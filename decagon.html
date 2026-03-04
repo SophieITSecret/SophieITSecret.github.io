@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>Master's Grand Strategy Center V8</title>
+    <style>
+        body { font-family: "Helvetica Neue", Arial, sans-serif; background-color: #0d1117; color: #c9d1d9; padding: 20px; margin: 0; }
+        .container { max-width: 1500px; margin: 0 auto; }
+        header { border-bottom: 2px solid #30363d; margin-bottom: 20px; padding-bottom: 10px; }
+        h1 { color: #f85149; font-size: 22px; text-transform: uppercase; margin: 0; letter-spacing: 2px; }
+        
+        .market-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px; height: 320px; }
+        .chart-container { background: #161b22; border-radius: 8px; border: 1px solid #30363d; overflow: hidden; }
+
+        .news-section { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 15px; }
+        .source-card { background: #161b22; padding: 15px; border-radius: 8px; border: 1px solid #30363d; display: flex; flex-direction: column; min-height: 180px; }
+        .source-card h2 { margin: 0; padding-bottom: 8px; border-bottom: 1px solid #30363d; }
+        .source-card h2 a { font-size: 14px; color: #58a6ff; text-decoration: none; }
+        .source-card h2 a:hover { color: #f85149; }
+        
+        .link-group { margin-top: 12px; flex-grow: 1; }
+        .main-link { display: block; background: #21262d; color: #c9d1d9; padding: 8px; border-radius: 4px; text-decoration: none; margin-bottom: 8px; font-weight: bold; font-size: 13px; text-align: center; border: 1px solid #444; }
+        .main-link:hover { background: #30363d; color: #58a6ff; }
+        
+        .sub-link { display: block; color: #8b949e; text-decoration: none; font-size: 11px; padding: 5px 8px; border-left: 2px solid #f85149; margin-bottom: 4px; }
+        .sub-link:hover { color: #f85149; background: rgba(248, 81, 73, 0.1); }
+        
+        .border-red { border-top: 4px solid #da0000; }
+        .border-blue { border-top: 4px solid #0058b0; }
+        .border-neutral { border-top: 4px solid #30363d; }
+        .border-gold { border-top: 4px solid #d4af37; }
+
+        .footer-tag { text-align: center; color: #484f58; font-size: 11px; margin-top: 40px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Strategic Decagon <span style="color:#8b949e; font-size:14px;">V8.0 - Grand Strategy</span></h1>
+        </header>
+
+        <div class="market-grid">
+            <div class="chart-container">
+                <iframe src="https://s.tradingview.com/widgetembed/?symbol=TVC%3AUSOIL&interval=D&theme=dark&style=1&timezone=Etc%2FUTC&locale=ja" width="100%" height="100%" frameborder="0"></iframe>
+            </div>
+            <div class="chart-container">
+                <iframe src="https://s.tradingview.com/widgetembed/?symbol=FX%3AUSDJPY&interval=D&theme=dark&style=1&timezone=Etc%2FUTC&locale=ja" width="100%" height="100%" frameborder="0"></iframe>
+            </div>
+        </div>
+
+        <div class="news-section">
+            <div class="source-card border-neutral">
+                <h2><a href="https://www.reuters.com/" target="_blank">1. Reuters</a></h2>
+                <div class="link-group">
+                    <a href="https://www.reuters.com/world/middle-east/" target="_blank" class="main-link">中東最新ハブ</a>
+                    <a href="https://www.reuters.com/search/ui/?q=Iran&sort=newest" target="_blank" class="sub-link">イラン最新：新着順</a>
+                </div>
+            </div>
+
+            <div class="source-card border-neutral">
+                <h2><a href="https://apnews.com/" target="_blank">2. AP News</a></h2>
+                <div class="link-group">
+                    <a href="https://apnews.com/hub/middle-east" target="_blank" class="main-link">中東ニュース速報</a>
+                </div>
+            </div>
+
+            <div class="source-card border-neutral">
+                <h2><a href="https://www.theguardian.com/" target="_blank">3. The Guardian</a></h2>
+                <div class="link-group">
+                    <a href="https://www.theguardian.com/world/live/2026/mar/03/us-israel-war-iran-live-updates-attacks-strikes-trump-netanyahu-lebanon-middle-east-latest-news" target="_blank" class="main-link">🔴 戦況ライブブログ</a>
+                </div>
+            </div>
+
+            <div class="source-card border-neutral">
+                <h2><a href="https://www.bbc.com/news" target="_blank">4. BBC News</a></h2>
+                <div class="link-group">
+                    <a href="https://www.bbc.com/news/world/middle_east" target="_blank" class="main-link">中東ワールド</a>
+                </div>
+            </div>
+
+            <div class="source-card border-neutral">
+                <h2><a href="https://www.economist.com/" target="_blank">5. The Economist</a></h2>
+                <div class="link-group">
+                    <a href="https://www.economist.com/middle-east-and-africa" target="_blank" class="main-link">中東政治・経済予測</a>
+                </div>
+            </div>
+
+            <div class="source-card border-gold">
+                <h2><a href="https://www.nzz.ch/english" target="_blank">6. Strategic Analysis (NZZ/FA)</a></h2>
+                <div class="link-group">
+                    <a href="https://www.nzz.ch/english/geopolitics" target="_blank" class="main-link">スイス・地政学分析</a>
+                    <a href="https://www.foreignaffairs.com/regions/middle-east" target="_blank" class="sub-link">Foreign Affairs：中東戦略論</a>
+                </div>
+            </div>
+
+            <div class="source-card border-neutral">
+                <h2><a href="https://www.aljazeera.com/" target="_blank">7. Al Jazeera</a></h2>
+                <div class="link-group">
+                    <a href="https://www.aljazeera.com/tag/iran-israel-conflict/" target="_blank" class="main-link">紛争速報 (アラブ視点)</a>
+                </div>
+            </div>
+
+            <div class="source-card border-neutral">
+                <h2><a href="https://www.understandingwar.org/" target="_blank">8. ISW</a></h2>
+                <div class="link-group">
+                    <a href="https://www.understandingwar.org/backgrounder/iran-updates" target="_blank" class="main-link">軍事実況レポート</a>
+                </div>
+            </div>
+
+            <div class="source-card border-blue">
+                <h2><a href="https://www.timesofisrael.com/" target="_blank">9. Times of Israel</a></h2>
+                <div class="link-group">
+                    <a href="https://www.timesofisrael.com/liveblog_entry/" target="_blank" class="main-link">🇮🇱 イスラエル速報</a>
+                    <a href="https://www.timesofisrael.com/topic/us-israel-relations/" target="_blank" class="sub-link">米・イスラエル関係の動向</a>
+                </div>
+            </div>
+
+            <div class="source-card border-red">
+                <h2><a href="https://www.presstv.ir/" target="_blank">10. Press TV (Iran)</a></h2>
+                <div class="link-group">
+                    <a href="https://www.presstv.ir/Default/Section/150101" target="_blank" class="main-link">🇮🇷 イラン政府公式</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer-tag">
+            Strategic Decagon Dashboard V8.0 - Built for the Master Mind
+        </div>
+    </div>
+</body>
+</html>
