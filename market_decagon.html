@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>Market Decagon V1.1</title>
+    <title>Market Decagon V2.0 - Zoom Edition</title>
     <style>
         body { 
             font-family: "Helvetica Neue", Arial, sans-serif; 
@@ -59,11 +59,36 @@
             height: 300px;
             box-shadow: 0 4px 8px rgba(0,0,0,0.3);
             transition: border-color 0.3s;
+            position: relative; /* ズームボタンを配置するための魔法 */
         }
         .chart-box:hover {
             border-color: #58a6ff;
         }
         
+        /* 🔍ズームボタンの装飾 */
+        .zoom-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(13, 17, 23, 0.8);
+            border: 1px solid #58a6ff;
+            color: #58a6ff;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            z-index: 10;
+            display: none; /* 普段は隠しておく */
+            transition: all 0.2s;
+        }
+        .chart-box:hover .zoom-btn {
+            display: block; /* マウスを乗せたら表示 */
+        }
+        .zoom-btn:hover {
+            background: #58a6ff;
+            color: #ffffff;
+        }
+
         .span-4 { grid-column: span 4; } 
         .span-3 { grid-column: span 3; } 
 
@@ -75,6 +100,40 @@
             padding-top: 20px;
             border-top: 1px solid #30363d;
         }
+
+        /* 巨大化用ポップアップ（モーダル）の装飾 */
+        #zoom-modal {
+            display: none; 
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(13, 17, 23, 0.95);
+            z-index: 1000;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        #zoom-iframe {
+            width: 90%;
+            height: 85%;
+            border: 2px solid #58a6ff;
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(88, 166, 255, 0.3);
+        }
+        .close-btn {
+            margin-bottom: 15px;
+            background: transparent;
+            border: 1px solid #f85149;
+            color: #f85149;
+            padding: 8px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.2s;
+        }
+        .close-btn:hover {
+            background: #f85149;
+            color: #ffffff;
+        }
     </style>
 </head>
 <body>
@@ -85,24 +144,70 @@
         </header>
 
         <div class="world-watch-grid">
-            <div class="chart-box span-4"><iframe src="https://s.tradingview.com/widgetembed/?symbol=FOREXCOM%3AJP225&interval=D&theme=dark&style=1&timezone=Etc%2FUTC&locale=ja" width="100%" height="100%" frameborder="0"></iframe></div>
-            <div class="chart-box span-4"><iframe src="https://s.tradingview.com/widgetembed/?symbol=OANDA%3ASPX500USD&interval=D&theme=dark&style=1&timezone=Etc%2FUTC&locale=ja" width="100%" height="100%" frameborder="0"></iframe></div>
-            <div class="chart-box span-4"><iframe src="https://s.tradingview.com/widgetembed/?symbol=FX%3AUSDJPY&interval=D&theme=dark&style=1&timezone=Etc%2FUTC&locale=ja" width="100%" height="100%" frameborder="0"></iframe></div>
+            <div class="chart-box span-4">
+                <button class="zoom-btn" onclick="openZoom('https://s.tradingview.com/widgetembed/?symbol=FOREXCOM%3AJP225&interval=D&theme=dark&style=1&timezone=Etc%2FUTC&locale=ja')">🔍</button>
+                <iframe src="https://s.tradingview.com/widgetembed/?symbol=FOREXCOM%3AJP225&interval=D&theme=dark&style=1&timezone=Etc%2FUTC&locale=ja" width="100%" height="100%" frameborder="0"></iframe>
+            </div>
+            <div class="chart-box span-4">
+                <button class="zoom-btn" onclick="openZoom('https://s.tradingview.com/widgetembed/?symbol=OANDA%3ASPX500USD&interval=D&theme=dark&style=1&timezone=Etc%2FUTC&locale=ja')">🔍</button>
+                <iframe src="https://s.tradingview.com/widgetembed/?symbol=OANDA%3ASPX500USD&interval=D&theme=dark&style=1&timezone=Etc%2FUTC&locale=ja" width="100%" height="100%" frameborder="0"></iframe>
+            </div>
+            <div class="chart-box span-4">
+                <button class="zoom-btn" onclick="openZoom('https://s.tradingview.com/widgetembed/?symbol=FX%3AUSDJPY&interval=D&theme=dark&style=1&timezone=Etc%2FUTC&locale=ja')">🔍</button>
+                <iframe src="https://s.tradingview.com/widgetembed/?symbol=FX%3AUSDJPY&interval=D&theme=dark&style=1&timezone=Etc%2FUTC&locale=ja" width="100%" height="100%" frameborder="0"></iframe>
+            </div>
 
-            <div class="chart-box span-4"><iframe src="https://s.tradingview.com/widgetembed/?symbol=TVC%3AUSOIL&interval=D&theme=dark&style=1&timezone=Etc%2FUTC&locale=ja" width="100%" height="100%" frameborder="0"></iframe></div>
-            <div class="chart-box span-4"><iframe src="https://s.tradingview.com/widgetembed/?symbol=OANDA%3AXAUUSD&interval=D&theme=dark&style=1&timezone=Etc%2FUTC&locale=ja" width="100%" height="100%" frameborder="0"></iframe></div>
-            <div class="chart-box span-4"><iframe src="https://s.tradingview.com/widgetembed/?symbol=OANDA%3AUSB10YUSD&interval=D&theme=dark&style=1&timezone=Etc%2FUTC&locale=ja" width="100%" height="100%" frameborder="0"></iframe></div>
+            <div class="chart-box span-4">
+                <button class="zoom-btn" onclick="openZoom('https://s.tradingview.com/widgetembed/?symbol=TVC%3AUSOIL&interval=D&theme=dark&style=1&timezone=Etc%2FUTC&locale=ja')">🔍</button>
+                <iframe src="https://s.tradingview.com/widgetembed/?symbol=TVC%3AUSOIL&interval=D&theme=dark&style=1&timezone=Etc%2FUTC&locale=ja" width="100%" height="100%" frameborder="0"></iframe>
+            </div>
+            <div class="chart-box span-4">
+                <button class="zoom-btn" onclick="openZoom('https://s.tradingview.com/widgetembed/?symbol=OANDA%3AXAUUSD&interval=D&theme=dark&style=1&timezone=Etc%2FUTC&locale=ja')">🔍</button>
+                <iframe src="https://s.tradingview.com/widgetembed/?symbol=OANDA%3AXAUUSD&interval=D&theme=dark&style=1&timezone=Etc%2FUTC&locale=ja" width="100%" height="100%" frameborder="0"></iframe>
+            </div>
+            <div class="chart-box span-4">
+                <button class="zoom-btn" onclick="openZoom('https://s.tradingview.com/widgetembed/?symbol=OANDA%3AUSB10YUSD&interval=D&theme=dark&style=1&timezone=Etc%2FUTC&locale=ja')">🔍</button>
+                <iframe src="https://s.tradingview.com/widgetembed/?symbol=OANDA%3AUSB10YUSD&interval=D&theme=dark&style=1&timezone=Etc%2FUTC&locale=ja" width="100%" height="100%" frameborder="0"></iframe>
+            </div>
 
-            <div class="chart-box span-3"><iframe src="https://s.tradingview.com/widgetembed/?symbol=BINANCE%3ABTCUSDT&interval=D&theme=dark&style=1&timezone=Etc%2FUTC&locale=ja" width="100%" height="100%" frameborder="0"></iframe></div>
-            <div class="chart-box span-3"><iframe src="https://s.tradingview.com/widgetembed/?symbol=CAPITALCOM%3AVIX&interval=D&theme=dark&style=1&timezone=Etc%2FUTC&locale=ja" width="100%" height="100%" frameborder="0"></iframe></div>
-            <div class="chart-box span-3"><iframe src="https://s.tradingview.com/widgetembed/?symbol=FX%3AEURUSD&interval=D&theme=dark&style=1&timezone=Etc%2FUTC&locale=ja" width="100%" height="100%" frameborder="0"></iframe></div>
-            <div class="chart-box span-3"><iframe src="https://s.tradingview.com/widgetembed/?symbol=OSE%3AJBL1!&interval=D&theme=dark&style=1&timezone=Etc%2FUTC&locale=ja" width="100%" height="100%" frameborder="0"></iframe></div>
+            <div class="chart-box span-3">
+                <button class="zoom-btn" onclick="openZoom('https://s.tradingview.com/widgetembed/?symbol=BINANCE%3ABTCUSDT&interval=D&theme=dark&style=1&timezone=Etc%2FUTC&locale=ja')">🔍</button>
+                <iframe src="https://s.tradingview.com/widgetembed/?symbol=BINANCE%3ABTCUSDT&interval=D&theme=dark&style=1&timezone=Etc%2FUTC&locale=ja" width="100%" height="100%" frameborder="0"></iframe>
+            </div>
+            <div class="chart-box span-3">
+                <button class="zoom-btn" onclick="openZoom('https://s.tradingview.com/widgetembed/?symbol=CAPITALCOM%3AVIX&interval=D&theme=dark&style=1&timezone=Etc%2FUTC&locale=ja')">🔍</button>
+                <iframe src="https://s.tradingview.com/widgetembed/?symbol=CAPITALCOM%3AVIX&interval=D&theme=dark&style=1&timezone=Etc%2FUTC&locale=ja" width="100%" height="100%" frameborder="0"></iframe>
+            </div>
+            <div class="chart-box span-3">
+                <button class="zoom-btn" onclick="openZoom('https://s.tradingview.com/widgetembed/?symbol=FX%3AEURUSD&interval=D&theme=dark&style=1&timezone=Etc%2FUTC&locale=ja')">🔍</button>
+                <iframe src="https://s.tradingview.com/widgetembed/?symbol=FX%3AEURUSD&interval=D&theme=dark&style=1&timezone=Etc%2FUTC&locale=ja" width="100%" height="100%" frameborder="0"></iframe>
+            </div>
+            <div class="chart-box span-3">
+                <button class="zoom-btn" onclick="openZoom('https://s.tradingview.com/widgetembed/?symbol=OSE%3AJBL1!&interval=D&theme=dark&style=1&timezone=Etc%2FUTC&locale=ja')">🔍</button>
+                <iframe src="https://s.tradingview.com/widgetembed/?symbol=OSE%3AJBL1!&interval=D&theme=dark&style=1&timezone=Etc%2FUTC&locale=ja" width="100%" height="100%" frameborder="0"></iframe>
+            </div>
         </div>
 
         <div class="footer-tag">
-            Market Decagon V1.1 - Built for the Master Mind<br>
+            Market Decagon V2.0 - Built for the Master Mind<br>
             <span style="color: #58a6ff; font-size: 12px; display: inline-block; margin-top: 5px;">Powered by IT Secretary Sophie</span>
         </div>
     </div>
+
+    <div id="zoom-modal">
+        <button class="close-btn" onclick="closeZoom()">✖ 閉じる</button>
+        <iframe id="zoom-iframe" src="" frameborder="0"></iframe>
+    </div>
+
+    <script>
+        function openZoom(url) {
+            document.getElementById('zoom-iframe').src = url;
+            document.getElementById('zoom-modal').style.display = 'flex';
+        }
+        function closeZoom() {
+            document.getElementById('zoom-modal').style.display = 'none';
+            document.getElementById('zoom-iframe').src = '';
+        }
+    </script>
 </body>
 </html>
