@@ -114,7 +114,7 @@
 
         <div class="news-card card-wsj">
             <h2>📈 Wall Street Journal</h2>
-            <div id="wsj-feed" class="loading">📡 RSSHub経由で潜入中...</div>
+            <div id="wsj-feed" class="loading">📡 最終兵器（corsproxy）で潜入中...</div>
         </div>
 
         <div class="news-card card-wapo">
@@ -155,41 +155,50 @@
                 });
         }
 
-        // WSJ専用の最終奥義関数（RSSHub ＋ rss2jsonの合わせ技）
-        function fetchWSJ_RSSHub() {
-            // 世界最大のオープンソースRSS生成プロジェクト「RSSHub」が生成しているWSJのワールドニュースRSSを指定
-            const wsjRssHubUrl = 'https://rsshub.app/wsj/world';
-            // それをさらにrss2json経由でJSONに変換してCORSをすり抜ける
-            const api = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(wsjRssHubUrl)}`;
+        // WSJ専用の最終兵器（corsproxy.io ＋ DOMParser）
+        function fetchWSJ_FinalWeapon() {
+            // Google News内のWSJ（ワールドニュース）
+            const targetUrl = 'https://news.google.com/rss/search?q=site:wsj.com+World&hl=en-US&gl=US&ceid=US:en';
+            // 最強のCORS突破プロキシを使用
+            const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(targetUrl);
 
-            fetch(api)
-                .then(response => response.json())
+            fetch(proxyUrl)
+                .then(response => {
+                    if (!response.ok) throw new Error("ネットワークエラー");
+                    return response.text();
+                })
+                .then(str => new window.DOMParser().parseFromString(str, "text/xml"))
                 .then(data => {
-                    if (data.status === 'ok') {
-                        let html = '<ul>';
-                        data.items.slice(0, 5).forEach(item => {
-                            // タイトルが長すぎる場合の処理（任意）やクリーンアップ
-                            const title = item.title;
-                            // pubDateが存在しない場合への備え
-                            const pubDate = item.pubDate ? new Date(item.pubDate).toLocaleString('ja-JP', { month: 'numeric', day: 'numeric', hour: '2-digit', minute:'2-digit' }) : '日付不明';
-                            html += `<li><a href="${item.link}" target="_blank">${title}</a><span class="date">${pubDate}</span></li>`;
-                        });
-                        html += '</ul>';
-                        document.getElementById('wsj-feed').innerHTML = html;
-                    } else {
-                        document.getElementById('wsj-feed').innerHTML = '⚠️ 潜入失敗（RSSHub限界）';
+                    const items = data.querySelectorAll("item");
+                    if (items.length === 0) {
+                        document.getElementById('wsj-feed').innerHTML = '⚠️ 記事データが空です';
+                        return;
                     }
+
+                    let html = '<ul>';
+                    for (let i = 0; i < Math.min(5, items.length); i++) {
+                        const item = items[i];
+                        let title = item.querySelector("title").textContent;
+                        title = title.replace(' - The Wall Street Journal', '');
+                        const link = item.querySelector("link").textContent;
+                        const pubDate = item.querySelector("pubDate").textContent;
+                        const date = new Date(pubDate).toLocaleString('ja-JP', { month: 'numeric', day: 'numeric', hour: '2-digit', minute:'2-digit' });
+
+                        html += `<li><a href="${link}" target="_blank">${title}</a><span class="date">${date}</span></li>`;
+                    }
+                    html += '</ul>';
+                    document.getElementById('wsj-feed').innerHTML = html;
                 })
                 .catch(error => {
-                    document.getElementById('wsj-feed').innerHTML = '⚠️ 通信エラー（RSSHub）';
-                    console.error("WSJ RSSHub Error:", error);
+                    document.getElementById('wsj-feed').innerHTML = '⚠️ 最終防壁に阻まれました';
+                    console.error("WSJ Final Weapon Error:", error);
                 });
         }
 
         // 部隊出撃！
         fetchStandardRSS('nyt', feeds.nyt);
         fetchStandardRSS('wapo', feeds.wapo);
-        fetchWSJ_RSSHub(); // WSJ専用・RSSHub潜入部隊
+        fetchWSJ_FinalWeapon(); // WSJ専用・最終兵器
     </script>
 </body>
 </html>
