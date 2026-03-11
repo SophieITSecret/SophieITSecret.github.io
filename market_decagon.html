@@ -2,7 +2,8 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>Market Decagon V1.1</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Market Decagon V1.2</title>
     <style>
         body { 
             font-family: "Helvetica Neue", Arial, sans-serif; 
@@ -59,11 +60,36 @@
             height: 300px;
             box-shadow: 0 4px 8px rgba(0,0,0,0.3);
             transition: border-color 0.3s;
+            position: relative; /* 虫眼鏡アイコンの配置基準にするため追加 */
         }
         .chart-box:hover {
             border-color: #58a6ff;
         }
         
+        /* 拡大鏡ボタンのデザイン */
+        .zoom-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(13, 17, 23, 0.8);
+            border: 1px solid #30363d;
+            border-radius: 4px;
+            color: #c9d1d9;
+            padding: 5px 8px;
+            cursor: pointer;
+            opacity: 0; /* 通常は隠す */
+            transition: all 0.2s;
+            z-index: 10;
+        }
+        .chart-box:hover .zoom-btn {
+            opacity: 1; /* マウスホバーで出現 */
+        }
+        .zoom-btn:hover {
+            background: #58a6ff;
+            color: #ffffff;
+            border-color: #58a6ff;
+        }
+
         .span-4 { grid-column: span 4; } 
         .span-3 { grid-column: span 3; } 
 
@@ -74,6 +100,58 @@
             margin-top: 40px; 
             padding-top: 20px;
             border-top: 1px solid #30363d;
+        }
+
+        /* 拡大モーダルのデザイン */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(13, 17, 23, 0.95);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            width: 90%;
+            height: 90%;
+            position: relative;
+            background: #161b22;
+            border-radius: 8px;
+            border: 2px solid #58a6ff;
+        }
+        .close-btn {
+            position: absolute;
+            top: -40px;
+            right: 0;
+            color: #c9d1d9;
+            font-size: 30px;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        .close-btn:hover {
+            color: #f85149;
+        }
+
+        /* スマホ用（画面幅768px以下）のレイアウト変更 */
+        @media (max-width: 768px) {
+            header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+            .world-watch-grid {
+                grid-template-columns: 1fr; /* 1列にする */
+            }
+            .span-4, .span-3 {
+                grid-column: span 1; /* カラム幅の指定を解除 */
+            }
+            .chart-box {
+                height: 350px; /* スマホで見やすいように少し高く */
+            }
+            .zoom-btn {
+                opacity: 0.7; /* スマホはホバーがないので常に薄く表示 */
+            }
         }
     </style>
 </head>
@@ -100,9 +178,51 @@
         </div>
 
         <div class="footer-tag">
-            Market Decagon V1.1 - Built for the Master Mind<br>
+            Market Decagon V1.2 - Built for the Master Mind<br>
             <span style="color: #58a6ff; font-size: 12px; display: inline-block; margin-top: 5px;">Powered by IT Secretary Sophie</span>
         </div>
     </div>
+
+    <div id="zoomModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" id="closeModal">×</span>
+            <iframe id="modalIframe" src="" width="100%" height="100%" frameborder="0" style="border-radius: 8px;"></iframe>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const chartBoxes = document.querySelectorAll('.chart-box');
+            const modal = document.getElementById('zoomModal');
+            const modalIframe = document.getElementById('modalIframe');
+            const closeModal = document.getElementById('closeModal');
+
+            // 各チャートに虫眼鏡ボタンを自動で追加
+            chartBoxes.forEach(box => {
+                const zoomBtn = document.createElement('div');
+                zoomBtn.className = 'zoom-btn';
+                zoomBtn.innerHTML = '🔍';
+                box.appendChild(zoomBtn);
+
+                // 虫眼鏡をクリックしたときの処理
+                zoomBtn.addEventListener('click', () => {
+                    const iframe = box.querySelector('iframe');
+                    modalIframe.src = iframe.src; // URLをコピー
+                    modal.style.display = 'flex'; // 画面ドーン！
+                });
+            });
+
+            // ×ボタンか背景をクリックで閉じる
+            const closeAction = () => {
+                modal.style.display = 'none';
+                modalIframe.src = ''; // 読み込みを止める
+            };
+            
+            closeModal.addEventListener('click', closeAction);
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) closeAction();
+            });
+        });
+    </script>
 </body>
 </html>
