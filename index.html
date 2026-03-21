@@ -189,6 +189,7 @@
             object-fit: cover;
             border-radius: 4px;
             border: 1px solid rgba(232, 62, 140, 0.3);
+            background-color: #0a1c12;
         }
 
         .note-content {
@@ -328,7 +329,7 @@
 
         <h2>▶︎ 最新の活動記録 (note連携)</h2>
         <div id="note-feed" class="note-feed-container">
-            <p style="text-align:center; color: var(--cyber-blue); font-size: 0.9rem;">最新の記事を取得しています...</p>
+            <p style="text-align:center; color: var(--cyber-blue); font-size: 0.9rem;">最新の生データを直接解析しています...</p>
         </div>
 
         <h2>▶︎ 最新のプロデュース作品</h2>
@@ -360,55 +361,64 @@
 
     <script>
         document.addEventListener("DOMContentLoaded", function() {
-            // ご主人様のnoteのRSSフィードURL
+            // 【最終兵器】中継サービス(rss2json)を廃止し、生のXMLデータを直接取得する方式に変更
             const rssUrl = "https://note.com/takeshi_makimura/rss";
-            // 外部API経由でRSSを読み込み可能な形式（JSON）に変換して取得
-            const apiUrl = "https://api.rss2json.com/v1/api.json?rss_url=" + encodeURIComponent(rssUrl);
+            const proxyUrl = "https://api.allorigins.win/get?url=" + encodeURIComponent(rssUrl);
 
-            fetch(apiUrl)
+            fetch(proxyUrl)
                 .then(response => response.json())
                 .then(data => {
                     const feedContainer = document.getElementById("note-feed");
-                    feedContainer.innerHTML = ""; // 「取得しています...」の文字を消す
+                    feedContainer.innerHTML = "";
 
-                    if (data.status === "ok" && data.items.length > 0) {
-                        const latestItems = data.items.slice(0, 3);
-                        
-                        latestItems.forEach(item => {
-                            // ★画像探しの【超・強化ロジック】
-                            let thumbnailUrl = item.thumbnail || (item.enclosure && item.enclosure.link);
+                    // わたくし自身で生のXML（電波）を解読します
+                    const parser = new DOMParser();
+                    const xmlDoc = parser.parseFromString(data.contents, "text/xml");
+                    
+                    // 記事(item)を上から3件だけ取り出す
+                    const items = Array.from(xmlDoc.querySelectorAll("item")).slice(0, 3);
+
+                    if (items.length > 0) {
+                        items.forEach(item => {
+                            // タイトル・リンク・日付の抽出
+                            const title = item.querySelector("title") ? item.querySelector("title").textContent : "無題";
+                            const link = item.querySelector("link") ? item.querySelector("link").textContent : "#";
+                            const pubDateStr = item.querySelector("pubDate") ? item.querySelector("pubDate").textContent : "";
                             
-                            // サムネイルが見つからない場合は、descriptionではなく【content（全文データ）】の中から探す！
-                            if (!thumbnailUrl || thumbnailUrl === "") {
-                                const htmlContent = item.content || item.description || "";
-                                // シングルクォート(')とダブルクォート(")の両方に対応し、大文字小文字も無視する最強の正規表現
-                                const imgMatch = htmlContent.match(/<img[^>]+src=["']([^"']+)["']/i);
+                            // ★【写真の直接捕獲ロジック】★
+                            let thumbnailUrl = "sophie.jpg"; // 見つからなかった時のデフォルト画像
+                            
+                            // 1. まずは「media:thumbnail」という、note専用の見出し画像タグを直接狙い撃ち
+                            const mediaThumbnail = item.getElementsByTagNameNS("*", "thumbnail");
+                            if (mediaThumbnail.length > 0 && mediaThumbnail[0].textContent) {
+                                thumbnailUrl = mediaThumbnail[0].textContent;
+                            } else {
+                                // 2. もし見出し画像が無ければ、本文(description)の生のHTMLからimgタグを強引に抜き出す
+                                const description = item.querySelector("description") ? item.querySelector("description").textContent : "";
+                                const imgMatch = description.match(/<img[^>]+src=["']([^"']+)["']/i);
                                 if (imgMatch) {
                                     thumbnailUrl = imgMatch[1];
-                                } else {
-                                    thumbnailUrl = "sophie.jpg"; 
                                 }
                             }
 
                             // 日付を整える
-                            const pubDate = new Date(item.pubDate);
+                            const pubDate = new Date(pubDateStr);
                             const dateString = pubDate.toLocaleDateString("ja-JP", { year: 'numeric', month: 'long', day: 'numeric' });
 
-                            // 1記事分のHTML（カード）を作成
+                            // カード型のHTMLを作成して表示
                             const card = document.createElement("a");
-                            card.href = item.link;
+                            card.href = link;
                             card.target = "_blank";
                             card.className = "note-card";
                             
                             card.innerHTML = `
                                 <img src="${thumbnailUrl}" alt="サムネイル" class="note-thumbnail" onerror="this.src='sophie.jpg'">
                                 <div class="note-content">
-                                    <h3 class="note-title">${item.title}</h3>
+                                    <h3 class="note-title">${title}</h3>
                                     <p class="note-date">${dateString}</p>
                                 </div>
                             `;
                             
-                            // 表示エリアに追加
                             feedContainer.appendChild(card);
                         });
                     } else {
