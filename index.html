@@ -230,7 +230,7 @@
                             
                             if (titleMatch) {
                                 // GitHubの images フォルダ内の「数字.jpg」を指定
-                                thumbnailUrl = `images/${titleMatch[1]}.jpg`;
+                                thumbnailUrl = `./images/${titleMatch[1]}.jpg`;
                             } else {
                                 // 通常の記事の場合
                                 thumbnailUrl = item.thumbnail || "sophie.jpg";
