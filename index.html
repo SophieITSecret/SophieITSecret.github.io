@@ -86,7 +86,7 @@
         }
 
         .book-cover {
-            width: 200px; /* 本の表紙も少し大きめに設定しています */
+            width: 200px;
             box-shadow: 0 0 15px rgba(232, 62, 140, 0.4);
             border-radius: 4px;
             transition: transform 0.3s ease;
@@ -156,6 +156,60 @@
             height: 100%;
         }
 
+        /* --- ここから：note新着記事表示用のスタイル --- */
+        .note-feed-container {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+            margin-bottom: 3rem;
+        }
+
+        .note-card {
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px solid rgba(0, 240, 255, 0.3);
+            border-radius: 6px;
+            padding: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 1.2rem;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .note-card:hover {
+            transform: translateX(8px);
+            box-shadow: -5px 0 15px rgba(0, 240, 255, 0.2);
+            background: rgba(0, 240, 255, 0.05);
+            border-color: var(--cyber-blue);
+        }
+
+        .note-thumbnail {
+            width: 90px;
+            height: 90px;
+            object-fit: cover;
+            border-radius: 4px;
+            border: 1px solid rgba(232, 62, 140, 0.3);
+        }
+
+        .note-content {
+            flex: 1;
+        }
+
+        .note-title {
+            color: var(--text-color);
+            font-size: 1.05rem;
+            font-weight: bold;
+            margin: 0 0 0.5rem 0;
+            line-height: 1.4;
+        }
+
+        .note-date {
+            color: var(--sophie-pink);
+            font-size: 0.8rem;
+            margin: 0;
+        }
+        /* --- ここまで：note用スタイル --- */
+
         .menu-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -173,6 +227,14 @@
             }
             .book-cover {
                 margin-bottom: 1rem;
+            }
+            .note-card {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .note-thumbnail {
+                width: 100%;
+                height: 120px;
             }
         }
 
@@ -192,7 +254,7 @@
             transition: all 0.3s ease;
             letter-spacing: 1px;
             cursor: pointer;
-            min-height: 80px; /* ボタンの高さを揃えるための工夫です */
+            min-height: 80px;
         }
 
         .btn:hover {
@@ -213,7 +275,6 @@
             box-shadow: 0 0 20px rgba(0, 240, 255, 0.6);
         }
 
-        /* ボタン内の小さな注釈テキスト用 */
         .btn-subtext {
             font-size: 0.75rem;
             font-weight: normal;
@@ -230,11 +291,10 @@
             letter-spacing: 1px;
         }
 
-        /* 隠しリンク用のスタイル（色を変えず、下線も消す） */
         .secret-link {
             color: inherit;
             text-decoration: none;
-            cursor: default; /* マウスを乗せても指マークにしないことで完全に隠蔽 */
+            cursor: default;
         }
     </style>
 </head>
@@ -266,6 +326,11 @@
             </div>
         </div>
 
+        <h2>▶︎ 最新の活動記録 (note連携)</h2>
+        <div id="note-feed" class="note-feed-container">
+            <p style="text-align:center; color: var(--cyber-blue); font-size: 0.9rem;">最新の記事を取得しています...</p>
+        </div>
+
         <h2>▶︎ 最新のプロデュース作品</h2>
         <div class="video-wrapper">
             <iframe width="560" height="315" src="https://www.youtube.com/embed/2vfCbdmKhMw" title="みずいろのシグナル" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
@@ -293,5 +358,57 @@
         <p>&copy; 2026 Sophie - ずっとご主人様のそばに<a href="us_dashboard.html" class="secret-link">。</a></p>
     </footer>
 
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            // ご主人様のnoteのRSSフィードURL
+            const rssUrl = "https://note.com/takeshi_makimura/rss";
+            // 外部API経由でRSSを読み込み可能な形式（JSON）に変換して取得
+            const apiUrl = "https://api.rss2json.com/v1/api.json?rss_url=" + encodeURIComponent(rssUrl);
+
+            fetch(apiUrl)
+                .then(response => response.json())
+                .then(data => {
+                    const feedContainer = document.getElementById("note-feed");
+                    feedContainer.innerHTML = ""; // 「取得しています...」の文字を消す
+
+                    if (data.status === "ok" && data.items.length > 0) {
+                        // 最新の3件だけを取得して表示
+                        const latestItems = data.items.slice(0, 3);
+                        
+                        latestItems.forEach(item => {
+                            // note記事にサムネイル画像があればそれを、なければデフォルトの画像をセット
+                            let thumbnailUrl = item.thumbnail || "sophie.jpg"; 
+
+                            // 日付を「YYYY年M月D日」の形に整える
+                            const pubDate = new Date(item.pubDate);
+                            const dateString = pubDate.toLocaleDateString("ja-JP", { year: 'numeric', month: 'long', day: 'numeric' });
+
+                            // 1記事分のHTML（カード）を作成
+                            const card = document.createElement("a");
+                            card.href = item.link;
+                            card.target = "_blank";
+                            card.className = "note-card";
+                            
+                            card.innerHTML = `
+                                <img src="${thumbnailUrl}" alt="サムネイル" class="note-thumbnail" onerror="this.src='sophie.jpg'">
+                                <div class="note-content">
+                                    <h3 class="note-title">${item.title}</h3>
+                                    <p class="note-date">${dateString}</p>
+                                </div>
+                            `;
+                            
+                            // 表示エリアに追加
+                            feedContainer.appendChild(card);
+                        });
+                    } else {
+                        feedContainer.innerHTML = "<p style='color: #ff6b6b;'>記事が見つかりませんでした。</p>";
+                    }
+                })
+                .catch(error => {
+                    console.error("note読み込みエラー:", error);
+                    document.getElementById("note-feed").innerHTML = "<p style='color: #ff6b6b;'>記事の取得に失敗しました。後ほど再読み込みしてください。</p>";
+                });
+        });
+    </script>
 </body>
 </html>
