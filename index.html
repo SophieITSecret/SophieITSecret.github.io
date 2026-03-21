@@ -184,8 +184,8 @@
         }
 
         .note-thumbnail {
-            width: 120px; /* 少し小さくして、本文のスペースを確保 */
-            height: 120px; /* 正方形に近づける */
+            width: 120px; 
+            height: 120px; 
             object-fit: cover;
             border-radius: 4px;
             border: 1px solid rgba(232, 62, 140, 0.3);
@@ -195,7 +195,6 @@
 
         .note-content {
             flex: 1;
-            /* 文字数が増えるので、少し行間をゆったりと */
             line-height: 1.6;
         }
 
@@ -207,13 +206,12 @@
             line-height: 1.4;
         }
 
-        /* 本文のチラ見せ用デザイン（★行数を増やしました） */
         .note-snippet {
             color: #a0b0a5;
             font-size: 0.9rem;
             margin: 0 0 0.8rem 0;
             display: -webkit-box;
-            -webkit-line-clamp: 4; /* ★最大4行まで表示 */
+            -webkit-line-clamp: 4; 
             -webkit-box-orient: vertical;
             overflow: hidden;
         }
@@ -222,7 +220,7 @@
             color: var(--sophie-pink);
             font-size: 0.8rem;
             margin: 0;
-            text-align: right; /* 日付は右下に配置 */
+            text-align: right; 
         }
         /* --- ここまで：note用スタイル --- */
 
@@ -246,12 +244,12 @@
             }
             .note-card {
                 flex-direction: column;
-                align-items: center; /* スマホでは画像を中央に */
+                align-items: center; 
                 text-align: center;
             }
             .note-thumbnail {
                 width: 100%;
-                max-width: 200px; /* スマホで画像が大きくなりすぎないように */
+                max-width: 200px; 
                 height: 120px; 
             }
             .note-date {
@@ -396,11 +394,12 @@
                         const latestItems = data.items.slice(0, 3);
                         
                         latestItems.forEach(item => {
-                            // 1. 本文の抽出とチラ見せ（★150文字に拡大）
+                            // 1. 本文の抽出とチラ見せ（150文字）
                             let snippet = "";
                             const rawContent = item.content || item.description || "";
                             let plainText = rawContent.replace(/<[^>]+>/g, ''); // HTMLタグを消去
-                            plainText = plainText.replace(/\s+/g, ' ').trim();  // 余分な空白を消去
+                            plainText = plainText.replace(/&nbsp;|&#160;/gi, ' ');
+                            plainText = plainText.replace(/[\r\n\s]+/g, ' ').trim();  // 余分な改行・空白を徹底消去
                             
                             if (plainText.length > 150) {
                                 snippet = plainText.substring(0, 150) + "...";
@@ -408,14 +407,26 @@
                                 snippet = plainText;
                             }
 
-                            // 2. 画像の抽出
-                            let thumbnailUrl = item.thumbnail || (item.enclosure && item.enclosure.link);
-                            if (!thumbnailUrl || thumbnailUrl === "") {
-                                const imgMatch = rawContent.match(/<img[^>]+src=["']([^"']+)["']/i);
-                                if (imgMatch) {
-                                    thumbnailUrl = imgMatch[1];
+                            // 2. ★【画像紐付けのテク】★
+                            // タイトルから「第○回」の数字を抜き出し、対応する画像を images フォルダから探す
+                            let thumbnailUrl = "sophie.jpg"; // 基本の画像
+                            const titleMatch = item.title.match(/第(\d+)回/);
+                            
+                            if (titleMatch) {
+                                const epNum = titleMatch[1]; // 数字の部分（例：11）
+                                // 日本語のファイル名でも読み込めるようにエンコードをかけます
+                                // 拡張子は「.jpg」と仮定しています
+                                thumbnailUrl = encodeURI(`images/独りごとパネルNo.${epNum}.jpg`);
+                            } else {
+                                // もし「第○回」と書いていない記事の場合は、今まで通り本文やnoteのデータから画像を探す
+                                let noteThumb = item.thumbnail || (item.enclosure && item.enclosure.link);
+                                if (!noteThumb || noteThumb === "") {
+                                    const imgMatch = rawContent.match(/<img[^>]+src=["']([^"']+)["']/i);
+                                    if (imgMatch) {
+                                        thumbnailUrl = imgMatch[1];
+                                    }
                                 } else {
-                                    thumbnailUrl = "sophie.jpg"; 
+                                    thumbnailUrl = noteThumb;
                                 }
                             }
 
