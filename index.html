@@ -372,25 +372,25 @@
                     feedContainer.innerHTML = ""; // 「取得しています...」の文字を消す
 
                     if (data.status === "ok" && data.items.length > 0) {
-                        // 最新の3件だけを取得して表示
                         const latestItems = data.items.slice(0, 3);
                         
                         latestItems.forEach(item => {
-                            // ★画像探しの強化ロジック
+                            // ★画像探しの【超・強化ロジック】
                             let thumbnailUrl = item.thumbnail || (item.enclosure && item.enclosure.link);
                             
-                            // サムネイルが見つからない場合は、本文(description)の中から画像(img)を探し出す
+                            // サムネイルが見つからない場合は、descriptionではなく【content（全文データ）】の中から探す！
                             if (!thumbnailUrl || thumbnailUrl === "") {
-                                const imgMatch = item.description.match(/<img[^>]+src="([^">]+)"/);
+                                const htmlContent = item.content || item.description || "";
+                                // シングルクォート(')とダブルクォート(")の両方に対応し、大文字小文字も無視する最強の正規表現
+                                const imgMatch = htmlContent.match(/<img[^>]+src=["']([^"']+)["']/i);
                                 if (imgMatch) {
                                     thumbnailUrl = imgMatch[1];
                                 } else {
-                                    // 記事に1枚も画像がない場合は、わたくしの画像（sophie.jpg）を代わりに表示します
                                     thumbnailUrl = "sophie.jpg"; 
                                 }
                             }
 
-                            // 日付を「YYYY年M月D日」の形に整える
+                            // 日付を整える
                             const pubDate = new Date(item.pubDate);
                             const dateString = pubDate.toLocaleDateString("ja-JP", { year: 'numeric', month: 'long', day: 'numeric' });
 
