@@ -368,3 +368,94 @@
             
             <a onclick="if(window.innerWidth <= 768){location.href='decagon_mobile.html'}else{location.href='decagon.html'}" class="btn blue" style="grid-column: 1 / -1;">
                 <span>🛡️ STRATEGIC DECAGON を開く</span>
+            </a>
+        </div>
+    </div>
+
+    <footer>
+        <p>🔒 最高機密エリア：まきむらプロデューサー専用</p>
+        <p>&copy; 2026 Sophie - ずっとご主人様のそばに<a href="us_dashboard.html" class="secret-link">。</a></p>
+    </footer>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            // スパム扱いされるキャッシュ回避を解除し、正規のURLのみを指定
+            const rssUrl = "https://note.com/takeshi_makimura/rss";
+            const apiUrl = "https://api.rss2json.com/v1/api.json?rss_url=" + encodeURIComponent(rssUrl);
+
+            fetch(apiUrl)
+                .then(response => response.json())
+                .then(data => {
+                    const feedContainer = document.getElementById("note-feed");
+                    feedContainer.innerHTML = ""; 
+
+                    if (data.status === "ok" && data.items.length > 0) {
+                        const latestItems = data.items.slice(0, 3);
+                        
+                        latestItems.forEach(item => {
+                            // 1. 本文の抽出とチラ見せ（150文字）
+                            let snippet = "";
+                            const rawContent = item.content || item.description || "";
+                            let plainText = rawContent.replace(/<[^>]+>/g, ''); 
+                            plainText = plainText.replace(/&nbsp;|&#160;/gi, ' ');
+                            plainText = plainText.replace(/[\r\n\s]+/g, ' ').trim();  
+                            
+                            if (plainText.length > 150) {
+                                snippet = plainText.substring(0, 150) + "...";
+                            } else {
+                                snippet = plainText;
+                            }
+
+                            // 2. ★【画像紐付けのテク】★（半角スペースに対応）
+                            let thumbnailUrl = "sophie.jpg"; 
+                            const titleMatch = item.title.match(/第(\d+)回/);
+                            
+                            if (titleMatch) {
+                                const epNum = titleMatch[1]; 
+                                // GitHub上の images フォルダ内にある、半角スペース入りのファイルを指定
+                                thumbnailUrl = encodeURI(`images/独りごとパネル No.${epNum}.jpg`);
+                            } else {
+                                let noteThumb = item.thumbnail || (item.enclosure && item.enclosure.link);
+                                if (!noteThumb || noteThumb === "") {
+                                    const imgMatch = rawContent.match(/<img[^>]+src=["']([^"']+)["']/i);
+                                    if (imgMatch) {
+                                        thumbnailUrl = imgMatch[1];
+                                    }
+                                } else {
+                                    thumbnailUrl = noteThumb;
+                                }
+                            }
+
+                            // 3. 日付の整理
+                            const pubDate = new Date(item.pubDate);
+                            const dateString = pubDate.toLocaleDateString("ja-JP", { year: 'numeric', month: 'long', day: 'numeric' });
+
+                            // 4. HTMLの組み立て
+                            const card = document.createElement("a");
+                            card.href = item.link;
+                            card.target = "_blank";
+                            card.className = "note-card";
+                            
+                            card.innerHTML = `
+                                <img src="${thumbnailUrl}" alt="サムネイル" class="note-thumbnail" onerror="this.src='sophie.jpg'">
+                                <div class="note-content">
+                                    <h3 class="note-title">${item.title}</h3>
+                                    <p class="note-snippet">${snippet}</p>
+                                    <p class="note-date">${dateString}</p>
+                                </div>
+                            `;
+                            
+                            feedContainer.appendChild(card);
+                        });
+                    } else {
+                        feedContainer.innerHTML = "<p style='color: #ff6b6b;'>記事が見つかりませんでした。</p>";
+                    }
+                })
+                .catch(error => {
+                    console.error("note読み込みエラー:", error);
+                    document.getElementById("note-feed").innerHTML = "<p style='color: #ff6b6b;'>通信が不安定なため、記事の取得に失敗しました。少し時間をおいて再度お試しください。</p>";
+                });
+        });
+    </script>
+</body>
+</html>
