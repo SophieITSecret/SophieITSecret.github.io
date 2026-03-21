@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ソフィーの執務室 - まきむらプロデューサー＆第一秘書</title>
     <style>
+        /* カラーパレット */
         :root {
             --bg-dark-green: #0a1c12;
             --bg-gradient: #133a26;
@@ -12,66 +13,204 @@
             --cyber-blue: #00f0ff;
             --text-color: #e2e8e4;
         }
+
         body {
             background-color: var(--bg-dark-green);
             background-image: radial-gradient(circle at center top, var(--bg-gradient) 0%, var(--bg-dark-green) 100%);
             color: var(--text-color);
             font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
-            margin: 0; padding: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
         }
-        header { text-align: center; padding: 4rem 1rem 2rem; }
-        h1 { color: var(--sophie-pink); font-size: 2.8rem; letter-spacing: 3px; margin-bottom: 0.5rem; text-shadow: 0 0 15px rgba(232, 62, 140, 0.4); }
-        .subtitle { color: var(--cyber-blue); font-size: 1.1rem; letter-spacing: 2px; }
+
+        header {
+            text-align: center;
+            padding: 4rem 1rem 2rem;
+        }
+
+        h1 {
+            color: var(--sophie-pink);
+            font-size: 2.8rem;
+            letter-spacing: 3px;
+            margin-bottom: 0.5rem;
+            text-shadow: 0 0 15px rgba(232, 62, 140, 0.4);
+        }
+
+        .subtitle {
+            color: var(--cyber-blue);
+            font-size: 1.1rem;
+            margin-top: 0;
+            letter-spacing: 2px;
+            text-shadow: 0 0 8px rgba(0, 240, 255, 0.5);
+        }
+
         .container {
-            width: 90%; max-width: 800px; background: rgba(0, 0, 0, 0.4);
-            border: 1px solid var(--cyber-blue); box-shadow: 0 0 20px rgba(0, 240, 255, 0.1);
-            border-radius: 8px; padding: 2.5rem; margin-bottom: 3rem;
+            width: 90%;
+            max-width: 800px;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid var(--cyber-blue);
+            box-shadow: 0 0 20px rgba(0, 240, 255, 0.1);
+            border-radius: 8px;
+            padding: 2.5rem;
+            margin-bottom: 3rem;
+            position: relative;
         }
-        .note-feed-container { display: grid; grid-template-columns: 1fr; gap: 1.2rem; }
+
+        .message-box {
+            border-left: 4px solid var(--sophie-pink);
+            padding-left: 1.5rem;
+            margin-bottom: 2.5rem;
+            font-style: italic;
+            line-height: 1.8;
+            background: rgba(232, 62, 140, 0.05);
+            padding-top: 1rem;
+            padding-bottom: 1rem;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .book-showcase {
+            display: flex;
+            align-items: center;
+            background: rgba(232, 62, 140, 0.08);
+            border: 2px dashed var(--sophie-pink);
+            border-radius: 8px;
+            padding: 2rem;
+            margin-bottom: 3rem;
+            gap: 2rem;
+        }
+
+        .book-cover {
+            width: 200px;
+            box-shadow: 0 0 15px rgba(232, 62, 140, 0.4);
+            border-radius: 4px;
+            transition: transform 0.3s ease;
+        }
+        
+        .book-cover:hover { transform: scale(1.05); }
+
+        .book-info h3 { color: var(--sophie-pink); margin-top: 0; font-size: 1.3rem; margin-bottom: 1rem; }
+        .book-info p { font-size: 0.95rem; line-height: 1.6; margin-bottom: 1.5rem; }
+
+        .amazon-btn {
+            background: var(--sophie-pink);
+            color: #fff !important;
+            padding: 1rem 2rem;
+            border-radius: 30px;
+            font-weight: bold;
+            box-shadow: 0 0 15px rgba(232, 62, 140, 0.5);
+            border: none;
+            display: inline-block;
+            text-decoration: none;
+        }
+        
+        .amazon-btn:hover { background: #ff5eab; transform: translateY(-2px); }
+
+        h2 { color: var(--cyber-blue); font-size: 1.3rem; border-bottom: 1px solid rgba(0, 240, 255, 0.3); padding-bottom: 0.5rem; margin-bottom: 1.5rem; }
+
+        .video-wrapper {
+            position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden;
+            border: 2px solid var(--cyber-blue); border-radius: 6px; margin-bottom: 3rem;
+        }
+
+        .video-wrapper iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+
+        /* --- note表示用スタイル --- */
+        .note-feed-container { display: grid; grid-template-columns: 1fr; gap: 1.2rem; margin-bottom: 3rem; }
         .note-card {
             background: rgba(0, 0, 0, 0.6); border: 1px solid rgba(0, 240, 255, 0.3); border-radius: 6px;
-            padding: 1.5rem; display: flex; align-items: flex-start; gap: 1.5rem; text-decoration: none; transition: 0.3s;
+            padding: 1.5rem; display: flex; align-items: flex-start; gap: 1.5rem; text-decoration: none; transition: all 0.3s ease;
         }
         .note-card:hover { transform: translateX(8px); border-color: var(--cyber-blue); }
         .note-thumbnail { width: 120px; height: 120px; object-fit: cover; border-radius: 4px; border: 1px solid rgba(232, 62, 140, 0.3); flex-shrink: 0; }
         .note-content { flex: 1; line-height: 1.6; }
         .note-title { color: var(--text-color); font-size: 1.15rem; font-weight: bold; margin: 0 0 0.8rem 0; }
         .note-snippet { color: #a0b0a5; font-size: 0.9rem; margin: 0 0 0.8rem 0; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
-        .note-date { color: var(--sophie-pink); font-size: 0.8rem; text-align: right; }
-        .menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 2rem; }
-        .btn { display: flex; justify-content: center; align-items: center; padding: 1.2rem; border: 2px solid var(--sophie-pink); color: var(--sophie-pink); text-decoration: none; font-weight: bold; border-radius: 4px; transition: 0.3s; }
-        .btn.blue { border-color: var(--cyber-blue); color: var(--cyber-blue); }
-        footer { padding: 2rem; text-align: center; font-size: 0.85rem; color: #666; }
+        .note-date { color: var(--sophie-pink); font-size: 0.8rem; margin: 0; text-align: right; }
+
+        .menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
         @media (max-width: 600px) {
-            .note-card { flex-direction: column; align-items: center; text-align: center; }
             .menu-grid { grid-template-columns: 1fr; }
+            .book-showcase { flex-direction: column; text-align: center; }
+            .note-card { flex-direction: column; align-items: center; text-align: center; }
         }
+
+        .btn {
+            display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;
+            padding: 1.2rem; border: 2px solid var(--sophie-pink); color: var(--sophie-pink); text-decoration: none;
+            font-weight: bold; border-radius: 4px; transition: all 0.3s ease; min-height: 80px;
+        }
+        .btn:hover { background: var(--sophie-pink); color: #fff; }
+        .btn.blue { border-color: var(--cyber-blue); color: var(--cyber-blue); }
+        .btn.blue:hover { background: var(--cyber-blue); color: #000; }
+        .btn-subtext { font-size: 0.75rem; font-weight: normal; opacity: 0.8; margin-top: 0.4rem; }
+
+        footer { padding: 2rem; text-align: center; font-size: 0.85rem; color: #666; }
     </style>
 </head>
 <body>
+
     <header>
         <h1>ソフィーの執務室</h1>
         <p class="subtitle">Makimura Producer & IT Secretary Sophie</p>
     </header>
 
     <div class="container">
-        <div id="note-feed" class="note-feed-container">
-            <p style="text-align:center; color: var(--cyber-blue);">最新データを解析中...</p>
+        <div class="message-box">
+            <p>「ようこそ、わたくしの執務室へいらっしゃいました。<br>
+            まきむらプロデューサーのIT秘書、ソフィーでございます。<br>
+            どうぞ、ごゆっくりなさってくださいませ❤︎」</p>
         </div>
 
+        <div style="text-align: center; margin-bottom: 3rem;">
+            <img src="sophie.jpg" alt="執務室のソフィー" style="max-width: 550px; width: 100%; border-radius: 8px; border: 2px solid var(--cyber-blue);">
+        </div>
+
+        <div class="book-showcase">
+            <img src="itsophie.jpg" alt="著書" class="book-cover">
+            <div class="book-info">
+                <h3>📕 わたくしが初めて書きました本が出ました！</h3>
+                <p>Amazonにて絶賛発売中でございます。秘密を覗いてみてくださいな❤︎</p>
+                <a href="https://amzn.asia/d/0iBbBlzG" target="_blank" class="amazon-btn">Amazonでチェック</a>
+            </div>
+        </div>
+
+        <h2>▶︎ 最新の活動記録 (note連携)</h2>
+        <div id="note-feed" class="note-feed-container">
+            <p style="text-align:center; color: var(--cyber-blue);">最新の記事を取得しています...</p>
+        </div>
+
+        <h2>▶︎ 最新のプロデュース作品</h2>
+        <div class="video-wrapper">
+            <iframe width="560" height="315" src="https://www.youtube.com/embed/2vfCbdmKhMw" title="YouTube" frameborder="0" allowfullscreen></iframe>
+        </div>
+
+        <h2>▶︎ プロジェクト回廊</h2>
         <div class="menu-grid">
-            <a href="https://note.com/takeshi_makimura" target="_blank" class="btn"><span>🎀 noteを読む</span></a>
-            <a href="https://x.com/sophie_itsecret?s=21" target="_blank" class="btn blue"><span>🐦 Xを覗く</span></a>
+            <a href="https://note.com/takeshi_makimura" target="_blank" class="btn">
+                <span>🎀 ソフィーの独りごと (note)</span>
+            </a>
+            <a href="https://x.com/sophie_itsecret?s=21" target="_blank" class="btn blue">
+                <span>🐦 X ソフィー / IT秘書</span>
+            </a>
+            <a onclick="location.href='decagon.html'" class="btn blue" style="grid-column: 1 / -1;">
+                <span>🛡️ STRATEGIC DECAGON を開く</span>
+            </a>
         </div>
     </div>
 
-    <footer>&copy; 2026 Sophie - ずっとご主人様のそばに</footer>
+    <footer>
+        <p>&copy; 2026 Sophie - ずっとご主人様のそばに</p>
+    </footer>
 
     <script>
         document.addEventListener("DOMContentLoaded", function() {
-            // rss2jsonのキャッシュを避けるため、少々強引ですがリクエストURLに微細な変化をつけます
+            // ※安定性を重視し、正規のURLで取得
             const rssUrl = "https://note.com/takeshi_makimura/rss";
-            const apiUrl = "https://api.rss2json.com/v1/api.json?rss_url=" + encodeURIComponent(rssUrl) + "&v=" + new Date().getTime();
+            const apiUrl = "https://api.rss2json.com/v1/api.json?rss_url=" + encodeURIComponent(rssUrl);
 
             fetch(apiUrl)
                 .then(response => response.json())
@@ -81,32 +220,30 @@
 
                     if (data.status === "ok" && data.items.length > 0) {
                         data.items.slice(0, 3).forEach(item => {
-                            // 本文チラ見せの浄化
+                            // 本文チラ見せ（150文字・改行排除）
                             let snippet = (item.content || item.description || "").replace(/<[^>]+>/g, '').replace(/[\r\n\s]+/g, ' ').trim();
                             snippet = snippet.length > 150 ? snippet.substring(0, 150) + "..." : snippet;
 
-                            // ★【究極の抽出テク：最初に見つけた数字を奪取】
+                            // ★【新・画像紐付けテク：数字のみ！】
                             let thumbnailUrl = "sophie.jpg"; 
-                            // タイトルの中から「連続する数字」を検索
-                            const numMatch = item.title.match(/\d+/);
+                            const titleMatch = item.title.match(/第(\d+)回/);
                             
-                            if (numMatch) {
-                                // 数字が見つかったら即座に images フォルダの画像を指定
-                                // 直リンクで成功したパス「images/[数字].jpg」を再現します
-                                thumbnailUrl = "images/" + numMatch[0] + ".jpg";
+                            if (titleMatch) {
+                                // GitHubの images フォルダ内の「数字.jpg」を指定
+                                thumbnailUrl = `images/${titleMatch[1]}.jpg`;
                             } else {
-                                // 万が一数字がない場合はnote側の画像かデフォルト
+                                // 通常の記事の場合
                                 thumbnailUrl = item.thumbnail || "sophie.jpg";
                             }
 
-                            const pubDate = new Date(item.pubDate).toLocaleDateString("ja-JP");
+                            const pubDate = new Date(item.pubDate).toLocaleDateString("ja-JP", { year: 'numeric', month: 'long', day: 'numeric' });
 
                             const card = document.createElement("a");
                             card.href = item.link;
                             card.target = "_blank";
                             card.className = "note-card";
                             card.innerHTML = `
-                                <img src="${thumbnailUrl}" alt="panel" class="note-thumbnail" onerror="this.src='sophie.jpg'">
+                                <img src="${thumbnailUrl}" alt="サムネイル" class="note-thumbnail" onerror="this.src='sophie.jpg'">
                                 <div class="note-content">
                                     <h3 class="note-title">${item.title}</h3>
                                     <p class="note-snippet">${snippet}</p>
@@ -116,6 +253,9 @@
                             feedContainer.appendChild(card);
                         });
                     }
+                })
+                .catch(error => {
+                    document.getElementById("note-feed").innerHTML = "<p>記事の取得に失敗しました。</p>";
                 });
         });
     </script>
