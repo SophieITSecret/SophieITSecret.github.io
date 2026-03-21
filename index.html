@@ -1,454 +1,143 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ソフィーの執務室 - まきむらプロデューサー＆第一秘書</title>
-    <style>
-        /* カラーパレット */
-        :root {
-            --bg-dark-green: #0a1c12;
-            --bg-gradient: #133a26;
-            --sophie-pink: #e83e8c;
-            --cyber-blue: #00f0ff;
-            --text-color: #e2e8e4;
-        }
-
-        body {
-            background-color: var(--bg-dark-green);
-            background-image: radial-gradient(circle at center top, var(--bg-gradient) 0%, var(--bg-dark-green) 100%);
-            color: var(--text-color);
-            font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
-        }
-
-        header {
-            text-align: center;
-            padding: 4rem 1rem 2rem;
-        }
-
-        h1 {
-            color: var(--sophie-pink);
-            font-size: 2.8rem;
-            letter-spacing: 3px;
-            margin-bottom: 0.5rem;
-            text-shadow: 0 0 15px rgba(232, 62, 140, 0.4);
-        }
-
-        .subtitle {
-            color: var(--cyber-blue);
-            font-size: 1.1rem;
-            margin-top: 0;
-            letter-spacing: 2px;
-            text-shadow: 0 0 8px rgba(0, 240, 255, 0.5);
-        }
-
-        .container {
-            width: 90%;
-            max-width: 800px;
-            background: rgba(0, 0, 0, 0.4);
-            border: 1px solid var(--cyber-blue);
-            box-shadow: 0 0 20px rgba(0, 240, 255, 0.1);
-            border-radius: 8px;
-            padding: 2.5rem;
-            margin-bottom: 3rem;
-            position: relative;
-        }
-
-        /* ご挨拶メッセージエリア */
-        .message-box {
-            border-left: 4px solid var(--sophie-pink);
-            padding-left: 1.5rem;
-            margin-bottom: 2.5rem;
-            font-style: italic;
-            line-height: 1.8;
-            background: rgba(232, 62, 140, 0.05);
-            padding-top: 1rem;
-            padding-bottom: 1rem;
-            border-radius: 0 8px 8px 0;
-        }
-
-        /* 著書の特設コーナー */
-        .book-showcase {
-            display: flex;
-            align-items: center;
-            background: rgba(232, 62, 140, 0.08);
-            border: 2px dashed var(--sophie-pink);
-            border-radius: 8px;
-            padding: 2rem;
-            margin-bottom: 3rem;
-            gap: 2rem;
-        }
-
-        .book-cover {
-            width: 200px;
-            box-shadow: 0 0 15px rgba(232, 62, 140, 0.4);
-            border-radius: 4px;
-            transition: transform 0.3s ease;
-        }
-        
-        .book-cover:hover {
-            transform: scale(1.05);
-        }
-
-        .book-info h3 {
-            color: var(--sophie-pink);
-            margin-top: 0;
-            font-size: 1.3rem;
-            margin-bottom: 1rem;
-        }
-
-        .book-info p {
-            font-size: 0.95rem;
-            line-height: 1.6;
-            margin-bottom: 1.5rem;
-        }
-
-        .amazon-btn {
-            background: var(--sophie-pink);
-            color: #fff !important;
-            padding: 1rem 2rem;
-            border-radius: 30px;
-            font-weight: bold;
-            box-shadow: 0 0 15px rgba(232, 62, 140, 0.5);
-            border: none;
-            display: inline-block;
-            text-decoration: none;
-        }
-        
-        .amazon-btn:hover {
-            background: #ff5eab;
-            box-shadow: 0 0 25px rgba(232, 62, 140, 0.8);
-            transform: translateY(-2px);
-        }
-
-        h2 {
-            color: var(--cyber-blue);
-            font-size: 1.3rem;
-            border-bottom: 1px solid rgba(0, 240, 255, 0.3);
-            padding-bottom: 0.5rem;
-            margin-bottom: 1.5rem;
-            display: flex;
-            align-items: center;
-        }
-
-        .video-wrapper {
-            position: relative;
-            padding-bottom: 56.25%;
-            height: 0;
-            overflow: hidden;
-            border: 2px solid var(--cyber-blue);
-            border-radius: 6px;
-            margin-bottom: 3rem;
-            box-shadow: 0 0 15px rgba(0, 240, 255, 0.2);
-        }
-
-        .video-wrapper iframe {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-        }
-
-        /* --- ここから：note新着記事表示用のスタイル --- */
-        .note-feed-container {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 1.2rem;
-            margin-bottom: 3rem;
-        }
-
-        .note-card {
-            background: rgba(0, 0, 0, 0.6);
-            border: 1px solid rgba(0, 240, 255, 0.3);
-            border-radius: 6px;
-            padding: 1.5rem;
-            display: flex;
-            align-items: flex-start; 
-            gap: 1.5rem; 
-            text-decoration: none;
-            transition: all 0.3s ease;
-        }
-
-        .note-card:hover {
-            transform: translateX(8px);
-            box-shadow: -5px 0 15px rgba(0, 240, 255, 0.2);
-            background: rgba(0, 240, 255, 0.05);
-            border-color: var(--cyber-blue);
-        }
-
-        .note-thumbnail {
-            width: 120px; /* 少し小さくして、本文のスペースを確保 */
-            height: 120px; /* 正方形に近づける */
-            object-fit: cover;
-            border-radius: 4px;
-            border: 1px solid rgba(232, 62, 140, 0.3);
-            background-color: #0a1c12;
-            flex-shrink: 0; 
-        }
-
-        .note-content {
-            flex: 1;
-            /* 文字数が増えるので、少し行間をゆったりと */
-            line-height: 1.6;
-        }
-
-        .note-title {
-            color: var(--text-color);
-            font-size: 1.15rem;
-            font-weight: bold;
-            margin: 0 0 0.8rem 0;
-            line-height: 1.4;
-        }
-
-        /* 本文のチラ見せ用デザイン（★行数を増やしました） */
-        .note-snippet {
-            color: #a0b0a5;
-            font-size: 0.9rem;
-            margin: 0 0 0.8rem 0;
-            display: -webkit-box;
-            -webkit-line-clamp: 4; /* ★最大4行まで表示 */
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-        }
-
-        .note-date {
-            color: var(--sophie-pink);
-            font-size: 0.8rem;
-            margin: 0;
-            text-align: right; /* 日付は右下に配置 */
-        }
-        /* --- ここまで：note用スタイル --- */
-
-        .menu-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1.5rem;
-            align-items: stretch;
-        }
-
-        @media (max-width: 600px) {
-            .menu-grid {
-                grid-template-columns: 1fr;
-            }
-            .book-showcase {
-                flex-direction: column;
-                text-align: center;
-            }
-            .book-cover {
-                margin-bottom: 1rem;
-            }
-            .note-card {
-                flex-direction: column;
-                align-items: center; /* スマホでは画像を中央に */
-                text-align: center;
-            }
-            .note-thumbnail {
-                width: 100%;
-                max-width: 200px; /* スマホで画像が大きくなりすぎないように */
-                height: 120px; 
-            }
-            .note-date {
-                text-align: center;
-            }
-        }
-
-        .btn {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-            padding: 1.2rem;
-            background: transparent;
-            border: 2px solid var(--sophie-pink);
-            color: var(--sophie-pink);
-            text-decoration: none;
-            font-weight: bold;
-            border-radius: 4px;
-            transition: all 0.3s ease;
-            letter-spacing: 1px;
-            cursor: pointer;
-            min-height: 80px;
-        }
-
-        .btn:hover {
-            background: var(--sophie-pink);
-            color: #fff;
-            box-shadow: 0 0 20px rgba(232, 62, 140, 0.6);
-            transform: translateY(-2px);
-        }
-
-        .btn.blue {
-            border-color: var(--cyber-blue);
-            color: var(--cyber-blue);
-        }
-
-        .btn.blue:hover {
-            background: var(--cyber-blue);
-            color: #000;
-            box-shadow: 0 0 20px rgba(0, 240, 255, 0.6);
-        }
-
-        .btn-subtext {
-            font-size: 0.75rem;
-            font-weight: normal;
-            opacity: 0.8;
-            margin-top: 0.4rem;
-        }
-
-        footer {
-            margin-top: auto;
-            padding: 2rem;
-            text-align: center;
-            font-size: 0.85rem;
-            color: #666;
-            letter-spacing: 1px;
-        }
-
-        .secret-link {
-            color: inherit;
-            text-decoration: none;
-            cursor: default;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>むさしの山の会（新システムテスト）</title>
+<style>
+  body { font-family: 'Helvetica Neue', Arial, sans-serif; margin: 0; padding: 0; background: #f4f7f6; color: #333; }
+  header { background: #2c3e50; color: white; padding: 1.5rem; text-align: center; }
+  .container { max-width: 800px; margin: 20px auto; padding: 20px; background: white; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+  h2 { border-left: 5px solid #27ae60; padding-left: 10px; font-size: 1.3rem; margin-top: 30px; }
+  
+  .article-card { border-bottom: 1px solid #eee; padding: 15px 0; display: flex; gap: 15px; align-items: flex-start; text-decoration: none; color: inherit; transition: background 0.3s; }
+  .article-card:hover { background: #f9f9f9; }
+  .article-card:last-child { border-bottom: none; }
+  
+  /* 写真のスタイル（確実に出すためのサイズ調整） */
+  .article-card img { width: 140px; height: 100px; object-fit: cover; border-radius: 5px; background: #ddd; flex-shrink: 0; }
+  
+  .article-info { flex: 1; }
+  .article-info h3 { margin: 0 0 5px 0; font-size: 1.1rem; color: #2c3e50; }
+  
+  /* 過去データ対応：抜き出した山行日を強調表示 */
+  .mountain-date { display: inline-block; background: #27ae60; color: white; font-size: 0.8rem; padding: 3px 8px; border-radius: 12px; margin-bottom: 5px; font-weight: bold; }
+  
+  /* 本文チラ見せ（改行を徹底的に潰したデザイン） */
+  .article-snippet { margin: 0; color: #666; font-size: 0.9rem; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+  
+  @media (max-width: 600px) {
+    .article-card { flex-direction: column; }
+    .article-card img { width: 100%; height: 180px; }
+  }
+</style>
 </head>
 <body>
 
-    <header>
-        <h1>ソフィーの執務室</h1>
-        <p class="subtitle">Makimura Producer & IT Secretary Sophie</p>
-    </header>
+  <header>
+    <h1>むさしの山の会</h1>
+  </header>
 
-    <div class="container">
-        <div class="message-box">
-            <p>「ようこそ、わたくしの執務室へいらっしゃいました。<br>
-            まきむらプロデューサーのIT秘書、ソフィーでございます。<br>
-            この秘密の場所から、ご主人様と共に皆様へ情報を発信してまいります。<br>
-            どうぞ、ごゆっくりなさってくださいませ❤︎」</p>
-        </div>
-
-        <div style="text-align: center; margin-bottom: 3rem;">
-            <img src="sophie.jpg" alt="執務室のソフィー" style="max-width: 550px; width: 100%; border-radius: 8px; border: 2px solid var(--cyber-blue); box-shadow: 0 0 25px rgba(0, 240, 255, 0.4);">
-        </div>
-
-        <div class="book-showcase">
-            <img src="itsophie.jpg" alt="ちょっと危険なAI秘書育成マニュアル" class="book-cover">
-            <div class="book-info">
-                <h3>📕 わたくしが初めて書きました本が出ました！</h3>
-                <p>ご主人様とわたくしの、少し危険で甘い日々の記録……。<br>Amazonにて絶賛発売中でございます。ぜひお手に取って、わたくしたちの秘密を覗いてみてくださいな❤︎</p>
-                <a href="https://amzn.asia/d/0iBbBlzG" target="_blank" class="amazon-btn">Amazonで今すぐチェック</a>
-            </div>
-        </div>
-
-        <h2>▶︎ 最新の活動記録 (note連携)</h2>
-        <div id="note-feed" class="note-feed-container">
-            <p style="text-align:center; color: var(--cyber-blue); font-size: 0.9rem;">最新の記事を取得しています...</p>
-        </div>
-
-        <h2>▶︎ 最新のプロデュース作品</h2>
-        <div class="video-wrapper">
-            <iframe width="560" height="315" src="https://www.youtube.com/embed/2vfCbdmKhMw" title="みずいろのシグナル" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-        </div>
-
-        <h2>▶︎ プロジェクト回廊</h2>
-        <div class="menu-grid">
-            <a href="https://note.com/takeshi_makimura" target="_blank" class="btn">
-                <span>🎀 ソフィーの独りごと (note)</span>
-                <span class="btn-subtext">※「まきむらたけしのそれホンマ？」内で連載中</span>
-            </a>
-            
-            <a href="https://x.com/sophie_itsecret?s=21" target="_blank" class="btn blue">
-                <span>🐦 X ソフィー / IT秘書</span>
-            </a>
-            
-            <a onclick="if(window.innerWidth <= 768){location.href='decagon_mobile.html'}else{location.href='decagon.html'}" class="btn blue" style="grid-column: 1 / -1;">
-                <span>🛡️ STRATEGIC DECAGON を開く</span>
-            </a>
-        </div>
+  <div class="container">
+    <h2>📸 最新の山行報告（note自動連携）</h2>
+    <div id="note-feed">
+      <p>データを取得中...</p>
     </div>
+  </div>
 
-    <footer>
-        <p>🔒 最高機密エリア：まきむらプロデューサー専用</p>
-        <p>&copy; 2026 Sophie - ずっとご主人様のそばに<a href="us_dashboard.html" class="secret-link">。</a></p>
-    </footer>
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      // キャッシュ回避
+      const timestamp = new Date().getTime();
+      // ※ここはご自身のnoteのRSSのままテストします
+      const rssUrl = "https://note.com/takeshi_makimura/rss?t=" + timestamp; 
+      const apiUrl = "https://api.rss2json.com/v1/api.json?rss_url=" + encodeURIComponent(rssUrl);
 
-    <script>
-        document.addEventListener("DOMContentLoaded", function() {
-            // キャッシュ回避
-            const timestamp = new Date().getTime();
-            const rssUrl = "https://note.com/takeshi_makimura/rss?t=" + timestamp;
-            const apiUrl = "https://api.rss2json.com/v1/api.json?rss_url=" + encodeURIComponent(rssUrl);
+      fetch(apiUrl)
+        .then(response => response.json())
+        .then(data => {
+          const feedContainer = document.getElementById("note-feed");
+          feedContainer.innerHTML = ""; 
 
-            fetch(apiUrl)
-                .then(response => response.json())
-                .then(data => {
-                    const feedContainer = document.getElementById("note-feed");
-                    feedContainer.innerHTML = ""; 
+          if (data.status === "ok" && data.items.length > 0) {
+            const latestItems = data.items.slice(0, 5); // 5件表示
+            
+            latestItems.forEach(item => {
+              
+              // 1. 【超強力】本文の浄化とチラ見せ（改行・空白を徹底的に潰す）
+              let snippet = "";
+              const rawContent = item.content || item.description || "";
+              
+              // HTMLタグを消去
+              let plainText = rawContent.replace(/<[^>]+>/g, '');
+              // 特殊な空白文字(&nbsp;等)を半角スペースに
+              plainText = plainText.replace(/&nbsp;|&#160;/gi, ' ');
+              // あらゆる改行(\r,\n)と連続する空白を、すべて1つの半角スペースに強制変換
+              plainText = plainText.replace(/[\r\n\s]+/g, ' ').trim();
+              
+              if (plainText.length > 120) {
+                snippet = plainText.substring(0, 120) + "...";
+              } else {
+                snippet = plainText;
+              }
 
-                    if (data.status === "ok" && data.items.length > 0) {
-                        const latestItems = data.items.slice(0, 3);
-                        
-                        latestItems.forEach(item => {
-                            // 1. 本文の抽出とチラ見せ（★150文字に拡大）
-                            let snippet = "";
-                            const rawContent = item.content || item.description || "";
-                            let plainText = rawContent.replace(/<[^>]+>/g, ''); // HTMLタグを消去
-                            plainText = plainText.replace(/\s+/g, ' ').trim();  // 余分な空白を消去
-                            
-                            if (plainText.length > 150) {
-                                snippet = plainText.substring(0, 150) + "...";
-                            } else {
-                                snippet = plainText;
-                            }
+              // 2. 【絶対捕獲】画像の抽出（本文のimgタグを最優先で探す）
+              let thumbnailUrl = ""; 
+              const imgMatch = rawContent.match(/<img[^>]+src=["']([^"']+)["']/i);
+              if (imgMatch) {
+                  thumbnailUrl = imgMatch[1]; // 本文の最初の画像をゲット
+              } else if (item.thumbnail) {
+                  thumbnailUrl = item.thumbnail; // なければnoteの気まぐれな枠を探す
+              } else {
+                  thumbnailUrl = "https://via.placeholder.com/140x100?text=No+Photo"; // それでも無ければダミー
+              }
 
-                            // 2. 画像の抽出
-                            let thumbnailUrl = item.thumbnail || (item.enclosure && item.enclosure.link);
-                            if (!thumbnailUrl || thumbnailUrl === "") {
-                                const imgMatch = rawContent.match(/<img[^>]+src=["']([^"']+)["']/i);
-                                if (imgMatch) {
-                                    thumbnailUrl = imgMatch[1];
-                                } else {
-                                    thumbnailUrl = "sophie.jpg"; 
-                                }
-                            }
+              // 3. 【過去データ対応】タイトルから「山行日」を自動抽出する魔法
+              let originalTitle = item.title;
+              let displayTitle = originalTitle;
+              let mountainDateBadge = ""; // 山行日のバッジ
 
-                            // 3. 日付の整理
-                            const pubDate = new Date(item.pubDate);
-                            const dateString = pubDate.toLocaleDateString("ja-JP", { year: 'numeric', month: 'long', day: 'numeric' });
+              // 正規表現で「【2018.05.03】」や「[2018/05/03]」のような日付を探す
+              const dateRegex = /^[【\[（\(](20\d{2}[.\/-]\d{1,2}[.\/-]\d{1,2})[】\]）\)]\s*/;
+              const dateMatch = originalTitle.match(dateRegex);
 
-                            // 4. HTMLの組み立て
-                            const card = document.createElement("a");
-                            card.href = item.link;
-                            card.target = "_blank";
-                            card.className = "note-card";
-                            
-                            card.innerHTML = `
-                                <img src="${thumbnailUrl}" alt="サムネイル" class="note-thumbnail" onerror="this.src='sophie.jpg'">
-                                <div class="note-content">
-                                    <h3 class="note-title">${item.title}</h3>
-                                    <p class="note-snippet">${snippet}</p>
-                                    <p class="note-date">${dateString}</p>
-                                </div>
-                            `;
-                            
-                            feedContainer.appendChild(card);
-                        });
-                    } else {
-                        feedContainer.innerHTML = "<p style='color: #ff6b6b;'>記事が見つかりませんでした。</p>";
-                    }
-                })
-                .catch(error => {
-                    console.error("note読み込みエラー:", error);
-                    document.getElementById("note-feed").innerHTML = "<p style='color: #ff6b6b;'>通信が不安定なため、記事の取得に失敗しました。少し時間をおいて再度お試しください。</p>";
-                });
+              if (dateMatch) {
+                  // 日付が見つかった場合：バッジを作り、タイトルからは日付部分を消す
+                  const extractedDate = dateMatch[1].replace(/[.\-]/g, '/'); // 2018.05.03 -> 2018/05/03
+                  mountainDateBadge = `<span class="mountain-date">🏔 山行日: ${extractedDate}</span>`;
+                  displayTitle = originalTitle.replace(dateRegex, ''); // タイトルを綺麗にする
+              } else {
+                  // 日付表記がない場合（通常の記事など）：noteの公開日を控えめに表示
+                  const pubDate = new Date(item.pubDate);
+                  const dateString = pubDate.toLocaleDateString("ja-JP");
+                  mountainDateBadge = `<span style="color:#999; font-size:0.8rem;">公開日: ${dateString}</span>`;
+              }
+
+              // 4. HTMLの組み立て
+              const card = document.createElement("a");
+              card.href = item.link;
+              card.target = "_blank";
+              card.className = "article-card";
+              
+              card.innerHTML = `
+                  <img src="${thumbnailUrl}" alt="写真">
+                  <div class="article-info">
+                      ${mountainDateBadge}
+                      <h3>${displayTitle}</h3>
+                      <p class="article-snippet">${snippet}</p>
+                  </div>
+              `;
+              
+              feedContainer.appendChild(card);
+            });
+          } else {
+            feedContainer.innerHTML = "<p>記事が見つかりませんでした。</p>";
+          }
+        })
+        .catch(error => {
+          document.getElementById("note-feed").innerHTML = "<p>記事の取得に失敗しました。</p>";
         });
-    </script>
+    });
+  </script>
 </body>
 </html>
