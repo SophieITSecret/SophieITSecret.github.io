@@ -156,7 +156,7 @@
             height: 100%;
         }
 
-        /* --- ここから：note新着記事表示用のスタイル --- */
+        /* --- ここから：note新着記事表示用のスタイル（★PC版レイアウト改善） --- */
         .note-feed-container {
             display: grid;
             grid-template-columns: 1fr;
@@ -170,8 +170,8 @@
             border-radius: 6px;
             padding: 1rem;
             display: flex;
-            align-items: center;
-            gap: 1.2rem;
+            align-items: flex-start; /* 上揃えに変更 */
+            gap: 1.5rem; /* 画像と文字の隙間を広げる */
             text-decoration: none;
             transition: all 0.3s ease;
         }
@@ -184,12 +184,13 @@
         }
 
         .note-thumbnail {
-            width: 90px;
+            width: 160px;  /* ★PC版の画像を大きく横長に変更 */
             height: 90px;
             object-fit: cover;
             border-radius: 4px;
             border: 1px solid rgba(232, 62, 140, 0.3);
             background-color: #0a1c12;
+            flex-shrink: 0; /* 文字が多くても画像が潰れないようにする */
         }
 
         .note-content {
@@ -198,10 +199,23 @@
 
         .note-title {
             color: var(--text-color);
-            font-size: 1.05rem;
+            font-size: 1.1rem;
             font-weight: bold;
             margin: 0 0 0.5rem 0;
             line-height: 1.4;
+        }
+
+        /* ★本文チラ見せ（スニペット）用のデザイン */
+        .note-snippet {
+            color: #a0b0a5;
+            font-size: 0.85rem;
+            margin: 0 0 0.5rem 0;
+            line-height: 1.5;
+            /* 2行で「...」と省略するCSSの魔法 */
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
         }
 
         .note-date {
@@ -235,7 +249,7 @@
             }
             .note-thumbnail {
                 width: 100%;
-                height: 120px;
+                height: 160px; /* スマホ版の高さも調整 */
             }
         }
 
@@ -361,7 +375,7 @@
 
     <script>
         document.addEventListener("DOMContentLoaded", function() {
-            // 【最終兵器】中継サービス(rss2json)を廃止し、生のXMLデータを直接取得する方式に変更
+            // 生のXMLデータを直接取得する方式
             const rssUrl = "https://note.com/takeshi_makimura/rss";
             const proxyUrl = "https://api.allorigins.win/get?url=" + encodeURIComponent(rssUrl);
 
@@ -371,41 +385,55 @@
                     const feedContainer = document.getElementById("note-feed");
                     feedContainer.innerHTML = "";
 
-                    // わたくし自身で生のXML（電波）を解読します
                     const parser = new DOMParser();
                     const xmlDoc = parser.parseFromString(data.contents, "text/xml");
                     
-                    // 記事(item)を上から3件だけ取り出す
                     const items = Array.from(xmlDoc.querySelectorAll("item")).slice(0, 3);
 
                     if (items.length > 0) {
                         items.forEach(item => {
-                            // タイトル・リンク・日付の抽出
+                            // 1. タイトルとリンク
                             const title = item.querySelector("title") ? item.querySelector("title").textContent : "無題";
                             const link = item.querySelector("link") ? item.querySelector("link").textContent : "#";
                             const pubDateStr = item.querySelector("pubDate") ? item.querySelector("pubDate").textContent : "";
                             
-                            // ★【写真の直接捕獲ロジック】★
-                            let thumbnailUrl = "sophie.jpg"; // 見つからなかった時のデフォルト画像
+                            // 2. 本文（description）の取得と、スニペット（チラ見せ）の作成 ★新規追加
+                            const descriptionNode = item.querySelector("description");
+                            let snippet = "";
+                            let rawDescription = "";
                             
-                            // 1. まずは「media:thumbnail」という、note専用の見出し画像タグを直接狙い撃ち
+                            if (descriptionNode && descriptionNode.textContent) {
+                                rawDescription = descriptionNode.textContent;
+                                // HTMLタグ（<p>や<img>など）を全て消去して純粋な文字だけにする
+                                let plainText = rawDescription.replace(/<[^>]+>/g, '');
+                                // 連続するスペースや改行を綺麗に整える
+                                plainText = plainText.replace(/\s+/g, ' ').trim();
+                                
+                                // 冒頭の60文字を切り取って「...」を付ける
+                                if (plainText.length > 60) {
+                                    snippet = plainText.substring(0, 60) + "...";
+                                } else {
+                                    snippet = plainText;
+                                }
+                            }
+
+                            // 3. 写真の捕獲
+                            let thumbnailUrl = "sophie.jpg"; 
                             const mediaThumbnail = item.getElementsByTagNameNS("*", "thumbnail");
                             if (mediaThumbnail.length > 0 && mediaThumbnail[0].textContent) {
                                 thumbnailUrl = mediaThumbnail[0].textContent;
                             } else {
-                                // 2. もし見出し画像が無ければ、本文(description)の生のHTMLからimgタグを強引に抜き出す
-                                const description = item.querySelector("description") ? item.querySelector("description").textContent : "";
-                                const imgMatch = description.match(/<img[^>]+src=["']([^"']+)["']/i);
+                                const imgMatch = rawDescription.match(/<img[^>]+src=["']([^"']+)["']/i);
                                 if (imgMatch) {
                                     thumbnailUrl = imgMatch[1];
                                 }
                             }
 
-                            // 日付を整える
+                            // 4. 日付の整理
                             const pubDate = new Date(pubDateStr);
                             const dateString = pubDate.toLocaleDateString("ja-JP", { year: 'numeric', month: 'long', day: 'numeric' });
 
-                            // カード型のHTMLを作成して表示
+                            // 5. HTMLブロックの組み立て（スニペットを追加）
                             const card = document.createElement("a");
                             card.href = link;
                             card.target = "_blank";
@@ -415,6 +443,7 @@
                                 <img src="${thumbnailUrl}" alt="サムネイル" class="note-thumbnail" onerror="this.src='sophie.jpg'">
                                 <div class="note-content">
                                     <h3 class="note-title">${title}</h3>
+                                    <p class="note-snippet">${snippet}</p>
                                     <p class="note-date">${dateString}</p>
                                 </div>
                             `;
