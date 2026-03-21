@@ -168,7 +168,7 @@
             background: rgba(0, 0, 0, 0.6);
             border: 1px solid rgba(0, 240, 255, 0.3);
             border-radius: 6px;
-            padding: 1.2rem;
+            padding: 1.5rem;
             display: flex;
             align-items: flex-start; 
             gap: 1.5rem; 
@@ -184,8 +184,8 @@
         }
 
         .note-thumbnail {
-            width: 160px;
-            height: 90px;
+            width: 120px; /* 少し小さくして、本文のスペースを確保 */
+            height: 120px; /* 正方形に近づける */
             object-fit: cover;
             border-radius: 4px;
             border: 1px solid rgba(232, 62, 140, 0.3);
@@ -195,24 +195,25 @@
 
         .note-content {
             flex: 1;
+            /* 文字数が増えるので、少し行間をゆったりと */
+            line-height: 1.6;
         }
 
         .note-title {
             color: var(--text-color);
-            font-size: 1.1rem;
+            font-size: 1.15rem;
             font-weight: bold;
-            margin: 0 0 0.5rem 0;
+            margin: 0 0 0.8rem 0;
             line-height: 1.4;
         }
 
-        /* 本文のチラ見せ用デザイン */
+        /* 本文のチラ見せ用デザイン（★行数を増やしました） */
         .note-snippet {
             color: #a0b0a5;
-            font-size: 0.85rem;
-            margin: 0 0 0.6rem 0;
-            line-height: 1.5;
+            font-size: 0.9rem;
+            margin: 0 0 0.8rem 0;
             display: -webkit-box;
-            -webkit-line-clamp: 2;
+            -webkit-line-clamp: 4; /* ★最大4行まで表示 */
             -webkit-box-orient: vertical;
             overflow: hidden;
         }
@@ -221,6 +222,7 @@
             color: var(--sophie-pink);
             font-size: 0.8rem;
             margin: 0;
+            text-align: right; /* 日付は右下に配置 */
         }
         /* --- ここまで：note用スタイル --- */
 
@@ -244,11 +246,16 @@
             }
             .note-card {
                 flex-direction: column;
-                align-items: flex-start;
+                align-items: center; /* スマホでは画像を中央に */
+                text-align: center;
             }
             .note-thumbnail {
                 width: 100%;
-                height: 160px; 
+                max-width: 200px; /* スマホで画像が大きくなりすぎないように */
+                height: 120px; 
+            }
+            .note-date {
+                text-align: center;
             }
         }
 
@@ -374,11 +381,9 @@
 
     <script>
         document.addEventListener("DOMContentLoaded", function() {
-            // ★キャッシュを強制的に回避する魔法（現在時刻のミリ秒をURLの末尾にくっつける）
+            // キャッシュ回避
             const timestamp = new Date().getTime();
             const rssUrl = "https://note.com/takeshi_makimura/rss?t=" + timestamp;
-            
-            // 通信が一番安定している「rss2json」を使用
             const apiUrl = "https://api.rss2json.com/v1/api.json?rss_url=" + encodeURIComponent(rssUrl);
 
             fetch(apiUrl)
@@ -391,19 +396,19 @@
                         const latestItems = data.items.slice(0, 3);
                         
                         latestItems.forEach(item => {
-                            // 1. 本文の抽出とチラ見せ（スニペット）の作成
+                            // 1. 本文の抽出とチラ見せ（★150文字に拡大）
                             let snippet = "";
                             const rawContent = item.content || item.description || "";
                             let plainText = rawContent.replace(/<[^>]+>/g, ''); // HTMLタグを消去
                             plainText = plainText.replace(/\s+/g, ' ').trim();  // 余分な空白を消去
                             
-                            if (plainText.length > 60) {
-                                snippet = plainText.substring(0, 60) + "...";
+                            if (plainText.length > 150) {
+                                snippet = plainText.substring(0, 150) + "...";
                             } else {
                                 snippet = plainText;
                             }
 
-                            // 2. 画像の抽出（thumbnail枠、または本文の中から探す）
+                            // 2. 画像の抽出
                             let thumbnailUrl = item.thumbnail || (item.enclosure && item.enclosure.link);
                             if (!thumbnailUrl || thumbnailUrl === "") {
                                 const imgMatch = rawContent.match(/<img[^>]+src=["']([^"']+)["']/i);
