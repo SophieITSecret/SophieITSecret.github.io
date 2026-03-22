@@ -33,9 +33,20 @@
 
         h2 { color: var(--cyber-blue); font-size: 1.3rem; border-bottom: 1px solid rgba(0, 240, 255, 0.3); padding-bottom: 0.5rem; margin: 2rem 0 1.5rem; }
 
-        /* --- noteフィード：物理的な高さを固定して整列 --- */
         .note-feed-container { display: grid; grid-template-columns: 1fr; gap: 2rem; margin-bottom: 1.5rem; }
-        .note-card { background: rgba(0, 0, 0, 0.6); border: 1px solid rgba(0, 240, 255, 0.2); border-radius: 6px; padding: 1.5rem; display: flex; align-items: flex-start; gap: 1.8rem; text-decoration: none; transition: 0.3s; }
+        
+        .note-card { 
+            background: rgba(0, 0, 0, 0.6); 
+            border: 1px solid rgba(0, 240, 255, 0.2); 
+            border-radius: 6px; 
+            padding: 1.2rem; 
+            display: flex; 
+            align-items: stretch; 
+            gap: 1.5rem; 
+            text-decoration: none; 
+            transition: 0.3s;
+            min-height: 135px; 
+        }
         .note-card:hover { transform: translateX(8px); border-color: var(--cyber-blue); background: rgba(0, 240, 255, 0.05); }
         
         .note-thumbnail { 
@@ -48,18 +59,35 @@
             flex-shrink: 0; 
         }
         
-        .note-content { flex: 1; line-height: 1.4; display: flex; flex-direction: column; overflow: hidden; }
-        .note-title { color: var(--cyber-blue); font-size: 1.25rem; font-weight: bold; margin: 0 0 0.5rem 0; }
+        .note-content { 
+            flex: 1; 
+            display: flex; 
+            flex-direction: column; 
+            overflow: hidden; 
+            justify-content: space-between;
+        }
+
+        .note-title { 
+            color: var(--cyber-blue); 
+            font-size: 1.15rem; 
+            font-weight: bold; 
+            margin: 0 0 0.4rem 0;
+            line-height: 1.3;
+            height: 2.6em; 
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
         
-        /* 【修正：4行で固定＆高さを指定してアンバランスを解消】 */
         .note-snippet { 
             color: #b0c0b5; 
-            font-size: 0.95rem; 
-            margin-bottom: 0.5rem; 
-            line-height: 1.5;
-            height: 6em;               /* 1.5（行間）× 4行 = 6em で高さを完全固定 */
+            font-size: 0.9rem; 
+            margin-bottom: 0.3rem; 
+            line-height: 1.4;
+            height: 4.2em; 
             display: -webkit-box; 
-            -webkit-line-clamp: 4;      /* 最大4行表示 */
+            -webkit-line-clamp: 3;
             -webkit-box-orient: vertical; 
             overflow: hidden; 
             text-align: justify; 
@@ -82,7 +110,7 @@
         footer { padding: 3rem; text-align: center; font-size: 0.8rem; color: #555; }
 
         @media (max-width: 650px) { 
-            .note-card { flex-direction: column; align-items: stretch; padding: 1rem; } 
+            .note-card { flex-direction: column; align-items: stretch; padding: 1rem; min-height: auto; } 
             .note-thumbnail { 
                 width: 100%; 
                 height: auto; 
@@ -90,6 +118,7 @@
                 margin-bottom: 1rem; 
                 object-fit: contain; 
             } 
+            .note-title, .note-snippet { height: auto; -webkit-line-clamp: unset; } 
             .menu-grid { grid-template-columns: 1fr; }
             .book-showcase { flex-direction: column; text-align: center; }
         }
@@ -167,16 +196,17 @@
 
                     if (data.status === "ok" && data.items.length > 0) {
                         data.items.slice(0, 3).forEach((item, index) => {
+                            // 【ここが核心です：noteが作った要約（description）ではなく、
+                            // 全文（content）を最優先で取得するように強制します】
                             const raw = item.content || item.description || "";
                             
-                            // 【修正：すべての改行と空白を「1つのスペース」に圧縮して密度を高める】
                             let cleanedText = raw.replace(/<[^>]+>/g, ' ')
                                                .replace(/&nbsp;|&#160;/g, ' ')
                                                .replace(/\s+/g, ' ') 
                                                .trim();
                             
-                            // スニペットとしての切り出し（表示制御はCSS側で4行に固定）
-                            let snippet = cleanedText;
+                            // 文字数を大幅に確保（ここが足りないと、全文を持ってきても表示されません）
+                            let snippet = cleanedText.length > 500 ? cleanedText.substring(0, 500) + "..." : cleanedText;
 
                             let thumbnailUrl = "sophie.jpg"; 
                             if (panelImages[index]) {
