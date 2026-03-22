@@ -33,37 +33,28 @@
 
         h2 { color: var(--cyber-blue); font-size: 1.3rem; border-bottom: 1px solid rgba(0, 240, 255, 0.3); padding-bottom: 0.5rem; margin: 2rem 0 1.5rem; }
 
-        /* --- noteエリア：黄金比＆高密度修正 --- */
-        .note-feed-container { display: grid; grid-template-columns: 1fr; gap: 2rem; }
+        /* --- noteフィード：高密度＆改行撲滅 --- */
+        .note-feed-container { display: grid; grid-template-columns: 1fr; gap: 2rem; margin-bottom: 1.5rem; }
         .note-card { background: rgba(0, 0, 0, 0.6); border: 1px solid rgba(0, 240, 255, 0.2); border-radius: 6px; padding: 1.5rem; display: flex; align-items: flex-start; gap: 1.8rem; text-decoration: none; transition: 0.3s; }
         .note-card:hover { transform: translateX(8px); border-color: var(--cyber-blue); background: rgba(0, 240, 255, 0.05); }
         
-        /* サムネイルを正方形から横長（240x135程度）に拡張 */
-        .note-thumbnail { 
-            width: 240px; 
-            height: auto; 
-            aspect-ratio: 16 / 9; 
-            object-fit: cover; 
-            border-radius: 4px; 
-            border: 1px solid rgba(232, 62, 140, 0.3); 
-            flex-shrink: 0; 
-        }
+        .note-thumbnail { width: 240px; height: auto; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 4px; border: 1px solid rgba(232, 62, 140, 0.3); flex-shrink: 0; }
         
-        .note-content { flex: 1; line-height: 1.7; display: flex; flex-direction: column; }
+        .note-content { flex: 1; line-height: 1.6; display: flex; flex-direction: column; }
         .note-title { color: var(--cyber-blue); font-size: 1.25rem; font-weight: bold; margin: 0 0 0.8rem 0; }
         
-        /* スニペット（本文）の行数制限を大幅に緩和し、300文字をしっかり見せる */
+        /* 本文の空白を一切許さない設定 */
         .note-snippet { 
-            color: #b0c0b5; 
-            font-size: 0.95rem; 
-            margin-bottom: 1rem; 
-            display: -webkit-box; 
-            -webkit-line-clamp: 10; /* 最大10行まで表示 */
-            -webkit-box-orient: vertical; 
-            overflow: hidden; 
-            text-align: justify; 
+            color: #b0c0b5; font-size: 0.95rem; margin-bottom: 1rem; 
+            display: -webkit-box; -webkit-line-clamp: 12; -webkit-box-orient: vertical; overflow: hidden; 
+            text-align: justify; word-break: break-all;
         }
         .note-date { color: var(--sophie-pink); font-size: 0.85rem; text-align: right; margin-top: auto; }
+
+        /* 「もっと見る」ボタンの装飾 */
+        .more-link-wrapper { text-align: center; margin: 2rem 0 3rem; }
+        .btn-more { display: inline-block; padding: 0.8rem 3rem; border: 1px solid var(--cyber-blue); color: var(--cyber-blue); text-decoration: none; font-weight: bold; border-radius: 30px; transition: 0.3s; background: rgba(0, 240, 255, 0.05); }
+        .btn-more:hover { background: var(--cyber-blue); color: #000; box-shadow: 0 0 15px var(--cyber-blue); }
 
         .video-wrapper { position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border: 2px solid var(--cyber-blue); border-radius: 6px; margin-bottom: 3rem; }
         .video-wrapper iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
@@ -74,10 +65,9 @@
 
         footer { padding: 3rem; text-align: center; font-size: 0.8rem; color: #555; }
 
-        /* スマホ対応：さらに見やすく */
         @media (max-width: 650px) { 
-            .note-card { flex-direction: column; align-items: stretch; text-align: left; } 
-            .note-thumbnail { width: 100%; height: auto; aspect-ratio: 16 / 9; margin: 0 auto 1rem; } 
+            .note-card { flex-direction: column; align-items: stretch; } 
+            .note-thumbnail { width: 100%; margin-bottom: 1rem; } 
             .menu-grid { grid-template-columns: 1fr; }
             .book-showcase { flex-direction: column; text-align: center; }
         }
@@ -111,6 +101,10 @@
         <div id="note-feed" class="note-feed-container">
             <p style="text-align:center; color: var(--cyber-blue);">最新の独りごとを解析しています...</p>
         </div>
+        
+        <div class="more-link-wrapper">
+            <a href="https://note.com/takeshi_makimura" target="_blank" class="btn-more">もっと見る（noteへ）</a>
+        </div>
 
         <h2>▶︎ 最新のプロデュース作品</h2>
         <div class="video-wrapper">
@@ -128,7 +122,7 @@
 
     <script>
         document.addEventListener("DOMContentLoaded", async function() {
-            // imagesフォルダ内のファイルをスキャンして数字順に並べるテク
+            // 画像スキャンの技法
             let panelImages = [];
             try {
                 const apiRes = await fetch(`https://api.github.com/repos/sophieitsecret/sophieitsecret.github.io/contents/images`);
@@ -139,7 +133,7 @@
                         .filter(name => name.match(/\d+\.jpg$/i))
                         .sort((a, b) => parseInt(b) - parseInt(a));
                 }
-            } catch (e) { console.error("API Error", e); }
+            } catch (e) { console.error(e); }
 
             const rssUrl = "https://note.com/takeshi_makimura/rss";
             const apiUrl = "https://api.rss2json.com/v1/api.json?rss_url=" + encodeURIComponent(rssUrl) + "&t=" + new Date().getTime();
@@ -152,12 +146,16 @@
 
                     if (data.status === "ok" && data.items.length > 0) {
                         data.items.slice(0, 3).forEach((item, index) => {
-                            // 1. 全文を掃除してから300文字数える技法
+                            // ★【強力洗浄技法：あらゆる空白・改行を完全に撲滅】
                             const raw = item.content || item.description || "";
-                            let cleanedText = raw.replace(/<[^>]+>/g, '').replace(/&nbsp;|&#160;/g, ' ').replace(/[\r\n\s]+/g, ' ').trim();
+                            let cleanedText = raw.replace(/<[^>]+>/g, ' ') // タグをスペースに変換
+                                               .replace(/&nbsp;|&#160;/g, ' ') // 特殊空白除去
+                                               .replace(/\s+/g, ' ') // 全ての改行、タブ、複数スペースを「半角1文字」に統合
+                                               .trim();
+                            
+                            // 掃除後に300文字切り出し
                             let snippet = cleanedText.length > 300 ? cleanedText.substring(0, 300) + "..." : cleanedText;
 
-                            // 2. フォルダ内の最新画像を割り当てる技法
                             let thumbnailUrl = "sophie.jpg"; 
                             if (panelImages[index]) {
                                 thumbnailUrl = "images/" + panelImages[index];
