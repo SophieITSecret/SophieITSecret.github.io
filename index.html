@@ -33,21 +33,40 @@
 
         h2 { color: var(--cyber-blue); font-size: 1.3rem; border-bottom: 1px solid rgba(0, 240, 255, 0.3); padding-bottom: 0.5rem; margin: 2rem 0 1.5rem; }
 
+        /* --- noteフィード：画像端切れ防止＆テキスト超濃縮 --- */
         .note-feed-container { display: grid; grid-template-columns: 1fr; gap: 2rem; margin-bottom: 1.5rem; }
         .note-card { background: rgba(0, 0, 0, 0.6); border: 1px solid rgba(0, 240, 255, 0.2); border-radius: 6px; padding: 1.5rem; display: flex; align-items: flex-start; gap: 1.8rem; text-decoration: none; transition: 0.3s; }
         .note-card:hover { transform: translateX(8px); border-color: var(--cyber-blue); background: rgba(0, 240, 255, 0.05); }
         
-        .note-thumbnail { width: 240px; height: auto; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 4px; border: 1px solid rgba(232, 62, 140, 0.3); flex-shrink: 0; }
-        
-        .note-content { flex: 1; line-height: 1.6; display: flex; flex-direction: column; overflow: hidden; }
-        .note-title { color: var(--cyber-blue); font-size: 1.25rem; font-weight: bold; margin: 0 0 0.8rem 0; }
-        
-        .note-snippet { 
-            color: #b0c0b5; font-size: 0.95rem; margin-bottom: 1rem; 
-            display: -webkit-box; -webkit-line-clamp: 12; -webkit-box-orient: vertical; overflow: hidden; 
-            text-align: justify; word-break: break-all;
+        /* 【重要】画像の左右が切れないように contain を採用 */
+        .note-thumbnail { 
+            width: 240px; 
+            height: 135px; 
+            object-fit: contain; 
+            background: rgba(0,0,0,0.5); 
+            border-radius: 4px; 
+            border: 1px solid rgba(232, 62, 140, 0.3); 
+            flex-shrink: 0; 
         }
-        .note-date { color: var(--sophie-pink); font-size: 0.85rem; text-align: right; margin-top: auto; }
+        
+        .note-content { flex: 1; line-height: 1.4; display: flex; flex-direction: column; overflow: hidden; }
+        .note-title { color: var(--cyber-blue); font-size: 1.25rem; font-weight: bold; margin: 0 0 0.5rem 0; }
+        
+        /* テキストの行間を詰め、密度を最大化 */
+        .note-snippet { 
+            color: #b0c0b5; 
+            font-size: 0.95rem; 
+            margin-bottom: 0.5rem; 
+            line-height: 1.4; 
+            display: -webkit-box; 
+            -webkit-line-clamp: 15; 
+            -webkit-box-orient: vertical; 
+            overflow: hidden; 
+            text-align: justify; 
+            word-break: break-all;
+            white-space: normal;
+        }
+        .note-date { color: var(--sophie-pink); font-size: 0.8rem; text-align: right; margin-top: auto; }
 
         .more-link-wrapper { text-align: center; margin: 2rem 0 3rem; }
         .btn-more { display: inline-block; padding: 0.8rem 3rem; border: 1px solid var(--cyber-blue); color: var(--cyber-blue); text-decoration: none; font-weight: bold; border-radius: 30px; transition: 0.3s; background: rgba(0, 240, 255, 0.05); }
@@ -62,9 +81,16 @@
 
         footer { padding: 3rem; text-align: center; font-size: 0.8rem; color: #555; }
 
+        /* 【スマホ最終調整】画像を絶対に切らない設定 */
         @media (max-width: 650px) { 
-            .note-card { flex-direction: column; align-items: stretch; } 
-            .note-thumbnail { width: 100%; margin-bottom: 1rem; } 
+            .note-card { flex-direction: column; align-items: stretch; padding: 1rem; } 
+            .note-thumbnail { 
+                width: 100%; 
+                height: auto; 
+                aspect-ratio: auto; 
+                margin-bottom: 1rem; 
+                object-fit: contain; 
+            } 
             .menu-grid { grid-template-columns: 1fr; }
             .book-showcase { flex-direction: column; text-align: center; }
         }
@@ -121,7 +147,6 @@
         document.addEventListener("DOMContentLoaded", async function() {
             let panelImages = [];
             try {
-                // 【テク】APIにタイムスタンプを付与し、Push直後の反映を保証
                 const apiRes = await fetch(`https://api.github.com/repos/sophieitsecret/sophieitsecret.github.io/contents/images?t=` + new Date().getTime());
                 if (apiRes.ok) {
                     const files = await apiRes.json();
@@ -143,11 +168,10 @@
 
                     if (data.status === "ok" && data.items.length > 0) {
                         data.items.slice(0, 3).forEach((item, index) => {
-                            // 【最強洗浄テク】HTMLタグ、特殊空白、全角スペース、あらゆる改行を撲滅
                             const raw = item.content || item.description || "";
                             let cleanedText = raw.replace(/<[^>]+>/g, ' ')
                                                .replace(/&nbsp;|&#160;/g, ' ')
-                                               .replace(/[\s\u3000]+/g, ' ') // 全角・半角スペース・改行をすべて単一スペースに
+                                               .replace(/[\s\u3000]+/g, ' ') 
                                                .trim();
                             
                             let snippet = cleanedText.length > 300 ? cleanedText.substring(0, 300) + "..." : cleanedText;
