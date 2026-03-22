@@ -23,18 +23,23 @@
         h1 { color: var(--sophie-pink); font-size: 2.8rem; letter-spacing: 3px; margin-bottom: 0.5rem; text-shadow: 0 0 15px rgba(232, 62, 140, 0.4); }
         .subtitle { color: var(--cyber-blue); font-size: 1.1rem; letter-spacing: 2px; opacity: 0.8; }
         
-        .container { width: 95%; max-width: 850px; background: rgba(0, 0, 0, 0.4); border: 1px solid var(--cyber-blue); box-shadow: 0 0 20px rgba(0, 240, 255, 0.1); border-radius: 8px; padding: 2.5rem; margin-bottom: 3rem; box-sizing: border-box; }
+        /* 【拡張：全体の道幅を1100pxに】 */
+        .container { width: 95%; max-width: 1100px; background: rgba(0, 0, 0, 0.4); border: 1px solid var(--cyber-blue); box-shadow: 0 0 20px rgba(0, 240, 255, 0.1); border-radius: 8px; padding: 2.5rem; margin-bottom: 3rem; box-sizing: border-box; }
         
         .message-box { border-left: 4px solid var(--sophie-pink); padding: 1rem 1.5rem; margin-bottom: 2.5rem; font-style: italic; line-height: 1.8; background: rgba(232, 62, 140, 0.05); border-radius: 0 8px 8px 0; }
         
-        .book-showcase { display: flex; align-items: center; background: rgba(232, 62, 140, 0.08); border: 2px dashed var(--sophie-pink); border-radius: 8px; padding: 2rem; margin-bottom: 3rem; gap: 2rem; }
-        .book-cover { width: 180px; border-radius: 4px; box-shadow: 0 0 15px rgba(232, 62, 140, 0.3); }
-        .amazon-btn { background: var(--sophie-pink); color: #fff !important; padding: 0.8rem 1.5rem; border-radius: 30px; text-decoration: none; font-weight: bold; display: inline-block; margin-top: 1rem; transition: 0.3s; }
+        /* 2カラムレイアウト用のグリッド */
+        .main-content-grid { 
+            display: grid; 
+            grid-template-columns: 2fr 1fr; /* 左(note)を2、右(X)を1の比率に */
+            gap: 2.5rem; 
+            margin-bottom: 3rem;
+        }
 
-        h2 { color: var(--cyber-blue); font-size: 1.3rem; border-bottom: 1px solid rgba(0, 240, 255, 0.3); padding-bottom: 0.5rem; margin: 2rem 0 1.5rem; }
+        h2 { color: var(--cyber-blue); font-size: 1.3rem; border-bottom: 1px solid rgba(0, 240, 255, 0.3); padding-bottom: 0.5rem; margin: 0 0 1.5rem 0; }
 
-        .note-feed-container { display: grid; grid-template-columns: 1fr; gap: 2rem; margin-bottom: 1.5rem; }
-        
+        /* --- noteフィード --- */
+        .note-feed-container { display: flex; flex-direction: column; gap: 1.5rem; }
         .note-card { 
             background: rgba(0, 0, 0, 0.6); 
             border: 1px solid rgba(0, 240, 255, 0.2); 
@@ -42,7 +47,7 @@
             padding: 1.2rem; 
             display: flex; 
             align-items: stretch; 
-            gap: 1.5rem; 
+            gap: 1.2rem; 
             text-decoration: none; 
             transition: 0.3s;
             min-height: 145px; 
@@ -50,8 +55,8 @@
         .note-card:hover { transform: translateX(8px); border-color: var(--cyber-blue); background: rgba(0, 240, 255, 0.05); }
         
         .note-thumbnail { 
-            width: 240px; 
-            height: 135px; 
+            width: 180px; /* 幅を少し調整 */
+            height: 110px; 
             object-fit: contain; 
             background: rgba(0,0,0,0.5); 
             border-radius: 4px; 
@@ -59,35 +64,27 @@
             flex-shrink: 0; 
         }
         
-        .note-content { 
-            flex: 1; 
-            display: flex; 
-            flex-direction: column; 
-            overflow: hidden; 
-            justify-content: flex-start;
-        }
+        .note-content { flex: 1; display: flex; flex-direction: column; overflow: hidden; justify-content: flex-start; }
 
-        /* 【修正：固定高を削除。1行なら1行分、最大2行までの可変に】 */
         .note-title { 
             color: var(--cyber-blue); 
-            font-size: 1.15rem; 
+            font-size: 1.1rem; 
             font-weight: bold; 
-            margin: 0 0 0.2rem 0; /* 下の余白をさらに詰めました */
+            margin: 0 0 0.2rem 0;
             line-height: 1.3;
-            max-height: 2.6em; /* 固定ではなく「最大」に */
+            max-height: 2.6em;
             display: -webkit-box;
             -webkit-line-clamp: 2;
             -webkit-box-orient: vertical;
             overflow: hidden;
         }
         
-        /* 【修正：きっちり4行分表示させる】 */
         .note-snippet { 
             color: #b0c0b5; 
-            font-size: 0.95rem; 
+            font-size: 0.88rem; 
             margin-bottom: 0.3rem; 
             line-height: 1.5;
-            height: 6.0em; /* 1.5 * 4行 = 6.0em */
+            height: 6.0em; 
             display: -webkit-box; 
             -webkit-line-clamp: 4;
             -webkit-box-orient: vertical; 
@@ -95,33 +92,38 @@
             text-align: justify; 
             word-break: break-all;
             white-space: normal;
-            margin-top: 0; 
         }
-        .note-date { color: var(--sophie-pink); font-size: 0.8rem; text-align: right; margin-top: auto; }
+        .note-date { color: var(--sophie-pink); font-size: 0.75rem; text-align: right; margin-top: auto; }
 
-        .more-link-wrapper { text-align: center; margin: 2rem 0 3rem; }
-        .btn-more { display: inline-block; padding: 0.8rem 3rem; border: 1px solid var(--cyber-blue); color: var(--cyber-blue); text-decoration: none; font-weight: bold; border-radius: 30px; transition: 0.3s; background: rgba(0, 240, 255, 0.05); }
-        .btn-more:hover { background: var(--cyber-blue); color: #000; box-shadow: 0 0 15px var(--cyber-blue); }
+        /* --- X(Twitter)エリア --- */
+        .x-feed-container { 
+            background: rgba(0, 0, 0, 0.3); 
+            border: 1px solid rgba(0, 240, 255, 0.1); 
+            border-radius: 6px; 
+            padding: 1rem;
+            height: 650px; /* 高さを調整 */
+            overflow: hidden;
+        }
 
+        /* 既存のコンポーネント用スタイル */
+        .book-showcase { display: flex; align-items: center; background: rgba(232, 62, 140, 0.08); border: 2px dashed var(--sophie-pink); border-radius: 8px; padding: 2rem; margin-bottom: 3rem; gap: 2rem; }
+        .book-cover { width: 180px; border-radius: 4px; box-shadow: 0 0 15px rgba(232, 62, 140, 0.3); }
+        .amazon-btn { background: var(--sophie-pink); color: #fff !important; padding: 0.8rem 1.5rem; border-radius: 30px; text-decoration: none; font-weight: bold; display: inline-block; margin-top: 1rem; transition: 0.3s; }
         .video-wrapper { position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border: 2px solid var(--cyber-blue); border-radius: 6px; margin-bottom: 3rem; }
         .video-wrapper iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
-
         .menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
         .btn { display: flex; justify-content: center; align-items: center; padding: 1.2rem; border: 2px solid var(--sophie-pink); color: var(--sophie-pink); text-decoration: none; font-weight: bold; border-radius: 4px; transition: 0.3s; text-align: center; }
         .btn.blue { border-color: var(--cyber-blue); color: var(--cyber-blue); }
-
         footer { padding: 3rem; text-align: center; font-size: 0.8rem; color: #555; }
 
+        /* 【スマホ・タブレット調整：1000px以下は縦並びに】 */
+        @media (max-width: 1000px) { 
+            .main-content-grid { grid-template-columns: 1fr; }
+            .x-feed-container { height: 500px; }
+        }
         @media (max-width: 650px) { 
             .note-card { flex-direction: column; align-items: stretch; padding: 1rem; min-height: auto; } 
-            .note-thumbnail { 
-                width: 100%; 
-                height: auto; 
-                aspect-ratio: auto; 
-                margin-bottom: 1rem; 
-                object-fit: contain; 
-            } 
-            .note-title, .note-snippet { height: auto; -webkit-line-clamp: unset; } 
+            .note-thumbnail { width: 100%; height: auto; margin-bottom: 1rem; } 
             .menu-grid { grid-template-columns: 1fr; }
             .book-showcase { flex-direction: column; text-align: center; }
         }
@@ -151,13 +153,24 @@
             </div>
         </div>
 
-        <h2>▶︎ 最新の活動記録 (note連携)</h2>
-        <div id="note-feed" class="note-feed-container">
-            <p style="text-align:center; color: var(--cyber-blue);">最新の独りごとを解析しています...</p>
-        </div>
-        
-        <div class="more-link-wrapper">
-            <a href="https://note.com/takeshi_makimura" target="_blank" class="btn-more">もっと見る（noteへ）</a>
+        <div class="main-content-grid">
+            <div class="note-section">
+                <h2>▶︎ 最新の活動記録 (note)</h2>
+                <div id="note-feed" class="note-feed-container">
+                    <p style="text-align:center; color: var(--cyber-blue);">最新の独りごとを解析しています...</p>
+                </div>
+                <div style="text-align: center; margin-top: 1.5rem;">
+                    <a href="https://note.com/takeshi_makimura" target="_blank" style="color: var(--cyber-blue); font-size: 0.9rem; text-decoration: none;">もっと読む（noteへ）→</a>
+                </div>
+            </div>
+
+            <div class="x-section">
+                <h2>▶︎ 最新の報告 (X)</h2>
+                <div class="x-feed-container">
+                    <a class="twitter-timeline" data-height="630" data-theme="dark" data-chrome="noheader nofooter noborders transparent" href="https://twitter.com/sophie_itsecret?ref_src=twsrc%5Etfw">Tweets by sophie_itsecret</a> 
+                    <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+                </div>
+            </div>
         </div>
 
         <h2>▶︎ 最新のプロデュース作品</h2>
@@ -198,16 +211,14 @@
                     feedContainer.innerHTML = ""; 
 
                     if (data.status === "ok" && data.items.length > 0) {
-                        data.items.slice(0, 3).forEach((item, index) => {
+                        data.items.slice(0, 4).forEach((item, index) => { /* 4件表示に増やしました */
                             const raw = item.content || item.description || "";
-                            
                             let cleanedText = raw.replace(/<[^>]+>/g, '') 
                                                .replace(/&nbsp;|&#160;/g, ' ')
                                                .replace(/\s+/g, ' ') 
                                                .trim();
                             
                             let snippet = cleanedText;
-
                             let thumbnailUrl = "sophie.jpg"; 
                             if (panelImages[index]) {
                                 thumbnailUrl = "images/" + panelImages[index];
@@ -215,7 +226,7 @@
                                 thumbnailUrl = item.thumbnail || "sophie.jpg";
                             }
 
-                            const pubDate = new Date(item.pubDate).toLocaleDateString("ja-JP", { year: 'numeric', month: 'long', day: 'numeric' });
+                            const pubDate = new Date(item.pubDate).toLocaleDateString("ja-JP", { month: 'short', day: 'numeric' });
 
                             const card = document.createElement("a");
                             card.href = item.link;
