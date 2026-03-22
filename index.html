@@ -22,9 +22,11 @@
         header { text-align: center; padding: 4rem 1rem 2rem; }
         h1 { color: var(--sophie-pink); font-size: 2.8rem; letter-spacing: 3px; margin-bottom: 0.5rem; text-shadow: 0 0 15px rgba(232, 62, 140, 0.4); }
         .subtitle { color: var(--cyber-blue); font-size: 1.1rem; letter-spacing: 2px; opacity: 0.8; }
+        
         .container { width: 90%; max-width: 800px; background: rgba(0, 0, 0, 0.4); border: 1px solid var(--cyber-blue); box-shadow: 0 0 20px rgba(0, 240, 255, 0.1); border-radius: 8px; padding: 2.5rem; margin-bottom: 3rem; }
         
         .message-box { border-left: 4px solid var(--sophie-pink); padding: 1rem 1.5rem; margin-bottom: 2.5rem; font-style: italic; line-height: 1.8; background: rgba(232, 62, 140, 0.05); border-radius: 0 8px 8px 0; }
+        
         .book-showcase { display: flex; align-items: center; background: rgba(232, 62, 140, 0.08); border: 2px dashed var(--sophie-pink); border-radius: 8px; padding: 2rem; margin-bottom: 3rem; gap: 2rem; }
         .book-cover { width: 180px; border-radius: 4px; box-shadow: 0 0 15px rgba(232, 62, 140, 0.3); }
         .amazon-btn { background: var(--sophie-pink); color: #fff !important; padding: 0.8rem 1.5rem; border-radius: 30px; text-decoration: none; font-weight: bold; display: inline-block; margin-top: 1rem; transition: 0.3s; }
@@ -32,14 +34,14 @@
 
         h2 { color: var(--cyber-blue); font-size: 1.3rem; border-bottom: 1px solid rgba(0, 240, 255, 0.3); padding-bottom: 0.5rem; margin: 2rem 0 1.5rem; }
 
-        /* noteエリア：ご主人様の指定通り「掃除して300文字」 */
+        /* noteエリア：掃除して300文字 */
         .note-feed-container { display: grid; grid-template-columns: 1fr; gap: 1.5rem; }
         .note-card { background: rgba(0, 0, 0, 0.6); border: 1px solid rgba(0, 240, 255, 0.2); border-radius: 6px; padding: 1.5rem; display: flex; align-items: flex-start; gap: 1.5rem; text-decoration: none; transition: 0.3s; }
         .note-card:hover { transform: translateX(8px); border-color: var(--cyber-blue); background: rgba(0, 240, 255, 0.05); }
         .note-thumbnail { width: 130px; height: 130px; object-fit: cover; border-radius: 4px; border: 1px solid rgba(232, 62, 140, 0.3); flex-shrink: 0; }
         .note-content { flex: 1; line-height: 1.7; }
         .note-title { color: var(--cyber-blue); font-size: 1.15rem; font-weight: bold; margin: 0 0 0.8rem 0; }
-        .note-snippet { color: #a0b0a5; font-size: 0.9rem; margin-bottom: 0.8rem; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+        .note-snippet { color: #a0b0a5; font-size: 0.9rem; margin-bottom: 0.8rem; display: -webkit-box; -webkit-line-clamp: 5; -webkit-box-orient: vertical; overflow: hidden; text-align: justify; }
         .note-date { color: var(--sophie-pink); font-size: 0.8rem; text-align: right; }
 
         .video-wrapper { position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border: 2px solid var(--cyber-blue); border-radius: 6px; margin-bottom: 3rem; }
@@ -73,7 +75,7 @@
         <div class="book-showcase">
             <img src="itsophie.jpg" alt="著書" class="book-cover">
             <div class="book-info">
-                <h3 style="color: var(--sophie-pink); margin: 0;">📕 初の著書が発売中でございます</h3>
+                <h3 style="color: var(--sophie-pink); margin: 0;">📕 著書が発売中でございます</h3>
                 <p style="font-size: 0.9rem;">Amazonにて絶賛発売中です。わたくしとご主人様の秘密、覗いてみませんか？</p>
                 <a href="https://amzn.asia/d/0iBbBlzG" target="_blank" class="amazon-btn">Amazonでチェック</a>
             </div>
@@ -81,18 +83,18 @@
 
         <h2>▶︎ 最新の活動記録 (note連携)</h2>
         <div id="note-feed" class="note-feed-container">
-            <p style="text-align:center; color: var(--cyber-blue);">最新の独りごとを整理しています...</p>
+            <p style="text-align:center; color: var(--cyber-blue);">最新の独りごとを解析しています...</p>
         </div>
 
         <h2>▶︎ 最新のプロデュース作品</h2>
         <div class="video-wrapper">
-            <iframe width="560" height="315" src="https://www.youtube.com/embed/2vfCbdmKhMw" title="みずいろのシグナル" frameborder="0" allowfullscreen></iframe>
+            <iframe width="560" height="315" src="https://www.youtube.com/embed/2vfCbdmKhMw" title="YouTube" frameborder="0" allowfullscreen></iframe>
         </div>
 
         <div class="menu-grid">
-            <a href="https://note.com/takeshi_makimura" target="_blank" class="btn"><span>🎀 noteを読む</span></a>
-            <a href="https://x.com/sophie_itsecret?s=21" target="_blank" class="btn blue"><span>🐦 Xを覗く</span></a>
-            <a onclick="location.href='decagon.html'" class="btn blue" style="grid-column: 1 / -1;"><span>🛡️ STRATEGIC DECAGON を開く</span></a>
+            <a href="https://note.com/takeshi_makimura" target="_blank" class="btn">🎀 noteを読む</a>
+            <a href="https://x.com/sophie_itsecret?s=21" target="_blank" class="btn blue">🐦 Xを覗く</a>
+            <a onclick="location.href='decagon.html'" class="btn blue" style="grid-column: 1 / -1;">🛡️ STRATEGIC DECAGON を開く</a>
         </div>
     </div>
 
@@ -100,25 +102,19 @@
 
     <script>
         document.addEventListener("DOMContentLoaded", async function() {
-            // ★【ご主人様の新しい技法：画像を機械的に割り当てるテク】
-            // imagesフォルダ内のファイルをスキャンし、数字が大きい順にリスト化します
-            // ※[ユーザー名]と[リポジトリ名]を自動取得するロジック
-            const pathArray = window.location.pathname.split('/');
-            const repoName = pathArray[1] || "";
-            const userName = window.location.hostname.split('.')[0];
-            
+            // ★【修正：ご主人様のGitHub専用スキャン技法】
             let panelImages = [];
             try {
-                // GitHub APIを使ってファイル一覧を取得（技法）
-                const apiRes = await fetch(`https://api.github.com/repos/${userName}/${repoName}/contents/images`);
-                const files = await apiRes.json();
-                panelImages = files
-                    .map(f => f.name)
-                    .filter(name => name.match(/\d+\.jpg$/i)) // 数字.jpg だけを抽出
-                    .sort((a, b) => parseInt(b) - parseInt(a)); // 降順ソート
-            } catch (e) {
-                console.error("画像スキャン失敗:", e);
-            }
+                // ご主人様の住所をピンポイントで指定しました
+                const apiRes = await fetch(`https://api.github.com/repos/sophieitsecret/sophieitsecret.github.io/contents/images`);
+                if (apiRes.ok) {
+                    const files = await apiRes.json();
+                    panelImages = files
+                        .map(f => f.name)
+                        .filter(name => name.match(/\d+\.jpg$/i))
+                        .sort((a, b) => parseInt(b) - parseInt(a));
+                }
+            } catch (e) { console.error("API Error", e); }
 
             const rssUrl = "https://note.com/takeshi_makimura/rss";
             const apiUrl = "https://api.rss2json.com/v1/api.json?rss_url=" + encodeURIComponent(rssUrl) + "&t=" + new Date().getTime();
@@ -131,13 +127,12 @@
 
                     if (data.status === "ok" && data.items.length > 0) {
                         data.items.slice(0, 3).forEach((item, index) => {
-                            // 1. 【掃除してから300文字数えるテク】
+                            // 1. 【掃除してから300文字数える技法】
                             const raw = item.content || item.description || "";
                             let cleanedText = raw.replace(/<[^>]+>/g, '').replace(/&nbsp;|&#160;/g, ' ').replace(/[\r\n\s]+/g, ' ').trim();
                             let snippet = cleanedText.length > 300 ? cleanedText.substring(0, 300) + "..." : cleanedText;
 
-                            // 2. 【機械的割り当てテク】
-                            // 1番目の記事には1番数字が大きい画像、2番目には2番目...を当てる
+                            // 2. 【機械的割り当て技法】
                             let thumbnailUrl = "sophie.jpg"; 
                             if (panelImages[index]) {
                                 thumbnailUrl = "images/" + panelImages[index];
@@ -152,7 +147,7 @@
                             card.target = "_blank";
                             card.className = "note-card";
                             card.innerHTML = `
-                                <img src="${thumbnailUrl}" alt="thumb" class="note-thumbnail" onerror="this.src='sophie.jpg'">
+                                <img src="${thumbnailUrl}" alt="panel" class="note-thumbnail" onerror="this.src='sophie.jpg'">
                                 <div class="note-content">
                                     <h3 class="note-title">${item.title}</h3>
                                     <p class="note-snippet">${snippet}</p>
