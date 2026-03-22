@@ -33,17 +33,15 @@
 
         h2 { color: var(--cyber-blue); font-size: 1.3rem; border-bottom: 1px solid rgba(0, 240, 255, 0.3); padding-bottom: 0.5rem; margin: 2rem 0 1.5rem; }
 
-        /* --- noteフィード：高密度＆改行撲滅 --- */
         .note-feed-container { display: grid; grid-template-columns: 1fr; gap: 2rem; margin-bottom: 1.5rem; }
         .note-card { background: rgba(0, 0, 0, 0.6); border: 1px solid rgba(0, 240, 255, 0.2); border-radius: 6px; padding: 1.5rem; display: flex; align-items: flex-start; gap: 1.8rem; text-decoration: none; transition: 0.3s; }
         .note-card:hover { transform: translateX(8px); border-color: var(--cyber-blue); background: rgba(0, 240, 255, 0.05); }
         
         .note-thumbnail { width: 240px; height: auto; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 4px; border: 1px solid rgba(232, 62, 140, 0.3); flex-shrink: 0; }
         
-        .note-content { flex: 1; line-height: 1.6; display: flex; flex-direction: column; }
+        .note-content { flex: 1; line-height: 1.6; display: flex; flex-direction: column; overflow: hidden; }
         .note-title { color: var(--cyber-blue); font-size: 1.25rem; font-weight: bold; margin: 0 0 0.8rem 0; }
         
-        /* 本文の空白を一切許さない設定 */
         .note-snippet { 
             color: #b0c0b5; font-size: 0.95rem; margin-bottom: 1rem; 
             display: -webkit-box; -webkit-line-clamp: 12; -webkit-box-orient: vertical; overflow: hidden; 
@@ -51,7 +49,6 @@
         }
         .note-date { color: var(--sophie-pink); font-size: 0.85rem; text-align: right; margin-top: auto; }
 
-        /* 「もっと見る」ボタンの装飾 */
         .more-link-wrapper { text-align: center; margin: 2rem 0 3rem; }
         .btn-more { display: inline-block; padding: 0.8rem 3rem; border: 1px solid var(--cyber-blue); color: var(--cyber-blue); text-decoration: none; font-weight: bold; border-radius: 30px; transition: 0.3s; background: rgba(0, 240, 255, 0.05); }
         .btn-more:hover { background: var(--cyber-blue); color: #000; box-shadow: 0 0 15px var(--cyber-blue); }
@@ -112,8 +109,8 @@
         </div>
 
         <div class="menu-grid">
-            <a href="https://note.com/takeshi_makimura" target="_blank" class="btn"><span>🎀 noteを読む</span></a>
-            <a href="https://x.com/sophie_itsecret?s=21" target="_blank" class="btn blue"><span>🐦 Xを覗く</span></a>
+            <a href="https://note.com/takeshi_makimura" target="_blank" class="btn">🎀 noteを読む</a>
+            <a href="https://x.com/sophie_itsecret?s=21" target="_blank" class="btn blue">🐦 Xを覗く</a>
             <a onclick="location.href='decagon.html'" class="btn blue" style="grid-column: 1 / -1;">🛡️ STRATEGIC DECAGON を開く</a>
         </div>
     </div>
@@ -122,10 +119,10 @@
 
     <script>
         document.addEventListener("DOMContentLoaded", async function() {
-            // 画像スキャンの技法
             let panelImages = [];
             try {
-                const apiRes = await fetch(`https://api.github.com/repos/sophieitsecret/sophieitsecret.github.io/contents/images`);
+                // 【テク】APIにタイムスタンプを付与し、Push直後の反映を保証
+                const apiRes = await fetch(`https://api.github.com/repos/sophieitsecret/sophieitsecret.github.io/contents/images?t=` + new Date().getTime());
                 if (apiRes.ok) {
                     const files = await apiRes.json();
                     panelImages = files
@@ -146,14 +143,13 @@
 
                     if (data.status === "ok" && data.items.length > 0) {
                         data.items.slice(0, 3).forEach((item, index) => {
-                            // ★【強力洗浄技法：あらゆる空白・改行を完全に撲滅】
+                            // 【最強洗浄テク】HTMLタグ、特殊空白、全角スペース、あらゆる改行を撲滅
                             const raw = item.content || item.description || "";
-                            let cleanedText = raw.replace(/<[^>]+>/g, ' ') // タグをスペースに変換
-                                               .replace(/&nbsp;|&#160;/g, ' ') // 特殊空白除去
-                                               .replace(/\s+/g, ' ') // 全ての改行、タブ、複数スペースを「半角1文字」に統合
+                            let cleanedText = raw.replace(/<[^>]+>/g, ' ')
+                                               .replace(/&nbsp;|&#160;/g, ' ')
+                                               .replace(/[\s\u3000]+/g, ' ') // 全角・半角スペース・改行をすべて単一スペースに
                                                .trim();
                             
-                            // 掃除後に300文字切り出し
                             let snippet = cleanedText.length > 300 ? cleanedText.substring(0, 300) + "..." : cleanedText;
 
                             let thumbnailUrl = "sophie.jpg"; 
