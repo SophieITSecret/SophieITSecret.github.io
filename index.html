@@ -33,12 +33,11 @@
 
         h2 { color: var(--cyber-blue); font-size: 1.3rem; border-bottom: 1px solid rgba(0, 240, 255, 0.3); padding-bottom: 0.5rem; margin: 2rem 0 1.5rem; }
 
-        /* --- noteフィード：画像端切れ防止＆テキスト超濃縮 --- */
+        /* --- noteフィード：物理的な高さを固定して整列 --- */
         .note-feed-container { display: grid; grid-template-columns: 1fr; gap: 2rem; margin-bottom: 1.5rem; }
         .note-card { background: rgba(0, 0, 0, 0.6); border: 1px solid rgba(0, 240, 255, 0.2); border-radius: 6px; padding: 1.5rem; display: flex; align-items: flex-start; gap: 1.8rem; text-decoration: none; transition: 0.3s; }
         .note-card:hover { transform: translateX(8px); border-color: var(--cyber-blue); background: rgba(0, 240, 255, 0.05); }
         
-        /* 【重要】画像の左右が切れないように contain を採用 */
         .note-thumbnail { 
             width: 240px; 
             height: 135px; 
@@ -52,14 +51,15 @@
         .note-content { flex: 1; line-height: 1.4; display: flex; flex-direction: column; overflow: hidden; }
         .note-title { color: var(--cyber-blue); font-size: 1.25rem; font-weight: bold; margin: 0 0 0.5rem 0; }
         
-        /* テキストの行間を詰め、密度を最大化 */
+        /* 【修正：4行で固定＆高さを指定してアンバランスを解消】 */
         .note-snippet { 
             color: #b0c0b5; 
             font-size: 0.95rem; 
             margin-bottom: 0.5rem; 
-            line-height: 1.4; 
+            line-height: 1.5;
+            height: 6em;               /* 1.5（行間）× 4行 = 6em で高さを完全固定 */
             display: -webkit-box; 
-            -webkit-line-clamp: 15; 
+            -webkit-line-clamp: 4;      /* 最大4行表示 */
             -webkit-box-orient: vertical; 
             overflow: hidden; 
             text-align: justify; 
@@ -81,7 +81,6 @@
 
         footer { padding: 3rem; text-align: center; font-size: 0.8rem; color: #555; }
 
-        /* 【スマホ最終調整】画像を絶対に切らない設定 */
         @media (max-width: 650px) { 
             .note-card { flex-direction: column; align-items: stretch; padding: 1rem; } 
             .note-thumbnail { 
@@ -169,12 +168,15 @@
                     if (data.status === "ok" && data.items.length > 0) {
                         data.items.slice(0, 3).forEach((item, index) => {
                             const raw = item.content || item.description || "";
+                            
+                            // 【修正：すべての改行と空白を「1つのスペース」に圧縮して密度を高める】
                             let cleanedText = raw.replace(/<[^>]+>/g, ' ')
                                                .replace(/&nbsp;|&#160;/g, ' ')
-                                               .replace(/[\s\u3000]+/g, ' ') 
+                                               .replace(/\s+/g, ' ') 
                                                .trim();
                             
-                            let snippet = cleanedText.length > 300 ? cleanedText.substring(0, 300) + "..." : cleanedText;
+                            // スニペットとしての切り出し（表示制御はCSS側で4行に固定）
+                            let snippet = cleanedText;
 
                             let thumbnailUrl = "sophie.jpg"; 
                             if (panelImages[index]) {
