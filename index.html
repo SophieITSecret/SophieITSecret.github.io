@@ -45,7 +45,7 @@
             gap: 1.5rem; 
             text-decoration: none; 
             transition: 0.3s;
-            min-height: 135px; 
+            min-height: 145px; 
         }
         .note-card:hover { transform: translateX(8px); border-color: var(--cyber-blue); background: rgba(0, 240, 255, 0.05); }
         
@@ -64,7 +64,7 @@
             display: flex; 
             flex-direction: column; 
             overflow: hidden; 
-            justify-content: space-between;
+            justify-content: flex-start;
         }
 
         .note-title { 
@@ -80,19 +80,21 @@
             overflow: hidden;
         }
         
+        /* 【重要：高さを6.0emに固定して「きっちり4行」表示させる】 */
         .note-snippet { 
             color: #b0c0b5; 
-            font-size: 0.9rem; 
+            font-size: 0.95rem; 
             margin-bottom: 0.3rem; 
-            line-height: 1.4;
-            height: 4.2em; 
+            line-height: 1.5;
+            height: 6.0em; /* 1.5 * 4行 = 6.0em */
             display: -webkit-box; 
-            -webkit-line-clamp: 3;
+            -webkit-line-clamp: 4;
             -webkit-box-orient: vertical; 
             overflow: hidden; 
             text-align: justify; 
             word-break: break-all;
             white-space: normal;
+            margin-top: 0; /* 余計な上余白を排除 */
         }
         .note-date { color: var(--sophie-pink); font-size: 0.8rem; text-align: right; margin-top: auto; }
 
@@ -196,17 +198,16 @@
 
                     if (data.status === "ok" && data.items.length > 0) {
                         data.items.slice(0, 3).forEach((item, index) => {
-                            // 【ここが核心です：noteが作った要約（description）ではなく、
-                            // 全文（content）を最優先で取得するように強制します】
+                            // 全文データを最優先
                             const raw = item.content || item.description || "";
                             
-                            let cleanedText = raw.replace(/<[^>]+>/g, ' ')
+                            // 【修正：タグを完全に消去してから、空白を圧縮し、最後に両端をトリミング】
+                            let cleanedText = raw.replace(/<[^>]+>/g, '') // 空白にせず「無」に置換
                                                .replace(/&nbsp;|&#160;/g, ' ')
-                                               .replace(/\s+/g, ' ') 
-                                               .trim();
+                                               .replace(/\s+/g, ' ') // 全体の空白を1つに圧縮
+                                               .trim(); // 冒頭のゴミを完全削除
                             
-                            // 文字数を大幅に確保（ここが足りないと、全文を持ってきても表示されません）
-                            let snippet = cleanedText.length > 500 ? cleanedText.substring(0, 500) + "..." : cleanedText;
+                            let snippet = cleanedText;
 
                             let thumbnailUrl = "sophie.jpg"; 
                             if (panelImages[index]) {
