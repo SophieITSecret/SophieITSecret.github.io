@@ -152,28 +152,29 @@
     <script>
         document.addEventListener("DOMContentLoaded", async function() {
             const feedContainer = document.getElementById("note-feed");
-            const timestamp = new Date().getTime();
+            const timestamp = new Date().getTime(); // 秒単位のタイムスタンプ
 
-            // 1. 画像の「最大番号」のみを正確に特定する
+            // 1. 画像の最新番号特定（最大100枚までスキャン）
             async function findMaxImageNumber(start, range) {
                 for (let i = start; i > 0; i--) {
                     try {
-                        const resp = await fetch(`images/${i}.jpg?v=${timestamp}`, { method: 'HEAD' });
-                        if (resp.ok) return i; // 1番最初に見つかった「最大の数字」を返す
+                        // ブラウザキャッシュを無視してチェック
+                        const resp = await fetch(`images/${i}.jpg?v=${timestamp}`, { method: 'HEAD', cache: 'no-store' });
+                        if (resp.ok) return i;
                     } catch (e) {}
                     if (start - i > range) break; 
                 }
                 return 0;
             }
 
-            // 100から順に探して、最新の画像番号（例:12）を1つだけ特定
             const maxNum = await findMaxImageNumber(100, 100);
 
-            // 2. note RSSの取得
+            // 2. note RSSの取得（API側のキャッシュを強引に破壊する）
             const rssUrl = "https://note.com/takeshi_makimura/rss";
-            const apiUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl)}&t=${timestamp}`;
+            // URL自体にダミーの引数 (?t=...) を混ぜてAPIを騙す
+            const apiUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl + "?t=" + timestamp)}&t=${timestamp}`;
 
-            fetch(apiUrl)
+            fetch(apiUrl, { cache: 'no-store' }) // ブラウザのキャッシュも利用しない
                 .then(response => response.json())
                 .then(data => {
                     feedContainer.innerHTML = ""; 
@@ -182,11 +183,7 @@
                             const raw = item.content || item.description || "";
                             let cleanedText = raw.replace(/<[^>]+>/g, '').replace(/&nbsp;|&#160;/g, ' ').replace(/\s+/g, ' ').trim();
                             
-                            /* 紐付けロジック：
-                               index 0 (最新記事) -> maxNum (12.jpg)
-                               index 1 (2番目)   -> maxNum - 1 (11.jpg)
-                               index 2 (3番目)   -> maxNum - 2 (10.jpg)
-                            */
+                            // 最新記事(0)に最大画像番号を割り当てる同期ロジック
                             let currentImgNum = maxNum - index;
                             let thumbnailUrl = (currentImgNum > 0) 
                                 ? `images/${currentImgNum}.jpg?v=${timestamp}` 
@@ -203,7 +200,12 @@
                                 </div>`;
                             feedContainer.appendChild(card);
                         });
+                    } else {
+                        feedContainer.innerHTML = "<p style='text-align:center;'>反映をお待ちください...（キャッシュ更新中）</p>";
                     }
+                })
+                .catch(err => {
+                    console.error("Fetch error:", err);
                 });
         });
     </script>
