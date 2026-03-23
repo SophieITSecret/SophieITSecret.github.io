@@ -40,10 +40,10 @@
         /* メッセージボックス */
         .message-box { border-left: 4px solid var(--sophie-pink); padding: 1rem 1.2rem; margin-bottom: 1.5rem; font-style: italic; line-height: 1.8; background: rgba(232, 62, 140, 0.05); border-radius: 0 4px 4px 0; font-size: 1rem; }
 
-        /* 本の大看板（適度に品よく） */
+        /* 本のセクション（品よく調整） */
         .book-section { display: flex; gap: 1.5rem; align-items: center; background: rgba(232, 62, 140, 0.05); border: 1px dashed var(--sophie-pink); padding: 1.5rem; border-radius: 8px; }
         .book-img { width: 180px; border-radius: 4px; box-shadow: 0 0 15px rgba(232, 62, 140, 0.3); flex-shrink: 0; }
-        .book-text { font-size: 1rem; line-height: 1.8; }
+        .book-text { font-size: 0.95rem; line-height: 1.8; }
 
         /* チャート垂直4連 */
         .chart-container { height: 260px; background: #161b22; border-radius: 6px; border: 1px solid #30363d; overflow: hidden; margin-bottom: 15px; }
@@ -55,9 +55,9 @@
         .note-title { color: var(--cyber-blue); font-size: 1.1rem; font-weight: bold; margin: 0 0 0.4rem; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
         .note-snippet { color: #b0c0b5; font-size: 0.9rem; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; margin: 0; }
 
-        /* ボタン共通 */
-        .btn-more { display: inline-block; padding: 10px 25px; border: 1px solid var(--cyber-blue); color: var(--cyber-blue); text-decoration: none; border-radius: 30px; font-size: 0.9rem; transition: 0.3s; margin-top: 1rem; }
-        .btn-more:hover { background: rgba(0, 240, 255, 0.15); box-shadow: 0 0 15px rgba(0, 240, 255, 0.2); }
+        /* ボタン */
+        .btn-action { display: inline-block; padding: 10px 20px; border: 1px solid var(--cyber-blue); color: var(--cyber-blue); text-decoration: none; border-radius: 30px; font-size: 0.85rem; transition: 0.3s; margin-top: 1rem; }
+        .btn-action:hover { background: rgba(0, 240, 255, 0.15); box-shadow: 0 0 15px rgba(0, 240, 255, 0.2); }
         .link-item { display: block; background: rgba(255,255,255,0.03); color: var(--text-color); padding: 10px 12px; border-radius: 4px; text-decoration: none; font-size: 0.85rem; border: 1px solid rgba(255,255,255,0.1); transition: 0.2s; margin-bottom: 8px; }
         .link-item:hover { background: rgba(0, 240, 255, 0.1); border-color: var(--cyber-blue); color: var(--cyber-blue); }
 
@@ -91,7 +91,7 @@
                     <div class="book-text">
                         わたくしが書きました『IT秘書ソフィー』<br>
                         Amazonにて絶賛発売中でございます。<br>
-                        <a href="https://amzn.asia/d/0iBbBlzG" target="_blank" class="btn-more" style="border-color:var(--sophie-pink); color:var(--sophie-pink);">Amazonに確認に行く →</a>
+                        <a href="https://amzn.asia/d/0iBbBlzG" target="_blank" class="btn-action" style="border-color:var(--sophie-pink); color:var(--sophie-pink);">Amazonに確認に行く →</a>
                     </div>
                 </div>
             </div>
@@ -109,7 +109,7 @@
                     <p style="text-align:center; color: var(--cyber-blue);">同期中...</p>
                 </div>
                 <div style="text-align: center;">
-                    <a href="https://note.com/takeshi_makimura" target="_blank" class="btn-more">もっと見る（noteへ） →</a>
+                    <a href="https://note.com/takeshi_makimura" target="_blank" class="btn-action">もっと見る（noteへ） →</a>
                 </div>
             </div>
         </main>
@@ -145,10 +145,10 @@
                     <iframe src="https://s.tradingview.com/widgetembed/?symbol=FX%3AUSDJPY&interval=D&theme=dark&style=1&timezone=Etc%2FUTC&locale=ja" width="100%" height="100%" frameborder="0"></iframe>
                 </div>
                 <div class="chart-container">
-                    <iframe src="https://s.tradingview.com/widgetembed/?symbol=TVC%3ANI225&interval=D&theme=dark&style=1&timezone=Etc%2FUTC&locale=ja" width="100%" height="100%" frameborder="0"></iframe>
+                    <iframe src="https://s.tradingview.com/widgetembed/?symbol=FOREXCOM%3AJP225&interval=D&theme=dark&style=1&timezone=Etc%2FUTC&locale=ja" width="100%" height="100%" frameborder="0"></iframe>
                 </div>
                 <div class="chart-container">
-                    <iframe src="https://s.tradingview.com/widgetembed/?symbol=SPX&interval=D&theme=dark&style=1&timezone=Etc%2FUTC&locale=ja" width="100%" height="100%" frameborder="0"></iframe>
+                    <iframe src="https://s.tradingview.com/widgetembed/?symbol=OANDA%3ASPX500USD&interval=D&theme=dark&style=1&timezone=Etc%2FUTC&locale=ja" width="100%" height="100%" frameborder="0"></iframe>
                 </div>
             </div>
         </aside>
