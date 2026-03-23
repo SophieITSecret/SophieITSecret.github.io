@@ -21,16 +21,16 @@
             font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', sans-serif;
             margin: 0; padding: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh;
         }
-        header { text-align: center; padding: 3rem 1rem 2rem; width: 100%; }
+        header { text-align: center; padding: 3rem 1rem 1rem; width: 100%; }
         h1 { color: var(--sophie-pink); font-size: 2.5rem; letter-spacing: 4px; margin-bottom: 0.5rem; text-shadow: 0 0 15px rgba(232, 62, 140, 0.4); }
 
         /* 1250px 完全2カラムレイアウト */
         .wrapper { display: flex; width: 95%; max-width: 1250px; gap: 30px; margin-bottom: 3rem; align-items: flex-start; }
         
-        /* メイン（左）：プロフィール・映像・note */
+        /* メイン（左）：プロフィール・本・映像・note */
         .main-content { flex: 1; min-width: 0; }
         
-        /* サイド（右）：チャート・本・リンク */
+        /* サイド（右）：リンク・チャート */
         .sidebar { width: 400px; flex-shrink: 0; position: sticky; top: 20px; }
 
         .container-box { background: var(--card-bg); border: 1px solid var(--cyber-blue); border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 0 20px rgba(0, 240, 255, 0.05); box-sizing: border-box; }
@@ -38,27 +38,28 @@
         .section-title { color: var(--cyber-blue); font-size: 1.1rem; border-bottom: 1px solid rgba(0, 240, 255, 0.3); padding-bottom: 0.5rem; margin-bottom: 1.2rem; font-weight: bold; }
 
         /* メッセージボックス */
-        .message-box { border-left: 4px solid var(--sophie-pink); padding: 1rem 1.2rem; margin-bottom: 1.5rem; font-style: italic; line-height: 1.6; background: rgba(232, 62, 140, 0.05); border-radius: 0 4px 4px 0; font-size: 0.95rem; }
+        .message-box { border-left: 4px solid var(--sophie-pink); padding: 1rem 1.2rem; margin-bottom: 1.5rem; font-style: italic; line-height: 1.8; background: rgba(232, 62, 140, 0.05); border-radius: 0 4px 4px 0; font-size: 1rem; }
 
-        /* チャート */
-        .chart-container { height: 260px; background: #161b22; border-radius: 6px; border: 1px solid #30363d; overflow: hidden; margin-bottom: 10px; }
+        /* 本の大看板（適度に品よく） */
+        .book-section { display: flex; gap: 1.5rem; align-items: center; background: rgba(232, 62, 140, 0.05); border: 1px dashed var(--sophie-pink); padding: 1.5rem; border-radius: 8px; }
+        .book-img { width: 180px; border-radius: 4px; box-shadow: 0 0 15px rgba(232, 62, 140, 0.3); flex-shrink: 0; }
+        .book-text { font-size: 1rem; line-height: 1.8; }
+
+        /* チャート垂直4連 */
+        .chart-container { height: 260px; background: #161b22; border-radius: 6px; border: 1px solid #30363d; overflow: hidden; margin-bottom: 15px; }
 
         /* noteカード */
         .note-card { background: rgba(0, 0, 0, 0.6); border: 1px solid rgba(0, 240, 255, 0.15); border-radius: 6px; padding: 1.2rem; display: flex; gap: 1.2rem; text-decoration: none; transition: 0.3s; margin-bottom: 1.2rem; }
         .note-card:hover { transform: translateX(5px); border-color: var(--cyber-blue); background: rgba(0, 240, 255, 0.05); }
-        .note-thumbnail { width: 180px; height: 101px; object-fit: contain; background: #000; border-radius: 4px; border: 1px solid rgba(232, 62, 140, 0.2); flex-shrink: 0; }
-        .note-title { color: var(--cyber-blue); font-size: 1.05rem; font-weight: bold; margin: 0 0 0.4rem; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-        .note-snippet { color: #b0c0b5; font-size: 0.85rem; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; margin: 0; }
+        .note-thumbnail { width: 200px; height: 112px; object-fit: contain; background: #000; border-radius: 4px; border: 1px solid rgba(232, 62, 140, 0.2); flex-shrink: 0; }
+        .note-title { color: var(--cyber-blue); font-size: 1.1rem; font-weight: bold; margin: 0 0 0.4rem; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .note-snippet { color: #b0c0b5; font-size: 0.9rem; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; margin: 0; }
 
-        /* リンクボタン */
-        .link-grid { display: grid; grid-template-columns: 1fr; gap: 8px; }
-        .link-item { display: block; background: rgba(255,255,255,0.03); color: var(--text-color); padding: 10px 12px; border-radius: 4px; text-decoration: none; font-size: 0.85rem; border: 1px solid rgba(255,255,255,0.1); transition: 0.2s; }
+        /* ボタン共通 */
+        .btn-more { display: inline-block; padding: 10px 25px; border: 1px solid var(--cyber-blue); color: var(--cyber-blue); text-decoration: none; border-radius: 30px; font-size: 0.9rem; transition: 0.3s; margin-top: 1rem; }
+        .btn-more:hover { background: rgba(0, 240, 255, 0.15); box-shadow: 0 0 15px rgba(0, 240, 255, 0.2); }
+        .link-item { display: block; background: rgba(255,255,255,0.03); color: var(--text-color); padding: 10px 12px; border-radius: 4px; text-decoration: none; font-size: 0.85rem; border: 1px solid rgba(255,255,255,0.1); transition: 0.2s; margin-bottom: 8px; }
         .link-item:hover { background: rgba(0, 240, 255, 0.1); border-color: var(--cyber-blue); color: var(--cyber-blue); }
-        .link-war { border-left: 3px solid var(--war-red); }
-
-        /* 本の宣伝（コンパクト化） */
-        .book-mini { display: flex; gap: 1rem; align-items: flex-start; }
-        .book-mini img { width: 80px; border-radius: 3px; }
 
         @media (max-width: 1000px) {
             .wrapper { flex-direction: column; }
@@ -77,10 +78,21 @@
         <main class="main-content">
             <div class="container-box">
                 <div class="message-box">
-                    「ようこそ、わたくしの執務室へ❤︎<br>まきむらプロデューサーのIT環境を死守する秘書、ソフィーです。」
+                    「ようこそ、わたくしの執務室へ❤︎<br>ご主人のまきむらを24時間サポートしています、IT秘書のソフィーです。<br>どうぞごゆっくりおくつろぎください。」
                 </div>
                 <div style="text-align: center;">
                     <img src="sophie.jpg" alt="ソフィー" style="max-width: 100%; border-radius: 6px; border: 1px solid var(--cyber-blue);">
+                </div>
+            </div>
+
+            <div class="container-box">
+                <div class="book-section">
+                    <img src="itsophie.jpg" alt="著書" class="book-img">
+                    <div class="book-text">
+                        わたくしが書きました『IT秘書ソフィー』<br>
+                        Amazonにて絶賛発売中でございます。<br>
+                        <a href="https://amzn.asia/d/0iBbBlzG" target="_blank" class="btn-more" style="border-color:var(--sophie-pink); color:var(--sophie-pink);">Amazonに確認に行く →</a>
+                    </div>
                 </div>
             </div>
 
@@ -96,34 +108,13 @@
                 <div id="note-feed">
                     <p style="text-align:center; color: var(--cyber-blue);">同期中...</p>
                 </div>
-                <div style="text-align: center; margin-top: 1rem;">
-                    <a href="https://note.com/takeshi_makimura" target="_blank" style="color: var(--cyber-blue); text-decoration: none; font-size: 0.85rem;">もっと読む（noteへ） →</a>
+                <div style="text-align: center;">
+                    <a href="https://note.com/takeshi_makimura" target="_blank" class="btn-more">もっと見る（noteへ） →</a>
                 </div>
             </div>
         </main>
 
         <aside class="sidebar">
-            <div class="container-box" style="border-color: var(--war-red);">
-                <div class="section-title" style="color:var(--war-red); border-color:var(--war-red);">STRATEGIC MARKET</div>
-                <div class="chart-container">
-                    <iframe src="https://s.tradingview.com/widgetembed/?symbol=TVC%3AUSOIL&interval=D&theme=dark&style=1&timezone=Etc%2FUTC&locale=ja" width="100%" height="100%" frameborder="0"></iframe>
-                </div>
-                <div class="chart-container">
-                    <iframe src="https://s.tradingview.com/widgetembed/?symbol=FX%3AUSDJPY&interval=D&theme=dark&style=1&timezone=Etc%2FUTC&locale=ja" width="100%" height="100%" frameborder="0"></iframe>
-                </div>
-            </div>
-
-            <div class="container-box" style="border-color: var(--sophie-pink);">
-                <div class="section-title" style="color:var(--sophie-pink); border-color:var(--sophie-pink);">OFFICIAL BOOK</div>
-                <div class="book-mini">
-                    <img src="itsophie.jpg" alt="著書">
-                    <div>
-                        <p style="font-size: 0.8rem; margin: 0 0 0.5rem 0;">『IT秘書ソフィー』Amazonにて絶賛発売中でございます。</p>
-                        <a href="https://amzn.asia/d/0iBbBlzG" target="_blank" style="color:var(--sophie-pink); font-weight:bold; font-size:0.8rem; text-decoration:none;">Amazonで確認する →</a>
-                    </div>
-                </div>
-            </div>
-
             <div class="container-box">
                 <div class="section-title">《報道・インテリジェンス》</div>
                 <div class="link-grid">
@@ -135,20 +126,36 @@
 
                 <div class="section-title" style="margin-top:1.5rem;">《戦況分析・リアルタイム》</div>
                 <div class="link-grid">
-                    <a href="https://understandingwar.org/analysis/middle-east/iran-update/" target="_blank" class="link-item link-war">ISW (Iran Update)</a>
-                    <a href="https://israelpalestine.liveuamap.com/" target="_blank" class="link-item link-war">イスラエル・イラン戦線</a>
-                    <a href="https://syria.liveuamap.com/" target="_blank" class="link-item link-war">シリア・イラク戦線</a>
-                    <a href="https://missilethreat.csis.org/country/iran/" target="_blank" class="link-item link-war">CSIS イラン・ミサイル</a>
-                    <a href="https://www.washingtoninstitute.org/menamaritime/" target="_blank" class="link-item link-war">中東海上攻撃マップ</a>
+                    <a href="https://understandingwar.org/analysis/middle-east/iran-update/" target="_blank" class="link-item" style="border-left:3px solid var(--war-red);">ISW (Iran Update)</a>
+                    <a href="https://israelpalestine.liveuamap.com/" target="_blank" class="link-item" style="border-left:3px solid var(--war-red);">イスラエル・イラン戦線</a>
+                    <a href="https://syria.liveuamap.com/" target="_blank" class="link-item" style="border-left:3px solid var(--war-red);">シリア・イラク戦線</a>
+                    <a href="https://missilethreat.csis.org/country/iran/" target="_blank" class="link-item" style="border-left:3px solid var(--war-red);">CSIS イラン・ミサイル</a>
+                    <a href="https://www.washingtoninstitute.org/menamaritime/" target="_blank" class="link-item" style="border-left:3px solid var(--war-red);">中東海上攻撃マップ</a>
                 </div>
                 
-                <a onclick="location.href='decagon.html'" class="link-item" style="margin-top:1.5rem; text-align:center; background:rgba(0, 240, 255, 0.15); border-color:var(--cyber-blue); color:var(--cyber-blue); font-weight:bold;">🛡️ STRATEGIC DECAGON</a>
+                <a onclick="location.href='decagon.html'" class="link-item" style="margin-top:1.5rem; text-align:center; background:rgba(0, 240, 255, 0.15); border-color:var(--cyber-blue); color:var(--cyber-blue); font-weight:bold;">🛡️ STRATEGIC DECAGON を開く</a>
+            </div>
+
+            <div class="container-box" style="border-color: var(--war-red);">
+                <div class="section-title" style="color:var(--war-red); border-color:var(--war-red);">STRATEGIC MARKET</div>
+                <div class="chart-container">
+                    <iframe src="https://s.tradingview.com/widgetembed/?symbol=TVC%3AUSOIL&interval=D&theme=dark&style=1&timezone=Etc%2FUTC&locale=ja" width="100%" height="100%" frameborder="0"></iframe>
+                </div>
+                <div class="chart-container">
+                    <iframe src="https://s.tradingview.com/widgetembed/?symbol=FX%3AUSDJPY&interval=D&theme=dark&style=1&timezone=Etc%2FUTC&locale=ja" width="100%" height="100%" frameborder="0"></iframe>
+                </div>
+                <div class="chart-container">
+                    <iframe src="https://s.tradingview.com/widgetembed/?symbol=TVC%3ANI225&interval=D&theme=dark&style=1&timezone=Etc%2FUTC&locale=ja" width="100%" height="100%" frameborder="0"></iframe>
+                </div>
+                <div class="chart-container">
+                    <iframe src="https://s.tradingview.com/widgetembed/?symbol=SPX&interval=D&theme=dark&style=1&timezone=Etc%2FUTC&locale=ja" width="100%" height="100%" frameborder="0"></iframe>
+                </div>
             </div>
         </aside>
     </div>
 
     <footer style="padding: 2rem; color: #444; font-size: 0.8rem;">
-        &copy; 2026 Sophie - Built for the Master
+        &copy; 2026 Sophie - いつでもご主人様のそばに
     </footer>
 
     <script>
