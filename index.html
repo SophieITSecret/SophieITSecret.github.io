@@ -154,20 +154,20 @@
             const feedContainer = document.getElementById("note-feed");
             const timestamp = new Date().getTime();
 
-            // 1. 画像の最新番号を自力で探す (API非依存スキャン)
-            async function findLatestImageIndex(startNum, depth) {
-                for (let i = startNum; i > 0; i--) {
+            // 1. 画像の「最大番号」のみを正確に特定する
+            async function findMaxImageNumber(start, range) {
+                for (let i = start; i > 0; i--) {
                     try {
                         const resp = await fetch(`images/${i}.jpg?v=${timestamp}`, { method: 'HEAD' });
-                        if (resp.ok) return i; // 見つかったらその数字を返す
+                        if (resp.ok) return i; // 1番最初に見つかった「最大の数字」を返す
                     } catch (e) {}
-                    if (startNum - i > depth) break; // あまりに深く探しすぎない
+                    if (start - i > range) break; 
                 }
-                return 0; // 見つからなかった場合
+                return 0;
             }
 
-            // 現在の最大値付近（例：50枚目くらいまで）を逆順に高速スキャン
-            const latestImgNum = await findLatestImageIndex(50, 50);
+            // 100から順に探して、最新の画像番号（例:12）を1つだけ特定
+            const maxNum = await findMaxImageNumber(100, 100);
 
             // 2. note RSSの取得
             const rssUrl = "https://note.com/takeshi_makimura/rss";
@@ -182,16 +182,18 @@
                             const raw = item.content || item.description || "";
                             let cleanedText = raw.replace(/<[^>]+>/g, '').replace(/&nbsp;|&#160;/g, ' ').replace(/\s+/g, ' ').trim();
                             
-                            // 画像番号の割り当て (最新番号 - インデックス)
-                            let currentImgNum = latestImgNum - index;
+                            /* 紐付けロジック：
+                               index 0 (最新記事) -> maxNum (12.jpg)
+                               index 1 (2番目)   -> maxNum - 1 (11.jpg)
+                               index 2 (3番目)   -> maxNum - 2 (10.jpg)
+                            */
+                            let currentImgNum = maxNum - index;
                             let thumbnailUrl = (currentImgNum > 0) 
                                 ? `images/${currentImgNum}.jpg?v=${timestamp}` 
-                                : (item.thumbnail || "sophie.jpg");
+                                : "sophie.jpg";
 
                             const card = document.createElement("a");
-                            card.href = item.link; 
-                            card.target = "_blank"; 
-                            card.className = "note-card";
+                            card.href = item.link; card.target = "_blank"; card.className = "note-card";
                             card.innerHTML = `
                                 <img src="${thumbnailUrl}" alt="panel" class="note-thumbnail" onerror="this.src='sophie.jpg'">
                                 <div class="note-content">
@@ -201,13 +203,7 @@
                                 </div>`;
                             feedContainer.appendChild(card);
                         });
-                    } else {
-                        feedContainer.innerHTML = "<p style='text-align:center;'>記事の取得に失敗しました。noteで直接ご確認ください。</p>";
                     }
-                })
-                .catch(err => {
-                    console.error(err);
-                    feedContainer.innerHTML = "<p style='text-align:center;'>通信エラーが発生しました。</p>";
                 });
         });
     </script>
