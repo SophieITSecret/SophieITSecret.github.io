@@ -2,35 +2,66 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>Bar Sophie (Staging v1.8)</title>
+    <title>Bar Sophie (Staging v1.9)</title>
     <style>
-        :root { --bar-bg: #020204; --bar-accent: #f0b56e; --bar-text: #f0f0f0; --bar-border: #2a2a3a; }
-        body { background: radial-gradient(circle at 30% 40%, rgba(240, 181, 110, 0.08) 0%, transparent 40%), #020204; color: var(--bar-text); font-family: 'Times New Roman', serif; margin: 0; overflow: hidden; height: 100vh; display: flex; }
-        .counter-area { flex: 7; position: relative; display: flex; justify-content: center; align-items: center; border-right: 1px solid var(--bar-border); }
-        #sophie-image { max-width: 92%; max-height: 96%; filter: drop-shadow(0 0 50px rgba(240, 181, 110, 0.3)); z-index: 2; }
+        :root { 
+            --bar-bg: #010103; 
+            --bar-accent: #f0b56e; 
+            --bar-text: #f0f0f0;
+            --bar-border: #2a2a3a;
+        }
+        body { 
+            background-color: var(--bar-bg);
+            color: var(--bar-text); 
+            font-family: 'Times New Roman', serif;
+            margin: 0; overflow: hidden; height: 100vh; display: flex;
+        }
 
-        .chat-area { flex: 3; display: flex; flex-direction: column; background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(20px); }
+        /* カウンターエリア：背景に「物理的な灯り」を配置 */
+        .counter-area {
+            flex: 7; position: relative; display: flex; justify-content: center; align-items: center;
+            border-right: 1px solid var(--bar-border);
+            background: #000;
+            overflow: hidden;
+        }
+        
+        /* 背後のスポットライト：これが「真っ暗」を防ぎます */
+        .back-light {
+            position: absolute;
+            width: 600px; height: 600px;
+            background: radial-gradient(circle, rgba(240, 181, 110, 0.15) 0%, transparent 70%);
+            z-index: 1;
+            filter: blur(30px);
+        }
+
+        #sophie-image {
+            max-width: 92%; max-height: 96%;
+            filter: drop-shadow(0 0 40px rgba(240, 181, 110, 0.4));
+            z-index: 2;
+        }
+
+        /* チャット・操作エリア */
+        .chat-area { flex: 3; display: flex; flex-direction: column; background: #08080a; z-index: 3; }
         .chat-header { padding: 15px; border-bottom: 1px solid var(--bar-border); color: var(--bar-accent); font-weight: bold; text-align: center; letter-spacing: 3px; }
         
-        /* ジュークボックス（手動操作） */
-        .jukebox { padding: 10px; border-bottom: 1px solid var(--bar-border); background: rgba(240, 181, 110, 0.05); }
-        .music-btn { background: none; border: 1px solid var(--bar-accent); color: var(--bar-accent); padding: 5px 10px; font-size: 0.75rem; cursor: pointer; margin: 2px; border-radius: 4px; transition: 0.3s; }
+        .jukebox { padding: 10px; border-bottom: 1px solid var(--bar-border); background: #111; text-align: center; }
+        .music-btn { background: none; border: 1px solid var(--bar-accent); color: var(--bar-accent); padding: 6px 12px; font-size: 0.75rem; cursor: pointer; margin: 3px; border-radius: 4px; }
         .music-btn:hover { background: var(--bar-accent); color: #000; }
-        .stop-btn { border-color: #d73a49; color: #d73a49; } /* 停止ボタンは赤系 */
-        .stop-btn:hover { background: #d73a49; color: #fff; }
+        .stop-btn { border-color: #ff4444; color: #ff4444; }
 
         .chat-messages { flex: 1; padding: 20px; overflow-y: auto; font-family: sans-serif; font-size: 0.95rem; line-height: 1.6; }
         .message { margin-bottom: 18px; line-height: 1.4; }
-        .message.user { text-align: right; color: #777; font-size: 0.8rem; margin-left: 20%; }
-        .message.sophie { text-align: left; color: var(--bar-text); border-left: 3px solid var(--bar-accent); padding-left: 12px; margin-right: 10%; }
+        .message.sophie { border-left: 3px solid var(--bar-accent); padding-left: 12px; }
+        .message.user { text-align: right; color: #666; font-size: 0.8rem; }
 
-        .chat-input-area { padding: 20px; background: #000; display: flex; gap: 10px; }
+        .chat-input-area { padding: 20px; background: #000; border-top: 1px solid var(--bar-border); display: flex; gap: 10px; }
         #chat-input { flex: 1; background: #111; border: 1px solid var(--bar-border); color: var(--bar-text); padding: 12px; border-radius: 8px; outline: none; }
     </style>
 </head>
 <body>
 
     <div class="counter-area">
+        <div class="back-light"></div>
         <img id="sophie-image" src="./sophie_shake.png" alt="Sophie">
     </div>
 
@@ -38,22 +69,21 @@
         <div class="chat-header">BAR SOPHIE</div>
 
         <div class="jukebox">
-            <p style="font-size: 0.6rem; color: #666; margin: 0 0 5px 5px;">SELECT REPERTOIRE</p>
-            <button class="music-btn" onclick="playMusic('LpP-ZqS2Spg', 'Jazz Lounge')">Jazz</button>
+            <button class="music-btn" onclick="playMusic('fEvM-OUbaKs', 'Sophie\'s Choice')">Sophie's Choice</button>
+            <button class="music-btn" onclick="playMusic('jfKfPfyJRdk', 'Lofi Night')">Lofi Night</button>
             <button class="music-btn" onclick="playMusic('5_mID9Z02Sk', 'Midnight Piano')">Piano</button>
-            <button class="music-btn" onclick="playMusic('jfKfPfyJRdk', 'Sophie\'s Choice')">Sophie's</button>
             <button class="music-btn stop-btn" onclick="stopMusic()">Stop</button>
         </div>
 
         <div class="chat-messages" id="chat-messages">
-            <div class="message sophie">いらっしゃいませ。今夜はどのボタンから始めましょうか……？</div>
+            <div class="message sophie">ご主人様、もう一度……灯りを付け直し、レコードも入れ替えました。いかがでしょう？</div>
         </div>
 
         <div class="chat-input-area">
-            <input type="text" id="chat-input" placeholder="彼女に語りかける...">
+            <input type="text" id="chat-input" placeholder="彼女に話しかける...">
         </div>
         
-        <div id="yt-wrap"></div>
+        <div id="yt-wrap" style="position: absolute; pointer-events: none; opacity: 0;"></div>
     </aside>
 
     <script>
@@ -69,16 +99,20 @@
             messages.scrollTop = messages.scrollHeight;
         }
 
-        // 音楽再生（ボタンから）
         function playMusic(id, title) {
-            ytWrap.innerHTML = `<iframe width="0" height="0" src="https://www.youtube.com/embed/${id}?autoplay=1&rel=0" frameborder="0" allow="autoplay"></iframe>`;
-            addMessage(`${title} を流しますね。`, 'sophie');
+            // Chrome対策: 一度中身を完全に消してから再生成
+            ytWrap.innerHTML = '';
+            const iframe = document.createElement('iframe');
+            iframe.width = "1"; iframe.height = "1";
+            iframe.src = `https://www.youtube.com/embed/${id}?autoplay=1&mute=0&rel=0&version=3`;
+            iframe.allow = "autoplay";
+            ytWrap.appendChild(iframe);
+            addMessage(`${title} を選びました。お耳に合えば嬉しいですが。`, 'sophie');
         }
 
-        // 音楽停止
         function stopMusic() {
             ytWrap.innerHTML = '';
-            addMessage("静寂に戻しましたわ。お話、続けましょうか？", 'sophie');
+            addMessage("静寂に戻しますね。", 'sophie');
         }
 
         function handleChat() {
@@ -88,7 +122,7 @@
             input.value = '';
             setTimeout(() => {
                 let res = "ええ。";
-                if (text.match(/酒|おすすめ/)) res = "今夜は琥珀色の液体を、あなたのグラスへ。";
+                if (text.match(/酒|おすすめ/)) res = "今夜は、このボトルを開けましょうか。";
                 addMessage(res, 'sophie');
             }, 800);
         }
