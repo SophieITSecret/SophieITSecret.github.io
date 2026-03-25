@@ -1,1 +1,119 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>Bar Sophie (Staging v1.0)</title>
+    <link rel="stylesheet" href="../Sophie-Night.css">
+    <style>
+        :root { 
+            --bar-bg: #050509; /* ミッドナイトブルー */
+            --bar-accent: #e0ac69; /* 琥珀色 */
+            --bar-text: #e2e8e4;
+            --bar-border: #1a1a2e;
+        }
+        body { 
+            background-color: var(--bar-bg); 
+            color: var(--bar-text); 
+            font-family: 'Times New Roman', serif; /* 少しクラシックに */
+            margin: 0; overflow: hidden; height: 100vh;
+            display: flex;
+        }
 
+        /* カウンターエリア（左側：画像と演出） */
+        .counter-area {
+            flex: 7;
+            position: relative;
+            display: flex; justify-content: center; align-items: center;
+            border-right: 1px solid var(--bar-border);
+        }
+        #sophie-image {
+            max-width: 90%; max-height: 90%;
+            box-shadow: 0 0 50px rgba(224, 172, 105, 0.1); /* 琥珀色の残光 */
+            transition: opacity 1s;
+        }
+        .bar-header {
+            position: absolute; top: 20px; left: 30px;
+            font-size: 1.5rem; color: var(--bar-accent); letter-spacing: 3px;
+        }
+
+        /* チャットエリア（右側：コミュニケーション） */
+        .chat-area {
+            flex: 3;
+            display: flex; flex-direction: column;
+            background: rgba(255,255,255,0.01);
+        }
+        .chat-header {
+            padding: 15px; border-bottom: 1px solid var(--bar-border);
+            color: var(--bar-accent); font-weight: bold; text-align: center;
+        }
+        .chat-messages {
+            flex: 1; padding: 20px; overflow-y: auto;
+            font-family: sans-serif; font-size: 0.85rem; line-height: 1.6;
+        }
+        .message { margin-bottom: 15px; }
+        .message.user { text-align: right; color: #aaa; }
+        .message.sophie { text-align: left; color: var(--bar-text); }
+        
+        .chat-input-area {
+            padding: 15px; border-top: 1px solid var(--bar-border);
+            display: flex; gap: 10px;
+        }
+        #chat-input {
+            flex: 1; background: #111; border: 1px solid var(--bar-border);
+            color: var(--bar-text); padding: 8px; border-radius: 4px;
+        }
+        #send-btn {
+            background: var(--bar-accent); color: #000; border: none;
+            padding: 8px 15px; border-radius: 4px; cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="counter-area">
+        <div class="bar-header">Bar Sophie</div>
+        <img id="sophie-image" src="../military/map_1.png" alt="Sophie">
+    </div>
+
+    <aside class="chat-area">
+        <div class="chat-header">Sophie’s Conversation</div>
+        <div class="chat-messages" id="chat-messages">
+            <div class="message sophie">いらっしゃいませ、ご主人様。今夜はどのようなお話を……？</div>
+        </div>
+        <div class="chat-input-area">
+            <input type="text" id="chat-input" placeholder="彼女に語りかける...">
+            <button id="send-btn">Send</button>
+        </div>
+    </aside>
+
+    <script>
+        // チャットの簡易シミュレーション（将来的にAPI連携）
+        const input = document.getElementById('chat-input');
+        const messages = document.getElementById('chat-messages');
+        const sendBtn = document.getElementById('send-btn');
+
+        function sendMessage() {
+            if (input.value.trim() === '') return;
+            
+            // ユーザーのメッセージ
+            messages.innerHTML += `<div class="message user">${input.value}</div>`;
+            const userMsg = input.value;
+            input.value = '';
+            messages.scrollTop = messages.scrollHeight;
+
+            // ソフィーの反応（仮）
+            setTimeout(() => {
+                let response = "ええ、面白いお話ですね。";
+                if (userMsg.includes('酒') || userMsg.includes('ジン')) {
+                    response = "お酒のうんちくですか？ それなら、17世紀のオランダで生まれた「ジュネヴァ」のお話から始めましょうか……。";
+                }
+                messages.innerHTML += `<div class="message sophie">${response}</div>`;
+                messages.scrollTop = messages.scrollHeight;
+            }, 1000);
+        }
+
+        sendBtn.onclick = sendMessage;
+        input.onkeypress = (e) => { if (e.key === 'Enter') sendMessage(); };
+    </script>
+</body>
+</html>
