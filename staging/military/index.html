@@ -2,62 +2,61 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>戦術ダッシュボード：統合司令 Ver 5.2</title>
+    <title>戦術ダッシュボード：統合司令 Ver 5.3</title>
     <link rel="stylesheet" href="../Sophie-Core-v13.css">
     <style>
         :root { --theme-bg: #1a1a1b; --theme-accent: #d73a49; --theme-border: #30363d; }
-        body { font-size: 0.85rem; background: var(--theme-bg); color: #e2e8e4; margin: 0; line-height: 1.1; }
+        body { font-size: 0.85rem; background: var(--theme-bg); color: #e2e8e4; margin: 0; line-height: 1.0; }
         
-        .wrapper { display: flex; max-width: 1400px; margin: 0.5rem auto; gap: 20px; padding: 0 10px; align-items: flex-start; }
+        .wrapper { display: flex; max-width: 1400px; margin: 0.3rem auto; gap: 20px; padding: 0 10px; align-items: flex-start; }
         .main-timeline { flex: 0 0 60%; min-width: 0; }
         .side-maps { flex: 0 0 38%; position: sticky; top: 10px; }
         
-        /* サマリー：上下余白を0に、1文字空けで開始 */
+        /* サマリー：上下余白をゼロ、頭からスタート */
         .summary-box { 
             background: rgba(215, 58, 73, 0.1); border: 1px solid var(--theme-accent); 
-            padding: 2px 10px; margin-bottom: 6px; border-radius: 4px; line-height: 1.4;
+            padding: 2px 8px; margin-bottom: 5px; border-radius: 4px; line-height: 1.4;
         }
-        .summary-label { font-weight: bold; color: var(--theme-accent); display: inline; }
-        #summary-content { display: inline; }
+        .summary-label { font-weight: bold; color: var(--theme-accent); }
 
-        .map-img { width: 100%; border: 1px solid var(--theme-border); margin-bottom: 8px; cursor: pointer; display: block; background: #000; }
-        .legend-bar { font-size: 0.75rem; text-align: right; margin-bottom: 4px; color: #aaa; border-bottom: 1px dashed var(--theme-border); padding-bottom: 2px; }
+        .map-img { width: 100%; border: 1px solid var(--theme-border); margin-bottom: 6px; cursor: pointer; display: block; background: #000; }
+        .legend-bar { font-size: 0.75rem; text-align: right; margin-bottom: 3px; color: #aaa; border-bottom: 1px dashed var(--theme-border); padding-bottom: 1px; }
 
-        /* タイムライン：アイコンと文章の間を8px（約1文字）に固定 */
+        /* タイムライン：アイコン・日付の後のスペースを正確に1文字分に */
         .timeline-item { 
             display: flex; align-items: flex-start; border-left: 2px solid var(--theme-border); 
-            padding: 1px 8px; margin-bottom: 0px; background: rgba(255,255,255,0.01); 
+            padding: 1px 6px; margin-bottom: 0px; background: rgba(255,255,255,0.01); 
             white-space: nowrap; overflow: hidden; text-overflow: ellipsis; 
         }
         .timeline-item:hover { white-space: normal; background: rgba(255,255,255,0.08); border-left-color: var(--theme-accent); }
-        .date-tag { flex-shrink: 0; width: 62px; color: var(--theme-accent); font-family: monospace; font-weight: bold; }
-        .content-text { flex: 1; margin-left: 8px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .date-tag { flex-shrink: 0; width: 62px; color: var(--theme-accent); font-family: 'Courier New', monospace; font-weight: bold; letter-spacing: -0.5px; }
+        .content-text { flex: 1; margin-left: 0.6em; border-bottom: 1px solid rgba(255,255,255,0.05); }
 
-        /* 週の区切り（日曜と土曜の間） */
+        /* 週の区切り：月曜と日曜の間に線を引く（降順リスト） */
         .week-spacer { 
-            height: 16px; margin: 4px 0; border-left: 2px solid transparent;
-            display: flex; align-items: center;
+            height: 12px; margin: 2px 0; border-left: 2px solid transparent;
+            display: flex; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.03);
         }
         .week-spacer::after { 
-            content: "-------------------------- PREVIOUS WEEK --------------------------"; 
-            font-size: 0.6rem; color: #444; letter-spacing: 1px; white-space: nowrap; margin-left: 10px;
+            content: "--- WEEKLY DIVISION ---"; 
+            font-size: 0.6rem; color: #333; letter-spacing: 2px; margin-left: 10px;
         }
 
-        h1 { font-size: 1.1rem; margin: 0; padding: 4px 20px; border-bottom: 1px solid var(--theme-border); background: #111; }
+        h1 { font-size: 1.0rem; margin: 0; padding: 3px 20px; border-bottom: 1px solid var(--theme-border); background: #111; }
         #modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 1000; cursor: zoom-out; justify-content: center; align-items: center; }
         #modal-img { max-width: 98%; max-height: 98%; }
     </style>
 </head>
 <body>
 
-<h1>IRAN WAR LOG <span style="font-size:0.7rem; color:var(--theme-accent);">COMMAND CENTER v5.2</span></h1>
+<h1>IRAN WAR LOG <span style="font-size:0.7rem; color:var(--theme-accent);">COMMAND CENTER v5.3</span></h1>
 
 <div class="wrapper">
     <main class="main-timeline">
-        <div class="summary-box">
-            <span class="summary-label">戦況サマリー</span>　<span id="summary-content">Loading...</span>
+        <div class="summary-box" id="summary-box">
+            <span class="summary-label">戦況サマリー</span>　<span id="summary-content">Connecting...</span>
         </div>
-        <div class="legend-bar">🔵 米・イス攻撃 ／ 🔴 イラン攻撃 ／ 🟢 外交・国際</div>
+        <div class="legend-bar">🔵 米・イス ／ 🔴 イラン ／ 🟢 外交・国際</div>
         <div id="timeline-root"></div>
     </main>
     <aside class="side-maps" id="maps-root">
@@ -73,15 +72,16 @@
             const res = await fetch('data.csv?v=' + Date.now());
             if (!res.ok) throw new Error("data.csv not found");
             const csvText = await res.text();
-            const lines = csvText.split('\n').filter(l => l.trim() !== '');
+            const lines = csvText.split(/\r?\n/).filter(l => l.trim() !== '');
 
             const tRoot = document.getElementById('timeline-root');
             const mRoot = document.getElementById('maps-root');
             let logRows = [];
 
             lines.forEach(line => {
-                const cols = line.split(',');
-                const type = cols[0].trim().toUpperCase();
+                // CSV解析（引用符内のカンマを保護）
+                const cols = line.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g) || line.split(',');
+                const type = cols[0].replace(/"/g, '').trim().toUpperCase();
 
                 if (type === 'SUMMARY') {
                     const content = line.substring(line.indexOf(',') + 1).trim().replace(/^"|"$/g, '').replace(/""/g, '"');
@@ -89,7 +89,8 @@
                 }
                 else if (type === 'MAPS') {
                     for (let i = 1; i <= 5; i++) {
-                        if (cols[i] && cols[i].trim().toUpperCase() === 'ON') {
+                        const val = cols[i] ? cols[i].replace(/"/g, '').trim().toUpperCase() : 'OFF';
+                        if (val === 'ON') {
                             const img = document.createElement('img');
                             img.src = `map_${i}.png?v=${Date.now()}`;
                             img.className = 'map-img';
@@ -99,20 +100,21 @@
                         }
                     }
                 }
-                else if (type === 'LOG') { logRows.push(cols); }
+                else if (type === 'LOG') { logRows.push(cols.map(c => c.replace(/"/g, '').trim())); }
             });
 
             // タイムライン描画（最新が上）
-            let prevDayNum = -1; // 前の行の曜日を保持
+            let prevDayNum = -1; 
             logRows.reverse().forEach((cols, index) => {
-                const dateStr = cols[1].trim(); 
-                // ブラウザの時差問題を避けるため手動パース
-                const [y, m, d] = dateStr.split('-').map(Number);
-                const dateObj = new Date(y, m-1, d);
+                const dateStr = cols[1]; // YYYY-MM-DD想定
+                const dateParts = dateStr.match(/(\d{4})[/-](\d{1,2})[/-](\d{1,2})/);
+                
+                if (!dateParts) return; // 日付が壊れていたらスキップ
+
+                const dateObj = new Date(parseInt(dateParts[1]), parseInt(dateParts[2])-1, parseInt(dateParts[3]));
                 const currentDayNum = dateObj.getDay(); // 0:日, 1:月...6:土
 
-                // 週の区切り判定：降順リストで、前が日曜(0)かつ今が土曜(6)なら週が変わった
-                // または単純に、曜日が「前より増えた」ら週を跨いだと判定
+                // 週の区切り判定：降順リストで「日(0)から土(6)」に跳ね上がったら週の境界
                 if (prevDayNum !== -1 && currentDayNum > prevDayNum) {
                      const spacer = document.createElement('div');
                      spacer.className = 'week-spacer';
@@ -120,8 +122,11 @@
                 }
                 prevDayNum = currentDayNum;
 
-                const shortDate = ("0" + (dateObj.getMonth() + 1)).slice(-2) + "/" + ("0" + dateObj.getDate()).slice(-2);
-                const icon = cols[2].trim() === 'us_israel' ? '🔵' : (cols[2].trim() === 'iran' ? '🔴' : '🟢');
+                const mm = ("0" + (dateObj.getMonth() + 1)).slice(-2);
+                const dd = ("0" + dateObj.getDate()).slice(-2);
+                const shortDate = mm + "/" + dd;
+                
+                const icon = cols[2] === 'us_israel' ? '🔵' : (cols[2] === 'iran' ? '🔴' : '🟢');
                 const text = cols.slice(3).join(',').replace(/^"|"$/g, '').replace(/""/g, '"');
                 
                 const item = document.createElement('div');
