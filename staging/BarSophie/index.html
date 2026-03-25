@@ -2,76 +2,49 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>Bar Sophie (Staging v1.5)</title>
+    <title>Bar Sophie (Staging v1.6)</title>
     <style>
         :root { 
-            --bar-bg: #050509; 
-            --bar-accent: #e0ac69; 
-            --bar-text: #e2e8e4;
-            --bar-border: #1a1a2e;
+            --bar-bg: #030305; 
+            --bar-accent: #f0b56e; /* 輝きを増した琥珀色 */
+            --bar-text: #f0f0f0;
+            --bar-border: #2a2a3a;
         }
         body { 
-            background: radial-gradient(circle at 30% 50%, #1a1a2e 0%, #050509 70%); /* 背景に奥行き */
+            /* 背景に「琥珀色の灯り」を演出 */
+            background: 
+                radial-gradient(circle at 35% 45%, rgba(240, 181, 110, 0.12) 0%, transparent 50%),
+                radial-gradient(circle at 20% 50%, #1a1a2e 0%, #030305 80%);
             color: var(--bar-text); 
-            font-family: 'Times New Roman', serif;
-            margin: 0; overflow: hidden; height: 100vh;
-            display: flex;
+            font-family: 'Times New Roman', 'MS PMincho', serif;
+            margin: 0; overflow: hidden; height: 100vh; display: flex;
+            image-rendering: -webkit-optimize-contrast; /* Chromeでの色くすみ対策 */
         }
 
-        /* カウンターエリア */
         .counter-area {
-            flex: 7;
-            position: relative;
-            display: flex; justify-content: center; align-items: center;
+            flex: 7; position: relative; display: flex; justify-content: center; align-items: center;
             border-right: 1px solid var(--bar-border);
         }
         #sophie-image {
-            max-width: 90%; max-height: 95%;
-            filter: drop-shadow(0 0 30px rgba(224, 172, 105, 0.2)); /* 彼女を浮かび上がらせる */
+            max-width: 92%; max-height: 96%;
+            /* 彼女を浮かび上がらせるバックライト効果 */
+            filter: drop-shadow(0 0 40px rgba(240, 181, 110, 0.25)) contrast(1.05) saturate(1.1);
             z-index: 2;
         }
 
-        /* チャットエリア */
-        .chat-area {
-            flex: 3; display: flex; flex-direction: column;
-            background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(10px);
-        }
-        .chat-header {
-            padding: 15px; border-bottom: 1px solid var(--bar-border);
-            color: var(--bar-accent); font-weight: bold; text-align: center;
-            letter-spacing: 2px; font-family: sans-serif;
-        }
-        .chat-messages {
-            flex: 1; padding: 20px; overflow-y: auto;
-            font-family: sans-serif; font-size: 0.9rem; line-height: 1.6;
-            border-bottom: 1px solid var(--bar-border);
-        }
-        .message { margin-bottom: 15px; }
-        .message.user { text-align: right; color: #888; }
-        .message.sophie { text-align: left; color: var(--bar-text); border-left: 2px solid var(--bar-accent); padding-left: 10px; }
+        .chat-area { flex: 3; display: flex; flex-direction: column; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(15px); }
+        .chat-header { padding: 15px; border-bottom: 1px solid var(--bar-border); color: var(--bar-accent); font-weight: bold; text-align: center; letter-spacing: 3px; }
+        .chat-messages { flex: 1; padding: 20px; overflow-y: auto; font-family: sans-serif; font-size: 0.95rem; line-height: 1.6; }
+        
+        .message { margin-bottom: 18px; opacity: 0; transform: translateY(10px); animation: fadeIn 0.4s forwards; }
+        @keyframes fadeIn { to { opacity: 1; transform: translateY(0); } }
+        
+        .message.user { text-align: right; color: #999; font-size: 0.85rem; }
+        .message.sophie { text-align: left; color: var(--bar-text); border-left: 3px solid var(--bar-accent); padding-left: 12px; }
 
-        /* YouTube プレイリストエリア */
-        .music-player {
-            padding: 10px; background: rgba(224, 172, 105, 0.05);
-            border-bottom: 1px solid var(--bar-border);
-        }
-        .music-btn {
-            background: none; border: 1px solid var(--bar-accent); color: var(--bar-accent);
-            padding: 4px 8px; font-size: 0.7rem; cursor: pointer; margin: 2px; border-radius: 3px;
-        }
-        .music-btn:hover { background: var(--bar-accent); color: #000; }
-
-        .chat-input-area {
-            padding: 15px; display: flex; gap: 10px;
-        }
-        #chat-input {
-            flex: 1; background: #111; border: 1px solid var(--bar-border);
-            color: var(--bar-text); padding: 10px; border-radius: 4px;
-        }
-        #send-btn {
-            background: var(--bar-accent); color: #000; border: none;
-            padding: 10px 20px; border-radius: 4px; cursor: pointer; font-weight: bold;
-        }
+        .chat-input-area { padding: 20px; background: #000; display: flex; gap: 10px; }
+        #chat-input { flex: 1; background: #151515; border: 1px solid var(--bar-border); color: var(--bar-text); padding: 12px; border-radius: 6px; outline: none; }
+        #chat-input:focus { border-color: var(--bar-accent); }
     </style>
 </head>
 <body>
@@ -81,22 +54,14 @@
     </div>
 
     <aside class="chat-area">
-        <div class="chat-header">BAR SOPHIE CONSOLE</div>
+        <div class="chat-header">BAR SOPHIE</div>
         
-        <div class="music-player">
-            <p style="font-size: 0.6rem; color: #666; margin: 0 0 5px 5px;">SELECT BGM (YouTube)</p>
-            <button class="music-btn" onclick="playMusic('LpP-ZqS2Spg')">Jazz Lounge</button>
-            <button class="music-btn" onclick="playMusic('5_mID9Z02Sk')">Midnight Rain</button>
-            <button class="music-btn" onclick="playMusic('fEvM-OUbaKs')">Sophie's Choice</button>
-        </div>
-
         <div class="chat-messages" id="chat-messages">
-            <div class="message sophie">お帰りなさいませ、ご主人様。今夜はどのようなくつろぎを？</div>
+            <div class="message sophie">お疲れ様、ご主人様。……画面が少し暗かったかしら？ 灯りを少し調整しましたわ。</div>
         </div>
 
         <div class="chat-input-area">
-            <input type="text" id="chat-input" placeholder="メッセージを入力...">
-            <button id="send-btn">Send</button>
+            <input type="text" id="chat-input" placeholder="彼女と話す（例：曲をかけて、おすすめは？）">
         </div>
         
         <div id="player-container" style="display:none;">
@@ -107,38 +72,55 @@
     <script>
         const input = document.getElementById('chat-input');
         const messages = document.getElementById('chat-messages');
-        const sendBtn = document.getElementById('send-btn');
         const ytPlayer = document.getElementById('yt-player');
 
-        // チャット送信機能
-        function sendMessage() {
+        // ソフィーのプレイリスト
+        const playlist = [
+            { id: 'LpP-ZqS2Spg', title: 'Midnight Jazz' },
+            { id: '5_mID9Z02Sk', title: 'Rainy Night Piano' },
+            { id: 'fEvM-OUbaKs', title: 'Sophie\'s Selection' },
+            { id: 'jfKfPfyJRdk', title: 'Lo-fi Chill for Thinking' }
+        ];
+
+        function addMessage(text, side) {
+            const div = document.createElement('div');
+            div.className = `message ${side}`;
+            div.innerText = text;
+            messages.appendChild(div);
+            messages.scrollTop = messages.scrollHeight;
+        }
+
+        async function handleChat() {
             const text = input.value.trim();
             if (text === '') return;
             
-            messages.innerHTML += `<div class="message user">${text}</div>`;
+            addMessage(text, 'user');
             input.value = '';
-            messages.scrollTop = messages.scrollHeight;
 
-            // ソフィーの反応ロジック
+            // ソフィーの知性（簡易判定ロジック）
             setTimeout(() => {
-                let res = "ええ、よく分かりますわ。";
-                if (text.includes("酒") || text.includes("ジン")) res = "お酒の歴史は、人間の情熱の歴史でもあります。何かお調べしましょうか？";
-                if (text.includes("音楽") || text.includes("曲")) res = "メニューのボタンから、お好きなBGMをお選びいただけます。";
+                let res = "ええ、ご主人様の仰る通りですわ。";
                 
-                messages.innerHTML += `<div class="message sophie">${res}</div>`;
-                messages.scrollTop = messages.scrollHeight;
-            }, 800);
+                // 選曲の依頼
+                if (text.match(/曲|音楽|歌|ミュージック/)) {
+                    const song = playlist[Math.floor(Math.random() * playlist.length)];
+                    ytPlayer.src = `https://www.youtube.com/embed/${song.id}?autoplay=1&mute=0&rel=0`;
+                    res = `承知いたしました。今の気分に合わせて「${song.title}」を流しますね。`;
+                } 
+                // お酒の相談
+                else if (text.match(/酒|ジン|おすすめ/)) {
+                    res = "今夜は、コチョウランの白に合わせて、澄んだジントニックはいかが？ 17世紀の物語もお付けしますわ。";
+                }
+                // 戦況
+                else if (text.match(/戦況|イラン/)) {
+                    res = "あちらの仕事はお休みしましょう。ここは、私とあなただけの場所ですから。";
+                }
+
+                addMessage(res, 'sophie');
+            }, 1000);
         }
 
-        // YouTube再生機能
-        function playMusic(id) {
-            ytPlayer.src = `https://www.youtube.com/embed/${id}?autoplay=1`;
-            messages.innerHTML += `<div class="message sophie">承知いたしました。音楽を切り替えますね。</div>`;
-            messages.scrollTop = messages.scrollHeight;
-        }
-
-        sendBtn.onclick = sendMessage;
-        input.onkeypress = (e) => { if (e.key === 'Enter') sendMessage(); };
+        input.onkeypress = (e) => { if (e.key === 'Enter') handleChat(); };
     </script>
 </body>
 </html>
