@@ -2,44 +2,60 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>戦術ダッシュボード：イラン戦況 (Staging)</title>
+    <title>戦術ダッシュボード：イラン戦況 (Staging v3.1)</title>
     <link rel="stylesheet" href="../Sophie-Core-v13.css">
     <style>
         :root { --theme-bg: #1a1a1b; --theme-accent: #d73a49; --theme-border: #30363d; }
-        body { font-size: 0.85rem; background: var(--theme-bg); color: #e2e8e4; margin: 0; }
-        .wrapper { display: flex; max-width: 1400px; margin: 0.5rem auto; gap: 20px; padding: 0 10px; }
-        .main-timeline { flex: 6; }
-        .side-maps { flex: 4; position: sticky; top: 10px; height: fit-content; }
-        .map-img { width: 100%; border: 1px solid var(--theme-border); margin-bottom: 5px; cursor: pointer; transition: 0.2s; }
-        .map-img:hover { border-color: var(--theme-accent); transform: scale(1.01); }
-        .summary-box { background: rgba(215, 58, 73, 0.05); border: 1px solid var(--theme-accent); padding: 8px 12px; margin-bottom: 10px; border-radius: 4px; }
+        body { font-size: 0.85rem; background: var(--theme-bg); color: #e2e8e4; margin: 0; overflow-x: hidden; }
+        
+        /* 6:4比率を厳守。地図に圧迫されない設定 */
+        .wrapper { display: flex; max-width: 1400px; margin: 0.5rem auto; gap: 20px; padding: 0 10px; align-items: flex-start; }
+        .main-timeline { flex: 0 0 60%; min-width: 0; } /* 左 60% 固定 */
+        .side-maps { flex: 0 0 38%; position: sticky; top: 10px; } /* 右 38% 固定 */
+        
+        .map-img { width: 100%; border: 1px solid var(--theme-border); margin-bottom: 8px; cursor: pointer; display: block; background: #000; min-height: 100px; }
+        
+        /* サマリー：右に突き抜けないよう wrap 設定 */
+        .summary-box { 
+            background: rgba(215, 58, 73, 0.08); border: 1px solid var(--theme-accent); 
+            padding: 10px 15px; margin-bottom: 12px; border-radius: 4px;
+            word-wrap: break-word; overflow-wrap: break-word; white-space: normal; /* 改行を許可 */
+        }
+        
         .legend-bar { font-size: 0.75rem; text-align: right; margin-bottom: 8px; color: #aaa; border-bottom: 1px dashed var(--theme-border); }
-        .timeline-item { display: flex; align-items: flex-start; border-left: 2px solid var(--theme-border); padding: 1px 8px; margin-bottom: 1px; background: rgba(255,255,255,0.01); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        
+        /* タイムライン：1行を維持しつつホバーで展開 */
+        .timeline-item { display: flex; align-items: flex-start; border-left: 2px solid var(--theme-border); padding: 2px 8px; margin-bottom: 1px; background: rgba(255,255,255,0.01); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .timeline-item:hover { white-space: normal; background: rgba(255,255,255,0.08); border-left-color: var(--theme-accent); }
+        
         .date-tag { flex-shrink: 0; width: 55px; color: var(--theme-accent); font-family: monospace; font-weight: bold; }
-        .content-text { flex: 1; margin-left: 5px; border-bottom: 1px solid rgba(255,255,255,0.05); }
-        h1 { font-size: 1.2rem; margin: 0; padding: 5px 20px; letter-spacing: 1px; border-bottom: 1px solid var(--theme-border); }
-        h2 { display: inline; font-size: 0.8rem; color: var(--theme-accent); }
-        #modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; cursor: zoom-out; justify-content: center; align-items: center; }
-        #modal-img { max-width: 98%; max-height: 98%; border: 1px solid #fff; }
+        .content-text { flex: 1; margin-left: 5px; border-bottom: 1px solid rgba(255,255,255,0.05); overflow: hidden; }
+        
+        h1 { font-size: 1.2rem; margin: 0; padding: 8px 20px; letter-spacing: 1px; border-bottom: 1px solid var(--theme-border); background: #111; }
+        h2 { display: inline; font-size: 0.85rem; color: var(--theme-accent); font-weight: bold; }
+        
+        #modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 1000; cursor: zoom-out; justify-content: center; align-items: center; }
+        #modal-img { max-width: 98%; max-height: 98%; box-shadow: 0 0 20px #000; }
     </style>
 </head>
 <body>
 
-<h1>IRAN WAR INTELLIGENCE LOG <span style="font-size:0.7rem; color:#666;">v3.0 SYNCING...</span></h1>
+<h1>IRAN WAR INTELLIGENCE <span style="font-size:0.7rem; color:var(--theme-accent);">STAGING v3.1</span></h1>
 
 <div class="wrapper">
     <main class="main-timeline">
         <div class="summary-box">
-            <h2>戦況サマリー</h2>　<span id="summary-content">Loading...</span>
+            <h2>戦況サマリー</h2>　<span id="summary-content">Initializing Intelligence Stream...</span>
         </div>
         <div class="legend-bar">🔵 米・イス攻撃 ／ 🔴 イラン攻撃 ／ 🟢 外交・国際</div>
         <div id="timeline-root">Loading...</div>
     </main>
 
-    <aside class="side-maps" id="maps-root">
-        <p style="font-size:0.7rem; color:var(--theme-accent); font-weight:bold;">STRATEGIC MAPS</p>
-        </aside>
+    <aside class="side-maps">
+        <div id="maps-root" style="background: rgba(0,0,0,0.2); padding: 10px; border: 1px solid var(--theme-border);">
+            <p style="font-size:0.7rem; color:var(--theme-accent); font-weight:bold; margin-top:0;">STRATEGIC MAPS (PNG ONLY)</p>
+            </div>
+    </aside>
 </div>
 
 <div id="modal-overlay" onclick="this.style.display='none'"><img id="modal-img" src=""></div>
@@ -52,41 +68,59 @@
     };
 
     async function loadDashboard() {
-        // 1. サマリー読み込み (B1セル想定)
-        const summaryData = await fetch(urls.summary).then(r => r.text());
-        const summaryText = summaryData.split('\n')[0].split(',')[1] || "No summary data.";
-        document.getElementById('summary-content').innerText = summaryText;
+        try {
+            // 1. サマリー解析（B列のデータをカンマを考慮して取得）
+            const summaryRes = await fetch(urls.summary + '&cache=' + Date.now());
+            const summaryRaw = await summaryRes.text();
+            // CSVの1行目、最初のカンマ以降すべてを取得（文章内のカンマ対策）
+            const firstLine = summaryRaw.split('\n')[0];
+            const summaryBody = firstLine.substring(firstLine.indexOf(',') + 1).replace(/^"|"$/g, '');
+            document.getElementById('summary-content').innerText = summaryBody;
 
-        // 2. 地図読み込み (ON/OFF連動)
-        const mapsData = await fetch(urls.maps).then(r => r.text());
-        const mapLines = mapsData.split('\n');
-        const mapsRoot = document.getElementById('maps-root');
-        for (let i = 1; i <= 5; i++) {
-            const row = mapLines[i-1] ? mapLines[i-1].split(',') : [];
-            if (row[1] && row[1].trim().toUpperCase() === 'ON') {
-                const img = document.createElement('img');
-                img.src = `map_${i}.png`; // PNG固定
-                img.className = 'map-img';
-                img.onclick = () => { document.getElementById('modal-img').src = img.src; document.getElementById('modal-overlay').style.display = 'flex'; };
-                mapsRoot.appendChild(img);
+            // 2. 地図読み込み
+            const mapsRes = await fetch(urls.maps + '&cache=' + Date.now());
+            const mapsRaw = await mapsRes.text();
+            const mapLines = mapsRaw.split('\n');
+            const mapsRoot = document.getElementById('maps-root');
+            
+            for (let i = 1; i <= 5; i++) {
+                const row = mapLines[i-1] ? mapLines[i-1].split(',') : [];
+                if (row[1] && row[1].trim().toUpperCase() === 'ON') {
+                    const img = document.createElement('img');
+                    // キャッシュ回避のためランダムなクエリを付与
+                    img.src = `map_${i}.png?v=${Date.now()}`; 
+                    img.className = 'map-img';
+                    img.alt = `STRATEGIC MAP ${i}`;
+                    img.onerror = function() { this.style.display='none'; console.log(`map_${i}.png not found`); };
+                    img.onclick = () => { 
+                        document.getElementById('modal-img').src = img.src; 
+                        document.getElementById('modal-overlay').style.display = 'flex'; 
+                    };
+                    mapsRoot.appendChild(img);
+                }
             }
-        }
 
-        // 3. タイムライン読み込み (CSV解析)
-        const timelineData = await fetch(urls.timeline).then(r => r.text());
-        const rows = timelineData.split('\n').slice(1); // ヘッダー除去
-        const root = document.getElementById('timeline-root');
-        root.innerHTML = '';
-        rows.reverse().forEach(row => {
-            const cols = row.split(',');
-            if (cols.length < 3) return;
-            const date = cols[0].split('-').slice(1).join('/'); // MM/DD
-            const icon = cols[1] === 'us_israel' ? '🔵' : (cols[1] === 'iran' ? '🔴' : '🟢');
-            const item = document.createElement('div');
-            item.className = 'timeline-item';
-            item.innerHTML = `<div class="date-tag">${icon}${date}</div><div class="content-text">${cols[2]}</div>`;
-            root.appendChild(item);
-        });
+            // 3. タイムライン
+            const timelineRes = await fetch(urls.timeline + '&cache=' + Date.now());
+            const timelineRaw = await timelineRes.text();
+            const rows = timelineRaw.split('\n').filter(row => row.trim() !== '').slice(1);
+            const root = document.getElementById('timeline-root');
+            root.innerHTML = '';
+            rows.reverse().forEach(row => {
+                const cols = row.split(',');
+                if (cols.length < 3) return;
+                const date = cols[0].split('-').slice(1).join('/');
+                const icon = cols[1].trim() === 'us_israel' ? '🔵' : (cols[1].trim() === 'iran' ? '🔴' : '🟢');
+                const text = row.substring(row.indexOf(cols[1]) + cols[1].length + 1).replace(/^"|"$/g, '');
+                
+                const item = document.createElement('div');
+                item.className = 'timeline-item';
+                item.innerHTML = `<div class="date-tag">${icon}${date}</div><div class="content-text">${text}</div>`;
+                root.appendChild(item);
+            });
+        } catch (e) {
+            console.error("Data Load Error:", e);
+        }
     }
 
     loadDashboard();
