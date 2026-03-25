@@ -2,46 +2,46 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>戦術ダッシュボード：統合司令 Ver 5.5</title>
+    <title>戦術ダッシュボード：統合司令 Ver 5.6</title>
     <link rel="stylesheet" href="../Sophie-Core-v13.css">
     <style>
         :root { --theme-bg: #1a1a1b; --theme-accent: #d73a49; --theme-border: #30363d; }
         
-        /* 1と2の統合調整：全文表示にしつつ、行間を少し締める(1.35) */
+        /* フォント0.9remを維持。行間は全文表示に合わせて1.35へ微調整 */
         body { font-size: 0.9rem; background: var(--theme-bg); color: #e2e8e4; margin: 0; line-height: 1.35; }
         
         .wrapper { display: flex; max-width: 1400px; margin: 0.5rem auto; gap: 20px; padding: 0 10px; align-items: flex-start; }
         .main-timeline { flex: 0 0 60%; min-width: 0; }
         .side-maps { flex: 0 0 38%; position: sticky; top: 10px; }
         
+        /* サマリーと凡例の間を1.5rem（約1行分以上）確保 */
         .summary-box { 
             background: rgba(215, 58, 73, 0.1); border: 1px solid var(--theme-accent); 
-            padding: 4px 10px; margin-bottom: 1.2rem; border-radius: 4px; line-height: 1.5;
+            padding: 4px 10px; margin-bottom: 1.5rem; border-radius: 4px; line-height: 1.5;
         }
         .summary-label { font-weight: bold; color: var(--theme-accent); }
 
         .map-img { width: 100%; border: 1px solid var(--theme-border); margin-bottom: 8px; cursor: pointer; display: block; background: #000; }
         .legend-bar { font-size: 0.75rem; text-align: right; margin-bottom: 8px; color: #aaa; border-bottom: 1px dashed var(--theme-border); padding-bottom: 4px; }
 
-        /* タイムライン：全文表示(white-space: normal) */
+        /* 全文表示：white-spaceをnormalにし、行間を少し締める */
         .timeline-item { 
             display: flex; align-items: flex-start; border-left: 2px solid var(--theme-border); 
             padding: 4px 8px; margin-bottom: 0px; background: rgba(255,255,255,0.01); 
-            white-space: normal; /* 全文表示に切り替え */
-            word-wrap: break-word;
+            white-space: normal; word-wrap: break-word;
         }
         .timeline-item:hover { background: rgba(255,255,255,0.08); border-left-color: var(--theme-accent); }
         .date-tag { flex-shrink: 0; width: 65px; color: var(--theme-accent); font-family: 'Courier New', monospace; font-weight: bold; }
         .content-text { flex: 1; margin-left: 10px; border-bottom: 1px solid rgba(255,255,255,0.05); }
 
-        /* 週の区切り：日曜日の上に線を引く（月曜始まりの週の境界） */
+        /* 週の区切り：月曜と日曜の間に確実に1本 */
         .week-spacer { 
-            height: 24px; margin-top: 10px; border-left: 2px solid transparent;
-            display: flex; align-items: center; border-bottom: 1px solid rgba(215, 58, 73, 0.2);
+            height: 30px; margin: 10px 0; border-left: 2px solid transparent;
+            display: flex; align-items: center; border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
         .week-spacer::after { 
             content: "--- NEW WEEK STARTING MONDAY ---"; 
-            font-size: 0.65rem; color: #555; letter-spacing: 2px; margin-left: 15px; font-weight: bold;
+            font-size: 0.65rem; color: #555; letter-spacing: 3px; margin-left: 15px; font-weight: bold;
         }
 
         h1 { font-size: 1.1rem; margin: 0; padding: 6px 20px; border-bottom: 1px solid var(--theme-border); background: #111; }
@@ -51,7 +51,7 @@
 </head>
 <body>
 
-<h1>IRAN WAR LOG <span style="font-size:0.7rem; color:var(--theme-accent);">COMMAND CENTER v5.5</span></h1>
+<h1>IRAN WAR LOG <span style="font-size:0.7rem; color:var(--theme-accent);">COMMAND CENTER v5.6</span></h1>
 
 <div class="wrapper">
     <main class="main-timeline">
@@ -106,20 +106,30 @@
             });
 
             // タイムライン描画（最新から過去へ）
+            let lastMondayStr = null;
+
             logRows.reverse().forEach((cols, index) => {
                 const dateStr = cols[1]; 
                 const dateParts = dateStr.match(/(\d{4})[/-](\d{1,2})[/-](\d{1,2})/);
                 if (!dateParts) return;
 
                 const dateObj = new Date(parseInt(dateParts[1]), parseInt(dateParts[2])-1, parseInt(dateParts[3]));
-                const currentDayNum = dateObj.getDay(); // 0:日, 1:月...6:土
+                
+                // 週の境界判定ロジック：
+                // その日が属する週の「月曜日」を計算する
+                const d = new Date(dateObj);
+                const day = d.getDay();
+                const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+                const mondayObj = new Date(d.setDate(diff));
+                const currentMondayStr = mondayObj.toDateString();
 
-                // 週の区切り判定：降順リストで「日曜日(0)」が来たら、その上に線を引く（月曜と日曜の間）
-                if (currentDayNum === 0 && index !== 0) {
+                // 前の記事と「属する週の月曜日」が違えば、そこが週の境界
+                if (lastMondayStr !== null && currentMondayStr !== lastMondayStr) {
                      const spacer = document.createElement('div');
                      spacer.className = 'week-spacer';
                      tRoot.appendChild(spacer);
                 }
+                lastMondayStr = currentMondayStr;
 
                 const mm = ("0" + (dateObj.getMonth() + 1)).slice(-2);
                 const dd = ("0" + dateObj.getDate()).slice(-2);
