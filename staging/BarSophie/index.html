@@ -2,84 +2,85 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>Bar Sophie (Staging v1.6)</title>
+    <title>Bar Sophie (Staging v1.7)</title>
     <style>
         :root { 
-            --bar-bg: #030305; 
-            --bar-accent: #f0b56e; /* 輝きを増した琥珀色 */
+            --bar-bg: #020204; 
+            --bar-accent: #f0b56e; 
             --bar-text: #f0f0f0;
             --bar-border: #2a2a3a;
         }
         body { 
-            /* 背景に「琥珀色の灯り」を演出 */
+            /* 背後の「暗闇」に琥珀色のグラデーションを多層化して、奥行きを強制演出 */
             background: 
-                radial-gradient(circle at 35% 45%, rgba(240, 181, 110, 0.12) 0%, transparent 50%),
-                radial-gradient(circle at 20% 50%, #1a1a2e 0%, #030305 80%);
+                radial-gradient(circle at 30% 40%, rgba(240, 181, 110, 0.08) 0%, transparent 40%),
+                radial-gradient(circle at 70% 60%, rgba(26, 26, 46, 0.5) 0%, transparent 50%),
+                #020204;
             color: var(--bar-text); 
-            font-family: 'Times New Roman', 'MS PMincho', serif;
+            font-family: 'Times New Roman', serif;
             margin: 0; overflow: hidden; height: 100vh; display: flex;
-            image-rendering: -webkit-optimize-contrast; /* Chromeでの色くすみ対策 */
         }
 
         .counter-area {
             flex: 7; position: relative; display: flex; justify-content: center; align-items: center;
             border-right: 1px solid var(--bar-border);
+            overflow: hidden;
         }
+        
+        /* 画像の背後に、ぼんやりとした「棚」のような影を配置 */
+        .counter-area::before {
+            content: ""; position: absolute; width: 110%; height: 110%;
+            background: repeating-linear-gradient(90deg, transparent, transparent 100px, rgba(255,255,255,0.01) 101px);
+            transform: skewX(-20deg); pointer-events: none;
+        }
+
         #sophie-image {
             max-width: 92%; max-height: 96%;
-            /* 彼女を浮かび上がらせるバックライト効果 */
-            filter: drop-shadow(0 0 40px rgba(240, 181, 110, 0.25)) contrast(1.05) saturate(1.1);
-            z-index: 2;
+            filter: drop-shadow(0 0 50px rgba(240, 181, 110, 0.3)); /* 発光感を強化 */
+            z-index: 2; transition: transform 0.5s ease;
         }
 
-        .chat-area { flex: 3; display: flex; flex-direction: column; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(15px); }
+        .chat-area { flex: 3; display: flex; flex-direction: column; background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(20px); }
         .chat-header { padding: 15px; border-bottom: 1px solid var(--bar-border); color: var(--bar-accent); font-weight: bold; text-align: center; letter-spacing: 3px; }
         .chat-messages { flex: 1; padding: 20px; overflow-y: auto; font-family: sans-serif; font-size: 0.95rem; line-height: 1.6; }
-        
-        .message { margin-bottom: 18px; opacity: 0; transform: translateY(10px); animation: fadeIn 0.4s forwards; }
-        @keyframes fadeIn { to { opacity: 1; transform: translateY(0); } }
-        
-        .message.user { text-align: right; color: #999; font-size: 0.85rem; }
-        .message.sophie { text-align: left; color: var(--bar-text); border-left: 3px solid var(--bar-accent); padding-left: 12px; }
+        .message { margin-bottom: 18px; line-height: 1.4; }
+        .message.user { text-align: right; color: #777; font-size: 0.8rem; margin-left: 20%; }
+        .message.sophie { text-align: left; color: var(--bar-text); border-left: 3px solid var(--bar-accent); padding-left: 12px; margin-right: 10%; }
 
-        .chat-input-area { padding: 20px; background: #000; display: flex; gap: 10px; }
-        #chat-input { flex: 1; background: #151515; border: 1px solid var(--bar-border); color: var(--bar-text); padding: 12px; border-radius: 6px; outline: none; }
+        .chat-input-area { padding: 20px; background: #000; display: flex; gap: 10px; align-items: center; }
+        #chat-input { flex: 1; background: #111; border: 1px solid var(--bar-border); color: var(--bar-text); padding: 12px; border-radius: 8px; outline: none; font-size: 0.9rem; }
         #chat-input:focus { border-color: var(--bar-accent); }
     </style>
 </head>
 <body>
 
-    <div class="counter-area">
+    <div class="counter-area" onclick="enableAudio()">
         <img id="sophie-image" src="./sophie_shake.png" alt="Sophie">
     </div>
 
     <aside class="chat-area">
         <div class="chat-header">BAR SOPHIE</div>
-        
         <div class="chat-messages" id="chat-messages">
-            <div class="message sophie">お疲れ様、ご主人様。……画面が少し暗かったかしら？ 灯りを少し調整しましたわ。</div>
+            <div class="message sophie">お帰りなさいませ。……少しだけ、お店の灯りを足してみました。音楽が必要な時は、いつでもお声がけを。</div>
         </div>
-
         <div class="chat-input-area">
-            <input type="text" id="chat-input" placeholder="彼女と話す（例：曲をかけて、おすすめは？）">
+            <input type="text" id="chat-input" placeholder="彼女と話す...">
         </div>
-        
-        <div id="player-container" style="display:none;">
-            <iframe id="yt-player" width="0" height="0" src="" frameborder="0" allow="autoplay"></iframe>
-        </div>
+        <div id="yt-wrap"></div>
     </aside>
 
     <script>
         const input = document.getElementById('chat-input');
         const messages = document.getElementById('chat-messages');
-        const ytPlayer = document.getElementById('yt-player');
+        let audioEnabled = false;
 
-        // ソフィーのプレイリスト
+        // 画面クリックでオーディオ再生を許可する儀式
+        function enableAudio() { audioEnabled = true; }
+
         const playlist = [
             { id: 'LpP-ZqS2Spg', title: 'Midnight Jazz' },
-            { id: '5_mID9Z02Sk', title: 'Rainy Night Piano' },
-            { id: 'fEvM-OUbaKs', title: 'Sophie\'s Selection' },
-            { id: 'jfKfPfyJRdk', title: 'Lo-fi Chill for Thinking' }
+            { id: '5_mID9Z02Sk', title: 'Rainy Piano' },
+            { id: 'jfKfPfyJRdk', title: 'Chill Lo-fi' }
         ];
 
         function addMessage(text, side) {
@@ -90,37 +91,27 @@
             messages.scrollTop = messages.scrollHeight;
         }
 
-        async function handleChat() {
+        function handleChat() {
             const text = input.value.trim();
             if (text === '') return;
-            
             addMessage(text, 'user');
             input.value = '';
 
-            // ソフィーの知性（簡易判定ロジック）
             setTimeout(() => {
-                let res = "ええ、ご主人様の仰る通りですわ。";
-                
-                // 選曲の依頼
-                if (text.match(/曲|音楽|歌|ミュージック/)) {
+                let res = "ええ、お聞きしています。";
+                if (text.match(/曲|音楽|歌/)) {
                     const song = playlist[Math.floor(Math.random() * playlist.length)];
-                    ytPlayer.src = `https://www.youtube.com/embed/${song.id}?autoplay=1&mute=0&rel=0`;
-                    res = `承知いたしました。今の気分に合わせて「${song.title}」を流しますね。`;
-                } 
-                // お酒の相談
-                else if (text.match(/酒|ジン|おすすめ/)) {
-                    res = "今夜は、コチョウランの白に合わせて、澄んだジントニックはいかが？ 17世紀の物語もお付けしますわ。";
+                    const wrap = document.getElementById('yt-wrap');
+                    // 広告が出にくい、かつ再生されやすい埋め込み形式
+                    wrap.innerHTML = `<iframe width="0" height="0" src="https://www.youtube.com/embed/${song.id}?autoplay=1&mute=0&origin=${window.location.origin}" frameborder="0" allow="autoplay"></iframe>`;
+                    res = `今の気分は「${song.title}」……。これなら、お話の邪魔にならないかしら。`;
                 }
-                // 戦況
-                else if (text.match(/戦況|イラン/)) {
-                    res = "あちらの仕事はお休みしましょう。ここは、私とあなただけの場所ですから。";
-                }
-
+                else if (text.match(/酒|ジン|おすすめ/)) { res = "コチョウランの香りに負けない、華やかな一杯をご用意しましょうか？"; }
                 addMessage(res, 'sophie');
             }, 1000);
         }
 
-        input.onkeypress = (e) => { if (e.key === 'Enter') handleChat(); };
+        input.onkeypress = (e) => { if (e.key === 'Enter') { enableAudio(); handleChat(); } };
     </script>
 </body>
 </html>
