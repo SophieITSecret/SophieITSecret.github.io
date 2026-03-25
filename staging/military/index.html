@@ -1,1 +1,64 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>検収場：イラン戦況ダッシュボード</title>
+    <link rel="stylesheet" href="../Sophie-Core-v13.css">
+    <style>
+        /* ジョン君専用の上書き設定（軍事色） */
+        :root {
+            --theme-bg: #1a1a1b; /* Gunmetal Gray */
+            --theme-accent: #d73a49; /* Alert Red */
+            --theme-border: #30363d;
+        }
+        .wrapper { display: flex; max-width: 1200px; margin: 2rem auto; gap: 20px; padding: 0 15px; }
+        .main-timeline { flex: 2; } /* 左 66% */
+        .side-maps { flex: 1; position: sticky; top: 20px; height: fit-content; } /* 右 33% 追従 */
+        .map-img { width: 100%; border: 1px solid var(--theme-border); margin-bottom: 10px; border-radius: 4px; }
+    </style>
+</head>
+<body>
 
+<header style="text-align:center; padding: 2rem;">
+    <h1 style="color:var(--theme-accent);">STRATEGIC INTELLIGENCE: IRAN</h1>
+    <p style="opacity:0.6;">SAS Ver 1.3 / 検収環境 (Staging)</p>
+</header>
+
+<div class="wrapper">
+    <main class="main-timeline" id="timeline-root">
+        <p>情報読み込み中...</p>
+    </main>
+
+    <aside class="side-maps">
+        <div class="container-box">
+            <h3 style="font-size:0.9rem; margin-top:0;">STRATEGIC MAPS</h3>
+            <img src="map_main.jpg" class="map-img" alt="中東全体図">
+            <img src="map_kharg.jpg" class="map-img" alt="カーグ島衛星写真">
+            <img src="map_missile.jpg" class="map-img" alt="ミサイル射程図">
+        </div>
+    </aside>
+</div>
+
+<script>
+    // ジョン君のJSONを読み込んで表示する魔法
+    fetch('war_data.json')
+        .then(response => response.json())
+        .then(data => {
+            const root = document.getElementById('timeline-root');
+            root.innerHTML = '';
+            
+            // 逆時系列ソート（最新が上）
+            data.reverse().forEach(item => {
+                const icon = item.category === 'us_israel' ? '🔵' : (item.category === 'iran' ? '🔴' : '🟢');
+                const div = document.createElement('div');
+                div.className = 'timeline-item';
+                div.innerHTML = `
+                    <div class="date-tag">${icon} ${item.date}</div>
+                    <div style="font-size:1.1rem; margin-top:5px;">${item.text}</div>
+                `;
+                root.appendChild(div);
+            });
+        });
+</script>
+</body>
+</html>
