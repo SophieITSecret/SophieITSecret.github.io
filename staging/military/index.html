@@ -2,35 +2,54 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>戦術ダッシュボード：統合司令 Ver 5.0</title>
+    <title>戦術ダッシュボード：統合司令 Ver 5.1</title>
     <link rel="stylesheet" href="../Sophie-Core-v13.css">
     <style>
         :root { --theme-bg: #1a1a1b; --theme-accent: #d73a49; --theme-border: #30363d; }
-        body { font-size: 0.85rem; background: var(--theme-bg); color: #e2e8e4; margin: 0; }
+        body { font-size: 0.85rem; background: var(--theme-bg); color: #e2e8e4; margin: 0; line-height: 1.2; }
+        
+        /* 6:4比率の厳守 */
         .wrapper { display: flex; max-width: 1400px; margin: 0.5rem auto; gap: 20px; padding: 0 10px; align-items: flex-start; }
         .main-timeline { flex: 0 0 60%; min-width: 0; }
         .side-maps { flex: 0 0 38%; position: sticky; top: 10px; }
-        .summary-box { background: rgba(215, 58, 73, 0.1); border: 1px solid var(--theme-accent); padding: 12px 15px; margin-bottom: 12px; border-radius: 4px; white-space: pre-wrap; line-height: 1.6; }
-        .map-img { width: 100%; border: 1px solid var(--theme-border); margin-bottom: 10px; cursor: pointer; display: block; background: #000; }
-        .legend-bar { font-size: 0.75rem; text-align: right; margin-bottom: 8px; color: #aaa; border-bottom: 1px dashed var(--theme-border); }
-        .timeline-item { display: flex; align-items: flex-start; border-left: 2px solid var(--theme-border); padding: 2px 8px; margin-bottom: 1px; background: rgba(255,255,255,0.01); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        
+        /* サマリー：余白を極限まで削り、1文字空けで開始 */
+        .summary-box { 
+            background: rgba(215, 58, 73, 0.1); border: 1px solid var(--theme-accent); 
+            padding: 4px 10px; margin-bottom: 8px; border-radius: 4px; line-height: 1.5;
+        }
+        .summary-label { font-weight: bold; color: var(--theme-accent); }
+
+        .map-img { width: 100%; border: 1px solid var(--theme-border); margin-bottom: 8px; cursor: pointer; display: block; background: #000; }
+        .legend-bar { font-size: 0.75rem; text-align: right; margin-bottom: 4px; color: #aaa; border-bottom: 1px dashed var(--theme-border); padding-bottom: 2px; }
+
+        /* タイムライン：アイコンと文章の間を1文字分に */
+        .timeline-item { 
+            display: flex; align-items: flex-start; border-left: 2px solid var(--theme-border); 
+            padding: 1px 8px; margin-bottom: 1px; background: rgba(255,255,255,0.01); 
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis; 
+        }
         .timeline-item:hover { white-space: normal; background: rgba(255,255,255,0.08); border-left-color: var(--theme-accent); }
-        .date-tag { flex-shrink: 0; width: 55px; color: var(--theme-accent); font-family: monospace; font-weight: bold; }
-        .content-text { flex: 1; margin-left: 5px; border-bottom: 1px solid rgba(255,255,255,0.05); }
-        h1 { font-size: 1.2rem; margin: 0; padding: 8px 20px; border-bottom: 1px solid var(--theme-border); background: #111; }
+        .date-tag { flex-shrink: 0; width: 62px; color: var(--theme-accent); font-family: monospace; font-weight: bold; }
+        .content-text { flex: 1; margin-left: 8px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+
+        /* 週の区切り（月曜と日曜の間） */
+        .week-spacer { height: 12px; border-left: 2px solid transparent; margin-bottom: 2px; position: relative; }
+        .week-spacer::after { content: "--- WEEKLY DIVISION ---"; position: absolute; left: 10px; font-size: 0.6rem; color: #444; letter-spacing: 2px; }
+
+        h1 { font-size: 1.1rem; margin: 0; padding: 5px 20px; border-bottom: 1px solid var(--theme-border); background: #111; }
         #modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 1000; cursor: zoom-out; justify-content: center; align-items: center; }
         #modal-img { max-width: 98%; max-height: 98%; }
     </style>
 </head>
 <body>
 
-<h1>IRAN WAR LOG <span style="font-size:0.7rem; color:var(--theme-accent);">COMMAND CENTER v5.0</span></h1>
+<h1>IRAN WAR LOG <span style="font-size:0.7rem; color:var(--theme-accent);">COMMAND CENTER v5.1</span></h1>
 
 <div class="wrapper">
     <main class="main-timeline">
         <div class="summary-box">
-            <h2 style="display:inline; font-size:0.9rem; color:var(--theme-accent); margin-right:10px;">戦況サマリー</h2>
-            <span id="summary-content">Loading Integrated Data...</span>
+            <span class="summary-label">戦況サマリー</span>　<span id="summary-content">Loading...</span>
         </div>
         <div class="legend-bar">🔵 米・イス攻撃 ／ 🔴 イラン攻撃 ／ 🟢 外交・国際</div>
         <div id="timeline-root"></div>
@@ -46,7 +65,7 @@
     async function loadCommandCenter() {
         try {
             const res = await fetch('data.csv?v=' + Date.now());
-            if (!res.ok) throw new Error("data.csvが見つかりません");
+            if (!res.ok) throw new Error("data.csv not found");
             const csvText = await res.text();
             const lines = csvText.split('\n').filter(l => l.trim() !== '');
 
@@ -58,13 +77,10 @@
                 const cols = line.split(',');
                 const type = cols[0].trim().toUpperCase();
 
-                // 1. サマリーの処理
                 if (type === 'SUMMARY') {
-                    const content = line.substring(line.indexOf(',') + 1).replace(/^"|"$/g, '').replace(/""/g, '"');
+                    const content = line.substring(line.indexOf(',') + 1).trim().replace(/^"|"$/g, '').replace(/""/g, '"');
                     document.getElementById('summary-content').innerText = content;
                 }
-                
-                // 2. 地図スイッチの処理
                 else if (type === 'MAPS') {
                     for (let i = 1; i <= 5; i++) {
                         if (cols[i] && cols[i].trim().toUpperCase() === 'ON') {
@@ -77,22 +93,36 @@
                         }
                     }
                 }
-
-                // 3. ログの蓄積
                 else if (type === 'LOG') {
                     logRows.push(cols);
                 }
             });
 
-            // タイムライン描画（逆順）
-            logRows.reverse().forEach(cols => {
-                const date = cols[1].split('-').slice(1).join('/');
+            // タイムライン描画（最新が上）
+            let lastWeekId = null;
+            logRows.reverse().forEach((cols, index) => {
+                const dateStr = cols[1].trim(); // 2026-03-25
+                const dateObj = new Date(dateStr);
+                
+                // 日付表示の復旧 (MM/DD)
+                const shortDate = dateStr.substring(5).replace('-', '/');
+                
+                // 週の区切りロジック（日曜と月曜の間）
+                // 日曜(0)と月曜(1)の境界を検知
+                const dayOfWeek = dateObj.getDay(); 
+                if (index > 0 && dayOfWeek === 0) { // 現在が日曜で、その上に月曜以降があった場合
+                     const spacer = document.createElement('div');
+                     spacer.className = 'week-spacer';
+                     tRoot.appendChild(spacer);
+                }
+
                 const icon = cols[2].trim() === 'us_israel' ? '🔵' : (cols[2].trim() === 'iran' ? '🔴' : '🟢');
-                // カンマを含む文章対策
-                const rawLine = lines.find(l => l.includes(cols[3]));
                 const text = cols.slice(3).join(',').replace(/^"|"$/g, '').replace(/""/g, '"');
                 
-                tRoot.innerHTML += `<div class="timeline-item"><div class="date-tag">${icon}${date}</div><div class="content-text">${text}</div></div>`;
+                const item = document.createElement('div');
+                item.className = 'timeline-item';
+                item.innerHTML = `<div class="date-tag">${icon}${shortDate}</div><div class="content-text">${text}</div>`;
+                tRoot.appendChild(item);
             });
 
         } catch (e) {
