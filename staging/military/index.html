@@ -2,141 +2,94 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>検収場：イラン戦況・高度ブリーフィング Ver 2.0</title>
+    <title>戦術ダッシュボード：イラン戦況 (Staging)</title>
     <link rel="stylesheet" href="../Sophie-Core-v13.css">
     <style>
-        :root {
-            --theme-bg: #1a1a1b;
-            --theme-accent: #d73a49;
-            --theme-border: #30363d;
-        }
-        body { font-size: 0.85rem; }
-        
-        /* 【3】レイアウトを 2:1 から 6:4 へ変更 */
+        :root { --theme-bg: #1a1a1b; --theme-accent: #d73a49; --theme-border: #30363d; }
+        body { font-size: 0.85rem; background: var(--theme-bg); color: #e2e8e4; margin: 0; }
         .wrapper { display: flex; max-width: 1400px; margin: 0.5rem auto; gap: 20px; padding: 0 10px; }
-        .main-timeline { flex: 6; } /* 左 6 */
-        .side-maps { flex: 4; position: sticky; top: 10px; height: fit-content; } /* 右 4 追従 */
-        
-        /* 地図画像のスタイル */
-        .map-img { 
-            width: 100%; border: 1px solid var(--theme-border); 
-            margin-bottom: 5px; border-radius: 2px; cursor: pointer; /* クリック可能に */
-            transition: 0.2s;
-        }
-        .map-img:hover { border-color: var(--theme-accent); transform: scale(1.02); }
-
-        /* 戦況サマリーボックス（詰め込み仕様） */
-        .summary-box {
-            background: rgba(215, 58, 73, 0.05);
-            border: 1px solid var(--theme-accent);
-            padding: 8px 12px; margin-bottom: 10px; border-radius: 4px;
-        }
-
-        /* 【2】凡例（レジェンド）を右寄せ */
-        .legend-bar {
-            font-size: 0.75rem; text-align: right; /* 右寄せ */
-            margin-bottom: 8px; padding-bottom: 5px;
-            border-bottom: 1px dashed var(--theme-border); color: #aaa;
-        }
-
-        /* ギッチリ詰めるタイムライン */
-        .timeline-item {
-            display: flex; align-items: flex-start;
-            border-left: 2px solid var(--theme-border);
-            padding: 1px 8px; margin-bottom: 1px;
-            background: rgba(255,255,255,0.01);
-            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-        }
-        .timeline-item:hover { 
-            white-space: normal; background: rgba(255,255,255,0.08); 
-            border-left-color: var(--theme-accent);
-        }
+        .main-timeline { flex: 6; }
+        .side-maps { flex: 4; position: sticky; top: 10px; height: fit-content; }
+        .map-img { width: 100%; border: 1px solid var(--theme-border); margin-bottom: 5px; cursor: pointer; transition: 0.2s; }
+        .map-img:hover { border-color: var(--theme-accent); transform: scale(1.01); }
+        .summary-box { background: rgba(215, 58, 73, 0.05); border: 1px solid var(--theme-accent); padding: 8px 12px; margin-bottom: 10px; border-radius: 4px; }
+        .legend-bar { font-size: 0.75rem; text-align: right; margin-bottom: 8px; color: #aaa; border-bottom: 1px dashed var(--theme-border); }
+        .timeline-item { display: flex; align-items: flex-start; border-left: 2px solid var(--theme-border); padding: 1px 8px; margin-bottom: 1px; background: rgba(255,255,255,0.01); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .timeline-item:hover { white-space: normal; background: rgba(255,255,255,0.08); border-left-color: var(--theme-accent); }
         .date-tag { flex-shrink: 0; width: 55px; color: var(--theme-accent); font-family: monospace; font-weight: bold; }
         .content-text { flex: 1; margin-left: 5px; border-bottom: 1px solid rgba(255,255,255,0.05); }
-
-        h1 { font-size: 1.3rem; margin: 0; padding: 5px 0; letter-spacing: 2px; }
-        h2 { font-size: 0.8rem; color: var(--theme-accent); margin: 0; letter-spacing: 1px; }
-
-        /* 【3】クリックして大きくするためのモーダル（魔法） */
-        #modal-overlay {
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.8); z-index: 1000; cursor: zoom-out;
-            justify-content: center; align-items: center;
-        }
-        #modal-img { max-width: 95%; max-height: 95%; border: 3px solid #fff; border-radius: 4px; }
+        h1 { font-size: 1.2rem; margin: 0; padding: 5px 20px; letter-spacing: 1px; border-bottom: 1px solid var(--theme-border); }
+        h2 { display: inline; font-size: 0.8rem; color: var(--theme-accent); }
+        #modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; cursor: zoom-out; justify-content: center; align-items: center; }
+        #modal-img { max-width: 98%; max-height: 98%; border: 1px solid #fff; }
     </style>
 </head>
 <body>
 
-<header style="padding-left: 20px; border-bottom: 1px solid var(--theme-border); display: flex; align-items: center; justify-content: space-between;">
-    <h1>IRAN WAR INTELLIGENCE LOG</h1>
-    <span style="font-size:0.7rem; color:#666; padding-right:20px;">SECURITY LEVEL: ALPHA</span>
-</header>
+<h1>IRAN WAR INTELLIGENCE LOG <span style="font-size:0.7rem; color:#666;">v3.0 SYNCING...</span></h1>
 
 <div class="wrapper">
     <main class="main-timeline">
-        
         <div class="summary-box">
-            <div id="summary-text" style="line-height:1.5; color:#eee; display: inline-block;">
-                <h2 style="display: inline;">戦況サマリー</h2>　<span style="display: inline;">米・イス側の攻勢続くが、イラン側も散発的ながら、反撃は止まっていない。米海兵隊がペルシャ湾に迫っており、カーグ島上陸の可能性も推測されている。一方トランプ大統領の発電所攻撃予告と攻撃の5日間延期のあとの動向も注目される。長く書いてもこのまま横へ詰め込まれます。</span>
-            </div>
+            <h2>戦況サマリー</h2>　<span id="summary-content">Loading...</span>
         </div>
-
-        <div class="legend-bar">
-            🔵 米・イス攻撃 ／ 🔴 イラン攻撃 ／ 🟢 外交交渉・発言
-        </div>
-
-        <div id="timeline-root">Loading intelligence...</div>
+        <div class="legend-bar">🔵 米・イス攻撃 ／ 🔴 イラン攻撃 ／ 🟢 外交・国際</div>
+        <div id="timeline-root">Loading...</div>
     </main>
 
-    <aside class="side-maps">
-        <div class="container-box" style="padding: 10px;">
-            <p style="font-size:0.7rem; color:var(--theme-accent); margin:0 0 5px 0; font-weight:bold;">STRATEGIC MAPS</p>
-            <img src="map_main.jpg" class="map-img" onclick="openModal(this)" alt="中東全体図">
-            <img src="map_kharg.jpg" class="map-img" onclick="openModal(this)" alt="カーグ島衛星写真">
-            <img src="map_missile.jpg" class="map-img" onclick="openModal(this)" alt="ミサイル射程図">
-        </div>
-    </aside>
+    <aside class="side-maps" id="maps-root">
+        <p style="font-size:0.7rem; color:var(--theme-accent); font-weight:bold;">STRATEGIC MAPS</p>
+        </aside>
 </div>
 
-<div id="modal-overlay" onclick="closeModal()">
-    <img id="modal-img" src="" alt="拡大図">
-</div>
+<div id="modal-overlay" onclick="this.style.display='none'"><img id="modal-img" src=""></div>
 
 <script>
-    // タイムライン描画処理
-    fetch('war_data.json')
-        .then(response => response.json())
-        .then(data => {
-            const root = document.getElementById('timeline-root');
-            root.innerHTML = '';
-            
-            data.reverse().forEach(item => {
-                const icon = item.category === 'us_israel' ? '🔵' : (item.category === 'iran' ? '🔴' : '🟢');
-                const shortDate = item.date.split('-').slice(1).join('/');
-                
-                const div = document.createElement('div');
-                div.className = 'timeline-item';
-                div.innerHTML = `
-                    <div class="date-tag">${icon}${shortDate}</div>
-                    <div class="content-text">${item.text}</div>
-                `;
-                root.appendChild(div);
-            });
+    const urls = {
+        summary: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTp9viFaCBUPO77CPY91yx81TfHlQtwexU6vMoApOIK156NKij_MDL_DarhjgdEDm5s9Xze4Ki5EcTB/pub?gid=0&single=true&output=csv',
+        timeline: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTp9viFaCBUPO77CPY91yx81TfHlQtwexU6vMoApOIK156NKij_MDL_DarhjgdEDm5s9Xze4Ki5EcTB/pub?gid=419605200&single=true&output=csv',
+        maps: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTp9viFaCBUPO77CPY91yx81TfHlQtwexU6vMoApOIK156NKij_MDL_DarhjgdEDm5s9Xze4Ki5EcTB/pub?gid=1646785603&single=true&output=csv'
+    };
+
+    async function loadDashboard() {
+        // 1. サマリー読み込み (B1セル想定)
+        const summaryData = await fetch(urls.summary).then(r => r.text());
+        const summaryText = summaryData.split('\n')[0].split(',')[1] || "No summary data.";
+        document.getElementById('summary-content').innerText = summaryText;
+
+        // 2. 地図読み込み (ON/OFF連動)
+        const mapsData = await fetch(urls.maps).then(r => r.text());
+        const mapLines = mapsData.split('\n');
+        const mapsRoot = document.getElementById('maps-root');
+        for (let i = 1; i <= 5; i++) {
+            const row = mapLines[i-1] ? mapLines[i-1].split(',') : [];
+            if (row[1] && row[1].trim().toUpperCase() === 'ON') {
+                const img = document.createElement('img');
+                img.src = `map_${i}.png`; // PNG固定
+                img.className = 'map-img';
+                img.onclick = () => { document.getElementById('modal-img').src = img.src; document.getElementById('modal-overlay').style.display = 'flex'; };
+                mapsRoot.appendChild(img);
+            }
+        }
+
+        // 3. タイムライン読み込み (CSV解析)
+        const timelineData = await fetch(urls.timeline).then(r => r.text());
+        const rows = timelineData.split('\n').slice(1); // ヘッダー除去
+        const root = document.getElementById('timeline-root');
+        root.innerHTML = '';
+        rows.reverse().forEach(row => {
+            const cols = row.split(',');
+            if (cols.length < 3) return;
+            const date = cols[0].split('-').slice(1).join('/'); // MM/DD
+            const icon = cols[1] === 'us_israel' ? '🔵' : (cols[1] === 'iran' ? '🔴' : '🟢');
+            const item = document.createElement('div');
+            item.className = 'timeline-item';
+            item.innerHTML = `<div class="date-tag">${icon}${date}</div><div class="content-text">${cols[2]}</div>`;
+            root.appendChild(item);
         });
-
-    // モーダル表示の魔法
-    const modalOverlay = document.getElementById('modal-overlay');
-    const modalImg = document.getElementById('modal-img');
-
-    function openModal(img) {
-        modalImg.src = img.src; // クリックした画像のsrcをモーダルへ
-        modalOverlay.style.display = 'flex'; // モーダルを表示
     }
 
-    function closeModal() {
-        modalOverlay.style.display = 'none'; // モーダルを非表示
-    }
+    loadDashboard();
 </script>
 </body>
 </html>
