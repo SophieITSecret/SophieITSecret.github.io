@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>検収場：イラン戦況・高度ブリーフィング</title>
+    <title>検収場：イラン戦況・高度ブリーフィング Ver 2.0</title>
     <link rel="stylesheet" href="../Sophie-Core-v13.css">
     <style>
         :root {
@@ -10,52 +10,60 @@
             --theme-accent: #d73a49;
             --theme-border: #30363d;
         }
-        body { font-size: 0.85rem; } /* ご希望によりさらに僅かに縮小 */
+        body { font-size: 0.85rem; }
         
-        .wrapper { display: flex; max-width: 1400px; margin: 0.5rem auto; gap: 15px; padding: 0 10px; }
-        .main-timeline { flex: 2; }
-        .side-maps { flex: 1; position: sticky; top: 10px; height: fit-content; }
-        .map-img { width: 100%; border: 1px solid var(--theme-border); margin-bottom: 5px; border-radius: 2px; }
+        /* 【3】レイアウトを 2:1 から 6:4 へ変更 */
+        .wrapper { display: flex; max-width: 1400px; margin: 0.5rem auto; gap: 20px; padding: 0 10px; }
+        .main-timeline { flex: 6; } /* 左 6 */
+        .side-maps { flex: 4; position: sticky; top: 10px; height: fit-content; } /* 右 4 追従 */
+        
+        /* 地図画像のスタイル */
+        .map-img { 
+            width: 100%; border: 1px solid var(--theme-border); 
+            margin-bottom: 5px; border-radius: 2px; cursor: pointer; /* クリック可能に */
+            transition: 0.2s;
+        }
+        .map-img:hover { border-color: var(--theme-accent); transform: scale(1.02); }
 
-        /* 【新設】戦況サマリー・凡例ボックス */
+        /* 戦況サマリーボックス（詰め込み仕様） */
         .summary-box {
             background: rgba(215, 58, 73, 0.05);
             border: 1px solid var(--theme-accent);
-            padding: 8px 12px;
-            margin-bottom: 10px;
-            border-radius: 4px;
+            padding: 8px 12px; margin-bottom: 10px; border-radius: 4px;
         }
+
+        /* 【2】凡例（レジェンド）を右寄せ */
         .legend-bar {
-            font-size: 0.75rem;
-            margin-bottom: 8px;
-            padding-bottom: 5px;
-            border-bottom: 1px dashed var(--theme-border);
-            color: #aaa;
+            font-size: 0.75rem; text-align: right; /* 右寄せ */
+            margin-bottom: 8px; padding-bottom: 5px;
+            border-bottom: 1px dashed var(--theme-border); color: #aaa;
         }
 
         /* ギッチリ詰めるタイムライン */
         .timeline-item {
-            display: flex;
-            align-items: flex-start;
+            display: flex; align-items: flex-start;
             border-left: 2px solid var(--theme-border);
-            padding: 1px 8px;
-            margin-bottom: 1px;
+            padding: 1px 8px; margin-bottom: 1px;
             background: rgba(255,255,255,0.01);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
         }
         .timeline-item:hover { 
-            white-space: normal; 
-            background: rgba(255,255,255,0.08); 
+            white-space: normal; background: rgba(255,255,255,0.08); 
             border-left-color: var(--theme-accent);
         }
-
         .date-tag { flex-shrink: 0; width: 55px; color: var(--theme-accent); font-family: monospace; font-weight: bold; }
         .content-text { flex: 1; margin-left: 5px; border-bottom: 1px solid rgba(255,255,255,0.05); }
 
         h1 { font-size: 1.3rem; margin: 0; padding: 5px 0; letter-spacing: 2px; }
-        h2 { font-size: 0.8rem; color: var(--theme-accent); margin: 0 0 5px 0; letter-spacing: 1px; }
+        h2 { font-size: 0.8rem; color: var(--theme-accent); margin: 0; letter-spacing: 1px; }
+
+        /* 【3】クリックして大きくするためのモーダル（魔法） */
+        #modal-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8); z-index: 1000; cursor: zoom-out;
+            justify-content: center; align-items: center;
+        }
+        #modal-img { max-width: 95%; max-height: 95%; border: 3px solid #fff; border-radius: 4px; }
     </style>
 </head>
 <body>
@@ -69,14 +77,13 @@
     <main class="main-timeline">
         
         <div class="summary-box">
-            <h2>戦況サマリー</h2>
-            <div id="summary-text" style="line-height:1.5; color:#eee;">
-                米・イス側の攻勢続くが、イラン側も散発的ながら、反撃は止まっていない。米海兵隊がペルシャ湾に迫っており、カーグ島上陸の可能性も推測されている。一方トランプ大統領の発電所攻撃予告と攻撃の5日間延期のあとの動向も注目される。
+            <div id="summary-text" style="line-height:1.5; color:#eee; display: inline-block;">
+                <h2 style="display: inline;">戦況サマリー</h2>　<span style="display: inline;">米・イス側の攻勢続くが、イラン側も散発的ながら、反撃は止まっていない。米海兵隊がペルシャ湾に迫っており、カーグ島上陸の可能性も推測されている。一方トランプ大統領の発電所攻撃予告と攻撃の5日間延期のあとの動向も注目される。長く書いてもこのまま横へ詰め込まれます。</span>
             </div>
         </div>
 
         <div class="legend-bar">
-            🔵 米・イスラエル攻撃 ／ 🔴 イラン攻撃 ／ 🟢 外交交渉・発言、国際社会
+            🔵 米・イス攻撃 ／ 🔴 イラン攻撃 ／ 🟢 外交交渉・発言
         </div>
 
         <div id="timeline-root">Loading intelligence...</div>
@@ -85,11 +92,15 @@
     <aside class="side-maps">
         <div class="container-box" style="padding: 10px;">
             <p style="font-size:0.7rem; color:var(--theme-accent); margin:0 0 5px 0; font-weight:bold;">STRATEGIC MAPS</p>
-            <img src="map_main.jpg" class="map-img">
-            <img src="map_kharg.jpg" class="map-img">
-            <img src="map_missile.jpg" class="map-img">
+            <img src="map_main.jpg" class="map-img" onclick="openModal(this)" alt="中東全体図">
+            <img src="map_kharg.jpg" class="map-img" onclick="openModal(this)" alt="カーグ島衛星写真">
+            <img src="map_missile.jpg" class="map-img" onclick="openModal(this)" alt="ミサイル射程図">
         </div>
     </aside>
+</div>
+
+<div id="modal-overlay" onclick="closeModal()">
+    <img id="modal-img" src="" alt="拡大図">
 </div>
 
 <script>
@@ -100,7 +111,6 @@
             const root = document.getElementById('timeline-root');
             root.innerHTML = '';
             
-            // 逆時系列
             data.reverse().forEach(item => {
                 const icon = item.category === 'us_israel' ? '🔵' : (item.category === 'iran' ? '🔴' : '🟢');
                 const shortDate = item.date.split('-').slice(1).join('/');
@@ -114,6 +124,19 @@
                 root.appendChild(div);
             });
         });
+
+    // モーダル表示の魔法
+    const modalOverlay = document.getElementById('modal-overlay');
+    const modalImg = document.getElementById('modal-img');
+
+    function openModal(img) {
+        modalImg.src = img.src; // クリックした画像のsrcをモーダルへ
+        modalOverlay.style.display = 'flex'; // モーダルを表示
+    }
+
+    function closeModal() {
+        modalOverlay.style.display = 'none'; // モーダルを非表示
+    }
 </script>
 </body>
 </html>
