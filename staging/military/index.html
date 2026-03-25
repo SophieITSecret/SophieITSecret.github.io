@@ -2,58 +2,42 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>戦術ダッシュボード：イラン戦況 (Staging v3.2)</title>
+    <title>戦術ダッシュボード：イラン戦況 (Staging v3.3)</title>
     <link rel="stylesheet" href="../Sophie-Core-v13.css">
     <style>
         :root { --theme-bg: #1a1a1b; --theme-accent: #d73a49; --theme-border: #30363d; }
-        body { font-size: 0.85rem; background: var(--theme-bg); color: #e2e8e4; margin: 0; overflow-x: hidden; }
-        
-        /* 6:4 比率を絶対維持 */
+        body { font-size: 0.85rem; background: var(--theme-bg); color: #e2e8e4; margin: 0; }
         .wrapper { display: flex; max-width: 1400px; margin: 0.5rem auto; gap: 20px; padding: 0 10px; align-items: flex-start; }
         .main-timeline { flex: 0 0 60%; min-width: 0; }
         .side-maps { flex: 0 0 38%; position: sticky; top: 10px; }
-        
-        .map-img { width: 100%; border: 1px solid var(--theme-border); margin-bottom: 10px; cursor: pointer; display: block; background: #000; min-height: 50px; }
-        
-        /* サマリー：改行を許可し、幅を固定して下に伸ばす */
-        .summary-box { 
-            background: rgba(215, 58, 73, 0.1); border: 1px solid var(--theme-accent); 
-            padding: 12px 15px; margin-bottom: 12px; border-radius: 4px;
-            white-space: pre-wrap; /* 改行を有効にする */
-            word-wrap: break-word; /* 長い単語でも折り返す */
-            line-height: 1.6;
-        }
-        
+        .summary-box { background: rgba(215, 58, 73, 0.1); border: 1px solid var(--theme-accent); padding: 12px 15px; margin-bottom: 12px; border-radius: 4px; white-space: pre-wrap; line-height: 1.6; }
+        .map-img { width: 100%; border: 1px solid var(--theme-border); margin-bottom: 10px; cursor: pointer; display: block; background: #000; }
         .legend-bar { font-size: 0.75rem; text-align: right; margin-bottom: 8px; color: #aaa; border-bottom: 1px dashed var(--theme-border); }
         .timeline-item { display: flex; align-items: flex-start; border-left: 2px solid var(--theme-border); padding: 2px 8px; margin-bottom: 1px; background: rgba(255,255,255,0.01); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .timeline-item:hover { white-space: normal; background: rgba(255,255,255,0.08); border-left-color: var(--theme-accent); }
         .date-tag { flex-shrink: 0; width: 55px; color: var(--theme-accent); font-family: monospace; font-weight: bold; }
         .content-text { flex: 1; margin-left: 5px; border-bottom: 1px solid rgba(255,255,255,0.05); }
-        
-        h1 { font-size: 1.2rem; margin: 0; padding: 8px 20px; letter-spacing: 1px; border-bottom: 1px solid var(--theme-border); background: #111; }
-        h2 { display: inline; font-size: 0.9rem; color: var(--theme-accent); font-weight: bold; margin-right: 10px; }
-        
+        h1 { font-size: 1.2rem; margin: 0; padding: 8px 20px; border-bottom: 1px solid var(--theme-border); background: #111; }
         #modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 1000; cursor: zoom-out; justify-content: center; align-items: center; }
         #modal-img { max-width: 98%; max-height: 98%; }
+        .error-msg { color: #ff4444; font-weight: bold; padding: 10px; border: 1px solid #ff4444; }
     </style>
 </head>
 <body>
 
-<h1>IRAN WAR LOG <span style="font-size:0.7rem; color:var(--theme-accent);">STAGING v3.2</span></h1>
+<h1>IRAN WAR LOG <span style="font-size:0.7rem; color:var(--theme-accent);">STAGING v3.3</span></h1>
 
 <div class="wrapper">
     <main class="main-timeline">
         <div class="summary-box">
-            <h2>戦況サマリー</h2><span id="summary-content">...</span>
+            <h2 style="display:inline; font-size:0.9rem; color:var(--theme-accent); margin-right:10px;">戦況サマリー</h2>
+            <span id="summary-content">Loading...</span>
         </div>
         <div class="legend-bar">🔵 米・イス攻撃 ／ 🔴 イラン攻撃 ／ 🟢 外交・国際</div>
-        <div id="timeline-root">...</div>
+        <div id="timeline-root">Loading...</div>
     </main>
-
-    <aside class="side-maps">
-        <div id="maps-root" style="background: rgba(0,0,0,0.2); padding: 10px; border: 1px solid var(--theme-border);">
-            <p style="font-size:0.7rem; color:var(--theme-accent); font-weight:bold; margin-top:0;">STRATEGIC MAPS</p>
-        </div>
+    <aside class="side-maps" id="maps-root">
+        <p style="font-size:0.7rem; color:var(--theme-accent); font-weight:bold;">STRATEGIC MAPS</p>
     </aside>
 </div>
 
@@ -66,54 +50,54 @@
         maps: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTp9viFaCBUPO77CPY91yx81TfHlQtwexU6vMoApOIK156NKij_MDL_DarhjgdEDm5s9Xze4Ki5EcTB/pub?gid=1646785603&single=true&output=csv'
     };
 
+    async function fetchData(url) {
+        const response = await fetch(url + '&c=' + Date.now());
+        const text = await response.text();
+        if (text.includes('<!DOCTYPE html>')) {
+            throw new Error("スプレッドシートの公開設定が正しくありません。URLを再確認してください。");
+        }
+        return text;
+    }
+
     async function loadDashboard() {
         try {
-            // 1. サマリー解析（全文章取得ロジック）
-            const summaryRaw = await fetch(urls.summary + '&c=' + Date.now()).then(r => r.text());
-            // 最初のカンマ以降すべてを取得し、前後の引用符と不要な改行を整理
-            let summaryBody = summaryRaw.substring(summaryRaw.indexOf(',') + 1).trim();
-            summaryBody = summaryBody.replace(/^"|"$/g, '').replace(/""/g, '"');
-            document.getElementById('summary-content').innerText = summaryBody;
+            // 1. サマリー
+            const sRaw = await fetchData(urls.summary);
+            document.getElementById('summary-content').innerText = sRaw.substring(sRaw.indexOf(',') + 1).trim().replace(/^"|"$/g, '').replace(/""/g, '"');
 
-            // 2. 地図読み込み（ヘッダー飛ばし）
-            const mapsRaw = await fetch(urls.maps + '&c=' + Date.now()).then(r => r.text());
-            const mapLines = mapsRaw.split('\n');
-            const mapsRoot = document.getElementById('maps-root');
-            
-            // i=1 から開始（0行目のヘッダー「項目,表示スイッチ」を無視）
-            for (let i = 1; i < mapLines.length; i++) {
-                const row = mapLines[i].split(',');
+            // 2. 地図
+            const mRaw = await fetchData(urls.maps);
+            const mLines = mRaw.split('\n');
+            const mRoot = document.getElementById('maps-root');
+            for (let i = 1; i < mLines.length; i++) {
+                const row = mLines[i].split(',');
                 if (row[1] && row[1].trim().toUpperCase() === 'ON') {
-                    const imgNum = row[0].replace(/[^0-9]/g, ''); // "Map 1" から "1" を抽出
+                    const imgNum = row[0].replace(/[^0-9]/g, '');
                     const img = document.createElement('img');
-                    img.src = `map_${imgNum}.png?v=` + Date.now();
+                    img.src = `map_${imgNum}.png?v=${Date.now()}`;
                     img.className = 'map-img';
-                    img.onerror = function() { this.style.display='none'; };
-                    img.onclick = () => { 
-                        document.getElementById('modal-img').src = img.src; 
-                        document.getElementById('modal-overlay').style.display = 'flex'; 
-                    };
-                    mapsRoot.appendChild(img);
+                    img.onclick = () => { document.getElementById('modal-img').src = img.src; document.getElementById('modal-overlay').style.display = 'flex'; };
+                    mRoot.appendChild(img);
                 }
             }
 
             // 3. タイムライン
-            const timelineRaw = await fetch(urls.timeline + '&c=' + Date.now()).then(r => r.text());
-            const rows = timelineRaw.split('\n').filter(r => r.trim() !== '').slice(1);
-            const root = document.getElementById('timeline-root');
-            root.innerHTML = '';
+            const tRaw = await fetchData(urls.timeline);
+            const rows = tRaw.split('\n').filter(r => r.trim() !== '').slice(1);
+            const tRoot = document.getElementById('timeline-root');
+            tRoot.innerHTML = '';
             rows.reverse().forEach(row => {
                 const cols = row.split(',');
                 if (cols.length < 3) return;
                 const date = cols[0].split('-').slice(1).join('/');
                 const icon = cols[1].trim() === 'us_israel' ? '🔵' : (cols[1].trim() === 'iran' ? '🔴' : '🟢');
                 const text = row.substring(row.indexOf(cols[1]) + cols[1].length + 1).replace(/^"|"$/g, '').replace(/""/g, '"');
-                const item = document.createElement('div');
-                item.className = 'timeline-item';
-                item.innerHTML = `<div class="date-tag">${icon}${date}</div><div class="content-text">${text}</div>`;
-                root.appendChild(item);
+                tRoot.innerHTML += `<div class="timeline-item"><div class="date-tag">${icon}${date}</div><div class="content-text">${text}</div></div>`;
             });
-        } catch (e) { console.error(e); }
+        } catch (e) {
+            document.getElementById('summary-content').innerHTML = `<span class="error-msg">${e.message}</span>`;
+            console.error(e);
+        }
     }
     loadDashboard();
 </script>
