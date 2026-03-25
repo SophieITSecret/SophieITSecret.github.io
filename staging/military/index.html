@@ -2,59 +2,85 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>検収場：イラン戦況ダッシュボード</title>
+    <title>検収場：イラン戦況ダッシュボード（高密度仕様）</title>
     <link rel="stylesheet" href="../Sophie-Core-v13.css">
     <style>
-        /* ジョン君専用の上書き設定（軍事色） */
         :root {
-            --theme-bg: #1a1a1b; /* Gunmetal Gray */
-            --theme-accent: #d73a49; /* Alert Red */
+            --theme-bg: #1a1a1b;
+            --theme-accent: #d73a49;
             --theme-border: #30363d;
         }
-        .wrapper { display: flex; max-width: 1200px; margin: 2rem auto; gap: 20px; padding: 0 15px; }
-        .main-timeline { flex: 2; } /* 左 66% */
-        .side-maps { flex: 1; position: sticky; top: 20px; height: fit-content; } /* 右 33% 追従 */
-        .map-img { width: 100%; border: 1px solid var(--theme-border); margin-bottom: 10px; border-radius: 4px; }
+        body { font-size: 0.9rem; } /* フォントを一回り小さく */
+        
+        .wrapper { display: flex; max-width: 1400px; margin: 1rem auto; gap: 15px; padding: 0 10px; }
+        .main-timeline { flex: 2; }
+        .side-maps { flex: 1; position: sticky; top: 10px; height: fit-content; }
+        .map-img { width: 100%; border: 1px solid var(--theme-border); margin-bottom: 5px; border-radius: 2px; }
+
+        /* ギッチリ詰めるための新スタイル */
+        .timeline-item {
+            display: flex; /* 横並び */
+            align-items: flex-start;
+            border-left: 2px solid var(--theme-accent);
+            padding: 2px 8px; /* 上下余白を極限までカット */
+            margin-bottom: 2px; /* 行間をゼロに近く */
+            background: rgba(255,255,255,0.02);
+            border-bottom: 1px solid rgba(255,255,255,0.05); /* 区切り線 */
+            white-space: nowrap; /* 基本は1行 */
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .timeline-item:hover { white-space: normal; background: rgba(255,255,255,0.08); } /* ホバー時のみ全文表示 */
+
+        .date-tag { 
+            flex-shrink: 0;
+            width: 70px; /* 日付幅を固定 */
+            color: var(--theme-accent); 
+            font-family: monospace; 
+            font-weight: bold;
+        }
+        .content-text { flex: 1; margin-left: 5px; }
+
+        h1 { font-size: 1.5rem; margin: 0; padding: 10px 0; }
     </style>
 </head>
 <body>
 
-<header style="text-align:center; padding: 2rem;">
-    <h1 style="color:var(--theme-accent);">STRATEGIC INTELLIGENCE: IRAN</h1>
-    <p style="opacity:0.6;">SAS Ver 1.3 / 検収環境 (Staging)</p>
+<header style="border-bottom: 1px solid var(--theme-border); margin-bottom: 10px; padding-left: 20px;">
+    <h1>IRAN WAR LOG <span style="font-size:0.7rem; color:var(--theme-accent); vertical-align:middle;">HIGH-DENSITY MODE</span></h1>
 </header>
 
 <div class="wrapper">
-    <main class="main-timeline" id="timeline-root">
-        <p>情報読み込み中...</p>
-    </main>
+    <main class="main-timeline" id="timeline-root">Loading intelligence...</main>
 
     <aside class="side-maps">
-        <div class="container-box">
-            <h3 style="font-size:0.9rem; margin-top:0;">STRATEGIC MAPS</h3>
-            <img src="map_main.jpg" class="map-img" alt="中東全体図">
-            <img src="map_kharg.jpg" class="map-img" alt="カーグ島衛星写真">
-            <img src="map_missile.jpg" class="map-img" alt="ミサイル射程図">
+        <div class="container-box" style="padding: 10px;">
+            <p style="font-size:0.7rem; color:var(--theme-accent); margin:0 0 5px 0; font-weight:bold;">STRATEGIC MAPS</p>
+            <img src="map_main.jpg" class="map-img">
+            <img src="map_kharg.jpg" class="map-img">
+            <img src="map_missile.jpg" class="map-img">
         </div>
     </aside>
 </div>
 
 <script>
-    // ジョン君のJSONを読み込んで表示する魔法
     fetch('war_data.json')
         .then(response => response.json())
         .then(data => {
             const root = document.getElementById('timeline-root');
             root.innerHTML = '';
             
-            // 逆時系列ソート（最新が上）
             data.reverse().forEach(item => {
                 const icon = item.category === 'us_israel' ? '🔵' : (item.category === 'iran' ? '🔴' : '🟢');
+                
+                // 日付を 03/25 形式に変換
+                const shortDate = item.date.split('-').slice(1).join('/');
+                
                 const div = document.createElement('div');
                 div.className = 'timeline-item';
                 div.innerHTML = `
-                    <div class="date-tag">${icon} ${item.date}</div>
-                    <div style="font-size:1.1rem; margin-top:5px;">${item.text}</div>
+                    <div class="date-tag">${icon}${shortDate}</div>
+                    <div class="content-text">${item.text}</div>
                 `;
                 root.appendChild(div);
             });
