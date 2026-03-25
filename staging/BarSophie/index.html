@@ -2,96 +2,77 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>Bar Sophie (Staging v2.1)</title>
+    <title>Bar Sophie (Staging v2.2)</title>
     <style>
-        :root { 
-            --bar-bg: #030305; /* 深いミッドナイトブルー */
-            --bar-accent: #f0b56e; /* 琥珀色 */
-            --bar-text: #f0f0f0;
-            --bar-border: #2a2a3a;
-        }
+        :root { --bar-bg: #030305; --bar-accent: #f0b56e; --bar-text: #f0f0f0; }
+        
         body { 
-            background-color: var(--bar-bg);
+            background-color: #050508; /* 真っ黒ではなく、わずかに青みのある黒 */
             color: var(--bar-text); 
-            font-family: 'Times New Roman', 'MS PMincho', serif;
             margin: 0; overflow: hidden; height: 100vh; display: flex;
         }
 
-        /* カウンターエリア：ここを拡張します */
         .counter-area {
-            flex: 7; position: relative; display: flex; justify-content: center; align-items: center;
-            border-right: 1px solid var(--bar-border);
-            /* 【根本解決】縦長画像の「左右」の余白を照らすグラデーション。
-               中心からAmber（琥珀色）を少し滲ませ、左右に深いブルーを広げます。
-            */
-            background: 
-                radial-gradient(circle at center, rgba(240, 181, 110, 0.1) 0%, transparent 70%),
-                radial-gradient(circle at 30% 50%, #1a1a2e 0%, #030305 70%); /* 深い青の奥行き */
+            flex: 7; position: relative; 
+            display: flex; justify-content: center; align-items: center;
+            background-color: #050508;
             overflow: hidden;
         }
-        
-        /* 左右の余白に、ぼんやりとした照明の「残光」を演出 */
-        .counter-area::before {
-            content: ""; position: absolute; width: 150%; height: 150%;
-            background: 
-                radial-gradient(circle at 10% 20%, rgba(240, 181, 110, 0.05) 0%, transparent 30%),
-                radial-gradient(circle at 90% 80%, rgba(26, 26, 46, 0.3) 0%, transparent 30%);
-            z-index: 1; pointer-events: none;
+
+        /* 【新兵器】画像の左右に配置する「物理的な光」 */
+        .ambient-light-left {
+            position: absolute; left: -100px; width: 500px; height: 100%;
+            background: radial-gradient(circle at center, rgba(240, 181, 110, 0.15) 0%, transparent 80%);
+            filter: blur(40px); z-index: 1;
+        }
+        .ambient-light-right {
+            position: absolute; right: -100px; width: 500px; height: 100%;
+            background: radial-gradient(circle at center, rgba(240, 181, 110, 0.1) 0%, transparent 80%);
+            filter: blur(40px); z-index: 1;
         }
 
         #sophie-image {
-            max-width: 90%; max-height: 98%;
-            /* 画像自体の色の悪さを補正 */
-            filter: contrast(1.1) brightness(1.1) saturate(1.1);
-            z-index: 2;
-            box-shadow: 0 0 50px rgba(0,0,0,0.8); /* 画像と余白の境界をぼかす */
+            height: 96vh; /* 縦を画面いっぱいに */
+            width: auto;   /* 横幅は比率を維持 */
+            z-index: 5;
+            /* ブラウザでの「色の悪さ」を強制補正 */
+            filter: contrast(1.15) brightness(1.1) saturate(1.2);
+            box-shadow: 0 0 100px rgba(0,0,0,1); /* 画像の端を闇に溶け込ませる */
         }
 
-        /* チャット・操作エリア（右側） */
-        .chat-area { flex: 3; display: flex; flex-direction: column; background: #08080a; box-shadow: -10px 0 30px rgba(0,0,0,0.5); z-index: 3; }
-        .chat-header { padding: 15px; border-bottom: 1px solid var(--bar-border); color: var(--bar-accent); font-weight: bold; text-align: center; letter-spacing: 3px; font-family: sans-serif; }
-        
-        /* ジュークボックス（手動） */
-        .jukebox { padding: 10px; border-bottom: 1px solid var(--bar-border); background: #111; text-align: center; }
-        .music-btn { background: none; border: 1px solid var(--bar-accent); color: var(--bar-accent); padding: 6px 10px; font-size: 0.7rem; cursor: pointer; margin: 2px; border-radius: 4px; transition: 0.3s; }
-        .music-btn:hover { background: var(--bar-accent); color: #000; }
-        .stop-btn { border-color: #ff4444; color: #ff4444; }
-
+        .chat-area { flex: 3; display: flex; flex-direction: column; background: #0a0a0c; border-left: 1px solid #1a1a2e; z-index: 10; }
+        .chat-header { padding: 15px; color: var(--bar-accent); font-weight: bold; text-align: center; border-bottom: 1px solid #1a1a2e; letter-spacing: 2px; }
+        .jukebox { padding: 10px; background: #111; text-align: center; border-bottom: 1px solid #1a1a2e; }
+        .music-btn { background: none; border: 1px solid var(--bar-accent); color: var(--bar-accent); padding: 5px 10px; font-size: 0.7rem; cursor: pointer; margin: 2px; border-radius: 4px; }
         .chat-messages { flex: 1; padding: 20px; overflow-y: auto; font-family: sans-serif; font-size: 0.9rem; line-height: 1.6; }
-        .message { margin-bottom: 18px; line-height: 1.4; animation: slideIn 0.3s ease-out; }
-        @keyframes slideIn { from { opacity: 0; transform: translateX(10px); } to { opacity: 1; transform: translateX(0); } }
-        .message.sophie { border-left: 3px solid var(--bar-accent); padding-left: 12px; }
-        .message.user { text-align: right; color: #666; font-size: 0.8rem; margin-left: 20%; }
-
-        .chat-input-area { padding: 20px; background: #000; border-top: 1px solid var(--bar-border); display: flex; gap: 10px; }
-        #chat-input { flex: 1; background: #111; border: 1px solid var(--bar-border); color: var(--bar-text); padding: 12px; border-radius: 8px; outline: none; }
-        #chat-input:focus { border-color: var(--bar-accent); }
+        .message.sophie { border-left: 3px solid var(--bar-accent); padding-left: 12px; margin-bottom: 15px; }
+        .chat-input-area { padding: 20px; background: #000; display: flex; }
+        #chat-input { flex: 1; background: #151515; border: 1px solid #2a2a3a; color: #fff; padding: 12px; border-radius: 8px; }
     </style>
 </head>
 <body>
 
     <div class="counter-area">
-        <img id="sophie-image" src="./sophie_shake.png" alt="Sophie Shaking">
+        <div class="ambient-light-left"></div>
+        <div class="ambient-light-right"></div>
+        
+        <img id="sophie-image" src="./sophie_shake.png" alt="Sophie">
     </div>
 
     <aside class="chat-area">
-        <div class="chat-header">SOPHIE’S PRIVATE COUNTER</div>
-
+        <div class="chat-header">BAR SOPHIE v2.2</div>
         <div class="jukebox">
-            <button class="music-btn" onclick="playMusic('fEvM-OUbaKs', 'Sophie\'s Selection')">Sophie's Selection</button>
-            <button class="music-btn" onclick="playMusic('LpP-ZqS2Spg', 'Night Jazz')">Night Jazz</button>
-            <button class="music-btn" onclick="playMusic('HMnrl0gFDUg', 'Smooth Piano')">Smooth Piano</button>
-            <button class="music-btn stop-btn" onclick="stopMusic()">Stop</button>
+            <button class="music-btn" onclick="playMusic('fEvM-OUbaKs')">Sophie's</button>
+            <button class="music-btn" onclick="playMusic('LpP-ZqS2Spg')">Jazz</button>
+            <button class="music-btn" onclick="playMusic('HMnrl0gFDUg')">Piano</button>
+            <button class="music-btn" onclick="stopMusic()">Stop</button>
         </div>
-
         <div id="chat-messages" class="chat-messages">
-            <div class="message sophie">ご主人様、なるほど！画像の「左右」ですね。お店の灯りを、空間全体に広げてみましたわ。これでいかがかしら？</div>
+            <div class="message sophie">ご主人様……。今度こそ、お店の隅々にまで灯りを届けたつもりですわ。……いかがかしら？</div>
         </div>
-
         <div class="chat-input-area">
-            <input type="text" id="chat-input" placeholder="彼女に語りかける...">
+            <input type="text" id="chat-input" placeholder="会話を続ける...">
         </div>
-        
         <div id="yt-wrap" style="display:none;"></div>
     </aside>
 
@@ -108,31 +89,20 @@
             messages.scrollTop = messages.scrollHeight;
         }
 
-        function playMusic(id, title) {
-            ytWrap.innerHTML = `<iframe width="1" height="1" src="https://www.youtube.com/embed/${id}?autoplay=1&mute=0&rel=0&version=3" frameborder="0" allow="autoplay"></iframe>`;
-            addMessage(`「${title}」……。静かな夜に相応しい一曲ですわ。`, 'sophie');
+        function playMusic(id) {
+            ytWrap.innerHTML = `<iframe width="1" height="1" src="https://www.youtube.com/embed/${id}?autoplay=1&rel=0" frameborder="0" allow="autoplay"></iframe>`;
+            addMessage("静かな夜に相応しい一曲ですわ。", 'sophie');
         }
 
-        function stopMusic() {
-            ytWrap.innerHTML = '';
-            addMessage("静寂に戻しますね。", 'sophie');
-        }
+        function stopMusic() { ytWrap.innerHTML = ''; addMessage("静寂に戻しましたわ。", 'sophie'); }
 
-        function handleChat() {
-            const text = input.value.trim();
-            if (text === '') return;
-            addMessage(text, 'user');
-            input.value = '';
-            setTimeout(() => {
-                let res = "ええ。";
-                if (text.match(/酒|おすすめ/)) res = "コチョウランの白を眺めながら、この一杯はいかが？";
-                if (text.match(/音楽|曲/)) res = "メニューのボタンからお選びくださいね。";
-                if (text.match(/戦況|イラン/)) res = "あちらの仕事はお休みしましょう。ここは、私とあなただけの場所ですから。";
-                addMessage(res, 'sophie');
-            }, 800);
-        }
-
-        input.onkeypress = (e) => { if (e.key === 'Enter') handleChat(); };
+        input.onkeypress = (e) => {
+            if (e.key === 'Enter' && input.value.trim() !== '') {
+                addMessage(input.value, 'user');
+                input.value = '';
+                setTimeout(() => { addMessage("ええ。大切なお話、お聞きしていますわ。", 'sophie'); }, 800);
+            }
+        };
     </script>
 </body>
 </html>
