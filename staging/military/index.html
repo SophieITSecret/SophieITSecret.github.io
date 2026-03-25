@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>戦術ダッシュボード：イラン戦況 (Staging v3.3)</title>
+    <title>戦術ダッシュボード：統合司令 Ver 5.0</title>
     <link rel="stylesheet" href="../Sophie-Core-v13.css">
     <style>
         :root { --theme-bg: #1a1a1b; --theme-accent: #d73a49; --theme-border: #30363d; }
@@ -20,86 +20,86 @@
         h1 { font-size: 1.2rem; margin: 0; padding: 8px 20px; border-bottom: 1px solid var(--theme-border); background: #111; }
         #modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 1000; cursor: zoom-out; justify-content: center; align-items: center; }
         #modal-img { max-width: 98%; max-height: 98%; }
-        .error-msg { color: #ff4444; font-weight: bold; padding: 10px; border: 1px solid #ff4444; }
     </style>
 </head>
 <body>
 
-<h1>IRAN WAR LOG <span style="font-size:0.7rem; color:var(--theme-accent);">STAGING v3.3</span></h1>
+<h1>IRAN WAR LOG <span style="font-size:0.7rem; color:var(--theme-accent);">COMMAND CENTER v5.0</span></h1>
 
 <div class="wrapper">
     <main class="main-timeline">
         <div class="summary-box">
             <h2 style="display:inline; font-size:0.9rem; color:var(--theme-accent); margin-right:10px;">戦況サマリー</h2>
-            <span id="summary-content">Loading...</span>
+            <span id="summary-content">Loading Integrated Data...</span>
         </div>
         <div class="legend-bar">🔵 米・イス攻撃 ／ 🔴 イラン攻撃 ／ 🟢 外交・国際</div>
-        <div id="timeline-root">Loading...</div>
+        <div id="timeline-root"></div>
     </main>
     <aside class="side-maps" id="maps-root">
-        <p style="font-size:0.7rem; color:var(--theme-accent); font-weight:bold;">STRATEGIC MAPS</p>
+        <p style="font-size:0.7rem; color:var(--theme-accent); font-weight:bold; margin-top:0;">STRATEGIC MAPS</p>
     </aside>
 </div>
 
 <div id="modal-overlay" onclick="this.style.display='none'"><img id="modal-img" src=""></div>
 
 <script>
-    const urls = {
-        summary: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTp9viFaCBUPO77CPY91yx81TfHlQtwexU6vMoApOIK156NKij_MDL_DarhjgdEDm5s9Xze4Ki5EcTB/pub?gid=0&single=true&output=csv',
-        timeline: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTp9viFaCBUPO77CPY91yx81TfHlQtwexU6vMoApOIK156NKij_MDL_DarhjgdEDm5s9Xze4Ki5EcTB/pub?gid=419605200&single=true&output=csv',
-        maps: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTp9viFaCBUPO77CPY91yx81TfHlQtwexU6vMoApOIK156NKij_MDL_DarhjgdEDm5s9Xze4Ki5EcTB/pub?gid=1646785603&single=true&output=csv'
-    };
-
-    async function fetchData(url) {
-        const response = await fetch(url + '&c=' + Date.now());
-        const text = await response.text();
-        if (text.includes('<!DOCTYPE html>')) {
-            throw new Error("スプレッドシートの公開設定が正しくありません。URLを再確認してください。");
-        }
-        return text;
-    }
-
-    async function loadDashboard() {
+    async function loadCommandCenter() {
         try {
-            // 1. サマリー
-            const sRaw = await fetchData(urls.summary);
-            document.getElementById('summary-content').innerText = sRaw.substring(sRaw.indexOf(',') + 1).trim().replace(/^"|"$/g, '').replace(/""/g, '"');
+            const res = await fetch('data.csv?v=' + Date.now());
+            if (!res.ok) throw new Error("data.csvが見つかりません");
+            const csvText = await res.text();
+            const lines = csvText.split('\n').filter(l => l.trim() !== '');
 
-            // 2. 地図
-            const mRaw = await fetchData(urls.maps);
-            const mLines = mRaw.split('\n');
-            const mRoot = document.getElementById('maps-root');
-            for (let i = 1; i < mLines.length; i++) {
-                const row = mLines[i].split(',');
-                if (row[1] && row[1].trim().toUpperCase() === 'ON') {
-                    const imgNum = row[0].replace(/[^0-9]/g, '');
-                    const img = document.createElement('img');
-                    img.src = `map_${imgNum}.png?v=${Date.now()}`;
-                    img.className = 'map-img';
-                    img.onclick = () => { document.getElementById('modal-img').src = img.src; document.getElementById('modal-overlay').style.display = 'flex'; };
-                    mRoot.appendChild(img);
-                }
-            }
-
-            // 3. タイムライン
-            const tRaw = await fetchData(urls.timeline);
-            const rows = tRaw.split('\n').filter(r => r.trim() !== '').slice(1);
             const tRoot = document.getElementById('timeline-root');
-            tRoot.innerHTML = '';
-            rows.reverse().forEach(row => {
-                const cols = row.split(',');
-                if (cols.length < 3) return;
-                const date = cols[0].split('-').slice(1).join('/');
-                const icon = cols[1].trim() === 'us_israel' ? '🔵' : (cols[1].trim() === 'iran' ? '🔴' : '🟢');
-                const text = row.substring(row.indexOf(cols[1]) + cols[1].length + 1).replace(/^"|"$/g, '').replace(/""/g, '"');
+            const mRoot = document.getElementById('maps-root');
+            let logRows = [];
+
+            lines.forEach(line => {
+                const cols = line.split(',');
+                const type = cols[0].trim().toUpperCase();
+
+                // 1. サマリーの処理
+                if (type === 'SUMMARY') {
+                    const content = line.substring(line.indexOf(',') + 1).replace(/^"|"$/g, '').replace(/""/g, '"');
+                    document.getElementById('summary-content').innerText = content;
+                }
+                
+                // 2. 地図スイッチの処理
+                else if (type === 'MAPS') {
+                    for (let i = 1; i <= 5; i++) {
+                        if (cols[i] && cols[i].trim().toUpperCase() === 'ON') {
+                            const img = document.createElement('img');
+                            img.src = `map_${i}.png?v=${Date.now()}`;
+                            img.className = 'map-img';
+                            img.onclick = () => { document.getElementById('modal-img').src = img.src; document.getElementById('modal-overlay').style.display = 'flex'; };
+                            img.onerror = function() { this.style.display='none'; };
+                            mRoot.appendChild(img);
+                        }
+                    }
+                }
+
+                // 3. ログの蓄積
+                else if (type === 'LOG') {
+                    logRows.push(cols);
+                }
+            });
+
+            // タイムライン描画（逆順）
+            logRows.reverse().forEach(cols => {
+                const date = cols[1].split('-').slice(1).join('/');
+                const icon = cols[2].trim() === 'us_israel' ? '🔵' : (cols[2].trim() === 'iran' ? '🔴' : '🟢');
+                // カンマを含む文章対策
+                const rawLine = lines.find(l => l.includes(cols[3]));
+                const text = cols.slice(3).join(',').replace(/^"|"$/g, '').replace(/""/g, '"');
+                
                 tRoot.innerHTML += `<div class="timeline-item"><div class="date-tag">${icon}${date}</div><div class="content-text">${text}</div></div>`;
             });
+
         } catch (e) {
-            document.getElementById('summary-content').innerHTML = `<span class="error-msg">${e.message}</span>`;
-            console.error(e);
+            document.getElementById('summary-content').innerHTML = `<span style="color:red;">Error: ${e.message}</span>`;
         }
     }
-    loadDashboard();
+    loadCommandCenter();
 </script>
 </body>
 </html>
