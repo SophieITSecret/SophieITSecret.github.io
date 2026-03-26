@@ -2,17 +2,32 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>戦術ダッシュボード：統合司令 Ver 5.8</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>戦術ダッシュボード：統合司令 Ver 5.9</title>
     <link rel="stylesheet" href="../Sophie-Core-v13.css">
     <style>
         :root { --theme-bg: #1a1a1b; --theme-accent: #d73a49; --theme-border: #30363d; }
         
         body { font-size: 0.9rem; background: var(--theme-bg); color: #e2e8e4; margin: 0; line-height: 1.35; }
         
+        /* 基本構造：PCレイアウト */
         .wrapper { display: flex; max-width: 1400px; margin: 0.5rem auto; gap: 20px; padding: 0 10px; align-items: flex-start; }
         .main-timeline { flex: 0 0 60%; min-width: 0; }
         .side-maps { flex: 0 0 38%; position: sticky; top: 10px; }
         
+        /* 【レスポンシブ対応】画面幅が768px以下の設定 */
+        @media screen and (max-width: 768px) {
+            .wrapper { flex-direction: column; } /* 縦並びに変更 */
+            .main-timeline { flex: 1 1 100%; width: 100%; }
+            .side-maps { 
+                flex: 1 1 100%; width: 100%; 
+                position: static; /* スマホ時は固定解除 */
+                margin-top: 2rem; 
+                padding-top: 1rem;
+                border-top: 2px solid var(--theme-border);
+            }
+        }
+
         .summary-box { 
             background: rgba(215, 58, 73, 0.1); border: 1px solid var(--theme-accent); 
             padding: 4px 10px; margin-top: 1.5rem; margin-bottom: 1.5rem; border-radius: 4px; line-height: 1.5;
@@ -29,7 +44,6 @@
         }
         .timeline-item:hover { background: rgba(255,255,255,0.08); border-left-color: var(--theme-accent); }
         
-        /* 【重要記事】フラグが1（5列目）の場合のスタイル */
         .timeline-item.urgent {
             background: rgba(215, 58, 73, 0.18) !important; 
             font-weight: bold !important;
@@ -56,7 +70,7 @@
 </head>
 <body>
 
-<h1>IRAN WAR LOG <span style="font-size:0.7rem; color:var(--theme-accent);">COMMAND CENTER v5.8</span></h1>
+<h1>IRAN WAR LOG <span style="font-size:0.7rem; color:var(--theme-accent);">COMMAND CENTER v5.9</span></h1>
 
 <div class="wrapper">
     <main class="main-timeline">
@@ -80,7 +94,6 @@
             if (!res.ok) throw new Error("data.csv not found");
             const csvText = await res.text();
             
-            // 行分割
             const lines = csvText.split(/\r?\n/).filter(l => l.trim() !== '');
 
             const tRoot = document.getElementById('timeline-root');
@@ -88,7 +101,6 @@
             let logRows = [];
 
             lines.forEach(line => {
-                // タブまたはカンマで分割
                 let cols = [];
                 if (line.includes('\t')) {
                     cols = line.split('\t');
@@ -130,7 +142,6 @@
 
                 const dateObj = new Date(parseInt(dateParts[1]), parseInt(dateParts[2])-1, parseInt(dateParts[3]));
                 
-                // 週の境界判定
                 const d = new Date(dateObj);
                 const day = d.getDay();
                 const diff = d.getDate() - day + (day === 0 ? -6 : 1);
@@ -150,11 +161,7 @@
                 
                 const icon = cols[2] === 'us_israel' ? '🔵' : (cols[2] === 'iran' ? '🔴' : '🟢');
                 
-                // 【5列目判定】
-                // サンプルに基づき、cols[4]（0から数えて4番目）が1なら重要。
                 const isUrgent = (cols[4] && cols[4].trim() === '1');
-                
-                // 本文は3列目（cols[3]）
                 const displayArea = cols[3] || "";
                 
                 const item = document.createElement('div');
