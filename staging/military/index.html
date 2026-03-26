@@ -2,19 +2,17 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>戦術ダッシュボード：統合司令 Ver 5.7</title>
+    <title>戦術ダッシュボード：統合司令 Ver 5.8</title>
     <link rel="stylesheet" href="../Sophie-Core-v13.css">
     <style>
         :root { --theme-bg: #1a1a1b; --theme-accent: #d73a49; --theme-border: #30363d; }
         
-        /* フォント0.9remを維持。行間は全文表示に合わせて1.35へ微調整 */
         body { font-size: 0.9rem; background: var(--theme-bg); color: #e2e8e4; margin: 0; line-height: 1.35; }
         
         .wrapper { display: flex; max-width: 1400px; margin: 0.5rem auto; gap: 20px; padding: 0 10px; align-items: flex-start; }
         .main-timeline { flex: 0 0 60%; min-width: 0; }
         .side-maps { flex: 0 0 38%; position: sticky; top: 10px; }
         
-        /* サマリーとヘッダーの間に1行分の余白(1.5rem)を追加。サマリーと下の凡例の間も1.5rem確保 */
         .summary-box { 
             background: rgba(215, 58, 73, 0.1); border: 1px solid var(--theme-accent); 
             padding: 4px 10px; margin-top: 1.5rem; margin-bottom: 1.5rem; border-radius: 4px; line-height: 1.5;
@@ -24,25 +22,24 @@
         .map-img { width: 100%; border: 1px solid var(--theme-border); margin-bottom: 8px; cursor: pointer; display: block; background: #000; }
         .legend-bar { font-size: 0.75rem; text-align: right; margin-bottom: 8px; color: #aaa; border-bottom: 1px dashed var(--theme-border); padding-bottom: 4px; }
 
-        /* 通常のタイムラインアイテム */
         .timeline-item { 
             display: flex; align-items: flex-start; border-left: 2px solid var(--theme-border); 
-            padding: 4px 8px; margin-bottom: 0px; background: rgba(255,255,255,0.01); 
+            padding: 6px 8px; margin-bottom: 0px; background: rgba(255,255,255,0.01); 
             white-space: normal; word-wrap: break-word;
         }
         .timeline-item:hover { background: rgba(255,255,255,0.08); border-left-color: var(--theme-accent); }
         
-        /* 【重要記事】フラグが1の場合のスタイル */
+        /* 【重要記事】フラグが1（5列目）の場合のスタイル */
         .timeline-item.urgent {
-            background: rgba(215, 58, 73, 0.15); /* 薄い赤背景 */
-            font-weight: bold; /* 太字 */
-            border-left-width: 4px; /* ボーダーを強調 */
+            background: rgba(215, 58, 73, 0.18) !important; 
+            font-weight: bold !important;
+            border-left: 4px solid var(--theme-accent) !important;
         }
+        .timeline-item.urgent .content-text { color: #fff; }
 
         .date-tag { flex-shrink: 0; width: 65px; color: var(--theme-accent); font-family: 'Courier New', monospace; font-weight: bold; }
         .content-text { flex: 1; margin-left: 10px; border-bottom: 1px solid rgba(255,255,255,0.05); }
 
-        /* 週の区切り：月曜と日曜の間に確実に1本 */
         .week-spacer { 
             height: 30px; margin: 10px 0; border-left: 2px solid transparent;
             display: flex; align-items: center; border-bottom: 1px solid rgba(255, 255, 255, 0.1);
@@ -59,7 +56,7 @@
 </head>
 <body>
 
-<h1>IRAN WAR LOG <span style="font-size:0.7rem; color:var(--theme-accent);">COMMAND CENTER v5.7</span></h1>
+<h1>IRAN WAR LOG <span style="font-size:0.7rem; color:var(--theme-accent);">COMMAND CENTER v5.8</span></h1>
 
 <div class="wrapper">
     <main class="main-timeline">
@@ -82,6 +79,8 @@
             const res = await fetch('data.csv?v=' + Date.now());
             if (!res.ok) throw new Error("data.csv not found");
             const csvText = await res.text();
+            
+            // 行分割
             const lines = csvText.split(/\r?\n/).filter(l => l.trim() !== '');
 
             const tRoot = document.getElementById('timeline-root');
@@ -89,12 +88,19 @@
             let logRows = [];
 
             lines.forEach(line => {
-                const cols = line.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g) || line.split(',');
-                if(!cols) return;
+                // タブまたはカンマで分割
+                let cols = [];
+                if (line.includes('\t')) {
+                    cols = line.split('\t');
+                } else {
+                    cols = line.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g) || line.split(',');
+                }
+                
+                if(!cols || cols.length < 2) return;
                 const type = cols[0].replace(/"/g, '').trim().toUpperCase();
 
                 if (type === 'SUMMARY') {
-                    const content = line.substring(line.indexOf(',') + 1).trim().replace(/^"|"$/g, '').replace(/""/g, '"');
+                    const content = line.substring(line.indexOf(line.includes('\t') ? '\t' : ',') + 1).trim().replace(/^"|"$/g, '').replace(/""/g, '"');
                     document.getElementById('summary-content').innerText = content;
                 }
                 else if (type === 'MAPS') {
@@ -111,21 +117,20 @@
                     }
                 }
                 else if (type === 'LOG') { 
-                    logRows.push(cols.map(c => c.replace(/"/g, '').trim())); 
+                    logRows.push(cols.map(c => c.replace(/^"|"$/g, '').trim())); 
                 }
             });
 
-            // タイムライン描画（最新から過去へ）
             let lastMondayStr = null;
 
-            logRows.reverse().forEach((cols, index) => {
+            logRows.reverse().forEach((cols) => {
                 const dateStr = cols[1]; 
                 const dateParts = dateStr.match(/(\d{4})[/-](\d{1,2})[/-](\d{1,2})/);
                 if (!dateParts) return;
 
                 const dateObj = new Date(parseInt(dateParts[1]), parseInt(dateParts[2])-1, parseInt(dateParts[3]));
                 
-                // 週の境界判定ロジック
+                // 週の境界判定
                 const d = new Date(dateObj);
                 const day = d.getDay();
                 const diff = d.getDate() - day + (day === 0 ? -6 : 1);
@@ -145,14 +150,12 @@
                 
                 const icon = cols[2] === 'us_israel' ? '🔵' : (cols[2] === 'iran' ? '🔴' : '🟢');
                 
-                // 重要フラグの判定（4列目が '1' かどうか）
-                const isUrgent = (cols[3] && cols[3].trim() === '1');
+                // 【5列目判定】
+                // サンプルに基づき、cols[4]（0から数えて4番目）が1なら重要。
+                const isUrgent = (cols[4] && cols[4].trim() === '1');
                 
-                // 3列目以降をテキストとして結合（4列目がフラグの場合は5列目以降をテキストにする）
-                // ただし、これまでの互換性を考え、フラグの有無に関わらず全テキストを再構成
-                const text = cols.slice(3).join(',').replace(/^"|"$/g, '').replace(/""/g, '"');
-                // 重要フラグが '1,' で始まる場合は、表示用テキストからフラグ部分を除去
-                const displayArea = isUrgent ? text.replace(/^1\s*,\s*/, '') : text;
+                // 本文は3列目（cols[3]）
+                const displayArea = cols[3] || "";
                 
                 const item = document.createElement('div');
                 item.className = 'timeline-item' + (isUrgent ? ' urgent' : '');
