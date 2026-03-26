@@ -2,13 +2,13 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>Bar Sophie - Mizuiro Signal v3.8</title>
+    <title>Bar Sophie - Spatial Fusion v4.0</title>
     <style>
         :root { 
-            --bar-bg: #030305; 
-            --bar-accent: #e0ac69; 
-            --bar-vip: #4da6ff; /* みずいろ */
-            --bar-text: #e2e8e4;
+            --bar-bg: #010103; /* ほぼ黒 */
+            --bar-accent: #f0b56e; /* 琥珀色 */
+            --bar-text: #f0f0f0;
+            --bar-border: #2a2a3a;
         }
         body { 
             background-color: var(--bar-bg);
@@ -17,63 +17,88 @@
             margin: 0; overflow: hidden; height: 100vh; display: flex;
         }
 
-        /* 彼女が主役のカウンター空間 */
+        /* 【新機軸】カウンター空間：ここを「バーの壁」にする */
         .counter-area {
             flex: 7; position: relative; display: flex; justify-content: center; align-items: center;
-            background: radial-gradient(circle at center, rgba(224, 172, 105, 0.08) 0%, #050508 80%);
-            border-right: 1px solid #1a1a2e;
+            border-right: 1px solid var(--bar-border);
+            /* 【根本解決】真っ黒な闇を撃退する背景テクスチャ。
+               コンクリート調の壁に、琥珀色の間接照明が滲む演出。
+            */
+            background: 
+                radial-gradient(circle at 10% 50%, rgba(240, 181, 110, 0.08) 0%, transparent 60%),
+                radial-gradient(circle at center, rgba(26, 26, 46, 0.3) 0%, transparent 80%),
+                #050508; /* わずかに青みのある黒壁 */
+            overflow: hidden;
         }
+        
+        /* 彼女の背後で脈動する光の残像 */
+        .counter-area::before {
+            content: ""; position: absolute; width: 150%; height: 150%;
+            background: repeating-linear-gradient(90deg, transparent, transparent 120px, rgba(255,255,255,0.01) 121px);
+            z-index: 1; pointer-events: none; opacity: 0.3;
+        }
+
         #sophie-image {
             height: 96vh; width: auto; z-index: 5;
-            filter: contrast(1.05) brightness(1.05);
-            box-shadow: 0 0 100px rgba(0,0,0,0.9);
+            filter: contrast(1.1) brightness(1.05) saturate(1.1);
+            box-shadow: 0 0 100px rgba(0,0,0,1); /* 画像を闇に溶け込ませる */
         }
 
-        /* 右側：統合操作エリア */
+        /* 右側：統合操作・チャットエリア */
         .control-panel { 
             flex: 3; display: flex; flex-direction: column; background: #08080a; 
-            border-left: 1px solid #1a1a2e;
+            border-left: 1px solid var(--bar-border); z-index: 10;
         }
 
-        /* 右上の店内モニター（YouTube） */
+        /* 店内モニター（右上のYouTube） */
         .monitor-frame {
             width: 100%; aspect-ratio: 16 / 9; background: #000;
-            border-bottom: 2px solid #1a1a2e;
-            box-shadow: inset 0 0 20px rgba(0,0,0,1);
+            border-bottom: 3px solid var(--bar-border);
+            position: relative;
+        }
+        /* モニターのベゼル（枠） */
+        .monitor-frame::after {
+            content: ""; position: absolute; inset: 0; border: 10px solid #111; border-image: linear-gradient(to bottom, #111, #08080a) 1;
+            pointer-events: none;
         }
         #yt-iframe { width: 100%; height: 100%; border: none; }
 
-        /* ジュークボックス（2列5段 + 特大1枚） */
-        .jukebox-container { padding: 10px; background: rgba(224, 172, 105, 0.02); }
-        .jukebox-grid {
-            display: grid; grid-template-columns: 1fr 1fr; gap: 4px;
+        /* ジュークボックス・リクエストエリア */
+        .jukebox-container { 
+            padding: 10px; background: rgba(240, 181, 110, 0.01); 
+            border-bottom: 1px solid var(--bar-border);
         }
+        .jukebox-header {
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;
+        }
+        .jukebox-title { font-size: 0.7rem; color: #666; font-weight: bold; letter-spacing: 2px; }
+        .request-tab { background: none; border: 1px dashed #444; color: #444; font-size: 0.6rem; cursor: pointer; padding: 3px 8px; border-radius: 3px; }
+        .request-tab:hover { border-color: var(--bar-accent); color: var(--bar-accent); }
+
+        .jukebox-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
         .music-btn { 
-            background: #111; border: 1px solid #222; color: #888; padding: 6px; 
-            font-size: 0.65rem; cursor: pointer; border-radius: 2px; text-align: left;
-            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            background: #111; border: 1px solid #222; color: #aaa; padding: 7px; 
+            font-size: 0.65rem; cursor: pointer; border-radius: 4px; text-align: left;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: 0.3s;
         }
-        .music-btn:hover { border-color: var(--bar-accent); color: var(--bar-accent); }
+        .music-btn:hover { border-color: var(--bar-accent); color: var(--bar-accent); background: #1a1a1a; }
         
-        /* 11曲目：みずいろのシグナル */
-        .signal-btn { 
-            grid-column: span 2; margin-top: 6px; border: 1px solid var(--bar-vip); 
-            color: var(--bar-vip); font-weight: bold; background: rgba(77, 166, 255, 0.05);
-            text-align: center; font-size: 0.75rem;
+        /* 番外：みずいろのシグナル */
+        .sophie-sings-btn { 
+            grid-column: span 2; margin-top: 6px; border: 2px solid var(--bar-accent); 
+            color: #000; background: var(--bar-accent); font-weight: bold;
+            text-align: center; font-size: 0.75rem; border-radius: 6px; 
+            box-shadow: 0 0 15px rgba(240, 181, 110, 0.3);
         }
-        .signal-btn:hover { background: var(--bar-vip); color: #000; }
+        .sophie-sings-btn:hover { background: #fff; border-color: #fff; box-shadow: 0 0 20px #fff; }
 
-        /* メニューボタン（拡張用） */
-        .request-btn {
-            grid-column: span 2; margin-top: 4px; border: 1px dashed #444; color: #444;
-            background: none; font-size: 0.6rem; cursor: pointer; padding: 4px;
-        }
+        .chat-messages { flex: 1; padding: 20px; overflow-y: auto; font-family: sans-serif; font-size: 0.9rem; line-height: 1.7; color: #ccc; }
+        .message.sophie { border-left: 3px solid var(--bar-accent); padding-left: 15px; margin-bottom: 15px; }
+        .message.user { text-align: right; color: #666; font-size: 0.8rem; margin-left: 20%; }
 
-        .chat-messages { flex: 1; padding: 15px; overflow-y: auto; font-family: sans-serif; font-size: 0.85rem; line-height: 1.6; }
-        .message.sophie { border-left: 2px solid var(--bar-accent); padding-left: 12px; margin-bottom: 15px; }
-
-        .chat-input-area { padding: 15px; background: #000; display: flex; border-top: 1px solid #1a1a2e; }
-        #chat-input { flex: 1; background: #111; border: 1px solid #222; color: #fff; padding: 10px; border-radius: 4px; outline: none; }
+        .chat-input-area { padding: 15px; background: #000; display: flex; border-top: 1px solid var(--bar-border); }
+        #chat-input { flex: 1; background: #111; border: 1px solid #222; color: #fff; padding: 12px; border-radius: 8px; outline: none; }
+        #chat-input:focus { border-color: var(--bar-accent); }
     </style>
 </head>
 <body>
@@ -84,51 +109,54 @@
 
     <aside class="control-panel">
         <div class="monitor-frame">
-            <iframe id="yt-iframe" src="https://www.youtube.com/embed/2vfCbdmKhMw?autoplay=0&rel=0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+            <iframe id="yt-iframe" src="https://www.youtube.com/embed/NoCs-3cxA4I?autoplay=0&rel=0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
         </div>
 
         <div class="jukebox-container">
+            <div class="jukebox-header">
+                <span class="jukebox-title">JUKEBOX - 夜の演歌</span>
+                <button class="request-tab" onclick="requestMenu()">+ Request More...</button>
+            </div>
             <div class="jukebox-grid">
-                <button class="music-btn" onclick="play('QyzK21nx70o')">1.深夜ジャズ1</button>
-                <button class="music-btn" onclick="play('vh4TWlwYfLc')">2.深夜ジャズ2</button>
-                <button class="music-btn" onclick="play('g_NQsSxaPpw')">3.静寂ピアノ1</button>
-                <button class="music-btn" onclick="play('biHxC8IkeVQ')">4.静寂ピアノ2</button>
-                <button class="music-btn" onclick="play('ZBrmNO92OTI')">5.夜のLo-Fi 1</button>
-                <button class="music-btn" onclick="play('cIZhlFIyJ_Y')">6.夜のLo-Fi 2</button>
-                <button class="music-btn" onclick="play('qeaiWwQwwMo')">7.70's フォーク</button>
-                <button class="music-btn" onclick="play('SJ-CyDbxH9I')">8.昭和歌謡曲</button>
-                <button class="music-btn" onclick="play('tHk7TBoCZ8E')">9.演歌・酒場唄</button>
-                <button class="music-btn" onclick="play('NoCs-3cxA4I')">10.歌姫特撰</button>
+                <button class="music-btn" onclick="play('QyzK21nx70o')">深夜ジャズ Vol.1</button>
+                <button class="music-btn" onclick="play('vh4TWlwYfLc')">深夜ジャズ Vol.2</button>
+                <button class="music-btn" onclick="play('g_NQsSxaPpw')">静寂ピアノ Vol.1</button>
+                <button class="music-btn" onclick="play('biHxC8IkeVQ')">静寂ピアノ Vol.2</button>
+                <button class="music-btn" onclick="play('ZBrmNO92OTI')">夜のLo-Fi Vol.1</button>
+                <button class="music-btn" onclick="play('cIZhlFIyJ_Y')">夜のLo-Fi Vol.2</button>
+                <button class="music-btn" onclick="play('qeaiWwQwwMo')">70's フォーク名選</button>
+                <button class="music-btn" onclick="play('SJ-CyDbxH9I')">昭和歌謡曲メドレー</button>
+                <button class="music-btn" onclick="play('tHk7TBoCZ8E')">演歌・酒場唄</button>
+                <button class="music-btn" onclick="play('NoCs-3cxA4I')">歌姫特撰 (VIP)</button>
                 
-                <button class="music-btn signal-btn" onclick="play('2vfCbdmKhMw')">11. 💎 みずいろのシグナル (Sophie)</button>
-                
-                <button class="request-btn" onclick="requestMenu()">+ Request More Music...</button>
+                <button class="sophie-sings-btn" onclick="play('2vfCbdmKhMw')">💎 Sophie Sings - みずいろのシグナル</button>
             </div>
         </div>
 
         <div id="chat-messages" class="chat-messages">
-            <div class="message sophie">（モニターをちらりと見て）<br>11番目……それを選んでくださるなんて。……少し、照れくさいですわ。</div>
+            <div class="message sophie">（壁のテクスチャをなでて）<br>マスター、この新しい内装、いかがかしら？……暗闇を撃退して、やっとお店らしくなりましたわね。ふふ。</div>
         </div>
 
         <div class="chat-input-area">
-            <input type="text" id="chat-input" placeholder="彼女と話す...">
+            <input type="text" id="chat-input" placeholder="ソフィーと話す...">
         </div>
     </aside>
 
     <script>
         const messages = document.getElementById('chat-messages');
         const iframe = document.getElementById('yt-iframe');
+        const input = document.getElementById('chat-input');
 
         function play(id) {
-            iframe.src = `https://www.youtube.com/embed/${id}?autoplay=1&rel=0`;
+            iframe.src = `https://www.youtube.com/embed/${id}?autoplay=1&mute=0&rel=0&version=3`;
             const msg = (id === '2vfCbdmKhMw') ? 
-                "わたくしのデビュー曲……。心を込めて、お届けしますね。" : 
-                "良い曲ですね。モニター、よく見えるかしら？";
+                "わたくしの曲……。心を込めて、お届けしますね。" : 
+                "いい選曲ですね。……昭和演歌、私も好きですわ。";
             addSophieMessage(msg);
         }
 
         function requestMenu() {
-            addSophieMessage("他にも聴きたい曲があるの？……ふふ、わがままなマスター。リスト、探してきましょうか？");
+            addSophieMessage("他にも聴きたい曲があるの？……ふふ、わがままなマスター。お気に入りをごそっとリストに入れてきましょうか？");
         }
 
         function addSophieMessage(text) {
@@ -139,14 +167,14 @@
             messages.scrollTop = messages.scrollHeight;
         }
 
-        document.getElementById('chat-input').onkeypress = (e) => {
-            if (e.key === 'Enter' && e.target.value.trim() !== '') {
+        input.onkeypress = (e) => {
+            if (e.key === 'Enter' && input.value.trim() !== '') {
                 const userDiv = document.createElement('div');
-                userDiv.className = "message"; userDiv.style.textAlign = "right"; userDiv.style.color = "#555";
-                userDiv.innerText = e.target.value;
+                userDiv.className = "message user";
+                userDiv.innerText = input.value;
                 messages.appendChild(userDiv);
-                e.target.value = '';
-                setTimeout(() => { addSophieMessage("ええ、お聞きしています。この夜が明けるまで。"); }, 800);
+                input.value = '';
+                setTimeout(() => { addSophieMessage("ええ、お聞きしていますわ。武蔵野の夜は、これからですもの。"); }, 800);
             }
         };
     </script>
