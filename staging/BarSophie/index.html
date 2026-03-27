@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>Bar Sophie - High Density v5.9</title>
+    <title>Bar Sophie - Fixed Visual v6.0</title>
     <style>
         :root { 
             --bar-bg: #000; 
@@ -32,7 +32,6 @@
         }
         body.theater-mode .player-ctrl { position: absolute; bottom: 0; left: 0; width: 100vw; background: rgba(0,0,0,0.95); z-index: 1020; padding: 10px 0; border-top: 1px solid #444; }
 
-        /* ソフィー（シアター） */
         #sophie-theater { display: none; position: fixed; bottom: 55px; right: 5%; height: 26vh; z-index: 1030; filter: brightness(0.95); pointer-events: none; }
         body.theater-mode #sophie-theater { display: block; }
 
@@ -43,7 +42,6 @@
         .ctrl-btn { background: #111; border: 1px solid #444; color: #aaa; padding: 4px 12px; font-size: 1rem; cursor: pointer; border-radius: 4px; }
         .theater-btn { color: var(--bar-accent); border-color: var(--bar-accent); font-weight: bold; }
 
-        /* おすすめ10ボタン：さらに高密度化 */
         .jukebox-container { padding: 6px 10px; border-bottom: 1px solid var(--bar-border); }
         .jukebox-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
         .music-btn { background: #050505; border: 1.5px solid rgba(0, 210, 255, 0.6); color: #fff; padding: 5px 8px; font-size: 1.1rem; font-weight: bold; cursor: pointer; border-radius: 4px; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; box-shadow: inset 0 0 3px var(--neon-blue); }
@@ -52,30 +50,33 @@
         .signal-btn { background: var(--signal-blue); color: #1a2a3a; padding: 8px; margin-top: 5px; font-size: 1.1rem; }
         .request-btn { background: var(--request-green); color: #fff; padding: 5px; margin-top: 4px; font-size: 1rem; width: 80%; margin-left: 10%; border: none; }
 
-        /* 【究極】高密度・大文字お品書きメニュー */
+        /* 【刷新】潰れない・高密度お品書き */
         .dynamic-area { flex: 1; position: relative; overflow: hidden; background: #050505; }
         #menu-layer { position: absolute; inset: 0; background: #08080a; display: flex; flex-direction: column; z-index: 20; }
-        .menu-list { flex: 1; overflow-y: auto; display: grid; grid-template-columns: 1fr 1fr; gap: 1px; padding: 2px; }
         
-        .genre-label { grid-column: span 2; background: #1a1a2e; color: var(--bar-accent); padding: 4px 10px; font-size: 1rem; font-weight: bold; border-bottom: 1px solid #333; margin-top: 5px; }
+        .menu-list { 
+            flex: 1; overflow-y: auto; display: grid; grid-template-columns: 1fr 1fr; 
+            grid-auto-rows: 32px; /* ★ここを固定。文字が潰れるのを物理的に防ぐ */
+            gap: 1px; padding: 2px; 
+        }
         
-        /* 文字を大きく、行間をギリギリまで詰める */
+        .genre-label { grid-column: span 2; background: #1a1a2e; color: var(--bar-accent); padding: 0 10px; font-size: 1.1rem; font-weight: bold; line-height: 32px; border-bottom: 1px solid #333; margin-top: 5px; }
+        
         .menu-item { 
-            padding: 4px 8px; /* 上下パディングを大幅削減 */
+            padding: 0 8px; 
             border-bottom: 1px solid #1a1a1a; 
             cursor: pointer; 
-            font-size: 1.2rem; 
+            font-size: 1.25rem; /* さらにもう少し大きく */
             color: #ccc; 
-            line-height: 1.1; /* 行の高さを文字サイズに近づける */
+            height: 32px; /* ★1行の高さ */
+            line-height: 32px; /* ★文字を垂直中央へ */
             overflow: hidden; text-overflow: ellipsis; white-space: nowrap; 
         }
         .menu-item:hover { background: #1a1a1a; color: #fff; }
-        .menu-item.title-item { padding-left: 20px; color: #fff; } /* 曲名のインデントも適度に調整 */
+        .menu-item.title-item { padding-left: 30px; color: #fff; } 
         
-        /* 再生中 */
         .menu-item.playing { color: #fff; font-weight: bold; background: #1e3a5a; border-left: 5px solid var(--neon-blue); }
-        
-        .back-btn { padding: 8px 15px; color: var(--bar-accent); cursor: pointer; font-size: 1.1rem; border-bottom: 1px solid #222; font-weight: bold; background: #111; }
+        .back-btn { padding: 10px 15px; color: var(--bar-accent); cursor: pointer; font-size: 1.2rem; border-bottom: 1px solid #222; font-weight: bold; background: #111; }
     </style>
 </head>
 <body>
