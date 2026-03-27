@@ -2,13 +2,13 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>Bar Sophie - Theater Console v5.3</title>
+    <title>Bar Sophie - Smart Console v5.4</title>
     <style>
         :root { 
             --bar-bg: #000; 
             --bar-accent: #f0b56e; 
             --signal-blue: #a2dff7;
-            --neon-blue: #00d2ff; /* ネオンライン用 */
+            --neon-blue: #00d2ff;
             --request-green: #27ae60; 
             --bar-text: #eee;
             --bar-border: #1a1a2e;
@@ -16,54 +16,60 @@
         }
         body { background-color: var(--bar-bg); color: var(--bar-text); margin: 0; overflow: hidden; height: 100vh; display: flex; font-family: var(--ui-font); }
 
-        /* レイアウト */
-        #main-container { flex: 7; position: relative; display: flex; justify-content: center; align-items: center; border-right: 1px solid var(--bar-border); transition: 0.3s; }
-        #sophie-image { height: 96vh; width: auto; z-index: 5; transition: 0.5s; }
+        /* レイアウト基本形 */
+        #main-container { flex: 7; position: relative; display: flex; justify-content: center; align-items: center; border-right: 1px solid var(--bar-border); }
+        #sophie-image { height: 96vh; width: auto; z-index: 5; }
         #side-panel { flex: 3; display: flex; flex-direction: column; background: #08080a; z-index: 10; min-width: 320px; }
 
-        /* シアターモード・ダイナミック演出 */
+        /* 【重要】シアターモード設定 */
         body.theater-mode #main-container { display: none; }
         body.theater-mode #side-panel { flex: 1; width: 100vw; min-width: 100vw; background: #000; }
-        body.theater-mode .monitor-frame { height: 80vh; width: 100vw; position: fixed; top: 0; left: 0; z-index: 1000; border: none; }
-        body.theater-mode .player-ctrl { position: fixed; bottom: 0; left: 0; width: 100vw; background: rgba(0,0,0,0.85); backdrop-filter: blur(5px); z-index: 1001; padding: 15px 0; border-top: 1px solid #333; }
-        body.theater-mode #sophie-image { display: block; position: fixed; bottom: 0; right: 20px; height: 28vh; z-index: 1002; filter: brightness(0.8); transform: scaleX(-1); pointer-events: none; }
-        body.theater-mode .jukebox-container { display: none; }
+        body.theater-mode .monitor-frame { height: 70vh; width: 100vw; position: fixed; top: 0; left: 0; z-index: 1000; border: none; }
+        body.theater-mode .player-ctrl { position: fixed; bottom: 0; left: 0; width: 100vw; z-index: 1010; background: rgba(0,0,0,0.9); padding: 10px 0; }
         
-        /* シアター用メニュー位置調整 */
-        body.theater-mode .dynamic-area { position: fixed; bottom: 80px; right: 20px; width: 350px; height: 400px; z-index: 1003; border: 1px solid var(--bar-accent); border-radius: 8px; box-shadow: 0 0 20px rgba(0,0,0,0.8); }
+        /* シアター専用ソフィー（確実に表示） */
+        #sophie-theater { display: none; position: fixed; bottom: 0; right: 0; height: 30vh; z-index: 1020; filter: brightness(0.8); transform: scaleX(-1); pointer-events: none; }
+        body.theater-mode #sophie-theater { display: block; }
 
+        /* モニター */
         .monitor-frame { width: 100%; aspect-ratio: 16 / 9; background: #000; border-bottom: 2px solid var(--bar-border); }
         #yt-iframe { width: 100%; height: 100%; border: none; }
 
-        /* 操作パネル */
-        .player-ctrl { display: flex; justify-content: center; align-items: center; gap: 10px; padding: 8px; background: #000; border-bottom: 1px solid #222; }
-        .ctrl-btn { background: #111; border: 1px solid #444; color: #aaa; padding: 4px 12px; font-size: 0.85rem; cursor: pointer; border-radius: 3px; transition: 0.2s; }
-        .ctrl-btn:hover { color: #fff; border-color: var(--bar-accent); }
-        .theater-btn { background: #1a1a1a; color: var(--bar-accent); border: 1px solid var(--bar-accent); font-weight: bold; min-width: 80px; }
+        /* 操作パネル：高さを節約 */
+        .player-ctrl { display: flex; justify-content: center; gap: 8px; padding: 4px; border-bottom: 1px solid #222; }
+        .ctrl-btn { background: #111; border: 1px solid #444; color: #aaa; padding: 2px 10px; font-size: 0.8rem; cursor: pointer; border-radius: 3px; }
+        .theater-btn { color: var(--bar-accent); border-color: var(--bar-accent); font-weight: bold; }
 
-        /* おすすめ10ボタン：ネオンエッジ */
-        .jukebox-container { padding: 10px; border-bottom: 1px solid var(--bar-border); }
-        .jukebox-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+        /* おすすめ10ボタン：高さを限界まで圧縮 */
+        .jukebox-container { padding: 6px 10px; border-bottom: 1px solid var(--bar-border); }
+        .jukebox-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
         .music-btn { 
-            background: #050505; border: 1px solid #222; color: #fff; padding: 8px; font-size: 0.85rem; font-weight: bold; cursor: pointer; border-radius: 4px; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; 
-            box-shadow: inset 0 0 2px var(--neon-blue); /* 内側の光 */
-            border: 0.5px solid rgba(0, 210, 255, 0.4); /* 外側の薄いネオン */
+            background: #050505; border: 1px solid rgba(0, 210, 255, 0.4); color: #fff; 
+            padding: 4px 6px; font-size: 0.82rem; font-weight: bold; cursor: pointer; border-radius: 3px; 
+            text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            box-shadow: inset 0 0 1px var(--neon-blue);
         }
-        .music-btn:hover { border-color: var(--neon-blue); box-shadow: 0 0 10px rgba(0, 210, 255, 0.4); }
 
-        .special-btn { grid-column: span 2; border: 1.5px solid #fff; font-weight: bold; cursor: pointer; text-align: center; border-radius: 4px; }
-        .signal-btn { background: var(--signal-blue); color: #1a2a3a; padding: 10px; margin-top: 8px; font-size: 0.9rem; }
-        .request-btn { background: var(--request-green); color: #fff; padding: 8px; margin-top: 5px; font-size: 0.85rem; width: 85%; margin-left: 7.5%; border: none; }
+        .special-btn { grid-column: span 2; border: 1px solid #fff; font-weight: bold; cursor: pointer; text-align: center; border-radius: 3px; }
+        .signal-btn { background: var(--signal-blue); color: #1a2a3a; padding: 6px; margin-top: 4px; font-size: 0.85rem; }
+        .request-btn { background: var(--request-green); color: #fff; padding: 3px; margin-top: 3px; font-size: 0.75rem; width: 70%; margin-left: 15%; border: none; }
 
-        /* お品書き：2列 */
-        .dynamic-area { flex: 1; position: relative; overflow: hidden; background: #050505; }
-        #menu-layer { position: absolute; inset: 0; background: #08080a; display: flex; flex-direction: column; z-index: 20; padding: 5px; }
-        .menu-list { flex: 1; overflow-y: auto; display: grid; grid-template-columns: 1fr 1fr; gap: 1px; }
-        .genre-label { grid-column: span 2; background: #1a1a2e; color: var(--bar-accent); padding: 4px 8px; font-size: 0.75rem; font-weight: bold; margin-top: 5px; }
-        .menu-item { padding: 4px 6px; border-bottom: 1px solid #111; cursor: pointer; font-size: 0.78rem; color: #999; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        /* お品書き：行間と高さを固定 */
+        .dynamic-area { flex: 1; position: relative; overflow-y: auto; background: #050505; }
+        #menu-layer { position: absolute; inset: 0; background: #08080a; display: flex; flex-direction: column; z-index: 20; padding: 2px; }
+        
+        /* シアター中のメニュー位置調整 */
+        body.theater-mode .dynamic-area { position: fixed; bottom: 60px; right: 10px; width: 300px; height: 50vh; z-index: 1015; border: 1px solid #333; }
+
+        .menu-list { flex: 1; overflow-y: auto; display: grid; grid-template-columns: 1fr 1fr; gap: 0; }
+        .genre-label { grid-column: span 2; background: #1a1a2e; color: var(--bar-accent); padding: 2px 8px; font-size: 0.7rem; font-weight: bold; }
+        .menu-item { 
+            height: 24px; line-height: 24px; padding: 0 6px; border-bottom: 1px solid #111; 
+            cursor: pointer; font-size: 0.76rem; color: #999; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; 
+        }
         .menu-item.title-item { padding-left: 1.2em; color: #ccc; }
-        .menu-item.playing { color: #fff; font-weight: bold; background: #1e3a5a; border-left: 3px solid var(--signal-blue); }
-        .back-btn { padding: 6px 10px; color: var(--bar-accent); cursor: pointer; font-size: 0.8rem; border-bottom: 1px solid #222; font-weight: bold; }
+        .menu-item.playing { color: #fff; font-weight: bold; background: #1e3a5a; border-left: 3px solid var(--neon-blue); }
+        .back-btn { padding: 4px 10px; color: var(--bar-accent); cursor: pointer; font-size: 0.8rem; border-bottom: 1px solid #222; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -77,6 +83,8 @@
             <iframe id="yt-iframe" src="" allow="autoplay; encrypted-media"></iframe>
         </div>
 
+        <img id="sophie-theater" src="./sophie_shake.png" alt="Sophie-T">
+
         <div class="player-ctrl">
             <button class="ctrl-btn theater-btn" id="mode-toggle" onclick="toggleTheater()">シアター</button>
             <button class="ctrl-btn" onclick="prevSong()">⏮</button>
@@ -88,7 +96,7 @@
         </div>
 
         <div class="jukebox-container">
-            <div class="jukebox-grid">
+            <div class="jukebox-grid" id="standard-jbox">
                 <button class="music-btn" onclick="playFix('QyzK21nx70o', this)">深夜ジャズ 1</button>
                 <button class="music-btn" onclick="playFix('vh4TWlwYfLc', this)">深夜ジャズ 2</button>
                 <button class="music-btn" onclick="playFix('g_NQsSxaPpw', this)">静寂ピアノ 1</button>
