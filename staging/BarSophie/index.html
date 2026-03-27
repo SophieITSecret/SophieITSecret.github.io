@@ -2,78 +2,79 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>Bar Sophie - Theater Mode v4.9</title>
+    <title>Bar Sophie - Final Console v5.0</title>
     <style>
         :root { 
             --bar-bg: #000; 
             --bar-accent: #f0b56e; 
             --signal-blue: #a2dff7;
-            --request-green: #2ecc71; /* 少し濃いミント */
+            --request-green: #27ae60; 
             --bar-text: #eee;
             --bar-border: #1a1a2e;
-            --ui-font: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Hiragino Sans", sans-serif;
+            --ui-font: "Helvetica Neue", Arial, sans-serif;
         }
         body { background-color: var(--bar-bg); color: var(--bar-text); margin: 0; overflow: hidden; height: 100vh; display: flex; font-family: var(--ui-font); }
 
-        /* メイン空間 */
-        #main-container { flex: 7; position: relative; display: flex; justify-content: center; align-items: center; border-right: 1px solid var(--bar-border); transition: 0.5s; background: #000; }
-        #sophie-image { height: 96vh; width: auto; z-index: 5; transition: 0.5s; }
+        /* レイアウト */
+        #main-container { flex: 7; position: relative; display: flex; justify-content: center; align-items: center; border-right: 1px solid var(--bar-border); transition: 0.3s; background: #000; }
+        #sophie-image { height: 96vh; width: auto; z-index: 5; transition: 0.3s; }
+        #side-panel { flex: 3; display: flex; flex-direction: column; background: #08080a; z-index: 10; transition: 0.3s; min-width: 300px; }
 
-        /* 操作パネル */
-        #side-panel { flex: 3; display: flex; flex-direction: column; background: #08080a; z-index: 10; transition: 0.5s; }
-        
-        /* モニターエリア */
-        .monitor-frame { width: 100%; aspect-ratio: 16 / 9; background: #000; border-bottom: 2px solid var(--bar-border); position: relative; cursor: zoom-in; }
-        #yt-iframe { width: 100%; height: 100%; border: none; pointer-events: auto; }
+        /* シアターモード設定 */
+        body.theater-mode #main-container { flex: 0; width: 0; overflow: hidden; border: none; }
+        body.theater-mode #side-panel { flex: 10; width: 100vw; }
+        body.theater-mode .monitor-frame { height: 85vh; width: 100vw; aspect-ratio: auto; cursor: zoom-out; }
+        body.theater-mode #sophie-image { position: fixed; bottom: -20px; right: 20px; height: 25vh; z-index: 1000; filter: brightness(0.6); transform: scaleX(-1); pointer-events: none; }
+        body.theater-mode .jukebox-container, body.theater-mode .dynamic-area { display: none; } /* 鑑賞中はボタンを隠す */
 
-        /* シアターモード時のスタイル */
-        body.theater-mode #main-container { flex: 10; border: none; }
-        body.theater-mode #side-panel { flex: 0; width: 0; overflow: hidden; border: none; }
-        body.theater-mode .monitor-frame { position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 100; cursor: zoom-out; border: none; }
-        body.theater-mode #sophie-image { position: absolute; bottom: 10px; right: 10px; height: 25vh; z-index: 101; opacity: 0.8; filter: brightness(0.7); transform: scaleX(-1); }
+        /* モニター */
+        .monitor-frame { width: 100%; aspect-ratio: 16 / 9; background: #000; border-bottom: 2px solid var(--bar-border); cursor: zoom-in; position: relative; }
+        #yt-iframe { width: 100%; height: 100%; border: none; }
 
-        /* プレイヤーコントロール */
-        .player-ctrl { display: flex; justify-content: center; gap: 8px; padding: 8px; background: #000; border-bottom: 1px solid var(--bar-border); }
-        .ctrl-btn { background: #111; border: 1px solid #333; color: #aaa; padding: 4px 10px; font-size: 0.8rem; cursor: pointer; border-radius: 4px; }
+        /* コントロール */
+        .player-ctrl { display: flex; justify-content: center; gap: 15px; padding: 5px; background: #000; border-bottom: 1px solid #222; }
+        .ctrl-btn { background: none; border: 1px solid #444; color: #888; padding: 2px 12px; font-size: 0.9rem; cursor: pointer; border-radius: 3px; }
         .ctrl-btn:hover { color: #fff; border-color: var(--bar-accent); }
 
         /* ボタン群 */
-        .jukebox-container { padding: 10px; }
-        .jukebox-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
-        .music-btn { background: #111; border: 1px solid #222; color: #999; padding: 7px; font-size: 0.7rem; cursor: pointer; border-radius: 3px; text-align: left; }
-        .music-btn.active { border-color: var(--bar-accent); color: var(--bar-accent); box-shadow: 0 0 10px rgba(240,181,110,0.3); }
+        .jukebox-container { padding: 8px; border-bottom: 1px solid var(--bar-border); }
+        .jukebox-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 3px; }
+        .music-btn { background: #111; border: 1px solid #222; color: #999; padding: 5px; font-size: 0.7rem; cursor: pointer; border-radius: 2px; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .music-btn.active { border-color: var(--bar-accent); color: var(--bar-accent); box-shadow: 0 0 8px rgba(240,181,110,0.2); }
 
-        .special-btn { grid-column: span 2; margin-top: 5px; border: 1.5px solid #fff; font-weight: bold; font-size: 0.8rem; padding: 10px; border-radius: 4px; cursor: pointer; text-align: center; }
-        .signal-btn { background: var(--signal-blue); color: #1a2a3a; }
-        .request-btn { background: var(--request-green); color: #fff; margin-bottom: 5px; }
+        .special-btn { grid-column: span 2; border: 1.2px solid #fff; font-weight: bold; cursor: pointer; text-align: center; }
+        .signal-btn { background: var(--signal-blue); color: #1a2a3a; padding: 8px; margin-top: 5px; font-size: 0.8rem; border-radius: 4px; }
+        .request-btn { background: var(--request-green); color: #fff; padding: 4px; margin-top: 3px; font-size: 0.7rem; border-radius: 3px; width: 80%; margin-left: 10%; }
 
-        /* お品書きエリア */
+        /* 超・文字詰めお品書き */
         .dynamic-area { flex: 1; position: relative; overflow: hidden; background: #050505; }
-        .chat-messages { padding: 15px; height: 100%; overflow-y: auto; font-size: 0.9rem; color: #ccc; }
-        #menu-layer { position: absolute; inset: 0; background: #08080a; display: none; flex-direction: column; z-index: 20; padding: 10px; }
+        #menu-layer { position: absolute; inset: 0; background: #08080a; display: flex; flex-direction: column; z-index: 20; padding: 5px; }
         .menu-list { flex: 1; overflow-y: auto; }
-        .menu-item { padding: 6px 10px; border-bottom: 1px solid #1a1a2e; cursor: pointer; font-size: 0.85rem; color: #bbb; }
-        .menu-item:hover { background: #1a1a1a; color: var(--bar-accent); }
-        .genre-label { background: #111827; color: var(--bar-accent); padding: 5px 10px; font-size: 0.75rem; font-weight: bold; margin-top: 8px; border-left: 4px solid var(--bar-accent); }
-        .back-btn { padding: 8px; color: var(--bar-accent); cursor: pointer; font-size: 0.8rem; font-weight: bold; }
+        .menu-item { padding: 3px 8px; border-bottom: 1px solid #111; cursor: pointer; font-size: 0.78rem; color: #999; line-height: 1.2; }
+        .menu-item:hover { background: #1a1a1a; color: #fff; }
+        .menu-item.playing { color: var(--bar-accent); font-weight: bold; background: #1a1510; border-left: 2px solid var(--bar-accent); }
+        .genre-label { background: #1a1a2e; color: var(--bar-accent); padding: 2px 8px; font-size: 0.7rem; font-weight: bold; margin-top: 5px; }
+        .back-btn { padding: 4px 8px; color: var(--bar-accent); cursor: pointer; font-size: 0.75rem; font-weight: bold; border-bottom: 1px solid #222; }
+        
+        #chat-messages { padding: 10px; font-size: 0.85rem; color: #888; }
     </style>
 </head>
-<body>
+<body class="theater-mode-off">
 
     <div id="main-container">
         <img id="sophie-image" src="./sophie_shake.png" alt="Sophie">
     </div>
 
     <aside id="side-panel">
-        <div class="monitor-frame" onclick="toggleTheater()">
+        <div class="monitor-frame" title="Click to Expand/Collapse" onclick="toggleTheater()">
             <iframe id="yt-iframe" src="" allow="autoplay; encrypted-media"></iframe>
         </div>
 
         <div class="player-ctrl">
-            <button class="ctrl-btn" onclick="prevSong()">⏮</button>
-            <button class="ctrl-btn" onclick="togglePlay()">▶/■</button>
-            <button class="ctrl-btn" onclick="nextSong()">⏭</button>
-            <button class="ctrl-btn" onclick="resetSong()">↺</button>
+            <button class="ctrl-btn" onclick="prevSong()" title="Previous">⏮</button>
+            <button class="ctrl-btn" onclick="stopSong()" title="Stop">■</button>
+            <button class="ctrl-btn" onclick="nextSong()" title="Next">⏭</button>
+            <button class="ctrl-btn" onclick="resetSong()" title="Reset">↺</button>
         </div>
 
         <div class="jukebox-container">
@@ -95,11 +96,11 @@
         </div>
 
         <div class="dynamic-area">
-            <div id="chat-messages" class="chat-messages">
-                <div style="border-left:2px solid var(--bar-accent); padding-left:12px;">いらっしゃい、マスター。モニターを叩けば、大きな画面で一緒に楽しめますわ。</div>
+            <div id="chat-messages">
+                <div style="border-left:2px solid var(--bar-accent); padding-left:10px;">いらっしゃいませ。モニターをクリックすれば、全画面で鑑賞できますわ。</div>
             </div>
             <div id="menu-layer">
-                <div class="back-btn" id="menu-back">← 戻る</div>
+                <div class="back-btn" id="menu-back">← Chat</div>
                 <div class="menu-list" id="menu-content"></div>
             </div>
         </div>
@@ -113,6 +114,7 @@
         let masterData = [];
         let currentPlaylist = [];
         let currentIndex = -1;
+        let currentUrl = "";
         const genres = { 'E':'演歌', 'F':'フォーク', 'W':'洋楽', 'I':'インスト', 'S':'旅情・映像' };
 
         fetch('JBoxメニュー.csv').then(res => res.text()).then(csv => {
@@ -124,11 +126,18 @@
         });
 
         function playFix(url, btn) {
+            currentUrl = url;
             const id = url.includes('v=') ? url.split('v=')[1].split('&')[0] : url;
-            iframe.src = `https://www.youtube.com/embed/${id}?autoplay=1&rel=0&enablejsapi=1`;
-            document.querySelectorAll('.music-btn, .special-btn').forEach(b => b.classList.remove('active'));
+            iframe.src = `https://www.youtube.com/embed/${id}?autoplay=1&rel=0`;
+            
+            document.querySelectorAll('.music-btn, .special-btn, .menu-item').forEach(b => b.classList.remove('active', 'playing'));
             if(btn) btn.classList.add('active');
-            closeMenu();
+            
+            // リクエストメニュー内のハイライト更新
+            const menuItems = document.querySelectorAll('.menu-item');
+            menuItems.forEach(item => {
+                if(item.getAttribute('data-url') === url) item.classList.add('playing');
+            });
         }
 
         function playFromData(item) {
@@ -137,10 +146,10 @@
             playFix(item.url);
         }
 
-        function nextSong() { if(currentIndex >= 0) { currentIndex = (currentIndex + 1) % currentPlaylist.length; playFix(currentPlaylist[currentIndex].url); } }
-        function prevSong() { if(currentIndex >= 0) { currentIndex = (currentIndex - 1 + currentPlaylist.length) % currentPlaylist.length; playFix(currentPlaylist[currentIndex].url); } }
-        function resetSong() { const src = iframe.src; iframe.src = ""; setTimeout(() => iframe.src = src, 50); }
-        function togglePlay() { /* YouTube API制御は複雑なためReset代用か手動操作推奨 */ resetSong(); }
+        function nextSong() { if(currentIndex >= 0) { currentIndex = (currentIndex + 1) % currentPlaylist.length; playFromData(currentPlaylist[currentIndex]); } }
+        function prevSong() { if(currentIndex >= 0) { currentIndex = (currentIndex - 1 + currentPlaylist.length) % currentPlaylist.length; playFromData(currentPlaylist[currentIndex]); } }
+        function stopSong() { iframe.src = ""; currentUrl = ""; document.querySelectorAll('.active, .playing').forEach(b => b.classList.remove('active', 'playing')); }
+        function resetSong() { if(currentUrl) playFix(currentUrl); }
 
         function openMenu() { menuLayer.style.display = 'flex'; renderArtists(); }
         function closeMenu() { menuLayer.style.display = 'none'; }
@@ -148,6 +157,7 @@
 
         function renderArtists() {
             backBtn.onclick = closeMenu;
+            backBtn.innerText = "← Chatに戻る";
             menuContent.innerHTML = "";
             Object.keys(genres).forEach(f => {
                 const artists = [...new Set(masterData.filter(d => d.flag === f).map(d => d.artist))];
@@ -155,7 +165,7 @@
                 const lbl = document.createElement('div'); lbl.className="genre-label"; lbl.innerText=genres[f];
                 menuContent.appendChild(lbl);
                 artists.forEach(a => {
-                    const div = document.createElement('div'); div.className="menu-item"; div.innerText=a;
+                    const div = document.createElement('div'); div.className="menu-item"; div.innerText = "🎤 " + a;
                     div.onclick = () => renderTitles(a, f);
                     menuContent.appendChild(div);
                 });
@@ -164,9 +174,14 @@
 
         function renderTitles(artist, flag) {
             backBtn.onclick = renderArtists;
+            backBtn.innerText = "← 歌手一覧に戻る";
             menuContent.innerHTML = `<div class="genre-label">${artist}</div>`;
             masterData.filter(d => d.artist === artist).forEach(d => {
-                const div = document.createElement('div'); div.className="menu-item"; div.innerText=d.title;
+                const div = document.createElement('div'); 
+                div.className="menu-item"; 
+                div.innerText = d.title;
+                div.setAttribute('data-url', d.url);
+                if(d.url === currentUrl) div.classList.add('playing');
                 div.onclick = () => playFromData(d);
                 menuContent.appendChild(div);
             });
