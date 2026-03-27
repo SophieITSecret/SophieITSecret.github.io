@@ -2,47 +2,62 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>Bar Sophie - Crystal Signal v4.5</title>
+    <title>Bar Sophie - Request Console v4.8</title>
     <style>
         :root { 
             --bar-bg: #000000; 
             --bar-accent: #f0b56e; 
-            --signal-blue: #a2dff7; /* 透明感のある薄い水色 */
-            --signal-dia: #1e90ff; /* 鮮やかな青 */
+            --signal-blue: #a2dff7; /* みずいろ */
+            --request-green: #d1f2eb; /* 薄い緑 */
             --bar-text: #f0f0f0;
             --bar-border: #1a1a2e;
         }
         body { background-color: var(--bar-bg); color: var(--bar-text); font-family: 'Times New Roman', serif; margin: 0; overflow: hidden; height: 100vh; display: flex; }
 
+        /* カウンターエリア */
         .counter-area { flex: 7; position: relative; display: flex; justify-content: center; align-items: center; border-right: 1px solid var(--bar-border); }
         #sophie-image { height: 96vh; width: auto; z-index: 5; filter: contrast(1.1) brightness(1.1); }
 
-        .control-panel { flex: 3; display: flex; flex-direction: column; background: #08080a; }
+        /* 操作パネル */
+        .control-panel { flex: 3; display: flex; flex-direction: column; background: #08080a; border-left: 1px solid var(--bar-border); }
         .monitor-frame { width: 100%; aspect-ratio: 16 / 9; background: #000; border-bottom: 2px solid var(--bar-border); }
         #yt-iframe { width: 100%; height: 100%; border: none; }
 
+        /* ジュークボックス常設部 */
         .jukebox-container { padding: 10px; border-bottom: 1px solid var(--bar-border); }
         .jukebox-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
-        .music-btn { background: #111; border: 1px solid #222; color: #888; padding: 6px; font-size: 0.65rem; cursor: pointer; border-radius: 3px; transition: 0.3s; }
+        .music-btn { background: #111; border: 1px solid #222; color: #888; padding: 6px; font-size: 0.65rem; cursor: pointer; border-radius: 3px; transition: 0.3s; text-align: left; }
         .music-btn.active { border-color: var(--bar-accent); color: var(--bar-accent); box-shadow: 0 0 10px rgba(240, 181, 110, 0.4); }
 
-        /* 【刷新】クリスタル・シグナル・ボタン */
-        .signal-btn { 
-            grid-column: span 2; margin-top: 5px;
-            background: linear-gradient(135deg, rgba(162, 223, 247, 0.9) 0%, rgba(135, 206, 235, 0.7) 100%);
-            border: 1.5px solid #fff; /* 白い縁取りで透明感を演出 */
-            box-shadow: 0 2px 10px rgba(162, 223, 247, 0.3), inset 0 0 10px #fff;
-            color: #1a2a3a; font-weight: bold; font-size: 0.75rem;
-            padding: 8px; border-radius: 20px; cursor: pointer;
-            display: flex; justify-content: center; align-items: center; gap: 8px;
-            transition: 0.4s;
+        /* 特注ボタン共通：透明感と細い白縁 */
+        .special-btn { 
+            grid-column: span 2; margin-top: 5px; border: 1.2px solid #fff; font-weight: bold; font-size: 0.75rem;
+            padding: 8px; border-radius: 4px; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; transition: 0.4s;
         }
-        .signal-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 15px rgba(162, 223, 247, 0.5); }
-        .signal-dia { color: var(--signal-dia); font-size: 0.9rem; text-shadow: 0 0 2px #fff; }
 
-        .request-btn { width: 100%; background: none; border: 1px dashed #444; color: #666; font-size: 0.65rem; cursor: pointer; padding: 5px; margin-top: 5px; }
+        /* みずいろのシグナル */
+        .signal-btn { background: rgba(162, 223, 247, 0.8); color: #1a2a3a; box-shadow: 0 0 8px rgba(162, 223, 247, 0.3); }
+        .signal-dia { color: #0000cd; font-size: 0.9rem; }
 
+        /* 選曲リクエスト（薄い緑） */
+        .request-btn { background: rgba(209, 242, 235, 0.8); color: #1a3a2a; box-shadow: 0 0 8px rgba(209, 242, 235, 0.3); }
+
+        /* チャット＆メニュー切替エリア */
+        .dynamic-area { flex: 1; position: relative; overflow: hidden; display: flex; flex-direction: column; }
         .chat-messages { flex: 1; padding: 15px; overflow-y: auto; font-family: sans-serif; font-size: 0.85rem; line-height: 1.6; }
+        
+        /* 選曲お品書きレイヤー */
+        #menu-layer { 
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
+            background: #08080a; display: none; flex-direction: column; padding: 10px; box-sizing: border-box;
+            z-index: 20;
+        }
+        .menu-list { flex: 1; overflow-y: auto; }
+        .menu-item { padding: 8px; border-bottom: 1px solid #1a1a2e; cursor: pointer; font-size: 0.8rem; color: #ccc; transition: 0.2s; }
+        .menu-item:hover { background: #1a1a1a; color: var(--bar-accent); }
+        .genre-label { background: #1a1a2e; color: var(--bar-accent); padding: 4px 10px; font-size: 0.7rem; font-weight: bold; margin-top: 10px; border-left: 3px solid var(--bar-accent); }
+        .back-btn { padding: 5px; color: #777; cursor: pointer; font-size: 0.7rem; border-bottom: 1px solid #333; margin-bottom: 5px; }
+
         .message.sophie { border-left: 2px solid var(--bar-accent); padding-left: 12px; margin-bottom: 15px; }
     </style>
 </head>
@@ -58,7 +73,7 @@
         </div>
 
         <div class="jukebox-container">
-            <div class="jukebox-grid">
+            <div class="jukebox-grid" id="main-jbox">
                 <button class="music-btn" onclick="play('QyzK21nx70o', this)">深夜ジャズ 1</button>
                 <button class="music-btn" onclick="play('vh4TWlwYfLc', this)">深夜ジャズ 2</button>
                 <button class="music-btn" onclick="play('g_NQsSxaPpw', this)">静寂ピアノ 1</button>
@@ -70,32 +85,95 @@
                 <button class="music-btn" onclick="play('tHk7TBoCZ8E', this)">演歌・酒場唄</button>
                 <button class="music-btn" onclick="play('NoCs-3cxA4I', this)">歌姫特撰</button>
                 
-                <button class="signal-btn" onclick="play('2vfCbdmKhMw', this)">
+                <button class="special-btn signal-btn" onclick="play('2vfCbdmKhMw', this)">
                     <span class="signal-dia">◆</span> みずいろのシグナル <span class="signal-dia">◆</span>
                 </button>
+                <button class="special-btn request-btn" onclick="openMenu()">選曲リクエスト</button>
             </div>
-            <button class="request-btn" onclick="openJbox()">+ Open Master's Collection (CSV)</button>
         </div>
 
-        <div id="chat-messages" class="chat-messages">
-            <div class="message sophie">（新しくなったボタンを見つめて）<br>あら……透き通るような水色。マスター、センスが上がりましたわね。ふふ。</div>
+        <div class="dynamic-area">
+            <div id="chat-messages" class="chat-messages">
+                <div class="message sophie">（静かにシェイカーを置き、微笑んで）<br>いらっしゃい。今夜は何を聴かれますか？</div>
+            </div>
+            
+            <div id="menu-layer">
+                <div class="back-btn" id="menu-back" onclick="closeMenu()">← チャットに戻る</div>
+                <div class="menu-list" id="menu-content"></div>
+            </div>
         </div>
     </aside>
 
     <script>
         const iframe = document.getElementById('yt-iframe');
         const messages = document.getElementById('chat-messages');
+        const menuLayer = document.getElementById('menu-layer');
+        const menuContent = document.getElementById('menu-content');
+        const backBtn = document.getElementById('menu-back');
 
-        function play(id, btn) {
+        let masterData = [];
+        const genreNames = { 'E': '演歌', 'F': 'フォーク', 'W': '洋楽', 'I': 'インスト' };
+
+        // CSV読み込み
+        fetch('JBoxメニュー.csv')
+            .then(res => res.text())
+            .then(csv => {
+                const lines = csv.split('\n').slice(1);
+                masterData = lines.filter(l => l.trim()).map(line => {
+                    const cols = line.split(',');
+                    return { flag: cols[0], artist: cols[2], title: cols[3].replace(/"/g,''), url: cols[4].trim() };
+                });
+            });
+
+        function play(url, btn) {
+            const id = url.includes('v=') ? url.split('v=')[1].split('&')[0] : url;
             iframe.src = `https://www.youtube.com/embed/${id}?autoplay=1&rel=0`;
-            document.querySelectorAll('.music-btn, .signal-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.music-btn, .special-btn').forEach(b => b.classList.remove('active'));
             if(btn) btn.classList.add('active');
-            addSophieMessage(id === '2vfCbdmKhMw' ? "わたくしの歌、心を込めて……。" : "良い曲ですね。");
+            closeMenu();
+            addSophieMessage("承知しました。良い曲ですね……。");
         }
 
-        function openJbox() {
-            addSophieMessage("マスターの隠しリストですね？……ちょっと待ってて、今メニューにまとめてきますわ。");
-            // 将来的にここにCSVをパースしてリスト表示する処理を追加
+        function openMenu() {
+            menuLayer.style.display = 'flex';
+            renderArtists();
+        }
+
+        function closeMenu() { menuLayer.style.display = 'none'; }
+
+        function renderArtists() {
+            backBtn.onclick = closeMenu;
+            backBtn.innerText = "← チャットに戻る";
+            menuContent.innerHTML = "";
+            ['E','F','W','I'].forEach(flag => {
+                const artists = [...new Set(masterData.filter(d => d.flag === flag).map(d => d.artist))];
+                if(artists.length > 0) {
+                    const label = document.createElement('div');
+                    label.className = "genre-label";
+                    label.innerText = genreNames[flag] || flag;
+                    menuContent.appendChild(label);
+                    artists.forEach(a => {
+                        const item = document.createElement('div');
+                        item.className = "menu-item";
+                        item.innerText = a;
+                        item.onclick = () => renderTitles(a);
+                        menuContent.appendChild(item);
+                    });
+                }
+            });
+        }
+
+        function renderTitles(artist) {
+            backBtn.onclick = renderArtists;
+            backBtn.innerText = "← 歌手一覧に戻る";
+            menuContent.innerHTML = `<div class="genre-label">${artist}</div>`;
+            masterData.filter(d => d.artist === artist).forEach(d => {
+                const item = document.createElement('div');
+                item.className = "menu-item";
+                item.innerText = d.title;
+                item.onclick = () => play(d.url);
+                menuContent.appendChild(item);
+            });
         }
 
         function addSophieMessage(text) {
