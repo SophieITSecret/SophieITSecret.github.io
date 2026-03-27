@@ -2,64 +2,45 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>Bar Sophie - Signal Revival v4.2</title>
+    <title>Bar Sophie - Crystal Signal v4.5</title>
     <style>
         :root { 
             --bar-bg: #000000; 
             --bar-accent: #f0b56e; 
-            --signal-bg: #b0e0e6; /* 薄い水色 */
-            --signal-dia: #0000cd; /* 濃い青 */
+            --signal-blue: #a2dff7; /* 透明感のある薄い水色 */
+            --signal-dia: #1e90ff; /* 鮮やかな青 */
             --bar-text: #f0f0f0;
             --bar-border: #1a1a2e;
         }
         body { background-color: var(--bar-bg); color: var(--bar-text); font-family: 'Times New Roman', serif; margin: 0; overflow: hidden; height: 100vh; display: flex; }
 
-        /* カウンターエリア：黒を活かしたライティング */
-        .counter-area {
-            flex: 7; position: relative; display: flex; justify-content: center; align-items: center;
-            background: radial-gradient(circle at center, #0a0a0f 0%, #000 80%);
-            border-right: 1px solid var(--bar-border);
-        }
-        #sophie-image {
-            height: 96vh; width: auto; z-index: 5;
-            filter: contrast(1.1) brightness(1.1);
-            box-shadow: 0 0 50px rgba(240, 181, 110, 0.1);
-        }
+        .counter-area { flex: 7; position: relative; display: flex; justify-content: center; align-items: center; border-right: 1px solid var(--bar-border); }
+        #sophie-image { height: 96vh; width: auto; z-index: 5; filter: contrast(1.1) brightness(1.1); }
 
-        /* 操作パネル */
         .control-panel { flex: 3; display: flex; flex-direction: column; background: #08080a; }
         .monitor-frame { width: 100%; aspect-ratio: 16 / 9; background: #000; border-bottom: 2px solid var(--bar-border); }
         #yt-iframe { width: 100%; height: 100%; border: none; }
 
-        /* ジュークボックス */
         .jukebox-container { padding: 10px; border-bottom: 1px solid var(--bar-border); }
-        .jukebox-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
-        .request-btn { background: none; border: 1px dashed #444; color: #666; font-size: 0.6rem; cursor: pointer; padding: 2px 5px; }
-        
         .jukebox-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
-        .music-btn { 
-            background: #111; border: 1px solid #222; color: #888; padding: 6px; 
-            font-size: 0.65rem; cursor: pointer; border-radius: 3px; text-align: left;
-            transition: 0.3s;
-        }
-        /* 再生中の発光 */
-        .music-btn.active { border-color: var(--bar-accent); color: var(--bar-accent); box-shadow: 0 0 10px rgba(240, 181, 110, 0.4); background: #1a1a14; }
+        .music-btn { background: #111; border: 1px solid #222; color: #888; padding: 6px; font-size: 0.65rem; cursor: pointer; border-radius: 3px; transition: 0.3s; }
+        .music-btn.active { border-color: var(--bar-accent); color: var(--bar-accent); box-shadow: 0 0 10px rgba(240, 181, 110, 0.4); }
 
-        /* みずいろのシグナル専用：幅広・水色・青ダイヤ */
+        /* 【刷新】クリスタル・シグナル・ボタン */
         .signal-btn { 
-            grid-column: span 2; margin-top: 5px; 
-            background: var(--signal-bg); border: none; 
-            color: #333; font-weight: bold; font-size: 0.8rem;
-            padding: 10px; border-radius: 4px; cursor: pointer;
-            display: flex; justify-content: center; align-items: center; gap: 10px;
+            grid-column: span 2; margin-top: 5px;
+            background: linear-gradient(135deg, rgba(162, 223, 247, 0.9) 0%, rgba(135, 206, 235, 0.7) 100%);
+            border: 1.5px solid #fff; /* 白い縁取りで透明感を演出 */
+            box-shadow: 0 2px 10px rgba(162, 223, 247, 0.3), inset 0 0 10px #fff;
+            color: #1a2a3a; font-weight: bold; font-size: 0.75rem;
+            padding: 8px; border-radius: 20px; cursor: pointer;
+            display: flex; justify-content: center; align-items: center; gap: 8px;
+            transition: 0.4s;
         }
-        .signal-btn span { color: var(--signal-dia); font-size: 1rem; }
-        .signal-btn:hover { filter: brightness(1.1); }
+        .signal-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 15px rgba(162, 223, 247, 0.5); }
+        .signal-dia { color: var(--signal-dia); font-size: 0.9rem; text-shadow: 0 0 2px #fff; }
 
-        /* コントロール（Stop/Reset） */
-        .player-ctrl { padding: 5px 10px; display: flex; gap: 10px; background: #000; }
-        .ctrl-btn { background: none; border: 1px solid #333; color: #555; font-size: 0.6rem; cursor: pointer; padding: 2px 8px; border-radius: 2px; }
-        .ctrl-btn:hover { color: #fff; border-color: #666; }
+        .request-btn { width: 100%; background: none; border: 1px dashed #444; color: #666; font-size: 0.65rem; cursor: pointer; padding: 5px; margin-top: 5px; }
 
         .chat-messages { flex: 1; padding: 15px; overflow-y: auto; font-family: sans-serif; font-size: 0.85rem; line-height: 1.6; }
         .message.sophie { border-left: 2px solid var(--bar-accent); padding-left: 12px; margin-bottom: 15px; }
@@ -76,18 +57,8 @@
             <iframe id="yt-iframe" src="" allow="autoplay; encrypted-media"></iframe>
         </div>
 
-        <div class="player-ctrl">
-            <button class="ctrl-btn" onclick="stopMusic()">Stop</button>
-            <button class="ctrl-btn" onclick="resetMusic()">Reset</button>
-            <span style="font-size:0.6rem; color:#444; margin-top:3px;">※Brave推奨</span>
-        </div>
-
         <div class="jukebox-container">
-            <div class="jukebox-header">
-                <span style="font-size:0.6rem; color:#555;">REPERTOIRE</span>
-                <button class="request-btn" onclick="addSophieMessage('リクエスト？……ええ、準備しておきますわ。')">Request...</button>
-            </div>
-            <div class="jukebox-grid" id="jbox">
+            <div class="jukebox-grid">
                 <button class="music-btn" onclick="play('QyzK21nx70o', this)">深夜ジャズ 1</button>
                 <button class="music-btn" onclick="play('vh4TWlwYfLc', this)">深夜ジャズ 2</button>
                 <button class="music-btn" onclick="play('g_NQsSxaPpw', this)">静寂ピアノ 1</button>
@@ -100,35 +71,32 @@
                 <button class="music-btn" onclick="play('NoCs-3cxA4I', this)">歌姫特撰</button>
                 
                 <button class="signal-btn" onclick="play('2vfCbdmKhMw', this)">
-                    <span>◆</span> みずいろのシグナル (Sophie) <span>◆</span>
+                    <span class="signal-dia">◆</span> みずいろのシグナル <span class="signal-dia">◆</span>
                 </button>
             </div>
+            <button class="request-btn" onclick="openJbox()">+ Open Master's Collection (CSV)</button>
         </div>
 
         <div id="chat-messages" class="chat-messages">
-            <div class="message sophie">（青いダイヤが揺れるボタンを見て）<br>……マスター、この色、やっぱり落ち着きますわね。ふふ。</div>
+            <div class="message sophie">（新しくなったボタンを見つめて）<br>あら……透き通るような水色。マスター、センスが上がりましたわね。ふふ。</div>
         </div>
     </aside>
 
     <script>
         const iframe = document.getElementById('yt-iframe');
         const messages = document.getElementById('chat-messages');
-        let currentId = '';
 
         function play(id, btn) {
-            currentId = id;
             iframe.src = `https://www.youtube.com/embed/${id}?autoplay=1&rel=0`;
-            
-            // ボタンの発光切り替え
             document.querySelectorAll('.music-btn, .signal-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-
-            const msg = (id === '2vfCbdmKhMw') ? "わたくしのシグナル……届いていますか？" : "良い曲ですね。";
-            addSophieMessage(msg);
+            if(btn) btn.classList.add('active');
+            addSophieMessage(id === '2vfCbdmKhMw' ? "わたくしの歌、心を込めて……。" : "良い曲ですね。");
         }
 
-        function stopMusic() { iframe.src = ""; addSophieMessage("静寂に戻しましたわ。"); }
-        function resetMusic() { if(currentId) iframe.src = `https://www.youtube.com/embed/${currentId}?autoplay=1`; }
+        function openJbox() {
+            addSophieMessage("マスターの隠しリストですね？……ちょっと待ってて、今メニューにまとめてきますわ。");
+            // 将来的にここにCSVをパースしてリスト表示する処理を追加
+        }
 
         function addSophieMessage(text) {
             const div = document.createElement('div');
