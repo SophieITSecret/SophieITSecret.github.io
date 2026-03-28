@@ -101,18 +101,18 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // 【自動記帳テスト】ページを開いたら Firestore に「健志」を記録する
+        // 【自動記帳テスト】ページを開いたら Firestore に「まきむら」を記録する
         async function firstNote() {
             try {
                 await setDoc(doc(db, "users", "kenji_test_id"), {
-                    name: "健志",
+                    name: "まきむら",
                     visit_count: 1,
                     last_drink: "まだ決まっていないわ",
                     secret_notes: "今、私の新しい心臓が動き出したところよ。",
                     last_visit_date: serverTimestamp()
                 });
                 console.log("★Firestoreへの記帳に成功しました！★");
-                alert("ソフィーが『健志』さんの名前を手帳に書き込みました！");
+                alert("ソフィーが『まきむら』さんの名前を手帳に書き込みました！");
             } catch (e) {
                 console.error("記帳エラー: ", e);
             }
