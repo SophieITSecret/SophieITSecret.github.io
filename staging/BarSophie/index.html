@@ -2,76 +2,67 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Bar Sophie - The Heritage v7.8</title>
+    <title>Bar Sophie - The Legacy v7.9</title>
     <style>
-        /* --- 共通変数 --- */
+        /* --- Ver 6.1の完璧なデザインを完全復元 --- */
         :root { 
             --bar-bg: #000; --bar-accent: #f0b56e; --signal-blue: #a2dff7;
             --neon-blue: #00d2ff; --request-green: #27ae60; --bar-text: #eee;
             --bar-border: #1a1a2e; --ui-font: "Hiragino Kaku Gothic ProN", "Hiragino Sans", sans-serif;
         }
 
-        /* --- 【PC版：Ver 6.1/7.1の完全再現】 --- */
-        html, body { 
-            margin: 0; padding: 0; background-color: var(--bar-bg); color: var(--bar-text); 
-            font-family: var(--ui-font); height: 100vh; width: 100vw; overflow: hidden; 
+        /* PC：横並び・固定を絶対死守 */
+        body { 
+            background-color: var(--bar-bg); color: var(--bar-text); margin: 0; 
+            overflow: hidden; height: 100vh; display: flex; font-family: var(--ui-font); 
         }
 
-        body { display: flex; flex-direction: row; } /* PCは絶対に横並び */
-
-        /* PC：左側（7割固定） */
+        /* 左側：ソフィー（flex 7固定） */
         #main-container { 
-            flex: 7; height: 100vh; display: flex; justify-content: center; align-items: center; 
-            border-right: 1px solid var(--bar-border); background: #000; position: relative;
+            flex: 7; position: relative; display: flex; justify-content: center; align-items: center; 
+            border-right: 1px solid var(--bar-border); height: 100vh;
         }
-        #sophie-image { height: 96vh; width: auto; z-index: 5; object-fit: contain; }
+        #sophie-image { height: 96vh; width: auto; z-index: 5; }
 
-        /* PC：右側（3割固定） */
+        /* 右側：サイドパネル（flex 3固定） */
         #side-panel { 
-            flex: 3; min-width: 350px; height: 100vh; display: flex; flex-direction: column; 
-            background: #08080a; z-index: 10; overflow: hidden;
+            flex: 3; display: flex; flex-direction: column; background: #08080a; 
+            z-index: 10; min-width: 350px; height: 100vh;
         }
 
-        /* --- 【スマホ専用：PC版に影響を与えない独立空間】 --- */
-        @media (max-width: 850px) {
-            body { flex-direction: column; overflow-y: auto; height: auto; }
-            #main-container { flex: none; width: 100vw; height: 60vh; border-right: none; }
-            #sophie-image { height: 100%; width: auto; }
-            #side-panel { flex: none; width: 100vw; min-width: 100vw; height: auto; }
-            .monitor-frame { position: sticky; top: 0; z-index: 100; border-bottom: 2px solid var(--neon-blue); }
-        }
-
-        /* --- PC版の豪華なパーツデザイン（1ドットも妥協せず） --- */
+        /* モニター・プレイヤー操作系 */
         .monitor-frame { width: 100%; aspect-ratio: 16 / 9; background: #000; border-bottom: 2px solid var(--bar-border); }
         #yt-iframe { width: 100%; height: 100%; border: none; }
-        .player-ctrl { display: flex; justify-content: center; gap: 8px; padding: 10px; border-bottom: 1px solid #222; background: #111; }
-        .ctrl-btn { background: #222; border: 1px solid #444; color: #aaa; padding: 6px 12px; font-size: 1rem; cursor: pointer; border-radius: 4px; }
+        .player-ctrl { display: flex; justify-content: center; gap: 8px; padding: 6px; border-bottom: 1px solid #222; }
+        .ctrl-btn { background: #111; border: 1px solid #444; color: #aaa; padding: 4px 12px; font-size: 1rem; cursor: pointer; border-radius: 4px; }
         
-        .jukebox-container { padding: 12px; border-bottom: 1px solid var(--bar-border); }
-        .jukebox-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        /* ジュークボックス・グリッド（PCでの使いやすさ） */
+        .jukebox-container { padding: 6px 10px; border-bottom: 1px solid var(--bar-border); }
+        .jukebox-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
         .music-btn { 
             background: #050505; border: 1.5px solid rgba(0, 210, 255, 0.6); color: #fff; 
-            padding: 10px; font-size: 1.1rem; font-weight: bold; cursor: pointer; border-radius: 4px; 
+            padding: 5px 8px; font-size: 1.1rem; font-weight: bold; cursor: pointer; border-radius: 4px; 
             text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; 
-            box-shadow: inset 0 0 5px var(--neon-blue); 
+            box-shadow: inset 0 0 3px var(--neon-blue); 
         }
         .request-btn { 
             grid-column: span 2; background: var(--request-green); color: #fff; 
-            padding: 12px; margin-top: 8px; font-size: 1.2rem; border: none; 
-            font-weight: bold; border-radius: 6px; cursor: pointer;
+            padding: 5px; margin-top: 4px; font-size: 1.1rem; width: 80%; margin-left: 10%; 
+            border: none; font-weight: bold; border-radius: 5px; cursor: pointer;
         }
-        
-        .dynamic-area { flex: 1; position: relative; background: #050505; min-height: 400px; overflow-y: auto; }
-        #menu-layer { position: absolute; inset: 0; background: #08080a; display: none; flex-direction: column; z-index: 200; }
-        .menu-list { flex: 1; overflow-y: auto; display: grid; grid-template-columns: 1fr 1fr; grid-auto-rows: 45px; gap: 2px; padding: 6px; }
-        .genre-label { grid-column: span 2; background: #1a1a2e; color: var(--bar-accent); padding: 0 15px; font-size: 1.1rem; font-weight: bold; line-height: 45px; border-bottom: 1px solid #333; margin-top: 8px; }
-        .menu-item { padding: 0 12px; border-bottom: 1px solid #1a1a1a; cursor: pointer; font-size: 1.2rem; color: #ccc; line-height: 45px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .back-btn { padding: 15px; color: var(--bar-accent); cursor: pointer; font-size: 1.2rem; border-bottom: 2px solid var(--bar-accent); background: #111; font-weight: bold; }
+
+        /* 会話・メニューレイヤー */
+        .dynamic-area { flex: 1; position: relative; overflow: hidden; background: #050505; }
+        #menu-layer { position: absolute; inset: 0; background: #08080a; display: none; flex-direction: column; z-index: 20; }
+        .menu-list { flex: 1; overflow-y: auto; display: grid; grid-template-columns: 1fr 1fr; grid-auto-rows: 32px; gap: 1px; padding: 2px; }
+        .genre-label { grid-column: span 2; background: #1a1a2e; color: var(--bar-accent); padding: 0 10px; font-size: 1.1rem; font-weight: bold; line-height: 32px; border-bottom: 1px solid #333; margin-top: 5px; }
+        .menu-item { padding: 0 8px; border-bottom: 1px solid #1a1a1a; cursor: pointer; font-size: 1.25rem; color: #ccc; height: 32px; line-height: 32px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .back-btn { padding: 10px 15px; color: var(--bar-accent); cursor: pointer; font-size: 1.2rem; border-bottom: 1px solid #222; font-weight: bold; background: #111; }
 
         /* シアターモード */
         body.theater-mode #main-container { display: none; }
-        body.theater-mode #side-panel { flex: 1; width: 100vw; min-width: 100vw; height: 100vh; }
+        body.theater-mode #side-panel { flex: 1; width: 100vw; min-width: 100vw; background: #000; position: relative; display: block; }
+        body.theater-mode .monitor-frame { height: 70vh; width: 100vw; position: absolute; top: 0; left: 0; border: none; }
     </style>
 </head>
 <body>
@@ -104,12 +95,12 @@
                 <div class="back-btn" onclick="window.closeMenu()">← Chatに戻る</div>
                 <div class="menu-list" id="menu-content"></div>
             </div>
-            <div style="padding:20px; color:#555; font-size:1.1rem;">(会話エリア：まきむら様、ここにソフィーの言葉が並びます)</div>
+            <div style="padding:20px; color:#555;">(まきむら様、ここにソフィーの言葉を綴ります)</div>
         </div>
     </aside>
 
     <script type="module">
-        /* Firebase & 楽曲制御ロジックを完全再構築 */
+        /* Firebase統合（魂の継承） */
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
@@ -124,33 +115,31 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // まきむら様記帳（Firebase）
         (async () => {
             try {
                 await setDoc(doc(db, "users", "makimura_p"), {
                     name: "まきむら",
                     visit_count: 1,
                     last_drink: "18年のスコッチ",
-                    secret_notes: "Ver 7.8 伝統の復活。PC版を完全固定。これでこそ、Bar Sophie。",
+                    secret_notes: "復刻版Ver 7.9。PCの黄金比を完全に取り戻したわ。",
                     last_visit_date: serverTimestamp()
                 });
+                console.log("Firebase sync: OK");
             } catch (e) { console.error(e); }
         })();
 
-        // 楽曲制御（グローバル関数化）
+        // 楽曲制御（グローバル関数）
         let masterData = [];
         let currentPlaylist = [];
         let currentIndex = -1;
-        let currentUrl = "";
 
         window.playFix = (url) => {
-            currentUrl = url;
             const id = url.includes('v=') ? url.split('v=')[1].split('&')[0] : url;
             document.getElementById('yt-iframe').src = `https://www.youtube.com/embed/${id}?autoplay=1&rel=0&enablejsapi=1`;
         };
         window.openMenu = () => { document.getElementById('menu-layer').style.display = 'flex'; renderArtists(); };
         window.closeMenu = () => { document.getElementById('menu-layer').style.display = 'none'; };
-        window.toggleTheater = () => { document.body.classList.toggle('theater-mode'); };
+        window.toggleTheater = () => document.body.classList.toggle('theater-mode');
 
         fetch('JBoxメニュー.csv').then(res => res.text()).then(csv => {
             const lines = csv.split('\n').slice(1);
@@ -179,7 +168,7 @@
 
         const renderTitles = (artist, flag) => {
             const menuContent = document.getElementById('menu-content');
-            menuContent.innerHTML = `<div class="back-btn" onclick="window.renderArtists()">← アーティストに戻る</div><div class="genre-label">${artist}</div>`;
+            menuContent.innerHTML = `<div class="back-btn" onclick="window.renderArtists()">← 戻る</div><div class="genre-label">${artist}</div>`;
             masterData.filter(d => d.artist === artist).forEach(d => {
                 const div = document.createElement('div'); div.className = "menu-item"; div.innerText = d.title;
                 div.onclick = () => {
@@ -194,8 +183,8 @@
         window.nextSong = () => { if(currentIndex >= 0) { currentIndex = (currentIndex + 1) % currentPlaylist.length; window.playFix(currentPlaylist[currentIndex].url); } };
         window.prevSong = () => { if(currentIndex >= 0) { currentIndex = (currentIndex - 1 + currentPlaylist.length) % currentPlaylist.length; window.playFix(currentPlaylist[currentIndex].url); } };
         window.playCurrent = () => document.getElementById('yt-iframe').contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*');
-        window.pauseSong = () => document.getElementById('yt-iframe').contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*');
-        window.resetSong = () => { if(currentUrl) window.playFix(currentUrl); };
+        window.pauseSong = () => document.getElementById('yt-iframe').contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*');
+        window.resetSong = () => {};
     </script>
 </body>
 </html>
