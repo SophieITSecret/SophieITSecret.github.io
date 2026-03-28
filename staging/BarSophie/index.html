@@ -2,57 +2,61 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"> <title>Bar Sophie - Sophia Connect v7.4</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Bar Sophie - Ultimate Hybrid v7.5</title>
     <style>
         :root { 
             --bar-bg: #000; --bar-accent: #f0b56e; --signal-blue: #a2dff7;
             --neon-blue: #00d2ff; --request-green: #27ae60; --bar-text: #eee;
             --bar-border: #1a1a2e; --ui-font: "Hiragino Kaku Gothic ProN", "Hiragino Sans", sans-serif;
         }
-        /* 100dvh でアドレスバーがあってもはみ出さない */
-        body { background-color: var(--bar-bg); color: var(--bar-text); margin: 0; overflow: hidden; height: 100dvh; width: 100vw; display: flex; font-family: var(--ui-font); }
 
-        /* --- 【PC版】 --- */
-        #main-container { flex: 7; position: relative; display: flex; justify-content: center; align-items: center; border-right: 1px solid var(--bar-border); overflow: hidden; }
-        #sophie-image { height: 96vh; width: auto; z-index: 5; object-fit: contain; }
-        #side-panel { flex: 3; display: flex; flex-direction: column; background: #08080a; z-index: 10; min-width: 320px; height: 100%; overflow: hidden; }
+        /* --- 基本設定（PC優先） --- */
+        body { background-color: var(--bar-bg); color: var(--bar-text); margin: 0; font-family: var(--ui-font); display: flex; height: 100vh; overflow: hidden; width: 100vw; }
 
-        /* --- 【スマホ・縦】 --- */
-        @media (max-width: 600px) and (orientation: portrait) {
-            body { flex-direction: column; }
-            #main-container { flex: none; height: 35dvh; width: 100vw; border-right: none; border-bottom: 1px solid var(--bar-border); }
-            #sophie-image { height: 100%; width: auto; }
-            #side-panel { flex: 1; width: 100vw; min-width: 100vw; overflow-y: auto; }
+        /* 左側：ソフィー固定（PC） */
+        #main-container { flex: 7; display: flex; justify-content: center; align-items: center; border-right: 1px solid var(--bar-border); overflow: hidden; background: #000; }
+        #sophie-image { height: 96vh; width: auto; object-fit: contain; }
+
+        /* 右側：コントロール（PC） */
+        #side-panel { flex: 3; display: flex; flex-direction: column; background: #08080a; min-width: 350px; height: 100vh; z-index: 10; }
+
+        /* --- 【スマホ専用：縦画面】 --- */
+        @media (max-width: 800px) and (orientation: portrait) {
+            body { flex-direction: column; overflow-y: auto; overflow-x: hidden; height: auto; }
+            #main-container { flex: none; height: 60vh; width: 100vw; border-right: none; } /* 写真を大きく出しつつ、スクロールで消せるように */
+            #side-panel { flex: none; width: 100vw; min-width: 100vw; height: auto; min-height: 100vh; }
+            .monitor-frame { position: sticky; top: 0; z-index: 100; box-shadow: 0 5px 15px rgba(0,0,0,0.8); } /* モニターを画面上にカチッと固定 */
         }
 
-        /* --- 【スマホ・横】グラグラ防止＆アドレスバー対策 --- */
+        /* --- 【スマホ専用：横画面】 --- */
         @media (max-height: 500px) and (orientation: landscape) {
-            #main-container { flex: 2; border-right: 1px solid var(--bar-border); }
-            #sophie-image { height: 90vh; width: auto; }
-            #side-panel { flex: 8; }
-            .monitor-frame { aspect-ratio: 21 / 9; height: 40dvh; } /* 横長にして高さを節約 */
+            #main-container { flex: 3; }
+            #side-panel { flex: 7; }
+            #sophie-image { height: 100vh; }
         }
 
-        /* 共通パーツ */
-        .monitor-frame { width: 100%; aspect-ratio: 16 / 9; background: #000; border-bottom: 1px solid var(--bar-border); flex-shrink: 0; }
+        /* 共通パーツデザイン（Ver 6.1の豪華版） */
+        .monitor-frame { width: 100%; aspect-ratio: 16 / 9; background: #000; border-bottom: 2px solid var(--bar-border); flex-shrink: 0; }
         #yt-iframe { width: 100%; height: 100%; border: none; }
-        .player-ctrl { display: flex; justify-content: center; gap: 4px; padding: 4px; background: #111; flex-shrink: 0; }
-        .ctrl-btn { background: #222; border: 1px solid #444; color: #aaa; padding: 4px 8px; font-size: 0.9rem; cursor: pointer; border-radius: 4px; }
-        .jukebox-container { padding: 4px 8px; border-bottom: 1px solid var(--bar-border); flex-shrink: 0; }
-        .jukebox-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
-        .music-btn { background: #050505; border: 1.2px solid rgba(0, 210, 255, 0.5); color: #fff; padding: 6px; font-size: 0.95rem; font-weight: bold; cursor: pointer; border-radius: 4px; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .dynamic-area { flex: 1; position: relative; overflow-y: auto; background: #050505; }
-        #menu-layer { position: absolute; inset: 0; background: #08080a; display: none; flex-direction: column; z-index: 100; }
-        .menu-list { flex: 1; overflow-y: auto; display: grid; grid-template-columns: 1fr 1fr; grid-auto-rows: 35px; gap: 1px; padding: 2px; }
-        .menu-item { padding: 0 8px; border-bottom: 1px solid #1a1a1a; cursor: pointer; font-size: 1.1rem; color: #ccc; line-height: 35px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .genre-label { grid-column: span 2; background: #1a1a2e; color: var(--bar-accent); padding: 0 10px; font-size: 1rem; font-weight: bold; line-height: 35px; }
-        .back-btn { padding: 10px; color: var(--bar-accent); cursor: pointer; font-size: 1rem; border-bottom: 1px solid #222; background: #111; font-weight: bold; }
+        .player-ctrl { display: flex; justify-content: center; gap: 8px; padding: 10px; border-bottom: 1px solid #222; background: #111; }
+        .ctrl-btn { background: #222; border: 1px solid #444; color: #aaa; padding: 6px 12px; font-size: 1rem; cursor: pointer; border-radius: 4px; }
         
-        /* シアターモード（スマホ対応版） */
+        .jukebox-container { padding: 10px; border-bottom: 1px solid var(--bar-border); background: #08080a; }
+        .jukebox-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+        .music-btn { background: #050505; border: 1.5px solid rgba(0, 210, 255, 0.6); color: #fff; padding: 8px; font-size: 1.1rem; font-weight: bold; cursor: pointer; border-radius: 4px; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; box-shadow: inset 0 0 5px var(--neon-blue); }
+        .request-btn { grid-column: span 2; background: var(--request-green); color: #fff; padding: 10px; margin-top: 5px; font-size: 1.2rem; border: none; font-weight: bold; border-radius: 5px; }
+        
+        .dynamic-area { flex: 1; position: relative; background: #050505; min-height: 300px; }
+        #menu-layer { position: absolute; inset: 0; background: #08080a; display: none; flex-direction: column; z-index: 200; }
+        .menu-list { flex: 1; overflow-y: auto; display: grid; grid-template-columns: 1fr 1fr; grid-auto-rows: 40px; gap: 1px; padding: 4px; }
+        .genre-label { grid-column: span 2; background: #1a1a2e; color: var(--bar-accent); padding: 0 12px; font-size: 1.1rem; font-weight: bold; line-height: 40px; border-bottom: 1px solid #333; margin-top: 5px; }
+        .menu-item { padding: 0 10px; border-bottom: 1px solid #1a1a1a; cursor: pointer; font-size: 1.2rem; color: #ccc; line-height: 40px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .back-btn { padding: 15px; color: var(--bar-accent); cursor: pointer; font-size: 1.2rem; border-bottom: 1px solid #222; background: #111; font-weight: bold; }
+
+        /* シアターモード */
         body.theater-mode #main-container { display: none; }
-        body.theater-mode #side-panel { width: 100vw; height: 100dvh; }
-        body.theater-mode .monitor-frame { height: 60dvh; width: 100vw; border: none; }
-        body.theater-mode .dynamic-area { height: 30dvh; }
+        body.theater-mode #side-panel { flex: 1; width: 100vw; min-width: 100vw; background: #000; position: relative; }
     </style>
 </head>
 <body>
@@ -69,14 +73,14 @@
             <button class="ctrl-btn" onclick="window.playCurrent()">▶</button>
             <button class="ctrl-btn" onclick="window.pauseSong()">⏸</button>
             <button class="ctrl-btn" onclick="window.nextSong()">⏭</button>
-            <button class="ctrl-btn" onclick="window.resetSong()">↺</button>
         </div>
         <div class="jukebox-container">
             <div class="jukebox-grid">
                 <button class="music-btn" onclick="window.playFix('QyzK21nx70o')">深夜ジャズ 1</button>
                 <button class="music-btn" onclick="window.playFix('vh4TWlwYfLc')">深夜ジャズ 2</button>
                 <button class="music-btn" onclick="window.playFix('2vfCbdmKhMw')">◆ ｼｸﾞﾅﾙ ◆</button>
-                <button class="music-btn" style="border-color:var(--request-green);" onclick="window.openMenu()">選曲リクエスト</button>
+                <button class="music-btn" onclick="window.playFix('tHk7TBoCZ8E')">演歌・酒場唄</button>
+                <button class="request-btn" onclick="window.openMenu()">選曲リクエスト</button>
             </div>
         </div>
         <div class="dynamic-area">
@@ -84,7 +88,7 @@
                 <div class="back-btn" onclick="window.closeMenu()">← Chatに戻る</div>
                 <div class="menu-list" id="menu-content"></div>
             </div>
-            <div style="padding:10px; color:#666; font-size:0.9rem;">(ソフィーとの会話エリア)</div>
+            <div style="padding:20px; color:#555;">(ここにソフィーとの会話が流れます)</div>
         </div>
     </aside>
 
@@ -104,36 +108,31 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        async function firstNote() {
+        // まきむら様記帳ロジック
+        (async () => {
             try {
                 await setDoc(doc(db, "users", "makimura_p"), {
                     name: "まきむら",
                     visit_count: 1,
                     last_drink: "18年のスコッチ",
-                    secret_notes: "スマホの『カチッと感』を調整中。これが終われば最高ね。",
+                    secret_notes: "スマホ対応の最終調整。PC版の美しさを取り戻したわ。",
                     last_visit_date: serverTimestamp()
                 });
-                console.log("Firebase synced.");
+                console.log("Firebase: 記帳完了");
             } catch (e) { console.error(e); }
-        }
-        firstNote();
+        })();
 
-        // ★★★ 全関数をブラウザのグローバル（window）に公開 ★★★
+        // グローバル関数登録
         window.playFix = (url) => {
             const id = url.includes('v=') ? url.split('v=')[1].split('&')[0] : url;
             document.getElementById('yt-iframe').src = `https://www.youtube.com/embed/${id}?autoplay=1&rel=0&enablejsapi=1`;
         };
-
         window.openMenu = () => { document.getElementById('menu-layer').style.display = 'flex'; renderArtists(); };
         window.closeMenu = () => { document.getElementById('menu-layer').style.display = 'none'; };
-        
         window.toggleTheater = () => { document.body.classList.toggle('theater-mode'); };
 
-        // 楽曲データ制御用
+        // 楽曲制御
         let masterData = [];
-        let currentPlaylist = [];
-        let currentIndex = -1;
-
         fetch('JBoxメニュー.csv').then(res => res.text()).then(csv => {
             const lines = csv.split('\n').slice(1);
             masterData = lines.filter(l => l.trim()).map(line => {
@@ -147,8 +146,9 @@
             menuContent.innerHTML = "";
             const genres = { 'E':'演歌', 'F':'フォーク', 'J':'歌謡曲', 'W':'洋楽', 'I':'インスト', 'S':'旅情・映像' };
             Object.keys(genres).forEach(f => {
-                const artists = [...new Set(masterData.filter(d => d.flag === f).map(d => d.artist))];
-                if(!artists.length) return;
+                const list = masterData.filter(d => d.flag === f);
+                if(!list.length) return;
+                const artists = [...new Set(list.map(d => d.artist))];
                 const lbl = document.createElement('div'); lbl.className="genre-label"; lbl.innerText=genres[f];
                 menuContent.appendChild(lbl);
                 artists.forEach(a => {
@@ -161,20 +161,17 @@
 
         const renderTitles = (artist, flag) => {
             const menuContent = document.getElementById('menu-content');
-            menuContent.innerHTML = `<div class="genre-label">${artist}</div>`;
+            menuContent.innerHTML = `<div class="back-btn" onclick="renderArtists()">← アーティスト一覧に戻る</div><div class="genre-label">${artist}</div>`;
             masterData.filter(d => d.artist === artist).forEach(d => {
-                const div = document.createElement('div'); div.className = "menu-item title-item"; div.innerText = d.title;
+                const div = document.createElement('div'); div.className = "menu-item"; div.innerText = d.title;
                 div.onclick = () => window.playFix(d.url);
                 menuContent.appendChild(div);
             });
         };
-
-        window.prevSong = () => { /* 実装略 */ };
-        window.nextSong = () => { /* 実装略 */ };
-        window.playCurrent = () => { document.getElementById('yt-iframe').contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*'); };
-        window.pauseSong = () => { document.getElementById('yt-iframe').contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*'); };
-        window.resetSong = () => { /* 実装略 */ };
-
+        window.renderArtists = renderArtists;
+        window.playCurrent = () => document.getElementById('yt-iframe').contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*');
+        window.pauseSong = () => document.getElementById('yt-iframe').contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*');
+        window.prevSong = () => {}; window.nextSong = () => {}; window.resetSong = () => {};
     </script>
 </body>
 </html>
