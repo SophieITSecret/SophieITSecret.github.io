@@ -1,6 +1,12 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
+    <script>
+    // 画面幅が850px以下、または「スマホ特有の信号」を検知したら即座にジャンプ
+    if (window.innerWidth <= 850 || /iPhone|Android|Mobile/i.test(navigator.userAgent)) {
+        window.location.replace("index_m.html");
+    }
+    </script>
     <meta charset="UTF-8">
     <title>Bar Sophie - Producer's Cut v8.2</title>
     <style>
