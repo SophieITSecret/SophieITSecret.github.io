@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Bar Sophie Mobile - Integrated v8.6</title>
+    <title>Bar Sophie Mobile - Voice v8.7</title>
     <style>
         :root { 
             --bar-bg: #000; --bar-accent: #f0b56e; --neon-blue: #00d2ff; 
@@ -28,20 +28,16 @@
         .monitor-frame { width: 100vw; aspect-ratio: 16 / 9; background: #000; position: sticky; top: 0; z-index: 1000; border-bottom: 2px solid var(--neon-blue); }
         #yt-iframe { width: 100%; height: 100%; border: none; }
 
-        /* 3段コンソール：司令塔 */
         .console-box { display: flex; background: #111; padding: 5px; border-bottom: 1px solid #333; height: 115px; flex-shrink: 0; }
         .console-left { flex: 7; display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
         .console-right { flex: 3; background: #000; border-radius: 4px; overflow: hidden; display: flex; justify-content: center; align-items: center; }
         .small-sophie { height: 90%; width: auto; object-fit: contain; }
 
         .ctrl-btn { background: #222; border: 1px solid #444; color: #aaa; font-size: 1.1rem; border-radius: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
-        
-        /* ★司令塔ボタン：動的に文字が変わる */
         #master-back-btn { grid-column: span 2; color: var(--bar-accent); font-size: 0.95rem; font-weight: bold; background: #1a1a2e; border: 1.2px solid var(--bar-accent); }
 
         .music-toggle-btn { width: 100%; height: 100%; background: #0a0a0a; color: var(--neon-blue); border: none; font-size: 1.5rem; font-weight: bold; border-top: 2px solid var(--neon-blue); }
 
-        /* 選曲エリア：ボタンを消して広々と */
         .jukebox-area { flex: 1; background: #08080a; overflow-y: auto; position: relative; }
         #menu-layer { position: absolute; inset: 0; background: #08080a; z-index: 500; display: none; flex-direction: column; }
         
@@ -57,12 +53,14 @@
 <body class="chat-mode">
 
     <div id="sophie-container"><img id="sophie-image" src="./sophie_shake.png" alt="Sophie"></div>
-    <div id="chat-area">(まきむら様、ここにソフィーの言葉が綴られます)</div>
-    <div id="music-toggle-bar"><button class="music-toggle-btn" onclick="setMode('music')">♪ Music & Menu</button></div>
+    <div id="chat-area">(まきむら様、ここに会話が綴られます)</div>
+    
+    <div id="music-toggle-bar">
+        <button class="music-toggle-btn" onclick="setMode('music'); sophieSpeak('まきむら様、選曲ですね。私がお手伝いします。')">♪ Music & Menu</button>
+    </div>
 
     <div id="player-section">
         <div class="monitor-frame"><iframe id="yt-iframe" src="" allow="autoplay; encrypted-media"></iframe></div>
-        
         <div class="console-box">
             <div class="console-left">
                 <button class="ctrl-btn" onclick="window.prevSong()">⏮</button>
@@ -75,9 +73,7 @@
         </div>
 
         <div class="jukebox-area">
-            <div id="menu-layer">
-                <div class="menu-list" id="menu-content"></div>
-            </div>
+            <div id="menu-layer"><div class="menu-list" id="menu-content"></div></div>
             <button class="request-btn" onclick="window.openMenu()">選曲リクエスト (200曲+)</button>
             <div class="quick-grid">
                 <button class="quick-btn" onclick="window.playFix('QyzK21nx70o')">深夜ジャズ 1</button>
@@ -89,46 +85,44 @@
     </div>
 
     <script type="module">
-        /* Firebase & Logic */
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
         const firebaseConfig = { apiKey: "AIzaSyC1Jvj7A03LCUVlcLZGMROJn5DU3D-l7JY", authDomain: "bar-sophie.firebaseapp.com", projectId: "bar-sophie", storageBucket: "bar-sophie.firebasestorage.app", messagingSenderId: "398354933251", appId: "1:398354933251:web:1afc2c3b879c2a50fa9036" };
         const app = initializeApp(firebaseConfig); const db = getFirestore(app);
-        (async () => { await setDoc(doc(db, "users", "makimura_p"), { name: "まきむら", last_visit: serverTimestamp(), version: "8.6_mobile" }); })();
+        (async () => { await setDoc(doc(db, "users", "makimura_p"), { name: "まきむら", last_visit: serverTimestamp(), version: "8.7_voice_test" }); })();
 
         let masterData = []; let currentPlaylist = []; let currentIndex = -1;
-        let menuState = "closed"; // "closed", "artists", "titles"
-
+        let menuState = "closed";
         const masterBackBtn = document.getElementById('master-back-btn');
+
+        // ★ソフィーが喋るための魔法
+        window.sophieSpeak = (text) => {
+            window.speechSynthesis.cancel(); // 二重再生防止
+            const utter = new SpeechSynthesisUtterance(text);
+            utter.lang = 'ja-JP';
+            utter.rate = 1.05; // 速度
+            utter.pitch = 1.15; // 声の高さ（少し可愛らしく）
+            window.speechSynthesis.speak(utter);
+        };
 
         window.setMode = (mode) => { 
             document.body.className = (mode === 'music') ? 'music-mode' : 'chat-mode';
             if(mode === 'chat') window.closeMenu();
         };
 
-        // ★司令塔ボタンの動作を制御する関数
         window.handleMasterBack = () => {
-            if (menuState === "titles") {
-                renderArtists(); // 曲一覧なら歌手一覧へ
-            } else if (menuState === "artists") {
-                window.closeMenu(); // 歌手一覧ならメニューを閉じる
-            } else {
-                setMode('chat'); // メニューが閉じていればお店に戻る
-            }
+            if (menuState === "titles") { renderArtists(); } 
+            else if (menuState === "artists") { window.closeMenu(); } 
+            else { setMode('chat'); }
         };
 
-        window.playFix = (url) => { const id = url.includes('v=') ? url.split('v=')[1].split('&')[0] : url; document.getElementById('yt-iframe').src = `https://www.youtube.com/embed/${id}?autoplay=1&rel=0&enablejsapi=1`; };
-        
-        window.openMenu = () => { 
-            document.getElementById('menu-layer').style.display = 'flex'; 
-            renderArtists(); 
+        window.playFix = (url) => { 
+            const id = url.includes('v=') ? url.split('v=')[1].split('&')[0] : url; 
+            document.getElementById('yt-iframe').src = `https://www.youtube.com/embed/${id}?autoplay=1&rel=0&enablejsapi=1`; 
         };
         
-        window.closeMenu = () => { 
-            document.getElementById('menu-layer').style.display = 'none'; 
-            menuState = "closed";
-            masterBackBtn.innerText = "← お店に戻る";
-        };
+        window.openMenu = () => { document.getElementById('menu-layer').style.display = 'flex'; renderArtists(); };
+        window.closeMenu = () => { document.getElementById('menu-layer').style.display = 'none'; menuState = "closed"; masterBackBtn.innerText = "← お店に戻る"; };
 
         fetch('JBoxメニュー.csv').then(res => res.text()).then(csv => {
             const lines = csv.split('\n').slice(1);
@@ -139,8 +133,7 @@
         });
 
         const renderArtists = () => {
-            menuState = "artists";
-            masterBackBtn.innerText = "← お店に戻る";
+            menuState = "artists"; masterBackBtn.innerText = "← お店に戻る";
             const menuContent = document.getElementById('menu-content');
             menuContent.innerHTML = "";
             const genres = { 'E':'演歌', 'F':'フォーク', 'J':'歌謡曲', 'W':'洋楽', 'I':'インスト', 'S':'旅情・映像' };
@@ -158,8 +151,7 @@
         };
 
         const renderTitles = (artist, flag) => {
-            menuState = "titles";
-            masterBackBtn.innerText = "← 歌手一覧へ戻る";
+            menuState = "titles"; masterBackBtn.innerText = "← 歌手一覧へ戻る";
             const menuContent = document.getElementById('menu-content');
             menuContent.innerHTML = `<div class="genre-label" style="background:var(--bar-accent); color:#000;">${artist}</div>`;
             masterData.filter(d => d.artist === artist).forEach(d => {
@@ -168,6 +160,8 @@
                     currentPlaylist = masterData.filter(m => m.artist === artist); 
                     currentIndex = currentPlaylist.findIndex(m => m.url === d.url); 
                     window.playFix(d.url); 
+                    // ★曲を選んだ時も少し喋らせてみますか？
+                    sophieSpeak(d.artist + 'さんの、' + d.title + 'ですね。かしこまりました。');
                 };
                 menuContent.appendChild(div);
             });
