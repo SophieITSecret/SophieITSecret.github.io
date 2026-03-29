@@ -9,13 +9,14 @@
             --neon-blue: #00d2ff; --request-green: #27ae60; --bar-text: #eee;
             --bar-border: #1a1a2e; --ui-font: "Hiragino Kaku Gothic ProN", "Hiragino Sans", sans-serif;
         }
+        /* PC版：横並び・固定を絶対遵守 */
         body { background-color: var(--bar-bg); color: var(--bar-text); margin: 0; overflow: hidden; height: 100vh; display: flex; font-family: var(--ui-font); }
 
         #main-container { flex: 7; position: relative; display: flex; justify-content: center; align-items: center; border-right: 1px solid var(--bar-border); }
         #sophie-image { height: 96vh; width: auto; z-index: 5; }
         #side-panel { flex: 3; display: flex; flex-direction: column; background: #08080a; z-index: 10; min-width: 350px; }
 
-        /* シアターモード設定 */
+        /* シアターモード設定（Ver 6.1の数値を完全維持） */
         body.theater-mode #main-container { display: none; }
         body.theater-mode #side-panel { flex: 1; width: 100vw; min-width: 100vw; background: #000; position: relative; display: block; }
         body.theater-mode .monitor-frame { height: 70vh; width: 100vw; position: absolute; top: 0; left: 0; border: none; }
@@ -35,18 +36,24 @@
         .jukebox-container { padding: 6px 10px; border-bottom: 1px solid var(--bar-border); }
         .jukebox-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
         
-        /* ボタンの高さと縁取りを完全に統一 */
+        /* ボタンの高さを42pxで統一し、縁取り（水色ネオン）を揃える */
         .music-btn, .special-btn { 
             background: #050505; border: 1.5px solid rgba(0, 210, 255, 0.6); color: #fff; 
             padding: 8px; font-size: 1.1rem; font-weight: bold; cursor: pointer; border-radius: 4px; 
             text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; 
-            box-shadow: inset 0 0 3px var(--neon-blue); height: 42px; /* 高さを42pxで統一 */
+            box-shadow: inset 0 0 3px var(--neon-blue); height: 42px; 
             box-sizing: border-box;
         }
 
-        .special-btn { grid-column: span 2; text-align: center; width: 100%; margin-left: 0; }
+        /* みずいろのシグナルボタン：高さを揃え、縁取りも統一 */
+        .special-btn { grid-column: span 2; text-align: center; }
         .signal-btn { background: var(--signal-blue); color: #1a2a3a; margin-top: 4px; }
-        .request-btn { background: var(--request-green); color: #fff; margin-top: 4px; border: none; width: 100%; }
+
+        /* 選曲リクエストボタン：幅はVer 6.1準拠（80%）、高さは42pxに統一 */
+        .request-btn { 
+            background: var(--request-green); color: #fff; border: none; 
+            width: 80%; margin-left: 10%; margin-top: 4px;
+        }
 
         .dynamic-area { flex: 1; position: relative; overflow: hidden; background: #050505; }
         #menu-layer { position: absolute; inset: 0; background: #08080a; display: none; flex-direction: column; z-index: 20; }
@@ -100,7 +107,7 @@
     </aside>
 
     <script type="module">
-        /* Firebase & 記帳 */
+        /* Firebase & 記帳：PC版を壊さないようmodule内で完結 */
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
         const firebaseConfig = { apiKey: "AIzaSyC1Jvj7A03LCUVlcLZGMROJn5DU3D-l7JY", authDomain: "bar-sophie.firebaseapp.com", projectId: "bar-sophie", storageBucket: "bar-sophie.firebasestorage.app", messagingSenderId: "398354933251", appId: "1:398354933251:web:1afc2c3b879c2a50fa9036" };
@@ -110,7 +117,7 @@
     </script>
 
     <script>
-        /* メインロジック：まきむら様仕様 */
+        /* メインロジック：Ver 8.2 研磨エディション */
         const iframe = document.getElementById('yt-iframe');
         const menuLayer = document.getElementById('menu-layer');
         const menuContent = document.getElementById('menu-content');
@@ -151,17 +158,12 @@
             const isTheater = document.body.classList.toggle('theater-mode');
             modeBtn.innerText = isTheater ? "戻る" : "シアター";
             theaterReq.style.display = isTheater ? "inline-block" : "none";
-            // ★自動フルスクリーン魔法（ブラウザが許可する場合のみ）
-            if(isTheater && document.documentElement.requestFullscreen) {
-                document.documentElement.requestFullscreen();
-            } else if(!isTheater && document.exitFullscreen) {
-                document.exitFullscreen();
-            }
+            // ★自動フルスクリーン魔法は解除しました（F11で操作してください）
         }
 
         function renderArtists() {
             backBtn.onclick = closeMenu;
-            backBtn.innerText = "← Chatに戻る"; // 歌手一覧時はこれ
+            backBtn.innerText = "← Chatに戻る";
             menuContent.innerHTML = "";
             Object.keys(genres).forEach(f => {
                 const artists = [...new Set(masterData.filter(d => d.flag === f).map(d => d.artist))];
@@ -177,7 +179,7 @@
         }
         function renderTitles(artist, flag) {
             backBtn.onclick = renderArtists;
-            backBtn.innerText = "← 歌手一覧へ戻る"; // 曲名一覧時はこれ
+            backBtn.innerText = "← 歌手一覧へ戻る";
             menuContent.innerHTML = `<div class="genre-label">${artist}</div>`;
             masterData.filter(d => d.artist === artist).forEach(d => {
                 const div = document.createElement('div'); div.className = "menu-item title-item"; div.innerText = d.title;
