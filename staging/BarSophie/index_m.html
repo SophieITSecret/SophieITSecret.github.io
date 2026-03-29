@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Bar Sophie Mobile - Floating v8.4</title>
+    <title>Bar Sophie Mobile - Hospitality v8.5</title>
     <style>
         :root { 
             --bar-bg: #000; --bar-accent: #f0b56e; --neon-blue: #00d2ff; 
@@ -12,7 +12,7 @@
         }
         body { background-color: var(--bar-bg); color: var(--bar-text); margin: 0; font-family: var(--ui-font); overflow-x: hidden; display: flex; flex-direction: column; min-height: 100dvh; }
 
-        /* モード切替のベース */
+        /* モード共通 */
         #sophie-container { flex: none; display: flex; justify-content: center; align-items: center; background: #000; }
         #sophie-image { height: 100%; width: auto; object-fit: contain; }
 
@@ -24,59 +24,60 @@
         body.music-mode #sophie-container, body.music-mode #chat-area, body.music-mode #music-toggle-bar { display: none; }
         body.music-mode #player-section { display: flex; flex-direction: column; height: 100dvh; }
 
-        /* --- Musicモード：モニター固定 ＋ 3段コンソール ＋ スクロールメニュー --- */
+        /* --- Musicモード：モニター ＋ コンソール ＋ スクロールメニュー --- */
         .monitor-frame { width: 100vw; aspect-ratio: 16 / 9; background: #000; position: sticky; top: 0; z-index: 1000; border-bottom: 2px solid var(--neon-blue); }
         #yt-iframe { width: 100%; height: 100%; border: none; }
 
-        .console-box { display: flex; background: #111; padding: 5px; border-bottom: 1px solid #333; height: 120px; flex-shrink: 0; }
+        .console-box { display: flex; background: #111; padding: 5px; border-bottom: 1px solid #333; height: 110px; flex-shrink: 0; }
         .console-left { flex: 7; display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
         .console-right { flex: 3; background: #000; border-radius: 4px; overflow: hidden; display: flex; justify-content: center; align-items: center; }
         .small-sophie { height: 90%; width: auto; object-fit: contain; }
 
         .ctrl-btn { background: #222; border: 1px solid #444; color: #aaa; font-size: 1.1rem; border-radius: 4px; display: flex; align-items: center; justify-content: center; }
-        .close-music-btn { grid-column: span 2; background: #333; color: var(--bar-accent); font-weight: bold; font-size: 0.85rem; }
         .music-toggle-btn { width: 100%; height: 100%; background: #0a0a0a; color: var(--neon-blue); border: none; font-size: 1.5rem; font-weight: bold; border-top: 2px solid var(--neon-blue); }
 
-        /* 選曲エリア：モニターとコンソールを除いた残りの高さでスクロール */
+        /* 選曲エリア */
         .jukebox-area { flex: 1; background: #08080a; overflow-y: auto; position: relative; }
-        .request-btn { width: 94%; margin: 10px 3%; padding: 12px; background: var(--request-green); color: #fff; border: none; border-radius: 6px; font-weight: bold; font-size: 1.2rem; }
-        .quick-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 0 10px 20px; }
-        .quick-btn { background: #050505; border: 1px solid rgba(0,210,255,0.3); color: #ccc; padding: 10px; border-radius: 4px; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .request-btn { width: 94%; margin: 10px 3%; padding: 10px; background: var(--request-green); color: #fff; border: none; border-radius: 6px; font-weight: bold; font-size: 1.1rem; }
+        .quick-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 0 10px 10px; }
+        .quick-btn { background: #050505; border: 1px solid rgba(0,210,255,0.2); color: #ccc; padding: 8px; border-radius: 4px; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.9rem; }
 
-        /* --- 【改良】メニューをモニターの下に配置 --- */
+        /* --- 【統合】統合された戻るボタン --- */
         #menu-layer { 
             position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
             background: #08080a; z-index: 500; display: none; flex-direction: column; 
         }
-        /* ボタンの高さを縮めて一覧性をアップ */
-        .menu-list { flex: 1; overflow-y: auto; display: grid; grid-template-columns: 1fr 1fr; grid-auto-rows: 38px; gap: 1px; padding: 4px; }
-        .genre-label { grid-column: span 2; background: #1a1a2e; color: var(--bar-accent); padding: 0 10px; line-height: 38px; font-weight: bold; font-size: 0.95rem; }
-        .menu-item { padding: 0 10px; border-bottom: 1px solid #1a1a1a; line-height: 38px; color: #ccc; font-size: 1.05rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .back-btn { padding: 12px; color: var(--bar-accent); background: #111; font-weight: bold; border-bottom: 2px solid var(--bar-accent); flex-shrink: 0; }
+        .back-btn { padding: 12px; color: var(--bar-accent); background: #1a1a2e; font-weight: bold; border-bottom: 2px solid var(--bar-accent); flex-shrink: 0; font-size: 1.1rem; text-align: center; }
+
+        /* 一覧性を究極まで高めるためのダイエット */
+        .menu-list { flex: 1; overflow-y: auto; display: grid; grid-template-columns: 1fr 1fr; grid-auto-rows: 35px; gap: 1px; padding: 2px; }
+        .genre-label { grid-column: span 2; background: #0e0e1a; color: var(--bar-accent); padding: 0 10px; line-height: 35px; font-weight: bold; font-size: 0.9rem; margin-top: 2px; }
+        .menu-item { padding: 0 10px; border-bottom: 1px solid #111; line-height: 35px; color: #bbb; font-size: 1rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     </style>
 </head>
 <body class="chat-mode">
 
     <div id="sophie-container"><img id="sophie-image" src="./sophie_shake.png" alt="Sophie"></div>
-    <div id="chat-area">(ここに会話が綴られます)</div>
+    <div id="chat-area">(まきむら様、ここに会話が綴られます)</div>
     <div id="music-toggle-bar"><button class="music-toggle-btn" onclick="setMode('music')">♪ Music & Menu</button></div>
 
     <div id="player-section">
         <div class="monitor-frame"><iframe id="yt-iframe" src="" allow="autoplay; encrypted-media"></iframe></div>
+        
         <div class="console-box">
             <div class="console-left">
                 <button class="ctrl-btn" onclick="window.prevSong()">⏮</button>
                 <button class="ctrl-btn" onclick="window.nextSong()">⏭</button>
                 <button class="ctrl-btn" onclick="window.playCurrent()">▶</button>
                 <button class="ctrl-btn" onclick="window.pauseSong()">⏸</button>
-                <button class="ctrl-btn close-music-btn" onclick="setMode('chat')">← Chatに戻る(Close Music)</button>
+                <button class="ctrl-btn" style="grid-column: span 2; color:var(--bar-accent); font-size:0.9rem;" onclick="setMode('chat')">← お店に戻る (Close Player)</button>
             </div>
             <div class="console-right"><img src="./sophie_shake.png" class="small-sophie" alt="S-Sophie"></div>
         </div>
 
         <div class="jukebox-area">
             <div id="menu-layer">
-                <div class="back-btn" id="menu-back" onclick="window.closeMenu()">← 選曲を閉じる</div>
+                <div class="back-btn" id="menu-back-master" onclick="window.closeMenu()">← お店に戻る</div>
                 <div class="menu-list" id="menu-content"></div>
             </div>
             <button class="request-btn" onclick="window.openMenu()">選曲リクエスト (200曲+)</button>
@@ -111,8 +112,12 @@
         });
 
         const renderArtists = () => {
-            const menuContent = document.getElementById('menu-content'); const backBtn = document.getElementById('menu-back');
-            backBtn.onclick = window.closeMenu; backBtn.innerText = "← 選曲を閉じる";
+            const menuContent = document.getElementById('menu-content');
+            const masterBack = document.getElementById('menu-back-master');
+            
+            masterBack.onclick = window.closeMenu;
+            masterBack.innerText = "← お店に戻る"; // まきむら様こだわりの看板
+            
             menuContent.innerHTML = "";
             const genres = { 'E':'演歌', 'F':'フォーク', 'J':'歌謡曲', 'W':'洋楽', 'I':'インスト', 'S':'旅情・映像' };
             Object.keys(genres).forEach(f => {
@@ -127,13 +132,22 @@
                 });
             });
         };
+
         const renderTitles = (artist, flag) => {
-            const menuContent = document.getElementById('menu-content'); const backBtn = document.getElementById('menu-back');
-            backBtn.onclick = renderArtists; backBtn.innerText = "← 歌手一覧へ";
+            const menuContent = document.getElementById('menu-content');
+            const masterBack = document.getElementById('menu-back-master');
+            
+            masterBack.onclick = renderArtists;
+            masterBack.innerText = "← 歌手一覧へ戻る";
+            
             menuContent.innerHTML = `<div class="genre-label">${artist}</div>`;
             masterData.filter(d => d.artist === artist).forEach(d => {
                 const div = document.createElement('div'); div.className = "menu-item"; div.innerText = d.title;
-                div.onclick = () => { currentPlaylist = masterData.filter(m => m.artist === artist); currentIndex = currentPlaylist.findIndex(m => m.url === d.url); window.playFix(d.url); };
+                div.onclick = () => { 
+                    currentPlaylist = masterData.filter(m => m.artist === artist); 
+                    currentIndex = currentPlaylist.findIndex(m => m.url === d.url); 
+                    window.playFix(d.url); 
+                };
                 menuContent.appendChild(div);
             });
         };
