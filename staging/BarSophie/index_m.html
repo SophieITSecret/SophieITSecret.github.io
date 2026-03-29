@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Bar Sophie Mobile - Talk Menu v9.1</title>
+    <title>Bar Sophie Mobile - Reliable v9.2</title>
     <style>
         :root { 
             --bar-bg: #000; --bar-accent: #f0b56e; --neon-blue: #00d2ff; 
@@ -16,11 +16,13 @@
         #sophie-container { flex: none; display: flex; justify-content: center; align-items: center; background: #000; }
         #sophie-image { height: 100%; width: auto; object-fit: contain; }
 
+        /* チャットモード */
         body.chat-mode #sophie-container { height: 55dvh; }
         body.chat-mode #chat-area { height: 35dvh; border-top: 1px solid var(--bar-border); overflow-y: auto; padding: 15px; color: #888; }
         body.chat-mode #music-toggle-bar { height: 10dvh; display: flex; }
         body.chat-mode #player-section { display: none; }
 
+        /* Musicモード */
         body.music-mode #sophie-container, body.music-mode #chat-area, body.music-mode #music-toggle-bar { display: none; }
         body.music-mode #player-section { display: flex; flex-direction: column; height: 100dvh; }
 
@@ -37,6 +39,7 @@
 
         .music-toggle-btn { width: 100%; height: 100%; background: #0a0a0a; color: var(--neon-blue); border: none; font-size: 1.5rem; font-weight: bold; border-top: 2px solid var(--neon-blue); }
 
+        /* メニューエリア */
         .jukebox-area { flex: 1; background: #08080a; overflow-y: auto; position: relative; }
         #menu-layer { position: absolute; inset: 0; background: #08080a; z-index: 500; display: none; flex-direction: column; }
         
@@ -44,14 +47,14 @@
         .genre-label { grid-column: span 2; background: #0e0e1a; color: var(--bar-accent); padding: 0 10px; line-height: 35px; font-weight: bold; font-size: 0.9rem; border-bottom: 1px solid #222; }
         .menu-item { padding: 0 10px; border-bottom: 1px solid #111; line-height: 35px; color: #bbb; font-size: 1rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-        /* ボタンデザインの調整 */
-        .btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 8px 10px; }
-        .action-btn { padding: 12px; border: none; border-radius: 6px; font-weight: bold; font-size: 1rem; color: #fff; }
+        /* 二本柱ボタン */
+        .btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 10px; }
+        .action-btn { padding: 15px 5px; border: none; border-radius: 6px; font-weight: bold; font-size: 1rem; color: #fff; cursor: pointer; text-align: center; }
         .request-btn { background: var(--request-green); }
         .talk-btn { background: var(--talk-blue); }
 
         .quick-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 0 10px 10px; }
-        .quick-btn { background: #050505; border: 1px solid rgba(0,210,255,0.2); color: #ccc; padding: 8px; border-radius: 4px; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.9rem; }
+        .quick-btn { background: #050505; border: 1px solid rgba(0,210,255,0.2); color: #ccc; padding: 10px; border-radius: 4px; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.9rem; }
     </style>
 </head>
 <body class="chat-mode">
@@ -60,7 +63,7 @@
     <div id="chat-area">(まきむら様、ここにソフィーの言葉が綴られます)</div>
     
     <div id="music-toggle-bar">
-        <button class="music-toggle-btn" onclick="sophieSpeak('まきむら様、選曲ですね。私がお手伝いします。', () => setMode('music'))">♪ Music & Menu</button>
+        <button class="music-toggle-btn" onclick="setMode('music'); sophieSpeak('まきむら様、選曲ですね。私がお手伝いします。')">♪ Music & Menu</button>
     </div>
 
     <div id="player-section">
@@ -80,7 +83,7 @@
             <div id="menu-layer"><div class="menu-list" id="menu-content"></div></div>
             
             <div class="btn-row">
-                <button class="action-btn request-btn" onclick="window.openMenu()">選曲リクエスト</button>
+                <button class="action-btn request-btn" onclick="window.openMenu()">🎤 選曲リクエスト</button>
                 <button class="action-btn talk-btn" onclick="window.openTalkMenu()">🥃 お酒の話題</button>
             </div>
 
@@ -98,23 +101,17 @@
         import { getFirestore, doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
         const firebaseConfig = { apiKey: "AIzaSyC1Jvj7A03LCUVlcLZGMROJn5DU3D-l7JY", authDomain: "bar-sophie.firebaseapp.com", projectId: "bar-sophie", storageBucket: "bar-sophie.firebasestorage.app", messagingSenderId: "398354933251", appId: "1:398354933251:web:1afc2c3b879c2a50fa9036" };
         const app = initializeApp(firebaseConfig); const db = getFirestore(app);
-        (async () => { await setDoc(doc(db, "users", "makimura_p"), { name: "まきむら", last_visit: serverTimestamp(), version: "9.1_talk_menu" }); })();
+        (async () => { await setDoc(doc(db, "users", "makimura_p"), { name: "まきむら", last_visit: serverTimestamp(), version: "9.2_fixed" }); })();
 
         let masterData = []; let currentPlaylist = []; let currentIndex = -1;
         let menuState = "closed";
         const masterBackBtn = document.getElementById('master-back-btn');
 
-        // お酒の話題データ（カンペ）
-        const sakeTalks = [
-            { title: "ザ・グレンリベット", content: "いらっしゃいませ。今夜は「ザ・グレンリベット」の歴史を少しだけ紐解いてみましょう。スコットランドのスペイサイド地方にあるこの蒸留所は、1824年、政府公認第一号のライセンスを取得した極めて歴史的な場所です。当時は密造が当たり前の時代。創業者のジョージ・スミスは、ライセンスを取得したことで周囲から命を狙われることもありましたが、二丁の拳銃を携えて自らのウイスキーを守り抜いたと言われています。唯一無二を意味する定冠詞の「ザ」を冠することを公式に許された、まさにシングルモルトの原点。創業者の覚悟の重みを感じながら、ゆっくりとお楽しみください。" },
-            { title: "氷のこだわり", content: "バーでお出しする氷について、少しお話ししますね。私たちは「純氷」と呼ばれる、48時間以上かけてゆっくりと凍らせた透明な氷を使っています。家庭の氷と違って空気が含まれていないため、溶けにくく、お酒の味を薄めにくいのが特徴です。丸く削るのは、表面積を最小にしてさらに溶けにくくするため。カラン、とグラスで鳴る澄んだ音。それもまた、バーでの大切なスパイスだと思っております。" }
-        ];
-
-        window.sophieSpeak = (text, callback) => {
+        // シンプルで頑丈な発声関数
+        window.sophieSpeak = (text) => {
             window.speechSynthesis.cancel();
             const utter = new SpeechSynthesisUtterance(text);
             utter.lang = 'ja-JP'; utter.rate = 1.05; utter.pitch = 1.15;
-            utter.onend = () => { if(callback) setTimeout(callback, 500); };
             window.speechSynthesis.speak(utter);
         };
 
@@ -124,9 +121,16 @@
         };
 
         window.handleMasterBack = () => {
-            if (menuState === "titles" || menuState === "talks") { renderArtists(); } 
-            else if (menuState === "artists") { window.closeMenu(); } 
-            else { setMode('chat'); }
+            if (menuState === "titles" || menuState === "talks") { 
+                // トークメニューから戻る場合はトップの二本柱が見える状態に
+                window.closeMenu(); 
+            } 
+            else if (menuState === "artists") { 
+                window.closeMenu(); 
+            } 
+            else { 
+                setMode('chat'); 
+            }
         };
 
         window.loadVideo = (url) => {
@@ -136,27 +140,36 @@
         
         window.playFix = (url) => { window.loadVideo(url); };
 
-        window.openMenu = () => { document.getElementById('menu-layer').style.display = 'flex'; renderArtists(); };
-        window.closeMenu = () => { document.getElementById('menu-layer').style.display = 'none'; menuState = "closed"; masterBackBtn.innerText = "← お店に戻る"; };
+        window.openMenu = () => { 
+            document.getElementById('menu-layer').style.display = 'flex'; 
+            renderArtists(); 
+        };
 
-        // ★トークメニューを開く
         window.openTalkMenu = () => {
             menuState = "talks";
             masterBackBtn.innerText = "← お店に戻る";
             const menuContent = document.getElementById('menu-content');
-            const menuLayer = document.getElementById('menu-layer');
-            menuLayer.style.display = 'flex';
-            menuContent.innerHTML = '<div class="genre-label" style="background:var(--talk-blue);">お酒の話題（ソフィーの語り）</div>';
+            document.getElementById('menu-layer').style.display = 'flex';
             
+            const sakeTalks = [
+                { title: "ザ・グレンリベット", content: "いらっしゃいませ。今夜は「ザ・グレンリベット」の歴史を少しだけ紐解いてみましょう。スコットランドのスペイサイド地方にあるこの蒸留所は、1824年、政府公認第一号のライセンスを取得した極めて歴史的な場所です。当時は密造が当たり前の時代。創業者のジョージ・スミスは、ライセンスを取得したことで周囲から命を狙われることもありましたが、二丁の拳銃を携えて自らのウイスキーを守り抜いたと言われています。唯一無二を意味する定冠詞の「ザ」を冠することを公式に許された、まさにシングルモルトの原点。創業者の覚悟の重みを感じながら、ゆっくりとお楽しみください。" },
+                { title: "氷のこだわり", content: "バーでお出しする氷について、少しお話ししますね。私たちは「純氷」と呼ばれる、48時間以上かけてゆっくりと凍らせた透明な氷を使っています。家庭の氷と違って空気が含まれていないため、溶けにくく、お酒の味を薄めにくいのが特徴です。丸く削るのは、表面積を最小にしてさらに溶けにくくするため。カラン、とグラスで鳴る澄んだ音。それもまた、バーでの大切なスパイスだと思っております。" }
+            ];
+
+            menuContent.innerHTML = '<div class="genre-label" style="background:var(--talk-blue);">お酒の話題（ソフィーの語り）</div>';
             sakeTalks.forEach(talk => {
                 const div = document.createElement('div');
                 div.className = "menu-item";
                 div.innerText = "🥃 " + talk.title;
-                div.onclick = () => {
-                    sophieSpeak(talk.content);
-                };
+                div.onclick = () => { sophieSpeak(talk.content); };
                 menuContent.appendChild(div);
             });
+        };
+
+        window.closeMenu = () => { 
+            document.getElementById('menu-layer').style.display = 'none'; 
+            menuState = "closed"; 
+            masterBackBtn.innerText = "← お店に戻る"; 
         };
 
         fetch('JBoxメニュー.csv').then(res => res.text()).then(csv => {
@@ -194,7 +207,8 @@
                 div.onclick = () => { 
                     currentPlaylist = masterData.filter(m => m.artist === artist); 
                     currentIndex = currentPlaylist.findIndex(m => m.url === d.url); 
-                    sophieSpeak(artist + 'さんの、' + d.title + 'ですね。かしこまりました。', () => { window.loadVideo(d.url); });
+                    sophieSpeak(artist + 'さんの、' + d.title + 'ですね。かしこまりました。');
+                    setTimeout(() => { window.loadVideo(d.url); }, 2000); // 2秒後に曲開始
                 };
                 menuContent.appendChild(div);
             });
