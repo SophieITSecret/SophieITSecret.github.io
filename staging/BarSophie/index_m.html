@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Bar Sophie Mobile - Smart Escort v8.9</title>
+    <title>Bar Sophie Mobile - Harmony v9.0</title>
     <style>
         :root { 
             --bar-bg: #000; --bar-accent: #f0b56e; --neon-blue: #00d2ff; 
@@ -12,7 +12,6 @@
         }
         body { background-color: var(--bar-bg); color: var(--bar-text); margin: 0; font-family: var(--ui-font); overflow-x: hidden; display: flex; flex-direction: column; min-height: 100dvh; }
 
-        /* モード共通 */
         #sophie-container { flex: none; display: flex; justify-content: center; align-items: center; background: #000; }
         #sophie-image { height: 100%; width: auto; object-fit: contain; }
 
@@ -24,7 +23,6 @@
         body.music-mode #sophie-container, body.music-mode #chat-area, body.music-mode #music-toggle-bar { display: none; }
         body.music-mode #player-section { display: flex; flex-direction: column; height: 100dvh; }
 
-        /* Musicモード：レイアウト */
         .monitor-frame { width: 100vw; aspect-ratio: 16 / 9; background: #000; position: sticky; top: 0; z-index: 1000; border-bottom: 2px solid var(--neon-blue); }
         #yt-iframe { width: 100%; height: 100%; border: none; }
 
@@ -53,10 +51,10 @@
 <body class="chat-mode">
 
     <div id="sophie-container"><img id="sophie-image" src="./sophie_shake.png" alt="Sophie"></div>
-    <div id="chat-area">(まきむら様、ここに会話が綴られます)</div>
+    <div id="chat-area">(まきむら様、ここにソフィーの言葉が綴られます)</div>
     
     <div id="music-toggle-bar">
-        <button class="music-toggle-btn" onclick="setMode('music'); sophieSpeak('まきむら様、選曲ですね。私がお手伝いします。')">♪ Music & Menu</button>
+        <button class="music-toggle-btn" onclick="sophieSpeak('まきむら様、選曲ですね。私がお手伝いします。', () => setMode('music'))">♪ Music & Menu</button>
     </div>
 
     <div id="player-section">
@@ -89,20 +87,37 @@
         import { getFirestore, doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
         const firebaseConfig = { apiKey: "AIzaSyC1Jvj7A03LCUVlcLZGMROJn5DU3D-l7JY", authDomain: "bar-sophie.firebaseapp.com", projectId: "bar-sophie", storageBucket: "bar-sophie.firebasestorage.app", messagingSenderId: "398354933251", appId: "1:398354933251:web:1afc2c3b879c2a50fa9036" };
         const app = initializeApp(firebaseConfig); const db = getFirestore(app);
-        (async () => { await setDoc(doc(db, "users", "makimura_p"), { name: "まきむら", last_visit: serverTimestamp(), version: "8.9_voice_fix" }); })();
+        (async () => { await setDoc(doc(db, "users", "makimura_p"), { name: "まきむら", last_visit: serverTimestamp(), version: "9.0_perfect_sync" }); })();
 
         let masterData = []; let currentPlaylist = []; let currentIndex = -1;
         let menuState = "closed";
         const masterBackBtn = document.getElementById('master-back-btn');
 
-        // シンプルな発声関数（複雑なコールバックを廃止）
-        window.sophieSpeak = (text) => {
+        // ★ソフィーが喋るための魔法（改良版）
+        let currentUtterance = null; // ガベージコレクション対策で外に出す
+        window.sophieSpeak = (text, callback) => {
             window.speechSynthesis.cancel();
-            const utter = new SpeechSynthesisUtterance(text);
-            utter.lang = 'ja-JP';
-            utter.rate = 1.05;
-            utter.pitch = 1.15;
-            window.speechSynthesis.speak(utter);
+            currentUtterance = new SpeechSynthesisUtterance(text);
+            currentUtterance.lang = 'ja-JP';
+            currentUtterance.rate = 1.05;
+            currentUtterance.pitch = 1.15;
+
+            // 喋り終わった後の処理
+            currentUtterance.onend = () => {
+                setTimeout(() => { if(callback) callback(); }, 500); // 0.5秒の余韻
+            };
+
+            // Brave等でonendが稀に発火しない場合の安全装置（1文字0.2秒計算）
+            const safetyTimer = text.length * 200 + 1500;
+            const timerId = setTimeout(() => {
+                if(callback) { callback(); callback = null; }
+            }, safetyTimer);
+
+            // 実際に終わった時はタイマーを消す
+            const originalCallback = callback;
+            callback = () => { clearTimeout(timerId); if(originalCallback) originalCallback(); };
+
+            window.speechSynthesis.speak(currentUtterance);
         };
 
         window.setMode = (mode) => { 
@@ -162,11 +177,10 @@
                     currentPlaylist = masterData.filter(m => m.artist === artist); 
                     currentIndex = currentPlaylist.findIndex(m => m.url === d.url); 
                     
-                    // ★「確実な時間差」：まず喋り、2秒後にYouTubeをロード
-                    sophieSpeak(d.artist + 'さんの、' + d.title + 'ですね。かしこまりました。');
-                    setTimeout(() => {
+                    // 確実に言い終わってから曲を流す
+                    sophieSpeak(artist + 'さんの、' + d.title + 'ですね。かしこまりました。', () => {
                         window.loadVideo(d.url);
-                    }, 2200); // 2.2秒あればセリフのほとんどが言い終わります
+                    });
                 };
                 menuContent.appendChild(div);
             });
