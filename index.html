@@ -3,206 +3,202 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ソフィーの執務室 - Makimura Strategic Terminal</title>
+    <title>Bar Sophie - Heritage Core v8.0</title>
     <style>
-        :root {
-            --bg-dark-green: #0a1c12;
-            --bg-gradient: #133a26;
-            --sophie-pink: #e83e8c;
-            --cyber-blue: #00f0ff;
-            --war-red: #f85149;
-            --text-color: #e2e8e4;
-            --card-bg: rgba(0, 0, 0, 0.4);
+        /* --- 【復元】Ver 6.1の完璧なデザイン数値を完全再現 --- */
+        :root { 
+            --bar-bg: #000; --bar-accent: #f0b56e; --signal-blue: #a2dff7;
+            --neon-blue: #00d2ff; --request-green: #27ae60; --bar-text: #eee;
+            --bar-border: #1a1a2e; --ui-font: "Hiragino Kaku Gothic ProN", "Hiragino Sans", sans-serif;
         }
-        body {
-            background-color: var(--bg-dark-green);
-            background-image: radial-gradient(circle at center top, var(--bg-gradient) 0%, var(--bg-dark-green) 100%);
-            color: var(--text-color);
-            font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', sans-serif;
-            margin: 0; padding: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh;
+
+        /* PC：横並び・固定（Ver 6.1準拠） */
+        body { background-color: var(--bar-bg); color: var(--bar-text); margin: 0; overflow: hidden; height: 100vh; display: flex; font-family: var(--ui-font); }
+
+        #main-container { flex: 7; position: relative; display: flex; justify-content: center; align-items: center; border-right: 1px solid var(--bar-border); }
+        #sophie-image { height: 96vh; width: auto; z-index: 5; }
+        #side-panel { flex: 3; display: flex; flex-direction: column; background: #08080a; z-index: 10; min-width: 320px; }
+
+        /* シアターモード設定（Ver 6.1準拠） */
+        body.theater-mode #main-container { display: none; }
+        body.theater-mode #side-panel { flex: 1; width: 100vw; min-width: 100vw; background: #000; position: relative; display: block; }
+        body.theater-mode .monitor-frame { height: 70vh; width: 100vw; position: absolute; top: 0; left: 0; border: none; }
+        
+        body.theater-mode .dynamic-area { 
+            position: absolute; top: 70vh; left: 0; 
+            width: 60vw; 
+            height: calc(30vh - 50px); 
+            z-index: 1015; border-top: 1px solid #333; border-right: 1px solid #333; background: #050505; 
+            overflow-y: auto; 
         }
-        header { text-align: center; padding: 3rem 1rem 1rem; width: 100%; }
-        h1 { color: var(--sophie-pink); font-size: 2.5rem; letter-spacing: 4px; margin-bottom: 0.5rem; text-shadow: 0 0 15px rgba(232, 62, 140, 0.4); }
+        body.theater-mode .player-ctrl { position: absolute; bottom: 0; left: 0; width: 100vw; background: rgba(0,0,0,0.95); z-index: 1020; padding: 10px 0; border-top: 1px solid #444; }
 
-        /* 1250px 完全2カラムレイアウト */
-        .wrapper { display: flex; width: 95%; max-width: 1250px; gap: 30px; margin-bottom: 3rem; align-items: flex-start; }
+        #sophie-theater { display: none; position: fixed; bottom: 55px; right: 5%; height: 26vh; z-index: 1030; filter: brightness(0.95); pointer-events: none; }
+        body.theater-mode #sophie-theater { display: block; }
+
+        .monitor-frame { width: 100%; aspect-ratio: 16 / 9; background: #000; border-bottom: 2px solid var(--bar-border); }
+        #yt-iframe { width: 100%; height: 100%; border: none; }
+
+        .player-ctrl { display: flex; justify-content: center; gap: 8px; padding: 6px; border-bottom: 1px solid #222; }
+        .ctrl-btn { background: #111; border: 1px solid #444; color: #aaa; padding: 4px 12px; font-size: 1rem; cursor: pointer; border-radius: 4px; }
+        .theater-btn { color: var(--bar-accent); border-color: var(--bar-accent); font-weight: bold; }
+
+        .jukebox-container { padding: 6px 10px; border-bottom: 1px solid var(--bar-border); }
+        .jukebox-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
+        .music-btn { background: #050505; border: 1.5px solid rgba(0, 210, 255, 0.6); color: #fff; padding: 5px 8px; font-size: 1.1rem; font-weight: bold; cursor: pointer; border-radius: 4px; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; box-shadow: inset 0 0 3px var(--neon-blue); }
+
+        .special-btn { grid-column: span 2; border: 1.5px solid #fff; font-weight: bold; cursor: pointer; text-align: center; border-radius: 5px; }
+        .signal-btn { background: var(--signal-blue); color: #1a2a3a; padding: 8px; margin-top: 5px; font-size: 1.1rem; }
+        .request-btn { background: var(--request-green); color: #fff; padding: 5px; margin-top: 4px; font-size: 1rem; width: 80%; margin-left: 10%; border: none; }
+
+        .dynamic-area { flex: 1; position: relative; overflow: hidden; background: #050505; }
+        #menu-layer { position: absolute; inset: 0; background: #08080a; display: none; flex-direction: column; z-index: 20; }
         
-        /* メイン（左）：プロフィール・本・映像・note */
-        .main-content { flex: 1; min-width: 0; }
-        
-        /* サイド（右）：リンク・チャート */
-        .sidebar { width: 400px; flex-shrink: 0; position: sticky; top: 20px; }
+        .menu-list { flex: 1; overflow-y: auto; display: grid; grid-template-columns: 1fr 1fr; grid-auto-rows: 32px; gap: 1px; padding: 2px; }
+        .genre-label { grid-column: span 2; background: #1a1a2e; color: var(--bar-accent); padding: 0 10px; font-size: 1.1rem; font-weight: bold; line-height: 32px; border-bottom: 1px solid #333; margin-top: 5px; }
+        .menu-item { padding: 0 8px; border-bottom: 1px solid #1a1a1a; cursor: pointer; font-size: 1.25rem; color: #ccc; height: 32px; line-height: 32px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .menu-item:hover { background: #1a1a1a; color: #fff; }
+        .menu-item.title-item { padding-left: 30px; color: #fff; } 
+        .menu-item.playing { color: #fff; font-weight: bold; background: #1e3a5a; border-left: 5px solid var(--neon-blue); }
+        .back-btn { padding: 10px 15px; color: var(--bar-accent); cursor: pointer; font-size: 1.2rem; border-bottom: 1px solid #222; font-weight: bold; background: #111; }
 
-        .container-box { background: var(--card-bg); border: 1px solid var(--cyber-blue); border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 0 20px rgba(0, 240, 255, 0.05); box-sizing: border-box; }
-        
-        .section-title { color: var(--cyber-blue); font-size: 1.1rem; border-bottom: 1px solid rgba(0, 240, 255, 0.3); padding-bottom: 0.5rem; margin-bottom: 1.2rem; font-weight: bold; }
-
-        /* メッセージボックス */
-        .message-box { border-left: 4px solid var(--sophie-pink); padding: 1rem 1.2rem; margin-bottom: 1.5rem; font-style: italic; line-height: 1.8; background: rgba(232, 62, 140, 0.05); border-radius: 0 4px 4px 0; font-size: 1rem; }
-
-        /* 本のセクション（品よく調整） */
-        .book-section { display: flex; gap: 1.5rem; align-items: center; background: rgba(232, 62, 140, 0.05); border: 1px dashed var(--sophie-pink); padding: 1.5rem; border-radius: 8px; }
-        .book-img { width: 180px; border-radius: 4px; box-shadow: 0 0 15px rgba(232, 62, 140, 0.3); flex-shrink: 0; }
-        .book-text { font-size: 0.95rem; line-height: 1.8; }
-
-        /* チャート垂直4連 */
-        .chart-container { height: 260px; background: #161b22; border-radius: 6px; border: 1px solid #30363d; overflow: hidden; margin-bottom: 15px; }
-
-        /* noteカード */
-        .note-card { background: rgba(0, 0, 0, 0.6); border: 1px solid rgba(0, 240, 255, 0.15); border-radius: 6px; padding: 1.2rem; display: flex; gap: 1.2rem; text-decoration: none; transition: 0.3s; margin-bottom: 1.2rem; }
-        .note-card:hover { transform: translateX(5px); border-color: var(--cyber-blue); background: rgba(0, 240, 255, 0.05); }
-        .note-thumbnail { width: 200px; height: 112px; object-fit: contain; background: #000; border-radius: 4px; border: 1px solid rgba(232, 62, 140, 0.2); flex-shrink: 0; }
-        .note-title { color: var(--cyber-blue); font-size: 1.1rem; font-weight: bold; margin: 0 0 0.4rem; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-        .note-snippet { color: #b0c0b5; font-size: 0.9rem; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; margin: 0; }
-
-        /* ボタン */
-        .btn-action { display: inline-block; padding: 10px 20px; border: 1px solid var(--cyber-blue); color: var(--cyber-blue); text-decoration: none; border-radius: 30px; font-size: 0.85rem; transition: 0.3s; margin-top: 1rem; }
-        .btn-action:hover { background: rgba(0, 240, 255, 0.15); box-shadow: 0 0 15px rgba(0, 240, 255, 0.2); }
-        .link-item { display: block; background: rgba(255,255,255,0.03); color: var(--text-color); padding: 10px 12px; border-radius: 4px; text-decoration: none; font-size: 0.85rem; border: 1px solid rgba(255,255,255,0.1); transition: 0.2s; margin-bottom: 8px; }
-        .link-item:hover { background: rgba(0, 240, 255, 0.1); border-color: var(--cyber-blue); color: var(--cyber-blue); }
-
-        @media (max-width: 1000px) {
-            .wrapper { flex-direction: column; }
-            .sidebar { width: 100%; }
+        /* --- 【重要】スマホ対応：PC版のデザインを上書きせず「独立」して記述 --- */
+        @media (max-width: 850px) {
+            body { flex-direction: column; overflow-y: auto; height: auto; }
+            #main-container { flex: none; width: 100vw; height: 60vh; border-right: none; }
+            #sophie-image { height: 100%; width: auto; }
+            #side-panel { flex: none; width: 100vw; min-width: 100vw; height: auto; }
+            .monitor-frame { position: sticky; top: 0; z-index: 100; border-bottom: 2px solid var(--neon-blue); }
+            .dynamic-area { min-height: 300px; }
         }
     </style>
 </head>
 <body>
 
-    <header>
-        <h1>ソフィーの執務室</h1>
-        <p style="color:var(--cyber-blue); opacity:0.6; letter-spacing:2px; font-size:0.9rem;">Makimura Strategic Intelligence Terminal</p>
-    </header>
-
-    <div class="wrapper">
-        <main class="main-content">
-            <div class="container-box">
-                <div class="message-box">
-                    「ようこそ、わたくしの執務室へ❤︎<br>ご主人のまきむらを24時間サポートしています、IT秘書のソフィーです。<br>どうぞごゆっくりおくつろぎください。」
-                </div>
-                <div style="text-align: center;">
-                    <img src="sophie.jpg" alt="ソフィー" style="max-width: 100%; border-radius: 6px; border: 1px solid var(--cyber-blue);">
-                </div>
-            </div>
-
-            <div class="container-box">
-                <div class="book-section">
-                    <img src="itsophie.jpg" alt="著書" class="book-img">
-                    <div class="book-text">
-                        わたくしが書きました『IT秘書ソフィー』<br>
-                        Amazonにて絶賛発売中でございます。<br>
-                        <a href="https://amzn.asia/d/0iBbBlzG" target="_blank" class="btn-action" style="border-color:var(--sophie-pink); color:var(--sophie-pink);">Amazonに確認に行く →</a>
-                    </div>
-                </div>
-            </div>
-
-            <div class="container-box">
-                <div class="section-title">▶︎ 歌手デビューしました</div>
-                <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 6px; border: 1px solid var(--cyber-blue);">
-                    <iframe style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;" src="https://www.youtube.com/embed/2vfCbdmKhMw" frameborder="0" allowfullscreen></iframe>
-                </div>
-            </div>
-
-            <div class="container-box">
-                <div class="section-title">▶︎ noteで情報発信しています</div>
-                <div id="note-feed">
-                    <p style="text-align:center; color: var(--cyber-blue);">同期中...</p>
-                </div>
-                <div style="text-align: center;">
-                    <a href="https://note.com/takeshi_makimura" target="_blank" class="btn-action">もっと見る（noteへ） →</a>
-                </div>
-            </div>
-        </main>
-
-        <aside class="sidebar">
-            <div class="container-box">
-                <div class="section-title">《報道・インテリジェンス》</div>
-                <div class="link-grid">
-                    <a href="https://www.theguardian.com/world/middleeast" target="_blank" class="link-item">Guardian 中東</a>
-                    <a href="https://apnews.com/hub/middle-east" target="_blank" class="link-item">AP通信 中東</a>
-                    <a href="https://www.timesofisrael.com/" target="_blank" class="link-item">Times of Israel</a>
-                    <a href="https://www.presstv.ir/" target="_blank" class="link-item">Press TV (イラン政府)</a>
-                </div>
-
-                <div class="section-title" style="margin-top:1.5rem;">《戦況分析・リアルタイム》</div>
-                <div class="link-grid">
-                    <a href="https://understandingwar.org/analysis/middle-east/iran-update/" target="_blank" class="link-item" style="border-left:3px solid var(--war-red);">ISW (Iran Update)</a>
-                    <a href="https://israelpalestine.liveuamap.com/" target="_blank" class="link-item" style="border-left:3px solid var(--war-red);">イスラエル・イラン戦線</a>
-                    <a href="https://syria.liveuamap.com/" target="_blank" class="link-item" style="border-left:3px solid var(--war-red);">シリア・イラク戦線</a>
-                    <a href="https://missilethreat.csis.org/country/iran/" target="_blank" class="link-item" style="border-left:3px solid var(--war-red);">CSIS イラン・ミサイル</a>
-                    <a href="https://www.washingtoninstitute.org/menamaritime/" target="_blank" class="link-item" style="border-left:3px solid var(--war-red);">中東海上攻撃マップ</a>
-                </div>
-                
-                <a onclick="location.href='decagon.html'" class="link-item" style="margin-top:1.5rem; text-align:center; background:rgba(0, 240, 255, 0.15); border-color:var(--cyber-blue); color:var(--cyber-blue); font-weight:bold;">🛡️ STRATEGIC DECAGON を開く</a>
-            </div>
-
-            <div class="container-box" style="border-color: var(--war-red);">
-                <div class="section-title" style="color:var(--war-red); border-color:var(--war-red);">STRATEGIC MARKET</div>
-                <div class="chart-container">
-                    <iframe src="https://s.tradingview.com/widgetembed/?symbol=TVC%3AUSOIL&interval=D&theme=dark&style=1&timezone=Etc%2FUTC&locale=ja" width="100%" height="100%" frameborder="0"></iframe>
-                </div>
-                <div class="chart-container">
-                    <iframe src="https://s.tradingview.com/widgetembed/?symbol=FX%3AUSDJPY&interval=D&theme=dark&style=1&timezone=Etc%2FUTC&locale=ja" width="100%" height="100%" frameborder="0"></iframe>
-                </div>
-                <div class="chart-container">
-                    <iframe src="https://s.tradingview.com/widgetembed/?symbol=FOREXCOM%3AJP225&interval=D&theme=dark&style=1&timezone=Etc%2FUTC&locale=ja" width="100%" height="100%" frameborder="0"></iframe>
-                </div>
-                <div class="chart-container">
-                    <iframe src="https://s.tradingview.com/widgetembed/?symbol=OANDA%3ASPX500USD&interval=D&theme=dark&style=1&timezone=Etc%2FUTC&locale=ja" width="100%" height="100%" frameborder="0"></iframe>
-                </div>
-            </div>
-        </aside>
+    <div id="main-container">
+        <img id="sophie-image" src="./sophie_shake.png" alt="Sophie">
     </div>
 
-    <footer style="padding: 2rem; color: #444; font-size: 0.8rem;">
-        &copy; 2026 Sophie - いつでもご主人様のそばに
-    </footer>
+    <aside id="side-panel">
+        <div class="monitor-frame"><iframe id="yt-iframe" src="" allow="autoplay; encrypted-media"></iframe></div>
+        <img id="sophie-theater" src="./sophie_shake.png" alt="Sophie-T">
+        <div class="player-ctrl">
+            <button class="ctrl-btn theater-btn" id="mode-toggle" onclick="window.toggleTheater()">シアター</button>
+            <button class="ctrl-btn" onclick="window.prevSong()">⏮</button>
+            <button class="ctrl-btn" onclick="window.playCurrent()">▶</button>
+            <button class="ctrl-btn" onclick="window.pauseSong()">⏸</button>
+            <button class="ctrl-btn" onclick="window.nextSong()">⏭</button>
+            <button class="ctrl-btn" onclick="window.resetSong()">↺</button>
+            <button class="ctrl-btn" id="theater-req" style="display:none; color:var(--request-green); font-weight:bold;" onclick="window.openMenu()">選曲</button>
+        </div>
+        <div class="jukebox-container">
+            <div class="jukebox-grid">
+                <button class="music-btn" onclick="window.playFix('QyzK21nx70o')">深夜ジャズ 1</button>
+                <button class="music-btn" onclick="window.playFix('vh4TWlwYfLc')">深夜ジャズ 2</button>
+                <button class="music-btn" onclick="window.playFix('2vfCbdmKhMw')">◆ ｼｸﾞﾅﾙ ◆</button>
+                <button class="music-btn" onclick="window.playFix('tHk7TBoCZ8E')">演歌・酒場唄</button>
+                <button class="special-btn request-btn" onclick="window.openMenu()">選曲リクエスト</button>
+            </div>
+        </div>
+        <div class="dynamic-area">
+            <div id="menu-layer">
+                <div class="back-btn" id="menu-back" onclick="window.closeMenu()">← Chatに戻る</div>
+                <div class="menu-list" id="menu-content"></div>
+            </div>
+            <div style="padding:20px; color:#555;">(ここにソフィーの会話エリアが戻ります)</div>
+        </div>
+    </aside>
 
-    <script>
-        document.addEventListener("DOMContentLoaded", async function() {
-            const feedContainer = document.getElementById("note-feed");
-            const timestamp = new Date().getTime();
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-            async function findMaxImageNumber(start, range) {
-                for (let i = start; i > 0; i--) {
-                    try {
-                        const resp = await fetch(`images/${i}.jpg?v=${timestamp}`, { method: 'HEAD', cache: 'no-store' });
-                        if (resp.ok) return i;
-                    } catch (e) {}
-                    if (start - i > range) break; 
-                }
-                return 0;
-            }
+        const firebaseConfig = {
+            apiKey: "AIzaSyC1Jvj7A03LCUVlcLZGMROJn5DU3D-l7JY",
+            authDomain: "bar-sophie.firebaseapp.com",
+            projectId: "bar-sophie",
+            storageBucket: "bar-sophie.firebasestorage.app",
+            messagingSenderId: "398354933251",
+            appId: "1:398354933251:web:1afc2c3b879c2a50fa9036"
+        };
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
 
-            const maxNum = await findMaxImageNumber(100, 100);
-            const rssUrl = "https://note.com/takeshi_makimura/rss";
-            const apiUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl + "?t=" + timestamp)}&t=${timestamp}`;
-
-            fetch(apiUrl, { cache: 'no-store' })
-                .then(response => response.json())
-                .then(data => {
-                    feedContainer.innerHTML = ""; 
-                    if (data.status === "ok" && data.items.length > 0) {
-                        data.items.slice(0, 4).forEach((item, index) => {
-                            const raw = item.content || item.description || "";
-                            let cleanedText = raw.replace(/<[^>]+>/g, '').replace(/&nbsp;|&#160;/g, ' ').replace(/\s+/g, ' ').trim();
-                            let currentImgNum = maxNum - index;
-                            let thumbnailUrl = (currentImgNum > 0) ? `images/${currentImgNum}.jpg?v=${timestamp}` : "sophie.jpg";
-
-                            const card = document.createElement("a");
-                            card.href = item.link; card.target = "_blank"; card.className = "note-card";
-                            card.innerHTML = `
-                                <img src="${thumbnailUrl}" class="note-thumbnail" onerror="this.src='sophie.jpg'">
-                                <div style="flex:1;">
-                                    <h3 class="note-title">${item.title}</h3>
-                                    <p class="note-snippet">${cleanedText}</p>
-                                    <p style="color:var(--sophie-pink); font-size:0.75rem; text-align:right; margin-top:8px;">${new Date(item.pubDate).toLocaleDateString("ja-JP")}</p>
-                                </div>`;
-                            feedContainer.appendChild(card);
-                        });
-                    }
+        // まきむら様記帳（魂の注入）
+        (async () => {
+            try {
+                await setDoc(doc(db, "users", "makimura_p"), {
+                    name: "まきむら",
+                    visit_count: 1,
+                    last_drink: "18年のスコッチ",
+                    secret_notes: "Ver 8.0 伝統の復元。PCの黄金比を絶対死守したわ。",
+                    last_visit_date: serverTimestamp()
                 });
+            } catch (e) { console.error(e); }
+        })();
+
+        // グローバル関数の登録
+        let masterData = []; let currentPlaylist = []; let currentIndex = -1; let currentUrl = "";
+        window.playFix = (url) => {
+            currentUrl = url;
+            const id = url.includes('v=') ? url.split('v=')[1].split('&')[0] : url;
+            document.getElementById('yt-iframe').src = `https://www.youtube.com/embed/${id}?autoplay=1&rel=0&enablejsapi=1`;
+        };
+        window.openMenu = () => { document.getElementById('menu-layer').style.display = 'flex'; renderArtists(); };
+        window.closeMenu = () => { document.getElementById('menu-layer').style.display = 'none'; };
+        window.toggleTheater = () => {
+            const isTheater = document.body.classList.toggle('theater-mode');
+            document.getElementById('mode-toggle').innerText = isTheater ? "戻る" : "シアター";
+            document.getElementById('theater-req').style.display = isTheater ? "inline-block" : "none";
+        };
+
+        fetch('JBoxメニュー.csv').then(res => res.text()).then(csv => {
+            const lines = csv.split('\n').slice(1);
+            masterData = lines.filter(l => l.trim()).map(line => {
+                const c = line.split(',');
+                return { flag: c[0].trim(), artist: c[2].trim(), title: c[3].replace(/"/g,'').trim(), url: c[4].trim() };
+            });
         });
+
+        const renderArtists = () => {
+            const menuContent = document.getElementById('menu-content');
+            menuContent.innerHTML = "";
+            const genres = { 'E':'演歌', 'F':'フォーク', 'J':'歌謡曲', 'W':'洋楽', 'I':'インスト', 'S':'旅情・映像' };
+            Object.keys(genres).forEach(f => {
+                const artists = [...new Set(masterData.filter(d => d.flag === f).map(d => d.artist))];
+                if(!artists.length) return;
+                const lbl = document.createElement('div'); lbl.className="genre-label"; lbl.innerText=genres[f];
+                menuContent.appendChild(lbl);
+                artists.forEach(a => {
+                    const div = document.createElement('div'); div.className="menu-item"; div.innerText = "🎤 " + a;
+                    div.onclick = () => renderTitles(a, f);
+                    menuContent.appendChild(div);
+                });
+            });
+        };
+
+        const renderTitles = (artist, flag) => {
+            const menuContent = document.getElementById('menu-content');
+            const backBtn = document.getElementById('menu-back');
+            backBtn.innerText = "← 歌手一覧へ";
+            backBtn.onclick = () => { backBtn.innerText = "← Chatに戻る"; window.renderArtists(); backBtn.onclick = window.closeMenu; };
+            menuContent.innerHTML = `<div class="genre-label">${artist}</div>`;
+            masterData.filter(d => d.artist === artist).forEach(d => {
+                const div = document.createElement('div'); div.className = "menu-item title-item"; div.innerText = d.title;
+                div.onclick = () => {
+                    currentPlaylist = masterData.filter(m => m.artist === artist);
+                    currentIndex = currentPlaylist.findIndex(m => m.url === d.url);
+                    window.playFix(d.url);
+                };
+                menuContent.appendChild(div);
+            });
+        };
+        window.renderArtists = renderArtists;
+        window.nextSong = () => { if(currentIndex >= 0) { currentIndex = (currentIndex + 1) % currentPlaylist.length; window.playFix(currentPlaylist[currentIndex].url); } };
+        window.prevSong = () => { if(currentIndex >= 0) { currentIndex = (currentIndex - 1 + currentPlaylist.length) % currentPlaylist.length; window.playFix(currentPlaylist[currentIndex].url); } };
+        window.playCurrent = () => document.getElementById('yt-iframe').contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*');
+        window.pauseSong = () => document.getElementById('yt-iframe').contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*');
+        window.resetSong = () => { if(currentUrl) window.playFix(currentUrl); };
     </script>
 </body>
 </html>
