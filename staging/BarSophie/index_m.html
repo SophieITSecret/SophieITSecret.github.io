@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Bar Sophie v11.7</title>
+    <title>Bar Sophie v11.8</title>
     <style>
         :root { --bg: #000; --accent: #f0b56e; --blue: #00d2ff; --green: #27ae60; --talk: #2980b9; --text: #eee; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
@@ -15,33 +15,34 @@
         #entry-sophie { width: 80%; height: 45%; object-fit: contain; }
         .btn-enter { margin-top: 20px; padding: 15px 45px; font-size: 1.2rem; background: #111; border: 2px solid var(--accent); color: var(--accent); border-radius: 40px; font-weight: bold; }
 
-        /* 上部固定エリア（モニター＋操作盤） */
+        /* 上部固定（モニター＋操作盤） */
         #top-fixed { position: fixed; top: 0; left: 0; width: 100%; z-index: 2000; background: #000; }
         .monitor { width: 100%; aspect-ratio: 16/9; background: #000; border-bottom: 2px solid var(--blue); position: relative; }
         #yt-iframe, #monitor-img { width: 100%; height: 100%; border: none; display: none; object-fit: contain; }
-        #telop { position: absolute; inset: 0; background: rgba(0,0,0,0.7); padding: 15px; font-size: 1rem; display: none; z-index: 2100; color: #fff; overflow-y: auto; line-height: 1.6; }
+        #telop { position: absolute; inset: 0; background: rgba(0,0,0,0.7); padding: 15px; font-size: 1rem; display: none; z-index: 2100; color: #fff; overflow-y: auto; line-height: 1.5; }
 
-        .console { height: 80px; background: #111; display: flex; border-bottom: 1px solid #333; }
-        .btn-grid { flex: 1; display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px; padding: 5px; }
-        .sophie-box { width: 80px; background: #000; display: flex; justify-content: center; align-items: center; border-left: 1px solid #222; }
+        .console { height: 75px; background: #111; display: flex; border-bottom: 1px solid #333; }
+        .btn-grid { flex: 1; display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px; padding: 4px; }
+        .sophie-box { width: 75px; background: #000; display: flex; justify-content: center; align-items: center; border-left: 1px solid #222; }
         .sophie-box img { height: 85%; width: auto; }
         .c-btn { background: #222; border: 1px solid #444; color: #eee; border-radius: 4px; font-size: 0.85rem; font-weight: bold; display: flex; align-items: center; justify-content: center; }
 
-        /* 下部スクロールエリア：上部エリアの高さ分（56.25vw + 80px）を開ける */
+        /* 下部スクロール：ここを絶対基準で固定 */
         #main-ui { display: none; }
         .scroll-content { 
             position: absolute; 
-            top: calc(56.25vw + 80px); /* 16:9モニターの高さ + コンソールの高さ */
+            top: calc(56.25vw + 75px); /* 16:9モニター高さ + コンソール高さ */
             left: 0; width: 100%; bottom: 0; 
             overflow-y: scroll; -webkit-overflow-scrolling: touch; 
-            background: #08080a; padding-bottom: 50px;
+            background: #08080a; 
         }
 
-        #nav-main { padding: 15px; }
-        .act-btn { width: 100%; margin-bottom: 12px; padding: 18px; border-radius: 10px; border: none; font-weight: bold; color: #fff; font-size: 1.2rem; box-shadow: 0 4px 8px rgba(0,0,0,0.5); }
+        #nav-main { padding: 10px; }
+        .act-btn { width: 100%; height: 45px; margin-bottom: 8px; border-radius: 8px; border: none; font-weight: bold; color: #fff; font-size: 1.05rem; }
 
-        .label { background: #1a1a2e; color: var(--accent); padding: 10px 15px; font-size: 0.9rem; font-weight: bold; position: sticky; top: 0; z-index: 100; border-bottom: 1px solid #333; }
-        .item { min-height: 50px; padding: 10px 15px; border-bottom: 1px solid #222; color: #ccc; font-size: 1.1rem; display: flex; align-items: center; width: 100%; cursor: pointer; }
+        /* ★ボタンの上下幅の基準（クライテリオン） */
+        .label { background: #1a1a2e; color: var(--accent); padding: 0 12px; font-size: 0.8rem; font-weight: bold; position: sticky; top: 0; z-index: 100; border-bottom: 1px solid #333; height: 28px; line-height: 28px; }
+        .item { height: 38px; line-height: 38px; padding: 0 15px; border-bottom: 1px solid #222; color: #ccc; font-size: 0.95rem; display: block; width: 100%; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
         .ver { position: fixed; bottom: 4px; right: 8px; font-size: 10px; color: #333; pointer-events: none; z-index: 3000; }
     </style>
@@ -75,16 +76,17 @@
             <div id="nav-main">
                 <button class="act-btn" style="background:var(--green)" onclick="openMusic()">🎵 音楽選曲 (リクエスト)</button>
                 <button class="act-btn" style="background:var(--talk)" onclick="openTalk()">🥃 お酒の話 (140本の物語)</button>
-                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-top:10px;">
-                    <button class="c-btn" style="height:50px" onclick="playFix('QyzK21nx70o')">Jazz 1</button>
-                    <button class="c-btn" style="height:50px" onclick="playFix('vh4TWlwYfLc')">Jazz 2</button>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px;">
+                    <button class="c-btn" style="height:40px" onclick="playFix('QyzK21nx70o')">Jazz 1</button>
+                    <button class="c-btn" style="height:40px" onclick="playFix('vh4TWlwYfLc')">Jazz 2</button>
                 </div>
             </div>
             <div id="list-view" style="display:none;"></div>
+            <div style="height: 100px;"></div>
         </div>
     </div>
 
-    <div class="ver">v11.7 FINAL-RESCUE</div>
+    <div class="ver">v11.8 STANDARD</div>
 
     <script>
         let jData = [], tData = [], state = "none", curG = "", curP = [], curI = -1, lastTalk = "";
@@ -94,25 +96,19 @@
         function enter() {
             document.getElementById('entry-screen').style.display = 'none';
             document.getElementById('main-ui').style.display = 'block';
-            speak("まきむら様、お帰りなさいませ。今夜も良いお酒と音楽を。");
+            speak("まきむら様、お帰りなさい。140本のワインの物語、ようやくお聞かせできます。");
         }
 
         window.speak = (txt) => {
-            if(!txt) return;
-            lastTalk = txt;
+            if(!txt) return; lastTalk = txt;
             window.speechSynthesis.cancel();
-            telText.innerText = txt; 
-            tel.style.display = 'block';
-            
+            telText.innerText = txt; tel.style.display = 'block';
             const u = new SpeechSynthesisUtterance(txt);
             u.lang = 'ja-JP'; u.rate = 1.05;
             window.speechSynthesis.speak(u);
         };
 
-        window.stopSpeak = () => {
-            window.speechSynthesis.cancel();
-            tel.style.display = 'none';
-        };
+        window.stopSpeak = () => { window.speechSynthesis.cancel(); tel.style.display = 'none'; };
 
         function setMon(mode, src) {
             if(mode === 'v') { img.style.display = 'none'; yt.style.display = 'block'; yt.src = `https://www.youtube.com/embed/${src}?autoplay=1&enablejsapi=1&rel=0`; }
@@ -138,8 +134,7 @@
         });
 
         window.openMusic = () => {
-            state = "art";
-            let h = "";
+            state = "art"; let h = "";
             ['E','F','J','W','I','S'].forEach(f => {
                 const arts = [...new Set(jData.filter(d => d.f === f).map(d => d.a))];
                 if(arts.length) {
@@ -150,8 +145,7 @@
             renderList(h);
         };
         window.renderSongs = (a) => {
-            state = "tit";
-            let h = `<div class="label">${a}</div>`;
+            state = "tit"; let h = `<div class="label">${a}</div>`;
             const songs = jData.filter(m => m.a === a);
             songs.forEach(m => {
                 const vid = m.u.split('v=')[1] || m.u;
@@ -161,22 +155,19 @@
         };
 
         window.openTalk = () => {
-            state = "g";
-            let h = '<div class="label">お酒のジャンル</div>';
+            state = "g"; let h = '<div class="label">お酒のジャンル</div>';
             const genres = [...new Set(tData.map(d => d.g))];
             genres.forEach(g => { h += `<div class="item" onclick="curG='${g}'; openThemes('${g}')">📁 ${g}</div>`; });
             renderList(h);
         };
         window.openThemes = (g) => {
-            state = "th";
-            let h = `<div class="label">${g}</div>`;
+            state = "th"; let h = `<div class="label">${g}</div>`;
             const themes = [...new Set(tData.filter(d => d.g === g).map(d => d.th))];
             themes.forEach(t => { h += `<div class="item" onclick="openStories('${t}')">🏷️ ${t}</div>`; });
             renderList(h);
         };
         window.openStories = (t) => {
-            state = "st";
-            let h = `<div class="label">${t}</div>`;
+            state = "st"; let h = `<div class="label">${t}</div>`;
             tData.filter(d => d.th === t).forEach(d => {
                 h += `<div class="item" onclick="setMon('i','./talk_images/${d.id}.jpg'); speak(\`${d.txt}\`);">${d.ti}</div>`;
             });
@@ -184,10 +175,8 @@
         };
 
         function renderList(html) {
-            navMain.style.display = 'none';
-            listView.style.display = 'block';
-            listView.innerHTML = html;
-            mainScroll.scrollTop = 0;
+            navMain.style.display = 'none'; listView.style.display = 'block';
+            listView.innerHTML = html; mainScroll.scrollTop = 0;
         }
 
         window.handleBack = () => {
@@ -199,12 +188,9 @@
 
         window.play = () => { 
             yt.contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*'); 
-            if(lastTalk) speak(lastTalk); // ★再生ボタンで最後に選んだ話を読み上げる
+            if(lastTalk) speak(lastTalk);
         };
-        window.pause = () => { 
-            yt.contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*'); 
-            stopSpeak(); 
-        };
+        window.pause = () => { yt.contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*'); stopSpeak(); };
         window.playFix = (id) => setMon('v', id);
         window.next = () => { if(curI >= 0 && curI < curP.length-1) { curI++; const m = curP[curI]; setMon('v', m.u.split('v=')[1] || m.u); } };
     </script>
