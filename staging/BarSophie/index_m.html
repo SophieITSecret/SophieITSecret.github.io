@@ -3,51 +3,54 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Bar Sophie v10.9</title>
+    <title>Bar Sophie v11.0</title>
     <style>
         :root { --bg: #000; --accent: #f0b56e; --blue: #00d2ff; --green: #27ae60; --talk: #2980b9; --text: #eee; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
-        body { background: var(--bg); color: var(--text); font-family: sans-serif; height: 100dvh; overflow: hidden; display: flex; flex-direction: column; width: 100vw; }
+        body { background: var(--bg); color: var(--text); font-family: sans-serif; height: 100dvh; overflow: hidden; width: 100vw; }
 
-        /* 入口 */
+        /* 入口画面 */
         #entry-screen { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; }
         #entry-sophie { width: 80%; height: 55%; object-fit: contain; }
         .btn-enter { margin-top: 20px; padding: 15px 45px; font-size: 1.2rem; background: #111; border: 2px solid var(--accent); color: var(--accent); border-radius: 40px; font-weight: bold; }
 
-        #main-ui { display: none; height: 100dvh; width: 100vw; flex-direction: column; }
+        /* メインUI */
+        #main-ui { display: none; flex-direction: column; height: 100dvh; width: 100vw; position: relative; }
         
+        /* 横画面：モニターを大きく、メニューを右に */
         @media (orientation: landscape) {
             #main-ui { flex-direction: row; }
-            .left-side { flex: 1.2; display: flex; flex-direction: column; border-right: 1px solid #333; height: 100%; }
-            .right-side { flex: 1; display: flex; flex-direction: column; height: 100%; }
-            .monitor { flex: 1 !important; aspect-ratio: auto !important; }
+            .left-side { flex: 1.5; display: flex; flex-direction: column; border-right: 1px solid #333; }
+            .right-side { flex: 1; display: flex; flex-direction: column; }
+            .monitor { aspect-ratio: auto !important; height: 100% !important; }
         }
 
         .monitor { width: 100%; aspect-ratio: 16/9; background: #000; border-bottom: 1px solid var(--blue); position: relative; flex-shrink: 0; }
         #yt-iframe, #monitor-img { width: 100%; height: 100%; border: none; display: none; object-fit: contain; }
-        #telop { position: absolute; bottom: 0; width: 100%; background: rgba(0,0,0,0.85); padding: 8px; font-size: 0.85rem; display: none; z-index: 100; color: #fff; text-align: center; }
+        #telop { position: absolute; bottom: 0; width: 100%; background: rgba(0,0,0,0.85); padding: 8px; font-size: 0.85rem; display: none; z-index: 1000; color: #fff; text-align: center; }
 
-        .console { height: 75px; background: #111; display: flex; border-bottom: 1px solid #333; width: 100%; flex-shrink: 0; }
+        /* コンソール：ソフィー固定 */
+        .console { height: 80px; background: #111; display: flex; border-bottom: 1px solid #333; width: 100%; flex-shrink: 0; }
         .btn-grid { flex: 1; display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px; padding: 5px; }
-        .sophie-box { width: 80px; background: #000; display: flex; justify-content: center; align-items: center; border-left: 1px solid #222; }
-        .sophie-box img { height: 90%; width: auto; }
+        .sophie-box { width: 85px; background: #000; display: flex; justify-content: center; align-items: center; border-left: 1px solid #222; }
+        .sophie-box img { height: 90%; width: auto; object-fit: contain; }
         .c-btn { background: #222; border: 1px solid #444; color: #eee; border-radius: 4px; font-size: 0.9rem; font-weight: bold; display: flex; align-items: center; justify-content: center; }
         .back-btn { color: var(--accent); border-color: var(--accent); }
 
-        /* リストエリア：ここが「2行の壁」を壊す核心 */
-        .scroll-area { flex: 1; overflow: hidden; background: #08080a; position: relative; display: flex; flex-direction: column; }
-        #list-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #08080a; z-index: 500; display: none; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+        /* メニューエリア：2行の壁を壊すための「独立スクロール層」 */
+        .menu-container { flex: 1; position: relative; background: #08080a; overflow: hidden; }
+        #list-layer { position: absolute; inset: 0; background: #08080a; z-index: 500; display: none; overflow-y: scroll; -webkit-overflow-scrolling: touch; }
         
-        .main-menu-btns { padding: 10px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-        .act-btn { padding: 14px; border-radius: 6px; border: none; font-weight: bold; color: #fff; font-size: 1rem; }
+        .main-menu-btns { padding: 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .act-btn { padding: 16px; border-radius: 8px; border: none; font-weight: bold; color: #fff; font-size: 1.1rem; }
         
-        /* リストアイテム：確実に1行ずつ表示 */
-        .list-container { display: block; width: 100%; padding-bottom: 50px; }
-        .label { background: #1a1a2e; color: var(--accent); padding: 6px 12px; font-size: 0.8rem; font-weight: bold; position: sticky; top: 0; z-index: 510; border-bottom: 1px solid #333; }
-        .item { height: 40px; padding: 0 15px; border-bottom: 1px solid #111; color: #ccc; font-size: 1rem; display: flex; align-items: center; width: 100%; background: transparent; }
-        .item-grid { display: grid; grid-template-columns: 1fr 1fr; width: 100%; }
+        /* リスト表示 */
+        .label { background: #1a1a2e; color: var(--accent); padding: 8px 12px; font-size: 0.85rem; font-weight: bold; position: sticky; top: 0; z-index: 510; border-bottom: 1px solid #333; }
+        .list-grid { display: grid; grid-template-columns: 1fr 1fr; width: 100%; padding-bottom: 80px; }
+        #list-layer.single .list-grid { grid-template-columns: 1fr; }
+        .item { height: 42px; padding: 0 15px; border-bottom: 1px solid #111; color: #ccc; font-size: 1rem; display: flex; align-items: center; width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-        .ver { position: fixed; bottom: 2px; left: 5px; font-size: 8px; color: #333; pointer-events: none; }
+        .ver { position: fixed; bottom: 4px; left: 6px; font-size: 10px; color: #333; pointer-events: none; z-index: 9999; }
     </style>
 </head>
 <body>
@@ -76,21 +79,21 @@
                 </div>
                 <div class="sophie-box"><img src="./sophie_shake.png"></div>
             </div>
-            <div class="scroll-area">
-                <div id="list-layer"><div id="cont" class="list-container"></div></div>
+            <div class="menu-container">
+                <div id="list-layer"><div id="cont" class="list-grid"></div></div>
                 
                 <div class="main-menu-btns">
                     <button class="act-btn" style="background:var(--green)" onclick="openMusic()">🎵 音楽選曲</button>
                     <button class="act-btn" style="background:var(--talk)" onclick="openTalk()">🥃 お酒の話</button>
                 </div>
-                <div style="padding:0 10px; display:grid; grid-template-columns:1fr 1fr; gap:6px;">
-                    <button class="c-btn" style="height:35px" onclick="playFix('QyzK21nx70o')">Jazz 1</button>
-                    <button class="c-btn" style="height:35px" onclick="playFix('vh4TWlwYfLc')">Jazz 2</button>
+                <div style="padding:0 12px; display:grid; grid-template-columns:1fr 1fr; gap:6px;">
+                    <button class="c-btn" style="height:40px" onclick="playFix('QyzK21nx70o')">Jazz 1</button>
+                    <button class="c-btn" style="height:40px" onclick="playFix('vh4TWlwYfLc')">Jazz 2</button>
                 </div>
             </div>
         </div>
     </div>
-    <div class="ver">v10.9</div>
+    <div class="ver">v11.0 FINAL</div>
 
     <script>
         let jData = [], tData = [], state = "none", curG = "", curP = [], curI = -1;
@@ -116,8 +119,8 @@
             else { yt.style.display = 'none'; yt.src = ""; img.style.display = 'block'; img.src = src; }
         }
 
-        // CSV読み込み
-        const loadCSV = () => {
+        // CSV読み込み (日本語名を確実にフェッチ)
+        const loadFiles = () => {
             fetch('JBoxメニュー.csv').then(r => r.text()).then(csv => {
                 const lines = csv.split('\n').slice(1);
                 const gMap = { 'E':'演歌', 'F':'フォーク', 'J':'歌謡曲', 'W':'洋楽', 'I':'インスト', 'S':'旅情・映像' };
@@ -135,29 +138,21 @@
                 }).filter(d => d);
             });
         };
-        loadCSV();
+        loadFiles();
 
-        // 音楽メニュー
         function openMusic() {
-            if(jData.length === 0) { speak("名簿を確認中です..."); return; }
-            state = "art"; layer.style.display = 'block';
+            if(jData.length === 0) { setTimeout(openMusic, 500); return; } // データなければ待って再試行
+            state = "art"; layer.classList.remove('single'); layer.style.display = 'block';
             cont.innerHTML = "";
-            const grid = document.createElement('div'); grid.className = "item-grid";
-            
             ['E','F','J','W','I','S'].forEach(f => {
                 const arts = [...new Set(jData.filter(d => d.f === f).map(d => d.a))];
                 if(arts.length) {
-                    const lbl = document.createElement('div'); lbl.className = "label"; 
-                    lbl.innerText = jData.find(d => d.f === f).gName;
-                    cont.appendChild(lbl);
-                    
-                    const subGrid = document.createElement('div'); subGrid.className = "item-grid";
+                    cont.innerHTML += `<div class="label">${jData.find(d => d.f === f).gName}</div>`;
                     arts.forEach(a => {
                         const d = document.createElement('div'); d.className = "item"; d.innerText = "🎤 " + a;
                         d.onclick = () => renderSongs(a);
-                        subGrid.appendChild(d);
+                        cont.appendChild(d);
                     });
-                    cont.appendChild(subGrid);
                 }
             });
             layer.scrollTop = 0;
@@ -166,27 +161,19 @@
         function renderSongs(a) {
             state = "tit"; cont.innerHTML = `<div class="label">${a}</div>`;
             const songs = jData.filter(m => m.a === a);
-            const subGrid = document.createElement('div'); subGrid.className = "item-grid";
             songs.forEach(m => {
                 const d = document.createElement('div'); d.className = "item"; d.innerText = m.ti;
-                d.onclick = () => { 
-                    speak(a + "の" + m.ti); 
-                    curP = songs; curI = songs.indexOf(m); 
-                    setMon('v', m.u.split('v=')[1] || m.u); 
-                };
-                subGrid.appendChild(d);
+                d.onclick = () => { speak(a + "の" + m.ti); curP = songs; curI = songs.indexOf(m); setMon('v', m.u.split('v=')[1] || m.u); };
+                cont.appendChild(d);
             });
-            cont.appendChild(subGrid);
             layer.scrollTop = 0;
         }
 
-        // お酒メニュー
         function openTalk() {
-            if(tData.length === 0) { speak("お酒のリストを確認中です..."); return; }
-            state = "g"; layer.style.display = 'block';
+            if(tData.length === 0) { setTimeout(openTalk, 500); return; }
+            state = "g"; layer.classList.remove('single'); layer.style.display = 'block';
             cont.innerHTML = '<div class="label">お酒のジャンル</div>';
-            const genres = [...new Set(tData.map(d => d.g))];
-            genres.forEach(g => {
+            [...new Set(tData.map(d => d.g))].forEach(g => {
                 const d = document.createElement('div'); d.className = "item"; d.innerText = "📁 " + g;
                 d.onclick = () => { curG = g; openThemes(g); };
                 cont.appendChild(d);
@@ -195,9 +182,9 @@
         }
 
         function openThemes(g) {
-            state = "th"; cont.innerHTML = `<div class="label">${g}</div>`;
-            const themes = [...new Set(tData.filter(d => d.g === g).map(d => d.th))];
-            themes.forEach(t => {
+            state = "th"; layer.classList.add('single');
+            cont.innerHTML = `<div class="label">${g}</div>`;
+            [...new Set(tData.filter(d => d.g === g).map(d => d.th))].forEach(t => {
                 const d = document.createElement('div'); d.className = "item"; d.innerText = "🏷️ " + t;
                 d.onclick = () => openStories(t);
                 cont.appendChild(d);
@@ -206,15 +193,13 @@
         }
 
         function openStories(t) {
-            state = "st"; cont.innerHTML = `<div class="label">${t}</div>`;
-            const list = tData.filter(d => d.th === t);
-            const subGrid = document.createElement('div'); subGrid.className = "item-grid";
-            list.forEach(d => {
+            state = "st"; layer.classList.remove('single');
+            cont.innerHTML = `<div class="label">${t}</div>`;
+            tData.filter(d => d.th === t).forEach(d => {
                 const i = document.createElement('div'); i.className = "item"; i.innerText = d.ti;
                 i.onclick = () => { setMon('i', `./talk_images/${d.id}.jpg`); speak(d.txt); };
-                subGrid.appendChild(i);
+                cont.appendChild(i);
             });
-            cont.appendChild(subGrid);
             layer.scrollTop = 0;
         }
 
