@@ -3,12 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Bar Sophie v11.2</title>
+    <title>Bar Sophie v11.3</title>
     <style>
         :root { --bg: #000; --accent: #f0b56e; --blue: #00d2ff; --green: #27ae60; --talk: #2980b9; --text: #eee; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
         
-        /* 画面全体の固定 */
         body { background: var(--bg); color: var(--text); font-family: sans-serif; height: 100dvh; width: 100vw; overflow: hidden; display: flex; flex-direction: column; }
 
         /* 入口 */
@@ -16,37 +15,39 @@
         #entry-sophie { width: 80%; height: 50%; object-fit: contain; }
         .btn-enter { margin-top: 20px; padding: 15px 45px; font-size: 1.2rem; background: #111; border: 2px solid var(--accent); color: var(--accent); border-radius: 40px; font-weight: bold; }
 
-        #main-ui { display: none; flex-direction: column; height: 100%; width: 100%; }
+        #main-ui { display: none; flex: 1; flex-direction: column; height: 100%; width: 100%; overflow: hidden; }
         @media (orientation: landscape) {
             #main-ui { flex-direction: row; }
-            .left-side { flex: 1.4; display: flex; flex-direction: column; border-right: 1px solid #333; }
-            .right-side { flex: 1; display: flex; flex-direction: column; }
+            .left-side { flex: 1.4; display: flex; flex-direction: column; border-right: 1px solid #333; height: 100%; }
+            .right-side { flex: 1; display: flex; flex-direction: column; height: 100%; }
         }
 
-        /* 上部：モニター */
+        /* モニター */
         .monitor { width: 100%; aspect-ratio: 16/9; background: #000; border-bottom: 1px solid var(--blue); position: relative; flex-shrink: 0; }
         #yt-iframe, #monitor-img { width: 100%; height: 100%; border: none; display: none; object-fit: contain; }
-        #telop { position: absolute; bottom: 0; width: 100%; background: rgba(0,0,0,0.85); padding: 8px; font-size: 0.85rem; display: none; z-index: 100; color: #fff; text-align: center; pointer-events: none; }
+        
+        /* テロップ：消えない仕様 & 停止ボタン付き */
+        #telop { position: absolute; inset: 0; background: rgba(0,0,0,0.9); padding: 15px; font-size: 1rem; display: none; z-index: 1000; color: #fff; overflow-y: auto; line-height: 1.6; }
+        .telop-close { position: sticky; top: 0; float: right; background: var(--accent); color: #000; border: none; padding: 5px 12px; border-radius: 4px; font-weight: bold; margin-bottom: 10px; }
 
-        /* 中部：操作盤 */
+        /* 操作盤 */
         .console { height: 75px; background: #111; display: flex; border-bottom: 1px solid #333; flex-shrink: 0; }
         .btn-grid { flex: 1; display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px; padding: 4px; }
         .sophie-box { width: 75px; background: #000; display: flex; justify-content: center; align-items: center; border-left: 1px solid #222; }
         .sophie-box img { height: 85%; width: auto; }
         .c-btn { background: #222; border: 1px solid #444; color: #eee; border-radius: 4px; font-size: 0.85rem; font-weight: bold; display: flex; align-items: center; justify-content: center; }
 
-        /* 下部：最強のスクロールエリア */
-        .scroll-container { flex: 1; overflow-y: auto; background: #08080a; -webkit-overflow-scrolling: touch; }
+        /* スクロールエリア：ここを確実に動かす */
+        .scroll-container { flex: 1; overflow-y: scroll; background: #08080a; -webkit-overflow-scrolling: touch; }
         
-        /* ボタンとリストを同じ階層で制御 */
-        #nav-main { padding: 10px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-        .act-btn { padding: 15px; border-radius: 8px; border: none; font-weight: bold; color: #fff; font-size: 1.1rem; }
+        #nav-main { padding: 10px; display: block; width: 100%; }
+        .act-btn { width: 100%; margin-bottom: 8px; padding: 15px; border-radius: 8px; border: none; font-weight: bold; color: #fff; font-size: 1.1rem; }
 
         #list-view { display: none; width: 100%; }
-        .label { background: #1a1a2e; color: var(--accent); padding: 6px 12px; font-size: 0.8rem; font-weight: bold; position: sticky; top: 0; z-index: 10; border-bottom: 1px solid #333; }
-        .list-grid { display: grid; grid-template-columns: 1fr 1fr; width: 100%; }
-        .single .list-grid { grid-template-columns: 1fr; }
-        .item { height: 42px; padding: 0 12px; border-bottom: 1px solid #111; color: #ccc; font-size: 0.95rem; display: flex; align-items: center; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .label { background: #1a1a2e; color: var(--accent); padding: 8px 12px; font-size: 0.85rem; font-weight: bold; position: sticky; top: 0; z-index: 10; border-bottom: 1px solid #333; }
+        .list-grid { display: grid; grid-template-columns: 1fr 1fr; width: 100%; border-top: 1px solid #222; }
+        .single-col .list-grid { grid-template-columns: 1fr; }
+        .item { height: 45px; padding: 0 15px; border-bottom: 1px solid #111; color: #ccc; font-size: 1rem; display: flex; align-items: center; cursor: pointer; }
 
         .ver { position: fixed; bottom: 4px; left: 8px; font-size: 9px; color: #333; pointer-events: none; z-index: 10000; }
     </style>
@@ -63,7 +64,10 @@
             <div class="monitor">
                 <iframe id="yt-iframe" allow="autoplay; encrypted-media"></iframe>
                 <img id="monitor-img">
-                <div id="telop"></div>
+                <div id="telop">
+                    <button class="telop-close" onclick="stopSpeak()">文章を閉じる (停止)</button>
+                    <div id="telop-text"></div>
+                </div>
             </div>
         </div>
         <div class="right-side">
@@ -79,41 +83,49 @@
             
             <div class="scroll-container" id="main-scroll">
                 <div id="nav-main">
-                    <button class="act-btn" style="background:var(--green)" onclick="openMusic()">🎵 音楽選曲</button>
-                    <button class="act-btn" style="background:var(--talk)" onclick="openTalk()">🥃 お酒の話</button>
-                    <div style="grid-column: span 2; display:grid; grid-template-columns: 1fr 1fr; gap:6px; margin-top:5px;">
-                        <button class="c-btn" style="height:40px" onclick="playFix('QyzK21nx70o')">Jazz 1</button>
-                        <button class="c-btn" style="height:40px" onclick="playFix('vh4TWlwYfLc')">Jazz 2</button>
+                    <button class="act-btn" style="background:var(--green)" onclick="openMusic()">🎵 音楽選曲 (リクエスト)</button>
+                    <button class="act-btn" style="background:var(--talk)" onclick="openTalk()">🥃 お酒の話 (140本の物語)</button>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px; margin-top:10px;">
+                        <button class="c-btn" style="height:45px" onclick="playFix('QyzK21nx70o')">Jazz 1</button>
+                        <button class="c-btn" style="height:45px" onclick="playFix('vh4TWlwYfLc')">Jazz 2</button>
                     </div>
                 </div>
 
                 <div id="list-view">
                     <div id="cont-area"></div>
-                    <div style="height: 100px;"></div> </div>
+                    <div style="height: 120px;"></div> </div>
             </div>
         </div>
     </div>
 
-    <div class="ver">v11.2 REBORN</div>
+    <div class="ver">v11.3 WINE-STABLE</div>
 
     <script>
         let jData = [], tData = [], state = "none", curG = "", curP = [], curI = -1;
         const mainScroll = document.getElementById('main-scroll'), navMain = document.getElementById('nav-main');
         const listView = document.getElementById('list-view'), contArea = document.getElementById('cont-area');
-        const yt = document.getElementById('yt-iframe'), img = document.getElementById('monitor-img'), tel = document.getElementById('telop');
+        const yt = document.getElementById('yt-iframe'), img = document.getElementById('monitor-img'), tel = document.getElementById('telop'), telText = document.getElementById('telop-text');
 
         function enter() {
             document.getElementById('entry-screen').style.display = 'none';
             document.getElementById('main-ui').style.display = 'flex';
-            speak("まきむら様、お帰りなさいませ。");
+            speak("まきむら様、お帰りなさいませ。140本のワインもご用意できておりますよ。");
         }
 
         function speak(txt) {
-            window.speechSynthesis.cancel();
-            tel.innerText = txt; tel.style.display = 'block';
-            setTimeout(() => { tel.style.display = 'none'; }, 4000);
-            const u = new SpeechSynthesisUtterance(txt); u.lang = 'ja-JP'; u.rate = 1.1;
+            window.speechSynthesis.cancel(); // 前の声を止める
+            telText.innerText = txt; 
+            tel.style.display = 'block';
+            tel.scrollTop = 0;
+
+            const u = new SpeechSynthesisUtterance(txt);
+            u.lang = 'ja-JP'; u.rate = 1.05;
             window.speechSynthesis.speak(u);
+        }
+
+        function stopSpeak() {
+            window.speechSynthesis.cancel();
+            tel.style.display = 'none';
         }
 
         function setMon(mode, src) {
@@ -121,7 +133,6 @@
             else { yt.style.display = 'none'; yt.src = ""; img.style.display = 'block'; img.src = src; }
         }
 
-        // CSV読み込み
         const loadCSV = () => {
             fetch('JBoxメニュー.csv').then(r => r.text()).then(csv => {
                 const lines = csv.split('\n').slice(1);
@@ -142,16 +153,14 @@
         };
         loadCSV();
 
-        // リスト表示の共通処理
         function showList(html, isSingle = false) {
             navMain.style.display = 'none';
             listView.style.display = 'block';
-            if(isSingle) listView.classList.add('single'); else listView.classList.remove('single');
+            if(isSingle) listView.classList.add('single-col'); else listView.classList.remove('single-col');
             contArea.innerHTML = html;
             mainScroll.scrollTop = 0;
         }
 
-        // 音楽
         window.openMusic = () => {
             state = "art";
             let h = "";
@@ -165,6 +174,7 @@
             });
             showList(h);
         };
+
         window.renderSongs = (a) => {
             state = "tit";
             let h = `<div class="label">${a}</div><div class="list-grid">`;
@@ -177,7 +187,6 @@
             showList(h);
         };
 
-        // お酒
         window.openTalk = () => {
             state = "g";
             let h = '<div class="label">お酒のジャンル</div><div class="list-grid">';
@@ -186,6 +195,7 @@
             h += '</div>';
             showList(h);
         };
+
         window.openThemes = (g) => {
             state = "th";
             let h = `<div class="label">${g}</div><div class="list-grid">`;
@@ -194,6 +204,7 @@
             h += '</div>';
             showList(h, true);
         };
+
         window.openStories = (t) => {
             state = "st";
             let h = `<div class="label">${t}</div><div class="list-grid">`;
@@ -208,8 +219,9 @@
             if (state === "st") openThemes(curG);
             else if (state === "th") openTalk();
             else if (state === "tit") openMusic();
-            else { listView.style.display = 'none'; navMain.style.display = 'grid'; state = "none"; }
+            else { listView.style.display = 'none'; navMain.style.display = 'block'; state = "none"; }
         };
+
         window.playFix = (id) => { setMon('v', id); };
         window.play = () => { yt.contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*'); };
         window.pause = () => { yt.contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*'); };
