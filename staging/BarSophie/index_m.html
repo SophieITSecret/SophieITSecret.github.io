@@ -3,48 +3,56 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Bar Sophie v11.8</title>
+    <title>Bar Sophie v11.9</title>
     <style>
         :root { --bg: #000; --accent: #f0b56e; --blue: #00d2ff; --green: #27ae60; --talk: #2980b9; --text: #eee; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
-        
-        body { background: var(--bg); color: var(--text); font-family: sans-serif; height: 100dvh; width: 100vw; overflow: hidden; }
+        body { background: var(--bg); color: var(--text); font-family: sans-serif; height: 100dvh; width: 100vw; overflow: hidden; display: flex; flex-direction: column; }
 
         /* 入口 */
         #entry-screen { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        #entry-sophie { width: 80%; height: 45%; object-fit: contain; }
+        #entry-sophie { width: 80%; height: 50%; object-fit: contain; }
         .btn-enter { margin-top: 20px; padding: 15px 45px; font-size: 1.2rem; background: #111; border: 2px solid var(--accent); color: var(--accent); border-radius: 40px; font-weight: bold; }
 
-        /* 上部固定（モニター＋操作盤） */
-        #top-fixed { position: fixed; top: 0; left: 0; width: 100%; z-index: 2000; background: #000; }
-        .monitor { width: 100%; aspect-ratio: 16/9; background: #000; border-bottom: 2px solid var(--blue); position: relative; }
-        #yt-iframe, #monitor-img { width: 100%; height: 100%; border: none; display: none; object-fit: contain; }
-        #telop { position: absolute; inset: 0; background: rgba(0,0,0,0.7); padding: 15px; font-size: 1rem; display: none; z-index: 2100; color: #fff; overflow-y: auto; line-height: 1.5; }
+        /* チャット（ラウンジ）画面 */
+        #chat-mode { display: none; flex-direction: column; height: 100%; background: #000; }
+        .portrait { flex: 1; display: flex; justify-content: center; align-items: center; padding: 20px; }
+        .portrait img { height: 100%; width: auto; object-fit: contain; }
+        .chat-area { height: 150px; padding: 20px; background: #080808; border-top: 1px solid #1a1a2e; color: #ccc; font-size: 1.1rem; text-align: center; }
+        .btn-to-bar { padding: 15px; background: #111; border: 1px solid var(--accent); color: var(--accent); font-weight: bold; margin: 10px; border-radius: 8px; }
 
-        .console { height: 75px; background: #111; display: flex; border-bottom: 1px solid #333; }
-        .btn-grid { flex: 1; display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px; padding: 4px; }
-        .sophie-box { width: 75px; background: #000; display: flex; justify-content: center; align-items: center; border-left: 1px solid #222; }
-        .sophie-box img { height: 85%; width: auto; }
-        .c-btn { background: #222; border: 1px solid #444; color: #eee; border-radius: 4px; font-size: 0.85rem; font-weight: bold; display: flex; align-items: center; justify-content: center; }
-
-        /* 下部スクロール：ここを絶対基準で固定 */
-        #main-ui { display: none; }
-        .scroll-content { 
-            position: absolute; 
-            top: calc(56.25vw + 75px); /* 16:9モニター高さ + コンソール高さ */
-            left: 0; width: 100%; bottom: 0; 
-            overflow-y: scroll; -webkit-overflow-scrolling: touch; 
-            background: #08080a; 
+        /* メインUI */
+        #main-ui { display: none; height: 100dvh; width: 100vw; flex-direction: column; position: relative; }
+        
+        /* ★横画面：2カラム強制 */
+        @media (orientation: landscape) {
+            #main-ui { flex-direction: row !important; }
+            .l-side { flex: 1.4 !important; height: 100% !important; border-right: 1px solid #333; }
+            .r-side { flex: 1 !important; height: 100% !important; }
+            .monitor { height: 100% !important; aspect-ratio: auto !important; }
         }
 
+        .l-side { flex-shrink: 0; }
+        .r-side { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+        .monitor { width: 100%; aspect-ratio: 16/9; background: #000; border-bottom: 1px solid var(--blue); position: relative; }
+        #yt-iframe, #monitor-img { width: 100%; height: 100%; border: none; display: none; object-fit: contain; }
+        #telop { position: absolute; inset: 0; background: rgba(0,0,0,0.6); padding: 15px; font-size: 1rem; display: none; z-index: 1000; color: #fff; overflow-y: auto; }
+
+        .console { height: 75px; background: #111; display: flex; border-bottom: 1px solid #333; flex-shrink: 0; }
+        .btn-grid { flex: 1; display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px; padding: 4px; }
+        .sophie-box { width: 75px; background: #000; display: flex; justify-content: center; align-items: center; border-left: 1px solid #222; }
+        .sophie-box img { height: 85%; width: auto; cursor: pointer; }
+        .c-btn { background: #222; border: 1px solid #444; color: #eee; border-radius: 4px; font-size: 0.85rem; font-weight: bold; display: flex; align-items: center; justify-content: center; }
+
+        .scroll-area { flex: 1; overflow-y: auto; background: #08080a; -webkit-overflow-scrolling: touch; }
         #nav-main { padding: 10px; }
         .act-btn { width: 100%; height: 45px; margin-bottom: 8px; border-radius: 8px; border: none; font-weight: bold; color: #fff; font-size: 1.05rem; }
 
-        /* ★ボタンの上下幅の基準（クライテリオン） */
         .label { background: #1a1a2e; color: var(--accent); padding: 0 12px; font-size: 0.8rem; font-weight: bold; position: sticky; top: 0; z-index: 100; border-bottom: 1px solid #333; height: 28px; line-height: 28px; }
-        .item { height: 38px; line-height: 38px; padding: 0 15px; border-bottom: 1px solid #222; color: #ccc; font-size: 0.95rem; display: block; width: 100%; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .item { height: 38px; line-height: 38px; padding: 0 15px; border-bottom: 1px solid #222; color: #ccc; font-size: 0.95rem; display: block; width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-        .ver { position: fixed; bottom: 4px; right: 8px; font-size: 10px; color: #333; pointer-events: none; z-index: 3000; }
+        .ver { position: fixed; bottom: 4px; right: 8px; font-size: 9px; color: #333; pointer-events: none; z-index: 10000; }
     </style>
 </head>
 <body>
@@ -54,61 +62,113 @@
         <button class="btn-enter" onclick="enter()">🥃 Bar Sophie に入る</button>
     </div>
 
+    <div id="chat-mode">
+        <div class="portrait"><img src="./sophie_shake.png" onclick="goToBar()"></div>
+        <div class="chat-area" id="lounge-text">まきむら様、お帰りなさいませ。</div>
+        <button class="btn-to-bar" onclick="goToBar()">カウンター（メニュー）へ</button>
+    </div>
+
     <div id="main-ui">
-        <div id="top-fixed">
-            <div class="monitor" onclick="stopSpeak()">
+        <div class="l-side">
+            <div class="monitor">
                 <iframe id="yt-iframe" allow="autoplay; encrypted-media"></iframe>
                 <img id="monitor-img">
-                <div id="telop"><div id="telop-text"></div></div>
-            </div>
-            <div class="console">
-                <div class="btn-grid">
-                    <button class="c-btn" onclick="play()">▶ 再生/読上</button>
-                    <button class="c-btn" onclick="pause()">⏸ 停止</button>
-                    <button class="c-btn" style="color:var(--accent); border-color:var(--accent);" onclick="handleBack()">← 戻る</button>
-                    <button class="c-btn" onclick="next()">⏭ 次へ</button>
-                </div>
-                <div class="sophie-box"><img src="./sophie_shake.png"></div>
+                <div id="telop" onclick="this.style.display='none'"></div>
             </div>
         </div>
-
-        <div class="scroll-content" id="main-scroll">
-            <div id="nav-main">
-                <button class="act-btn" style="background:var(--green)" onclick="openMusic()">🎵 音楽選曲 (リクエスト)</button>
-                <button class="act-btn" style="background:var(--talk)" onclick="openTalk()">🥃 お酒の話 (140本の物語)</button>
-                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px;">
-                    <button class="c-btn" style="height:40px" onclick="playFix('QyzK21nx70o')">Jazz 1</button>
-                    <button class="c-btn" style="height:40px" onclick="playFix('vh4TWlwYfLc')">Jazz 2</button>
+        <div class="r-side">
+            <div class="console">
+                <div class="btn-grid">
+                    <button class="c-btn" onclick="playHead()">▶ 再生(頭から)</button>
+                    <button class="c-btn" onclick="togglePause()">⏸ 停止/再開</button>
+                    <button class="c-btn" style="color:var(--accent);" onclick="handleBack()">← 戻る</button>
+                    <button class="c-btn" onclick="next()">⏭ 次へ</button>
+                </div>
+                <div class="sophie-box" onclick="sophieNav()">
+                    <img src="./sophie_shake.png" id="sophie-master-btn">
                 </div>
             </div>
-            <div id="list-view" style="display:none;"></div>
-            <div style="height: 100px;"></div>
+            <div class="scroll-area" id="main-scroll">
+                <div id="nav-main">
+                    <button class="act-btn" style="background:var(--green)" onclick="openMusic()">🎵 音楽選曲 (リクエスト)</button>
+                    <button class="act-btn" style="background:var(--talk)" onclick="openTalk()">🥃 お酒の話 (140本の物語)</button>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px;">
+                        <button class="c-btn" style="height:40px" onclick="playFix('QyzK21nx70o')">Jazz 1</button>
+                        <button class="c-btn" style="height:40px" onclick="playFix('vh4TWlwYfLc')">Jazz 2</button>
+                    </div>
+                </div>
+                <div id="list-view" style="display:none;"></div>
+                <div style="height: 100px;"></div>
+            </div>
         </div>
     </div>
 
-    <div class="ver">v11.8 STANDARD</div>
+    <div class="ver">v11.9 MASTER-SOPHIE</div>
 
     <script>
-        let jData = [], tData = [], state = "none", curG = "", curP = [], curI = -1, lastTalk = "";
+        let jData = [], tData = [], state = "none", curG = "", curP = [], curI = -1;
+        let lastSpeakTxt = "", isPaused = false;
         const mainScroll = document.getElementById('main-scroll'), navMain = document.getElementById('nav-main'), listView = document.getElementById('list-view');
-        const yt = document.getElementById('yt-iframe'), img = document.getElementById('monitor-img'), tel = document.getElementById('telop'), telText = document.getElementById('telop-text');
+        const yt = document.getElementById('yt-iframe'), img = document.getElementById('monitor-img'), tel = document.getElementById('telop');
 
         function enter() {
             document.getElementById('entry-screen').style.display = 'none';
-            document.getElementById('main-ui').style.display = 'block';
-            speak("まきむら様、お帰りなさい。140本のワインの物語、ようやくお聞かせできます。");
+            document.getElementById('chat-mode').style.display = 'flex';
+            speakLounge("まきむら様、お帰りなさいませ。今夜もお会いできて嬉しいわ。");
+        }
+        function goToBar() {
+            document.getElementById('chat-mode').style.display = 'none';
+            document.getElementById('main-ui').style.display = 'flex';
+            window.speechSynthesis.cancel();
+        }
+        function speakLounge(txt) {
+            document.getElementById('lounge-text').innerText = txt;
+            const u = new SpeechSynthesisUtterance(txt); u.lang = 'ja-JP';
+            window.speechSynthesis.speak(u);
         }
 
-        window.speak = (txt) => {
-            if(!txt) return; lastTalk = txt;
+        // 読み上げ：題名は言わず、5秒で消す
+        window.speak = (txt, showTelop = true) => {
             window.speechSynthesis.cancel();
-            telText.innerText = txt; tel.style.display = 'block';
-            const u = new SpeechSynthesisUtterance(txt);
-            u.lang = 'ja-JP'; u.rate = 1.05;
+            lastSpeakTxt = txt; isPaused = false;
+            if(showTelop) {
+                tel.innerText = txt; tel.style.display = 'block';
+                setTimeout(() => { tel.style.display = 'none'; }, 5000); // 5秒で消去
+            }
+            const u = new SpeechSynthesisUtterance(txt); u.lang = 'ja-JP'; u.rate = 1.05;
             window.speechSynthesis.speak(u);
         };
 
-        window.stopSpeak = () => { window.speechSynthesis.cancel(); tel.style.display = 'none'; };
+        // ⏸ 停止/再開（トグル）
+        window.togglePause = () => {
+            if(!isPaused) { // 停止
+                yt.contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*');
+                window.speechSynthesis.pause();
+                isPaused = true;
+            } else { // 再開
+                yt.contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*');
+                window.speechSynthesis.resume();
+                isPaused = false;
+            }
+        };
+
+        // ▶ 頭から再生
+        window.playHead = () => {
+            yt.contentWindow.postMessage('{"event":"command","func":"seekTo","args":[0, true]}', '*');
+            yt.contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*');
+            if(lastSpeakTxt) speak(lastSpeakTxt);
+        };
+
+        // ソフィー写真ナビ
+        window.sophieNav = () => {
+            if (state !== "none") { // リスト表示中ならメニューに戻る
+                handleBack();
+            } else { // メインメニューならラウンジに戻る
+                document.getElementById('main-ui').style.display = 'none';
+                document.getElementById('chat-mode').style.display = 'flex';
+                speakLounge("あら、まきむら様。少しお休みになりますか？");
+            }
+        };
 
         function setMon(mode, src) {
             if(mode === 'v') { img.style.display = 'none'; yt.style.display = 'block'; yt.src = `https://www.youtube.com/embed/${src}?autoplay=1&enablejsapi=1&rel=0`; }
@@ -149,7 +209,7 @@
             const songs = jData.filter(m => m.a === a);
             songs.forEach(m => {
                 const vid = m.u.split('v=')[1] || m.u;
-                h += `<div class="item" onclick="curP=jData.filter(x=>x.a==='${a}'); curI=${songs.indexOf(m)}; setMon('v','${vid}'); speak('${a}の${m.ti}');">${m.ti}</div>`;
+                h += `<div class="item" onclick="curP=jData.filter(x=>x.a==='${a}'); curI=${songs.indexOf(m)}; setMon('v','${vid}'); speak('', false);">${m.ti}</div>`;
             });
             renderList(h);
         };
@@ -186,11 +246,8 @@
             else { listView.style.display = 'none'; navMain.style.display = 'block'; state = "none"; }
         };
 
-        window.play = () => { 
-            yt.contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*'); 
-            if(lastTalk) speak(lastTalk);
-        };
-        window.pause = () => { yt.contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*'); stopSpeak(); };
+        window.pause = window.togglePause;
+        window.play = window.playHead;
         window.playFix = (id) => setMon('v', id);
         window.next = () => { if(curI >= 0 && curI < curP.length-1) { curI++; const m = curP[curI]; setMon('v', m.u.split('v=')[1] || m.u); } };
     </script>
