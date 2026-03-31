@@ -3,54 +3,50 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Bar Sophie v11.0</title>
+    <title>Bar Sophie v11.1</title>
     <style>
         :root { --bg: #000; --accent: #f0b56e; --blue: #00d2ff; --green: #27ae60; --talk: #2980b9; --text: #eee; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
-        body { background: var(--bg); color: var(--text); font-family: sans-serif; height: 100dvh; overflow: hidden; width: 100vw; }
+        body { background: var(--bg); color: var(--text); font-family: sans-serif; height: 100dvh; width: 100vw; overflow: hidden; display: flex; flex-direction: column; }
 
-        /* 入口画面 */
+        /* 入口 */
         #entry-screen { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; }
         #entry-sophie { width: 80%; height: 55%; object-fit: contain; }
         .btn-enter { margin-top: 20px; padding: 15px 45px; font-size: 1.2rem; background: #111; border: 2px solid var(--accent); color: var(--accent); border-radius: 40px; font-weight: bold; }
 
-        /* メインUI */
-        #main-ui { display: none; flex-direction: column; height: 100dvh; width: 100vw; position: relative; }
-        
-        /* 横画面：モニターを大きく、メニューを右に */
+        #main-ui { display: none; height: 100dvh; width: 100vw; flex-direction: column; }
         @media (orientation: landscape) {
             #main-ui { flex-direction: row; }
-            .left-side { flex: 1.5; display: flex; flex-direction: column; border-right: 1px solid #333; }
+            .left-side { flex: 1.4; display: flex; flex-direction: column; border-right: 1px solid #333; }
             .right-side { flex: 1; display: flex; flex-direction: column; }
-            .monitor { aspect-ratio: auto !important; height: 100% !important; }
         }
 
         .monitor { width: 100%; aspect-ratio: 16/9; background: #000; border-bottom: 1px solid var(--blue); position: relative; flex-shrink: 0; }
         #yt-iframe, #monitor-img { width: 100%; height: 100%; border: none; display: none; object-fit: contain; }
         #telop { position: absolute; bottom: 0; width: 100%; background: rgba(0,0,0,0.85); padding: 8px; font-size: 0.85rem; display: none; z-index: 1000; color: #fff; text-align: center; }
 
-        /* コンソール：ソフィー固定 */
-        .console { height: 80px; background: #111; display: flex; border-bottom: 1px solid #333; width: 100%; flex-shrink: 0; }
+        .console { height: 75px; background: #111; display: flex; border-bottom: 1px solid #333; width: 100%; flex-shrink: 0; }
         .btn-grid { flex: 1; display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px; padding: 5px; }
-        .sophie-box { width: 85px; background: #000; display: flex; justify-content: center; align-items: center; border-left: 1px solid #222; }
-        .sophie-box img { height: 90%; width: auto; object-fit: contain; }
-        .c-btn { background: #222; border: 1px solid #444; color: #eee; border-radius: 4px; font-size: 0.9rem; font-weight: bold; display: flex; align-items: center; justify-content: center; }
+        .sophie-box { width: 75px; background: #000; display: flex; justify-content: center; align-items: center; border-left: 1px solid #222; }
+        .sophie-box img { height: 85%; width: auto; }
+        .c-btn { background: #222; border: 1px solid #444; color: #eee; border-radius: 4px; font-size: 0.85rem; font-weight: bold; display: flex; align-items: center; justify-content: center; }
         .back-btn { color: var(--accent); border-color: var(--accent); }
 
-        /* メニューエリア：2行の壁を壊すための「独立スクロール層」 */
-        .menu-container { flex: 1; position: relative; background: #08080a; overflow: hidden; }
-        #list-layer { position: absolute; inset: 0; background: #08080a; z-index: 500; display: none; overflow-y: scroll; -webkit-overflow-scrolling: touch; }
+        /* メニューエリア：2行の壁を壊すための「排他的レイアウト」 */
+        .stage { flex: 1; background: #08080a; position: relative; overflow: hidden; }
         
-        .main-menu-btns { padding: 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .act-btn { padding: 16px; border-radius: 8px; border: none; font-weight: bold; color: #fff; font-size: 1.1rem; }
-        
-        /* リスト表示 */
-        .label { background: #1a1a2e; color: var(--accent); padding: 8px 12px; font-size: 0.85rem; font-weight: bold; position: sticky; top: 0; z-index: 510; border-bottom: 1px solid #333; }
-        .list-grid { display: grid; grid-template-columns: 1fr 1fr; width: 100%; padding-bottom: 80px; }
-        #list-layer.single .list-grid { grid-template-columns: 1fr; }
-        .item { height: 42px; padding: 0 15px; border-bottom: 1px solid #111; color: #ccc; font-size: 1rem; display: flex; align-items: center; width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        /* 初期ボタン */
+        #nav-main { padding: 10px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .act-btn { padding: 15px; border-radius: 8px; border: none; font-weight: bold; color: #fff; font-size: 1.1rem; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
 
-        .ver { position: fixed; bottom: 4px; left: 6px; font-size: 10px; color: #333; pointer-events: none; z-index: 9999; }
+        /* リストレイヤー：ここを最前面に */
+        #list-layer { position: absolute; inset: 0; background: #08080a; z-index: 500; display: none; flex-direction: column; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+        .label { background: #1a1a2e; color: var(--accent); padding: 8px 12px; font-size: 0.8rem; font-weight: bold; position: sticky; top: 0; z-index: 510; border-bottom: 1px solid #333; }
+        .list-grid { display: grid; grid-template-columns: 1fr 1fr; width: 100%; padding-bottom: 100px; }
+        #list-layer.single .list-grid { grid-template-columns: 1fr; }
+        .item { height: 40px; padding: 0 12px; border-bottom: 1px solid #111; color: #ccc; font-size: 0.95rem; display: flex; align-items: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; }
+
+        .ver { position: fixed; bottom: 4px; left: 8px; font-size: 9px; color: #333; pointer-events: none; z-index: 10000; }
     </style>
 </head>
 <body>
@@ -68,42 +64,42 @@
                 <div id="telop"></div>
             </div>
         </div>
-
         <div class="right-side">
             <div class="console">
                 <div class="btn-grid">
                     <button class="c-btn" onclick="play()">▶ 再生</button>
                     <button class="c-btn" onclick="pause()">⏸ 停止</button>
-                    <button class="c-btn back-btn" onclick="back()">← 戻る</button>
+                    <button class="c-btn back-btn" onclick="handleBack()">← 戻る</button>
                     <button class="c-btn" onclick="next()">⏭ 次へ</button>
                 </div>
                 <div class="sophie-box"><img src="./sophie_shake.png"></div>
             </div>
-            <div class="menu-container">
+            <div class="stage">
                 <div id="list-layer"><div id="cont" class="list-grid"></div></div>
                 
-                <div class="main-menu-btns">
+                <div id="nav-main">
                     <button class="act-btn" style="background:var(--green)" onclick="openMusic()">🎵 音楽選曲</button>
                     <button class="act-btn" style="background:var(--talk)" onclick="openTalk()">🥃 お酒の話</button>
-                </div>
-                <div style="padding:0 12px; display:grid; grid-template-columns:1fr 1fr; gap:6px;">
-                    <button class="c-btn" style="height:40px" onclick="playFix('QyzK21nx70o')">Jazz 1</button>
-                    <button class="c-btn" style="height:40px" onclick="playFix('vh4TWlwYfLc')">Jazz 2</button>
+                    <div style="grid-column: span 2; display:grid; grid-template-columns: 1fr 1fr; gap:6px; margin-top:5px;">
+                        <button class="c-btn" style="height:40px" onclick="playFix('QyzK21nx70o')">Jazz 1</button>
+                        <button class="c-btn" style="height:40px" onclick="playFix('vh4TWlwYfLc')">Jazz 2</button>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-    <div class="ver">v11.0 FINAL</div>
+
+    <div class="ver">v11.1 WINE140</div>
 
     <script>
         let jData = [], tData = [], state = "none", curG = "", curP = [], curI = -1;
-        const layer = document.getElementById('list-layer'), cont = document.getElementById('cont');
+        const listLayer = document.getElementById('list-layer'), cont = document.getElementById('cont'), navMain = document.getElementById('nav-main');
         const yt = document.getElementById('yt-iframe'), img = document.getElementById('monitor-img'), tel = document.getElementById('telop');
 
         function enter() {
             document.getElementById('entry-screen').style.display = 'none';
             document.getElementById('main-ui').style.display = 'flex';
-            speak("まきむら様、お帰りなさいませ。");
+            speak("まきむら様、お帰りなさいませ。140本の物語が、あなたを待っています。");
         }
 
         function speak(txt) {
@@ -119,8 +115,8 @@
             else { yt.style.display = 'none'; yt.src = ""; img.style.display = 'block'; img.src = src; }
         }
 
-        // CSV読み込み (日本語名を確実にフェッチ)
-        const loadFiles = () => {
+        // CSV読み込み (バリデーション強化)
+        const loadCSV = () => {
             fetch('JBoxメニュー.csv').then(r => r.text()).then(csv => {
                 const lines = csv.split('\n').slice(1);
                 const gMap = { 'E':'演歌', 'F':'フォーク', 'J':'歌謡曲', 'W':'洋楽', 'I':'インスト', 'S':'旅情・映像' };
@@ -138,26 +134,24 @@
                 }).filter(d => d);
             });
         };
-        loadFiles();
+        loadCSV();
 
-        function openMusic() {
-            if(jData.length === 0) { setTimeout(openMusic, 500); return; } // データなければ待って再試行
-            state = "art"; layer.classList.remove('single'); layer.style.display = 'block';
-            cont.innerHTML = "";
+        // 音楽
+        window.openMusic = () => {
+            state = "art"; listLayer.style.display = 'block'; navMain.style.display = 'none';
+            listLayer.classList.remove('single'); cont.innerHTML = "";
             ['E','F','J','W','I','S'].forEach(f => {
                 const arts = [...new Set(jData.filter(d => d.f === f).map(d => d.a))];
                 if(arts.length) {
                     cont.innerHTML += `<div class="label">${jData.find(d => d.f === f).gName}</div>`;
                     arts.forEach(a => {
                         const d = document.createElement('div'); d.className = "item"; d.innerText = "🎤 " + a;
-                        d.onclick = () => renderSongs(a);
-                        cont.appendChild(d);
+                        d.onclick = () => renderSongs(a); cont.appendChild(d);
                     });
                 }
             });
-            layer.scrollTop = 0;
-        }
-
+            listLayer.scrollTop = 0;
+        };
         function renderSongs(a) {
             state = "tit"; cont.innerHTML = `<div class="label">${a}</div>`;
             const songs = jData.filter(m => m.a === a);
@@ -166,53 +160,50 @@
                 d.onclick = () => { speak(a + "の" + m.ti); curP = songs; curI = songs.indexOf(m); setMon('v', m.u.split('v=')[1] || m.u); };
                 cont.appendChild(d);
             });
-            layer.scrollTop = 0;
+            listLayer.scrollTop = 0;
         }
 
-        function openTalk() {
-            if(tData.length === 0) { setTimeout(openTalk, 500); return; }
-            state = "g"; layer.classList.remove('single'); layer.style.display = 'block';
-            cont.innerHTML = '<div class="label">お酒のジャンル</div>';
-            [...new Set(tData.map(d => d.g))].forEach(g => {
+        // お酒
+        window.openTalk = () => {
+            state = "g"; listLayer.style.display = 'block'; navMain.style.display = 'none';
+            listLayer.classList.remove('single'); cont.innerHTML = '<div class="label">お酒のジャンル</div>';
+            const genres = [...new Set(tData.map(d => d.g))];
+            genres.forEach(g => {
                 const d = document.createElement('div'); d.className = "item"; d.innerText = "📁 " + g;
-                d.onclick = () => { curG = g; openThemes(g); };
-                cont.appendChild(d);
+                d.onclick = () => { curG = g; openThemes(g); }; cont.appendChild(d);
             });
-            layer.scrollTop = 0;
-        }
-
+            listLayer.scrollTop = 0;
+        };
         function openThemes(g) {
-            state = "th"; layer.classList.add('single');
+            state = "th"; listLayer.classList.add('single');
             cont.innerHTML = `<div class="label">${g}</div>`;
             [...new Set(tData.filter(d => d.g === g).map(d => d.th))].forEach(t => {
                 const d = document.createElement('div'); d.className = "item"; d.innerText = "🏷️ " + t;
-                d.onclick = () => openStories(t);
-                cont.appendChild(d);
+                d.onclick = () => openStories(t); cont.appendChild(d);
             });
-            layer.scrollTop = 0;
+            listLayer.scrollTop = 0;
         }
-
         function openStories(t) {
-            state = "st"; layer.classList.remove('single');
+            state = "st"; listLayer.classList.remove('single');
             cont.innerHTML = `<div class="label">${t}</div>`;
             tData.filter(d => d.th === t).forEach(d => {
                 const i = document.createElement('div'); i.className = "item"; i.innerText = d.ti;
                 i.onclick = () => { setMon('i', `./talk_images/${d.id}.jpg`); speak(d.txt); };
                 cont.appendChild(i);
             });
-            layer.scrollTop = 0;
+            listLayer.scrollTop = 0;
         }
 
-        function back() {
+        window.handleBack = () => {
             if (state === "st") openThemes(curG);
             else if (state === "th") openTalk();
             else if (state === "tit") openMusic();
-            else { layer.style.display = 'none'; state = "none"; }
-        }
-        function playFix(id) { setMon('v', id); }
-        function play() { yt.contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*'); }
-        function pause() { yt.contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*'); }
-        function next() { if(curI >= 0 && curI < curP.length-1) { curI++; setMon('v', curP[curI].u.split('v=')[1] || curP[curI].u); } }
+            else { listLayer.style.display = 'none'; navMain.style.display = 'grid'; state = "none"; }
+        };
+        window.playFix = (id) => { setMon('v', id); };
+        window.play = () => { yt.contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*'); };
+        window.pause = () => { yt.contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*'); };
+        window.next = () => { if(curI >= 0 && curI < curP.length-1) { curI++; setMon('v', curP[curI].u.split('v=')[1] || curP[curI].u); } };
     </script>
 </body>
 </html>
