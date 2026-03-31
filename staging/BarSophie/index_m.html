@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Bar Sophie v10.1</title>
+    <title>Bar Sophie v10.2</title>
     <style>
         :root { --bg: #000; --accent: #f0b56e; --blue: #00d2ff; --green: #27ae60; --talk: #2980b9; --text: #eee; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -12,46 +12,45 @@
         /* --- 1. 入口画面 --- */
         #entry-screen { position: fixed; inset: 0; background: #000; z-index: 5000; display: flex; flex-direction: column; align-items: center; padding: 20px; }
         #entry-sophie { flex: 1; max-width: 100%; object-fit: contain; }
-        .btn-enter { margin-top: 15px; padding: 12px 35px; font-size: 1.1rem; background: none; border: 2px solid var(--accent); color: var(--accent); border-radius: 30px; font-weight: bold; }
+        .btn-enter { margin-top: 15px; padding: 15px 45px; font-size: 1.2rem; background: #111; border: 2px solid var(--accent); color: var(--accent); border-radius: 40px; font-weight: bold; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
 
         /* --- 2. 対面チャットモード --- */
         #chat-mode { display: none; flex-direction: column; height: 100%; }
         .sophie-portrait { flex: 6; display: flex; justify-content: center; align-items: center; overflow: hidden; }
         .sophie-portrait img { height: 100%; width: auto; object-fit: contain; }
-        .chat-balloon { flex: 3; padding: 15px; font-size: 1.05rem; line-height: 1.5; color: #ccc; border-top: 1px solid #1a1a2e; overflow-y: auto; background: #080808; }
-        .nav-area { flex: 1; display: flex; padding: 8px; gap: 8px; }
-        .btn-nav { flex: 1; background: #111; color: var(--accent); border: 1px solid var(--accent); border-radius: 6px; font-weight: bold; }
+        .chat-balloon { flex: 3; padding: 18px; font-size: 1.1rem; line-height: 1.6; color: #ccc; border-top: 1px solid #1a1a2e; overflow-y: auto; background: #080808; }
+        .nav-area { flex: 1; display: flex; padding: 10px; gap: 10px; }
+        .btn-nav { flex: 1; background: #1a1a1a; color: var(--accent); border: 1.5px solid var(--accent); border-radius: 8px; font-weight: bold; }
 
         /* --- 3. カウンター（メニュー）モード --- */
         #menu-mode { display: none; flex-direction: column; height: 100%; }
         .monitor { width: 100%; aspect-ratio: 16/9; background: #000; border-bottom: 2px solid var(--blue); position: relative; flex-shrink: 0; }
         #yt-iframe, #monitor-img { width: 100%; height: 100%; display: none; border: none; }
-        #telop { position: absolute; bottom: 0; width: 100%; background: rgba(0,0,0,0.85); padding: 8px; font-size: 0.85rem; min-height: 3em; display: none; z-index: 10; }
+        #telop { position: absolute; bottom: 0; width: 100%; background: rgba(0,0,0,0.85); padding: 10px; font-size: 0.9rem; min-height: 3.2em; display: none; z-index: 10; }
 
-        /* 操作盤：高さを抑えつつボタンを均等化 */
-        .console { height: 75px; background: #151515; display: flex; border-bottom: 1px solid #333; flex-shrink: 0; }
-        .btn-grid { flex: 7.5; display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; padding: 4px; }
-        .sophie-side { flex: 2.5; background: #000; display: flex; justify-content: center; align-items: center; border-left: 1px solid #222; }
-        .sophie-side img { height: 80%; width: auto; }
-        .c-btn { background: #222; border: 1px solid #444; color: #ccc; border-radius: 4px; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; }
-        .back-btn { font-size: 0.75rem; color: var(--accent); border-color: var(--accent); }
+        /* 操作盤：ミニソフィー復活とボタンの立体感 */
+        .console { height: 95px; background: #111; display: flex; border-bottom: 1px solid #333; flex-shrink: 0; }
+        .btn-grid { flex: 7; display: grid; grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(2, 1fr); gap: 4px; padding: 5px; }
+        .sophie-side { flex: 3; background: #000; display: flex; justify-content: center; align-items: center; border-left: 1px solid #222; }
+        .sophie-side img { height: 90%; width: auto; }
+        .c-btn { background: #2a2a2a; border: 1px solid #444; color: #eee; border-radius: 4px; font-size: 0.95rem; font-weight: bold; display: flex; align-items: center; justify-content: center; }
+        .back-btn { color: var(--accent); border: 1.2px solid var(--accent); background: #1a1a2e; }
 
-        /* リストエリア */
+        /* リストエリア：潰れないように調整 */
         .list-area { flex: 1; overflow-y: auto; background: #08080a; position: relative; }
-        .main-choice { padding: 8px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-        .act-btn { padding: 12px; border-radius: 6px; border: none; font-weight: bold; color: #fff; font-size: 0.95rem; }
+        .main-choice { padding: 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .act-btn { padding: 16px; border-radius: 8px; border: none; font-weight: bold; color: #fff; font-size: 1.05rem; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
         .m-bg { background: var(--green); } .t-bg { background: var(--talk); }
 
         #list-layer { position: absolute; inset: 0; background: #08080a; z-index: 100; display: none; flex-direction: column; }
-        .list-scroll { flex: 1; overflow-y: auto; display: grid; grid-template-columns: 1fr 1fr; gap: 1px; padding: 1px; }
+        .list-scroll { flex: 1; overflow-y: auto; display: grid; grid-template-columns: 1fr 1fr; gap: 1px; padding: 2px; }
         #list-layer.single .list-scroll { grid-template-columns: 1fr; }
 
-        /* ★ジャンルラベルの極薄化 */
-        .label { grid-column: 1/-1; background: #1a1a2e; color: var(--accent); padding: 4px 10px; font-size: 0.8rem; font-weight: bold; position: sticky; top: 0; border-bottom: 1px solid #333; line-height: 1.2; }
-        /* ★アイテムの圧迫解消 */
-        .item { padding: 8px 10px; border-bottom: 1px solid #111; color: #bbb; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.3; }
+        .label { grid-column: 1/-1; background: #1a1a2e; color: var(--accent); padding: 8px 12px; font-size: 0.85rem; font-weight: bold; position: sticky; top: 0; z-index: 10; border-bottom: 1px solid #333; }
+        /* ★アイテムの高さと余白をしっかり確保 */
+        .item { min-height: 48px; padding: 12px; border-bottom: 1px solid #111; color: #ccc; font-size: 1rem; display: flex; align-items: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-        .ver-tag { position: fixed; bottom: 2px; right: 5px; font-size: 9px; color: #333; }
+        .ver-tag { position: fixed; bottom: 2px; right: 5px; font-size: 10px; color: #333; }
     </style>
 </head>
 <body>
@@ -71,16 +70,16 @@
 
     <div id="menu-mode">
         <div class="monitor">
-            <iframe id="yt-iframe" allow="autoplay"></iframe>
+            <iframe id="yt-iframe" allow="autoplay; encrypted-media"></iframe>
             <img id="monitor-img">
             <div id="telop"></div>
         </div>
         <div class="console">
             <div class="btn-grid">
-                <button class="c-btn" onclick="play()">▶</button>
-                <button class="c-btn" onclick="pause()">⏸</button>
-                <button class="c-btn" onclick="next()">⏭</button>
-                <button class="c-btn back-btn" onclick="back()">戻る</button>
+                <button class="c-btn" onclick="play()">▶ 再生</button>
+                <button class="c-btn" onclick="pause()">⏸ 停止</button>
+                <button class="c-btn back-btn" onclick="back()">← 戻る</button>
+                <button class="c-btn" onclick="next()">⏭ 次へ</button>
             </div>
             <div class="sophie-side"><img src="./sophie_shake.png"></div>
         </div>
@@ -90,31 +89,29 @@
                 <button class="act-btn m-bg" onclick="openMusic()">🎵 音楽選曲</button>
                 <button class="act-btn t-bg" onclick="openTalk()">🥃 お酒の話</button>
             </div>
-            <div style="padding:0 8px 8px; display:grid; grid-template-columns:1fr 1fr; gap:5px;">
-                <button class="c-btn" style="padding:8px; font-size:0.75rem" onclick="playFix('QyzK21nx70o')">Jazz 1</button>
-                <button class="c-btn" style="padding:8px; font-size:0.75rem" onclick="playFix('vh4TWlwYfLc')">Jazz 2</button>
+            <div style="padding:0 12px 12px; display:grid; grid-template-columns:1fr 1fr; gap:6px;">
+                <button class="c-btn" style="padding:10px; font-size:0.85rem" onclick="playFix('QyzK21nx70o')">Jazz 1</button>
+                <button class="c-btn" style="padding:10px; font-size:0.85rem" onclick="playFix('vh4TWlwYfLc')">Jazz 2</button>
             </div>
         </div>
     </div>
 
-    <div class="ver-tag">Ver 10.1</div>
+    <div class="ver-tag">Ver 10.2</div>
 
     <script>
-        let jData = [], tData = [], state = "none", curG = "";
+        let jData = [], tData = [], state = "none", curG = "", curPlaylist = [], curIdx = -1;
         const layer = document.getElementById('list-layer'), cont = document.getElementById('content');
         const yt = document.getElementById('yt-iframe'), img = document.getElementById('monitor-img'), tel = document.getElementById('telop');
 
         function enter() {
             document.getElementById('entry-screen').style.display = 'none';
             document.getElementById('chat-mode').style.display = 'flex';
-            speak("まきむら様、お帰りなさいませ。今夜も良いお酒を。");
+            speak("まきむら様、お帰りなさいませ。今夜もお会いできて光栄です。");
         }
-
         function showMenu() {
             document.getElementById('chat-mode').style.display = 'none';
             document.getElementById('menu-mode').style.display = 'flex';
         }
-
         function speak(txt) {
             window.speechSynthesis.cancel();
             if(txt.length > 15) { tel.innerText = txt; tel.style.display = 'block'; }
@@ -125,12 +122,16 @@
                 document.getElementById('chat-text').innerText = txt;
             }
         }
-
         function setMon(mode, src) {
-            if(mode === 'v') { img.style.display = 'none'; yt.style.display = 'block'; yt.src = `https://www.youtube.com/embed/${src}?autoplay=1`; }
-            else { yt.style.display = 'none'; img.style.display = 'block'; img.src = src; }
+            if(mode === 'v') { 
+                img.style.display = 'none'; yt.style.display = 'block'; 
+                yt.src = `https://www.youtube.com/embed/${src}?autoplay=1&enablejsapi=1`; 
+            } else { 
+                yt.style.display = 'none'; yt.src = ""; img.style.display = 'block'; img.src = src; 
+            }
         }
 
+        // CSV読み込み
         fetch('JBoxメニュー.csv').then(r => r.text()).then(csv => {
             const lines = csv.split('\n').slice(1);
             const genres = { 'E':'演歌', 'F':'フォーク', 'J':'歌謡曲', 'W':'洋楽', 'I':'インスト', 'S':'旅情・映像' };
@@ -139,7 +140,6 @@
                 return { f: c[0].trim(), gName: genres[c[0].trim()] || "その他", a: c[2].trim(), ti: c[3].replace(/"/g,'').trim(), u: c[4].trim() };
             });
         });
-
         fetch('sake_talk.csv').then(r => r.text()).then(csv => {
             const lines = csv.split('\n').slice(1);
             tData = lines.filter(l => l.trim()).map(l => {
@@ -151,20 +151,23 @@
         function openMusic() {
             state = "art"; layer.classList.remove('single'); layer.style.display = 'flex';
             cont.innerHTML = "";
-            const flags = ['E', 'F', 'J', 'W', 'I', 'S'];
-            flags.forEach(flag => {
+            ['E', 'F', 'J', 'W', 'I', 'S'].forEach(flag => {
                 const artists = [...new Set(jData.filter(d => d.f === flag).map(d => d.a))];
                 if(artists.length) {
                     const groupName = jData.find(d => d.f === flag).gName;
-                    const lbl = document.createElement('div'); lbl.className = "label"; lbl.innerText = groupName;
-                    cont.appendChild(lbl);
+                    cont.innerHTML += `<div class="label">${groupName}</div>`;
                     artists.forEach(a => {
                         const d = document.createElement('div'); d.className = "item"; d.innerText = "🎤 " + a;
                         d.onclick = () => {
                             state = "tit"; cont.innerHTML = `<div class="label">${a}</div>`;
-                            jData.filter(m => m.a === a).forEach(m => {
+                            const songs = jData.filter(m => m.a === a);
+                            songs.forEach(m => {
                                 const i = document.createElement('div'); i.className = "item"; i.innerText = m.ti;
-                                i.onclick = () => { speak(a + "の" + m.ti); const id = m.u.split('v=')[1] || m.u; setMon('v', id); };
+                                i.onclick = () => { 
+                                    speak(a + "の" + m.ti); 
+                                    curPlaylist = songs; curIdx = curPlaylist.indexOf(m);
+                                    const id = m.u.split('v=')[1] || m.u; setMon('v', id); 
+                                };
                                 cont.appendChild(i);
                             });
                         };
@@ -177,7 +180,8 @@
         function openTalk() {
             state = "g"; layer.classList.remove('single'); layer.style.display = 'flex';
             cont.innerHTML = '<div class="label">お酒のジャンル</div>';
-            [...new Set(tData.map(d => d.g))].forEach(g => {
+            const genres = [...new Set(tData.map(d => d.g))];
+            genres.forEach(g => {
                 const d = document.createElement('div'); d.className = "item"; d.innerText = "📁 " + g;
                 d.onclick = () => { curG = g; openThemes(g); }; cont.appendChild(d);
             });
@@ -210,7 +214,7 @@
         function playFix(id) { setMon('v', id); }
         function play() { yt.contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*'); }
         function pause() { yt.contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*'); }
-        function next() {}
+        function next() { if(curIdx >= 0 && curIdx < curPlaylist.length - 1) { curIdx++; const m = curPlaylist[curIdx]; setMon('v', m.u.split('v=')[1] || m.u); } }
     </script>
 </body>
 </html>
