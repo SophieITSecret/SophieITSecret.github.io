@@ -3,21 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Bar Sophie v12.6</title>
+    <title>Bar Sophie v12.7</title>
     <style>
         :root { --bg: #000; --accent: #f0b56e; --blue: #00d2ff; --green: #27ae60; --text: #eee; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
+        
+        /* 画面全体 */
         body { background: var(--bg); color: var(--text); font-family: sans-serif; height: 100dvh; width: 100vw; overflow: hidden; display: flex; flex-direction: column; }
 
-        /* 入口 */
+        /* 入口：絶対に巨大化させない (50%固定) */
         #entry-screen { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        #entry-sophie { max-height: 55dvh; width: 85%; object-fit: contain; margin-bottom: 20px; }
+        #entry-sophie { height: 45dvh !important; max-width: 80vw; object-fit: contain; margin-bottom: 30px; }
         .btn-enter { padding: 15px 45px; font-size: 1.2rem; background: #111; border: 2px solid var(--accent); color: var(--accent); border-radius: 40px; font-weight: bold; }
 
         /* ラウンジ */
         #chat-mode { display: none; flex-direction: column; height: 100%; background: #000; }
         .portrait { flex: 1; display: flex; justify-content: center; align-items: center; padding: 20px; }
-        .portrait img { height: 100%; width: auto; object-fit: contain; }
+        .portrait img { height: 50dvh; width: auto; object-fit: contain; }
         .chat-area { height: 140px; padding: 20px; background: #080808; border-top: 1px solid #1a1a2e; color: #ccc; font-size: 1.1rem; text-align: center; }
         .btn-to-bar { padding: 15px; background: #111; border: 1px solid var(--accent); color: var(--accent); font-weight: bold; margin: 10px 20px; border-radius: 8px; }
 
@@ -25,9 +27,10 @@
         #main-ui { display: none; flex: 1; flex-direction: column; height: 100%; overflow: hidden; }
         @media (orientation: landscape) { #main-ui { flex-direction: row !important; } .l-side { flex: 1.4 !important; border-right: 1px solid #333; } .r-side { flex: 1 !important; } }
 
+        /* モニター */
         .monitor { width: 100%; aspect-ratio: 16/9; background: #000; border-bottom: 2px solid var(--blue); position: relative; flex-shrink: 0; }
         #yt-iframe, #monitor-img { width: 100%; height: 100%; border: none; display: none; object-fit: contain; }
-        #telop { position: absolute; inset: 0; background: rgba(0,0,0,0.7); padding: 15px; font-size: 1.05rem; display: none; z-index: 1000; color: #fff; overflow-y: auto; line-height: 1.6; }
+        #telop { position: absolute; inset: 0; background: rgba(0,0,0,0.75); padding: 15px; font-size: 1.05rem; display: none; z-index: 1000; color: #fff; overflow-y: auto; line-height: 1.6; }
 
         /* 操作盤 */
         .console { height: 75px; background: #111; display: flex; border-bottom: 1px solid #333; flex-shrink: 0; }
@@ -35,22 +38,20 @@
         .sophie-box { width: 75px; background: #000; display: flex; justify-content: center; align-items: center; border-left: 1px solid #222; }
         .sophie-box img { height: 85%; width: auto; cursor: pointer; }
         .c-btn { background: #222; border: 1px solid #444; color: #eee; border-radius: 4px; font-size: 0.85rem; font-weight: bold; display: flex; align-items: center; justify-content: center; user-select: none; }
-        
-        /* オートプレイ中（⏭ボタン）の視覚効果 */
-        .auto-active { border-color: var(--green) !important; color: var(--green) !important; box-shadow: inset 0 0 10px rgba(39, 174, 96, 0.3); }
+        .auto-active { border-color: var(--green) !important; color: var(--green) !important; }
 
-        /* 下部エリア */
-        .r-side { flex: 1; display: flex; flex-direction: column; min-height: 0; position: relative; }
+        /* 下部メニュー */
+        .r-side { flex: 1; display: flex; flex-direction: column; min-height: 0; }
         .scroll-area { flex: 1; overflow-y: scroll; background: #08080a; -webkit-overflow-scrolling: touch; }
-        #nav-main { padding: 12px; }
-        .act-btn { width: 100%; height: 45px; margin-bottom: 10px; border-radius: 8px; border: none; font-weight: bold; color: #fff; font-size: 1.1rem; }
+        #nav-main { padding: 12px; display: block; }
+        .act-btn { width: 100%; height: 48px; margin-bottom: 10px; border-radius: 8px; border: none; font-weight: bold; color: #fff; font-size: 1.1rem; display: block; }
 
         /* ★規律：ラベル28px、アイテム38px、発光（accent） */
-        .label { background: #1a1a2e; color: var(--accent); padding: 0 12px; font-size: 0.8rem; font-weight: bold; position: sticky; top: 0; z-index: 100; border-bottom: 1px solid #333; height: 28px; line-height: 28px; }
-        .item { height: 38px; line-height: 38px; padding: 0 15px; border-bottom: 1px solid #222; color: #ccc; font-size: 0.95rem; display: block; width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; }
+        .label { background: #1a1a2e; color: var(--accent); padding: 0 12px; font-size: 0.8rem; font-weight: bold; position: sticky; top: 0; z-index: 100; border-bottom: 1px solid #333; height: 28px; line-height: 28px; width: 100%; }
+        .item { height: 38px !important; line-height: 38px !important; padding: 0 15px; border-bottom: 1px solid #222; color: #ccc; font-size: 0.95rem; display: block; width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; }
         .active-item { background: var(--accent) !important; color: #000 !important; font-weight: bold; }
 
-        .ver { position: fixed; bottom: 4px; right: 8px; font-size: 9px; color: #333; pointer-events: none; z-index: 10000; }
+        .ver { position: fixed; bottom: 4px; right: 8px; font-size: 9px; color: #444; pointer-events: none; z-index: 10000; }
     </style>
 </head>
 <body>
@@ -98,24 +99,28 @@
         </div>
     </div>
 
-    <div class="ver">v12.6 MASTER-FLOW</div>
+    <div class="ver">v12.7 RE-FIXED</div>
 
     <script>
         let jData = [], tData = [], state = "none", curG = "", curP = [], curI = -1;
         let lastTelopTxt = "", isPaused = false, isMusicMode = false, isAutoPlay = false;
         let pressTimer = null;
 
-        const mainScroll = document.getElementById('main-scroll'), navMain = document.getElementById('nav-main'), listView = document.getElementById('list-view');
         const yt = document.getElementById('yt-iframe'), img = document.getElementById('monitor-img'), tel = document.getElementById('telop');
 
-        // YouTube再生終了検知
+        // YouTube再生終了検知の強化
+        setInterval(() => {
+            if (isAutoPlay && isMusicMode && yt.src.includes('youtube')) {
+                yt.contentWindow.postMessage('{"event":"listening","id":1,"channel":"widget"}', '*');
+                yt.contentWindow.postMessage('{"event":"command","func":"getPlayerState","args":[]}', '*');
+            }
+        }, 1000);
+
         window.addEventListener('message', (e) => {
-            if (e.origin !== "https://www.youtube.com") return;
             try {
                 const data = JSON.parse(e.data);
-                if (data.event === "onStateChange" && data.info === 0 && isAutoPlay && isMusicMode) {
-                    next(); // 曲終了 -> 次へ
-                }
+                // info: 0 は再生終了
+                if (data.info === 0 && isAutoPlay && isMusicMode) next();
             } catch (err) {}
         });
 
@@ -128,18 +133,15 @@
         function speakNow(txt) { document.getElementById('lounge-text').innerText = txt; const u = new SpeechSynthesisUtterance(txt); u.lang = 'ja-JP'; window.speechSynthesis.speak(u); }
 
         function extractYtId(url) {
-            if (!url) return "";
-            if (url.length === 11) return url;
             const match = url.match(/^.*(youtu\.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/);
             return (match && match[2].length === 11) ? match[2] : url;
         }
 
-        // 表示とハイライトの更新
         function updateHighlight() {
-            document.querySelectorAll('.item').forEach((el, idx) => {
+            const items = document.querySelectorAll('.item');
+            items.forEach((el, idx) => {
                 el.classList.toggle('active-item', idx === curI);
             });
-            // 光っている場所に自動スクロール
             const active = document.querySelector('.active-item');
             if (active && !isAutoPlay) active.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
         }
@@ -162,7 +164,7 @@
             window.speechSynthesis.cancel();
             const u = new SpeechSynthesisUtterance(txt);
             u.lang = 'ja-JP'; u.rate = 1.05;
-            u.onend = () => { if(isAutoPlay && !isMusicMode) setTimeout(next, 1000); };
+            u.onend = () => { if(isAutoPlay && !isMusicMode) setTimeout(next, 800); };
             window.speechSynthesis.speak(u);
         }
 
@@ -170,18 +172,22 @@
             if(!isPaused) { 
                 yt.contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*'); 
                 window.speechSynthesis.pause(); isPaused = true; 
-                isAutoPlay = false; updateAutoPlayUI(); // 停止で自動運転解除
             } else { 
                 yt.contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*'); 
                 window.speechSynthesis.resume(); isPaused = false; 
             }
         };
 
-        window.stopSpeak = () => { window.speechSynthesis.cancel(); tel.style.display = 'none'; };
+        window.stopSpeak = () => { window.speechSynthesis.cancel(); tel.style.display = 'none'; isAutoPlay = false; updateAutoPlayUI(); };
 
         window.sophieWarp = () => {
-            if (state !== "none") { listView.style.display = 'none'; navMain.style.display = 'block'; state = "none"; }
-            else { document.getElementById('main-ui').style.display = 'none'; document.getElementById('chat-mode').style.display = 'flex'; speakNow("まきむら様、ごゆっくり。"); }
+            if (state !== "none") { 
+                document.getElementById('list-view').style.display = 'none'; 
+                document.getElementById('nav-main').style.display = 'block'; state = "none"; 
+            } else { 
+                document.getElementById('main-ui').style.display = 'none';
+                document.getElementById('chat-mode').style.display = 'flex';
+            }
         };
 
         function setMon(mode, src) {
@@ -189,25 +195,19 @@
             setTimeout(() => {
                 if(mode === 'v') { 
                     const vid = extractYtId(src);
-                    yt.style.display = 'block'; yt.src = `https://www.youtube.com/embed/${vid}?autoplay=1&enablejsapi=1&rel=0`; 
+                    yt.style.display = 'block'; 
+                    yt.src = `https://www.youtube.com/embed/${vid}?autoplay=1&enablejsapi=1&rel=${window.location.origin}`; 
                 } else { img.style.display = 'block'; img.src = src; }
-            }, 50);
+            }, 100);
         }
 
-        // ⏭ボタンの長押し処理
         window.handleNextDown = (e) => {
-            pressTimer = setTimeout(() => {
-                isAutoPlay = !isAutoPlay;
-                updateAutoPlayUI();
-                pressTimer = null;
-            }, 500);
+            pressTimer = setTimeout(() => { isAutoPlay = !isAutoPlay; updateAutoPlayUI(); pressTimer = null; }, 600);
         };
         window.handleNextUp = (e) => {
             if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; next(); }
         };
-        function updateAutoPlayUI() {
-            document.getElementById('btn-next').classList.toggle('auto-active', isAutoPlay);
-        }
+        function updateAutoPlayUI() { document.getElementById('btn-next').classList.toggle('auto-active', isAutoPlay); }
 
         window.next = () => {
             if(curI < curP.length - 1) {
@@ -221,20 +221,18 @@
                     prepareMedia(m.txt, false);
                     if(isAutoPlay) startReading(m.txt);
                 }
-            } else {
-                isAutoPlay = false; updateAutoPlayUI();
-            }
+            } else { isAutoPlay = false; updateAutoPlayUI(); }
         };
 
-        // CSV読み込み
-        const loadCSVs = () => {
+        // CSV
+        const load = () => {
             fetch('JBoxメニュー.csv').then(r => r.text()).then(csv => {
                 const lines = csv.split('\n').slice(1);
                 const gMap = { 'E':'演歌', 'F':'フォーク', 'J':'歌謡曲', 'W':'洋楽', 'I':'インスト', 'S':'旅情・映像' };
                 jData = lines.filter(l => l.includes(',')).map(l => {
                     const c = l.split(',').map(s => s.trim());
                     return { f: c[0], gName: gMap[c[0]] || "他", a: c[2], ti: (c[3]||"").replace(/"/g,''), u: c[4] };
-                }).filter(d => d && d.a);
+                }).filter(d => d.a);
             });
             fetch('お酒の話.csv').then(r => r.text()).then(csv => {
                 const lines = csv.split('\n').slice(1);
@@ -245,7 +243,7 @@
                 }).filter(d => d);
             });
         };
-        loadCSVs();
+        load();
 
         window.openMusic = () => {
             state = "art"; let h = "";
@@ -281,10 +279,15 @@
             renderList(h);
         };
 
-        function renderList(html) { navMain.style.display = 'none'; listView.style.display = 'block'; listView.innerHTML = html; mainScroll.scrollTop = 0; }
+        function renderList(html) {
+            document.getElementById('nav-main').style.display = 'none';
+            const lv = document.getElementById('list-view');
+            lv.style.display = 'block'; lv.innerHTML = html;
+            document.getElementById('main-scroll').scrollTop = 0;
+        }
         window.handleBack = () => {
             if (state === "st") openThemes(curG); else if (state === "th") openTalk(); else if (state === "tit") openMusic();
-            else { listView.style.display = 'none'; navMain.style.display = 'block'; state = "none"; }
+            else { document.getElementById('list-view').style.display = 'none'; document.getElementById('nav-main').style.display = 'block'; state = "none"; }
         };
     </script>
 </body>
