@@ -3,94 +3,91 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Bar Sophie Mobile - Wide v9.6</title>
+    <title>Bar Sophie Mobile - Final v9.7</title>
     <style>
         :root { 
-            --bar-bg: #050505; --bar-accent: #f0b56e; --neon-blue: #00d2ff; 
-            --request-green: #27ae60; --bar-text: #eee; --bar-border: #1a1a2e;
-            --talk-blue: #2980b9;
+            --bar-bg: #000; --bar-accent: #f0b56e; --neon-blue: #00d2ff; 
+            --request-green: #27ae60; --bar-text: #eee; --talk-blue: #2980b9;
         }
         body { background-color: var(--bar-bg); color: var(--bar-text); margin: 0; font-family: sans-serif; overflow: hidden; display: flex; flex-direction: column; height: 100dvh; }
 
-        /* 入口画面：ソフィーをドカンと出す */
-        #entry-screen { position: fixed; inset: 0; background: #000; z-index: 3000; display: flex; flex-direction: column; align-items: center; }
-        #entry-sophie { flex: 8; width: 100%; object-fit: contain; }
-        .entry-btn-area { flex: 2; width: 100%; display: flex; justify-content: center; align-items: center; background: #000; }
+        /* 1. 入口画面（入店するまで表示） */
+        #entry-screen { position: fixed; inset: 0; background: #000; z-index: 3000; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        #entry-sophie { width: 90%; height: 70%; object-fit: contain; margin-bottom: 20px; }
         .entry-btn { padding: 15px 40px; font-size: 1.3rem; background: transparent; border: 2px solid var(--bar-accent); color: var(--bar-accent); border-radius: 30px; font-weight: bold; }
 
-        /* バー店内レイアウト */
+        /* 2. メイン店内レイアウト（入店後に表示） */
         #bar-layout { display: none; flex-direction: column; height: 100dvh; }
 
         /* 上部：モニター（画像とビデオ） */
-        .monitor-frame { width: 100vw; aspect-ratio: 16 / 9; background: #000; border-bottom: 2px solid var(--neon-blue); position: relative; overflow: hidden; }
+        .monitor-area { width: 100vw; aspect-ratio: 16 / 9; background: #000; border-bottom: 2px solid var(--neon-blue); position: relative; }
         #yt-iframe, #monitor-img { width: 100%; height: 100%; border: none; display: none; object-fit: contain; }
-        #telop-box { position: absolute; bottom: 0; width: 100%; background: rgba(0,0,0,0.8); color: #fff; padding: 8px; font-size: 0.9rem; min-height: 3em; display: none; z-index: 10; }
+        #telop-box { position: absolute; bottom: 0; width: 100%; background: rgba(0,0,0,0.8); color: #fff; padding: 10px; font-size: 0.9rem; min-height: 3.5em; display: none; z-index: 10; box-sizing: border-box; }
 
         /* 中部：操作パネルと小さなソフィー */
-        .console-panel { height: 80px; background: #111; display: flex; border-bottom: 1px solid #333; }
-        .controls { flex: 7; display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; padding: 5px; }
-        .mini-sophie { flex: 3; background: #000; display: flex; justify-content: center; align-items: center; border-left: 1px solid #222; }
-        .mini-sophie img { height: 90%; width: auto; }
-        .ctrl-btn { background: #222; border: 1px solid #444; color: #aaa; border-radius: 4px; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; }
-        .back-home { grid-column: span 4; font-size: 0.85rem; color: var(--bar-accent); border-color: var(--bar-accent); background: #1a1a2e; }
+        .console-box { height: 100px; background: #111; display: flex; border-bottom: 1px solid #333; }
+        .control-grid { flex: 7; display: grid; grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(2, 1fr); gap: 4px; padding: 5px; }
+        .mini-sophie-box { flex: 3; background: #000; display: flex; justify-content: center; align-items: center; border-left: 1px solid #222; }
+        .mini-sophie-box img { height: 90%; width: auto; }
+        
+        .ctrl-btn { background: #222; border: 1px solid #444; color: #aaa; border-radius: 4px; font-size: 1rem; display: flex; align-items: center; justify-content: center; }
+        .back-btn { color: var(--bar-accent); border-color: var(--bar-accent); font-size: 0.85rem; }
 
         /* 下部：広大なメニューエリア */
-        .menu-area { flex: 1; background: #08080a; overflow-y: auto; position: relative; }
-        .main-buttons { padding: 10px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .action-btn { padding: 15px; border-radius: 8px; font-weight: bold; font-size: 1rem; color: #fff; border: none; }
+        .menu-scroll-area { flex: 1; background: #08080a; overflow-y: auto; position: relative; padding-bottom: 20px; }
+        .base-buttons { padding: 10px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .action-btn { padding: 15px; border-radius: 8px; font-weight: bold; font-size: 1.1rem; color: #fff; border: none; }
         .request-btn { background: var(--request-green); }
         .talk-btn { background: var(--talk-blue); }
 
-        /* クイック選曲 */
-        .quick-grid { padding: 0 10px 10px; display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
-        .quick-btn { background: #111; border: 1px solid #222; color: #888; padding: 8px; border-radius: 4px; font-size: 0.85rem; text-align: left; }
-
-        /* メニューレイヤー（全画面を覆う） */
+        /* メニューレイヤー */
         #menu-layer { position: absolute; inset: 0; background: #08080a; z-index: 2000; display: none; flex-direction: column; }
         .menu-list { flex: 1; overflow-y: auto; display: grid; grid-template-columns: 1fr 1fr; gap: 1px; padding: 2px; }
-        #menu-layer.single-col .menu-list { grid-template-columns: 1fr; }
+        #menu-layer.single-col .menu-list { grid-template-columns: 1fr; } /* 中テーマ用1列 */
         .genre-label { grid-column: 1 / -1; background: #1a1a2e; color: var(--bar-accent); padding: 8px 12px; font-weight: bold; font-size: 0.9rem; position: sticky; top: 0; }
-        .menu-item { padding: 10px 12px; border-bottom: 1px solid #111; color: #bbb; font-size: 0.95rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .menu-item { padding: 12px; border-bottom: 1px solid #111; color: #bbb; font-size: 1rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+        /* クイックボタン */
+        .quick-section { padding: 10px; display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+        .q-btn { background: #0a0a0a; border: 1px solid #222; color: #777; padding: 10px; border-radius: 4px; font-size: 0.8rem; text-align: left; }
     </style>
 </head>
 <body>
 
     <div id="entry-screen">
         <img id="entry-sophie" src="./sophie_shake.png">
-        <div class="entry-btn-area">
-            <button class="entry-btn" onclick="enterBar()">🥃 Bar Sophie に入る</button>
-        </div>
+        <button class="entry-btn" onclick="enterBar()">🥃 Bar Sophie に入店する</button>
     </div>
 
     <div id="bar-layout">
-        <div class="monitor-frame">
+        <div class="monitor-area">
             <iframe id="yt-iframe" allow="autoplay; encrypted-media"></iframe>
             <img id="monitor-img">
             <div id="telop-box"></div>
         </div>
 
-        <div class="console-panel">
-            <div class="controls">
-                <button class="ctrl-btn" onclick="window.prevSong()">⏮</button>
-                <button class="ctrl-btn" onclick="window.playCurrent()">▶</button>
-                <button class="ctrl-btn" onclick="window.pauseSong()">⏸</button>
-                <button class="ctrl-btn" onclick="window.nextSong()">⏭</button>
-                <button class="ctrl-btn back-home" onclick="handleMasterBack()">← お店に戻る</button>
+        <div class="console-box">
+            <div class="control-grid">
+                <button class="ctrl-btn" onclick="window.playCurrent()">▶ Play</button>
+                <button class="ctrl-btn" onclick="window.pauseSong()">⏸ Pause</button>
+                <button class="ctrl-btn back-btn" onclick="handleMasterBack()">← 戻る</button>
+                <button class="ctrl-btn" onclick="window.nextSong()">⏭ Next</button>
             </div>
-            <div class="mini-sophie"><img src="./sophie_shake.png"></div>
+            <div class="mini-sophie-box"><img src="./sophie_shake.png"></div>
         </div>
 
-        <div class="menu-area">
+        <div class="menu-scroll-area">
             <div id="menu-layer"><div class="menu-list" id="menu-content"></div></div>
-            <div class="main-buttons">
-                <button class="action-btn request-btn" onclick="openMusicMenu()">🎵 選曲リクエスト</button>
-                <button class="action-btn talk-btn" onclick="openTalkGenres()">🥃 お酒の話題</button>
+            
+            <div class="base-buttons">
+                <button class="action-btn request-btn" onclick="openMusicMenu()">🎵 音楽選曲</button>
+                <button class="action-btn talk-btn" onclick="openTalkGenres()">🥃 お酒の話</button>
             </div>
-            <div class="quick-grid">
-                <button class="quick-btn" onclick="playFix('QyzK21nx70o')">深夜ジャズ 1</button>
-                <button class="quick-btn" onclick="playFix('vh4TWlwYfLc')">深夜ジャズ 2</button>
-                <button class="quick-btn" onclick="playFix('2vfCbdmKhMw')">◆ ｼｸﾞナール ◆</button>
-                <button class="quick-btn" onclick="playFix('tHk7TBoCZ8E')">演歌・酒場唄</button>
+            <div class="quick-section">
+                <button class="q-btn" onclick="playFix('QyzK21nx70o')">深夜ジャズ 1</button>
+                <button class="q-btn" onclick="playFix('vh4TWlwYfLc')">深夜ジャズ 2</button>
+                <button class="q-btn" onclick="playFix('2vfCbdmKhMw')">◆ ｼｸﾞナール ◆</button>
+                <button class="q-btn" onclick="playFix('tHk7TBoCZ8E')">演歌・酒場唄</button>
             </div>
         </div>
     </div>
@@ -108,16 +105,16 @@
         window.enterBar = () => {
             document.getElementById('entry-screen').style.display = 'none';
             document.getElementById('bar-layout').style.display = 'flex';
-            sophieSpeak("まきむら様、お帰りなさい。今夜は音楽になさいますか？ それとも、お酒の物語をお聞かせしましょうか？");
-            (async () => { await setDoc(doc(db, "users", "makimura_p"), { last_visit: serverTimestamp(), mode: "Mobile_v9.6" }); })();
+            sophieSpeak("まきむら様、お帰りなさいませ。お酒の物語も用意してありますよ。");
+            (async () => { await setDoc(doc(db, "users", "makimura_p"), { last_visit: serverTimestamp(), ver: "9.7_final" }); })();
         };
 
-        window.sophieSpeak = (text, callback) => {
+        window.sophieSpeak = (text) => {
             window.speechSynthesis.cancel();
             if(text.length > 20) { telopBox.innerText = text; telopBox.style.display = 'block'; }
             const utter = new SpeechSynthesisUtterance(text);
             utter.lang = 'ja-JP'; utter.rate = 1.05;
-            utter.onend = () => { telopBox.style.display = 'none'; if(callback) callback(); };
+            utter.onend = () => { telopBox.style.display = 'none'; };
             window.speechSynthesis.speak(utter);
         };
 
@@ -127,7 +124,7 @@
         };
 
         // CSV読み込み
-        fetch('お酒の話.csv').then(res => res.text()).then(csv => {
+        fetch('sake_talk.csv').then(res => res.text()).then(csv => {
             const lines = csv.split('\n').slice(1);
             talkData = lines.filter(l => l.trim()).map(line => {
                 const c = line.split(',');
@@ -142,10 +139,37 @@
             });
         });
 
-        // 音楽メニュー
+        // お酒の話
+        window.openTalkGenres = () => {
+            menuState = "talk-genres"; menuLayer.classList.remove('single-col'); menuLayer.style.display = 'flex';
+            menuContent.innerHTML = '<div class="genre-label">お酒の話題</div>';
+            [...new Set(talkData.map(d => d.genre))].forEach(g => {
+                const div = document.createElement('div'); div.className = "menu-item"; div.innerText = "📁 " + g;
+                div.onclick = () => { currentGenre = g; openTalkThemes(g); }; menuContent.appendChild(div);
+            });
+        };
+        window.openTalkThemes = (genre) => {
+            menuState = "talk-themes"; menuLayer.classList.add('single-col'); // 1列
+            menuContent.innerHTML = `<div class="genre-label">${genre}</div>`;
+            [...new Set(talkData.filter(d => d.genre === genre).map(d => d.theme))].forEach(t => {
+                const div = document.createElement('div'); div.className = "menu-item"; div.innerText = "🏷️ " + t;
+                div.onclick = () => openTalkStories(t); menuContent.appendChild(div);
+            });
+        };
+        window.openTalkStories = (theme) => {
+            menuState = "talk-stories"; menuLayer.classList.remove('single-col'); // 2列
+            menuContent.innerHTML = `<div class="genre-label">${theme}</div>`;
+            talkData.filter(d => d.theme === theme).forEach(t => {
+                const div = document.createElement('div'); div.className = "menu-item"; div.innerText = t.title;
+                div.onclick = () => { setMonitor('image', `./talk_images/${t.id}.jpg`); sophieSpeak(t.content); };
+                menuContent.appendChild(div);
+            });
+        };
+
+        // 音楽
         window.openMusicMenu = () => {
             menuState = "artists"; menuLayer.classList.remove('single-col'); menuLayer.style.display = 'flex';
-            menuContent.innerHTML = '<div class="genre-label">選曲リクエスト</div>';
+            menuContent.innerHTML = '<div class="genre-label">歌手名</div>';
             const genres = { 'E':'演歌', 'F':'フォーク', 'J':'歌謡曲', 'W':'洋楽', 'I':'インスト', 'S':'旅情・映像' };
             Object.keys(genres).forEach(f => {
                 const artists = [...new Set(jboxData.filter(d => d.flag === f).map(d => d.artist))];
@@ -158,7 +182,7 @@
                             jboxData.filter(d => d.artist === a).forEach(d => {
                                 const item = document.createElement('div'); item.className = "menu-item"; item.innerText = d.title;
                                 item.onclick = () => {
-                                    sophieSpeak(a + "さんの、" + d.title + "ですね。");
+                                    sophieSpeak(a + "さんの" + d.title);
                                     const id = d.url.includes('v=') ? d.url.split('v=')[1].split('&')[0] : d.url;
                                     setMonitor('video', id);
                                 };
@@ -171,45 +195,17 @@
             });
         };
 
-        // お話メニュー
-        window.openTalkGenres = () => {
-            menuState = "talk-genres"; menuLayer.classList.remove('single-col'); menuLayer.style.display = 'flex';
-            menuContent.innerHTML = '<div class="genre-label">お酒の話題</div>';
-            [...new Set(talkData.map(d => d.genre))].forEach(g => {
-                const div = document.createElement('div'); div.className = "menu-item"; div.innerText = "📁 " + g;
-                div.onclick = () => { currentGenre = g; openTalkThemes(g); }; menuContent.appendChild(div);
-            });
-        };
-        window.openTalkThemes = (genre) => {
-            menuState = "talk-themes"; menuLayer.classList.add('single-col'); // 中テーマは1列
-            menuContent.innerHTML = `<div class="genre-label">${genre}</div>`;
-            [...new Set(talkData.filter(d => d.genre === genre).map(d => d.theme))].forEach(t => {
-                const div = document.createElement('div'); div.className = "menu-item"; div.innerText = "🏷️ " + t;
-                div.onclick = () => openTalkStories(t); menuContent.appendChild(div);
-            });
-        };
-        window.openTalkStories = (theme) => {
-            menuState = "talk-stories"; menuLayer.classList.remove('single-col'); // 個別は2列
-            menuContent.innerHTML = `<div class="genre-label">${theme}</div>`;
-            talkData.filter(d => d.theme === theme).forEach(t => {
-                const div = document.createElement('div'); div.className = "menu-item"; div.innerText = t.title;
-                div.onclick = () => { setMonitor('image', `./talk_images/${t.id}.jpg`); sophieSpeak(t.content); };
-                menuContent.appendChild(div);
-            });
-        };
-
         window.handleMasterBack = () => {
             if (menuState === "talk-stories") openTalkThemes(currentGenre);
             else if (menuState === "talk-themes") openTalkGenres();
             else if (menuState === "titles") openMusicMenu();
-            else if (menuState === "closed") { /* 何もしない */ }
             else { menuLayer.style.display = 'none'; menuState = "closed"; }
         };
 
         window.playFix = (id) => { setMonitor('video', id); };
         window.playCurrent = () => ytIframe.contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*');
         window.pauseSong = () => ytIframe.contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*');
-        window.nextSong = () => {}; window.prevSong = () => {};
+        window.nextSong = () => {};
     </script>
 </body>
 </html>
