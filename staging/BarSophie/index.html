@@ -2,17 +2,22 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>Bar Sophie - Modular Elegance v14.3</title>
+    <title>Bar Sophie - Modular Elegance v14.4</title>
     <link rel="stylesheet" href="css/style_pc.css">
 </head>
 <body class="mode-init">
     <div id="main-container">
-        <img id="sophie-image" src="./sophie_shake.png" alt="Sophie">
-    </div>
+        <div id="sophie-wrapper">
+            <img id="sophie-image" src="./sophie_shake.png" alt="Sophie">
+        </div>
+        <div id="chat-placeholder"></div> </div>
 
     <aside id="side-panel">
         <div class="monitor-frame">
-            <iframe id="yt-iframe" src="" allow="autoplay; encrypted-media"></iframe>
+            <div class="monitor-inner">
+                <iframe id="yt-iframe" src="" allow="autoplay; encrypted-media"></iframe>
+                <div id="telop-box"></div>
+            </div>
         </div>
 
         <img id="sophie-theater" src="./sophie_shake.png" alt="Sophie-T">
@@ -40,7 +45,7 @@
 
         <div class="dynamic-area">
             <div id="menu-layer">
-                <div class="back-btn" id="menu-back">← Chatに戻る</div>
+                <div class="back-btn" id="menu-back">← 戻る</div>
                 <div class="menu-list" id="menu-content"></div>
             </div>
         </div>
