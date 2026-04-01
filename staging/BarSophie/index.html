@@ -2,43 +2,41 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>Bar Sophie - Legend v13.6</title>
+    <title>Bar Sophie - Modular Elegance v14.2</title>
     <link rel="stylesheet" href="css/style_pc.css">
 </head>
-<body>
-    <div id="entry-overlay"><button class="entry-btn" id="btn-entry-pc">🥃 Bar Sophie に入店する</button></div>
-    
-    <div id="left-panel">
-        <div id="sophie-main"><img id="sophie-image" src="./sophie_shake.png" alt="Sophie"></div>
-        <div id="chat-area">まきむら様、今夜はどのようなお時間になさいますか？</div>
+<body class="mode-init">
+    <div id="main-container">
+        <img id="sophie-image" src="./sophie_shake.png" alt="Sophie">
     </div>
-    
-    <div id="right-panel">
+
+    <aside id="side-panel">
         <div class="monitor-frame">
-            <iframe id="yt-iframe" src="" allow="autoplay"></iframe>
-            <img id="monitor-image" src="" alt="Sake Image">
-            <div id="telop-box"></div>
+            <iframe id="yt-iframe" src="" allow="autoplay; encrypted-media"></iframe>
         </div>
 
-        <div class="console-pc">
-            <div class="btn-grid-pc">
-                <button class="c-btn-pc" id="ctrl-play">▶ 再生/読上</button>
-                <button class="c-btn-pc" id="ctrl-pause">⏸ 停止/再開</button>
-                <button class="c-btn-pc" id="ctrl-back">← 戻る</button>
-                <button class="c-btn-pc" id="btn-next">⏭ 次へ</button>
-            </div>
+        <div class="player-ctrl">
+            <button class="ctrl-btn theater-btn" id="mode-toggle">シアター</button>
+            <button class="ctrl-btn" id="ctrl-prev">⏮</button>
+            <button class="ctrl-btn" id="ctrl-play">▶</button>
+            <button class="ctrl-btn" id="ctrl-pause">⏸</button>
+            <button class="ctrl-btn" id="ctrl-next">⏭</button>
+            <button class="ctrl-btn" id="ctrl-reset">↺</button>
         </div>
 
-        <div class="jukebox-controls">
+        <div class="jukebox-container">
+            <div class="jukebox-grid" id="fixed-buttons-grid">
+                </div>
+            <button class="special-btn request-btn" id="btn-open-menu">選曲リクエスト（全リスト）</button>
+        </div>
+
+        <div class="dynamic-area">
             <div id="menu-layer">
+                <div class="back-btn" id="menu-back">← Chatに戻る</div>
                 <div class="menu-list" id="menu-content"></div>
             </div>
-            <div class="btn-group-pc" id="nav-main-pc">
-                <button class="action-btn-pc request-btn" id="btn-music">🎵 選曲リクエスト</button>
-                <button class="action-btn-pc talk-btn" id="btn-talk">🥃 お酒の物語 (140本)</button>
-            </div>
         </div>
-    </div>
+    </aside>
 
     <script type="module" src="js/app_pc.js"></script>
 </body>
