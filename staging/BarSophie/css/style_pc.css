@@ -1,88 +1,56 @@
 :root { 
-    --bar-bg: #050505; 
+    --bar-bg: #000; 
     --bar-accent: #f0b56e; 
     --neon-blue: #00d2ff; 
-    --talk-blue: #2980b9; 
-    --request-green: #27ae60; 
-    --bar-text: #eee; 
+    --bar-border: #1a1a2e;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { 
-    background-color: var(--bar-bg); 
-    color: var(--bar-text); 
-    font-family: "Hiragino Kaku Gothic ProN", "Meiryo", sans-serif; 
-    overflow: hidden; 
-    display: flex; 
-    height: 100vh; 
-    width: 100vw; 
+    background-color: var(--bar-bg); color: #eee; 
+    height: 100vh; display: flex; overflow: hidden;
+    font-family: "Hiragino Kaku Gothic ProN", sans-serif;
 }
 
-/* 左パネル：ソフィー画像最適化 */
-#left-panel { width: 55%; height: 100vh; display: flex; flex-direction: column; border-right: 2px solid #1a1a1a; }
-#sophie-main { flex: 1; display: flex; justify-content: center; align-items: flex-start; background: #000; overflow: hidden; }
-#sophie-image { 
-    height: 100%; 
-    width: auto; 
-    object-fit: contain; 
-    object-position: top; /* 頭が絶対にはみ出ないように固定 */
+/* 7:3 の比率を厳守 */
+#main-container { flex: 7; position: relative; display: flex; justify-content: center; align-items: flex-start; border-right: 1px solid var(--bar-border); overflow: hidden; }
+#sophie-image { height: 100%; width: auto; object-fit: contain; object-position: top; }
+
+#side-panel { flex: 3; min-width: 320px; display: flex; flex-direction: column; background: #08080a; }
+
+/* シアターモード：V6.1の回り込みを再現 */
+body.theater-mode { flex-direction: column; }
+body.theater-mode #main-container { display: none; }
+body.theater-mode #side-panel { flex: 1; width: 100vw; }
+body.theater-mode .monitor-frame { height: 70vh; border: none; }
+body.theater-mode .jukebox-container { position: absolute; top: 70vh; right: 0; width: 40vw; height: calc(30vh - 60px); overflow-y: auto; background: #050505; border-left: 1px solid #333; }
+body.theater-mode .dynamic-area { position: absolute; top: 70vh; left: 0; width: 60vw; height: calc(30vh - 60px); }
+body.theater-mode .player-ctrl { position: fixed; bottom: 0; width: 100vw; z-index: 100; }
+
+/* パーツ：モニター */
+.monitor-frame { width: 100%; aspect-ratio: 16 / 9; border-bottom: 2px solid var(--neon-blue); background: #000; }
+#yt-iframe { width: 100%; height: 100%; border: none; }
+
+/* パーツ：操作盤 */
+.player-ctrl { display: flex; justify-content: center; gap: 8px; padding: 8px; background: #111; border-bottom: 1px solid #222; }
+.ctrl-btn { background: #222; border: 1px solid #444; color: #aaa; padding: 6px 12px; cursor: pointer; border-radius: 4px; }
+.theater-btn { color: var(--bar-accent); border-color: var(--bar-accent); font-weight: bold; }
+
+/* 10個のボタン：密度の復元 */
+.jukebox-container { padding: 8px; border-bottom: 1px solid var(--bar-border); }
+.jukebox-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
+.music-btn { 
+    background: #050505; border: 1.5px solid rgba(0, 210, 255, 0.4); color: #fff; 
+    padding: 6px; font-size: 0.95rem; font-weight: bold; cursor: pointer; border-radius: 4px;
+    text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
-#chat-area-container {
-    height: 180px;
-    padding: 20px;
-    background: linear-gradient(to bottom, #111, #000);
-    border-top: 2px solid var(--bar-accent);
-}
-#chat-area { font-size: 1.25rem; line-height: 1.6; color: #fff; }
+.special-btn { width: 100%; padding: 10px; margin-top: 6px; font-weight: bold; border-radius: 4px; cursor: pointer; border: none; }
+.request-btn { background: #27ae60; color: #fff; }
 
-/* 右パネル */
-#right-panel { width: 45%; height: 100vh; display: flex; flex-direction: column; background: #0a0a0a; }
-
-/* モニター */
-.monitor-frame { width: 100%; aspect-ratio: 16/9; background: #000; border-bottom: 2px solid var(--neon-blue); position: relative; }
-#yt-iframe, #monitor-image { width: 100%; height: 100%; border: none; display: none; object-fit: cover; }
-#telop-box { 
-    position: absolute; inset: 0; background: rgba(0,0,0,0.9); color: #fff; 
-    padding: 25px; font-size: 1.2rem; display: none; overflow-y: auto; z-index: 10; 
-    line-height: 1.8; border: 1px solid var(--neon-blue);
-}
-
-/* コンソール（10個のボタンとコントロール） */
-.console-pc { background: #151515; padding: 12px; border-bottom: 1px solid #333; }
-.control-row { display: flex; gap: 10px; margin-bottom: 10px; }
-.theater-btn { flex: 1; border: 1px solid var(--bar-accent) !important; color: var(--bar-accent) !important; }
-.transport-btns { flex: 2; display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; }
-
-.signal-song-btn {
-    width: 100%; padding: 12px; margin-bottom: 10px; background: #1e3a5a; 
-    border: 1px solid var(--neon-blue); color: #fff; font-weight: bold; border-radius: 4px; cursor: pointer;
-}
-
-.genre-grid-pc { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
-.g-select-btn {
-    background: #222; border: 1px solid #444; color: #ccc; padding: 8px 0;
-    font-size: 0.8rem; border-radius: 3px; cursor: pointer;
-}
-.g-select-btn:hover { background: #333; color: var(--bar-accent); }
-
-/* メニューリスト：視認性向上 */
-.jukebox-controls { flex: 1; display: flex; flex-direction: column; overflow: hidden; padding: 15px; }
-#menu-layer { flex: 1; overflow-y: auto; background: #050505; border: 1px solid #333; display: none; margin-bottom: 10px; }
-.menu-list { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: #333; }
-.genre-label { 
-    background: #1a1a2e; color: var(--bar-accent); padding: 12px; 
-    font-size: 1.1rem; font-weight: bold; position: sticky; top: 0; grid-column: 1 / -1; z-index: 5; 
-}
-.menu-item { 
-    background: #08080a; padding: 15px 12px; cursor: pointer; color: #eee; 
-    font-size: 1.1rem; /* 文字を大きく */ border: none;
-}
-
-/* 下部メインボタン */
-.btn-group-pc { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.action-btn-pc { padding: 15px; border-radius: 4px; font-weight: bold; cursor: pointer; color: #fff; font-size: 1rem; border: none; }
-.request-btn { background: var(--request-green); }
-.talk-btn { background: var(--talk-blue); }
-
-/* オーバーレイ */
-#entry-overlay { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; justify-content: center; align-items: center; transition: 0.5s; }
-.entry-btn { padding: 25px 60px; font-size: 1.8rem; background: transparent; border: 2px solid var(--bar-accent); color: var(--bar-accent); cursor: pointer; border-radius: 50px; }
+/* メニューレイヤー */
+.dynamic-area { flex: 1; position: relative; overflow: hidden; }
+#menu-layer { position: absolute; inset: 0; background: #08080a; display: none; flex-direction: column; z-index: 20; }
+.menu-list { flex: 1; overflow-y: auto; display: grid; grid-template-columns: 1fr 1fr; grid-auto-rows: 36px; gap: 1px; background: #222; }
+.genre-label { grid-column: span 2; background: #1a1a2e; color: var(--bar-accent); padding: 0 10px; line-height: 36px; font-weight: bold; border-bottom: 1px solid #333; }
+.menu-item { background: #08080a; padding: 0 10px; line-height: 36px; cursor: pointer; color: #ccc; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.menu-item:hover { background: #1a1a2e; color: #fff; }
+.back-btn { padding: 12px; color: var(--bar-accent); cursor: pointer; font-weight: bold; border-bottom: 1px solid #222; background: #111; }
