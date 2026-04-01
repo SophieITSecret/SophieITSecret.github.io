@@ -1,14 +1,10 @@
 :root { --bar-bg: #050505; --bar-accent: #f0b56e; --neon-blue: #00d2ff; --talk-blue: #2980b9; --request-green: #27ae60; --bar-text: #eee; }
 * { box-sizing: border-box; }
-
-/* ★ゴシック体へ変更 */
-body { background-color: var(--bar-bg); color: var(--bar-text); margin: 0; font-family: sans-serif; overflow: hidden; display: flex; height: 100vh; }
+body { background-color: var(--bar-bg); color: var(--bar-text); margin: 0; font-family: sans-serif !important; overflow: hidden; display: flex; height: 100vh; }
 
 #left-panel { flex: 5; display: flex; flex-direction: column; border-right: 1px solid #222; }
 #sophie-main { flex: 7; display: flex; justify-content: center; align-items: center; background: #000; overflow: hidden; }
 #sophie-image { height: 95%; width: auto; object-fit: contain; }
-
-/* ★フォント調整 */
 #chat-area { flex: 3; padding: 25px; font-size: 1.1rem; line-height: 1.8; color: #ccc; background: #0a0a0a; border-top: 1px solid #1a1a2e; font-family: sans-serif; }
 
 #right-panel { flex: 4; display: flex; flex-direction: column; background: #0a0a0a; }
@@ -25,11 +21,10 @@ body { background-color: var(--bar-bg); color: var(--bar-text); margin: 0; font-
 #menu-layer { flex: 1; overflow-y: auto; background: #08080a; border: 1px solid #222; display: none; }
 .menu-list { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; }
 
-.genre-label { background: #1a1a2e; color: var(--bar-accent); padding: 10px 15px; font-weight: bold; position: sticky; top: 0; grid-column: 1 / -1; z-index: 5; font-size: 0.9rem; }
+.genre-label { background: #1a1a2e; color: var(--bar-accent); padding: 10px 15px; font-weight: bold; position: sticky; top: 0; grid-column: 1 / -1; z-index: 5; font-size: 0.9rem; font-family: sans-serif; }
 .menu-item { padding: 12px 15px; border-bottom: 1px solid #111; cursor: pointer; color: #bbb; font-size: 0.95rem; font-family: sans-serif; }
 .active-item { background: var(--bar-accent) !important; color: #000 !important; font-weight: bold; }
 
-/* ★お酒の話ボタンの視認性確保 */
 .btn-group-pc { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; background: #111; padding: 5px; }
 .action-btn-pc { padding: 18px; border: 1px solid #444; border-radius: 6px; font-weight: bold; cursor: pointer; color: #fff !important; font-size: 1rem; font-family: sans-serif; }
 .request-btn { background: var(--request-green) !important; }
@@ -37,3 +32,4 @@ body { background-color: var(--bar-bg); color: var(--bar-text); margin: 0; font-
 
 #entry-overlay { position: fixed; inset: 0; background: #000; z-index: 2000; display: flex; justify-content: center; align-items: center; }
 .entry-btn { padding: 25px 60px; font-size: 1.8rem; background: transparent; border: 2px solid var(--bar-accent); color: var(--bar-accent); cursor: pointer; font-family: sans-serif; }
+.back-btn { background: #222; color: var(--bar-accent); border: 1px solid #444; padding: 10px; cursor: pointer; width: 100%; position: sticky; top: 0; z-index: 101; font-family: sans-serif; }
