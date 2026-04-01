@@ -1,40 +1,61 @@
-:root { --bar-bg: #050505; --bar-accent: #f0b56e; --neon-blue: #00d2ff; --talk-blue: #2980b9; --request-green: #27ae60; --bar-text: #eee; }
+:root { 
+    --bar-bg: #000; --bar-accent: #f0b56e; --signal-blue: #a2dff7;
+    --neon-blue: #00d2ff; --request-green: #27ae60; --bar-text: #eee;
+    --bar-border: #1a1a2e; --ui-font: "Hiragino Mincho ProN", serif;
+}
 * { box-sizing: border-box; }
-body { background-color: var(--bar-bg); color: var(--bar-text); margin: 0; font-family: "Hiragino Mincho ProN", serif; overflow: hidden; display: flex; height: 100vh; }
+body { background-color: var(--bar-bg); color: var(--bar-text); margin: 0; overflow: hidden; height: 100vh; display: flex; font-family: var(--ui-font); }
 
-#left-panel { flex: 5; display: flex; flex-direction: column; border-right: 1px solid #222; }
-#sophie-main { flex: 7; display: flex; justify-content: center; align-items: center; background: #000; overflow: hidden; }
-#sophie-image { height: 95%; width: auto; object-fit: contain; }
-#chat-area { flex: 3; padding: 25px; font-size: 1.1rem; line-height: 1.8; color: #aaa; background: #0a0a0a; border-top: 1px solid #1a1a2e; }
+/* 左：ソフィーの巨大ポートレート (96vh) */
+#main-container { flex: 7; position: relative; display: flex; justify-content: center; align-items: center; border-right: 1px solid var(--bar-border); }
+#sophie-image { height: 96vh; width: auto; z-index: 5; object-fit: contain; }
 
-#right-panel { flex: 4; display: flex; flex-direction: column; background: #0a0a0a; }
-.monitor-frame { width: 100%; aspect-ratio: 16/9; background: #000; border-bottom: 2px solid var(--neon-blue); position: relative; }
+/* 右：操作パネル */
+#side-panel { flex: 3; display: flex; flex-direction: column; background: #08080a; z-index: 10; min-width: 320px; }
+
+/* ★シアターモード：6.1の完璧な指定を復元 */
+body.theater-mode #main-container { display: none; }
+body.theater-mode #side-panel { flex: 1; width: 100vw; min-width: 100vw; background: #000; position: relative; display: block; }
+body.theater-mode .monitor-frame { height: 70vh; width: 100vw; position: absolute; top: 0; left: 0; border: none; }
+body.theater-mode .dynamic-area { 
+    position: absolute; top: 70vh; left: 0; 
+    width: 60vw; /* プロデューサーこだわりの60% */
+    height: calc(30vh - 50px); 
+    z-index: 1015; border-top: 1px solid #333; border-right: 1px solid #333; background: #050505; 
+    overflow-y: auto; 
+}
+body.theater-mode .player-ctrl { position: absolute; bottom: 0; left: 0; width: 100vw; background: rgba(0,0,0,0.95); z-index: 1020; padding: 10px 0; border-top: 1px solid #444; }
+#sophie-theater { display: none; position: fixed; bottom: 55px; right: 5%; height: 26vh; z-index: 1030; filter: brightness(0.95); pointer-events: none; }
+body.theater-mode #sophie-theater { display: block; }
+
+/* モニター・コントロール */
+.monitor-frame { width: 100%; aspect-ratio: 16 / 9; background: #000; border-bottom: 2px solid var(--bar-border); }
 #yt-iframe, #monitor-image { width: 100%; height: 100%; border: none; display: none; object-fit: contain; }
-#telop-box { position: absolute; inset: 0; background: rgba(0,0,0,0.85); color: #fff; padding: 20px; font-size: 1.1rem; line-height: 1.6; display: none; overflow-y: auto; z-index: 10; }
+#telop-box { position: absolute; inset: 0; background: rgba(0,0,0,0.8); color: #fff; padding: 20px; font-size: 1.1rem; line-height: 1.6; display: none; overflow-y: auto; z-index: 100; }
 
-/* ★追加：コントローラーのデザイン */
-.console-pc { background: #111; padding: 10px; border-bottom: 1px solid #333; }
-.btn-grid-pc { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
-.c-btn-pc { background: #222; border: 1px solid #444; color: #eee; border-radius: 4px; padding: 12px; font-size: 0.9rem; font-weight: bold; cursor: pointer; }
-.c-btn-pc:hover { background: #333; }
-.auto-active { border-color: var(--request-green) !important; color: var(--request-green) !important; box-shadow: 0 0 5px var(--request-green); }
+.player-ctrl { display: flex; justify-content: center; gap: 8px; padding: 6px; border-bottom: 1px solid #222; }
+.ctrl-btn { background: #111; border: 1px solid #444; color: #aaa; padding: 4px 12px; font-size: 1rem; cursor: pointer; border-radius: 4px; }
+.theater-btn { color: var(--bar-accent); border-color: var(--bar-accent); font-weight: bold; }
+.auto-active { color: var(--request-green) !important; border-color: var(--request-green) !important; }
 
-/* メニューリスト */
-.jukebox-controls { flex: 1; display: flex; flex-direction: column; overflow: hidden; padding: 10px; }
-#menu-layer { flex: 1; overflow-y: auto; background: #08080a; border: 1px solid #222; display: none; }
-.menu-list { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; }
-.single-col .menu-list { grid-template-columns: 1fr; }
+/* ジュークボックス（固定ボタン） */
+.jukebox-container { padding: 6px 10px; border-bottom: 1px solid var(--bar-border); }
+.jukebox-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
+.music-btn { background: #050505; border: 1.5px solid rgba(0, 210, 255, 0.6); color: #fff; padding: 5px 8px; font-size: 1.1rem; font-weight: bold; cursor: pointer; border-radius: 4px; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; box-shadow: inset 0 0 3px var(--neon-blue); }
+.special-btn { grid-column: span 2; border: 1.5px solid #fff; font-weight: bold; cursor: pointer; text-align: center; border-radius: 5px; }
+.signal-btn { background: var(--signal-blue); color: #1a2a3a; padding: 8px; margin-top: 5px; font-size: 1.1rem; }
+.request-btn { background: var(--request-green); color: #fff; padding: 5px; margin-top: 4px; font-size: 1rem; width: 80%; margin-left: 10%; border: none; }
+.talk-btn { background: var(--talk-blue); color: #fff; padding: 5px; margin-top: 4px; font-size: 1rem; width: 80%; margin-left: 10%; border: none; }
 
-.genre-label { background: #1a1a2e; color: var(--bar-accent); padding: 10px 15px; font-weight: bold; position: sticky; top: 0; grid-column: 1 / -1; z-index: 5; }
-.menu-item { padding: 12px 15px; border-bottom: 1px solid #111; cursor: pointer; color: #bbb; font-size: 0.95rem; }
-.menu-item:hover { background: #1a1a2e; color: #fff; }
-.active-item { background: var(--bar-accent) !important; color: #000 !important; font-weight: bold; }
+/* ダイナミックエリア（メニュー） */
+.dynamic-area { flex: 1; position: relative; overflow: hidden; background: #050505; }
+#chat-area { padding: 20px; color: #ccc; font-size: 1.1rem; line-height: 1.7; }
+#menu-layer { position: absolute; inset: 0; background: #08080a; display: none; flex-direction: column; z-index: 20; }
+.menu-list { flex: 1; overflow-y: auto; display: grid; grid-template-columns: 1fr 1fr; grid-auto-rows: 32px; gap: 1px; padding: 2px; }
+.genre-label { grid-column: span 2; background: #1a1a2e; color: var(--bar-accent); padding: 0 10px; font-size: 1.1rem; font-weight: bold; line-height: 32px; border-bottom: 1px solid #333; margin-top: 5px; }
+.menu-item { padding: 0 8px; border-bottom: 1px solid #1a1a1a; cursor: pointer; font-size: 1.25rem; color: #ccc; height: 32px; line-height: 32px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.active-item { background: #1e3a5a !important; color: #fff !important; font-weight: bold; border-left: 5px solid var(--neon-blue); }
+.back-btn { padding: 10px 15px; color: var(--bar-accent); cursor: pointer; font-size: 1.2rem; border-bottom: 1px solid #222; font-weight: bold; background: #111; }
 
-/* 下部ボタン */
-.btn-group-pc { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
-.action-btn-pc { padding: 18px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; color: #fff; font-size: 1rem; }
-.request-btn { background: var(--request-green); }
-.talk-btn { background: var(--talk-blue); }
-
-#entry-overlay { position: fixed; inset: 0; background: #000; z-index: 2000; display: flex; justify-content: center; align-items: center; }
-.entry-btn { padding: 25px 60px; font-size: 1.8rem; background: transparent; border: 2px solid var(--bar-accent); color: var(--bar-accent); cursor: pointer; }
+#entry-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 2000; display: flex; justify-content: center; align-items: center; }
+.entry-btn { padding: 20px 40px; font-size: 1.5rem; background: transparent; border: 2px solid var(--bar-accent); color: var(--bar-accent); cursor: pointer; }
