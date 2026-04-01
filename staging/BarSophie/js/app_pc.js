@@ -2,7 +2,6 @@ import * as media from './media.js';
 import * as nav from './navigation.js';
 
 let isAutoPlay = false, isMusicMode = false, lastTxt = "", pressTimer = null, isPaused = false;
-
 const chat = document.getElementById('chat-area'), tel = document.getElementById('telop-box'), img = document.getElementById('monitor-image'), yt = document.getElementById('yt-iframe'), menuL = document.getElementById('menu-layer'), menuC = document.getElementById('menu-content'), navM = document.getElementById('nav-main-pc');
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -74,7 +73,7 @@ function updateHigh() {
 }
 
 function openMusic() {
-    nav.updateNav("art"); menuL.style.display = 'block'; navM.style.display = 'none';
+    nav.updateNav("art"); menuL.style.display = 'block'; 
     let h = '<div class="genre-label">アーティスト</div>';
     ['E','F','J','W','I','S'].forEach(f => {
         const arts = [...new Set(nav.jData.filter(d => d.f === f).map(d => d.a))];
@@ -94,8 +93,8 @@ function renderSongs(a) {
 }
 
 function openTalk() {
-    nav.updateNav("g"); menuL.style.display = 'block'; navM.style.display = 'none';
-    let h = '<div class="genre-label">お酒のジャンル</div>';
+    nav.updateNav("g"); menuL.style.display = 'block'; 
+    let h = '<div class="genre-label">ジャンル</div>';
     [...new Set(nav.tData.map(d => d.g))].forEach(g => { h += `<div class="menu-item g-click" data-g="${g}">📁 ${g}</div>`; });
     render(h, (e) => { const g = e.target.closest('.g-click')?.dataset.g; if(g) { nav.updateNav("th", g); renderThemes(g); } });
 }
@@ -121,7 +120,7 @@ function handleBack() {
     if (nav.state === "st") renderThemes(nav.curG);
     else if (nav.state === "th") openTalk();
     else if (nav.state === "tit") openMusic();
-    else { menuL.style.display = 'none'; navM.style.display = 'grid'; nav.updateNav("none"); }
+    else { menuL.style.display = 'none'; nav.updateNav("none"); }
 }
 
 function checkYT() { if (isAutoPlay && isMusicMode) yt.contentWindow.postMessage('{"event":"command","func":"getPlayerState","args":[]}', '*'); }
