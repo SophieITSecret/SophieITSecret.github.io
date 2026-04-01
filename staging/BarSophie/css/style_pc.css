@@ -1,7 +1,10 @@
 :root { 
     --bar-bg: #000; 
     --bar-accent: #f0b56e; 
-    --neon-blue: #00d2ff; 
+    --signal-blue: #a2dff7;
+    --neon-blue: #00d2ff;
+    --request-green: #27ae60;
+    --talk-blue: #2980b9;
     --bar-border: #1a1a2e;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -11,46 +14,52 @@ body {
     font-family: "Hiragino Kaku Gothic ProN", sans-serif;
 }
 
-/* 7:3 の比率を厳守 */
+/* 7:3 黄金比 */
 #main-container { flex: 7; position: relative; display: flex; justify-content: center; align-items: flex-start; border-right: 1px solid var(--bar-border); overflow: hidden; }
 #sophie-image { height: 100%; width: auto; object-fit: contain; object-position: top; }
 
-#side-panel { flex: 3; min-width: 320px; display: flex; flex-direction: column; background: #08080a; }
+#side-panel { flex: 3; min-width: 320px; display: flex; flex-direction: column; background: #08080a; position: relative; }
 
-/* シアターモード：V6.1の回り込みを再現 */
-body.theater-mode { flex-direction: column; }
+/* シアターモード設定 */
 body.theater-mode #main-container { display: none; }
-body.theater-mode #side-panel { flex: 1; width: 100vw; }
-body.theater-mode .monitor-frame { height: 70vh; border: none; }
-body.theater-mode .jukebox-container { position: absolute; top: 70vh; right: 0; width: 40vw; height: calc(30vh - 60px); overflow-y: auto; background: #050505; border-left: 1px solid #333; }
-body.theater-mode .dynamic-area { position: absolute; top: 70vh; left: 0; width: 60vw; height: calc(30vh - 60px); }
-body.theater-mode .player-ctrl { position: fixed; bottom: 0; width: 100vw; z-index: 100; }
+body.theater-mode #side-panel { flex: 1; width: 100vw; background: #000; }
+body.theater-mode .monitor-frame { height: 75vh; border-bottom: 2px solid #333; }
+body.theater-mode .jukebox-container { display: none; } /* 10個のボタンを隠す */
+body.theater-mode .dynamic-area { position: absolute; top: 75vh; left: 0; width: 100vw; height: calc(25vh - 60px); }
+body.theater-mode .player-ctrl { position: fixed; bottom: 0; width: 100vw; z-index: 100; border-top: 1px solid #444; }
 
-/* パーツ：モニター */
+/* シアター用ソフィー（右下） */
+#sophie-theater { display: none; position: fixed; bottom: 65px; right: 5%; height: 28vh; z-index: 1030; filter: brightness(0.9); pointer-events: none; }
+body.theater-mode #sophie-theater { display: block; }
+
 .monitor-frame { width: 100%; aspect-ratio: 16 / 9; border-bottom: 2px solid var(--neon-blue); background: #000; }
 #yt-iframe { width: 100%; height: 100%; border: none; }
 
-/* パーツ：操作盤 */
-.player-ctrl { display: flex; justify-content: center; gap: 8px; padding: 8px; background: #111; border-bottom: 1px solid #222; }
-.ctrl-btn { background: #222; border: 1px solid #444; color: #aaa; padding: 6px 12px; cursor: pointer; border-radius: 4px; }
+.player-ctrl { display: flex; justify-content: center; gap: 8px; padding: 10px; background: #111; border-bottom: 1px solid #222; }
+.ctrl-btn { background: #222; border: 1px solid #444; color: #aaa; padding: 6px 14px; font-size: 1.1rem; cursor: pointer; border-radius: 4px; }
 .theater-btn { color: var(--bar-accent); border-color: var(--bar-accent); font-weight: bold; }
 
-/* 10個のボタン：密度の復元 */
-.jukebox-container { padding: 8px; border-bottom: 1px solid var(--bar-border); }
-.jukebox-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
+/* 10個のボタン：フォント調整 */
+.jukebox-container { padding: 10px; border-bottom: 1px solid var(--bar-border); }
+.jukebox-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-bottom: 8px; }
 .music-btn { 
-    background: #050505; border: 1.5px solid rgba(0, 210, 255, 0.4); color: #fff; 
-    padding: 6px; font-size: 0.95rem; font-weight: bold; cursor: pointer; border-radius: 4px;
-    text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    background: #050505; border: 1.5px solid rgba(0, 210, 255, 0.5); color: #ffffff; /* 純白 */
+    padding: 10px 8px; font-size: 1.3rem; /* 2サイズ拡大 */ font-weight: bold; cursor: pointer; border-radius: 4px;
+    text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; transition: 0.2s;
 }
-.special-btn { width: 100%; padding: 10px; margin-top: 6px; font-weight: bold; border-radius: 4px; cursor: pointer; border: none; }
-.request-btn { background: #27ae60; color: #fff; }
+.music-btn:hover { background: #1a1a1a; border-color: var(--neon-blue); }
 
-/* メニューレイヤー */
+/* 特別ボタン群 */
+.special-btn { width: 100%; padding: 12px; font-weight: bold; border-radius: 5px; cursor: pointer; border: 1.5px solid #fff; margin-bottom: 5px; font-size: 1.1rem; }
+.signal-btn { background: var(--signal-blue); color: #1a2a3a; border-color: var(--neon-blue); margin-top: 5px; }
+.main-action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.request-btn { background: var(--request-green); color: #fff; border: none; }
+.talk-btn { background: var(--talk-blue); color: #fff; border: none; }
+
+/* メニューエリア */
 .dynamic-area { flex: 1; position: relative; overflow: hidden; }
 #menu-layer { position: absolute; inset: 0; background: #08080a; display: none; flex-direction: column; z-index: 20; }
-.menu-list { flex: 1; overflow-y: auto; display: grid; grid-template-columns: 1fr 1fr; grid-auto-rows: 36px; gap: 1px; background: #222; }
-.genre-label { grid-column: span 2; background: #1a1a2e; color: var(--bar-accent); padding: 0 10px; line-height: 36px; font-weight: bold; border-bottom: 1px solid #333; }
-.menu-item { background: #08080a; padding: 0 10px; line-height: 36px; cursor: pointer; color: #ccc; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.menu-item:hover { background: #1a1a2e; color: #fff; }
-.back-btn { padding: 12px; color: var(--bar-accent); cursor: pointer; font-weight: bold; border-bottom: 1px solid #222; background: #111; }
+.menu-list { flex: 1; overflow-y: auto; display: grid; grid-template-columns: 1fr 1fr; grid-auto-rows: 40px; gap: 1px; background: #222; }
+.genre-label { grid-column: span 2; background: #1a1a2e; color: var(--bar-accent); padding: 0 10px; line-height: 40px; font-weight: bold; }
+.menu-item { background: #08080a; padding: 0 12px; line-height: 40px; cursor: pointer; color: #eee; font-size: 1.2rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.back-btn { padding: 12px; color: var(--bar-accent); cursor: pointer; font-weight: bold; background: #111; border-bottom: 1px solid #222; }
