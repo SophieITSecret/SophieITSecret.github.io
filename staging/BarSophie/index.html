@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>Bar Sophie - Modular PC v13.0</title>
+    <title>Bar Sophie - Modular PC v13.1</title>
     <link rel="stylesheet" href="css/style_pc.css">
 </head>
 <body>
@@ -19,14 +19,23 @@
             <img id="monitor-image" src="" alt="Sake Image">
             <div id="telop-box"></div>
         </div>
+
+        <div class="console-pc">
+            <div class="btn-grid-pc">
+                <button class="c-btn-pc" id="ctrl-play">▶ 再生/読上</button>
+                <button class="c-btn-pc" id="ctrl-pause">⏸ 停止/再開</button>
+                <button class="c-btn-pc" id="ctrl-back" style="color:var(--bar-accent);">← 戻る</button>
+                <button class="c-btn-pc" id="btn-next">⏭ 次へ</button>
+            </div>
+        </div>
+
         <div class="jukebox-controls">
             <div id="menu-layer">
-                <button class="back-btn" onclick="handleMasterBack()">← 戻る</button>
                 <div class="menu-list" id="menu-content"></div>
             </div>
-            <div class="btn-group">
-                <button class="action-btn request-btn" onclick="openMusicMenu()">🎵 選曲リクエスト</button>
-                <button class="action-btn talk-btn" onclick="openTalkGenres()">🥃 お酒の話題</button>
+            <div class="btn-group-pc" id="nav-main-pc">
+                <button class="action-btn-pc request-btn" id="btn-music">🎵 音楽リクエスト</button>
+                <button class="action-btn-pc talk-btn" id="btn-talk">🥃 お酒の物語 (140本)</button>
             </div>
         </div>
     </div>
