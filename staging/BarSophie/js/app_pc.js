@@ -73,19 +73,16 @@ function initUI() {
     document.getElementById('btn-open-talk').onclick = openTalkMenu;
     document.getElementById('ctrl-stop-speech').onclick = stopTalk;
 
-    // 基本コントロール
     document.getElementById('ctrl-play').onclick = () => iframe.contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*');
     document.getElementById('ctrl-pause').onclick = () => iframe.contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*');
     document.getElementById('ctrl-reset').onclick = () => { if(currentUrl) playFix(currentUrl); };
 }
 
-// --- ナビゲーションロジックの整理 ---
-function closeMenu() { menuLayer.style.display = 'none'; }
-
+// --- メニュー表示の論理化（2列グリッドを壊さない分離） ---
 function openMusicMenu() {
     menuLayer.style.display = 'flex';
-    menuBack.innerText = "← ソフィーと話す";
-    menuBack.onclick = closeMenu;
+    menuBack.innerText = "← ソフィーと話す (閉じる)";
+    menuBack.onclick = () => menuLayer.style.display = 'none';
     
     const genres = { 'E':'演歌', 'F':'フォーク', 'J':'歌謡曲', 'W':'洋楽', 'I':'インスト', 'S':'旅情・映像' };
     menuContent.innerHTML = "";
@@ -103,7 +100,7 @@ function openMusicMenu() {
 }
 
 function renderSongTitles(artist) {
-    menuBack.innerText = "← 歌手一覧へ";
+    menuBack.innerText = "← 歌手一覧へ戻る";
     menuBack.onclick = openMusicMenu;
     menuContent.innerHTML = `<div class="genre-label">${artist}</div>`;
     masterData.filter(d => d.artist === artist).forEach(d => {
@@ -113,11 +110,10 @@ function renderSongTitles(artist) {
     });
 }
 
-// --- お酒の物語演出 ---
 function openTalkMenu() {
     menuLayer.style.display = 'flex';
-    menuBack.innerText = "← ソフィーと話す";
-    menuBack.onclick = closeMenu;
+    menuBack.innerText = "← ソフィーと話す (閉じる)";
+    menuBack.onclick = () => menuLayer.style.display = 'none';
     
     menuContent.innerHTML = '<div class="genre-label">お酒のジャンル</div>';
     const genres = [...new Set(talkData.map(d => d.genre))];
@@ -139,21 +135,11 @@ function openTalkMenu() {
 
 function startTalk(talkObj) {
     stopTalk();
-    // 1. 背景BGMを「深夜ジャズ2」にする
-    // ※深夜ジャズ2のID: vh4TWlwYfLc (V6.1ソースより)
-    playFix('vh4TWlwYfLc', true); 
-    
-    // 2. モニターに仮のお酒画像を出す
-    monitorImg.src = "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?q=80&w=800"; // 仮のWhisky画像
-    
-    // 3. テキストを表示
+    playFix('vh4TWlwYfLc', true); // 深夜ジャズ2をバックに流す
+    monitorImg.src = "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?q=80&w=800";
     speechArea.innerText = talkObj.body;
-    
-    // 4. 読み上げ開始
     const uttr = new SpeechSynthesisUtterance(talkObj.body);
-    uttr.lang = 'ja-JP';
-    uttr.rate = 1.0;
-    synth.speak(uttr);
+    uttr.lang = 'ja-JP'; synth.speak(uttr);
 }
 
 function stopTalk() {
