@@ -2,43 +2,41 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { background-color: var(--bar-bg); color: var(--bar-text); font-family: sans-serif !important; overflow: hidden; display: flex; height: 100vh; width: 100vw; }
 
-/* 左右分割 */
-#left-panel { width: 55%; height: 100vh; display: flex; flex-direction: column; border-right: 1px solid #333; background: #000; }
-#right-panel { width: 45%; height: 100vh; display: flex; flex-direction: column; background: #050505; }
+/* 左パネル：ソフィーの定位置 */
+#left-panel { width: 58%; height: 100vh; display: flex; flex-direction: column; border-right: 1px solid #222; background: #000; }
+#sophie-main { flex: 7; display: flex; justify-content: center; align-items: center; padding: 10px; overflow: hidden; }
+#sophie-image { height: 98%; width: auto; object-fit: contain; }
+#chat-area { flex: 3; padding: 25px; font-size: 1.15rem; line-height: 1.8; color: #ccc; background: rgba(10,10,10,0.95); border-top: 1px solid #1a1a2e; }
 
-/* 左側コンポーネント */
-#sophie-main { flex: 7; display: flex; justify-content: center; align-items: center; overflow: hidden; padding: 20px; }
-#sophie-image { height: 100%; width: auto; object-fit: contain; }
-#chat-area { flex: 3; padding: 25px; font-size: 1.15rem; line-height: 1.8; color: #ccc; background: #0a0a0a; border-top: 1px solid #1a1a2e; }
-
-/* 右側コンポーネント */
-.monitor-frame { width: 100%; aspect-ratio: 16/9; background: #000; border-bottom: 2px solid var(--neon-blue); position: relative; flex-shrink: 0; }
+/* 右パネル：v6.1の操作盤再現 */
+#right-panel { width: 42%; height: 100vh; display: flex; flex-direction: column; background: #0a0a0a; }
+.monitor-frame { width: 100%; aspect-ratio: 16/9; background: #000; border-bottom: 2px solid var(--neon-blue); position: relative; }
 #yt-iframe, #monitor-image { width: 100%; height: 100%; border: none; display: none; object-fit: contain; }
-#telop-box { position: absolute; inset: 0; background: rgba(0,0,0,0.85); color: #fff; padding: 20px; font-size: 1.1rem; line-height: 1.6; display: none; overflow-y: auto; z-index: 10; }
+#telop-box { position: absolute; inset: 0; background: rgba(0,0,0,0.85); color: #fff; padding: 20px; font-size: 1.1rem; line-height: 1.6; display: none; overflow-y: auto; z-index: 100; }
 
-/* コントローラー */
-.console-pc { background: #111; padding: 12px; border-bottom: 1px solid #333; flex-shrink: 0; }
+/* 4大コントローラー：v6.1風の質感 */
+.console-pc { background: #151515; padding: 12px; border-bottom: 1px solid #333; }
 .btn-grid-pc { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
-.c-btn-pc { background: #222; border: 1px solid #444; color: #eee; border-radius: 4px; padding: 12px 5px; font-size: 0.85rem; font-weight: bold; cursor: pointer; text-align: center; }
-.c-btn-pc:hover { background: #333; }
+.c-btn-pc { background: #2a2a2a; border: 1px solid #444; color: #eee; border-radius: 4px; padding: 12px 0; font-size: 0.85rem; font-weight: bold; cursor: pointer; text-align: center; box-shadow: inset 0 1px 0 rgba(255,255,255,0.1), 0 2px 4px rgba(0,0,0,0.5); }
+.c-btn-pc:active { transform: translateY(1px); box-shadow: none; }
 .auto-active { border-color: var(--request-green) !important; color: var(--request-green) !important; box-shadow: 0 0 10px var(--request-green); }
 
-/* リスト表示 */
-.jukebox-controls { flex: 1; display: flex; flex-direction: column; overflow: hidden; padding: 15px; min-height: 0; }
+/* リスト表示：v6.1伝説の2列グリッド */
+.jukebox-controls { flex: 1; display: flex; flex-direction: column; overflow: hidden; padding: 10px; }
 #menu-layer { flex: 1; overflow-y: auto; background: #08080a; border: 1px solid #222; display: none; margin-bottom: 10px; }
-.menu-list { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; }
+.menu-list { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: #111; }
 
-.genre-label { background: #1a1a2e; color: var(--bar-accent); padding: 10px 15px; font-weight: bold; position: sticky; top: 0; grid-column: 1 / -1; z-index: 5; font-size: 0.9rem; }
-.menu-item { padding: 12px 15px; border-bottom: 1px solid #111; cursor: pointer; color: #bbb; font-size: 0.95rem; }
+.genre-label { background: #1a1a2e; color: var(--bar-accent); padding: 10px 15px; font-weight: bold; position: sticky; top: 0; grid-column: 1 / -1; z-index: 10; font-size: 0.9rem; border-bottom: 1px solid #333; }
+.menu-item { background: #0a0a0a; padding: 12px 10px; cursor: pointer; color: #bbb; font-size: 0.9rem; border: 0.5px solid #111; display: flex; align-items: center; }
 .menu-item:hover { background: #1a1a2e; color: #fff; }
 .active-item { background: var(--bar-accent) !important; color: #000 !important; font-weight: bold; }
 
-/* 下部メインボタン */
-.btn-group-pc { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 5px 0; flex-shrink: 0; }
-.action-btn-pc { padding: 20px; border: 1px solid #444; border-radius: 8px; font-weight: bold; cursor: pointer; color: #fff !important; font-size: 1.05rem; }
+/* 下部メインボタン：伝説の色彩 */
+.btn-group-pc { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 5px; }
+.action-btn-pc { padding: 20px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; color: #fff !important; font-size: 1.1rem; box-shadow: 0 4px #000; transition: 0.1s; }
+.action-btn-pc:active { transform: translateY(2px); box-shadow: 0 2px #000; }
 .request-btn { background: var(--request-green) !important; }
 .talk-btn { background: var(--talk-blue) !important; }
 
-/* 入口 */
 #entry-overlay { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; justify-content: center; align-items: center; }
-.entry-btn { padding: 25px 60px; font-size: 1.8rem; background: transparent; border: 2px solid var(--bar-accent); color: var(--bar-accent); cursor: pointer; border-radius: 50px; }
+.entry-btn { padding: 25px 60px; font-size: 1.8rem; background: transparent; border: 2px solid var(--bar-accent); color: var(--bar-accent); cursor: pointer; border-radius: 50px; font-weight: bold; }
