@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>Bar Sophie - Grand Unified v14.0</title>
+    <title>Bar Sophie - Grand Unified v14.1 Custom</title>
     <link rel="stylesheet" href="css/style_pc.css">
 </head>
 <body class="mode-init">
@@ -14,7 +14,9 @@
         <div id="sophie-main">
             <img id="sophie-image" src="./sophie_shake.png" alt="Sophie">
         </div>
-        <div id="chat-area">まきむら様、今夜はどのようなお時間になさいますか？</div>
+        <div id="chat-area-container">
+            <div id="chat-area">まきむら様、今夜はどのようなお時間になさいますか？</div>
+        </div>
     </div>
     
     <div id="right-panel">
@@ -25,11 +27,31 @@
         </div>
 
         <div class="console-pc">
-            <div class="btn-grid-pc">
-                <button class="c-btn-pc" id="ctrl-play">▶ 再生/読上</button>
-                <button class="c-btn-pc" id="ctrl-pause">⏸ 停止/再開</button>
-                <button class="c-btn-pc" id="ctrl-back">← 戻る</button>
-                <button class="c-btn-pc" id="btn-next">⏭ 次へ</button>
+            <div class="control-row">
+                <button class="c-btn-pc theater-btn" id="ctrl-theater">🎭 THEATER</button>
+                <div class="transport-btns">
+                    <button class="c-btn-pc" id="ctrl-back">⏮</button>
+                    <button class="c-btn-pc" id="ctrl-play">▶</button>
+                    <button class="c-btn-pc" id="ctrl-pause">⏸</button>
+                    <button class="c-btn-pc" id="btn-next">⏭</button>
+                </div>
+            </div>
+
+            <button class="signal-song-btn" id="btn-signal-song">
+                <span class="symbol">💎</span> 看板ソング『みずいろのシグナル』
+            </button>
+
+            <div class="genre-grid-pc">
+                <button class="g-select-btn" data-flag="E">演歌</button>
+                <button class="g-select-btn" data-flag="F">フォーク</button>
+                <button class="g-select-btn" data-flag="J">歌謡曲</button>
+                <button class="g-select-btn" data-flag="W">洋楽</button>
+                <button class="g-select-btn" data-flag="I">インスト</button>
+                <button class="g-select-btn" data-flag="S">旅情・映像</button>
+                <button class="g-select-btn" data-flag="X">J-POP</button>
+                <button class="g-select-btn" data-flag="Z">ジャズ</button>
+                <button class="g-select-btn" data-flag="A">アニメ</button>
+                <button class="g-select-btn" data-flag="K">クラシック</button>
             </div>
         </div>
 
@@ -38,8 +60,8 @@
                 <div class="menu-list" id="menu-content"></div>
             </div>
             <div class="btn-group-pc" id="nav-main-pc">
-                <button class="action-btn-pc request-btn" id="btn-music">🎵 選曲リクエスト</button>
-                <button class="action-btn-pc talk-btn" id="btn-talk">🥃 お酒の物語 (140本)</button>
+                <button class="action-btn-pc request-btn" id="btn-music">🎵 全アーティスト一覧</button>
+                <button class="action-btn-pc talk-btn" id="btn-talk">🥃 お酒の物語を読む</button>
             </div>
         </div>
     </div>
