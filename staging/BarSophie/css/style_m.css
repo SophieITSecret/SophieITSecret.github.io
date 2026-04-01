@@ -1,0 +1,43 @@
+:root { --bg: #000; --accent: #f0b56e; --blue: #00d2ff; --green: #27ae60; --talk: #2980b9; --text: #eee; }
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: sans-serif !important; height: 100dvh; width: 100vw; overflow: hidden; display: flex; flex-direction: column; }
+
+/* 入口 */
+#entry-screen { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+#entry-sophie { height: 45dvh !important; max-width: 80vw; object-fit: contain; margin-bottom: 30px; }
+.btn-enter { padding: 15px 45px; font-size: 1.2rem; background: #111; border: 2px solid var(--accent); color: var(--accent); border-radius: 40px; font-weight: bold; font-family: sans-serif; }
+
+/* ラウンジ */
+#chat-mode { display: none; flex-direction: column; height: 100%; background: #000; }
+.portrait { flex: 1; display: flex; justify-content: center; align-items: center; padding: 20px; }
+.portrait img { height: 50dvh; width: auto; object-fit: contain; }
+.chat-area { height: 140px; padding: 20px; background: #080808; border-top: 1px solid #1a1a2e; color: #ccc; font-size: 1.1rem; text-align: center; font-family: sans-serif; }
+.btn-to-bar { padding: 15px; background: #111; border: 1px solid var(--accent); color: var(--accent); font-weight: bold; margin: 10px 20px; border-radius: 8px; font-family: sans-serif; }
+
+/* メインUI */
+#main-ui { display: none; flex: 1; flex-direction: column; height: 100%; overflow: hidden; }
+@media (orientation: landscape) { #main-ui { flex-direction: row !important; } .l-side { flex: 1.4 !important; border-right: 1px solid #333; } .r-side { flex: 1 !important; } }
+
+.monitor { width: 100%; aspect-ratio: 16/9; background: #000; border-bottom: 2px solid var(--blue); position: relative; flex-shrink: 0; }
+#yt-iframe, #monitor-img { width: 100%; height: 100%; border: none; display: none; object-fit: contain; }
+#telop { position: absolute; inset: 0; background: rgba(0,0,0,0.75); padding: 15px; font-size: 1.05rem; display: none; z-index: 1000; color: #fff; overflow-y: auto; line-height: 1.6; font-family: sans-serif; }
+
+.console { height: 75px; background: #111; display: flex; border-bottom: 1px solid #333; flex-shrink: 0; }
+.btn-grid { flex: 1; display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px; padding: 4px; }
+.sophie-box { width: 75px; background: #000; display: flex; justify-content: center; align-items: center; border-left: 1px solid #222; }
+.sophie-box img { height: 85%; width: auto; cursor: pointer; }
+.c-btn { background: #222; border: 1px solid #444; color: #eee; border-radius: 4px; font-size: 0.85rem; font-weight: bold; display: flex; align-items: center; justify-content: center; user-select: none; font-family: sans-serif; }
+.auto-active { border-color: var(--green) !important; color: var(--green) !important; }
+
+.r-side { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+.scroll-area { flex: 1; overflow-y: scroll; background: #08080a; -webkit-overflow-scrolling: touch; }
+#nav-main { padding: 12px; display: block; }
+
+/* ★ボタンの視認性：!importantで強制指定 */
+.act-btn { width: 100%; height: 48px; margin-bottom: 10px; border-radius: 8px; border: 1px solid #444; font-weight: bold; color: #fff !important; font-size: 1.1rem; display: block !important; font-family: sans-serif; }
+
+.label { background: #1a1a2e; color: var(--accent); padding: 0 12px; font-size: 0.8rem; font-weight: bold; position: sticky; top: 0; z-index: 100; border-bottom: 1px solid #333; height: 28px; line-height: 28px; font-family: sans-serif; }
+.item { height: 38px !important; line-height: 38px !important; padding: 0 15px; border-bottom: 1px solid #222; color: #ccc; font-size: 0.95rem; display: block; width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; font-family: sans-serif; }
+.active-item { background: var(--accent) !important; color: #000 !important; font-weight: bold; }
+
+.ver { position: fixed; bottom: 4px; right: 8px; font-size: 9px; color: #444; pointer-events: none; z-index: 10000; }
