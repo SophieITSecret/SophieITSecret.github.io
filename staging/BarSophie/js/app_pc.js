@@ -78,7 +78,7 @@ function initUI() {
     document.getElementById('ctrl-reset').onclick = () => { if(currentUrl) playFix(currentUrl); };
 }
 
-// --- メニュー表示の論理化（2列グリッドを壊さない分離） ---
+// --- ナビゲーション整理：2列グリッドを保護 ---
 function openMusicMenu() {
     menuLayer.style.display = 'flex';
     menuBack.innerText = "← ソフィーと話す (閉じる)";
@@ -135,11 +135,12 @@ function openTalkMenu() {
 
 function startTalk(talkObj) {
     stopTalk();
-    playFix('vh4TWlwYfLc', true); // 深夜ジャズ2をバックに流す
+    playFix('vh4TWlwYfLc', true); // 深夜ジャズ2をBGMに
     monitorImg.src = "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?q=80&w=800";
     speechArea.innerText = talkObj.body;
     const uttr = new SpeechSynthesisUtterance(talkObj.body);
-    uttr.lang = 'ja-JP'; synth.speak(uttr);
+    uttr.lang = 'ja-JP';
+    synth.speak(uttr);
 }
 
 function stopTalk() {
