@@ -1,37 +1,85 @@
-:root { --bar-bg: #050505; --bar-accent: #f0b56e; --neon-blue: #00d2ff; --talk-blue: #2980b9; --request-green: #27ae60; --bar-text: #eee; }
+:root { 
+    --bar-bg: #050505; 
+    --bar-accent: #f0b56e; 
+    --neon-blue: #00d2ff; 
+    --talk-blue: #2980b9; 
+    --request-green: #27ae60; 
+    --bar-text: #eee; 
+}
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body { background-color: var(--bar-bg); color: var(--bar-text); font-family: sans-serif !important; overflow: hidden; display: flex; height: 100vh; width: 100vw; }
+body { 
+    background-color: var(--bar-bg); 
+    color: var(--bar-text); 
+    font-family: "Hiragino Kaku Gothic ProN", sans-serif; 
+    overflow: hidden; 
+    display: flex; 
+    height: 100vh; 
+    width: 100vw; 
+}
 
+/* パネル構成 */
 #left-panel { width: 60%; height: 100vh; display: flex; flex-direction: column; border-right: 1px solid #222; }
 #sophie-main { flex: 7; display: flex; justify-content: center; align-items: center; background: #000; overflow: hidden; }
-#sophie-image { height: 98%; width: auto; object-fit: contain; }
-#chat-area { flex: 3; padding: 20px; font-size: 1.1rem; line-height: 1.7; color: #ccc; background: #080808; border-top: 1px solid #1a1a2e; }
+#sophie-image { height: 95vh; width: auto; object-fit: contain; }
+#chat-area { 
+    flex: 3; padding: 25px; font-size: 1.2rem; line-height: 1.8; color: #fff; 
+    background: linear-gradient(to bottom, #080808, #000); 
+    border-top: 2px solid #1a1a2e; 
+}
 
 #right-panel { width: 40%; height: 100vh; display: flex; flex-direction: column; background: #0a0a0a; }
+
+/* モニター */
 .monitor-frame { width: 100%; aspect-ratio: 16/9; background: #000; border-bottom: 2px solid var(--neon-blue); position: relative; }
-#yt-iframe, #monitor-image { width: 100%; height: 100%; border: none; display: none; object-fit: contain; }
-#telop-box { position: absolute; inset: 0; background: rgba(0,0,0,0.8); color: #fff; padding: 15px; font-size: 1.05rem; display: none; overflow-y: auto; z-index: 10; }
+#yt-iframe, #monitor-image { width: 100%; height: 100%; border: none; display: none; object-fit: cover; }
+#telop-box { 
+    position: absolute; inset: 0; background: rgba(0,0,0,0.85); color: #fff; 
+    padding: 20px; font-size: 1.1rem; display: none; overflow-y: auto; z-index: 10; 
+    line-height: 1.6; border: 1px solid var(--neon-blue);
+}
 
-.console-pc { background: #111; padding: 8px; border-bottom: 1px solid #333; }
-.btn-grid-pc { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
-.c-btn-pc { background: #222; border: 1px solid #444; color: #eee; border-radius: 3px; padding: 10px 0; font-size: 0.8rem; font-weight: bold; cursor: pointer; }
-.auto-active { border-color: var(--request-green) !important; color: var(--request-green) !important; }
+/* 操作盤 */
+.console-pc { background: #111; padding: 10px; border-bottom: 1px solid #333; }
+.btn-grid-pc { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.c-btn-pc { 
+    background: #222; border: 1px solid #444; color: #eee; border-radius: 4px; 
+    padding: 12px 0; font-size: 0.85rem; font-weight: bold; cursor: pointer; transition: 0.2s;
+}
+.c-btn-pc:hover { background: #333; border-color: var(--bar-accent); }
+.auto-active { border-color: var(--request-green) !important; color: var(--request-green) !important; box-shadow: 0 0 10px var(--request-green); }
 
-/* 伝説の2列グリッド再現 */
-.jukebox-controls { flex: 1; display: flex; flex-direction: column; overflow: hidden; padding: 10px; min-height: 0; }
-#menu-layer { flex: 1; overflow-y: auto; background: #08080a; border: 1px solid #222; display: none; margin-bottom: 5px; }
+/* 2列グリッド・メニュー */
+.jukebox-controls { flex: 1; display: flex; flex-direction: column; overflow: hidden; padding: 10px; }
+#menu-layer { flex: 1; overflow-y: auto; background: #050505; border: 1px solid #222; display: none; margin-bottom: 10px; }
 .menu-list { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: #222; }
 
-.genre-label { background: #1a1a2e; color: var(--bar-accent); padding: 8px 12px; font-weight: bold; position: sticky; top: 0; grid-column: 1 / -1; z-index: 5; font-size: 0.85rem; }
-.menu-item { background: #08080a; padding: 10px; cursor: pointer; color: #bbb; font-size: 0.85rem; border: 0.1px solid #111; display: flex; align-items: center; }
+.genre-label { 
+    background: #1a1a2e; color: var(--bar-accent); padding: 10px; 
+    font-weight: bold; position: sticky; top: 0; grid-column: 1 / -1; z-index: 5; 
+}
+.menu-item { 
+    background: #08080a; padding: 12px 10px; cursor: pointer; color: #ccc; 
+    font-size: 0.9rem; border: none; display: flex; align-items: center; 
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
 .menu-item:hover { background: #1a1a2e; color: #fff; }
-.active-item { background: var(--bar-accent) !important; color: #000 !important; font-weight: bold; }
+.active-item { background: #1e3a5a !important; color: var(--neon-blue) !important; font-weight: bold; border-left: 4px solid var(--neon-blue) !important; }
 
-/* メインボタン：v6.1カラー */
-.btn-group-pc { display: grid; grid-template-columns: 1fr; gap: 8px; padding-top: 5px; }
-.action-btn-pc { padding: 15px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; color: #fff !important; font-size: 1rem; width: 100%; }
-.request-btn { background: var(--request-green) !important; }
-.talk-btn { background: var(--talk-blue) !important; }
+/* メインボタン */
+.btn-group-pc { display: grid; grid-template-columns: 1fr; gap: 10px; }
+.action-btn-pc { 
+    padding: 18px; border: none; border-radius: 6px; font-weight: bold; 
+    cursor: pointer; color: #fff; font-size: 1.1rem; transition: 0.3s;
+}
+.request-btn { background: var(--request-green); box-shadow: inset 0 0 15px rgba(0,0,0,0.3); }
+.talk-btn { background: var(--talk-blue); box-shadow: inset 0 0 15px rgba(0,0,0,0.3); }
+.request-btn:hover, .talk-btn:hover { filter: brightness(1.2); transform: translateY(-2px); }
 
+/* オーバーレイ */
 #entry-overlay { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; justify-content: center; align-items: center; }
-.entry-btn { padding: 20px 50px; font-size: 1.5rem; background: transparent; border: 2px solid var(--bar-accent); color: var(--bar-accent); cursor: pointer; border-radius: 40px; }
+.entry-btn { 
+    padding: 25px 60px; font-size: 1.8rem; background: transparent; 
+    border: 2px solid var(--bar-accent); color: var(--bar-accent); cursor: pointer; 
+    border-radius: 50px; transition: 0.5s;
+}
+.entry-btn:hover { background: var(--bar-accent); color: #000; }
