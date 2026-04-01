@@ -1,127 +1,271 @@
 import * as media from './media.js';
 import * as nav from './navigation.js';
 
-let isAutoPlay = false, isMusicMode = false, lastTxt = "", pressTimer = null, isPaused = false;
-const chat = document.getElementById('chat-area'), tel = document.getElementById('telop-box'), img = document.getElementById('monitor-image'), yt = document.getElementById('yt-iframe'), menuL = document.getElementById('menu-layer'), menuC = document.getElementById('menu-content'), navM = document.getElementById('nav-main-pc');
+let isAutoPlay = false;
+let isMusicMode = false;
+let lastText = "";
+let pressTimer = null;
+let isPaused = false;
+
+// DOM要素のキャッシュ
+const chat = document.getElementById('chat-area');
+const telop = document.getElementById('telop-box');
+const monitorImg = document.getElementById('monitor-image');
+const monitorYt = document.getElementById('yt-iframe');
+const menuLayer = document.getElementById('menu-layer');
+const menuContent = document.getElementById('menu-content');
+const navMain = document.getElementById('nav-main-pc');
+const btnNext = document.getElementById('btn-next');
 
 document.addEventListener('DOMContentLoaded', async () => {
     await nav.loadAllData();
-    setup();
-    setInterval(checkYT, 1000);
+    initEventListeners();
+    // YouTube終了検知の定期チェック
+    setInterval(checkYoutubeState, 1000);
 });
 
-function setup() {
+function initEventListeners() {
+    // 入店
     document.getElementById('btn-entry-pc').onclick = () => {
-        document.getElementById('entry-overlay').style.display = 'none';
-        speak("まきむら様、お帰りなさいませ。");
+        document.getElementById('entry-overlay').style.opacity = '0';
+        setTimeout(() => document.getElementById('entry-overlay').style.display = 'none', 500);
+        performSpeak("まきむら様、お帰りなさいませ。今夜もお会いできて光栄です。");
     };
-    document.getElementById('ctrl-play').onclick = playHead;
+
+    // 操作パネル
+    document.getElementById('ctrl-play').onclick = () => {
+        if (isMusicMode) {
+            monitorYt.contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*');
+        } else if (lastText) {
+            performSpeak(lastText);
+        }
+    };
+
     document.getElementById('ctrl-pause').onclick = togglePause;
     document.getElementById('ctrl-back').onclick = handleBack;
-    document.getElementById('btn-music').onclick = openMusic;
-    document.getElementById('btn-talk').onclick = openTalk;
-    
-    const btnN = document.getElementById('btn-next');
-    btnN.onpointerdown = () => {
-        pressTimer = setTimeout(() => { isAutoPlay = !isAutoPlay; btnN.classList.toggle('auto-active', isAutoPlay); pressTimer = null; }, 600);
+
+    // 次へボタン（長押しでオートプレイ切り替え）
+    btnNext.onpointerdown = () => {
+        pressTimer = setTimeout(() => {
+            isAutoPlay = !isAutoPlay;
+            btnNext.classList.toggle('auto-active', isAutoPlay);
+            media.speak(isAutoPlay ? "自動進行を開始します" : "自動進行を解除しました");
+            pressTimer = null;
+        }, 800);
     };
-    btnN.onpointerup = () => { if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; next(); } };
+    btnNext.onpointerup = () => {
+        if (pressTimer) {
+            clearTimeout(pressTimer);
+            pressTimer = null;
+            goNext();
+        }
+    };
+
+    // モード切替
+    document.getElementById('btn-music').onclick = openMusicMenu;
+    document.getElementById('btn-talk').onclick = openTalkMenu;
 }
 
-function speak(text, isMusic = false) {
-    media.speak(text, 1.05, () => { if(isAutoPlay && !isMusicMode) setTimeout(next, 1000); });
-    chat.innerText = text; lastTxt = text;
-    if(text.length > 5) {
-        tel.innerText = text; tel.style.display = 'block'; tel.scrollTop = 0;
-        if(isMusic) setTimeout(() => { if(tel.innerText === text) tel.style.display = 'none'; }, 5000);
+// 共通再生処理
+function performSpeak(text, isShortInfo = false) {
+    lastText = text;
+    chat.innerText = text;
+    
+    // 物語モードならテロップ表示、音楽モードなら一定時間で消す
+    if (text.length > 5) {
+        telop.innerText = text;
+        telop.style.display = 'block';
+        telop.scrollTop = 0;
+        if (isShortInfo) {
+            setTimeout(() => { if(telop.innerText === text) telop.style.display = 'none'; }, 5000);
+        }
     }
-}
 
-function playHead() {
-    yt.contentWindow.postMessage('{"event":"command","func":"seekTo","args":[0, true]}', '*');
-    yt.contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*');
-    if(!isMusicMode && lastTxt) speak(lastTxt);
+    media.speak(text, 1.05, () => {
+        if (isAutoPlay && !isMusicMode) {
+            setTimeout(goNext, 1500);
+        }
+    });
 }
 
 function togglePause() {
-    if(!isPaused) { yt.contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*'); window.speechSynthesis.pause(); isPaused = true; }
-    else { yt.contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*'); window.speechSynthesis.resume(); isPaused = false; }
+    isPaused = !isPaused;
+    if (isPaused) {
+        monitorYt.contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*');
+        media.stopSpeak();
+    } else {
+        if (isMusicMode) {
+            monitorYt.contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*');
+        } else {
+            performSpeak(lastText);
+        }
+    }
 }
 
-function next() {
-    if(nav.curI < nav.curP.length - 1) {
-        nav.updateNav(undefined, undefined, undefined, nav.curI + 1);
-        const m = nav.curP[nav.curI];
-        if (isMusicMode) { setMon('v', m.u); speak(nav.curG + "さんの" + m.ti + "です", true); }
-        else { setMon('i', `./talk_images/${m.id}.jpg`); speak(m.txt); }
-        updateHigh();
-    } else { isAutoPlay = false; document.getElementById('btn-next').classList.remove('auto-active'); }
+// 次の項目へ
+function goNext() {
+    if (nav.curI < nav.curP.length - 1) {
+        const nextIdx = nav.curI + 1;
+        nav.updateNav(undefined, undefined, undefined, nextIdx);
+        playCurrentItem();
+    } else {
+        isAutoPlay = false;
+        btnNext.classList.remove('auto-active');
+        performSpeak("リストの終わりに到達しました。");
+    }
 }
 
-function setMon(mode, src) {
-    yt.style.display='none'; img.style.display='none'; yt.src="";
-    setTimeout(() => {
-        if(mode === 'v') { yt.style.display='block'; yt.src=`https://www.youtube.com/embed/${media.extractYtId(src)}?autoplay=1&enablejsapi=1`; }
-        else { img.style.display='block'; img.src=src; }
-    }, 100);
+// 現在のアイテムを再生（Music/Talk共通）
+function playCurrentItem() {
+    const item = nav.curP[nav.curI];
+    if (!item) return;
+
+    if (isMusicMode) {
+        setMonitor('v', item.u);
+        performSpeak(`${nav.curG}さんの「${item.ti}」をおかけします。`, true);
+    } else {
+        setMonitor('i', `./talk_images/${item.id}.jpg`);
+        performSpeak(item.txt);
+    }
+    updateHighlight();
 }
 
-function updateHigh() {
-    document.querySelectorAll('.menu-item').forEach((el, idx) => el.classList.toggle('active-item', idx === nav.curI));
-    const active = document.querySelector('.active-item');
-    if(active && !isAutoPlay) active.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+function setMonitor(mode, src) {
+    monitorYt.style.display = 'none';
+    monitorImg.style.display = 'none';
+    
+    if (mode === 'v') {
+        const ytId = media.extractYtId(src);
+        monitorYt.src = `https://www.youtube.com/embed/${ytId}?autoplay=1&enablejsapi=1`;
+        monitorYt.style.display = 'block';
+    } else {
+        monitorYt.src = "";
+        monitorImg.src = src;
+        monitorImg.style.display = 'block';
+    }
 }
 
-function openMusic() {
-    nav.updateNav("art"); menuL.style.display = 'block'; 
-    let h = '<div class="genre-label">アーティスト</div>';
-    ['E','F','J','W','I','S'].forEach(f => {
-        const arts = [...new Set(nav.jData.filter(d => d.f === f).map(d => d.a))];
-        arts.forEach(a => { h += `<div class="menu-item art-click" data-art="${a}">🎤 ${a}</div>`; });
+// メニュー生成
+function openMusicMenu() {
+    isMusicMode = true;
+    nav.updateNav("art");
+    menuLayer.style.display = 'block';
+    
+    let html = '<div class="genre-label">アーティスト一覧</div>';
+    // ジャンル順にアーティストを並べる
+    ['E','F','J','W','I','S'].forEach(flag => {
+        const artists = [...new Set(nav.jData.filter(d => d.f === flag).map(d => d.a))];
+        artists.forEach(a => {
+            html += `<div class="menu-item art-btn" data-art="${a}">🎤 ${a}</div>`;
+        });
     });
-    render(h, (e) => { const art = e.target.closest('.art-click')?.dataset.art; if(art) renderSongs(art); });
-}
-
-function renderSongs(a) {
-    nav.updateNav("tit", a, nav.jData.filter(m => m.a === a)); isMusicMode = true;
-    let h = `<div class="genre-label">${a}</div>`;
-    nav.curP.forEach((m, i) => { h += `<div class="menu-item song-click" data-idx="${i}">${m.ti}</div>`; });
-    render(h, (e) => {
-        const i = parseInt(e.target.closest('.song-click')?.dataset.idx);
-        if(!isNaN(i)) { nav.updateNav(undefined, undefined, undefined, i); setMon('v', nav.curP[i].u); speak(a + "さんの" + nav.curP[i].ti + "です", true); updateHigh(); }
+    renderMenu(html, (e) => {
+        const art = e.target.closest('.art-btn')?.dataset.art;
+        if (art) showSongs(art);
     });
 }
 
-function openTalk() {
-    nav.updateNav("g"); menuL.style.display = 'block'; 
-    let h = '<div class="genre-label">ジャンル</div>';
-    [...new Set(nav.tData.map(d => d.g))].forEach(g => { h += `<div class="menu-item g-click" data-g="${g}">📁 ${g}</div>`; });
-    render(h, (e) => { const g = e.target.closest('.g-click')?.dataset.g; if(g) { nav.updateNav("th", g); renderThemes(g); } });
-}
-
-function renderThemes(g) {
-    nav.updateNav("th"); let h = `<div class="genre-label">${g}</div>`;
-    [...new Set(nav.tData.filter(d => d.g === g).map(d => d.th))].forEach(t => { h += `<div class="menu-item th-click" data-th="${t}">🏷️ ${t}</div>`; });
-    render(h, (e) => { const t = e.target.closest('.th-click')?.dataset.th; if(t) { nav.updateNav("st", undefined, nav.tData.filter(d => d.th === t)); renderStories(t); } });
-}
-
-function renderStories(t) {
-    isMusicMode = false; let h = `<div class="genre-label">${t}</div>`;
-    nav.curP.forEach((d, i) => { h += `<div class="menu-item st-click" data-idx="${i}">${d.ti}</div>`; });
-    render(h, (e) => {
-        const i = parseInt(e.target.closest('.st-click')?.dataset.idx);
-        if(!isNaN(i)) { nav.updateNav(undefined, undefined, undefined, i); setMon('i', `./talk_images/${nav.curP[i].id}.jpg`); speak(nav.curP[i].txt); updateHigh(); }
+function showSongs(artist) {
+    const songs = nav.jData.filter(d => d.a === artist);
+    nav.updateNav("tit", artist, songs);
+    
+    let html = `<div class="genre-label">${artist} の名曲</div>`;
+    songs.forEach((s, i) => {
+        html += `<div class="menu-item song-btn" data-idx="${i}">${s.ti}</div>`;
+    });
+    renderMenu(html, (e) => {
+        const idx = parseInt(e.target.closest('.song-btn')?.dataset.idx);
+        if (!isNaN(idx)) {
+            nav.updateNav(undefined, undefined, undefined, idx);
+            playCurrentItem();
+        }
     });
 }
 
-function render(h, cb) { menuC.innerHTML = h; menuC.onclick = cb; menuL.scrollTop = 0; }
+function openTalkMenu() {
+    isMusicMode = false;
+    nav.updateNav("g");
+    menuLayer.style.display = 'block';
+    
+    let html = '<div class="genre-label">お酒の知識・物語</div>';
+    const genres = [...new Set(nav.tData.map(d => d.g))];
+    genres.forEach(g => {
+        html += `<div class="menu-item g-btn" data-g="${g}">🥃 ${g}</div>`;
+    });
+    renderMenu(html, (e) => {
+        const g = e.target.closest('.g-btn')?.dataset.g;
+        if (g) showThemes(g);
+    });
+}
+
+function showThemes(genre) {
+    nav.updateNav("th", genre);
+    const themes = [...new Set(nav.tData.filter(d => d.g === genre).map(d => d.th))];
+    
+    let html = `<div class="genre-label">${genre}</div>`;
+    themes.forEach(th => {
+        html += `<div class="menu-item th-btn" data-th="${th}">🏷️ ${th}</div>`;
+    });
+    renderMenu(html, (e) => {
+        const th = e.target.closest('.th-btn')?.dataset.th;
+        if (th) showStories(th);
+    });
+}
+
+function showStories(theme) {
+    const stories = nav.tData.filter(d => d.th === theme);
+    nav.updateNav("st", undefined, stories);
+    
+    let html = `<div class="genre-label">${theme}</div>`;
+    stories.forEach((st, i) => {
+        html += `<div class="menu-item st-btn" data-idx="${i}">${st.ti}</div>`;
+    });
+    renderMenu(html, (e) => {
+        const idx = parseInt(e.target.closest('.st-btn')?.dataset.idx);
+        if (!isNaN(idx)) {
+            nav.updateNav(undefined, undefined, undefined, idx);
+            playCurrentItem();
+        }
+    });
+}
+
+function renderMenu(html, callback) {
+    menuContent.innerHTML = html;
+    menuContent.onclick = callback;
+    menuLayer.scrollTop = 0;
+}
 
 function handleBack() {
-    if (nav.state === "st") renderThemes(nav.curG);
-    else if (nav.state === "th") openTalk();
-    else if (nav.state === "tit") openMusic();
-    else { menuL.style.display = 'none'; nav.updateNav("none"); }
+    switch(nav.state) {
+        case "st": showThemes(nav.curG); break;
+        case "th": openTalkMenu(); break;
+        case "tit": openMusicMenu(); break;
+        default: 
+            menuLayer.style.display = 'none';
+            nav.updateNav("none");
+            break;
+    }
 }
 
-function checkYT() { if (isAutoPlay && isMusicMode) yt.contentWindow.postMessage('{"event":"command","func":"getPlayerState","args":[]}', '*'); }
-window.addEventListener('message', (e) => { try { const d = JSON.parse(e.data); if (d.info === 0 && isAutoPlay && isMusicMode) next(); } catch(err){} });
+function updateHighlight() {
+    document.querySelectorAll('.menu-item').forEach((el, idx) => {
+        el.classList.toggle('active-item', idx === nav.curI);
+    });
+}
+
+// YouTubeの状態監視（終了時に次へ）
+function checkYoutubeState() {
+    if (isAutoPlay && isMusicMode) {
+        monitorYt.contentWindow.postMessage('{"event":"command","func":"getPlayerState","args":[]}', '*');
+    }
+}
+
+window.addEventListener('message', (e) => {
+    try {
+        const data = JSON.parse(e.data);
+        // info: 0 は YouTube API における "Ended" (再生終了)
+        if (data.info === 0 && isAutoPlay && isMusicMode) {
+            goNext();
+        }
+    } catch (err) { /* JSON解析エラーは無視 */ }
+});
