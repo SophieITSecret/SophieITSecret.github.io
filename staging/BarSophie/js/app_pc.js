@@ -1,168 +1,167 @@
 /**
- * Bar Sophie PC版 v14.10
- * 【修正内容】
- * 1. YouTube切り替えを「iframe直接操作」に変更（無反応を解消）
- * 2. 音楽ボタン(JBox)と物語ボタン(MP3)の完全連動
- * 3. 引用符を含む複雑なCSVを正しく読み込む「高精度パース」搭載
+ * Bar Sophie PC版 v14.14 (v14.7 HTML専用)
+ * 修正内容：HTML側の ID (yt-iframe, fixed-buttons-grid, menu-content等) に完全対応
  */
 
-// --- 1. グローバル設定 ---
 const sophieVoice = new Audio();
 const BGM_VOLUME_NORMAL = 0.2;
 const BGM_VOLUME_DUCKING = 0.05;
 
-// --- 2. 初期化 ---
+// CSVデータの保持用
+let jboxData = [];
+let storyData = [];
+
 window.onload = async function() {
-    console.log("🍷 Bar Sophie v14.10 起動中...");
-    await loadBarData();
+    console.log("🍷 Bar Sophie v14.7 起動...");
+    await loadAllCsvData();
+    setupEventListeners();
 };
 
-// --- 3. CSVを正しく読み込む関数（カンマや引用符対策） ---
+// --- 1. 高精度CSVパース ---
 function parseCsvLine(line) {
     const result = [];
     let cur = '';
     let inQuotes = false;
     for (let i = 0; i < line.length; i++) {
         const char = line[i];
-        if (char === '"') {
-            inQuotes = !inQuotes;
-        } else if (char === ',' && !inQuotes) {
+        if (char === '"') inQuotes = !inQuotes;
+        else if (char === ',' && !inQuotes) {
             result.push(cur.trim());
             cur = '';
-        } else {
-            cur += char;
-        }
+        } else cur += char;
     }
     result.push(cur.trim());
-    // 各項目の前後にある余計な引用符を削除
     return result.map(val => val.replace(/^"|"$/g, ''));
 }
 
-// --- 4. データ読み込みとボタン生成 ---
-async function loadBarData() {
+// --- 2. データ読み込み ---
+async function loadAllCsvData() {
     try {
-        // [A] ジュークボックス（音楽）の読み込み
+        // 音楽メニュー
         const jboxRes = await fetch('data/JBoxメニュー.csv');
         const jboxText = await jboxRes.text();
-        renderJukebox(jboxText);
+        const jboxLines = jboxText.split(/\r?\n/).filter(l => l.trim() !== '');
+        jboxData = jboxLines.slice(1).map(line => parseCsvLine(line));
 
-        // [B] お酒の物語（音声）の読み込み
+        // お酒の物語
         const storyRes = await fetch('data/お酒の話.csv');
         const storyText = await storyRes.text();
-        renderStories(storyText);
+        const storyLines = storyText.split(/\r?\n/).filter(l => l.trim() !== '');
+        storyData = storyLines.slice(1).map(line => parseCsvLine(line));
 
+        // 最初の画面（FIXボタン）を描画
+        renderFixedButtons();
+        console.log("✅ データ読み込み完了");
     } catch (err) {
-        console.error("❌ データ読み込み失敗:", err);
+        console.error("❌ CSV読み込み失敗:", err);
     }
 }
 
-// [JBoxボタン生成]
-function renderJukebox(csvData) {
-    const lines = csvData.split(/\r?\n/).filter(line => line.trim() !== '');
-    const fixGrid = document.getElementById('fix-buttons-grid');
-    const requestList = document.getElementById('request-list');
-    
-    if (fixGrid) fixGrid.innerHTML = '';
-    if (requestList) requestList.innerHTML = '';
+// --- 3. メニュー描画ロジック ---
 
-    lines.slice(1).forEach(line => {
-        const [flag, code, singer, title, url] = parseCsvLine(line);
-        if (!title || !url) return;
+// [FIXボタン] 上部のグリッドに表示
+function renderFixedButtons() {
+    const grid = document.getElementById('fixed-buttons-grid');
+    if (!grid) return;
+    grid.innerHTML = '';
 
+    jboxData.filter(d => d[0] === 'FIX').forEach(cols => {
+        const [flag, code, singer, title, url] = cols;
         const btn = document.createElement('button');
-        btn.className = 'jbox-button';
+        btn.className = 'jbox-button'; // CSSに合わせる
         btn.innerHTML = `<span class="singer">${singer}</span><br><span class="title">${title}</span>`;
-        
-        // クリックイベント：YouTubeを再生
         btn.onclick = () => playMusic(url);
-
-        if (flag === 'FIX') {
-            if (fixGrid) fixGrid.appendChild(btn);
-        } else if (flag !== 'SIGNAL') {
-            if (requestList) requestList.appendChild(btn);
-        }
+        grid.appendChild(btn);
     });
-    console.log("🎵 音楽メニュー展開完了");
 }
 
-// [物語ボタン生成]
-function renderStories(csvData) {
-    const lines = csvData.split(/\r?\n/).filter(line => line.trim() !== '');
-    const storyList = document.getElementById('story-list');
-    if (storyList) storyList.innerHTML = '';
+// [動的メニュー] 選曲リクエスト または お酒の物語
+function renderDynamicMenu(type) {
+    const container = document.getElementById('menu-content');
+    const layer = document.getElementById('menu-layer');
+    if (!container || !layer) return;
 
-    lines.slice(1).forEach(line => {
-        const [id, title, genre, body] = parseCsvLine(line);
-        if (!title) return;
+    container.innerHTML = '';
+    layer.style.display = 'block'; // メニュー層を表示
 
-        const btn = document.createElement('button');
-        btn.className = 'story-button';
-        btn.innerText = title;
-        
-        // クリックイベント：ソフィーの声を再生
-        btn.onclick = () => playSophieStory(id, title, body);
-        
-        if (storyList) storyList.appendChild(btn);
-    });
-    console.log("🎙️ 物語メニュー展開完了");
+    if (type === 'music') {
+        jboxData.filter(d => d[0] !== 'FIX' && d[0] !== 'SIGNAL').forEach(cols => {
+            const [flag, code, singer, title, url] = cols;
+            const btn = document.createElement('button');
+            btn.className = 'menu-item-btn'; // スタイルに合わせて調整
+            btn.innerText = `${singer} - ${title}`;
+            btn.onclick = () => playMusic(url);
+            container.appendChild(btn);
+        });
+    } else {
+        storyData.forEach(cols => {
+            const [id, title, genre, body] = cols;
+            const btn = document.createElement('button');
+            btn.className = 'menu-item-btn';
+            btn.innerText = title;
+            btn.onclick = () => playSophieStory(id, title, body);
+            container.appendChild(btn);
+        });
+    }
 }
 
-// --- 5. 再生コントロール（メイン） ---
+// --- 4. 再生コントロール ---
 
-// [YouTube再生]
 function playMusic(urlOrId) {
     let videoId = urlOrId;
-    // URLからIDを抽出 (v=... または youtu.be/...)
-    if (urlOrId.includes('v=')) {
-        videoId = urlOrId.split('v=')[1].split('&')[0];
-    } else if (urlOrId.includes('youtu.be/')) {
-        videoId = urlOrId.split('youtu.be/')[1].split('?')[0];
-    }
+    if (urlOrId.includes('v=')) videoId = urlOrId.split('v=')[1].split('&')[0];
+    else if (urlOrId.includes('youtu.be/')) videoId = urlOrId.split('youtu.be/')[1].split('?')[0];
 
-    const monitor = document.getElementById('main-monitor-iframe');
-    if (monitor) {
-        // enablejsapi=1 を付けて、後で音量をいじれるようにしておく
-        monitor.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&controls=0&enablejsapi=1`;
-        console.log("🎬 YouTube切り替え:", videoId);
-    } else {
-        console.error("❌ main-monitor-iframe が見つかりません");
+    const iframe = document.getElementById('yt-iframe'); // HTMLに準拠
+    if (iframe) {
+        iframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&controls=0&enablejsapi=1`;
+        console.log("🎬 YouTube再生:", videoId);
     }
 }
 
-// [ソフィーの音声再生]
 function playSophieStory(id, title, text) {
-    // 前の声を止める
     sophieVoice.pause();
     sophieVoice.src = `voices_mp3/${id}.mp3?v=${new Date().getTime()}`;
 
-    // YouTubeの音量を下げる（ダッキング命令を送信）
-    const monitor = document.getElementById('main-monitor-iframe');
-    if (monitor && monitor.contentWindow) {
-        monitor.contentWindow.postMessage('{"event":"command","func":"setVolume","args":[5]}', '*');
-    }
+    // ダッキング (iframeへ命令)
+    const iframe = document.getElementById('yt-iframe');
+    iframe?.contentWindow?.postMessage('{"event":"command","func":"setVolume","args":[5]}', '*');
 
     sophieVoice.play().then(() => {
-        // テキスト表示
-        const chat = document.getElementById('sophie-chat');
-        if (chat) {
-            chat.innerHTML = `<strong>【${title}】</strong><br>${text.replace(/\n/g, '<br>')}`;
-            chat.scrollTop = chat.scrollHeight;
+        const display = document.getElementById('sophie-speech-text'); // HTMLに準拠
+        if (display) {
+            display.innerHTML = `<strong>【${title}】</strong><br>${text.replace(/\n/g, '<br>')}`;
         }
-    }).catch(e => console.error("🎙️ 音声再生エラー:", e));
+    }).catch(e => console.warn("音声再生待ち...", e));
 
-    // 声が終わったら音量を戻す
     sophieVoice.onended = () => {
-        if (monitor && monitor.contentWindow) {
-            monitor.contentWindow.postMessage('{"event":"command","func":"setVolume","args":[20]}', '*');
-        }
+        iframe?.contentWindow?.postMessage('{"event":"command","func":"setVolume","args":[20]}', '*');
     };
 }
 
-// --- 6. 全停止プロトコル ---
-function stopEverything() {
-    sophieVoice.pause();
-    const monitor = document.getElementById('main-monitor-iframe');
-    if (monitor && monitor.contentWindow) {
-        monitor.contentWindow.postMessage('{"event":"command","func":"stopVideo","args":""}', '*');
-    }
+// --- 5. イベントリスナー設定 ---
+function setupEventListeners() {
+    // 選曲リクエストボタン
+    document.getElementById('btn-open-menu')?.addEventListener('click', () => renderDynamicMenu('music'));
+    
+    // お酒の物語ボタン
+    document.getElementById('btn-open-talk')?.addEventListener('click', () => renderDynamicMenu('story'));
+    
+    // 戻るボタン
+    document.getElementById('menu-back')?.addEventListener('click', () => {
+        document.getElementById('menu-layer').style.display = 'none';
+    });
+
+    // ⏹ 停止ボタン
+    document.getElementById('ctrl-stop-speech')?.addEventListener('click', () => {
+        sophieVoice.pause();
+        const iframe = document.getElementById('yt-iframe');
+        iframe?.contentWindow?.postMessage('{"event":"command","func":"stopVideo","args":""}', '*');
+    });
+
+    // シグナル曲ボタン
+    document.getElementById('btn-signal-song')?.addEventListener('click', () => {
+        const signal = jboxData.find(d => d[0] === 'SIGNAL');
+        if (signal) playMusic(signal[4]);
+    });
 }
