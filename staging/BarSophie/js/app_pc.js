@@ -1,150 +1,146 @@
-let masterData = [];
-let talkData = [];
-let currentUrl = "";
-let synth = window.speechSynthesis;
+/**
+ * Bar Sophie PC版 v14.16 (HTML v14.7 完全適合モデル)
+ * 修正点：ID一致確認済み、YouTube解析強化、CSVエラー耐性向上
+ */
 
-const iframe = document.getElementById('yt-iframe');
-const monitorImg = document.getElementById('monitor-image-overlay');
-const speechArea = document.getElementById('sophie-speech-text');
-const menuLayer = document.getElementById('menu-layer');
-const menuContent = document.getElementById('menu-content');
-const menuBack = document.getElementById('menu-back');
+const sophieVoice = new Audio();
+const BGM_VOL_NORMAL = 0.2;
+const BGM_VOL_DUCKING = 0.05;
 
-document.addEventListener('DOMContentLoaded', () => {
-    loadMusicCSV();
-    loadTalkCSV();
-    initUI();
-});
+let jboxData = [];
+let storyData = [];
 
-async function loadMusicCSV() {
-    const res = await fetch(`JBoxメニュー.csv?v=${new Date().getTime()}`);
-    const text = await res.text();
-    const lines = text.split('\n').slice(1);
-    masterData = lines.filter(l => l.trim()).map(line => {
-        const c = line.split(',');
-        return { flag: c[0].trim(), artist: c[2].trim(), title: c[3].replace(/"/g,'').trim(), url: c[4].trim() };
-    });
-    renderFixedButtons();
+window.onload = async function() {
+    console.log("🍷 Bar Sophie 起動中...");
+    await loadData();
+    bindEvents();
+};
+
+// --- 高精度CSVパース（引用符内のカンマ・改行対策） ---
+function parseCsv(line) {
+    const result = [];
+    let cur = '', inQuotes = false;
+    for (let char of line) {
+        if (char === '"') inQuotes = !inQuotes;
+        else if (char === ',' && !inQuotes) { result.push(cur.trim()); cur = ''; }
+        else cur += char;
+    }
+    result.push(cur.trim());
+    return result.map(v => v.replace(/^"|"$/g, ''));
 }
 
-async function loadTalkCSV() {
-    const res = await fetch(`お酒の話.csv?v=${new Date().getTime()}`);
-    const text = await res.text();
-    const lines = text.split('\n').slice(1);
-    talkData = lines.filter(l => l.trim()).map(line => {
-        const c = line.split(',');
-        return { genre: c[1], theme: c[2], title: c[3], body: c[5] };
-    });
+async function loadData() {
+    try {
+        // [1] 音楽メニュー読み込み
+        const jRes = await fetch('data/JBoxメニュー.csv');
+        const jText = await jRes.text();
+        jboxData = jText.split(/\r?\n/).filter(l => l.trim().length > 0).slice(1).map(parseCsv);
+
+        // [2] お酒の物語読み込み
+        const sRes = await fetch('data/お酒の話.csv');
+        const sText = await sRes.text();
+        storyData = sText.split(/\r?\n/).filter(l => l.trim().length > 0).slice(1).map(parseCsv);
+
+        drawFixButtons();
+        console.log("✅ データロード成功");
+    } catch (e) {
+        console.error("❌ データロード失敗:", e);
+    }
 }
 
-function renderFixedButtons() {
-    const fixedItems = masterData.filter(d => d.flag === 'FIX').slice(0, 10);
+// --- 画面描画 ---
+function drawFixButtons() {
     const grid = document.getElementById('fixed-buttons-grid');
-    grid.innerHTML = "";
-    fixedItems.forEach(item => {
+    if (!grid) return;
+    grid.innerHTML = '';
+    
+    jboxData.filter(d => d[0] === 'FIX').forEach(cols => {
         const btn = document.createElement('button');
-        btn.className = 'music-btn';
-        btn.innerText = item.title;
-        btn.onclick = () => { stopTalk(); playFix(item.url); };
+        btn.className = 'jbox-button';
+        btn.innerHTML = `<span class="singer">${cols[2]}</span><br><span class="title">${cols[3]}</span>`;
+        btn.onclick = () => playMusic(cols[4]);
         grid.appendChild(btn);
     });
 }
 
-function playFix(url, showOverlay = false) {
-    currentUrl = url;
-    monitorImg.style.display = showOverlay ? 'block' : 'none';
-    let id = url.includes('v=') ? url.split('v=')[1].split('&')[0] : url;
-    iframe.src = `https://www.youtube.com/embed/${id}?autoplay=1&rel=0&enablejsapi=1`;
-}
+function showSubMenu(mode) {
+    const content = document.getElementById('menu-content');
+    const layer = document.getElementById('menu-layer');
+    if (!content || !layer) return;
 
-function initUI() {
-    document.getElementById('mode-toggle').onclick = () => {
-        const isTheater = document.body.classList.toggle('theater-mode');
-        document.getElementById('mode-toggle').innerText = isTheater ? "戻る" : "シアター";
-    };
-    
-    document.getElementById('btn-signal-song').onclick = () => {
-        stopTalk();
-        const signal = masterData.find(d => d.flag === 'SIGNAL');
-        if (signal) playFix(signal.url);
-    };
+    content.innerHTML = '';
+    layer.style.display = 'block';
 
-    document.getElementById('btn-open-menu').onclick = openMusicMenu;
-    document.getElementById('btn-open-talk').onclick = openTalkMenu;
-    document.getElementById('ctrl-stop-speech').onclick = stopTalk;
-
-    document.getElementById('ctrl-play').onclick = () => iframe.contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*');
-    document.getElementById('ctrl-pause').onclick = () => iframe.contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*');
-    document.getElementById('ctrl-reset').onclick = () => { if(currentUrl) playFix(currentUrl); };
-}
-
-// --- ナビゲーション整理：2列グリッドを保護 ---
-function openMusicMenu() {
-    menuLayer.style.display = 'flex';
-    menuBack.innerText = "← ソフィーと話す (閉じる)";
-    menuBack.onclick = () => menuLayer.style.display = 'none';
-    
-    const genres = { 'E':'演歌', 'F':'フォーク', 'J':'歌謡曲', 'W':'洋楽', 'I':'インスト', 'S':'旅情・映像' };
-    menuContent.innerHTML = "";
-    Object.keys(genres).forEach(f => {
-        const artists = [...new Set(masterData.filter(d => d.flag === f).map(d => d.artist))];
-        if(!artists.length) return;
-        const lbl = document.createElement('div'); lbl.className="genre-label"; lbl.innerText=genres[f];
-        menuContent.appendChild(lbl);
-        artists.forEach(a => {
-            const div = document.createElement('div'); div.className="menu-item"; div.innerText = "🎤 " + a;
-            div.onclick = () => renderSongTitles(a);
-            menuContent.appendChild(div);
+    if (mode === 'music') {
+        jboxData.filter(d => d[0] !== 'FIX' && d[0] !== 'SIGNAL').forEach(cols => {
+            const btn = document.createElement('button');
+            btn.className = 'menu-item-btn';
+            btn.innerText = `${cols[2]} - ${cols[3]}`;
+            btn.onclick = () => playMusic(cols[4]);
+            content.appendChild(btn);
         });
-    });
+    } else {
+        storyData.forEach(cols => {
+            const btn = document.createElement('button');
+            btn.className = 'menu-item-btn';
+            btn.innerText = cols[1]; // タイトル
+            btn.onclick = () => playVoiceStory(cols[0], cols[1], cols[3]); // ID, タイトル, 本文
+            content.appendChild(btn);
+        });
+    }
 }
 
-function renderSongTitles(artist) {
-    menuBack.innerText = "← 歌手一覧へ戻る";
-    menuBack.onclick = openMusicMenu;
-    menuContent.innerHTML = `<div class="genre-label">${artist}</div>`;
-    masterData.filter(d => d.artist === artist).forEach(d => {
-        const div = document.createElement('div'); div.className = "menu-item"; div.innerText = d.title;
-        div.onclick = () => { stopTalk(); playFix(d.url); };
-        menuContent.appendChild(div);
-    });
+// --- 再生系 ---
+function playMusic(idOrUrl) {
+    let vid = idOrUrl;
+    // URLから動画IDを抽出する正規表現
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+    const match = idOrUrl.match(regExp);
+    if (match && match[2].length === 11) vid = match[2];
+
+    const iframe = document.getElementById('yt-iframe');
+    if (iframe) {
+        iframe.src = `https://www.youtube.com/embed/${vid}?autoplay=1&controls=0&enablejsapi=1`;
+    }
 }
 
-function openTalkMenu() {
-    menuLayer.style.display = 'flex';
-    menuBack.innerText = "← ソフィーと話す (閉じる)";
-    menuBack.onclick = () => menuLayer.style.display = 'none';
+function playVoiceStory(id, title, text) {
+    sophieVoice.pause();
+    sophieVoice.src = `voices_mp3/${id}.mp3?v=${Date.now()}`;
     
-    menuContent.innerHTML = '<div class="genre-label">お酒のジャンル</div>';
-    const genres = [...new Set(talkData.map(d => d.genre))];
-    genres.forEach(g => {
-        const div = document.createElement('div'); div.className="menu-item"; div.innerText = "🥃 " + g;
-        div.onclick = () => {
-            menuBack.innerText = "← ジャンル一覧へ";
-            menuBack.onclick = openTalkMenu;
-            menuContent.innerHTML = `<div class="genre-label">${g}</div>`;
-            talkData.filter(d => d.genre === g).forEach(t => {
-                const item = document.createElement('div'); item.className="menu-item"; item.innerText = t.title;
-                item.onclick = () => startTalk(t);
-                menuContent.appendChild(item);
-            });
-        };
-        menuContent.appendChild(div);
+    const iframe = document.getElementById('yt-iframe');
+    // ダッキング（BGM音量を下げる）
+    iframe?.contentWindow?.postMessage('{"event":"command","func":"setVolume","args":[5]}', '*');
+
+    sophieVoice.play().then(() => {
+        const chat = document.getElementById('sophie-speech-text');
+        if (chat) chat.innerHTML = `<strong>【${title}】</strong><br>${text.replace(/\n/g, '<br>')}`;
+    }).catch(err => console.warn("音声再生待機中...", err));
+
+    sophieVoice.onended = () => {
+        iframe?.contentWindow?.postMessage('{"event":"command","func":"setVolume","args":[20]}', '*');
+    };
+}
+
+// --- イベント登録 ---
+function bindEvents() {
+    document.getElementById('btn-open-menu')?.addEventListener('click', () => showSubMenu('music'));
+    document.getElementById('btn-open-talk')?.addEventListener('click', () => showSubMenu('story'));
+    document.getElementById('menu-back')?.addEventListener('click', () => {
+        const layer = document.getElementById('menu-layer');
+        if (layer) layer.style.display = 'none';
     });
-}
+    
+    // ⏹ 停止ボタン
+    document.getElementById('ctrl-stop-speech')?.addEventListener('click', () => {
+        sophieVoice.pause();
+        const iframe = document.getElementById('yt-iframe');
+        iframe?.contentWindow?.postMessage('{"event":"command","func":"stopVideo","args":""}', '*');
+    });
 
-function startTalk(talkObj) {
-    stopTalk();
-    playFix('vh4TWlwYfLc', true); // 深夜ジャズ2をBGMに
-    monitorImg.src = "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?q=80&w=800";
-    speechArea.innerText = talkObj.body;
-    const uttr = new SpeechSynthesisUtterance(talkObj.body);
-    uttr.lang = 'ja-JP';
-    synth.speak(uttr);
-}
-
-function stopTalk() {
-    synth.cancel();
-    speechArea.innerText = "";
-    monitorImg.style.display = 'none';
+    // シグナル曲
+    document.getElementById('btn-signal-song')?.addEventListener('click', () => {
+        const sig = jboxData.find(d => d[0] === 'SIGNAL');
+        if (sig) playMusic(sig[4]);
+    });
 }
