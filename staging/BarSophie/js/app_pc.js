@@ -1,150 +1,135 @@
-let masterData = [];
-let talkData = [];
-let currentUrl = "";
-let synth = window.speechSynthesis;
+/**
+ * Bar Sophie PC版 v14.8 (External Voice Engine)
+ * 360本以上の軽量MP3に対応した、音と文字の完全同期システム
+ */
 
-const iframe = document.getElementById('yt-iframe');
-const monitorImg = document.getElementById('monitor-image-overlay');
-const speechArea = document.getElementById('sophie-speech-text');
-const menuLayer = document.getElementById('menu-layer');
-const menuContent = document.getElementById('menu-content');
-const menuBack = document.getElementById('menu-back');
+// --- 1. グローバル定数・プレイヤー設定 ---
+const sophieVoice = new Audio(); // ソフィー専用の音声プレイヤー
+const BGM_VOLUME_NORMAL = 0.2;   // BGMの通常音量
+const BGM_VOLUME_DUCKING = 0.05; // ソフィーが話している時のBGM音量
 
-document.addEventListener('DOMContentLoaded', () => {
-    loadMusicCSV();
-    loadTalkCSV();
-    initUI();
-});
+// --- 2. 音声再生・演出コントロール（心臓部） ---
+/**
+ * @param {string} id - CSVのID（ファイル名に対応: 101, 102...）
+ * @param {string} title - お酒のタイトル
+ * @param {string} text - 読み上げる本文
+ */
+function playSophieStory(id, title, text) {
+    console.log(`🎤 再生リクエスト: ${id} - ${title}`);
 
-async function loadMusicCSV() {
-    const res = await fetch(`JBoxメニュー.csv?v=${new Date().getTime()}`);
-    const text = await res.text();
-    const lines = text.split('\n').slice(1);
-    masterData = lines.filter(l => l.trim()).map(line => {
-        const c = line.split(',');
-        return { flag: c[0].trim(), artist: c[2].trim(), title: c[3].replace(/"/g,'').trim(), url: c[4].trim() };
+    // [A] 既存の音声を即座に停止（連打対応）
+    sophieVoice.pause();
+    sophieVoice.currentTime = 0;
+
+    // [B] MP3ファイルのパスをセット (軽量化した600KBの精鋭たち)
+    // キャッシュ対策としてタイムスタンプを付与
+    sophieVoice.src = `voices_mp3/${id}.mp3?v=${new Date().getTime()}`;
+
+    // [C] BGMのダッキング（音量を下げる）
+    const bgmPlayer = document.getElementById('bgm-player');
+    if (bgmPlayer) {
+        bgmPlayer.volume = BGM_VOLUME_DUCKING;
+    }
+
+    // [D] 再生実行
+    sophieVoice.play().then(() => {
+        // [E] 視覚演出：モニターに画像を表示、チャット欄にテキストを表示
+        updateMonitorImage(id); // IDに基づいた画像を表示（後述）
+        displaySophieText(title, text);
+        console.log(`✅ ${id}.mp3 再生中...`);
+    }).catch(err => {
+        console.error("❌ 音声ファイルが読み込めません:", err);
+        // 音声がなくても物語だけは届ける（フォールバック）
+        displaySophieText(title, text + "\n(音声読み込みエラー)");
     });
-    renderFixedButtons();
-}
 
-async function loadTalkCSV() {
-    const res = await fetch(`お酒の話.csv?v=${new Date().getTime()}`);
-    const text = await res.text();
-    const lines = text.split('\n').slice(1);
-    talkData = lines.filter(l => l.trim()).map(line => {
-        const c = line.split(',');
-        return { genre: c[1], theme: c[2], title: c[3], body: c[5] };
-    });
-}
-
-function renderFixedButtons() {
-    const fixedItems = masterData.filter(d => d.flag === 'FIX').slice(0, 10);
-    const grid = document.getElementById('fixed-buttons-grid');
-    grid.innerHTML = "";
-    fixedItems.forEach(item => {
-        const btn = document.createElement('button');
-        btn.className = 'music-btn';
-        btn.innerText = item.title;
-        btn.onclick = () => { stopTalk(); playFix(item.url); };
-        grid.appendChild(btn);
-    });
-}
-
-function playFix(url, showOverlay = false) {
-    currentUrl = url;
-    monitorImg.style.display = showOverlay ? 'block' : 'none';
-    let id = url.includes('v=') ? url.split('v=')[1].split('&')[0] : url;
-    iframe.src = `https://www.youtube.com/embed/${id}?autoplay=1&rel=0&enablejsapi=1`;
-}
-
-function initUI() {
-    document.getElementById('mode-toggle').onclick = () => {
-        const isTheater = document.body.classList.toggle('theater-mode');
-        document.getElementById('mode-toggle').innerText = isTheater ? "戻る" : "シアター";
+    // [F] 終了時の処理（BGMを戻す）
+    sophieVoice.onended = () => {
+        if (bgmPlayer) {
+            bgmPlayer.volume = BGM_VOLUME_NORMAL;
+        }
+        console.log("🏁 物語が終了しました。");
     };
-    
-    document.getElementById('btn-signal-song').onclick = () => {
-        stopTalk();
-        const signal = masterData.find(d => d.flag === 'SIGNAL');
-        if (signal) playFix(signal.url);
-    };
-
-    document.getElementById('btn-open-menu').onclick = openMusicMenu;
-    document.getElementById('btn-open-talk').onclick = openTalkMenu;
-    document.getElementById('ctrl-stop-speech').onclick = stopTalk;
-
-    document.getElementById('ctrl-play').onclick = () => iframe.contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*');
-    document.getElementById('ctrl-pause').onclick = () => iframe.contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*');
-    document.getElementById('ctrl-reset').onclick = () => { if(currentUrl) playFix(currentUrl); };
 }
 
-// --- ナビゲーション整理：2列グリッドを保護 ---
-function openMusicMenu() {
-    menuLayer.style.display = 'flex';
-    menuBack.innerText = "← ソフィーと話す (閉じる)";
-    menuBack.onclick = () => menuLayer.style.display = 'none';
+// --- 3. UI表示・テキスト演出 ---
+function displaySophieText(title, text) {
+    const chatContainer = document.getElementById('sophie-chat');
+    if (!chatContainer) return;
+
+    // HTMLを生成（改行コードを<br>に置換）
+    const formattedText = text.replace(/\n/g, '<br>');
+    chatContainer.innerHTML = `
+        <div class="story-bubble">
+            <h3 class="story-title">【${title}】</h3>
+            <p class="story-body">${formattedText}</p>
+        </div>
+    `;
     
-    const genres = { 'E':'演歌', 'F':'フォーク', 'J':'歌謡曲', 'W':'洋楽', 'I':'インスト', 'S':'旅情・映像' };
-    menuContent.innerHTML = "";
-    Object.keys(genres).forEach(f => {
-        const artists = [...new Set(masterData.filter(d => d.flag === f).map(d => d.artist))];
-        if(!artists.length) return;
-        const lbl = document.createElement('div'); lbl.className="genre-label"; lbl.innerText=genres[f];
-        menuContent.appendChild(lbl);
-        artists.forEach(a => {
-            const div = document.createElement('div'); div.className="menu-item"; div.innerText = "🎤 " + a;
-            div.onclick = () => renderSongTitles(a);
-            menuContent.appendChild(div);
+    // 常に最新のメッセージが見えるようスクロール
+    chatContainer.scrollTop = chatContainer.scrollHeight;
+}
+
+// --- 4. モニター画像制御 ---
+function updateMonitorImage(id) {
+    const monitor = document.getElementById('main-monitor');
+    if (!monitor) return;
+
+    // お酒の画像があれば表示（なければデフォルトのソフィー画像）
+    const imgPath = `images/liquor/${id}.jpg`;
+    const defaultImg = `images/sophie_standard.png`;
+
+    const img = new Image();
+    img.src = imgPath;
+    img.onload = () => monitor.style.backgroundImage = `url(${imgPath})`;
+    img.onerror = () => monitor.style.backgroundImage = `url(${defaultImg})`;
+}
+
+// --- 5. ⏹️ 停止ボタンの完全連動 ---
+function stopEverything() {
+    // ソフィーを黙らせる
+    sophieVoice.pause();
+    sophieVoice.currentTime = 0;
+
+    // BGMの音量を戻す
+    const bgmPlayer = document.getElementById('bgm-player');
+    if (bgmPlayer) bgmPlayer.volume = BGM_VOLUME_NORMAL;
+
+    // チャットをクリア（または案内を表示）
+    const chatContainer = document.getElementById('sophie-chat');
+    if (chatContainer) chatContainer.innerHTML = "<p>（ソフィーは静かに微笑んでいます）</p>";
+
+    console.log("⏹️ 全停止プロトコル発動");
+}
+
+// --- 6. CSVデータ読み込み・イベント紐付け（初期化） ---
+async function initSophieStories() {
+    try {
+        const response = await fetch('data/お酒の話.csv');
+        const csvData = await response.text();
+        
+        // 簡易CSVパース（ID, タイトル, ジャンル, 本文）
+        const rows = csvData.split('\n').slice(1); // ヘッダーを除外
+        const listContainer = document.getElementById('story-list');
+
+        rows.forEach(row => {
+            const cols = row.split(','); // 実際はカンマ区切り。必要に応じてPapaParse等を使用
+            if (cols.length < 4) return;
+
+            const [id, title, genre, body] = cols;
+
+            // ボタン生成
+            const btn = document.createElement('button');
+            btn.className = 'story-button';
+            btn.innerText = title;
+            btn.onclick = () => playSophieStory(id.trim(), title.trim(), body.trim());
+            
+            listContainer.appendChild(btn);
         });
-    });
+    } catch (err) {
+        console.error("CSV読み込み失敗:", err);
+    }
 }
 
-function renderSongTitles(artist) {
-    menuBack.innerText = "← 歌手一覧へ戻る";
-    menuBack.onclick = openMusicMenu;
-    menuContent.innerHTML = `<div class="genre-label">${artist}</div>`;
-    masterData.filter(d => d.artist === artist).forEach(d => {
-        const div = document.createElement('div'); div.className = "menu-item"; div.innerText = d.title;
-        div.onclick = () => { stopTalk(); playFix(d.url); };
-        menuContent.appendChild(div);
-    });
-}
-
-function openTalkMenu() {
-    menuLayer.style.display = 'flex';
-    menuBack.innerText = "← ソフィーと話す (閉じる)";
-    menuBack.onclick = () => menuLayer.style.display = 'none';
-    
-    menuContent.innerHTML = '<div class="genre-label">お酒のジャンル</div>';
-    const genres = [...new Set(talkData.map(d => d.genre))];
-    genres.forEach(g => {
-        const div = document.createElement('div'); div.className="menu-item"; div.innerText = "🥃 " + g;
-        div.onclick = () => {
-            menuBack.innerText = "← ジャンル一覧へ";
-            menuBack.onclick = openTalkMenu;
-            menuContent.innerHTML = `<div class="genre-label">${g}</div>`;
-            talkData.filter(d => d.genre === g).forEach(t => {
-                const item = document.createElement('div'); item.className="menu-item"; item.innerText = t.title;
-                item.onclick = () => startTalk(t);
-                menuContent.appendChild(item);
-            });
-        };
-        menuContent.appendChild(div);
-    });
-}
-
-function startTalk(talkObj) {
-    stopTalk();
-    playFix('vh4TWlwYfLc', true); // 深夜ジャズ2をBGMに
-    monitorImg.src = "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?q=80&w=800";
-    speechArea.innerText = talkObj.body;
-    const uttr = new SpeechSynthesisUtterance(talkObj.body);
-    uttr.lang = 'ja-JP';
-    synth.speak(uttr);
-}
-
-function stopTalk() {
-    synth.cancel();
-    speechArea.innerText = "";
-    monitorImg.style.display = 'none';
-}
+// ページ読み込み時に初期化
+window.onload = initSophieStories;
