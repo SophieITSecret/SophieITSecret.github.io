@@ -1,6 +1,7 @@
 /**
- * Bar Sophie Mobile v14.7 - Final Stable Edition
- * Fix: Undefined data mapping issue
+ * Bar Sophie Mobile v14.7 - Standard Edition
+ * 修正：CSV列のインデックス指定によるデータ取得（undefined対策）
+ * 音声：./voices_mp3/[ID].mp3
  */
 
 const state = {
@@ -36,16 +37,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     setInterval(checkYTProgress, 1000);
 });
 
+// CSV読み込みロジック（列番号固定で取得）
 async function loadData() {
     try {
         const tRes = await fetch('お酒の話.csv');
         const tTxt = await tRes.text();
-        state.talkData = parseCSV(tTxt);
+        state.talkData = parseTalkCSV(tTxt);
 
         try {
             const mRes = await fetch('音楽リスト.csv');
             const mTxt = await mRes.text();
-            state.musicData = parseCSV(mTxt);
+            state.musicData = parseMusicCSV(mTxt);
         } catch (e) {
             state.musicData = [];
         }
@@ -54,40 +56,43 @@ async function loadData() {
     }
 }
 
-// CSVパースロジックの強化
-function parseCSV(text) {
-    const lines = text.trim().split('\n');
+function parseTalkCSV(text) {
+    const lines = text.trim().split(/\r?\n/);
     if (lines.length < 2) return [];
     
-    const header = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
-    
     return lines.slice(1).map(line => {
-        // カンマ区切りだが、引用符内のカンマを考慮しない簡易版（お酒の話.csvに準拠）
-        const values = line.split(',').map(v => v.trim().replace(/^"|"$/g, ''));
-        const obj = {};
-        header.forEach((h, i) => {
-            obj[h] = values[i] || "";
-        });
-        
-        // プログラム内部で使いやすいように正規化（エイリアス作成）
-        obj.id = obj["ID"];
-        obj.g  = obj["ジャンル"];
-        obj.th = obj["テーマ"];
-        obj.ti = obj["UI表示タイトル"];
-        obj.txt = obj["カンペ本文（250文字程度）"];
-        obj.fix = obj["FIX"];
-        
-        return obj;
+        // カンマで分割（引用符内のカンマは考慮しないシンプル分割）
+        const v = line.split(',').map(s => s.trim().replace(/^"|"$/g, ''));
+        return {
+            id: v[0],    // ID
+            g:  v[1],    // ジャンル
+            th: v[2],    // テーマ
+            ti: v[3],    // UI表示タイトル
+            txt: v[5],   // カンペ本文（6列目）
+            fix: v[6] || "" // FIX（もしあれば7列目）
+        };
+    }).filter(d => d.id);
+}
+
+function parseMusicCSV(text) {
+    const lines = text.trim().split(/\r?\n/);
+    if (lines.length < 2) return [];
+    const header = lines[0].split(',').map(h => h.trim());
+    return lines.slice(1).map(line => {
+        const v = line.split(',').map(s => s.trim().replace(/^"|"$/g, ''));
+        return { a: v[0], ti: v[1], u: v[2], fix: v[3] || "" };
     });
 }
 
 function setupEvents() {
+    // 【継承】入店フロー
     document.getElementById('btn-enter').onclick = () => {
         document.getElementById('entry-screen').style.display = 'none';
         document.getElementById('chat-mode').style.display = 'flex';
+        // 音声アンロック
         dom.audio.play().catch(()=>{}); 
         dom.audio.pause();
-        speak(dom.loungeText.innerText);
+        speak("まきむら様、お帰りなさいませ。");
     };
 
     document.getElementById('btn-to-bar').onclick = () => {
@@ -167,6 +172,7 @@ function openStories(t) {
     state.currentView = "stories";
     state.isMusicMode = false;
     
+    // FIXソート
     const stories = state.talkData.filter(d => d.th === t).sort((a, b) => {
         const fixA = (a.fix === "1" || a.fix === "true") ? 1 : 0;
         const fixB = (b.fix === "1" || b.fix === "true") ? 1 : 0;
@@ -278,13 +284,17 @@ function prepMedia(text, isMusic, id = null) {
         if(id) playAudio(id, text);
     }
     
-    document.querySelectorAll('.item').forEach((el) => {
+    // アイテムのハイライト
+    const items = dom.lv.querySelectorAll('.item');
+    items.forEach((el) => {
         const idx = parseInt(el.dataset.idx);
-        el.classList.toggle('active-item', idx === state.currentIndex);
+        if (idx === state.currentIndex) el.classList.add('active-item');
+        else el.classList.remove('active-item');
     });
 }
 
 function playAudio(id, fallbackText) {
+    // MP3フォルダ指定
     dom.audio.src = `./voices_mp3/${id}.mp3?t=${new Date().getTime()}`;
     
     dom.audio.onerror = () => {
@@ -302,7 +312,7 @@ function speak(text) {
     window.speechSynthesis.cancel();
     const ut = new SpeechSynthesisUtterance(text);
     ut.lang = 'ja-JP';
-    ut.rate = 1.05;
+    ut.rate = 1.1; // 少しだけ速めに
     window.speechSynthesis.speak(ut);
 }
 
@@ -314,12 +324,12 @@ function stopAllVoice() {
 }
 
 function playHead() {
-    dom.yt.contentWindow.postMessage('{"event":"command","func":"seekTo","args":[0, true]}', '*');
-    dom.yt.contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*');
-    if(!state.isMusicMode) {
-        if(dom.audio.src) dom.audio.play().catch(()=>{});
-    } else {
+    if(state.isMusicMode) {
+        dom.yt.contentWindow.postMessage('{"event":"command","func":"seekTo","args":[0, true]}', '*');
+        dom.yt.contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*');
         speak(state.lastTxt);
+    } else {
+        if(dom.audio.src) dom.audio.play().catch(()=>{});
     }
 }
 
