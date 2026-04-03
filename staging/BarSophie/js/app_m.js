@@ -1,383 +1,152 @@
 /**
- * Bar Sophie Mobile v14.7 - Standard Edition
- * 修正：CSV列のインデックス指定によるデータ取得（undefined対策）
- * 音声：./voices_mp3/[ID].mp3
+ * Bar Sophie PC版 v14.13
+ * 目的: メニューが動かない問題を根絶し、強引に起動させる
  */
 
-const state = {
-    talkData: [],
-    musicData: [],
-    currentView: 'none',
-    currentGenre: '',
-    currentTheme: '',
-    currentArtist: '',
-    currentList: [],
-    currentIndex: -1,
-    isPaused: false,
-    isAutoPlay: false,
-    isMusicMode: false,
-    lastTxt: "",
-    pressTimer: null
-};
+const sophieVoice = new Audio();
 
-const dom = {
-    yt: document.getElementById('yt-iframe'),
-    img: document.getElementById('monitor-img'),
-    tel: document.getElementById('telop'),
-    lv: document.getElementById('list-view'),
-    nm: document.getElementById('nav-main'),
-    audio: document.getElementById('talk-audio'),
-    scrollArea: document.getElementById('main-scroll'),
-    loungeText: document.getElementById('lounge-text')
-};
-
-document.addEventListener('DOMContentLoaded', async () => {
-    await loadData();
-    setupEvents();
-    setInterval(checkYTProgress, 1000);
-});
-
-// CSV読み込みロジック（列番号固定で取得）
-async function loadData() {
+window.onload = async function() {
+    console.log("🛠️ [Debug] PC版 起動シーケンス開始...");
     try {
-        const tRes = await fetch('お酒の話.csv');
-        const tTxt = await tRes.text();
-        state.talkData = parseTalkCSV(tTxt);
-
-        try {
-            const mRes = await fetch('音楽リスト.csv');
-            const mTxt = await mRes.text();
-            state.musicData = parseMusicCSV(mTxt);
-        } catch (e) {
-            state.musicData = [];
-        }
+        await loadBarData();
+        console.log("🛠️ [Debug] 全データ読み込み完了");
     } catch (e) {
-        console.error("Data loading failed:", e);
+        console.error("🛠️ [Debug] 起動時に致命的なエラー:", e);
     }
-}
+};
 
-function parseTalkCSV(text) {
-    const lines = text.trim().split(/\r?\n/);
-    if (lines.length < 2) return [];
-    
-    return lines.slice(1).map(line => {
-        // カンマで分割（引用符内のカンマは考慮しないシンプル分割）
-        const v = line.split(',').map(s => s.trim().replace(/^"|"$/g, ''));
-        return {
-            id: v[0],    // ID
-            g:  v[1],    // ジャンル
-            th: v[2],    // テーマ
-            ti: v[3],    // UI表示タイトル
-            txt: v[5],   // カンペ本文（6列目）
-            fix: v[6] || "" // FIX（もしあれば7列目）
-        };
-    }).filter(d => d.id);
-}
-
-function parseMusicCSV(text) {
-    const lines = text.trim().split(/\r?\n/);
-    if (lines.length < 2) return [];
-    const header = lines[0].split(',').map(h => h.trim());
-    return lines.slice(1).map(line => {
-        const v = line.split(',').map(s => s.trim().replace(/^"|"$/g, ''));
-        return { a: v[0], ti: v[1], u: v[2], fix: v[3] || "" };
-    });
-}
-
-function setupEvents() {
-    // 【継承】入店フロー
-    document.getElementById('btn-enter').onclick = () => {
-        document.getElementById('entry-screen').style.display = 'none';
-        document.getElementById('chat-mode').style.display = 'flex';
-        // 音声アンロック
-        dom.audio.play().catch(()=>{}); 
-        dom.audio.pause();
-        speak("まきむら様、お帰りなさいませ。");
-    };
-
-    document.getElementById('btn-to-bar').onclick = () => {
-        document.getElementById('chat-mode').style.display = 'none';
-        document.getElementById('main-ui').style.display = 'flex';
-        stopAllVoice();
-    };
-
-    document.getElementById('ctrl-play').onclick = playHead;
-    document.getElementById('ctrl-pause').onclick = togglePause;
-    document.getElementById('ctrl-back').onclick = handleBack;
-    
-    document.getElementById('sophie-warp').onclick = () => {
-        if(state.currentView !== "none") {
-            dom.lv.style.display = 'none';
-            dom.nm.style.display = 'block';
-            state.currentView = "none";
-        } else {
-            document.getElementById('main-ui').style.display = 'none';
-            document.getElementById('chat-mode').style.display = 'flex';
-        }
-    };
-
-    document.getElementById('btn-music').onclick = openMusic;
-    document.getElementById('btn-talk').onclick = openTalk;
-
-    const btnN = document.getElementById('btn-next');
-    btnN.onpointerdown = () => {
-        state.pressTimer = setTimeout(() => {
-            state.isAutoPlay = !state.isAutoPlay;
-            btnN.classList.toggle('auto-active', state.isAutoPlay);
-            state.pressTimer = null;
-        }, 600);
-    };
-    btnN.onpointerup = () => {
-        if (state.pressTimer) {
-            clearTimeout(state.pressTimer);
-            state.pressTimer = null;
-            next();
-        }
-    };
-
-    dom.audio.onended = () => {
-        if (state.isAutoPlay && !state.isMusicMode) setTimeout(next, 1200);
-    };
-}
-
-// ---------------- UI描画 ----------------
-
-function openTalk() {
-    state.currentView = "genre";
-    let h = '<div class="label">お酒のジャンル</div>';
-    const genres = [...new Set(state.talkData.map(d => d.g))].filter(g => g);
-    genres.forEach(g => { h += `<div class="item" id="g-${g}">📁 ${g}</div>`; });
-    render(h, (e) => {
-        if(e.target.id.startsWith('g-')) {
-            state.currentGenre = e.target.id.replace('g-','');
-            openThemes(state.currentGenre);
-        }
-    });
-}
-
-function openThemes(g) {
-    state.currentView = "theme";
-    let h = `<div class="label">${g}</div>`;
-    const themes = [...new Set(state.talkData.filter(d => d.g === g).map(d => d.th))].filter(t => t);
-    themes.forEach(t => { h += `<div class="item" id="th-${t}">🏷️ ${t}</div>`; });
-    render(h, (e) => {
-        if(e.target.id.startsWith('th-')) {
-            state.currentTheme = e.target.id.replace('th-','');
-            openStories(state.currentTheme);
-        }
-    });
-}
-
-function openStories(t) {
-    state.currentView = "stories";
-    state.isMusicMode = false;
-    
-    // FIXソート
-    const stories = state.talkData.filter(d => d.th === t).sort((a, b) => {
-        const fixA = (a.fix === "1" || a.fix === "true") ? 1 : 0;
-        const fixB = (b.fix === "1" || b.fix === "true") ? 1 : 0;
-        return fixB - fixA;
-    });
-    
-    state.currentList = stories;
-    let h = `<div class="label">${t}</div>`;
-    stories.forEach((d, i) => {
-        const fixIcon = (d.fix === "1" || d.fix === "true") ? "📌 " : "";
-        h += `<div class="item" data-idx="${i}">${fixIcon}${d.ti || "無題"}</div>`;
-    });
-    render(h, (e) => {
-        const i = parseInt(e.target.dataset.idx);
-        if(!isNaN(i)) playStory(i);
-    });
-}
-
-function playStory(index) {
-    state.currentIndex = index;
-    const m = state.currentList[index];
-    if(!m) return;
-    setMonitor('i', `./talk_images/${m.id}.jpg`);
-    prepMedia(m.txt || "", false, m.id);
-}
-
-function openMusic() {
-    state.currentView = "artists";
-    let h = '<div class="label">アーティスト選曲</div>';
-    const artists = [...new Set(state.musicData.map(d => d.a))].filter(a => a);
-    artists.forEach(a => { h += `<div class="item" id="art-${a}">🎤 ${a}</div>`; });
-    render(h, (e) => {
-        if(e.target.id.startsWith('art-')) {
-            state.currentArtist = e.target.id.replace('art-','');
-            renderSongs(state.currentArtist);
-        }
-    });
-}
-
-function renderSongs(a) {
-    state.currentView = "titles";
-    state.isMusicMode = true;
-    const songs = state.musicData.filter(m => m.a === a);
-    state.currentList = songs;
-    let h = `<div class="label">${a}</div>`;
-    songs.forEach((m, i) => {
-        h += `<div class="item" data-idx="${i}">${m.ti || "無題"}</div>`;
-    });
-    render(h, (e) => {
-        const i = parseInt(e.target.dataset.idx);
-        if(!isNaN(i)) { state.currentIndex = i; playMusic(i); }
-    });
-}
-
-function playMusic(index) {
-    const m = state.currentList[index];
-    if(!m) return;
-    setMonitor('v', m.u);
-    prepMedia(`${m.a}さんの「${m.ti}」です。`, true);
-}
-
-function render(h, cb) {
-    dom.nm.style.display = 'none';
-    dom.lv.style.display = 'block';
-    dom.lv.innerHTML = h;
-    dom.lv.onclick = cb;
-    dom.scrollArea.scrollTop = 0;
-}
-
-function handleBack() {
-    const v = state.currentView;
-    if (v === "stories") openThemes(state.currentGenre);
-    else if (v === "theme") openTalk();
-    else if (v === "titles") openMusic();
-    else { dom.lv.style.display = 'none'; dom.nm.style.display = 'block'; state.currentView = "none"; }
-}
-
-// ---------------- メディア制御 ----------------
-
-function setMonitor(type, src) {
-    dom.yt.style.display = 'none';
-    dom.img.style.display = 'none';
-    dom.yt.src = "";
-    setTimeout(() => {
-        if(type === 'v') {
-            dom.yt.style.display = 'block';
-            const ytId = extractYtId(src);
-            dom.yt.src = `https://www.youtube.com/embed/${ytId}?autoplay=1&enablejsapi=1`;
-        } else {
-            dom.img.style.display = 'block';
-            dom.img.src = src;
-        }
-    }, 100);
-}
-
-function prepMedia(text, isMusic, id = null) {
-    stopAllVoice();
-    state.lastTxt = text;
-    state.isMusicMode = isMusic;
-    state.isPaused = false;
-    dom.tel.innerText = text;
-    dom.tel.style.display = 'block';
-    dom.tel.scrollTop = 0;
-
-    if(isMusic) {
-        speak(text);
-        setTimeout(() => { if(dom.tel.innerText === text) dom.tel.style.display = 'none'; }, 5000);
-    } else {
-        if(id) playAudio(id, text);
+// --- 高精度CSVパース（エラー耐性強化） ---
+function parseCsvLine(line) {
+    const result = [];
+    let cur = '';
+    let inQuotes = false;
+    for (let i = 0; i < line.length; i++) {
+        const char = line[i];
+        if (char === '"') inQuotes = !inQuotes;
+        else if (char === ',' && !inQuotes) {
+            result.push(cur.trim());
+            cur = '';
+        } else cur += char;
     }
-    
-    // アイテムのハイライト
-    const items = dom.lv.querySelectorAll('.item');
-    items.forEach((el) => {
-        const idx = parseInt(el.dataset.idx);
-        if (idx === state.currentIndex) el.classList.add('active-item');
-        else el.classList.remove('active-item');
-    });
+    result.push(cur.trim());
+    return result.map(val => val.replace(/^"|"$/g, ''));
 }
 
-function playAudio(id, fallbackText) {
-    // MP3フォルダ指定
-    dom.audio.src = `./voices_mp3/${id}.mp3?t=${new Date().getTime()}`;
-    
-    dom.audio.onerror = () => {
-        speak(fallbackText);
-    };
-
-    const p = dom.audio.play();
-    if (p !== undefined) {
-        p.catch(() => { speak(fallbackText); });
-    }
-}
-
-function speak(text) {
-    if(!text) return;
-    window.speechSynthesis.cancel();
-    const ut = new SpeechSynthesisUtterance(text);
-    ut.lang = 'ja-JP';
-    ut.rate = 1.1; // 少しだけ速めに
-    window.speechSynthesis.speak(ut);
-}
-
-function stopAllVoice() {
-    window.speechSynthesis.cancel();
-    dom.audio.pause();
-    dom.audio.currentTime = 0;
-    dom.audio.onerror = null;
-}
-
-function playHead() {
-    if(state.isMusicMode) {
-        dom.yt.contentWindow.postMessage('{"event":"command","func":"seekTo","args":[0, true]}', '*');
-        dom.yt.contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*');
-        speak(state.lastTxt);
-    } else {
-        if(dom.audio.src) dom.audio.play().catch(()=>{});
-    }
-}
-
-function togglePause() {
-    if(!state.isPaused) {
-        dom.yt.contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*');
-        dom.audio.pause();
-        window.speechSynthesis.pause();
-        state.isPaused = true;
-    } else {
-        dom.yt.contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*');
-        if(!state.isMusicMode && dom.audio.src) dom.audio.play().catch(()=>{});
-        window.speechSynthesis.resume();
-        state.isPaused = false;
-    }
-}
-
-function next() {
-    if(state.currentIndex < state.currentList.length - 1) {
-        const nextIdx = state.currentIndex + 1;
-        if (state.isMusicMode) {
-            state.currentIndex = nextIdx;
-            playMusic(nextIdx);
-        } else {
-            playStory(nextIdx);
-        }
-    } else {
-        state.isAutoPlay = false;
-        document.getElementById('btn-next').classList.remove('auto-active');
-    }
-}
-
-function extractYtId(u) {
-    if(!u) return "";
-    const reg = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i;
-    const match = u.match(reg);
-    return match ? match[1] : u;
-}
-
-function checkYTProgress() {
-    if (state.isAutoPlay && state.isMusicMode) {
-        dom.yt.contentWindow.postMessage('{"event":"command","func":"getPlayerState","args":[]}', '*');
-    }
-}
-
-window.addEventListener('message', (e) => {
+// --- データ読み込み ---
+async function loadBarData() {
+    // [1] JBoxメニューの読み込み
+    console.log("🛠️ [Debug] JBoxメニューを読み込みます...");
     try {
-        const d = JSON.parse(e.data);
-        if (d.info === 0 && state.isAutoPlay && state.isMusicMode) next();
-    } catch(err){}
-});
+        const jboxRes = await fetch('data/JBoxメニュー.csv');
+        if (!jboxRes.ok) throw new Error("JBoxメニューが見つかりません");
+        const jboxText = await jboxRes.text();
+        renderJukebox(jboxText);
+    } catch (e) {
+        console.warn("⚠️ JBox読み込み失敗（スキップします）:", e);
+    }
+
+    // [2] お酒の物語の読み込み
+    console.log("🛠️ [Debug] お酒の物語を読み込みます...");
+    try {
+        const storyRes = await fetch('data/お酒の話.csv');
+        if (!storyRes.ok) throw new Error("お酒の話が見つかりません");
+        const storyText = await storyRes.text();
+        renderStories(storyText);
+    } catch (e) {
+        console.warn("⚠️ お酒の話読み込み失敗（スキップします）:", e);
+    }
+}
+
+// --- 音楽メニュー表示（徹底的に安全な設計） ---
+function renderJukebox(csvData) {
+    const lines = csvData.split(/\r?\n/).filter(line => line.trim() !== '');
+    // HTMLのIDを徹底的に探す
+    const fixGrid = document.getElementById('fix-buttons-grid') || document.querySelector('.fix-grid');
+    const requestList = document.getElementById('request-list') || document.querySelector('.request-list');
+    
+    if (fixGrid) fixGrid.innerHTML = '';
+    if (requestList) requestList.innerHTML = '';
+
+    lines.slice(1).forEach((line, index) => {
+        const cols = parseCsvLine(line);
+        if (cols.length < 5) return;
+        const [flag, code, singer, title, url] = cols;
+
+        const btn = document.createElement('button');
+        btn.className = 'jbox-button';
+        btn.innerHTML = `<span class="singer">${singer}</span><br><span class="title">${title}</span>`;
+        
+        btn.onclick = () => {
+            console.log(`🎵 ボタンクリック成功: ${title}`);
+            playMusic(url);
+        };
+
+        if (flag === 'FIX' && fixGrid) fixGrid.appendChild(btn);
+        else if (flag !== 'SIGNAL' && requestList) requestList.appendChild(btn);
+    });
+}
+
+// --- お酒の物語表示 ---
+function renderStories(csvData) {
+    const lines = csvData.split(/\r?\n/).filter(line => line.trim() !== '');
+    const storyList = document.getElementById('story-list') || document.querySelector('.story-list');
+    if (storyList) storyList.innerHTML = '';
+
+    lines.slice(1).forEach(line => {
+        const cols = parseCsvLine(line);
+        if (cols.length < 4) return;
+        const [id, title, genre, body] = cols;
+
+        const btn = document.createElement('button');
+        btn.className = 'story-button';
+        btn.innerText = title;
+        btn.onclick = () => {
+            console.log(`🎙️ 物語クリック成功: ${title}`);
+            playSophieStory(id, title, body);
+        };
+        if (storyList) storyList.appendChild(btn);
+    });
+}
+
+// --- 🎬 YouTubeモニター制御 ---
+function playMusic(urlOrId) {
+    let videoId = urlOrId;
+    if (urlOrId.includes('v=')) videoId = urlOrId.split('v=')[1].split('&')[0];
+    else if (urlOrId.includes('youtu.be/')) videoId = urlOrId.split('youtu.be/')[1].split('?')[0];
+
+    const monitor = document.getElementById('main-monitor-iframe') || 
+                    document.getElementById('player') || 
+                    document.querySelector('iframe');
+
+    if (monitor) {
+        monitor.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&controls=0&enablejsapi=1`;
+        console.log("✅ YouTubeをモニターに設定しました:", videoId);
+    } else {
+        console.error("❌ [Fatal] YouTubeを表示する iframe が見つかりません。");
+    }
+}
+
+// --- 🎙️ ソフィー音声再生 ---
+function playSophieStory(id, title, text) {
+    sophieVoice.pause();
+    sophieVoice.src = `voices_mp3/${id}.mp3?v=${new Date().getTime()}`;
+
+    const monitor = document.querySelector('iframe');
+    if (monitor?.contentWindow) {
+        monitor.contentWindow.postMessage('{"event":"command","func":"setVolume","args":[5]}', '*');
+    }
+
+    sophieVoice.play().then(() => {
+        const chat = document.getElementById('sophie-chat');
+        if (chat) {
+            chat.innerHTML = `<strong>【${title}】</strong><br>${text.replace(/\n/g, '<br>')}`;
+            chat.scrollTop = chat.scrollHeight;
+        }
+    }).catch(e => console.warn("音声ファイル読み込み中...", e));
+
+    sophieVoice.onended = () => {
+        if (monitor?.contentWindow) {
+            monitor.contentWindow.postMessage('{"event":"command","func":"setVolume","args":[20]}', '*');
+        }
+    };
+}
