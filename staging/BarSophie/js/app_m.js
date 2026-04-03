@@ -1,10 +1,8 @@
 /**
- * Bar Sophie Mobile v14.7 - MP3 Edition
- * Folder path: ./voices_mp3/
- * File format: [ID].mp3
+ * Bar Sophie Mobile v14.7 - Final Stable Edition
+ * Fix: Undefined data mapping issue
  */
 
-// 状態管理
 const state = {
     talkData: [],
     musicData: [],
@@ -21,7 +19,6 @@ const state = {
     pressTimer: null
 };
 
-// DOM要素
 const dom = {
     yt: document.getElementById('yt-iframe'),
     img: document.getElementById('monitor-img'),
@@ -39,7 +36,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     setInterval(checkYTProgress, 1000);
 });
 
-// CSV読み込み
 async function loadData() {
     try {
         const tRes = await fetch('お酒の話.csv');
@@ -58,28 +54,34 @@ async function loadData() {
     }
 }
 
+// CSVパースロジックの強化
 function parseCSV(text) {
     const lines = text.trim().split('\n');
-    const header = lines[0].split(',').map(h => h.trim());
+    if (lines.length < 2) return [];
+    
+    const header = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
+    
     return lines.slice(1).map(line => {
-        const values = line.split(',');
+        // カンマ区切りだが、引用符内のカンマを考慮しない簡易版（お酒の話.csvに準拠）
+        const values = line.split(',').map(v => v.trim().replace(/^"|"$/g, ''));
         const obj = {};
         header.forEach((h, i) => {
-            const val = values[i] ? values[i].trim() : "";
-            if(h === "ID") obj.id = val;
-            else if(h === "ジャンル") obj.g = val;
-            else if(h === "テーマ") obj.th = val;
-            else if(h === "UI表示タイトル") obj.ti = val;
-            else if(h === "カンペ本文（250文字程度）") obj.txt = val;
-            else if(h === "FIX") obj.fix = val;
-            obj[h] = val;
+            obj[h] = values[i] || "";
         });
+        
+        // プログラム内部で使いやすいように正規化（エイリアス作成）
+        obj.id = obj["ID"];
+        obj.g  = obj["ジャンル"];
+        obj.th = obj["テーマ"];
+        obj.ti = obj["UI表示タイトル"];
+        obj.txt = obj["カンペ本文（250文字程度）"];
+        obj.fix = obj["FIX"];
+        
         return obj;
     });
 }
 
 function setupEvents() {
-    // 入店フロー
     document.getElementById('btn-enter').onclick = () => {
         document.getElementById('entry-screen').style.display = 'none';
         document.getElementById('chat-mode').style.display = 'flex';
@@ -94,7 +96,6 @@ function setupEvents() {
         stopAllVoice();
     };
 
-    // 操作パネル
     document.getElementById('ctrl-play').onclick = playHead;
     document.getElementById('ctrl-pause').onclick = togglePause;
     document.getElementById('ctrl-back').onclick = handleBack;
@@ -113,7 +114,6 @@ function setupEvents() {
     document.getElementById('btn-music').onclick = openMusic;
     document.getElementById('btn-talk').onclick = openTalk;
 
-    // 次へボタン
     const btnN = document.getElementById('btn-next');
     btnN.onpointerdown = () => {
         state.pressTimer = setTimeout(() => {
@@ -140,7 +140,7 @@ function setupEvents() {
 function openTalk() {
     state.currentView = "genre";
     let h = '<div class="label">お酒のジャンル</div>';
-    const genres = [...new Set(state.talkData.map(d => d.g))];
+    const genres = [...new Set(state.talkData.map(d => d.g))].filter(g => g);
     genres.forEach(g => { h += `<div class="item" id="g-${g}">📁 ${g}</div>`; });
     render(h, (e) => {
         if(e.target.id.startsWith('g-')) {
@@ -153,7 +153,7 @@ function openTalk() {
 function openThemes(g) {
     state.currentView = "theme";
     let h = `<div class="label">${g}</div>`;
-    const themes = [...new Set(state.talkData.filter(d => d.g === g).map(d => d.th))];
+    const themes = [...new Set(state.talkData.filter(d => d.g === g).map(d => d.th))].filter(t => t);
     themes.forEach(t => { h += `<div class="item" id="th-${t}">🏷️ ${t}</div>`; });
     render(h, (e) => {
         if(e.target.id.startsWith('th-')) {
@@ -177,7 +177,7 @@ function openStories(t) {
     let h = `<div class="label">${t}</div>`;
     stories.forEach((d, i) => {
         const fixIcon = (d.fix === "1" || d.fix === "true") ? "📌 " : "";
-        h += `<div class="item" data-idx="${i}">${fixIcon}${d.ti}</div>`;
+        h += `<div class="item" data-idx="${i}">${fixIcon}${d.ti || "無題"}</div>`;
     });
     render(h, (e) => {
         const i = parseInt(e.target.dataset.idx);
@@ -188,14 +188,15 @@ function openStories(t) {
 function playStory(index) {
     state.currentIndex = index;
     const m = state.currentList[index];
+    if(!m) return;
     setMonitor('i', `./talk_images/${m.id}.jpg`);
-    prepMedia(m.txt, false, m.id);
+    prepMedia(m.txt || "", false, m.id);
 }
 
 function openMusic() {
     state.currentView = "artists";
     let h = '<div class="label">アーティスト選曲</div>';
-    const artists = [...new Set(state.musicData.map(d => d.a))];
+    const artists = [...new Set(state.musicData.map(d => d.a))].filter(a => a);
     artists.forEach(a => { h += `<div class="item" id="art-${a}">🎤 ${a}</div>`; });
     render(h, (e) => {
         if(e.target.id.startsWith('art-')) {
@@ -208,17 +209,11 @@ function openMusic() {
 function renderSongs(a) {
     state.currentView = "titles";
     state.isMusicMode = true;
-    const songs = state.musicData.filter(m => m.a === a).sort((a, b) => {
-        const fixA = (a.fix === "1" || a.fix === "true") ? 1 : 0;
-        const fixB = (b.fix === "1" || b.fix === "true") ? 1 : 0;
-        return fixB - fixA;
-    });
-    
+    const songs = state.musicData.filter(m => m.a === a);
     state.currentList = songs;
     let h = `<div class="label">${a}</div>`;
     songs.forEach((m, i) => {
-        const fixIcon = (m.fix === "1" || m.fix === "true") ? "📌 " : "";
-        h += `<div class="item" data-idx="${i}">${fixIcon}${m.ti}</div>`;
+        h += `<div class="item" data-idx="${i}">${m.ti || "無題"}</div>`;
     });
     render(h, (e) => {
         const i = parseInt(e.target.dataset.idx);
@@ -228,6 +223,7 @@ function renderSongs(a) {
 
 function playMusic(index) {
     const m = state.currentList[index];
+    if(!m) return;
     setMonitor('v', m.u);
     prepMedia(`${m.a}さんの「${m.ti}」です。`, true);
 }
@@ -282,20 +278,16 @@ function prepMedia(text, isMusic, id = null) {
         if(id) playAudio(id, text);
     }
     
-    document.querySelectorAll('.item').forEach((el, idx) => {
+    document.querySelectorAll('.item').forEach((el) => {
+        const idx = parseInt(el.dataset.idx);
         el.classList.toggle('active-item', idx === state.currentIndex);
     });
 }
 
-/**
- * 音声再生コア（MP3 & フォルダ voices_mp3 対応版）
- */
 function playAudio(id, fallbackText) {
-    // キャッシュ回避用のランダムクエリを付与 (?t=...)
     dom.audio.src = `./voices_mp3/${id}.mp3?t=${new Date().getTime()}`;
     
     dom.audio.onerror = () => {
-        console.warn(`MP3 [${id}.mp3] not found. Fallback to synthesis.`);
         speak(fallbackText);
     };
 
@@ -306,6 +298,7 @@ function playAudio(id, fallbackText) {
 }
 
 function speak(text) {
+    if(!text) return;
     window.speechSynthesis.cancel();
     const ut = new SpeechSynthesisUtterance(text);
     ut.lang = 'ja-JP';
@@ -324,7 +317,7 @@ function playHead() {
     dom.yt.contentWindow.postMessage('{"event":"command","func":"seekTo","args":[0, true]}', '*');
     dom.yt.contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*');
     if(!state.isMusicMode) {
-        if(dom.audio.src) dom.audio.play();
+        if(dom.audio.src) dom.audio.play().catch(()=>{});
     } else {
         speak(state.lastTxt);
     }
@@ -338,7 +331,7 @@ function togglePause() {
         state.isPaused = true;
     } else {
         dom.yt.contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*');
-        if(!state.isMusicMode && dom.audio.src) dom.audio.play();
+        if(!state.isMusicMode && dom.audio.src) dom.audio.play().catch(()=>{});
         window.speechSynthesis.resume();
         state.isPaused = false;
     }
