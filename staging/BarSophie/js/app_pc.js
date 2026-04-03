@@ -40,11 +40,11 @@ function parseCsv(line) {
 
 async function loadBarDatabase() {
     try {
-        const jRes = await fetch('data/JBoxメニュー.csv');
+        const jRes = await fetch('JBoxメニュー.csv');
         const jText = await jRes.text();
         jboxData = jText.split(/\r?\n/).filter(l => l.length > 20).slice(1).map(parseCsv);
 
-        const sRes = await fetch('data/お酒の話.csv');
+        const sRes = await fetch('お酒の話.csv');
         const sText = await sRes.text();
         storyData = sText.split(/\r?\n/).filter(l => l.length > 20).slice(1).map(parseCsv);
 
