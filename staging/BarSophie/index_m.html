@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Bar Sophie v13.0 Modular</title>
+    <title>Bar Sophie v14.7 Mobile</title>
     <link rel="stylesheet" href="css/style_m.css">
 </head>
 <body>
@@ -29,7 +29,7 @@
         <div class="r-side">
             <div class="console">
                 <div class="btn-grid">
-                    <button class="c-btn" id="ctrl-play">▶ 再生/読上</button>
+                    <button class="c-btn" id="ctrl-play">▶ 再生</button>
                     <button class="c-btn" id="ctrl-pause">⏸ 停止/再開</button>
                     <button class="c-btn" id="ctrl-back">← 戻る</button>
                     <button class="c-btn" id="btn-next">⏭ 次へ</button>
@@ -39,15 +39,18 @@
             <div class="scroll-area" id="main-scroll">
                 <div id="nav-main">
                     <button class="act-btn" style="background:var(--green)" id="btn-music">🎵 音楽選曲 (リクエスト)</button>
-                    <button class="act-btn" style="background:var(--talk)" id="btn-talk">🥃 お酒の話 (140本の物語)</button>
+                    <button class="act-btn" style="background:var(--talk)" id="btn-talk">🥃 お酒の話 (360本の物語)</button>
                 </div>
                 <div id="list-view" style="display:none;"></div>
-                <div style="height: 120px;"></div>
+                <div id="detail-view" style="display:none;"></div>
             </div>
         </div>
     </div>
-    <div class="ver">v13.0 MODULAR-PRO</div>
 
-    <script type="module" src="js/app_m.js"></script>
+    <div class="ver">v14.7m-wav</div>
+
+    <audio id="talk-audio" style="display:none;"></audio>
+
+    <script src="js/app_m.js"></script>
 </body>
 </html>
