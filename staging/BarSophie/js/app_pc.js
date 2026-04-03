@@ -160,7 +160,7 @@ function startTalk(talkObj) {
     speechArea.innerText = talkObj.body;
 
     // WAVファイルを再生
-    const wavPath = `voices_vp/${talkObj.id}.wav?v=${Date.now()}`;
+    const wavPath = `voices_mp3/${talkObj.id}.mp3?v=${Date.now()}`;
     sophieVoice.src = wavPath;
     sophieVoice.play().catch(() => {
         // WAVファイルがない場合はテキスト表示のみ（エラーは無視）
