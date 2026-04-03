@@ -1,135 +1,150 @@
 /**
- * Bar Sophie PC版 v14.8 (External Voice Engine)
- * 360本以上の軽量MP3に対応した、音と文字の完全同期システム
+ * Bar Sophie PC版 v14.8
+ * 【修正内容】
+ * 1. ジュークボックス(JBoxメニュー.csv)の完全復旧
+ * 2. 音声物語(お酒の話.csv)の軽量MP3対応
+ * 3. YouTube(音楽)とMP3(声)の同時制御（ダッキング機能付）
  */
 
-// --- 1. グローバル定数・プレイヤー設定 ---
-const sophieVoice = new Audio(); // ソフィー専用の音声プレイヤー
-const BGM_VOLUME_NORMAL = 0.2;   // BGMの通常音量
-const BGM_VOLUME_DUCKING = 0.05; // ソフィーが話している時のBGM音量
+// --- 1. プレイヤー・定数設定 ---
+let ytPlayer; // YouTubeプレイヤー
+const sophieVoice = new Audio(); // ソフィーの音声用
+const BGM_VOLUME_NORMAL = 0.2;
+const BGM_VOLUME_DUCKING = 0.05;
 
-// --- 2. 音声再生・演出コントロール（心臓部） ---
-/**
- * @param {string} id - CSVのID（ファイル名に対応: 101, 102...）
- * @param {string} title - お酒のタイトル
- * @param {string} text - 読み上げる本文
- */
-function playSophieStory(id, title, text) {
-    console.log(`🎤 再生リクエスト: ${id} - ${title}`);
+// --- 2. 初期化処理（CSV読み込み） ---
+window.onload = async function() {
+    console.log("🚀 Bar Sophie v14.8 起動開始...");
+    await initJukebox();       // 音楽メニューの読み込み
+    await initSophieStories(); // お酒の物語の読み込み
+};
 
-    // [A] 既存の音声を即座に停止（連打対応）
-    sophieVoice.pause();
-    sophieVoice.currentTime = 0;
+// --- 3. ジュークボックス（音楽）制御 ---
+async function initJukebox() {
+    try {
+        const response = await fetch('data/JBoxメニュー.csv');
+        const csvData = await response.text();
+        const rows = csvData.split('\n').filter(row => row.trim() !== '');
+        
+        const fixGrid = document.getElementById('fix-buttons-grid'); // FIXボタン用エリア
+        const requestList = document.getElementById('request-list'); // 選曲リスト用エリア
 
-    // [B] MP3ファイルのパスをセット (軽量化した600KBの精鋭たち)
-    // キャッシュ対策としてタイムスタンプを付与
-    sophieVoice.src = `voices_mp3/${id}.mp3?v=${new Date().getTime()}`;
+        // ヘッダーを除外してループ
+        rows.slice(1).forEach(row => {
+            // カンマ区切り（簡易パース。引用符内のカンマには非対応なので注意）
+            const [flag, code, singer, title, url] = row.split(',').map(s => s.replace(/"/g, '').trim());
 
-    // [C] BGMのダッキング（音量を下げる）
-    const bgmPlayer = document.getElementById('bgm-player');
-    if (bgmPlayer) {
-        bgmPlayer.volume = BGM_VOLUME_DUCKING;
+            if (!title) return; // 空行対策
+
+            const btn = document.createElement('button');
+            btn.className = 'jbox-button';
+            btn.innerHTML = `<span class="singer">${singer}</span><br><span class="title">${title}</span>`;
+            
+            // 再生イベント
+            btn.onclick = () => playMusic(url);
+
+            // フラグが「FIX」なら上部グリッドへ、それ以外はリストへ
+            if (flag === 'FIX') {
+                if (fixGrid) fixGrid.appendChild(btn);
+            } else if (flag === 'SIGNAL') {
+                // 看板曲ボタン（もしあれば個別に紐付け）
+                const signalBtn = document.getElementById('signal-btn');
+                if (signalBtn) signalBtn.onclick = () => playMusic(url);
+            } else {
+                if (requestList) requestList.appendChild(btn);
+            }
+        });
+        console.log("🎵 ジュークボックスの読み込み完了");
+    } catch (err) {
+        console.error("❌ 音楽データの読み込みに失敗:", err);
+    }
+}
+
+function playMusic(urlOrId) {
+    let videoId = urlOrId;
+    // URLからIDだけを抽出（YouTubeのフルURLにも対応）
+    if (urlOrId.includes('v=')) {
+        videoId = urlOrId.split('v=')[1].split('&')[0];
+    } else if (urlOrId.includes('youtu.be/')) {
+        videoId = urlOrId.split('youtu.be/')[1];
     }
 
-    // [D] 再生実行
-    sophieVoice.play().then(() => {
-        // [E] 視覚演出：モニターに画像を表示、チャット欄にテキストを表示
-        updateMonitorImage(id); // IDに基づいた画像を表示（後述）
-        displaySophieText(title, text);
-        console.log(`✅ ${id}.mp3 再生中...`);
-    }).catch(err => {
-        console.error("❌ 音声ファイルが読み込めません:", err);
-        // 音声がなくても物語だけは届ける（フォールバック）
-        displaySophieText(title, text + "\n(音声読み込みエラー)");
-    });
-
-    // [F] 終了時の処理（BGMを戻す）
-    sophieVoice.onended = () => {
-        if (bgmPlayer) {
-            bgmPlayer.volume = BGM_VOLUME_NORMAL;
+    // YouTubeプレイヤーの読み込み（iframe apiを使用している前提）
+    if (ytPlayer && ytPlayer.loadVideoById) {
+        ytPlayer.loadVideoById(videoId);
+    } else {
+        // 簡易実装用：直接iframeのsrcを書き換える場合
+        const monitor = document.getElementById('main-monitor-iframe');
+        if (monitor) {
+            monitor.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&controls=0`;
         }
-        console.log("🏁 物語が終了しました。");
-    };
+    }
+    console.log(`播放音楽: ${videoId}`);
 }
 
-// --- 3. UI表示・テキスト演出 ---
-function displaySophieText(title, text) {
-    const chatContainer = document.getElementById('sophie-chat');
-    if (!chatContainer) return;
-
-    // HTMLを生成（改行コードを<br>に置換）
-    const formattedText = text.replace(/\n/g, '<br>');
-    chatContainer.innerHTML = `
-        <div class="story-bubble">
-            <h3 class="story-title">【${title}】</h3>
-            <p class="story-body">${formattedText}</p>
-        </div>
-    `;
-    
-    // 常に最新のメッセージが見えるようスクロール
-    chatContainer.scrollTop = chatContainer.scrollHeight;
-}
-
-// --- 4. モニター画像制御 ---
-function updateMonitorImage(id) {
-    const monitor = document.getElementById('main-monitor');
-    if (!monitor) return;
-
-    // お酒の画像があれば表示（なければデフォルトのソフィー画像）
-    const imgPath = `images/liquor/${id}.jpg`;
-    const defaultImg = `images/sophie_standard.png`;
-
-    const img = new Image();
-    img.src = imgPath;
-    img.onload = () => monitor.style.backgroundImage = `url(${imgPath})`;
-    img.onerror = () => monitor.style.backgroundImage = `url(${defaultImg})`;
-}
-
-// --- 5. ⏹️ 停止ボタンの完全連動 ---
-function stopEverything() {
-    // ソフィーを黙らせる
-    sophieVoice.pause();
-    sophieVoice.currentTime = 0;
-
-    // BGMの音量を戻す
-    const bgmPlayer = document.getElementById('bgm-player');
-    if (bgmPlayer) bgmPlayer.volume = BGM_VOLUME_NORMAL;
-
-    // チャットをクリア（または案内を表示）
-    const chatContainer = document.getElementById('sophie-chat');
-    if (chatContainer) chatContainer.innerHTML = "<p>（ソフィーは静かに微笑んでいます）</p>";
-
-    console.log("⏹️ 全停止プロトコル発動");
-}
-
-// --- 6. CSVデータ読み込み・イベント紐付け（初期化） ---
+// --- 4. お酒の物語（音声）制御 ---
 async function initSophieStories() {
     try {
         const response = await fetch('data/お酒の話.csv');
         const csvData = await response.text();
+        const rows = csvData.split('\n').filter(row => row.trim() !== '');
         
-        // 簡易CSVパース（ID, タイトル, ジャンル, 本文）
-        const rows = csvData.split('\n').slice(1); // ヘッダーを除外
-        const listContainer = document.getElementById('story-list');
+        const storyList = document.getElementById('story-list');
 
-        rows.forEach(row => {
-            const cols = row.split(','); // 実際はカンマ区切り。必要に応じてPapaParse等を使用
-            if (cols.length < 4) return;
+        rows.slice(1).forEach(row => {
+            const [id, title, genre, body] = row.split(',').map(s => s.replace(/"/g, '').trim());
+            if (!title) return;
 
-            const [id, title, genre, body] = cols;
-
-            // ボタン生成
             const btn = document.createElement('button');
             btn.className = 'story-button';
             btn.innerText = title;
-            btn.onclick = () => playSophieStory(id.trim(), title.trim(), body.trim());
+            btn.onclick = () => playSophieStory(id, title, body);
             
-            listContainer.appendChild(btn);
+            if (storyList) storyList.appendChild(btn);
         });
+        console.log("🎙️ お酒の物語の読み込み完了");
     } catch (err) {
-        console.error("CSV読み込み失敗:", err);
+        console.error("❌ 物語データの読み込みに失敗:", err);
     }
 }
 
-// ページ読み込み時に初期化
-window.onload = initSophieStories;
+function playSophieStory(id, title, text) {
+    sophieVoice.pause();
+    sophieVoice.currentTime = 0;
+
+    // 軽量MP3を読み込み
+    sophieVoice.src = `voices_mp3/${id}.mp3?v=${new Date().getTime()}`;
+
+    // ダッキング：BGM音量を下げる
+    const monitorIframe = document.getElementById('main-monitor-iframe');
+    // 注意: YouTubeの音量操作はAPI経由が必要。
+    // ここでは簡易的に「再生中のYouTubeがあれば音量を下げる」命令を想定
+    if (ytPlayer && ytPlayer.setVolume) {
+        ytPlayer.setVolume(BGM_VOLUME_DUCKING * 100);
+    }
+
+    sophieVoice.play().then(() => {
+        displayChat(title, text);
+    }).catch(e => console.log("音声再生エラー:", e));
+
+    // 終了時に音量を戻す
+    sophieVoice.onended = () => {
+        if (ytPlayer && ytPlayer.setVolume) {
+            ytPlayer.setVolume(BGM_VOLUME_NORMAL * 100);
+        }
+    };
+}
+
+// --- 5. 共通演出・ユーティリティ ---
+function displayChat(title, text) {
+    const chat = document.getElementById('sophie-chat');
+    if (!chat) return;
+    chat.innerHTML = `<strong>【${title}】</strong><br>${text.replace(/\n/g, '<br>')}`;
+    chat.scrollTop = chat.scrollHeight;
+}
+
+function stopAll() {
+    sophieVoice.pause();
+    if (ytPlayer && ytPlayer.stopVideo) ytPlayer.stopVideo();
+    console.log("⏹️ 全停止");
+}
