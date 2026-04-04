@@ -1,7 +1,7 @@
 import * as media from './media.js';
 import * as nav from './navigation.js';
 
-// 【スマホ特化】万が一エラーが起きたら画面にポップアップ表示する自己診断機能
+// 念のため自己診断ツールは残しておきます
 window.onerror = function(msg, url, lineNo) {
     alert("System Error:\n" + msg + "\nLine: " + lineNo);
     return true;
@@ -71,9 +71,10 @@ function openTalk() {
     nav.updateNav("th"); 
     let h = '<div class="label">お酒のジャンル</div>';
     [...new Set(nav.tData.map(d => d.g))].filter(Boolean).forEach(g => { h += `<div class="item" id="g-${g}">📁 ${g}</div>`; });
-    render(h, (e) => { 
-        const item = getValidItem(e.target);
-        if(item && item.id.startsWith('g-')) { 
+    
+    // 修正：コールバックに item（ボタンそのもの）を渡す
+    render(h, (item) => { 
+        if(item.id.startsWith('g-')) { 
             const selG = item.id.replace('g-','');
             nav.updateNav("th", selG); 
             openThemes(selG); 
@@ -85,9 +86,9 @@ function openThemes(g) {
     nav.updateNav("th"); 
     let h = `<div class="label">${g}</div>`;
     [...new Set(nav.tData.filter(d => d.g === g).map(d => d.th))].filter(Boolean).forEach(t => { h += `<div class="item" id="th-${t}">🏷️ ${t}</div>`; });
-    render(h, (e) => { 
-        const item = getValidItem(e.target);
-        if(item && item.id.startsWith('th-')) openStories(item.id.replace('th-','')); 
+    
+    render(h, (item) => { 
+        if(item.id.startsWith('th-')) openStories(item.id.replace('th-','')); 
     });
 }
 
@@ -104,9 +105,8 @@ function openStories(t) {
         const fixIcon = (d.fix === "1" || d.fix === "true") ? "📌 " : "";
         h += `<div class="item" data-idx="${i}">${fixIcon}${d.ti}</div>`; 
     });
-    render(h, (e) => { 
-        const item = getValidItem(e.target);
-        if(!item) return;
+    
+    render(h, (item) => { 
         const i = parseInt(item.dataset.idx); 
         if(!isNaN(i)){ 
             nav.updateNav(undefined,undefined,undefined,i); 
@@ -121,9 +121,9 @@ function openMusic() {
     nav.updateNav("art");
     let h = '<div class="label">アーティスト選曲</div>';
     [...new Set(nav.mData.map(d => d.a))].filter(Boolean).forEach(a => { h += `<div class="item" id="art-${a}">🎤 ${a}</div>`; });
-    render(h, (e) => { 
-        const item = getValidItem(e.target);
-        if(item && item.id.startsWith('art-')) openSongs(item.id.replace('art-','')); 
+    
+    render(h, (item) => { 
+        if(item.id.startsWith('art-')) openSongs(item.id.replace('art-','')); 
     });
 }
 
@@ -132,9 +132,8 @@ function openSongs(a) {
     isMusicMode = true;
     let h = `<div class="label">${a}</div>`;
     nav.curP.forEach((m, i) => { h += `<div class="item" data-idx="${i}">${m.ti}</div>`; });
-    render(h, (e) => { 
-        const item = getValidItem(e.target);
-        if(!item) return;
+    
+    render(h, (item) => { 
         const i = parseInt(item.dataset.idx); 
         if(!isNaN(i)){ 
             nav.updateNav(undefined,undefined,undefined,i); 
@@ -146,16 +145,18 @@ function openSongs(a) {
 
 // --- 共通メディア・UI制御 ---
 
-// スマホ特有のタッチ誤作動（文字をタップした判定）を補正する関数
-function getValidItem(target) {
-    let t = target;
-    if(t.nodeType === 3) t = t.parentNode; // テキストノードなら親を取得
-    return t.closest ? t.closest('.item') : null;
-}
-
+// 【究極の防弾仕様】親へのイベント委譲をやめ、各ボタンに直接イベントを付与する
 function render(h, cb) {
-    nm.style.display='none'; lv.style.display='block'; lv.innerHTML=h; lv.onclick=cb; 
+    nm.style.display='none'; 
+    lv.style.display='block'; 
+    lv.innerHTML=h; 
     document.getElementById('main-scroll').scrollTop = 0;
+
+    // 画面に描画した「各アイテム」に直接クリック指令を出す
+    const items = lv.querySelectorAll('.item');
+    items.forEach(item => {
+        item.onclick = () => cb(item); // 押されたボタン自体をコールバックに渡す
+    });
 }
 
 function setMon(type, src) {
@@ -172,7 +173,7 @@ function setMon(type, src) {
 function prep(t, isM, id = null) {
     window.speechSynthesis.cancel();
     
-    // 【修正箇所】スマホでの再生エラーを回避する防弾仕様
+    // スマホでの再生エラーを回避する安全装置
     try {
         talkAudio.pause(); 
         if (talkAudio.readyState > 0) {
@@ -196,6 +197,13 @@ function prep(t, isM, id = null) {
             playPromise.catch(() => { media.speak(t); });
         }
     }
+    
+    // アイテムのハイライト更新
+    const items = lv.querySelectorAll('.item');
+    items.forEach(el => {
+        if(parseInt(el.dataset.idx) === nav.idx) el.classList.add('active-item');
+        else el.classList.remove('active-item');
+    });
 }
 
 function handleBack() {
