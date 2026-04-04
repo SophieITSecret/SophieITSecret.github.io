@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>タケル｜軍事戦略検定</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- 入口画面 -->
+    <div id="entry-screen">
+        <div class="entry-emblem">⚔</div>
+        <div class="entry-title">TAKERU</div>
+        <div class="entry-sub">軍事戦略検定　３級</div>
+        <button id="btn-enter">学習をはじめる</button>
+    </div>
+
+    <!-- メインUI -->
+    <div id="main-ui">
+
+        <!-- 上部：画像エリア（4:3） -->
+        <div id="image-area">
+            <img id="card-image" src="" alt="">
+            <div id="image-placeholder">
+                <span>⚔</span>
+            </div>
+        </div>
+
+        <!-- 中部：テキスト or メニュー -->
+        <div id="content-area">
+            <!-- テキスト表示 -->
+            <div id="text-view">
+                <div id="card-title"></div>
+                <div id="card-body"></div>
+            </div>
+            <!-- メニュー表示 -->
+            <div id="menu-view" style="display:none;">
+                <div id="menu-content"></div>
+            </div>
+        </div>
+
+        <!-- 下部：コントロール -->
+        <div id="controls">
+            <button class="ctrl-btn" id="btn-back">◀ 戻る</button>
+            <button class="ctrl-btn" id="btn-section">章選択</button>
+            <button class="ctrl-btn btn-next" id="btn-next">次へ ▶</button>
+            <button class="ctrl-btn" id="btn-toggle">メニュー</button>
+            <button class="ctrl-btn" id="btn-voice">🔊 読上</button>
+        </div>
+
+    </div>
+
+    <div class="ver">TAKERU v1.0</div>
+
+    <script src="app.js"></script>
+</body>
+</html>
