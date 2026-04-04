@@ -20,20 +20,16 @@ body { background-color: var(--bar-bg); color: #eee; height: 100vh; display: fle
 /* --- 右パネル --- */
 #side-panel { flex: 3; min-width: 320px; display: flex; flex-direction: column; background: #08080a; position: relative; }
 
-/* モニター：上下に6pxの隙間 */
 .monitor-frame { width: 100%; aspect-ratio: 16 / 9; border-bottom: 2px solid var(--neon-blue); background: #000; padding: 6px 0; }
 .monitor-inner { width: 100%; height: 100%; position: relative; }
 #yt-iframe { width: 100%; height: 100%; border: none; }
 #monitor-image-overlay { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: none; z-index: 5; }
 
-/* コントローラー：光る枠 */
 .player-ctrl { display: flex; justify-content: center; gap: 5px; padding: 8px; background: #111; border-bottom: 1px solid #222; }
 .ctrl-btn { background: #1a1a1a; border: 1px solid #333; color: #777; padding: 6px 9px; font-size: 1rem; cursor: pointer; border-radius: 4px; transition: 0.2s; }
 .ctrl-btn:hover { color: #fff; border-color: var(--bar-accent); box-shadow: 0 0 8px var(--bar-accent); }
 .theater-btn { color: var(--bar-orange) !important; border-color: var(--bar-orange) !important; font-weight: bold; }
-.theater-btn:hover { box-shadow: 0 0 10px var(--bar-orange) !important; }
 
-/* 10個のボタン：低く・白く */
 .jukebox-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 8px 10px; }
 .music-btn { 
     background: #050505; border: 1px solid rgba(0, 210, 255, 0.3); color: #ffffff;
@@ -41,7 +37,6 @@ body { background-color: var(--bar-bg); color: #eee; height: 100vh; display: fle
     text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 
-/* 特別ボタン：Signalの色を死守 */
 .jukebox-container { padding: 0 10px 10px 10px; border-bottom: 1px solid #1a1a2e; }
 .special-btn { width: 100%; padding: 10px; font-weight: bold; border-radius: 4px; cursor: pointer; border: 1px solid #fff; margin-bottom: 4px; font-size: 1.1rem; }
 .signal-btn { background-color: var(--signal-blue) !important; color: #1a2a3a !important; border-color: var(--neon-blue) !important; box-shadow: inset 0 0 5px rgba(255,255,255,0.5); }
@@ -49,7 +44,6 @@ body { background-color: var(--bar-bg); color: #eee; height: 100vh; display: fle
 .request-btn { background: var(--request-green); color: #fff; border: none; }
 .talk-btn { background: var(--talk-blue); color: #fff; border: none; }
 
-/* --- メニューレイヤー（鎮圧ポイント） --- */
 .dynamic-area { flex: 1; position: relative; overflow: hidden; height: 100%; min-height: 100px; }
 #menu-layer { 
     position: absolute; inset: 0; background: #08080a; 
@@ -62,8 +56,7 @@ body { background-color: var(--bar-bg); color: #eee; height: 100vh; display: fle
 .genre-label { grid-column: span 2; background: #1a1a2e; color: var(--bar-accent); padding: 8px 12px; font-weight: bold; font-size: 0.95rem; }
 .menu-item { background: #08080a; padding: 10px 12px; cursor: pointer; color: #eee; font-size: 1.1rem; border-bottom: 1px solid #111; }
 
-/* --- シアターモード復元 --- */
-body.theater-mode { flex-direction: column; }
+/* --- シアターモード設定 --- */
 body.theater-mode #main-container { display: none; }
 body.theater-mode #side-panel { flex: 1; width: 100vw; height: 100vh; }
 body.theater-mode .monitor-frame { height: 75vh; border-bottom: 2px solid #333; }
@@ -71,6 +64,6 @@ body.theater-mode .jukebox-container { display: none; }
 body.theater-mode .dynamic-area { position: absolute; top: 75vh; left: 0; width: 50vw; height: calc(25vh - 60px); background: #000; border-right: 1px solid #333; }
 body.theater-mode .player-ctrl { position: fixed; bottom: 0; left: 0; width: 100vw; z-index: 100; border-top: 1px solid #444; }
 
-/* シアターソフィー：15vh (小さく寄り添う) */
-#sophie-theater { display: none; position: fixed; bottom: 70px; right: 5%; height: 15vh; z-index: 1030; filter: brightness(0.7); pointer-events: none; }
+/* シアターソフィー：ご主人様指示により15vhから20vh（約30%増）へ調整 */
+#sophie-theater { display: none; position: fixed; bottom: 70px; right: 5%; height: 20vh; z-index: 1030; filter: brightness(0.8); pointer-events: none; }
 body.theater-mode #sophie-theater { display: block; }
