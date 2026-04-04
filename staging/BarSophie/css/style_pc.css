@@ -44,7 +44,7 @@ body { background-color: var(--bar-bg); color: #eee; height: 100vh; display: fle
 .request-btn { background: var(--request-green); color: #fff; border: none; }
 .talk-btn { background: var(--talk-blue); color: #fff; border: none; }
 
-/* --- メニューレイヤー（高密度化） --- */
+/* --- メニューレイヤー：間延び防止改修 --- */
 .dynamic-area { flex: 1; position: relative; overflow: hidden; height: 100%; min-height: 100px; }
 #menu-layer { 
     position: absolute; inset: 0; background: #08080a; 
@@ -53,20 +53,32 @@ body { background-color: var(--bar-bg); color: #eee; height: 100vh; display: fle
 }
 .back-btn-container { background: #111; border-bottom: 1px solid #222; }
 .menu-back-btn { padding: 8px 15px; color: var(--bar-accent); cursor: pointer; font-weight: bold; font-size: 1.1rem; }
-.menu-list { flex: 1; overflow-y: auto; display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: #222; }
-.genre-label { grid-column: span 2; background: #1a1a2e; color: var(--bar-accent); padding: 4px 12px; font-weight: bold; font-size: 0.95rem; border-bottom: 1px solid #333; }
 
-/* メニュー項目：フォクトサイズ維持・余白を極限まで詰める */
+/* 間延び解消の核心：align-content: start と grid-auto-rows: min-content */
+.menu-list { 
+    flex: 1; 
+    overflow-y: auto; 
+    display: grid; 
+    grid-template-columns: 1fr 1fr; 
+    grid-auto-rows: min-content;
+    align-content: start;
+    gap: 1px; 
+    background: #222; 
+}
+
+.genre-label { grid-column: span 2; background: #1a1a2e; color: var(--bar-accent); padding: 5px 12px; font-weight: bold; font-size: 0.95rem; border-bottom: 1px solid #333; }
+
+/* 余白を5pxに再調整 */
 .menu-item { 
     background: #08080a; 
-    padding: 2px 12px; 
+    padding: 5px 12px; 
     cursor: pointer; 
     color: #eee; 
     font-size: 1.1rem; 
     border-bottom: 1px solid #111; 
     display: flex;
     align-items: center;
-    min-height: 1.4em; /* 文字の高さ程度まで圧縮 */
+    min-height: 1.2em;
 }
 
 /* --- シアターモード設定 --- */
