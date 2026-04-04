@@ -44,7 +44,7 @@ body { background-color: var(--bar-bg); color: #eee; height: 100vh; display: fle
 .request-btn { background: var(--request-green); color: #fff; border: none; }
 .talk-btn { background: var(--talk-blue); color: #fff; border: none; }
 
-/* --- メニューレイヤー：間延び防止改修 --- */
+/* --- メニューレイヤー改修 --- */
 .dynamic-area { flex: 1; position: relative; overflow: hidden; height: 100%; min-height: 100px; }
 #menu-layer { 
     position: absolute; inset: 0; background: #08080a; 
@@ -54,7 +54,7 @@ body { background-color: var(--bar-bg); color: #eee; height: 100vh; display: fle
 .back-btn-container { background: #111; border-bottom: 1px solid #222; }
 .menu-back-btn { padding: 8px 15px; color: var(--bar-accent); cursor: pointer; font-weight: bold; font-size: 1.1rem; }
 
-/* 間延び解消の核心：align-content: start と grid-auto-rows: min-content */
+/* デフォルトは2カラム・間延び防止 */
 .menu-list { 
     flex: 1; 
     overflow-y: auto; 
@@ -66,9 +66,14 @@ body { background-color: var(--bar-bg); color: #eee; height: 100vh; display: fle
     background: #222; 
 }
 
-.genre-label { grid-column: span 2; background: #1a1a2e; color: var(--bar-accent); padding: 5px 12px; font-weight: bold; font-size: 0.95rem; border-bottom: 1px solid #333; }
+/* 1カラム切り替え用クラス（ご主人様指示：曲一覧、お酒メニュー用） */
+.menu-list.single-col {
+    grid-template-columns: 1fr;
+}
 
-/* 余白を5pxに再調整 */
+.genre-label { grid-column: 1 / -1; background: #1a1a2e; color: var(--bar-accent); padding: 5px 12px; font-weight: bold; font-size: 0.95rem; border-bottom: 1px solid #333; }
+
+/* 余白を5pxで統一（ご主人様基準） */
 .menu-item { 
     background: #08080a; 
     padding: 5px 12px; 
@@ -79,6 +84,7 @@ body { background-color: var(--bar-bg); color: #eee; height: 100vh; display: fle
     display: flex;
     align-items: center;
     min-height: 1.2em;
+    line-height: 1.2;
 }
 
 /* --- シアターモード設定 --- */
