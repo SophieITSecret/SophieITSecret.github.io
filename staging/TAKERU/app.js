@@ -267,7 +267,8 @@ function setupButtons() {
         if (autoRead) {
             btnVoice.innerText = '🔊 読上 ON';
             btnVoice.classList.add('playing');
-            if (navState === 'card') playVoice();
+            // iPhoneはボタン押下の瞬間に直接呼ぶ必要がある
+            if (navState === 'card') playVoiceDirect();
         } else {
             btnVoice.innerText = '🔇 読上 OFF';
             btnVoice.classList.remove('playing');
@@ -285,29 +286,36 @@ function showSectionComplete() {
     imagePlaceholder.style.display = 'flex';
 }
 
-function playVoice() {
+// iPhoneはボタン押下の瞬間に呼ぶ用（setTimeoutなし）
+function playVoiceDirect() {
     if (!curSection.length || navState !== 'card') return;
     const card = curSection[curIndex];
-    voice.src = `voices/${card.id}.mp3`;
+
+    // まずWeb TTSで試みる（iPhoneはこちらが確実）
+    window.speechSynthesis.cancel();
+    const uttr = new SpeechSynthesisUtterance(card.body);
+    uttr.lang = 'ja-JP';
+    uttr.rate = 1.0;
+    uttr.onend = () => {
+        // 読み上げ終了後は止まる。次へボタンで進む。
+    };
+    window.speechSynthesis.speak(uttr);
+
+    // MP3があれば上書き再生
+    const mp3Path = `voices/${card.id}.mp3`;
+    voice.src = mp3Path;
     voice.play().then(() => {
+        window.speechSynthesis.cancel(); // TTSをキャンセルしてMP3を優先
         voice.onended = () => {
-            if (autoRead) {
-                if (curIndex < curSection.length - 1) setTimeout(() => showCard(curIndex + 1), 500);
-                else showSectionComplete();
-            }
+            // 読み上げ終了後は止まる。次へボタンで進む。
         };
     }).catch(() => {
-        const uttr = new SpeechSynthesisUtterance(card.body);
-        uttr.lang = 'ja-JP';
-        uttr.rate = 1.0;
-        uttr.onend = () => {
-            if (autoRead) {
-                if (curIndex < curSection.length - 1) setTimeout(() => showCard(curIndex + 1), 500);
-                else showSectionComplete();
-            }
-        };
-        window.speechSynthesis.speak(uttr);
+        // MP3なし → TTSのまま継続（何もしない）
     });
+}
+
+function playVoice() {
+    playVoiceDirect();
 }
 
 function stopVoice() {
