@@ -1,6 +1,6 @@
 // ==========================================
-// Bar Sophie PC版 app_pc.js v14.26
-// 修正内容：歌手一覧(2列)と他メニュー(1列)の動的分離、音声再生の堅牢化
+// Bar Sophie PC版 app_pc.js v14.28
+// 修正内容：YouTube ID抽出の正規表現化、メニュー列数の動的制御
 // ==========================================
 
 let masterData = [];
@@ -55,10 +55,19 @@ function renderFixedButtons() {
     });
 }
 
+// YouTube IDを抽出する堅牢なロジック
+function getYoutubeId(url) {
+    if (!url) return "";
+    // 正規表現により、通常URL、短縮URL、スマホURL、IDのみをすべてカバー
+    const regExp = /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/;
+    const match = url.match(regExp);
+    return (match && match[7].length == 11) ? match[7] : url;
+}
+
 function playFix(url, showOverlay = false) {
     currentUrl = url;
     monitorImg.style.display = showOverlay ? 'block' : 'none';
-    let id = url.includes('v=') ? url.split('v=')[1].split('&')[0] : url;
+    const id = getYoutubeId(url);
     iframe.src = `https://www.youtube.com/embed/${id}?autoplay=1&rel=0&enablejsapi=1`;
 }
 
@@ -80,10 +89,10 @@ function initUI() {
     document.getElementById('ctrl-reset').onclick = () => { if(currentUrl) playFix(currentUrl); };
 }
 
-// --- 曲選択：歌手一覧（2カラム） ---
+// --- 歌手一覧（2カラム） ---
 function openMusicMenu() {
     menuLayer.style.display = 'flex';
-    menuContent.classList.remove('single-col'); // 2カラムに戻す
+    menuContent.classList.remove('single-col'); // 2列モード
     menuBack.innerText = "← ソフィーと話す (閉じる)";
     menuBack.onclick = () => menuLayer.style.display = 'none';
     
@@ -102,9 +111,9 @@ function openMusicMenu() {
     });
 }
 
-// --- 曲選択：曲名一覧（1カラム） ---
+// --- 曲一覧（1カラム） ---
 function renderSongTitles(artist) {
-    menuContent.classList.add('single-col'); // 1カラムに設定
+    menuContent.classList.add('single-col'); // 1列モード
     menuBack.innerText = "← 歌手一覧へ戻る";
     menuBack.onclick = openMusicMenu;
     menuContent.innerHTML = `<div class="genre-label">${artist}</div>`;
@@ -155,38 +164,26 @@ function renderTalkTitles(genre, theme) {
 }
 
 function startTalk(talkObj) {
-    stopTalk(); // 音声と表示の初期化
-
-    // YouTubeダッキング (5%)
+    stopTalk();
     iframe.contentWindow?.postMessage('{"event":"command","func":"setVolume","args":[5]}', '*');
-
     speechArea.innerText = talkObj.body;
     monitorImg.src = "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?q=80&w=800";
     monitorImg.style.display = 'block';
 
-    // 音声再生ロジックの堅牢化
     const mp3Path = `voices_mp3/${talkObj.id}.mp3?v=${Date.now()}`;
     sophieVoice.src = mp3Path;
-    sophieVoice.load(); // 明示的にロード
-
-    // ロード完了後に再生
-    sophieVoice.oncanplaythrough = () => {
-        sophieVoice.play().catch(e => {
-            console.error("再生失敗:", e);
-        });
-    };
-
+    
     sophieVoice.onended = () => {
         iframe.contentWindow?.postMessage('{"event":"command","func":"setVolume","args":[20]}', '*');
     };
+
+    sophieVoice.play().catch(e => console.warn("再生失敗:", e));
 }
 
 function stopTalk() {
     sophieVoice.pause();
     sophieVoice.currentTime = 0;
-    // イベントハンドラをクリアして競合を防ぐ
-    sophieVoice.oncanplaythrough = null;
-    
+    sophieVoice.onended = null;
     speechArea.innerText = "";
     monitorImg.style.display = 'none';
     iframe.contentWindow?.postMessage('{"event":"command","func":"setVolume","args":[20]}', '*');
