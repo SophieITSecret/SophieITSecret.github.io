@@ -1,14 +1,18 @@
 import * as media from './media.js';
 import * as nav from './navigation.js';
 
+// 【スマホ特化】万が一エラーが起きたら画面にポップアップ表示する自己診断機能
+window.onerror = function(msg, url, lineNo) {
+    alert("System Error:\n" + msg + "\nLine: " + lineNo);
+    return true;
+};
+
 let isPaused = false, isAutoPlay = false, isMusicMode = false, lastTxt = "", pressTimer = null;
 const yt = document.getElementById('yt-iframe'), img = document.getElementById('monitor-img'), tel = document.getElementById('telop'), lv = document.getElementById('list-view'), nm = document.getElementById('nav-main');
 
-// 音声再生用要素（MP3用・メモリリーク防止設定）
 const talkAudio = document.getElementById('talk-audio') || document.createElement('audio');
 if(!talkAudio.id) { 
     talkAudio.id = 'talk-audio'; 
-    talkAudio.preload = 'auto'; // スマホでの読み込み遅延を防止
     document.body.appendChild(talkAudio); 
 }
 
@@ -19,46 +23,32 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 function setup() {
-    // 入店・カウンター移動
-    const btnEnter = document.getElementById('btn-enter');
-    if (btnEnter) {
-        btnEnter.onclick = () => { 
-            document.getElementById('entry-screen').style.display='none'; 
-            document.getElementById('chat-mode').style.display='flex'; 
-            // iOS/Androidの厳格なAudio制限を確実にアンロック
-            talkAudio.play().then(() => talkAudio.pause()).catch(()=>{});
-            media.speak("まきむら様、お帰りなさいませ。"); 
-        };
-    }
+    document.getElementById('btn-enter').onclick = () => { 
+        document.getElementById('entry-screen').style.display='none'; 
+        document.getElementById('chat-mode').style.display='flex'; 
+        talkAudio.play().then(() => talkAudio.pause()).catch(()=>{});
+        media.speak("まきむら様、お帰りなさいませ。"); 
+    };
 
-    const btnToBar = document.getElementById('btn-to-bar');
-    if (btnToBar) {
-        btnToBar.onclick = () => { 
-            document.getElementById('chat-mode').style.display='none'; 
-            document.getElementById('main-ui').style.display='flex'; 
-            window.speechSynthesis.cancel(); 
-        };
-    }
+    document.getElementById('btn-to-bar').onclick = () => { 
+        document.getElementById('chat-mode').style.display='none'; 
+        document.getElementById('main-ui').style.display='flex'; 
+        window.speechSynthesis.cancel(); 
+    };
 
-    // 操作パネル
     document.getElementById('ctrl-play').onclick = playHead;
     document.getElementById('ctrl-pause').onclick = togglePause;
     document.getElementById('ctrl-back').onclick = handleBack;
     document.getElementById('sophie-warp').onclick = () => { 
-        if(nav.state !== "none") { 
-            lv.style.display='none'; nm.style.display='block'; nav.updateNav("none"); 
-        } else { 
-            document.getElementById('main-ui').style.display='none'; document.getElementById('chat-mode').style.display='flex'; 
-        } 
+        if(nav.state !== "none") { lv.style.display='none'; nm.style.display='block'; nav.updateNav("none"); } 
+        else { document.getElementById('main-ui').style.display='none'; document.getElementById('chat-mode').style.display='flex'; } 
     };
 
     document.getElementById('btn-music').onclick = openMusic;
     document.getElementById('btn-talk').onclick = openTalk;
 
-    // 次へボタン（長押し対応）
     const btnN = document.getElementById('btn-next');
     btnN.addEventListener('pointerdown', (e) => {
-        // デフォルトのスワイプ挙動をキャンセルし、長押し判定を安定化
         e.preventDefault();
         pressTimer = setTimeout(() => {
             isAutoPlay = !isAutoPlay;
@@ -76,18 +66,14 @@ function setup() {
     talkAudio.onended = () => { if (isAutoPlay && !isMusicMode) setTimeout(next, 1200); };
 }
 
-// --- お酒の話 (360本対応 / 摩擦ゼロ・タップ設計) ---
+// --- お酒の話 ---
 function openTalk() {
     nav.updateNav("th"); 
     let h = '<div class="label">お酒のジャンル</div>';
-    [...new Set(nav.tData.map(d => d.g))].filter(Boolean).forEach(g => { 
-        h += `<div class="item" id="g-${g}">📁 ${g}</div>`; 
-    });
+    [...new Set(nav.tData.map(d => d.g))].filter(Boolean).forEach(g => { h += `<div class="item" id="g-${g}">📁 ${g}</div>`; });
     render(h, (e) => { 
-        // 改善: タップした要素の親( .item )を確実に見つける
-        const item = e.target.closest('.item');
-        if(!item) return;
-        if(item.id.startsWith('g-')) { 
+        const item = getValidItem(e.target);
+        if(item && item.id.startsWith('g-')) { 
             const selG = item.id.replace('g-','');
             nav.updateNav("th", selG); 
             openThemes(selG); 
@@ -98,18 +84,14 @@ function openTalk() {
 function openThemes(g) {
     nav.updateNav("th"); 
     let h = `<div class="label">${g}</div>`;
-    [...new Set(nav.tData.filter(d => d.g === g).map(d => d.th))].filter(Boolean).forEach(t => { 
-        h += `<div class="item" id="th-${t}">🏷️ ${t}</div>`; 
-    });
+    [...new Set(nav.tData.filter(d => d.g === g).map(d => d.th))].filter(Boolean).forEach(t => { h += `<div class="item" id="th-${t}">🏷️ ${t}</div>`; });
     render(h, (e) => { 
-        const item = e.target.closest('.item');
-        if(!item) return;
-        if(item.id.startsWith('th-')) openStories(item.id.replace('th-','')); 
+        const item = getValidItem(e.target);
+        if(item && item.id.startsWith('th-')) openStories(item.id.replace('th-','')); 
     });
 }
 
 function openStories(t) {
-    // FIXフラグによるソートを適用
     const stories = nav.tData.filter(d => d.th === t).sort((a, b) => {
         const fixA = (a.fix === "1" || a.fix === "true") ? 1 : 0;
         const fixB = (b.fix === "1" || b.fix === "true") ? 1 : 0;
@@ -123,7 +105,7 @@ function openStories(t) {
         h += `<div class="item" data-idx="${i}">${fixIcon}${d.ti}</div>`; 
     });
     render(h, (e) => { 
-        const item = e.target.closest('.item');
+        const item = getValidItem(e.target);
         if(!item) return;
         const i = parseInt(item.dataset.idx); 
         if(!isNaN(i)){ 
@@ -138,16 +120,10 @@ function openStories(t) {
 function openMusic() {
     nav.updateNav("art");
     let h = '<div class="label">アーティスト選曲</div>';
-    [...new Set(nav.mData.map(d => d.a))].filter(Boolean).forEach(a => { 
-        h += `<div class="item" id="art-${a}">🎤 ${a}</div>`; 
-    });
+    [...new Set(nav.mData.map(d => d.a))].filter(Boolean).forEach(a => { h += `<div class="item" id="art-${a}">🎤 ${a}</div>`; });
     render(h, (e) => { 
-        const item = e.target.closest('.item');
-        if(!item) return;
-        if(item.id.startsWith('art-')) {
-            const selA = item.id.replace('art-','');
-            openSongs(selA); 
-        }
+        const item = getValidItem(e.target);
+        if(item && item.id.startsWith('art-')) openSongs(item.id.replace('art-','')); 
     });
 }
 
@@ -157,7 +133,7 @@ function openSongs(a) {
     let h = `<div class="label">${a}</div>`;
     nav.curP.forEach((m, i) => { h += `<div class="item" data-idx="${i}">${m.ti}</div>`; });
     render(h, (e) => { 
-        const item = e.target.closest('.item');
+        const item = getValidItem(e.target);
         if(!item) return;
         const i = parseInt(item.dataset.idx); 
         if(!isNaN(i)){ 
@@ -169,11 +145,16 @@ function openSongs(a) {
 }
 
 // --- 共通メディア・UI制御 ---
+
+// スマホ特有のタッチ誤作動（文字をタップした判定）を補正する関数
+function getValidItem(target) {
+    let t = target;
+    if(t.nodeType === 3) t = t.parentNode; // テキストノードなら親を取得
+    return t.closest ? t.closest('.item') : null;
+}
+
 function render(h, cb) {
-    nm.style.display='none'; 
-    lv.style.display='block'; 
-    lv.innerHTML=h; 
-    lv.onclick=cb; // closest()を使っているため、イベント委譲で安全に捕捉
+    nm.style.display='none'; lv.style.display='block'; lv.innerHTML=h; lv.onclick=cb; 
     document.getElementById('main-scroll').scrollTop = 0;
 }
 
@@ -190,8 +171,16 @@ function setMon(type, src) {
 
 function prep(t, isM, id = null) {
     window.speechSynthesis.cancel();
-    talkAudio.pause(); 
-    talkAudio.currentTime = 0;
+    
+    // 【修正箇所】スマホでの再生エラーを回避する防弾仕様
+    try {
+        talkAudio.pause(); 
+        if (talkAudio.readyState > 0) {
+            talkAudio.currentTime = 0;
+        }
+    } catch(err) {
+        console.warn("Audio reset safety catch triggered.");
+    }
     
     lastTxt = t; isMusicMode = isM; isPaused = false;
     tel.innerText = t; tel.style.display='block'; tel.scrollTop = 0;
@@ -200,13 +189,8 @@ function prep(t, isM, id = null) {
         media.speak(t);
         setTimeout(() => { if(tel.innerText===t) tel.style.display='none'; }, 5000);
     } else if(id) {
-        // 通信量最適化：ランダムなクエリは廃止し、通常パスでアクセス。
-        // GitHub Pages側で更新があれば自然に新しいファイルが降ってくる設計。
         talkAudio.src = `./voices_mp3/${id}.mp3`;
-        
-        // フォールバック（WAVが見つからない場合）
         talkAudio.onerror = () => { media.speak(t); };
-        
         const playPromise = talkAudio.play();
         if (playPromise !== undefined) {
             playPromise.catch(() => { media.speak(t); });
@@ -248,7 +232,6 @@ function next() {
         if(isMusicMode) { setMon('v', nav.curD.u); prep(`${nav.curD.a}さんの「${nav.curD.ti}」です。`, true); }
         else { setMon('i', `./talk_images/${nav.curD.id}.jpg`); prep(nav.curD.txt, false, nav.curD.id); }
     } else {
-        // リストの最後まで到達したらオートプレイを解除
         isAutoPlay = false;
         document.getElementById('btn-next').classList.remove('auto-active');
     }
