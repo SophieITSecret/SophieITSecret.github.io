@@ -1,14 +1,13 @@
 // ==========================================
-// Bar Sophie PC版 app_pc.js
-// ベース：v14.7（ZIP版）
-// 変更点：音声読み上げをWeb TTSからWAVファイル再生に変更
+// Bar Sophie PC版 app_pc.js v14.23
+// 修正内容：BGM強制リセットの除去、MP3キャッシュ回避の統一
 // ==========================================
 
 let masterData = [];
 let talkData = [];
 let currentUrl = "";
 
-// WAV音声用のAudioオブジェクト（新版方式）
+// 音声再生用のAudioオブジェクト
 const sophieVoice = new Audio();
 
 const iframe = document.getElementById('yt-iframe');
@@ -25,7 +24,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 async function loadMusicCSV() {
-    const res = await fetch(`JBoxメニュー.csv?v=${new Date().getTime()}`);
+    const res = await fetch(`JBoxメニュー.csv?v=${Date.now()}`);
     const text = await res.text();
     const lines = text.split('\n').slice(1);
     masterData = lines.filter(l => l.trim()).map(line => {
@@ -36,7 +35,7 @@ async function loadMusicCSV() {
 }
 
 async function loadTalkCSV() {
-    const res = await fetch(`お酒の話.csv?v=${new Date().getTime()}`);
+    const res = await fetch(`お酒の話.csv?v=${Date.now()}`);
     const text = await res.text();
     const lines = text.split('\n').slice(1);
     talkData = lines.filter(l => l.trim()).map(line => {
@@ -86,7 +85,6 @@ function initUI() {
     document.getElementById('ctrl-reset').onclick = () => { if(currentUrl) playFix(currentUrl); };
 }
 
-// --- ナビゲーション整理：2列グリッドを保護 ---
 function openMusicMenu() {
     menuLayer.style.display = 'flex';
     menuBack.innerText = "← ソフィーと話す (閉じる)";
@@ -141,47 +139,35 @@ function openTalkMenu() {
     });
 }
 
-// ==========================================
-// 音声再生（WAVファイル方式に変更）
-// voices_vp フォルダの {id}.wav を再生する
-// WAVがない場合はテキスト表示のみにフォールバック
-// ==========================================
 function startTalk(talkObj) {
     stopTalk();
 
-    // BGMを小音量に（ダッキング）
-    playFix('vh4TWlwYfLc', true);
+    // BGMをダッキング (5%) - 既存のBGMを維持
     iframe.contentWindow?.postMessage('{"event":"command","func":"setVolume","args":[5]}', '*');
 
-    // お酒の画像をオーバーレイ表示
+    // お酒の画像をオーバーレイ表示（画像URLは任意で運用してください）
     monitorImg.src = "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?q=80&w=800";
+    monitorImg.style.display = 'block';
 
-    // テキストを表示
+    // 字幕を表示
     speechArea.innerText = talkObj.body;
 
-    // WAVファイルを再生
-    const wavPath = `voices_mp3/${talkObj.id}.mp3?v=${Date.now()}`;
-    sophieVoice.src = wavPath;
-    sophieVoice.play().catch(() => {
-        // WAVファイルがない場合はテキスト表示のみ（エラーは無視）
-        console.warn(`WAVファイルが見つかりません: ${wavPath}`);
-    });
+    // MP3を再生（キャッシュ回避用タイムスタンプ付与）
+    const mp3Path = `voices_mp3/${talkObj.id}.mp3?v=${Date.now()}`;
+    sophieVoice.src = mp3Path;
+    sophieVoice.play().catch(e => console.warn("MP3再生失敗:", mp3Path));
 
-    // 再生終了後にBGMを元の音量に戻す
+    // 再生終了後にBGMを復元 (20%)
     sophieVoice.onended = () => {
         iframe.contentWindow?.postMessage('{"event":"command","func":"setVolume","args":[20]}', '*');
     };
 }
 
 function stopTalk() {
-    // WAV音声を停止
     sophieVoice.pause();
     sophieVoice.currentTime = 0;
-
-    // テキストとオーバーレイをクリア
     speechArea.innerText = "";
     monitorImg.style.display = 'none';
-
-    // BGMを元の音量に戻す
+    // BGM音量を復元
     iframe.contentWindow?.postMessage('{"event":"command","func":"setVolume","args":[20]}', '*');
 }
