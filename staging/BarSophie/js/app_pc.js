@@ -1,13 +1,15 @@
 // ==========================================
-// Bar Sophie PC版 app_pc.js v14.24
-// 修正内容：メニュー密度の向上対応とTalkの3階層化
+// Bar Sophie PC版 app_pc.js v14.25
+// 修正内容：メニュー間延び解消、音声再生ロジックの安定化修復
 // ==========================================
 
 let masterData = [];
 let talkData = [];
 let currentUrl = "";
 
+// 音声再生用のAudioオブジェクト
 const sophieVoice = new Audio();
+
 const iframe = document.getElementById('yt-iframe');
 const monitorImg = document.getElementById('monitor-image-overlay');
 const speechArea = document.getElementById('sophie-speech-text');
@@ -80,7 +82,6 @@ function initUI() {
     document.getElementById('ctrl-reset').onclick = () => { if(currentUrl) playFix(currentUrl); };
 }
 
-// --- 曲選択メニュー（2階層） ---
 function openMusicMenu() {
     menuLayer.style.display = 'flex';
     menuBack.innerText = "← ソフィーと話す (閉じる)";
@@ -112,7 +113,6 @@ function renderSongTitles(artist) {
     });
 }
 
-// --- お酒メニュー（3階層化） ---
 function openTalkMenu() {
     menuLayer.style.display = 'flex';
     menuBack.innerText = "← ソフィーと話す (閉じる)";
@@ -131,7 +131,6 @@ function renderTalkThemes(genre) {
     menuBack.innerText = `← ジャンル一覧へ`;
     menuBack.onclick = openTalkMenu;
     menuContent.innerHTML = `<div class="genre-label">${genre}（テーマ選択）</div>`;
-    
     const themes = [...new Set(talkData.filter(d => d.genre === genre).map(d => d.theme))];
     themes.forEach(t => {
         const div = document.createElement('div'); div.className = "menu-item"; div.innerText = "◆ " + t;
@@ -144,7 +143,6 @@ function renderTalkTitles(genre, theme) {
     menuBack.innerText = `← ${genre}の一覧へ戻る`;
     menuBack.onclick = () => renderTalkThemes(genre);
     menuContent.innerHTML = `<div class="genre-label">${theme}</div>`;
-    
     talkData.filter(d => d.genre === genre && d.theme === theme).forEach(t => {
         const div = document.createElement('div'); div.className = "menu-item"; div.innerText = t.title;
         div.onclick = () => startTalk(t);
@@ -153,14 +151,32 @@ function renderTalkTitles(genre, theme) {
 }
 
 function startTalk(talkObj) {
-    stopTalk();
+    // 確実に前の音声を止める
+    sophieVoice.pause();
+    sophieVoice.currentTime = 0;
+
+    // 音量低下のみ実行（BGMのリセットは行わない）
     iframe.contentWindow?.postMessage('{"event":"command","func":"setVolume","args":[5]}', '*');
+
+    // テキスト表示
+    speechArea.innerText = talkObj.body;
+
+    // お酒の画像をオーバーレイ（既存の仕組みを維持）
     monitorImg.src = "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?q=80&w=800";
     monitorImg.style.display = 'block';
-    speechArea.innerText = talkObj.body;
+
+    // 音声再生（パスにタイムスタンプを付与）
     const mp3Path = `voices_mp3/${talkObj.id}.mp3?v=${Date.now()}`;
     sophieVoice.src = mp3Path;
-    sophieVoice.play().catch(e => console.warn("MP3再生失敗:", mp3Path));
+    
+    // ブラウザの制約を考慮し、playPromiseを扱う
+    const playPromise = sophieVoice.play();
+    if (playPromise !== undefined) {
+        playPromise.catch(error => {
+            console.warn("再生がブロックされました:", error);
+        });
+    }
+
     sophieVoice.onended = () => {
         iframe.contentWindow?.postMessage('{"event":"command","func":"setVolume","args":[20]}', '*');
     };
