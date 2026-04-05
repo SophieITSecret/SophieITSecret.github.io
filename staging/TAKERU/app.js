@@ -103,7 +103,7 @@ function showTopMenu() {
     showMenuView();
 
     // トップ画像を表示
-    cardImage.src = 'images/takeru-top.png';
+    cardImage.src = 'images/takeru-top.jpg';
     cardImage.style.display = 'block';
     imagePlaceholder.style.display = 'none';
     cardImage.onerror = () => {
