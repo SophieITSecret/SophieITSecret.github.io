@@ -389,38 +389,61 @@ function showSectionComplete() {
 }
 
 // ==========================================
-// 音声読み上げ（iPhone対応・改善版）
+// 音声読み上げ（iPhone対応・v2.2）
+// HEADリクエストでMP3の存在を確認してから再生方式を決定
 // ==========================================
-// ==========================================
-// 音声読み上げ（iPhone対応）
-// ボタン押下の瞬間にTTSを起動→MP3があれば上書き
-// ==========================================
+
+// iPhoneのAudioをボタン押下時にアンロック
+let audioUnlocked = false;
+function unlockAudio() {
+    if (audioUnlocked) return;
+    // 無音の最小WAVでアンロック
+    voice.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA';
+    voice.play().then(() => {
+        voice.src = '';
+        audioUnlocked = true;
+    }).catch(() => {});
+}
+
 function playVoiceDirect() {
     if (!curSection.length || navState !== 'card') return;
     const card = curSection[curIndex];
 
     stopVoice();
 
-    // iPhoneはユーザー操作の直後にspeakを呼ばないと動かない
-    // まずTTSを即座に起動する
-    const uttr = new SpeechSynthesisUtterance(card.body);
+    // ボタン押下の瞬間にAudioをアンロック（iPhone対応）
+    unlockAudio();
+
+    const mp3Path = `voices/${card.id}.mp3`;
+
+    // HEADリクエストでMP3の存在確認（再生はしない）
+    fetch(mp3Path, { method: 'HEAD' })
+        .then(res => {
+            if (res.ok) {
+                // MP3あり → MP3だけ再生（TTSは起動しない）
+                voice.src = mp3Path;
+                voice.volume = 1.0;
+                voice.play().catch(() => startTTS(card.body));
+                voice.onended = () => {};
+            } else {
+                // MP3なし → TTSのみ
+                startTTS(card.body);
+            }
+        })
+        .catch(() => {
+            // エラー → TTSにフォールバック
+            startTTS(card.body);
+        });
+}
+
+function startTTS(text) {
+    window.speechSynthesis.cancel();
+    const uttr = new SpeechSynthesisUtterance(text);
     uttr.lang = 'ja-JP';
     uttr.rate = 1.0;
     uttr.volume = 1.0;
-    uttr.onend = () => { /* 1枚で止まる */ };
+    uttr.onend = () => {};
     window.speechSynthesis.speak(uttr);
-
-    // MP3があれば少し遅れてTTSをキャンセルしてMP3に切り替え
-    const mp3Path = `voices/${card.id}.mp3`;
-    voice.src = mp3Path;
-    voice.volume = 1.0;
-    voice.play().then(() => {
-        // MP3再生成功→TTSをキャンセル
-        window.speechSynthesis.cancel();
-        voice.onended = () => { /* 1枚で止まる */ };
-    }).catch(() => {
-        // MP3なし→TTSのまま継続（何もしない）
-    });
 }
 
 function stopVoice() {
