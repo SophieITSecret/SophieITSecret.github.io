@@ -1,10 +1,8 @@
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&family=Oswald:wght@400;600;700&display=swap');
 
-/* ==================== CSS変数 ==================== */
 :root {
     --accent: #4caf50;
     --accent2: #81c784;
-    --accent-dark: #2e7d32;
     --font-size-body: 0.92rem;
 }
 
@@ -47,7 +45,6 @@ body {
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    /* カメラ穴対応：上部のsafe area */
     padding-top: env(safe-area-inset-top);
     padding-bottom: env(safe-area-inset-bottom);
     transition: background 0.3s, color 0.3s;
@@ -70,12 +67,7 @@ body {
         repeating-linear-gradient(90deg, transparent, transparent 40px, rgba(76,175,80,0.03) 40px, rgba(76,175,80,0.03) 41px);
 }
 
-.entry-emblem {
-    font-size: 4rem;
-    color: var(--accent);
-    animation: pulse 2s ease-in-out infinite;
-}
-
+.entry-emblem { font-size: 4rem; color: var(--accent); animation: pulse 2s ease-in-out infinite; }
 @keyframes pulse {
     0%, 100% { opacity: 0.8; transform: scale(1); }
     50% { opacity: 1; transform: scale(1.05); }
@@ -121,7 +113,6 @@ body {
     width: 100vw;
 }
 
-/* 上部：画像エリア（4:3） */
 #image-area {
     width: 100%;
     aspect-ratio: 4/3;
@@ -147,11 +138,8 @@ body {
     justify-content: center;
     font-size: 3rem;
     color: var(--placeholder-color);
-    background:
-        repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(76,175,80,0.02) 10px, rgba(76,175,80,0.02) 11px);
 }
 
-/* グリーン境界線 */
 #divider-line {
     height: 3px;
     background: var(--divider);
@@ -159,7 +147,6 @@ body {
     box-shadow: 0 0 8px rgba(76,175,80,0.4);
 }
 
-/* 中部：コンテンツエリア */
 #content-area {
     flex: 1;
     overflow: hidden;
@@ -168,7 +155,6 @@ body {
     min-height: 0;
 }
 
-/* テキスト表示 */
 #text-view {
     flex: 1;
     overflow-y: auto;
@@ -202,7 +188,6 @@ body {
     font-family: 'Noto Sans JP', sans-serif;
 }
 
-/* メニュー表示 */
 #menu-view {
     flex: 1;
     overflow-y: auto;
@@ -272,7 +257,6 @@ body {
 .btn-links   { background: linear-gradient(135deg, #2a1a2a, #6a1b9a); border-color: #9c27b0; }
 .btn-exam    { background: linear-gradient(135deg, #3a1a1a, #b71c1c); border-color: #f44336; }
 
-/* 級選択メニュー */
 .grade-menu-wrap {
     padding: 14px 12px;
     display: flex;
@@ -303,14 +287,14 @@ body {
 .btn-grade3 { background: linear-gradient(135deg, #1b5e20, #2e7d32); border: 1px solid #4caf50; color: #fff; }
 .btn-coming { background: var(--bg3); border: 1px solid var(--border); color: var(--text2); opacity: 0.5; }
 
-/* ==================== 下部コントロール ==================== */
+/* ==================== 下部コントロール（縦向き） ==================== */
+/* 左から：🏠ホーム・☰メニュー・◀戻る・次へ▶（広め）・🔊読上 */
 #controls {
     height: 54px;
     background: var(--bg2);
     border-top: 1px solid var(--border);
     display: grid;
-    /* 左から：ホーム・戻る・次へ・メニュー・読上 */
-    grid-template-columns: 0.8fr 1fr 1.2fr 1fr 1fr;
+    grid-template-columns: 0.8fr 0.8fr 1fr 1.4fr 1fr;
     gap: 3px;
     padding: 4px 4px 3px 4px;
     flex-shrink: 0;
@@ -336,10 +320,10 @@ body {
     border-color: var(--accent);
     color: var(--accent2);
     font-weight: bold;
+    font-size: 0.85rem;
 }
 .btn-next:active { background: rgba(76,175,80,0.4); }
-
-.btn-home { font-size: 1.1rem; }
+.btn-home { font-size: 1.0rem; }
 
 #btn-voice.playing {
     background: rgba(76,175,80,0.2);
@@ -349,15 +333,22 @@ body {
 
 /* ==================== 横向き対応 ==================== */
 @media (orientation: landscape) {
-    #main-ui {
-        flex-direction: row !important;
+    body {
+        padding-top: 0;
     }
 
-    /* 左側：画像エリア（カメラ穴回避＋縦いっぱい） */
+    #main-ui {
+        flex-direction: row !important;
+        height: 100dvh;
+    }
+
+    /* 左側：4:3で縦いっぱい、カメラ穴回避 */
     #image-area {
-        width: 46vw !important;
-        height: 100% !important;
-        max-height: 100% !important;
+        /* 縦100dvhに対して4:3の横幅を計算 */
+        height: 100dvh !important;
+        width: calc(100dvh * 4 / 3) !important;
+        max-height: 100dvh !important;
+        max-width: 60vw !important;
         aspect-ratio: unset !important;
         flex-shrink: 0;
         border-right: 3px solid var(--divider);
@@ -370,7 +361,7 @@ body {
     /* グリーン境界線は横向き時に非表示 */
     #divider-line { display: none; }
 
-    /* 中央：テキスト・メニューエリア */
+    /* 中央：テキスト・メニュー */
     #content-area {
         flex: 1;
         display: flex;
@@ -379,30 +370,31 @@ body {
         overflow: hidden;
     }
 
-    /* 右端：ボタンを縦積み */
+    /* 右端：ボタンを縦積み（下から：🏠・☰・◀・次へ・🔊） */
     #controls {
-        width: 52px !important;
-        height: 100% !important;
+        width: 50px !important;
+        height: 100dvh !important;
         display: flex !important;
-        flex-direction: column !important;
+        flex-direction: column-reverse !important;
         grid-template-columns: unset !important;
         padding: 4px 3px 4px 2px !important;
         border-top: none !important;
         border-left: 1px solid var(--border) !important;
         flex-shrink: 0;
         gap: 3px;
+        order: 1;
     }
 
     .ctrl-btn {
         flex: 1 !important;
-        font-size: 0.62rem !important;
-        writing-mode: horizontal-tb !important;
+        font-size: 0.6rem !important;
         min-height: 0;
+        width: 100%;
     }
 
-    /* 次へボタンは横向きでも目立たせる */
     .btn-next {
-        flex: 1.3 !important;
+        flex: 1.5 !important;
+        font-size: 0.65rem !important;
     }
 }
 
@@ -462,10 +454,7 @@ body {
     color: var(--text2);
 }
 
-.toggle-group {
-    display: flex;
-    gap: 6px;
-}
+.toggle-group { display: flex; gap: 6px; }
 
 .toggle-btn {
     flex: 1;
@@ -496,7 +485,6 @@ body {
     cursor: pointer;
 }
 
-/* ==================== バージョン ==================== */
 .ver {
     position: fixed;
     bottom: 4px;
@@ -508,7 +496,6 @@ body {
     font-family: 'Oswald', sans-serif;
 }
 
-/* ==================== フォントサイズ ==================== */
 body.font-small #card-body { font-size: 0.82rem; }
 body.font-medium #card-body { font-size: 0.92rem; }
 body.font-large #card-body { font-size: 1.05rem; }

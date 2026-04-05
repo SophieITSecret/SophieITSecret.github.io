@@ -391,29 +391,35 @@ function showSectionComplete() {
 // ==========================================
 // 音声読み上げ（iPhone対応・改善版）
 // ==========================================
+// ==========================================
+// 音声読み上げ（iPhone対応）
+// ボタン押下の瞬間にTTSを起動→MP3があれば上書き
+// ==========================================
 function playVoiceDirect() {
     if (!curSection.length || navState !== 'card') return;
     const card = curSection[curIndex];
 
     stopVoice();
 
-    // まずTTSを起動（iPhoneはユーザー操作の直後でないと動かない）
+    // iPhoneはユーザー操作の直後にspeakを呼ばないと動かない
+    // まずTTSを即座に起動する
     const uttr = new SpeechSynthesisUtterance(card.body);
     uttr.lang = 'ja-JP';
     uttr.rate = 1.0;
     uttr.volume = 1.0;
     uttr.onend = () => { /* 1枚で止まる */ };
+    window.speechSynthesis.speak(uttr);
 
-    // MP3を試す
+    // MP3があれば少し遅れてTTSをキャンセルしてMP3に切り替え
     const mp3Path = `voices/${card.id}.mp3`;
     voice.src = mp3Path;
     voice.volume = 1.0;
     voice.play().then(() => {
-        // MP3再生成功 → TTSは起動しない
+        // MP3再生成功→TTSをキャンセル
+        window.speechSynthesis.cancel();
         voice.onended = () => { /* 1枚で止まる */ };
     }).catch(() => {
-        // MP3なし → TTSで読み上げ
-        window.speechSynthesis.speak(uttr);
+        // MP3なし→TTSのまま継続（何もしない）
     });
 }
 
