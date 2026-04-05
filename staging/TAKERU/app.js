@@ -38,12 +38,6 @@ window.addEventListener('DOMContentLoaded', async () => {
     loadSavedSettings();
     setupPullToRefresh();
 
-    // 横向き切り替え時にレイアウト再計算
-    window.addEventListener('orientationchange', () => {
-        setTimeout(adjustLandscapeLayout, 300);
-    });
-    window.addEventListener('resize', adjustLandscapeLayout);
-
     document.getElementById('btn-enter').onclick = () => {
         entryScreen.style.display = 'none';
         mainUI.style.display = 'flex';
@@ -496,44 +490,6 @@ function loadSavedSettings() {
     }
     setFontSize(font);
     setActiveToggle(`btn-font-${font}`, ['btn-font-s','btn-font-m','btn-font-l']);
-}
-
-// ==========================================
-// 横向き時の動的レイアウト調整
-// テキストに25%を確保し、残りを図表に割り当てる
-// ==========================================
-function adjustLandscapeLayout() {
-    const isLandscape = window.innerWidth > window.innerHeight;
-    if (!isLandscape) {
-        // 縦向きに戻ったらリセット
-        const imageArea = document.getElementById('image-area');
-        const contentArea = document.getElementById('content-area');
-        if (imageArea) { imageArea.style.width = ''; imageArea.style.maxWidth = ''; }
-        if (contentArea) { contentArea.style.display = ''; contentArea.style.width = ''; }
-        return;
-    }
-
-    const totalWidth = window.innerWidth;
-    const btnWidth = 54;
-
-    // テキストに25%を確保
-    const textWidth = Math.floor(totalWidth * 0.25);
-    // 図表は残り全部
-    const imageWidth = totalWidth - textWidth - btnWidth;
-
-    const imageArea = document.getElementById('image-area');
-    const contentArea = document.getElementById('content-area');
-
-    if (imageArea) {
-        imageArea.style.width = `${imageWidth}px`;
-        imageArea.style.maxWidth = `${imageWidth}px`;
-    }
-    if (contentArea) {
-        contentArea.style.display = 'flex';
-        contentArea.style.width = `${textWidth}px`;
-        contentArea.style.minWidth = `${textWidth}px`;
-        contentArea.style.maxWidth = `${textWidth}px`;
-    }
 }
 
 // ==========================================

@@ -331,43 +331,29 @@ body {
     color: var(--accent);
 }
 
-/* ==================== 横向き対応 ==================== */
+/* ==================== 横向き対応（シンプル版） ==================== */
 @media (orientation: landscape) {
-    body {
-        padding-top: 0;
-    }
+    body { padding-top: 0; }
 
     #main-ui {
         flex-direction: row !important;
         height: 100dvh;
     }
 
-    /* 左側：4:3で縦いっぱい、図表優先、カメラ穴回避 */
     #image-area {
         height: 100dvh !important;
-        width: calc(100dvh * 4 / 3) !important;
+        width: auto !important;
         max-height: 100dvh !important;
-        max-width: 72vw !important;
-        aspect-ratio: unset !important;
+        aspect-ratio: 4/3 !important;
         flex-shrink: 0;
         border-right: 3px solid var(--divider);
         border-bottom: none;
         padding-left: env(safe-area-inset-left);
-        overflow: hidden;
-    }
-
-    #image-area #card-image {
-        width: 100% !important;
-        height: 100% !important;
-        object-fit: contain !important;
     }
 
     #card-image { object-fit: contain; }
-
-    /* グリーン境界線は横向き時に非表示 */
     #divider-line { display: none; }
 
-    /* 中央：テキスト・メニュー */
     #content-area {
         flex: 1;
         display: flex;
@@ -376,7 +362,6 @@ body {
         overflow: hidden;
     }
 
-    /* 右端：ボタンを縦積み（下から：🏠・☰・◀・次へ・🔊） */
     #controls {
         width: 50px !important;
         height: 100dvh !important;
@@ -398,10 +383,7 @@ body {
         width: 100%;
     }
 
-    .btn-next {
-        flex: 1.5 !important;
-        font-size: 0.65rem !important;
-    }
+    .btn-next { flex: 1.5 !important; font-size: 0.65rem !important; }
 }
 
 /* ==================== 設定ボタン ==================== */
