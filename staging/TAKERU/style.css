@@ -342,13 +342,12 @@ body {
         height: 100dvh;
     }
 
-    /* 左側：4:3で縦いっぱい、カメラ穴回避 */
+    /* 左側：4:3で縦いっぱい、図表優先、カメラ穴回避 */
     #image-area {
-        /* 縦100dvhに対して4:3の横幅を計算、上下ぴったり */
         height: 100dvh !important;
         width: calc(100dvh * 4 / 3) !important;
         max-height: 100dvh !important;
-        max-width: 55vw !important;
+        max-width: 72vw !important;
         aspect-ratio: unset !important;
         flex-shrink: 0;
         border-right: 3px solid var(--divider);
@@ -360,7 +359,7 @@ body {
     #image-area #card-image {
         width: 100% !important;
         height: 100% !important;
-        object-fit: cover !important;
+        object-fit: contain !important;
     }
 
     #card-image { object-fit: contain; }
