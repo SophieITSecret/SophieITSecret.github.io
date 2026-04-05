@@ -3,16 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>タケル｜軍事戦略検定</title>
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="TAKERU">
+    <link rel="apple-touch-icon" href="takeru-touch-icon.png">
+    <title>TAKERU｜MSアカデミー</title>
     <link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body class="dark-mode">
 
     <!-- 入口画面 -->
     <div id="entry-screen">
         <div class="entry-emblem">⚔</div>
         <div class="entry-title">TAKERU</div>
-        <div class="entry-sub">軍事戦略検定　３級</div>
+        <div class="entry-sub">MSアカデミー</div>
         <button id="btn-enter">学習をはじめる</button>
     </div>
 
@@ -22,37 +26,62 @@
         <!-- 上部：画像エリア（4:3） -->
         <div id="image-area">
             <img id="card-image" src="" alt="">
-            <div id="image-placeholder">
-                <span>⚔</span>
-            </div>
+            <div id="image-placeholder"><span>⚔</span></div>
         </div>
+
+        <!-- グリーン境界線 -->
+        <div id="divider-line"></div>
 
         <!-- 中部：テキスト or メニュー -->
         <div id="content-area">
-            <!-- テキスト表示 -->
             <div id="text-view">
+                <div id="card-progress"></div>
                 <div id="card-title"></div>
                 <div id="card-body"></div>
             </div>
-            <!-- メニュー表示 -->
             <div id="menu-view" style="display:none;">
                 <div id="menu-content"></div>
             </div>
         </div>
 
-        <!-- 下部：コントロール -->
+        <!-- 下部：コントロール（次へ・戻る・ホーム・メニュー・読上） -->
         <div id="controls">
-            <button class="ctrl-btn" id="btn-back">◀ 戻る</button>
-            <button class="ctrl-btn" id="btn-section">章選択</button>
             <button class="ctrl-btn btn-next" id="btn-next">次へ ▶</button>
+            <button class="ctrl-btn" id="btn-back">◀ 戻る</button>
+            <button class="ctrl-btn btn-home" id="btn-home">🏠</button>
             <button class="ctrl-btn" id="btn-toggle">メニュー</button>
             <button class="ctrl-btn" id="btn-voice">🔊 読上</button>
         </div>
 
     </div>
 
-    <div class="ver">TAKERU v1.0</div>
+    <!-- 設定パネル -->
+    <div id="settings-panel" style="display:none;">
+        <div id="settings-content">
+            <div class="settings-title">⚙ 設定</div>
+            <div class="settings-item">
+                <span>カラーモード</span>
+                <div class="toggle-group">
+                    <button class="toggle-btn active" id="btn-dark">ダーク</button>
+                    <button class="toggle-btn" id="btn-light">ホワイト</button>
+                </div>
+            </div>
+            <div class="settings-item">
+                <span>文字サイズ</span>
+                <div class="toggle-group">
+                    <button class="toggle-btn" id="btn-font-s">小</button>
+                    <button class="toggle-btn active" id="btn-font-m">中</button>
+                    <button class="toggle-btn" id="btn-font-l">大</button>
+                </div>
+            </div>
+            <button id="btn-settings-close">閉じる</button>
+        </div>
+    </div>
 
+    <!-- 設定ボタン -->
+    <button id="btn-settings">⚙</button>
+
+    <div class="ver">TAKERU v2.0</div>
     <script src="app.js"></script>
 </body>
 </html>
