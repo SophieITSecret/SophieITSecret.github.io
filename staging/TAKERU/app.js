@@ -1,5 +1,5 @@
 // ==========================================
-// TAKERU MSアカデミー app.js v2.0
+// TAKERU MSアカデミー app.js v2.1
 // ==========================================
 
 let cardData = [];
@@ -9,10 +9,10 @@ let navState = 'top';
 let curGenre = '';
 let curGrade = '3級';
 let autoRead = false;
+let isMenuVisible = false;
 
 const voice = new Audio();
 
-// DOM要素
 const entryScreen = document.getElementById('entry-screen');
 const mainUI = document.getElementById('main-ui');
 const cardImage = document.getElementById('card-image');
@@ -31,23 +31,18 @@ const btnHome = document.getElementById('btn-home');
 const btnSettings = document.getElementById('btn-settings');
 const settingsPanel = document.getElementById('settings-panel');
 
-// ==========================================
-// 起動
-// ==========================================
 window.addEventListener('DOMContentLoaded', async () => {
     await loadCSV();
     setupButtons();
     setupSettings();
     loadSavedSettings();
+    setupPullToRefresh();
 
     document.getElementById('btn-enter').onclick = () => {
         entryScreen.style.display = 'none';
         mainUI.style.display = 'flex';
         showTopMenu();
     };
-
-    // プルダウンで更新（PWA対応）
-    setupPullToRefresh();
 });
 
 // ==========================================
@@ -98,11 +93,12 @@ function parseCSV(text) {
 // ==========================================
 function showTopMenu() {
     navState = 'top';
+    isMenuVisible = true;
     stopVoice();
     clearCard();
     showMenuView();
+    btnSettings.style.display = 'block';
 
-    // トップ画像を表示
     cardImage.src = 'images/takeru-top.jpg';
     cardImage.style.display = 'block';
     imagePlaceholder.style.display = 'none';
@@ -110,9 +106,6 @@ function showTopMenu() {
         cardImage.style.display = 'none';
         imagePlaceholder.style.display = 'flex';
     };
-
-    // 設定ボタンを表示
-    btnSettings.style.display = 'block';
 
     menuContent.innerHTML = `
         <div class="top-menu-wrap">
@@ -126,19 +119,18 @@ function showTopMenu() {
     menuContent.onclick = (e) => {
         const btn = e.target.closest('.top-btn');
         if (!btn) return;
-        const action = btn.dataset.action;
-        if (action === 'jukou') showGradeMenu();
+        if (btn.dataset.action === 'jukou') showGradeMenu();
         else showPlaceholder(btn.innerText);
     };
-
     updateToggleBtn('メニュー');
 }
 
 // ==========================================
-// 級選択メニュー（1級・2級・3級）
+// 級選択
 // ==========================================
 function showGradeMenu() {
     navState = 'grade';
+    isMenuVisible = true;
     btnSettings.style.display = 'none';
     showMenuView();
 
@@ -172,6 +164,7 @@ function showGradeMenu() {
 // ==========================================
 function showGenreMenu() {
     navState = 'genre';
+    isMenuVisible = true;
     showMenuView();
     const genres = [...new Set(cardData.map(d => d.genre))];
     let html = `<div class="menu-label">▶ ${curGrade}　科目・ジャンルを選ぶ</div>`;
@@ -189,6 +182,7 @@ function showGenreMenu() {
 
 function showSectionMenu(genre) {
     navState = 'section';
+    isMenuVisible = true;
     curGenre = genre;
     showMenuView();
     const sections = [...new Set(cardData.filter(d => d.genre === genre).map(d => d.section))];
@@ -207,7 +201,8 @@ function showSectionMenu(genre) {
 }
 
 function showCardList(section) {
-    navState = 'card';
+    navState = 'cardlist';
+    isMenuVisible = true;
     curSection = cardData.filter(d => d.section === section);
     curIndex = 0;
     showMenuView();
@@ -229,13 +224,15 @@ function showCard(idx) {
     curIndex = Math.max(0, Math.min(idx, curSection.length - 1));
     const card = curSection[curIndex];
 
+    navState = 'card';
+    isMenuVisible = false;
     showTextView();
+
     cardProgress.innerText = `${curSection[0].section}　${curIndex + 1} / ${curSection.length}`;
     cardTitle.innerText = card.title;
     cardBody.innerText = card.body;
     textView.scrollTop = 0;
 
-    // 画像表示
     const imgPath = `images/${card.id}.png`;
     cardImage.src = imgPath;
     cardImage.style.display = 'block';
@@ -248,12 +245,10 @@ function showCard(idx) {
         };
     };
 
-    // アクティブ更新
     document.querySelectorAll('#menu-content .menu-item').forEach((el, i) => {
         el.classList.toggle('active-item', i === curIndex);
     });
 
-    navState = 'card';
     stopVoice();
     if (autoRead) setTimeout(() => playVoiceDirect(), 300);
 }
@@ -263,6 +258,7 @@ function showCard(idx) {
 // ==========================================
 function showPlaceholder(name) {
     navState = 'placeholder';
+    isMenuVisible = false;
     showTextView();
     cardProgress.innerText = '';
     cardTitle.innerText = name;
@@ -278,12 +274,14 @@ function showMenuView() {
     textView.style.display = 'none';
     menuView.style.display = 'flex';
     menuView.style.flexDirection = 'column';
+    isMenuVisible = true;
     updateToggleBtn('テキスト');
 }
 
 function showTextView() {
     menuView.style.display = 'none';
     textView.style.display = 'block';
+    isMenuVisible = false;
     updateToggleBtn('メニュー');
 }
 
@@ -312,24 +310,27 @@ function setupButtons() {
         }
     };
 
-    // 戻る（前のカードへ）
+    // 戻る：テキスト表示中→前のカード、メニュー表示中→上の階層
     btnBack.onclick = () => {
-        if (navState === 'card' && curIndex > 0) {
-            showCard(curIndex - 1);
-        } else if (navState === 'card') {
-            showCardList(curSection[0]?.section || '');
-        } else if (navState === 'section') {
-            showGenreMenu();
-        } else if (navState === 'genre') {
-            showGradeMenu();
-        } else if (navState === 'grade') {
-            showTopMenu();
+        if (!isMenuVisible) {
+            // テキスト表示中
+            if (navState === 'card' && curIndex > 0) {
+                showCard(curIndex - 1);
+            } else {
+                // 最初のカードならカード一覧へ
+                showCardList(curSection[0]?.section || '');
+            }
         } else {
-            showTopMenu();
+            // メニュー表示中→上の階層へ
+            if (navState === 'cardlist') showSectionMenu(curGenre);
+            else if (navState === 'section') showGenreMenu();
+            else if (navState === 'genre') showGradeMenu();
+            else if (navState === 'grade') showTopMenu();
+            else showTopMenu();
         }
     };
 
-    // ホーム（トップメニューへ一発で戻る）
+    // ホーム（一発でトップへ）
     btnHome.onclick = () => {
         stopVoice();
         showTopMenu();
@@ -337,8 +338,9 @@ function setupButtons() {
 
     // テキスト/メニュー切り替え
     btnToggle.onclick = () => {
-        if (menuView.style.display === 'none') {
-            if (navState === 'card' && curSection.length) {
+        if (!isMenuVisible) {
+            // テキスト→カード一覧
+            if (curSection.length && navState === 'card') {
                 showCardList(curSection[0].section);
                 setTimeout(() => {
                     document.querySelectorAll('#menu-content .menu-item').forEach((el, i) => {
@@ -347,8 +349,12 @@ function setupButtons() {
                 }, 50);
             } else showMenuView();
         } else {
-            if (curSection.length && navState === 'card') showCard(curIndex);
-            else showTextView();
+            // メニュー→テキスト
+            if (curSection.length && (navState === 'card' || navState === 'cardlist')) {
+                navState = 'card';
+                isMenuVisible = false;
+                showCard(curIndex);
+            } else showTextView();
         }
     };
 
@@ -372,60 +378,67 @@ function setupButtons() {
 // ==========================================
 function showSectionComplete() {
     stopVoice();
+    navState = 'complete';
+    isMenuVisible = false;
     showTextView();
     cardProgress.innerText = curSection[0]?.section || '';
     cardTitle.innerText = '✅ セクション完了';
-    cardBody.innerText = `全${curSection.length}枚を読み終えました。\n\n「戻る」でカード一覧へ、「🏠」でトップメニューへ戻れます。`;
+    cardBody.innerText = `全${curSection.length}枚を読み終えました。\n\n「🏠」でトップメニューへ戻れます。`;
     cardImage.style.display = 'none';
     imagePlaceholder.style.display = 'flex';
 }
 
 // ==========================================
-// 音声読み上げ（iPhone対応）
+// 音声読み上げ（iPhone対応・改善版）
 // ==========================================
 function playVoiceDirect() {
     if (!curSection.length || navState !== 'card') return;
     const card = curSection[curIndex];
 
-    // まずWeb TTSを起動（iPhoneはこれが確実）
+    // 既存の音声を完全停止
+    stopVoice();
+
+    // MP3を試す
+    const mp3Path = `voices/${card.id}.mp3`;
+    const testAudio = new Audio(mp3Path);
+
+    testAudio.addEventListener('canplaythrough', () => {
+        // MP3が読み込めた→TTSなしでMP3だけ再生
+        testAudio.remove();
+        voice.src = mp3Path;
+        voice.volume = 1.0;
+        voice.play().catch(() => fallbackTTS(card.body));
+        voice.onended = () => { /* 1枚で止まる */ };
+    }, { once: true });
+
+    testAudio.addEventListener('error', () => {
+        // MP3なし→TTSにフォールバック
+        testAudio.remove();
+        fallbackTTS(card.body);
+    }, { once: true });
+
+    // タイムアウト（1秒以内にcanplaythroughが来なければTTS）
+    setTimeout(() => {
+        if (voice.paused && !window.speechSynthesis.speaking) {
+            testAudio.remove();
+            fallbackTTS(card.body);
+        }
+    }, 1000);
+}
+
+function fallbackTTS(text) {
     window.speechSynthesis.cancel();
-    const uttr = new SpeechSynthesisUtterance(card.body);
+    const uttr = new SpeechSynthesisUtterance(text);
     uttr.lang = 'ja-JP';
     uttr.rate = 1.0;
-    uttr.onend = () => { /* 一枚で止まる */ };
+    uttr.onend = () => { /* 1枚で止まる */ };
     window.speechSynthesis.speak(uttr);
-
-    // MP3があれば上書き再生
-    const mp3Path = `voices/${card.id}.mp3`;
-    const testAudio = new Audio();
-    testAudio.src = mp3Path;
-    testAudio.play().then(() => {
-        // MP3が再生できたらTTSをキャンセルしてMP3を使う
-        window.speechSynthesis.cancel();
-        // 少し待ってボリュームをフェードイン
-        testAudio.volume = 0;
-        voice.src = mp3Path;
-        voice.volume = 0;
-        voice.play().then(() => {
-            testAudio.pause();
-            // フェードイン
-            let vol = 0;
-            const fade = setInterval(() => {
-                vol = Math.min(1, vol + 0.1);
-                voice.volume = vol;
-                if (vol >= 1) clearInterval(fade);
-            }, 50);
-            voice.onended = () => { /* 一枚で止まる */ };
-        });
-    }).catch(() => {
-        // MP3なし → TTSのまま
-    });
 }
 
 function stopVoice() {
     voice.pause();
     voice.currentTime = 0;
-    voice.volume = 1;
+    voice.volume = 1.0;
     window.speechSynthesis.cancel();
 }
 
@@ -433,49 +446,27 @@ function stopVoice() {
 // 設定パネル
 // ==========================================
 function setupSettings() {
-    btnSettings.onclick = () => {
-        settingsPanel.style.display = 'flex';
-    };
-    document.getElementById('btn-settings-close').onclick = () => {
-        settingsPanel.style.display = 'none';
-    };
+    btnSettings.onclick = () => { settingsPanel.style.display = 'flex'; };
+    document.getElementById('btn-settings-close').onclick = () => { settingsPanel.style.display = 'none'; };
 
-    // カラーモード
     document.getElementById('btn-dark').onclick = () => {
-        document.body.classList.remove('light-mode');
-        document.body.classList.add('dark-mode');
+        document.body.classList.replace('light-mode', 'dark-mode');
         setActiveToggle('btn-dark', ['btn-dark', 'btn-light']);
         localStorage.setItem('takeru-theme', 'dark');
     };
     document.getElementById('btn-light').onclick = () => {
-        document.body.classList.remove('dark-mode');
-        document.body.classList.add('light-mode');
+        document.body.classList.replace('dark-mode', 'light-mode');
         setActiveToggle('btn-light', ['btn-dark', 'btn-light']);
         localStorage.setItem('takeru-theme', 'light');
     };
 
-    // フォントサイズ
-    document.getElementById('btn-font-s').onclick = () => {
-        setFontSize('small');
-        setActiveToggle('btn-font-s', ['btn-font-s', 'btn-font-m', 'btn-font-l']);
-        localStorage.setItem('takeru-font', 'small');
-    };
-    document.getElementById('btn-font-m').onclick = () => {
-        setFontSize('medium');
-        setActiveToggle('btn-font-m', ['btn-font-s', 'btn-font-m', 'btn-font-l']);
-        localStorage.setItem('takeru-font', 'medium');
-    };
-    document.getElementById('btn-font-l').onclick = () => {
-        setFontSize('large');
-        setActiveToggle('btn-font-l', ['btn-font-s', 'btn-font-m', 'btn-font-l']);
-        localStorage.setItem('takeru-font', 'large');
-    };
+    document.getElementById('btn-font-s').onclick = () => { setFontSize('small'); localStorage.setItem('takeru-font', 'small'); setActiveToggle('btn-font-s', ['btn-font-s','btn-font-m','btn-font-l']); };
+    document.getElementById('btn-font-m').onclick = () => { setFontSize('medium'); localStorage.setItem('takeru-font', 'medium'); setActiveToggle('btn-font-m', ['btn-font-s','btn-font-m','btn-font-l']); };
+    document.getElementById('btn-font-l').onclick = () => { setFontSize('large'); localStorage.setItem('takeru-font', 'large'); setActiveToggle('btn-font-l', ['btn-font-s','btn-font-m','btn-font-l']); };
 }
 
 function setActiveToggle(activeId, allIds) {
-    allIds.forEach(id => {
-        document.getElementById(id).classList.toggle('active', id === activeId);
-    });
+    allIds.forEach(id => document.getElementById(id).classList.toggle('active', id === activeId));
 }
 
 function setFontSize(size) {
@@ -487,12 +478,11 @@ function loadSavedSettings() {
     const theme = localStorage.getItem('takeru-theme') || 'dark';
     const font = localStorage.getItem('takeru-font') || 'medium';
     if (theme === 'light') {
-        document.body.classList.remove('dark-mode');
-        document.body.classList.add('light-mode');
+        document.body.classList.replace('dark-mode', 'light-mode');
         setActiveToggle('btn-light', ['btn-dark', 'btn-light']);
     }
     setFontSize(font);
-    setActiveToggle(`btn-font-${font}`, ['btn-font-s', 'btn-font-m', 'btn-font-l']);
+    setActiveToggle(`btn-font-${font}`, ['btn-font-s','btn-font-m','btn-font-l']);
 }
 
 // ==========================================
@@ -508,15 +498,13 @@ function setupPullToRefresh() {
 
     document.addEventListener('touchmove', (e) => {
         const y = e.touches[0].clientY;
-        const scrollEl = document.getElementById('menu-content') || document.getElementById('text-view');
-        const atTop = scrollEl ? scrollEl.scrollTop === 0 : true;
-        if (atTop && y - startY > 60) pulling = true;
+        const menuEl = document.getElementById('menu-content');
+        const textEl = document.getElementById('text-view');
+        const atTop = (menuEl && menuEl.scrollTop === 0) || (textEl && textEl.scrollTop === 0);
+        if (atTop && y - startY > 80) pulling = true;
     }, { passive: true });
 
     document.addEventListener('touchend', () => {
-        if (pulling) {
-            pulling = false;
-            location.reload();
-        }
+        if (pulling) { pulling = false; location.reload(); }
     });
 }
