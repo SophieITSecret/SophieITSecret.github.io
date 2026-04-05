@@ -389,21 +389,9 @@ function showSectionComplete() {
 }
 
 // ==========================================
-// 音声読み上げ（iPhone対応・v2.2）
-// HEADリクエストでMP3の存在を確認してから再生方式を決定
+// 音声読み上げ（iPhone対応・v2.3）
+// MP3再生を試みて、500ms以内に開始しなければTTSにフォールバック
 // ==========================================
-
-// iPhoneのAudioをボタン押下時にアンロック
-let audioUnlocked = false;
-function unlockAudio() {
-    if (audioUnlocked) return;
-    // 無音の最小WAVでアンロック
-    voice.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA';
-    voice.play().then(() => {
-        voice.src = '';
-        audioUnlocked = true;
-    }).catch(() => {});
-}
 
 function playVoiceDirect() {
     if (!curSection.length || navState !== 'card') return;
@@ -411,29 +399,36 @@ function playVoiceDirect() {
 
     stopVoice();
 
-    // ボタン押下の瞬間にAudioをアンロック（iPhone対応）
-    unlockAudio();
-
     const mp3Path = `voices/${card.id}.mp3`;
+    let mp3Started = false;
+    let ttsStarted = false;
 
-    // HEADリクエストでMP3の存在確認（再生はしない）
-    fetch(mp3Path, { method: 'HEAD' })
-        .then(res => {
-            if (res.ok) {
-                // MP3あり → MP3だけ再生（TTSは起動しない）
-                voice.src = mp3Path;
-                voice.volume = 1.0;
-                voice.play().catch(() => startTTS(card.body));
-                voice.onended = () => {};
-            } else {
-                // MP3なし → TTSのみ
-                startTTS(card.body);
-            }
+    // MP3再生を試みる（ボタン押下の瞬間なのでiPhoneでも許可される）
+    voice.src = mp3Path;
+    voice.volume = 1.0;
+    voice.play()
+        .then(() => {
+            mp3Started = true;
+            voice.onended = () => {};
         })
         .catch(() => {
-            // エラー → TTSにフォールバック
-            startTTS(card.body);
+            // MP3再生失敗→即TTS
+            if (!ttsStarted) {
+                ttsStarted = true;
+                startTTS(card.body);
+            }
         });
+
+    // 500ms経ってもMP3が始まっていなければTTSを起動
+    setTimeout(() => {
+        if (!mp3Started && !ttsStarted) {
+            ttsStarted = true;
+            // MP3をキャンセルしてTTS起動
+            voice.pause();
+            voice.src = '';
+            startTTS(card.body);
+        }
+    }, 500);
 }
 
 function startTTS(text) {
@@ -449,6 +444,7 @@ function startTTS(text) {
 function stopVoice() {
     voice.pause();
     voice.currentTime = 0;
+    voice.src = '';
     voice.volume = 1.0;
     window.speechSynthesis.cancel();
 }
