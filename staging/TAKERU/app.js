@@ -395,44 +395,26 @@ function playVoiceDirect() {
     if (!curSection.length || navState !== 'card') return;
     const card = curSection[curIndex];
 
-    // 既存の音声を完全停止
     stopVoice();
+
+    // まずTTSを起動（iPhoneはユーザー操作の直後でないと動かない）
+    const uttr = new SpeechSynthesisUtterance(card.body);
+    uttr.lang = 'ja-JP';
+    uttr.rate = 1.0;
+    uttr.volume = 1.0;
+    uttr.onend = () => { /* 1枚で止まる */ };
 
     // MP3を試す
     const mp3Path = `voices/${card.id}.mp3`;
-    const testAudio = new Audio(mp3Path);
-
-    testAudio.addEventListener('canplaythrough', () => {
-        // MP3が読み込めた→TTSなしでMP3だけ再生
-        testAudio.remove();
-        voice.src = mp3Path;
-        voice.volume = 1.0;
-        voice.play().catch(() => fallbackTTS(card.body));
+    voice.src = mp3Path;
+    voice.volume = 1.0;
+    voice.play().then(() => {
+        // MP3再生成功 → TTSは起動しない
         voice.onended = () => { /* 1枚で止まる */ };
-    }, { once: true });
-
-    testAudio.addEventListener('error', () => {
-        // MP3なし→TTSにフォールバック
-        testAudio.remove();
-        fallbackTTS(card.body);
-    }, { once: true });
-
-    // タイムアウト（1秒以内にcanplaythroughが来なければTTS）
-    setTimeout(() => {
-        if (voice.paused && !window.speechSynthesis.speaking) {
-            testAudio.remove();
-            fallbackTTS(card.body);
-        }
-    }, 1000);
-}
-
-function fallbackTTS(text) {
-    window.speechSynthesis.cancel();
-    const uttr = new SpeechSynthesisUtterance(text);
-    uttr.lang = 'ja-JP';
-    uttr.rate = 1.0;
-    uttr.onend = () => { /* 1枚で止まる */ };
-    window.speechSynthesis.speak(uttr);
+    }).catch(() => {
+        // MP3なし → TTSで読み上げ
+        window.speechSynthesis.speak(uttr);
+    });
 }
 
 function stopVoice() {
