@@ -1,7 +1,6 @@
 import * as media from './media.js';
 import * as nav from './navigation.js';
 
-// 【復旧】自己診断ツール：何かエラーがあれば必ず画面にポップアップを出します
 window.onerror = function(msg, url, lineNo) {
     alert("System Error:\n" + msg + "\nLine: " + lineNo);
     return true;
@@ -10,7 +9,6 @@ window.onerror = function(msg, url, lineNo) {
 let isPaused = false, isAutoPlay = false, isMusicMode = false, lastTxt = "", pressTimer = null;
 let yt, img, tel, lv, nm, talkAudio;
 
-// 起動時のフリーズを防ぐため、HTMLが完全に読み込まれてから部品をセットします
 document.addEventListener('DOMContentLoaded', async () => {
     yt = document.getElementById('yt-iframe');
     img = document.getElementById('monitor-img');
@@ -40,9 +38,7 @@ function setup() {
             try {
                 const p = talkAudio.play();
                 if (p !== undefined) p.catch(() => { try { media.speak(fallbackText); } catch(e){} });
-            } catch(e) {
-                try { media.speak(fallbackText); } catch(err){}
-            }
+            } catch(e) { try { media.speak(fallbackText); } catch(err){} }
         };
     }
 
@@ -104,7 +100,6 @@ function next() {
     } else { isAutoPlay = false; const btnN = document.getElementById('btn-next'); if(btnN) btnN.classList.remove('auto-active'); }
 }
 
-// 削除してしまった抽出機能を復元
 function extractYtId(u) {
     if(!u) return "";
     const reg = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i;
@@ -133,10 +128,8 @@ function prep(t, isM, id = null) {
     } else if (id) {
         talkAudio.src = `./voices_mp3/${id}.mp3`;
         talkAudio.onerror = () => { try { media.speak(t); } catch(e){} };
-        try {
-            const p = talkAudio.play();
-            if (p !== undefined) p.catch(() => { try { media.speak(t); } catch(e){} });
-        } catch(e) { try { media.speak(t); } catch(err){} }
+        try { const p = talkAudio.play(); if (p !== undefined) p.catch(() => { try { media.speak(t); } catch(e){} }); } 
+        catch(e) { try { media.speak(t); } catch(err){} }
     }
     
     document.querySelectorAll('#list-view .item').forEach((el) => {
@@ -181,9 +174,11 @@ function openSpecialSongs(type) {
     if(type === 'ソフィー') {
         filtered = nav.jData.filter(m => m.a && m.a.includes("ソフィー"));
     } else if(type === 'BGM') {
-        filtered = nav.jData.filter(m => { const n = parseInt(m.fix); return !isNaN(n) && n >= 1 && n <= 6; });
+        // 小細工なしで素直に 1〜6 を抽出
+        filtered = nav.jData.filter(m => parseInt(m.fix) >= 1 && parseInt(m.fix) <= 6);
     } else if(type === '昭和ソング') {
-        filtered = nav.jData.filter(m => { const n = parseInt(m.fix); return !isNaN(n) && n >= 7 && n <= 10; });
+        // 小細工なしで素直に 7〜10 を抽出
+        filtered = nav.jData.filter(m => parseInt(m.fix) >= 7 && parseInt(m.fix) <= 10);
     }
     nav.updateNav("tit", undefined, filtered); isMusicMode = true;
     renderSongList(type);
@@ -230,14 +225,15 @@ function openThemes(g) {
 
 function openStories(t) {
     const stories = nav.tData.filter(d => d.th === t).sort((a,b) => {
-        const fixA = (a.fix === "1" || a.fix === "true") ? 1 : 0;
-        const fixB = (b.fix === "1" || b.fix === "true") ? 1 : 0;
-        return fixB - fixA;
+        const isFixA = (a.fix === "1" || a.fix === "true" || parseInt(a.fix) > 0) ? 1 : 0;
+        const isFixB = (b.fix === "1" || b.fix === "true" || parseInt(b.fix) > 0) ? 1 : 0;
+        return isFixB - isFixA;
     });
     nav.updateNav("st", undefined, stories); isMusicMode = false;
     let h = `<div class="label">${t}</div>`;
     nav.curP.forEach((d, i) => { 
-        const fixIcon = (d.fix === "1" || d.fix === "true") ? "📌 " : "";
+        const isFix = (d.fix === "1" || d.fix === "true" || parseInt(d.fix) > 0);
+        const fixIcon = isFix ? "📌 " : "";
         h += `<div class="item" data-idx="${i}">${fixIcon}${d.ti}</div>`; 
     });
     render(h, (e) => { 
