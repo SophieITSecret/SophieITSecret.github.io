@@ -58,20 +58,17 @@ function applyLandscapeLayout() {
     const contentArea = document.getElementById('content-area');
 
     if (!isLandscape) {
-        // 縦向き：スタイルをリセット
         imageArea.style.width = '';
         contentArea.style.width = '';
         return;
     }
 
     const screenW = window.innerWidth;
+    const screenH = window.innerHeight;
     const btnW = 32;
     const availableW = screenW - btnW;
     const minTextW = 80;
-
-    // imageAreaの実際の表示高さを使って計算（dvhとinnerHeightのズレを回避）
-    const actualH = imageArea.getBoundingClientRect().height || window.innerHeight;
-    const idealImageW = Math.floor(actualH * 4 / 3);
+    const idealImageW = Math.floor(screenH * 4 / 3);
 
     let imageW, textW;
     if (idealImageW + minTextW <= availableW) {
@@ -81,6 +78,36 @@ function applyLandscapeLayout() {
         textW = minTextW;
         imageW = availableW - minTextW;
     }
+
+    imageArea.style.width = imageW + 'px';
+    contentArea.style.width = textW + 'px';
+
+    // ★デバッグ表示（タップで消える）
+    let dbg = document.getElementById('debug-overlay');
+    if (!dbg) {
+        dbg = document.createElement('div');
+        dbg.id = 'debug-overlay';
+        dbg.style.cssText = `
+            position:fixed; top:10px; left:10px; z-index:99999;
+            background:rgba(0,0,0,0.85); color:#0f0; font-size:11px;
+            padding:8px 12px; border-radius:6px; font-family:monospace;
+            border:1px solid #0f0; line-height:1.6;
+        `;
+        dbg.onclick = () => dbg.remove();
+        document.body.appendChild(dbg);
+    }
+    const rectH = imageArea.getBoundingClientRect().height;
+    dbg.innerHTML = `
+        [タップで閉じる]<br>
+        innerW: ${screenW}px<br>
+        innerH: ${screenH}px<br>
+        availableW: ${availableW}px<br>
+        idealImageW: ${idealImageW}px<br>
+        imageW設定: ${imageW}px<br>
+        textW設定: ${textW}px<br>
+        imageArea実H: ${Math.round(rectH)}px
+    `;
+}
 
     imageArea.style.width = imageW + 'px';
     contentArea.style.width = textW + 'px';
