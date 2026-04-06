@@ -381,7 +381,7 @@ body {
         flex-shrink: 0;
         border-right: 3px solid var(--divider);
         border-bottom: none;
-        padding-left: env(safe-area-inset-left);
+        /* padding-left: env(safe-area-inset-left); */
     }
 
     #card-image {
