@@ -1,5 +1,5 @@
 // ==========================================
-// TAKERU MSアカデミー app.js v2.6
+// TAKERU MSアカデミー app.js v2.7
 // ==========================================
 
 let cardData = [];
@@ -49,7 +49,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 });
 
 // ==========================================
-// 横向きレイアウト動的計算（v2.6）
+// 横向きレイアウト動的計算（v2.7）
 // ==========================================
 function applyLandscapeLayout() {
     const isLandscape = window.innerWidth > window.innerHeight;
@@ -66,23 +66,24 @@ function applyLandscapeLayout() {
     const btnW = 32;
     const minTextW = 80;
 
-    // Dynamic Island等の左余白を取得
-    const safeLeft = parseInt(getComputedStyle(document.documentElement)
-        .getPropertyValue('--sal') || '0');
-
-    const availableW = screenW - btnW - safeLeft;
+    // Dynamic Island等の左余白（固定値44px）
+    const safeLeft = 44;
 
     // 実測値ベースで画像エリアの高さを取得
     const actualH = Math.round(imageArea.getBoundingClientRect().height);
-    const idealImageW = Math.floor(actualH * 4 / 3);
+
+    // 画像の表示幅（padding-left分を加算して吸収）
+    const idealImageW = Math.floor(actualH * 4 / 3) + safeLeft;
+
+    const availableW = screenW - btnW - safeLeft;
 
     let imageW, textW;
-    if (idealImageW + minTextW <= availableW) {
+    if (idealImageW + minTextW <= availableW + safeLeft) {
         imageW = idealImageW;
-        textW = availableW - idealImageW;
+        textW = availableW + safeLeft - idealImageW;
     } else {
         textW = minTextW;
-        imageW = availableW - minTextW;
+        imageW = availableW + safeLeft - minTextW;
     }
 
     imageArea.style.width = imageW + 'px';
