@@ -1,7 +1,7 @@
 import * as media from './media.js';
 import * as nav from './navigation.js';
 
-// 念のため自己診断ツールは残しておきます
+// 自己診断ツール
 window.onerror = function(msg, url, lineNo) {
     alert("System Error:\n" + msg + "\nLine: " + lineNo);
     return true;
@@ -72,7 +72,6 @@ function openTalk() {
     let h = '<div class="label">お酒のジャンル</div>';
     [...new Set(nav.tData.map(d => d.g))].filter(Boolean).forEach(g => { h += `<div class="item" id="g-${g}">📁 ${g}</div>`; });
     
-    // 修正：コールバックに item（ボタンそのもの）を渡す
     render(h, (item) => { 
         if(item.id.startsWith('g-')) { 
             const selG = item.id.replace('g-','');
@@ -109,9 +108,10 @@ function openStories(t) {
     render(h, (item) => { 
         const i = parseInt(item.dataset.idx); 
         if(!isNaN(i)){ 
-            nav.updateNav(undefined,undefined,undefined,i); 
-            setMon('i', `./talk_images/${nav.curD.id}.jpg`); 
-            prep(nav.curD.txt, false, nav.curD.id); 
+            nav.updateNav(undefined,undefined,undefined,i);
+            const curItem = nav.curP[nav.curI]; // Claude先生の指摘を反映
+            setMon('i', `./talk_images/${curItem.id}.jpg`); 
+            prep(curItem.txt, false, curItem.id); 
         } 
     });
 }
@@ -120,7 +120,7 @@ function openStories(t) {
 function openMusic() {
     nav.updateNav("art");
     let h = '<div class="label">アーティスト選曲</div>';
-    [...new Set(nav.mData.map(d => d.a))].filter(Boolean).forEach(a => { h += `<div class="item" id="art-${a}">🎤 ${a}</div>`; });
+    [...new Set(nav.jData.map(d => d.a))].filter(Boolean).forEach(a => { h += `<div class="item" id="art-${a}">🎤 ${a}</div>`; }); // Claude先生の指摘を反映
     
     render(h, (item) => { 
         if(item.id.startsWith('art-')) openSongs(item.id.replace('art-','')); 
@@ -128,7 +128,7 @@ function openMusic() {
 }
 
 function openSongs(a) {
-    nav.updateNav("tit", undefined, nav.mData.filter(m => m.a === a));
+    nav.updateNav("tit", undefined, nav.jData.filter(m => m.a === a)); // Claude先生の指摘を反映
     isMusicMode = true;
     let h = `<div class="label">${a}</div>`;
     nav.curP.forEach((m, i) => { h += `<div class="item" data-idx="${i}">${m.ti}</div>`; });
@@ -137,25 +137,23 @@ function openSongs(a) {
         const i = parseInt(item.dataset.idx); 
         if(!isNaN(i)){ 
             nav.updateNav(undefined,undefined,undefined,i); 
-            setMon('v', nav.curD.u); 
-            prep(`${nav.curD.a}さんの「${nav.curD.ti}」です。`, true); 
+            const curItem = nav.curP[nav.curI]; // Claude先生の指摘を反映
+            setMon('v', curItem.u); 
+            prep(`${curItem.a}さんの「${curItem.ti}」です。`, true); 
         } 
     });
 }
 
 // --- 共通メディア・UI制御 ---
-
-// 【究極の防弾仕様】親へのイベント委譲をやめ、各ボタンに直接イベントを付与する
 function render(h, cb) {
     nm.style.display='none'; 
     lv.style.display='block'; 
     lv.innerHTML=h; 
     document.getElementById('main-scroll').scrollTop = 0;
 
-    // 画面に描画した「各アイテム」に直接クリック指令を出す
     const items = lv.querySelectorAll('.item');
     items.forEach(item => {
-        item.onclick = () => cb(item); // 押されたボタン自体をコールバックに渡す
+        item.onclick = () => cb(item); 
     });
 }
 
@@ -173,7 +171,6 @@ function setMon(type, src) {
 function prep(t, isM, id = null) {
     window.speechSynthesis.cancel();
     
-    // スマホでの再生エラーを回避する安全装置
     try {
         talkAudio.pause(); 
         if (talkAudio.readyState > 0) {
@@ -198,10 +195,9 @@ function prep(t, isM, id = null) {
         }
     }
     
-    // アイテムのハイライト更新
     const items = lv.querySelectorAll('.item');
     items.forEach(el => {
-        if(parseInt(el.dataset.idx) === nav.idx) el.classList.add('active-item');
+        if(parseInt(el.dataset.idx) === nav.curI) el.classList.add('active-item'); // Claude先生の指摘を反映
         else el.classList.remove('active-item');
     });
 }
@@ -234,11 +230,12 @@ function togglePause() {
 }
 
 function next() {
-    if(nav.idx < nav.curP.length - 1) {
-        const i = nav.idx + 1;
+    if(nav.curI < nav.curP.length - 1) { // Claude先生の指摘を反映
+        const i = nav.curI + 1; // Claude先生の指摘を反映
         nav.updateNav(undefined,undefined,undefined,i);
-        if(isMusicMode) { setMon('v', nav.curD.u); prep(`${nav.curD.a}さんの「${nav.curD.ti}」です。`, true); }
-        else { setMon('i', `./talk_images/${nav.curD.id}.jpg`); prep(nav.curD.txt, false, nav.curD.id); }
+        const curItem = nav.curP[nav.curI]; // Claude先生の指摘を反映
+        if(isMusicMode) { setMon('v', curItem.u); prep(`${curItem.a}さんの「${curItem.ti}」です。`, true); }
+        else { setMon('i', `./talk_images/${curItem.id}.jpg`); prep(curItem.txt, false, curItem.id); }
     } else {
         isAutoPlay = false;
         document.getElementById('btn-next').classList.remove('auto-active');
