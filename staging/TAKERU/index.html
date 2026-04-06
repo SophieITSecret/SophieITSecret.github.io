@@ -35,14 +35,19 @@
                 <div id="menu-content"></div>
             </div>
         </div>
-        <!-- 縦向き左から：🏠・☰メニュー・◀戻る・次へ▶・🔊読上 -->
-        <!-- 横向き下から：🏠・☰・◀・次へ・🔊 -->
         <div id="controls">
             <button class="ctrl-btn btn-home" id="btn-home">🏠</button>
             <button class="ctrl-btn" id="btn-toggle">☰ メニュー</button>
             <button class="ctrl-btn" id="btn-back">◀ 戻る</button>
             <button class="ctrl-btn btn-next" id="btn-next">次へ ▶</button>
             <button class="ctrl-btn" id="btn-voice">🔊 読上</button>
+        </div>
+    </div>
+
+    <!-- 音声ワーニング -->
+    <div id="voice-warning" style="display:none;">
+        <div id="voice-warning-box">
+            <div id="voice-warning-text">🔇 音声データがありません<br><span>タップして閉じる　／　読上ボタンで音声読上</span></div>
         </div>
     </div>
 
@@ -69,7 +74,7 @@
     </div>
 
     <button id="btn-settings">⚙</button>
-    <div class="ver">TAKERU v2.2</div>
+    <div class="ver">TAKERU v2.3</div>
     <script src="app.js"></script>
 </body>
 </html>

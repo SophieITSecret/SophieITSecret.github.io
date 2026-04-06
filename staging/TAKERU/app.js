@@ -1,5 +1,5 @@
 // ==========================================
-// TAKERU MSアカデミー app.js v2.1
+// TAKERU MSアカデミー app.js v2.3
 // ==========================================
 
 let cardData = [];
@@ -10,6 +10,7 @@ let curGenre = '';
 let curGrade = '3級';
 let autoRead = false;
 let isMenuVisible = false;
+let mp3Missing = false;
 
 const voice = new Audio();
 
@@ -221,6 +222,8 @@ function showCardList(section) {
 
 function showCard(idx) {
     if (!curSection.length) return;
+    hideVoiceWarning();
+    mp3Missing = false;
     curIndex = Math.max(0, Math.min(idx, curSection.length - 1));
     const card = curSection[curIndex];
 
@@ -310,18 +313,15 @@ function setupButtons() {
         }
     };
 
-    // 戻る：テキスト表示中→前のカード、メニュー表示中→上の階層
+    // 戻る
     btnBack.onclick = () => {
         if (!isMenuVisible) {
-            // テキスト表示中
             if (navState === 'card' && curIndex > 0) {
                 showCard(curIndex - 1);
             } else {
-                // 最初のカードならカード一覧へ
                 showCardList(curSection[0]?.section || '');
             }
         } else {
-            // メニュー表示中→上の階層へ
             if (navState === 'cardlist') showSectionMenu(curGenre);
             else if (navState === 'section') showGenreMenu();
             else if (navState === 'genre') showGradeMenu();
@@ -330,7 +330,7 @@ function setupButtons() {
         }
     };
 
-    // ホーム（一発でトップへ）
+    // ホーム
     btnHome.onclick = () => {
         stopVoice();
         showTopMenu();
@@ -339,7 +339,6 @@ function setupButtons() {
     // テキスト/メニュー切り替え
     btnToggle.onclick = () => {
         if (!isMenuVisible) {
-            // テキスト→カード一覧
             if (curSection.length && navState === 'card') {
                 showCardList(curSection[0].section);
                 setTimeout(() => {
@@ -349,7 +348,6 @@ function setupButtons() {
                 }, 50);
             } else showMenuView();
         } else {
-            // メニュー→テキスト
             if (curSection.length && (navState === 'card' || navState === 'cardlist')) {
                 navState = 'card';
                 isMenuVisible = false;
@@ -358,8 +356,19 @@ function setupButtons() {
         }
     };
 
-    // 読上ON/OFFトグル
+    // 読上ボタン
     btnVoice.onclick = () => {
+        if (mp3Missing) {
+            // ワーニング表示中に再度押したらTTS試行
+            hideVoiceWarning();
+            mp3Missing = false;
+            autoRead = true;
+            btnVoice.innerText = '🔊 読上 ON';
+            btnVoice.classList.add('playing');
+            if (navState === 'card') startTTS(curSection[curIndex].body);
+            return;
+        }
+
         autoRead = !autoRead;
         if (autoRead) {
             btnVoice.innerText = '🔊 読上 ON';
@@ -389,46 +398,45 @@ function showSectionComplete() {
 }
 
 // ==========================================
-// 音声読み上げ（iPhone対応・v2.3）
-// MP3再生を試みて、500ms以内に開始しなければTTSにフォールバック
+// 音声再生
 // ==========================================
-
 function playVoiceDirect() {
     if (!curSection.length || navState !== 'card') return;
     const card = curSection[curIndex];
-
     stopVoice();
+    mp3Missing = false;
 
     const mp3Path = `voices/${card.id}.mp3`;
-    let mp3Started = false;
-    let ttsStarted = false;
 
-    // MP3再生を試みる（ボタン押下の瞬間なのでiPhoneでも許可される）
     voice.src = mp3Path;
     voice.volume = 1.0;
     voice.play()
         .then(() => {
-            mp3Started = true;
+            // MP3再生成功
             voice.onended = () => {};
         })
         .catch(() => {
-            // MP3再生失敗→即TTS
-            if (!ttsStarted) {
-                ttsStarted = true;
-                startTTS(card.body);
-            }
-        });
-
-    // 500ms経ってもMP3が始まっていなければTTSを起動
-    setTimeout(() => {
-        if (!mp3Started && !ttsStarted) {
-            ttsStarted = true;
-            // MP3をキャンセルしてTTS起動
-            voice.pause();
+            // MP3なし→ワーニング表示
             voice.src = '';
-            startTTS(card.body);
-        }
-    }, 500);
+            mp3Missing = true;
+            autoRead = false;
+            btnVoice.innerText = '🔊 読上';
+            btnVoice.classList.remove('playing');
+            showVoiceWarning();
+        });
+}
+
+function showVoiceWarning() {
+    const el = document.getElementById('voice-warning');
+    el.style.display = 'block';
+    document.getElementById('voice-warning-box').onclick = () => {
+        hideVoiceWarning();
+        mp3Missing = false;
+    };
+}
+
+function hideVoiceWarning() {
+    document.getElementById('voice-warning').style.display = 'none';
 }
 
 function startTTS(text) {
@@ -447,6 +455,7 @@ function stopVoice() {
     voice.src = '';
     voice.volume = 1.0;
     window.speechSynthesis.cancel();
+    hideVoiceWarning();
 }
 
 // ==========================================
