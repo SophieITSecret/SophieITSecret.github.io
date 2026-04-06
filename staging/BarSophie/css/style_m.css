@@ -41,3 +41,44 @@ body { background: var(--bg); color: var(--text); font-family: sans-serif !impor
 .active-item { background: var(--accent) !important; color: #000 !important; font-weight: bold; }
 
 .ver { position: fixed; bottom: 4px; right: 8px; font-size: 9px; color: #444; pointer-events: none; z-index: 10000; }
+
+/* =========================================
+   追加・修正用スタイル（Bar Sophie 特別調整）
+   ========================================= */
+
+/* 【要件5】ラベル文字（オレンジの字）を1回り大きくする */
+#list-view .label {
+    font-size: 1.25rem !important; /* 元のサイズから1回り拡大 */
+    font-weight: bold;
+    color: #ff9800; /* 美しいオレンジ色を強制指定 */
+    margin-bottom: 12px;
+    padding-bottom: 5px;
+    border-bottom: 1px solid rgba(255, 152, 0, 0.3); /* 下線を引いてさらに見やすく */
+}
+
+/* 【要件6】横画面（ランドスケープ）時の比率調整 */
+/* 左の画面を大きく、右のボタン/リストエリアの幅を絞る */
+@media screen and (orientation: landscape) {
+    
+    /* 画面全体を横に並べる親コンテナ（通常 #main-ui がこれにあたります） */
+    #main-ui {
+        display: flex;
+        flex-direction: row;
+        width: 100%;
+        height: 100vh;
+    }
+
+    /* 左側のモニターエリア（映像・画像が映る場所） */
+    #monitor-area, .left-pane {
+        flex: 2.5 !important; /* 右側の2.5倍の広さを確保 */
+        height: 100%;
+    }
+
+    /* 右側の操作エリア（ボタンやリスト） */
+    #control-area, .right-pane, #nav-main, #list-view {
+        flex: 1 !important; /* 幅を絞る */
+        max-width: 280px !important; /* どんなに画面が横に長くても右側は280px以上広がらない */
+        height: 100%;
+        overflow-y: auto;
+    }
+}
