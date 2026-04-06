@@ -1,5 +1,5 @@
 // ==========================================
-// TAKERU MSアカデミー app.js v2.4b
+// TAKERU MSアカデミー app.js v2.4c
 // ==========================================
 
 let cardData = [];
@@ -49,8 +49,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 });
 
 // ==========================================
-// 横向きレイアウト動的計算
-// imageAreaの実際の高さを取得して4:3幅を計算
+// 横向きレイアウト動的計算（デバッグ表示付き）
 // ==========================================
 function applyLandscapeLayout() {
     const isLandscape = window.innerWidth > window.innerHeight;
@@ -58,20 +57,20 @@ function applyLandscapeLayout() {
     const contentArea = document.getElementById('content-area');
 
     if (!isLandscape) {
-        // 縦向き：スタイルをリセット
         imageArea.style.width = '';
         contentArea.style.width = '';
+        // 縦向きのときはデバッグ表示を消す
+        const dbg = document.getElementById('debug-overlay');
+        if (dbg) dbg.remove();
         return;
     }
 
     const screenW = window.innerWidth;
+    const screenH = window.innerHeight;
     const btnW = 32;
     const availableW = screenW - btnW;
     const minTextW = 80;
-
-    // imageAreaの実際の表示高さを使って計算（dvhとinnerHeightのズレを回避）
-    const actualH = imageArea.getBoundingClientRect().height || window.innerHeight;
-    const idealImageW = Math.floor(actualH * 4 / 3);
+    const idealImageW = Math.floor(screenH * 4 / 3);
 
     let imageW, textW;
     if (idealImageW + minTextW <= availableW) {
@@ -84,12 +83,36 @@ function applyLandscapeLayout() {
 
     imageArea.style.width = imageW + 'px';
     contentArea.style.width = textW + 'px';
+
+    // ★デバッグ表示（タップで消える）
+    let dbg = document.getElementById('debug-overlay');
+    if (!dbg) {
+        dbg = document.createElement('div');
+        dbg.id = 'debug-overlay';
+        dbg.style.cssText = [
+            'position:fixed', 'top:10px', 'left:10px', 'z-index:99999',
+            'background:rgba(0,0,0,0.85)', 'color:#0f0', 'font-size:11px',
+            'padding:8px 12px', 'border-radius:6px', 'font-family:monospace',
+            'border:1px solid #0f0', 'line-height:1.6'
+        ].join(';');
+        dbg.onclick = () => dbg.remove();
+        document.body.appendChild(dbg);
+    }
+    const rectH = Math.round(imageArea.getBoundingClientRect().height);
+    dbg.innerHTML =
+        '[タップで閉じる]<br>' +
+        'innerW: ' + screenW + 'px<br>' +
+        'innerH: ' + screenH + 'px<br>' +
+        'availableW: ' + availableW + 'px<br>' +
+        'idealImageW: ' + idealImageW + 'px<br>' +
+        'imageW設定: ' + imageW + 'px<br>' +
+        'textW設定: ' + textW + 'px<br>' +
+        'imageArea実H: ' + rectH + 'px';
 }
 
 function setupLandscapeLayout() {
     window.addEventListener('resize', applyLandscapeLayout);
     window.addEventListener('orientationchange', () => {
-        // 300msでレイアウト確定を待ってから計算
         setTimeout(applyLandscapeLayout, 300);
     });
 }
@@ -156,15 +179,15 @@ function showTopMenu() {
         imagePlaceholder.style.display = 'flex';
     };
 
-    menuContent.innerHTML = `
-        <div class="top-menu-wrap">
-            <button class="top-btn btn-jukou" data-action="jukou">📚 受　講</button>
-            <button class="top-btn btn-library" data-action="library">🏛️ 図書館</button>
-            <button class="top-btn btn-news" data-action="news">📰 ニュース・お知らせ</button>
-            <button class="top-btn btn-links" data-action="links">🔗 リンク集</button>
-            <button class="top-btn btn-exam" data-action="exam">📝 受験案内</button>
-        </div>
-    `;
+    menuContent.innerHTML =
+        '<div class="top-menu-wrap">' +
+        '<button class="top-btn btn-jukou" data-action="jukou">📚 受　講</button>' +
+        '<button class="top-btn btn-library" data-action="library">🏛️ 図書館</button>' +
+        '<button class="top-btn btn-news" data-action="news">📰 ニュース・お知らせ</button>' +
+        '<button class="top-btn btn-links" data-action="links">🔗 リンク集</button>' +
+        '<button class="top-btn btn-exam" data-action="exam">📝 受験案内</button>' +
+        '</div>';
+
     menuContent.onclick = (e) => {
         const btn = e.target.closest('.top-btn');
         if (!btn) return;
@@ -183,23 +206,14 @@ function showGradeMenu() {
     btnSettings.style.display = 'none';
     showMenuView();
 
-    menuContent.innerHTML = `
-        <div class="menu-label">▶ 受講する級を選んでください</div>
-        <div class="grade-menu-wrap">
-            <button class="grade-btn btn-coming" disabled>
-                １級　将官の心得
-                <span class="grade-sub">ご期待ください</span>
-            </button>
-            <button class="grade-btn btn-coming" disabled>
-                ２級　士官の心得
-                <span class="grade-sub">ご期待ください</span>
-            </button>
-            <button class="grade-btn btn-grade3" data-grade="3級">
-                ３級　戦士の心得
-                <span class="grade-sub">開講中</span>
-            </button>
-        </div>
-    `;
+    menuContent.innerHTML =
+        '<div class="menu-label">▶ 受講する級を選んでください</div>' +
+        '<div class="grade-menu-wrap">' +
+        '<button class="grade-btn btn-coming" disabled>１級　将官の心得<span class="grade-sub">ご期待ください</span></button>' +
+        '<button class="grade-btn btn-coming" disabled>２級　士官の心得<span class="grade-sub">ご期待ください</span></button>' +
+        '<button class="grade-btn btn-grade3" data-grade="3級">３級　戦士の心得<span class="grade-sub">開講中</span></button>' +
+        '</div>';
+
     menuContent.onclick = (e) => {
         const btn = e.target.closest('.grade-btn[data-grade]');
         if (!btn) return;
@@ -216,9 +230,9 @@ function showGenreMenu() {
     isMenuVisible = true;
     showMenuView();
     const genres = [...new Set(cardData.map(d => d.genre))];
-    let html = `<div class="menu-label">▶ ${curGrade}　科目・ジャンルを選ぶ</div>`;
+    let html = '<div class="menu-label">▶ ' + curGrade + '　科目・ジャンルを選ぶ</div>';
     genres.forEach(g => {
-        html += `<div class="menu-item" data-genre="${g}">📁 ${g}</div>`;
+        html += '<div class="menu-item" data-genre="' + g + '">📁 ' + g + '</div>';
     });
     menuContent.innerHTML = html;
     menuContent.onclick = (e) => {
@@ -235,10 +249,10 @@ function showSectionMenu(genre) {
     curGenre = genre;
     showMenuView();
     const sections = [...new Set(cardData.filter(d => d.genre === genre).map(d => d.section))];
-    let html = `<div class="menu-label">◀ ${genre}</div>`;
+    let html = '<div class="menu-label">◀ ' + genre + '</div>';
     sections.forEach(s => {
         const count = cardData.filter(d => d.section === s).length;
-        html += `<div class="menu-item" data-section="${s}">🏷️ ${s} <span style="color:#555;margin-left:auto;font-size:0.8em">${count}枚</span></div>`;
+        html += '<div class="menu-item" data-section="' + s + '">🏷️ ' + s + ' <span style="color:#555;margin-left:auto;font-size:0.8em">' + count + '枚</span></div>';
     });
     menuContent.innerHTML = html;
     menuContent.onclick = (e) => {
@@ -255,9 +269,9 @@ function showCardList(section) {
     curSection = cardData.filter(d => d.section === section);
     curIndex = 0;
     showMenuView();
-    let html = `<div class="menu-label">◀ ${section}</div>`;
+    let html = '<div class="menu-label">◀ ' + section + '</div>';
     curSection.forEach((card, i) => {
-        html += `<div class="menu-item" data-idx="${i}">${i + 1}. ${card.title}</div>`;
+        html += '<div class="menu-item" data-idx="' + i + '">' + (i + 1) + '. ' + card.title + '</div>';
     });
     menuContent.innerHTML = html;
     menuContent.onclick = (e) => {
@@ -279,17 +293,17 @@ function showCard(idx) {
     isMenuVisible = false;
     showTextView();
 
-    cardProgress.innerText = `${curSection[0].section}　${curIndex + 1} / ${curSection.length}`;
+    cardProgress.innerText = curSection[0].section + '　' + (curIndex + 1) + ' / ' + curSection.length;
     cardTitle.innerText = card.title;
     cardBody.innerText = card.body;
     textView.scrollTop = 0;
 
-    const imgPath = `images/${card.id}.png`;
+    const imgPath = 'images/' + card.id + '.png';
     cardImage.src = imgPath;
     cardImage.style.display = 'block';
     imagePlaceholder.style.display = 'none';
     cardImage.onerror = () => {
-        cardImage.src = `images/${card.id}.jpg`;
+        cardImage.src = 'images/' + card.id + '.jpg';
         cardImage.onerror = () => {
             cardImage.style.display = 'none';
             imagePlaceholder.style.display = 'flex';
@@ -352,7 +366,6 @@ function clearCard() {
 // ==========================================
 function setupButtons() {
 
-    // 次へ
     btnNext.onclick = () => {
         if (navState === 'card' && curIndex < curSection.length - 1) {
             showCard(curIndex + 1);
@@ -361,7 +374,6 @@ function setupButtons() {
         }
     };
 
-    // 戻る
     btnBack.onclick = () => {
         if (!isMenuVisible) {
             if (navState === 'card' && curIndex > 0) {
@@ -378,13 +390,11 @@ function setupButtons() {
         }
     };
 
-    // ホーム
     btnHome.onclick = () => {
         stopVoice();
         showTopMenu();
     };
 
-    // テキスト/メニュー切り替え
     btnToggle.onclick = () => {
         if (!isMenuVisible) {
             if (curSection.length && navState === 'card') {
@@ -404,7 +414,6 @@ function setupButtons() {
         }
     };
 
-    // 読上ボタン
     btnVoice.onclick = () => {
         if (mp3Missing) {
             hideVoiceWarning();
@@ -415,7 +424,6 @@ function setupButtons() {
             if (navState === 'card') startTTS(curSection[curIndex].body);
             return;
         }
-
         autoRead = !autoRead;
         if (autoRead) {
             btnVoice.innerText = '🔊 読上 ON';
@@ -439,7 +447,7 @@ function showSectionComplete() {
     showTextView();
     cardProgress.innerText = curSection[0]?.section || '';
     cardTitle.innerText = '✅ セクション完了';
-    cardBody.innerText = `全${curSection.length}枚を読み終えました。\n\n「🏠」でトップメニューへ戻れます。`;
+    cardBody.innerText = '全' + curSection.length + '枚を読み終えました。\n\n「🏠」でトップメニューへ戻れます。';
     cardImage.style.display = 'none';
     imagePlaceholder.style.display = 'flex';
 }
@@ -453,9 +461,7 @@ function playVoiceDirect() {
     stopVoice();
     mp3Missing = false;
 
-    const mp3Path = `voices/${card.id}.mp3`;
-
-    voice.src = mp3Path;
+    voice.src = 'voices/' + card.id + '.mp3';
     voice.volume = 1.0;
     voice.play()
         .then(() => {
@@ -532,7 +538,7 @@ function setActiveToggle(activeId, allIds) {
 
 function setFontSize(size) {
     document.body.classList.remove('font-small', 'font-medium', 'font-large');
-    document.body.classList.add(`font-${size}`);
+    document.body.classList.add('font-' + size);
 }
 
 function loadSavedSettings() {
@@ -543,12 +549,11 @@ function loadSavedSettings() {
         setActiveToggle('btn-light', ['btn-dark', 'btn-light']);
     }
     setFontSize(font);
-    setActiveToggle(`btn-font-${font}`, ['btn-font-s','btn-font-m','btn-font-l']);
+    setActiveToggle('btn-font-' + font, ['btn-font-s','btn-font-m','btn-font-l']);
 }
 
 // ==========================================
-// プルダウンで更新（PWA対応）
-// 220px以上引いた場合のみ更新（誤作動防止強化）
+// プルダウンで更新（220px・誤作動防止強化）
 // ==========================================
 function setupPullToRefresh() {
     let startY = 0;
