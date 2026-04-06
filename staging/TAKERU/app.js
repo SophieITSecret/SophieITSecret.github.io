@@ -1,5 +1,5 @@
 // ==========================================
-// TAKERU MSアカデミー app.js v2.3
+// TAKERU MSアカデミー app.js v2.4
 // ==========================================
 
 let cardData = [];
@@ -38,13 +38,64 @@ window.addEventListener('DOMContentLoaded', async () => {
     setupSettings();
     loadSavedSettings();
     setupPullToRefresh();
+    setupLandscapeLayout();
 
     document.getElementById('btn-enter').onclick = () => {
         entryScreen.style.display = 'none';
         mainUI.style.display = 'flex';
         showTopMenu();
+        applyLandscapeLayout();
     };
 });
+
+// ==========================================
+// 横向きレイアウト動的計算
+// 画像を高さ基準で4:3に収め、残りをテキストエリアに
+// ==========================================
+function applyLandscapeLayout() {
+    const isLandscape = window.innerWidth > window.innerHeight;
+    const imageArea = document.getElementById('image-area');
+    const contentArea = document.getElementById('content-area');
+
+    if (!isLandscape) {
+        // 縦向き：スタイルをリセット
+        imageArea.style.width = '';
+        contentArea.style.width = '';
+        return;
+    }
+
+    const screenW = window.innerWidth;
+    const screenH = window.innerHeight;
+    const btnW = 32; // 横向きボタン列の幅
+
+    // 4:3画像が高さいっぱいに収まる幅
+    const idealImageW = Math.floor(screenH * 4 / 3);
+
+    // テキストエリアの最小幅（残り全部、ただし最低80px確保）
+    const availableW = screenW - btnW;
+    const minTextW = 80;
+
+    let imageW, textW;
+    if (idealImageW + minTextW <= availableW) {
+        // 理想的な画像幅が収まる場合
+        imageW = idealImageW;
+        textW = availableW - idealImageW;
+    } else {
+        // 収まらない場合はテキストに最低幅を確保して残りを画像に
+        textW = minTextW;
+        imageW = availableW - minTextW;
+    }
+
+    imageArea.style.width = imageW + 'px';
+    contentArea.style.width = textW + 'px';
+}
+
+function setupLandscapeLayout() {
+    window.addEventListener('resize', applyLandscapeLayout);
+    window.addEventListener('orientationchange', () => {
+        setTimeout(applyLandscapeLayout, 100);
+    });
+}
 
 // ==========================================
 // CSVロード
@@ -412,7 +463,6 @@ function playVoiceDirect() {
     voice.volume = 1.0;
     voice.play()
         .then(() => {
-            // MP3再生成功
             voice.onended = () => {};
         })
         .catch(() => {
@@ -503,6 +553,7 @@ function loadSavedSettings() {
 
 // ==========================================
 // プルダウンで更新（PWA対応）
+// 150px以上引いた場合のみ更新（誤作動防止）
 // ==========================================
 function setupPullToRefresh() {
     let startY = 0;
@@ -517,7 +568,7 @@ function setupPullToRefresh() {
         const menuEl = document.getElementById('menu-content');
         const textEl = document.getElementById('text-view');
         const atTop = (menuEl && menuEl.scrollTop === 0) || (textEl && textEl.scrollTop === 0);
-        if (atTop && y - startY > 80) pulling = true;
+        if (atTop && y - startY > 150) pulling = true;
     }, { passive: true });
 
     document.addEventListener('touchend', () => {
