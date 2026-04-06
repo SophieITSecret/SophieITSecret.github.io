@@ -1,5 +1,5 @@
 // ==========================================
-// TAKERU MSアカデミー app.js v2.5
+// TAKERU MSアカデミー app.js v2.6
 // ==========================================
 
 let cardData = [];
@@ -49,7 +49,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 });
 
 // ==========================================
-// 横向きレイアウト動的計算（実測値ベース v2.5）
+// 横向きレイアウト動的計算（v2.6）
 // ==========================================
 function applyLandscapeLayout() {
     const isLandscape = window.innerWidth > window.innerHeight;
@@ -59,16 +59,18 @@ function applyLandscapeLayout() {
     if (!isLandscape) {
         imageArea.style.width = '';
         contentArea.style.width = '';
-        const dbg = document.getElementById('debug-overlay');
-        if (dbg) dbg.remove();
         return;
     }
 
     const screenW = window.innerWidth;
-    const screenH = window.innerHeight;
     const btnW = 32;
-    const availableW = screenW - btnW;
     const minTextW = 80;
+
+    // Dynamic Island等の左余白を取得
+    const safeLeft = parseInt(getComputedStyle(document.documentElement)
+        .getPropertyValue('--sal') || '0');
+
+    const availableW = screenW - btnW - safeLeft;
 
     // 実測値ベースで画像エリアの高さを取得
     const actualH = Math.round(imageArea.getBoundingClientRect().height);
@@ -85,36 +87,6 @@ function applyLandscapeLayout() {
 
     imageArea.style.width = imageW + 'px';
     contentArea.style.width = textW + 'px';
-
-    // safe-area-inset-top を CSS変数から取得
-    const satRaw = getComputedStyle(document.documentElement)
-        .getPropertyValue('--sat').trim();
-    const safeTop = parseInt(satRaw) || 0;
-
-    // デバッグ表示（タップで消える）
-    let dbg = document.getElementById('debug-overlay');
-    if (!dbg) {
-        dbg = document.createElement('div');
-        dbg.id = 'debug-overlay';
-        dbg.style.cssText = [
-            'position:fixed', 'top:10px', 'left:10px', 'z-index:99999',
-            'background:rgba(0,0,0,0.85)', 'color:#0f0', 'font-size:11px',
-            'padding:8px 12px', 'border-radius:6px', 'font-family:monospace',
-            'border:1px solid #0f0', 'line-height:1.6'
-        ].join(';');
-        dbg.onclick = () => dbg.remove();
-        document.body.appendChild(dbg);
-    }
-    dbg.innerHTML =
-        '[タップで閉じる]<br>' +
-        'innerW: ' + screenW + 'px<br>' +
-        'innerH: ' + screenH + 'px<br>' +
-        'safeTop: ' + safeTop + 'px<br>' +
-        'actualH(実測): ' + actualH + 'px<br>' +
-        'idealImageW: ' + idealImageW + 'px<br>' +
-        'imageW設定: ' + imageW + 'px<br>' +
-        'textW設定: ' + textW + 'px<br>' +
-        'imageArea実H: ' + Math.round(imageArea.getBoundingClientRect().height) + 'px';
 }
 
 function setupLandscapeLayout() {
