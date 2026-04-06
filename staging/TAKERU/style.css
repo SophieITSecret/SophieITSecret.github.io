@@ -4,6 +4,7 @@
     --accent: #4caf50;
     --accent2: #81c784;
     --font-size-body: 0.92rem;
+    --sat: env(safe-area-inset-top);  /* ★追加 */
 }
 
 body.dark-mode {
