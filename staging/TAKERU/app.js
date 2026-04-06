@@ -66,15 +66,8 @@ function applyLandscapeLayout() {
     const btnW = 32;
     const minTextW = 80;
 
-<<<<<<< HEAD
     // Dynamic Island等の左余白（固定値44px）
     const safeLeft = 44;
-=======
-    // Dynamic Island等の左余白を取得
-    const safeLeft = 44;
-
-    const availableW = screenW - btnW - safeLeft;
->>>>>>> c0cd07276c6f758295f3ad07d034d8148d2f8639
 
     // 実測値ベースで画像エリアの高さを取得
     const actualH = Math.round(imageArea.getBoundingClientRect().height);
