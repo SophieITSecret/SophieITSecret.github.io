@@ -8,7 +8,6 @@ window.onerror = function(msg, url, lineNo) {
 };
 
 let isPaused = false, isAutoPlay = false, isMusicMode = false, lastTxt = "", pressTimer = null;
-let currentMusicGenre = ""; 
 
 const yt = document.getElementById('yt-iframe'), img = document.getElementById('monitor-img'), tel = document.getElementById('telop'), lv = document.getElementById('list-view'), nm = document.getElementById('nav-main');
 
@@ -25,7 +24,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 function setup() {
-    // 【要件1】入り口の挨拶：greeting.mp3（または汎用テキストの読み上げ）
     document.getElementById('btn-enter').onclick = () => { 
         document.getElementById('entry-screen').style.display='none'; 
         document.getElementById('chat-mode').style.display='flex'; 
@@ -128,8 +126,7 @@ function openStories(t) {
     });
 }
 
-// --- 音楽選曲 ---
-// 【要件2】ジャンル表記の復活と翻訳
+// --- 音楽選曲（1画面にジャンルとアーティスト一覧を展開） ---
 function getMusicGenreName(code) {
     if(!code) return "その他";
     const map = {
@@ -144,50 +141,34 @@ function getMusicGenreName(code) {
 }
 
 function openMusic() {
-    nav.updateNav("m_gen"); 
-    let h = '<div class="label">音楽ジャンル</div>';
+    nav.updateNav("art"); 
+    let h = '<div class="label">アーティスト一覧</div>';
     
-    // 【要件2】特選曲の自動生成（A案）
-    const hasSpecial = nav.jData.some(m => m.fix === "1" || m.fix === "true" || (m.a && m.a.includes("ソフィー")));
-    if(hasSpecial) {
-        h += `<div class="item" id="mgen-SPECIAL">⭐ 特選曲</div>`;
+    // 【特選曲ブロック】
+    const specialData = nav.jData.filter(m => m.fix === "1" || m.fix === "true" || (m.a && m.a.includes("ソフィー")));
+    if(specialData.length > 0) {
+        h += `<div style="font-weight:bold; color:#ff9800; margin-top:10px; padding:5px 0; border-bottom:1px solid rgba(255,152,0,0.3);">⭐ 特選曲</div>`;
+        h += `<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 8px 4px;">`;
+        const specialArtists = [...new Set(specialData.map(d => d.a))].filter(Boolean);
+        specialArtists.forEach(a => { 
+            h += `<div class="item" style="margin:0; font-size: 0.95rem; padding: 12px 5px;" data-genre="SPECIAL" data-artist="${a}">🎤 ${a}</div>`; 
+        });
+        h += `</div>`;
     }
 
+    // 【各ジャンルのブロック】
     const genres = [...new Set(nav.jData.map(d => d.g))].filter(Boolean);
     genres.forEach(g => { 
-        h += `<div class="item" id="mgen-${g}">📁 ${getMusicGenreName(g)}</div>`; 
+        h += `<div style="font-weight:bold; color:#ff9800; margin-top:15px; padding:5px 0; border-bottom:1px solid rgba(255,152,0,0.3);">📁 ${getMusicGenreName(g)}</div>`; 
+        h += `<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 8px 4px;">`;
+        
+        const filtered = nav.jData.filter(m => m.g === g);
+        const artists = [...new Set(filtered.map(d => d.a))].filter(Boolean);
+        artists.forEach(a => { 
+            h += `<div class="item" style="margin:0; font-size: 0.95rem; padding: 12px 5px;" data-genre="${g}" data-artist="${a}">🎤 ${a}</div>`; 
+        });
+        h += `</div>`;
     });
-    
-    render(h, (item) => { 
-        if(item.id && item.id.startsWith('mgen-')) {
-            currentMusicGenre = item.id.replace('mgen-','');
-            openMusicArtists(currentMusicGenre); 
-        }
-    });
-}
-
-function openMusicArtists(genre) {
-    nav.updateNav("art");
-    const genreName = (genre === 'SPECIAL') ? '⭐ 特選曲' : getMusicGenreName(genre);
-    
-    // 【要件2】表記を「アーティスト一覧」に戻す
-    let h = `<div class="label">${genreName} - アーティスト一覧</div>`;
-    
-    // 【要件2】見やすい2カラムレイアウト（縦割り）
-    h += `<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 4px;">`;
-    
-    let filtered;
-    if(genre === 'SPECIAL') {
-        filtered = nav.jData.filter(m => m.fix === "1" || m.fix === "true" || (m.a && m.a.includes("ソフィー")));
-    } else {
-        filtered = nav.jData.filter(m => m.g === genre);
-    }
-    
-    const artists = [...new Set(filtered.map(d => d.a))].filter(Boolean);
-    artists.forEach(a => { 
-        h += `<div class="item" style="margin:0; font-size: 0.95rem; padding: 12px 5px;" data-genre="${genre}" data-artist="${a}">🎤 ${a}</div>`; 
-    });
-    h += `</div>`;
     
     render(h, (item) => { 
         const g = item.dataset.genre;
@@ -208,7 +189,6 @@ function openSongs(genre, artist) {
     isMusicMode = true;
     let h = `<div class="label">${artist}</div>`;
     
-    // 【要件2】見やすい2カラムレイアウト（縦割り）
     h += `<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 4px;">`;
     nav.curP.forEach((m, i) => { 
         h += `<div class="item" style="margin:0; font-size: 0.95rem; padding: 12px 5px;" data-idx="${i}">🎵 ${m.ti}</div>`; 
@@ -242,8 +222,6 @@ function render(h, cb) {
 
 function setMon(type, src) {
     yt.style.display='none'; img.style.display='none'; yt.src="";
-    
-    // 【要件3】YouTubeの即時再生（setTimeoutを完全撤廃し、タップした瞬間にロード）
     if(type==='v'){ 
         yt.style.display='block'; 
         const id = extractYtId(src);
@@ -269,7 +247,6 @@ function prep(t, isM, id = null) {
     tel.innerText = t; tel.style.display='block'; tel.scrollTop = 0;
 
     if(isM) {
-        // 【要件3】曲名の読み上げを完全に禁止（無音）。文字の5秒表示のみ。
         setTimeout(() => { if(tel.innerText===t) tel.style.display='none'; }, 5000);
     } else if(id) {
         talkAudio.src = `./voices_mp3/${id}.mp3`;
@@ -291,8 +268,7 @@ function handleBack() {
     const s = nav.state;
     if(s==="st") openThemes(nav.curG);
     else if(s==="th") openTalk();
-    else if(s==="tit") openMusicArtists(currentMusicGenre); 
-    else if(s==="art" || s==="m_gen") openMusic(); 
+    else if(s==="tit") openMusic(); // 曲一覧からは、1画面にまとまったアーティスト一覧へ戻る
     else { lv.style.display='none'; nm.style.display='block'; nav.updateNav("none"); }
 }
 
