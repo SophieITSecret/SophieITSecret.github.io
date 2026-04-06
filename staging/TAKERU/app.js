@@ -1,5 +1,5 @@
 // ==========================================
-// TAKERU MSアカデミー app.js v2.4c
+// TAKERU MSアカデミー app.js v2.5
 // ==========================================
 
 let cardData = [];
@@ -49,7 +49,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 });
 
 // ==========================================
-// 横向きレイアウト動的計算（デバッグ表示付き）
+// 横向きレイアウト動的計算（実測値ベース v2.5）
 // ==========================================
 function applyLandscapeLayout() {
     const isLandscape = window.innerWidth > window.innerHeight;
@@ -59,7 +59,6 @@ function applyLandscapeLayout() {
     if (!isLandscape) {
         imageArea.style.width = '';
         contentArea.style.width = '';
-        // 縦向きのときはデバッグ表示を消す
         const dbg = document.getElementById('debug-overlay');
         if (dbg) dbg.remove();
         return;
@@ -70,7 +69,10 @@ function applyLandscapeLayout() {
     const btnW = 32;
     const availableW = screenW - btnW;
     const minTextW = 80;
-    const idealImageW = Math.floor(screenH * 4 / 3);
+
+    // 実測値ベースで画像エリアの高さを取得
+    const actualH = Math.round(imageArea.getBoundingClientRect().height);
+    const idealImageW = Math.floor(actualH * 4 / 3);
 
     let imageW, textW;
     if (idealImageW + minTextW <= availableW) {
@@ -84,7 +86,12 @@ function applyLandscapeLayout() {
     imageArea.style.width = imageW + 'px';
     contentArea.style.width = textW + 'px';
 
-    // ★デバッグ表示（タップで消える）
+    // safe-area-inset-top を CSS変数から取得
+    const satRaw = getComputedStyle(document.documentElement)
+        .getPropertyValue('--sat').trim();
+    const safeTop = parseInt(satRaw) || 0;
+
+    // デバッグ表示（タップで消える）
     let dbg = document.getElementById('debug-overlay');
     if (!dbg) {
         dbg = document.createElement('div');
@@ -98,16 +105,16 @@ function applyLandscapeLayout() {
         dbg.onclick = () => dbg.remove();
         document.body.appendChild(dbg);
     }
-    const rectH = Math.round(imageArea.getBoundingClientRect().height);
     dbg.innerHTML =
         '[タップで閉じる]<br>' +
         'innerW: ' + screenW + 'px<br>' +
         'innerH: ' + screenH + 'px<br>' +
-        'availableW: ' + availableW + 'px<br>' +
+        'safeTop: ' + safeTop + 'px<br>' +
+        'actualH(実測): ' + actualH + 'px<br>' +
         'idealImageW: ' + idealImageW + 'px<br>' +
         'imageW設定: ' + imageW + 'px<br>' +
         'textW設定: ' + textW + 'px<br>' +
-        'imageArea実H: ' + rectH + 'px';
+        'imageArea実H: ' + Math.round(imageArea.getBoundingClientRect().height) + 'px';
 }
 
 function setupLandscapeLayout() {
@@ -122,7 +129,7 @@ function setupLandscapeLayout() {
 // ==========================================
 async function loadCSV() {
     try {
-        const res = await fetch(`TAKERUcard.csv?v=${Date.now()}`);
+        const res = await fetch('TAKERUcard.csv?v=' + Date.now());
         const text = await res.text();
         const records = parseCSV(text).slice(1);
         cardData = records.map(c => ({
