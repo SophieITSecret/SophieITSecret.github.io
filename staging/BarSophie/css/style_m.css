@@ -45,26 +45,20 @@ body { background: var(--bg); color: var(--text); font-family: sans-serif !impor
 
 
 /* =========================================
-   UIの最適化（隙間削減、1カラム化、横画面対応）
+   UIの最適化（純粋な隙間削減と1カラム化）
    ========================================= */
 
-/* ラベル（見出し）のサイズと隙間調整 */
+/* 見出し（ラベル）の文字を1回り大きくし、上下の隙間を整える */
 #list-view .label {
-    font-size: 1.1rem !important; 
-    font-weight: bold;
-    color: var(--accent); /* 元の美しいオレンジ */
+    font-size: 1.1rem !important;
     padding: 6px 12px !important;
-    margin-bottom: 2px !important;
-    border-bottom: 1px solid #333;
 }
 
-/* ★ 全アイテムの「変な線」を消し、隙間を限界まで詰める（高さ1.6倍比率） */
+/* ★ 全アイテムの「無駄な隙間」と「枠線」だけを純粋に消去 */
 #list-view .item {
-    padding: 4px 8px !important; /* 上隙間、下隙間を縮小 */
+    padding: 8px 12px !important; /* 上下の隙間を詰める */
     margin-bottom: 2px !important;
-    border: none !important; /* 邪魔な線を完全撤廃 */
-    font-size: 0.95rem !important;
-    line-height: 1.2 !important;
+    border: none !important;      /* 邪魔な線を撤廃 */
 }
 
 /* 歌手一覧のみ適用する2カラム（2列）レイアウト */
