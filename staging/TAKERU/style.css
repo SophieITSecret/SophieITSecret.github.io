@@ -382,6 +382,7 @@ body {
         border-right: 3px solid var(--divider);
         border-bottom: none;
         /* padding-left: env(safe-area-inset-left); */
+        margin-left: env(safe-area-inset-left);
     }
 
     #card-image {
