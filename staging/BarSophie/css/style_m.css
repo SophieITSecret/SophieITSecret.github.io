@@ -26,7 +26,7 @@ body { background: var(--bg); color: var(--text); font-family: sans-serif !impor
 .btn-grid { flex: 1; display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px; padding: 4px; }
 .sophie-box { width: 75px; background: #000; display: flex; justify-content: center; align-items: center; border-left: 1px solid #222; }
 .sophie-box img { height: 85%; width: auto; cursor: pointer; }
-.c-btn { background: #222; border: 1px solid #444; color: #eee; border-radius: 4px; font-size: 0.85rem; font-weight: bold; display: flex; align-items: center; justify-content: center; user-select: none; font-family: sans-serif; }
+.c-btn { background: #222; border: 1px solid #444; color: #eee; border-radius: 4px;  0.85rem; font-weight: bold; display: flex; align-items: center; justify-content: center; user-select: none; font-family: sans-serif; }
 .auto-active { border-color: var(--green) !important; color: var(--green) !important; }
 
 .r-side { flex: 1; display: flex; flex-direction: column; min-height: 0; }
@@ -48,7 +48,7 @@ body { background: var(--bg); color: var(--text); font-family: sans-serif !impor
 
 /* 【要件5】ラベル文字（オレンジの字）を1回り大きくする */
 #list-view .label {
-    font-size: 1.25rem !important; /* 元のサイズから1回り拡大 */
+    font-size: 1.10rem !important; /* 元のサイズから1回り拡大 */
     font-weight: bold;
     color: #ff9800; /* 美しいオレンジ色を強制指定 */
     margin-bottom: 12px;
