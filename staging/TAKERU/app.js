@@ -67,8 +67,7 @@ function applyLandscapeLayout() {
     const minTextW = 80;
 
     // Dynamic Island等の左余白を取得
-    const safeLeft = parseInt(getComputedStyle(document.documentElement)
-        .getPropertyValue('--sal') || '0');
+    const safeLeft = 44;
 
     const availableW = screenW - btnW - safeLeft;
 
