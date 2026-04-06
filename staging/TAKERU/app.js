@@ -1,5 +1,5 @@
 // ==========================================
-// TAKERU MSアカデミー app.js v2.4
+// TAKERU MSアカデミー app.js v2.4b
 // ==========================================
 
 let cardData = [];
@@ -44,13 +44,13 @@ window.addEventListener('DOMContentLoaded', async () => {
         entryScreen.style.display = 'none';
         mainUI.style.display = 'flex';
         showTopMenu();
-        applyLandscapeLayout();
+        setTimeout(applyLandscapeLayout, 100);
     };
 });
 
 // ==========================================
 // 横向きレイアウト動的計算
-// 画像を高さ基準で4:3に収め、残りをテキストエリアに
+// imageAreaの実際の高さを取得して4:3幅を計算
 // ==========================================
 function applyLandscapeLayout() {
     const isLandscape = window.innerWidth > window.innerHeight;
@@ -65,23 +65,19 @@ function applyLandscapeLayout() {
     }
 
     const screenW = window.innerWidth;
-    const screenH = window.innerHeight;
-    const btnW = 32; // 横向きボタン列の幅
-
-    // 4:3画像が高さいっぱいに収まる幅
-    const idealImageW = Math.floor(screenH * 4 / 3);
-
-    // テキストエリアの最小幅（残り全部、ただし最低80px確保）
+    const btnW = 32;
     const availableW = screenW - btnW;
     const minTextW = 80;
 
+    // imageAreaの実際の表示高さを使って計算（dvhとinnerHeightのズレを回避）
+    const actualH = imageArea.getBoundingClientRect().height || window.innerHeight;
+    const idealImageW = Math.floor(actualH * 4 / 3);
+
     let imageW, textW;
     if (idealImageW + minTextW <= availableW) {
-        // 理想的な画像幅が収まる場合
         imageW = idealImageW;
         textW = availableW - idealImageW;
     } else {
-        // 収まらない場合はテキストに最低幅を確保して残りを画像に
         textW = minTextW;
         imageW = availableW - minTextW;
     }
@@ -93,7 +89,8 @@ function applyLandscapeLayout() {
 function setupLandscapeLayout() {
     window.addEventListener('resize', applyLandscapeLayout);
     window.addEventListener('orientationchange', () => {
-        setTimeout(applyLandscapeLayout, 100);
+        // 300msでレイアウト確定を待ってから計算
+        setTimeout(applyLandscapeLayout, 300);
     });
 }
 
@@ -410,7 +407,6 @@ function setupButtons() {
     // 読上ボタン
     btnVoice.onclick = () => {
         if (mp3Missing) {
-            // ワーニング表示中に再度押したらTTS試行
             hideVoiceWarning();
             mp3Missing = false;
             autoRead = true;
@@ -466,7 +462,6 @@ function playVoiceDirect() {
             voice.onended = () => {};
         })
         .catch(() => {
-            // MP3なし→ワーニング表示
             voice.src = '';
             mp3Missing = true;
             autoRead = false;
@@ -553,7 +548,7 @@ function loadSavedSettings() {
 
 // ==========================================
 // プルダウンで更新（PWA対応）
-// 150px以上引いた場合のみ更新（誤作動防止）
+// 220px以上引いた場合のみ更新（誤作動防止強化）
 // ==========================================
 function setupPullToRefresh() {
     let startY = 0;
@@ -561,6 +556,7 @@ function setupPullToRefresh() {
 
     document.addEventListener('touchstart', (e) => {
         startY = e.touches[0].clientY;
+        pulling = false;
     }, { passive: true });
 
     document.addEventListener('touchmove', (e) => {
@@ -568,7 +564,7 @@ function setupPullToRefresh() {
         const menuEl = document.getElementById('menu-content');
         const textEl = document.getElementById('text-view');
         const atTop = (menuEl && menuEl.scrollTop === 0) || (textEl && textEl.scrollTop === 0);
-        if (atTop && y - startY > 150) pulling = true;
+        if (atTop && y - startY > 220) pulling = true;
     }, { passive: true });
 
     document.addEventListener('touchend', () => {
