@@ -10,16 +10,14 @@
         header { border-bottom: 2px solid #30363d; margin-bottom: 15px; padding-bottom: 10px; text-align: center; }
         h1 { color: #f85149; font-size: 20px; text-transform: uppercase; margin: 0; letter-spacing: 1px; }
         
-        /* マーケットセクション（スマホでは縦積み） */
         .market-grid { display: grid; grid-template-columns: 1fr; gap: 15px; margin-bottom: 20px; }
-        @media (min-width: 768px) { .market-grid { grid-template-columns: 1fr 1fr; height: 320px; } } /* PCでは横並び */
+        @media (min-width: 768px) { .market-grid { grid-template-columns: 1fr 1fr; height: 320px; } }
         .chart-container { background: #161b22; border-radius: 8px; border: 1px solid #30363d; overflow: hidden; height: 250px; }
         @media (min-width: 768px) { .chart-container { height: 100%; } }
 
-        /* ニュースセクション（スマホでは1列〜2列） */
         .news-section { display: grid; grid-template-columns: 1fr; gap: 12px; }
         @media (min-width: 480px) { .news-section { grid-template-columns: 1fr 1fr; } }
-        @media (min-width: 1024px) { .news-section { grid-template-columns: repeat(5, 1fr); } } /* PCでは5列 */
+        @media (min-width: 1024px) { .news-section { grid-template-columns: repeat(5, 1fr); } }
         
         .source-card { background: #161b22; padding: 15px; border-radius: 8px; border: 1px solid #30363d; display: flex; flex-direction: column; }
         .source-card h2 { margin: 0; padding-bottom: 8px; border-bottom: 1px solid #30363d; }
@@ -27,7 +25,7 @@
         
         .link-group { margin-top: 12px; flex-grow: 1; }
         .main-link { display: block; background: #21262d; color: #c9d1d9; padding: 12px; border-radius: 6px; text-decoration: none; margin-bottom: 10px; font-weight: bold; font-size: 14px; text-align: center; border: 1px solid #444; }
-        .main-link:active { background: #30363d; } /* タップ時の反応 */
+        .main-link:active { background: #30363d; }
         
         .sub-link { display: block; color: #8b949e; text-decoration: none; font-size: 13px; padding: 8px 10px; border-left: 3px solid #f85149; margin-bottom: 5px; background: rgba(255,255,255,0.02); }
         
@@ -43,7 +41,7 @@
 <body>
     <div class="container">
         <header>
-            <h1>Decagon Mobile <span style="color:#8b949e; font-size:12px;">V8.6 - Synced</span></h1>
+            <h1>Decagon Mobile <span style="color:#8b949e; font-size:12px;">V8.6.1 - Guardian Translation Test</span></h1>
         </header>
 
         <div class="market-grid">
@@ -72,10 +70,10 @@
             </div>
 
             <div class="source-card border-neutral">
-                <h2><a href="https://www.theguardian.com/" target="_blank">3. The Guardian</a></h2>
+                <h2><a href="https://translate.google.com/translate?sl=en&tl=ja&u=https://www.theguardian.com/" target="_blank">3. The Guardian (翻訳版)</a></h2>
                 <div class="link-group">
-                    <a href="https://www.theguardian.com/world/middleeast" target="_blank" class="main-link">🔴 中東最新ニュース</a>
-                    <a href="https://www.theguardian.com/world/iran" target="_blank" class="sub-link">イラン関連トピック</a>
+                    <a href="https://translate.google.com/translate?sl=en&tl=ja&u=https://www.theguardian.com/world/middleeast" target="_blank" class="main-link">🔴 中東最新ニュース (翻訳)</a>
+                    <a href="https://translate.google.com/translate?sl=en&tl=ja&u=https://www.theguardian.com/world/iran" target="_blank" class="sub-link">イラン関連トピック (翻訳)</a>
                 </div>
             </div>
 
@@ -134,7 +132,7 @@
         </div>
 
         <div class="footer-tag">
-            Sophie Mobile Command V8.6
+            Sophie Mobile Command V8.6.1 - Translation Test Mode
         </div>
     </div>
     <div style="text-align: center; padding: 20px; margin-top: 30px; border-top: 1px solid #30363d; color: #8b949e; font-size: 0.85em; font-family: 'Helvetica Neue', Arial, sans-serif;">
