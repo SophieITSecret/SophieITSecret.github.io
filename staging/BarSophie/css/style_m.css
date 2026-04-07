@@ -26,7 +26,7 @@ body { background: var(--bg); color: var(--text); font-family: sans-serif !impor
 .btn-grid { flex: 1; display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px; padding: 4px; }
 .sophie-box { width: 75px; background: #000; display: flex; justify-content: center; align-items: center; border-left: 1px solid #222; }
 .sophie-box img { height: 85%; width: auto; cursor: pointer; }
-.c-btn { background: #222; border: 1px solid #444; color: #eee; border-radius: 4px;  0.85rem; font-weight: bold; display: flex; align-items: center; justify-content: center; user-select: none; font-family: sans-serif; }
+.c-btn { background: #222; border: 1px solid #444; color: #eee; border-radius: 4px; font-size: 0.85rem; font-weight: bold; display: flex; align-items: center; justify-content: center; user-select: none; font-family: sans-serif; }
 .auto-active { border-color: var(--green) !important; color: var(--green) !important; }
 
 .r-side { flex: 1; display: flex; flex-direction: column; min-height: 0; }
@@ -37,45 +37,10 @@ body { background: var(--bg); color: var(--text); font-family: sans-serif !impor
 .act-btn { width: 100%; height: 48px; margin-bottom: 10px; border-radius: 8px; border: 1px solid #444; font-weight: bold; color: #fff !important; font-size: 1.1rem; display: block !important; font-family: sans-serif; }
 
 .label { background: #1a1a2e; color: var(--accent); padding: 0 12px; font-size: 0.8rem; font-weight: bold; position: sticky; top: 0; z-index: 100; border-bottom: 1px solid #333; height: 28px; line-height: 28px; font-family: sans-serif; }
-.item { height: 38px !important; line-height: 38px !important; padding: 0 15px; border-bottom: 1px solid #222; color: #ccc; font-size: 0.95rem; display: block; width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; font-family: sans-serif; }
+
+/* 変更点: 絶対値height/line-heightを排除し、padding（上3:文字10:下3の比率 = 0.3em）で自然な余白を形成 */
+.item { padding: 0.3em 15px; border-bottom: 1px solid #222; color: #ccc; font-size: 1rem; display: block; width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; font-family: sans-serif; }
+
 .active-item { background: var(--accent) !important; color: #000 !important; font-weight: bold; }
 
 .ver { position: fixed; bottom: 4px; right: 8px; font-size: 9px; color: #444; pointer-events: none; z-index: 10000; }
-
-
-
-/* =========================================
-   UIの最適化（純粋な隙間削減と1カラム化）
-   ========================================= */
-
-/* 見出し（ラベル）の文字を1回り大きくし、上下の隙間を整える */
-#list-view .label {
-    font-size: 1.1rem !important;
-    padding: 6px 12px !important;
-}
-
-/* ★ 全アイテムの「無駄な隙間」と「枠線」だけを純粋に消去 */
-#list-view .item {
-    padding: 8px 12px !important; /* 上下の隙間を詰める */
-    margin-bottom: 2px !important;
-    border: none !important;      /* 邪魔な線を撤廃 */
-}
-
-/* 歌手一覧のみ適用する2カラム（2列）レイアウト */
-.artist-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 2px 8px; /* 縦横の隙間も最小限に */
-    padding: 0 4px;
-    margin-bottom: 8px;
-}
-.artist-grid .item {
-    margin-bottom: 0 !important; /* グリッド内は余白ゼロで詰める */
-}
-
-/* 横画面時のレイアウト比率変更（左を大きく、右を280pxに） */
-@media screen and (orientation: landscape) {
-    #main-ui { display: flex; flex-direction: row; width: 100%; height: 100vh; }
-    #monitor-area, .left-pane, #yt-iframe, #monitor-img { flex: 2.5 !important; height: 100%; }
-    #nav-main, #list-view, .right-pane { flex: 1 !important; max-width: 280px !important; height: 100%; overflow-y: auto; }
-}
