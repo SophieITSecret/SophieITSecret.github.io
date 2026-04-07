@@ -2,59 +2,55 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>Bar Sophie - Modular Elegance v14.22</title>
-    <link rel="stylesheet" href="css/style_pc.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Bar Sophie v13.0 Modular</title>
+    <link rel="apple-touch-icon" href="bar_sophie.jpeg">
+    <meta name="apple-mobile-web-app-title" content="BARソフィー">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="stylesheet" href="css/style_m.css">
 </head>
-<body class="mode-init">
-    <div id="main-container">
-        <div id="sophie-wrapper">
-            <img id="sophie-image" src="./sophie_shake.png" alt="Sophie">
+<body>
+    <div id="entry-screen">
+        <img id="entry-sophie" src="./sophie_shake.png">
+        <button class="btn-enter" id="btn-enter">🥃 ＢＡＲソフィーに入る</button>
+    </div>
+
+    <div id="chat-mode">
+        <div class="portrait"><img src="./sophie_shake.png" id="lounge-sophie"></div>
+        <div class="chat-area" id="lounge-text">いらっしゃいませ。</div>
+        <button class="btn-to-bar" id="btn-to-bar">カウンターへ進む</button>
+    </div>
+
+    <div id="main-ui">
+        <div class="l-side">
+            <div class="monitor">
+                <iframe id="yt-iframe" allow="autoplay; encrypted-media"></iframe>
+                <img id="monitor-img">
+                <div id="telop"></div>
+            </div>
         </div>
-        <div id="chat-placeholder">
-            <div id="sophie-speech-text"></div>
+        <div class="r-side">
+            <div class="console">
+                <div class="btn-grid">
+                    <button class="c-btn" id="ctrl-play">▶ 再生/読上</button>
+                    <button class="c-btn" id="ctrl-pause">⏸ 停止/再開</button>
+                    <button class="c-btn" id="ctrl-back">← 戻る</button>
+                    <button class="c-btn" id="btn-next">⏭ 次へ</button>
+                </div>
+                <div class="sophie-box" id="sophie-warp"><img src="./sophie_shake.png"></div>
+            </div>
+            <div class="scroll-area" id="main-scroll">
+                <div id="nav-main">
+                    <button class="act-btn" style="background:var(--green)" id="btn-music">🎵 音楽選曲 (リクエスト)</button>
+                    <button class="act-btn" style="background:var(--talk)" id="btn-talk">🥃 お酒の話 (140本の物語)</button>
+                </div>
+                <div id="list-view" style="display:none;"></div>
+            </div>
+            <div class="ver">v13.0</div>
         </div>
     </div>
 
-    <aside id="side-panel">
-        <div class="monitor-frame">
-            <div class="monitor-inner">
-                <iframe id="yt-iframe" src="" allow="autoplay; encrypted-media"></iframe>
-                <img id="monitor-image-overlay" src="" alt="Monitor Overlay">
-                <div id="telop-box"></div>
-            </div>
-        </div>
-
-        <img id="sophie-theater" src="./sophie_shake.png" alt="Sophie-T">
-
-        <div class="player-ctrl">
-            <button class="ctrl-btn theater-btn" id="mode-toggle">シアター</button>
-            <button class="ctrl-btn" id="ctrl-prev">⏮</button>
-            <button class="ctrl-btn" id="ctrl-play">▶</button>
-            <button class="ctrl-btn" id="ctrl-pause">⏸</button>
-            <button class="ctrl-btn" id="ctrl-next">⏭</button>
-            <button class="ctrl-btn" id="ctrl-stop-speech" title="停止">⏹</button>
-            <button class="ctrl-btn" id="ctrl-reset">↺</button>
-        </div>
-
-        <div class="jukebox-container">
-            <div class="jukebox-grid" id="fixed-buttons-grid"></div>
-            <button class="special-btn signal-btn" id="btn-signal-song">◆ みずいろのシグナル ◆</button>
-            <div class="main-action-grid">
-                <button class="special-btn request-btn" id="btn-open-menu">選曲リクエスト</button>
-                <button class="special-btn talk-btn" id="btn-open-talk">お酒の物語</button>
-            </div>
-        </div>
-
-        <div class="dynamic-area">
-            <div id="menu-layer">
-                <div class="back-btn-container">
-                    <div id="menu-back" class="menu-back-btn"></div>
-                </div>
-                <div class="menu-list" id="menu-content"></div>
-            </div>
-        </div>
-    </aside>
-
-    <script type="module" src="js/app_pc.js"></script>
+    <script type="module" src="js/app_m.js"></script>
 </body>
 </html>
