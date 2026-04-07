@@ -174,11 +174,12 @@ function openSpecialSongs(type) {
     if(type === 'ソフィー') {
         filtered = nav.jData.filter(m => m.a && m.a.includes("ソフィー"));
     } else if(type === 'BGM') {
-        // 小細工なしで素直に 1〜6 を抽出
-        filtered = nav.jData.filter(m => parseInt(m.fix) >= 1 && parseInt(m.fix) <= 6);
+        // C列の文字列（m.a）が「BGM」と完全一致するものを安全に抽出
+        filtered = nav.jData.filter(m => m.a === "BGM");
     } else if(type === '昭和ソング') {
-        // 小細工なしで素直に 7〜10 を抽出
-        filtered = nav.jData.filter(m => parseInt(m.fix) >= 7 && parseInt(m.fix) <= 10);
+        // C列の文字列（m.a）が該当するジャンルに含まれるものを安全に抽出
+        const showaGenres = ["70s", "昭和", "演歌", "歌姫"];
+        filtered = nav.jData.filter(m => showaGenres.includes(m.a));
     }
     nav.updateNav("tit", undefined, filtered); isMusicMode = true;
     renderSongList(type);
