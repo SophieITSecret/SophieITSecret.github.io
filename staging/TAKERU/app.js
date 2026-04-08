@@ -1,5 +1,5 @@
 // ==========================================
-// TAKERU MSアカデミー app.js v2.5
+// TAKERU MSアカデミー app.js v2.6
 // ==========================================
 
 let cardData = [];
@@ -11,6 +11,7 @@ let curGenre = '';
 let curGrade = '3級';
 let autoRead = false;
 let isMenuVisible = false;
+let linkFullscreen = false;
 
 const voice = new Audio();
 
@@ -31,6 +32,8 @@ const btnToggle = document.getElementById('btn-toggle');
 const btnHome = document.getElementById('btn-home');
 const btnSettings = document.getElementById('btn-settings');
 const settingsPanel = document.getElementById('settings-panel');
+const imageArea = document.getElementById('image-area');
+const dividerLine = document.getElementById('divider-line');
 
 window.addEventListener('DOMContentLoaded', async () => {
     await loadCSV();
@@ -74,13 +77,14 @@ async function loadLinkCSV() {
     try {
         const res = await fetch(`MSlink.csv?v=${Date.now()}`);
         const text = await res.text();
-        const records = parseCSV(text).slice(1); // ヘッダー行スキップ
+        const records = parseCSV(text).slice(1);
         linkData = records.map(c => ({
             id: c[0]?.trim() || '',
             genre: c[1]?.trim() || '',
             field: c[2]?.trim() || '',
             name: c[3]?.trim() || '',
-            url: c[4]?.trim() || ''
+            url: c[4]?.trim() || '',
+            translate: parseInt(c[5]?.trim() || '0')
         })).filter(d => d.id);
     } catch (e) {
         console.error('リンクCSVロード失敗:', e);
@@ -111,6 +115,45 @@ function parseCSV(text) {
 }
 
 // ==========================================
+// translate.goog URL変換
+// ==========================================
+function toTranslateGoogUrl(url) {
+    try {
+        const u = new URL(url);
+        const host = u.hostname.replace(/\./g, '-');
+        const path = u.pathname + u.search + u.hash;
+        return `https://${host}.translate.goog${path}?_x_tr_sl=auto&_x_tr_tl=ja&_x_tr_hl=ja`;
+    } catch (e) {
+        return url;
+    }
+}
+
+function openLink(item) {
+    if (!item.url) return;
+    if (item.translate === 1) {
+        window.open(toTranslateGoogUrl(item.url), '_blank');
+    } else {
+        window.open(item.url, '_blank');
+    }
+}
+
+// ==========================================
+// リンク画面フルスクリーン制御
+// ==========================================
+function enterLinkFullscreen() {
+    linkFullscreen = true;
+    imageArea.style.display = 'none';
+    dividerLine.style.display = 'none';
+    btnSettings.style.display = 'none';
+}
+
+function exitLinkFullscreen() {
+    linkFullscreen = false;
+    imageArea.style.display = '';
+    dividerLine.style.display = '';
+}
+
+// ==========================================
 // トップメニュー
 // ==========================================
 function showTopMenu() {
@@ -118,6 +161,7 @@ function showTopMenu() {
     isMenuVisible = true;
     stopVoice();
     clearCard();
+    exitLinkFullscreen();
     showMenuView();
     btnSettings.style.display = 'block';
 
@@ -282,7 +326,7 @@ function showCard(idx) {
 function showLinkGenreMenu() {
     navState = 'linkgenre';
     isMenuVisible = true;
-    btnSettings.style.display = 'none';
+    enterLinkFullscreen();
     showMenuView();
 
     const genres = [...new Set(linkData.map(d => d.genre))];
@@ -318,13 +362,17 @@ function showLinkList(genre) {
         fieldItems.forEach(item => {
             const isReady = item.url && item.name !== '準備中';
             if (isReady) {
-                html += `<div class="menu-item link-item" data-url="${item.url}">
+                let badge = '';
+                if (item.translate === 1) badge = '<span class="link-badge badge-jp">JP</span>';
+                if (item.translate === 2) badge = '<span class="link-badge badge-pdf">PDF</span>';
+                html += `<div class="menu-item link-item" data-id="${item.id}">
                     <span class="link-name">${item.name}</span>
+                    ${badge}
                     <span class="link-arrow">↗</span>
                 </div>`;
             } else {
                 html += `<div class="menu-item link-item link-coming">
-                    <span class="link-name">${item.field}（準備中）</span>
+                    <span class="link-name">準備中</span>
                 </div>`;
             }
         });
@@ -332,10 +380,11 @@ function showLinkList(genre) {
     menuContent.innerHTML = html;
 
     menuContent.onclick = (e) => {
-        const item = e.target.closest('.link-item');
-        if (!item || item.classList.contains('link-coming')) return;
-        const url = item.dataset.url;
-        if (url) window.open(url, '_blank');
+        const el = e.target.closest('.link-item');
+        if (!el || el.classList.contains('link-coming')) return;
+        const id = el.dataset.id;
+        const item = linkData.find(d => d.id === id);
+        if (item) openLink(item);
     };
 }
 
@@ -387,7 +436,6 @@ function clearCard() {
 // ==========================================
 function setupButtons() {
 
-    // 次へ
     btnNext.onclick = () => {
         if (navState === 'card' && curIndex < curSection.length - 1) {
             showCard(curIndex + 1);
@@ -396,7 +444,6 @@ function setupButtons() {
         }
     };
 
-    // 戻る
     btnBack.onclick = () => {
         if (!isMenuVisible) {
             if (navState === 'card' && curIndex > 0) {
@@ -415,13 +462,11 @@ function setupButtons() {
         }
     };
 
-    // ホーム
     btnHome.onclick = () => {
         stopVoice();
         showTopMenu();
     };
 
-    // テキスト/メニュー切り替え
     btnToggle.onclick = () => {
         if (!isMenuVisible) {
             if (curSection.length && navState === 'card') {
@@ -441,7 +486,6 @@ function setupButtons() {
         }
     };
 
-    // 読上ON/OFFトグル
     btnVoice.onclick = () => {
         autoRead = !autoRead;
         if (autoRead) {
@@ -477,7 +521,6 @@ function showSectionComplete() {
 function playVoiceDirect() {
     if (!curSection.length || navState !== 'card') return;
     const card = curSection[curIndex];
-
     stopVoice();
 
     const mp3Path = `voices/${card.id}.mp3`;
@@ -492,17 +535,13 @@ function playVoiceDirect() {
             voice.onended = () => {};
         })
         .catch(() => {
-            if (!ttsStarted) {
-                ttsStarted = true;
-                startTTS(card.body);
-            }
+            if (!ttsStarted) { ttsStarted = true; startTTS(card.body); }
         });
 
     setTimeout(() => {
         if (!mp3Started && !ttsStarted) {
             ttsStarted = true;
-            voice.pause();
-            voice.src = '';
+            voice.pause(); voice.src = '';
             startTTS(card.body);
         }
     }, 500);

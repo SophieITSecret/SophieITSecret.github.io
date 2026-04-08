@@ -18,7 +18,6 @@ body.dark-mode {
     --divider: #4caf50;
     --settings-bg: rgba(10,12,16,0.97);
     --placeholder-color: #2a3048;
-    --link-coming-text: #3a4560;
     --link-field-bg: #0f1520;
     --link-field-color: #4a5a7a;
 }
@@ -35,7 +34,6 @@ body.light-mode {
     --divider: #2e7d32;
     --settings-bg: rgba(245,245,240,0.97);
     --placeholder-color: #c8d8c8;
-    --link-coming-text: #b0bec5;
     --link-field-bg: #eaeeea;
     --link-field-color: #7a8a7a;
 }
@@ -329,10 +327,22 @@ body {
     color: var(--accent);
     opacity: 0.7;
     flex-shrink: 0;
+    margin-left: 4px;
 }
 
+.link-badge {
+    font-size: 0.65rem;
+    font-family: 'Oswald', sans-serif;
+    padding: 1px 5px;
+    border-radius: 3px;
+    flex-shrink: 0;
+    letter-spacing: 0.05em;
+}
+.badge-jp  { background: rgba(76,175,80,0.2); color: var(--accent); border: 1px solid var(--accent); }
+.badge-pdf { background: rgba(244,67,54,0.15); color: #ef9a9a; border: 1px solid #e57373; }
+
 .link-coming {
-    opacity: 0.35;
+    opacity: 0.3;
     cursor: default;
 }
 .link-coming:active { background: transparent; }
