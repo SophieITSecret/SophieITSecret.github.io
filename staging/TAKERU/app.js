@@ -1,8 +1,9 @@
 // ==========================================
-// TAKERU MSアカデミー app.js v2.7
+// TAKERU MSアカデミー app.js v2.5
 // ==========================================
 
 let cardData = [];
+let linkData = [];
 let curSection = [];
 let curIndex = 0;
 let navState = 'top';
@@ -10,7 +11,6 @@ let curGenre = '';
 let curGrade = '3級';
 let autoRead = false;
 let isMenuVisible = false;
-let mp3Missing = false;
 
 const voice = new Audio();
 
@@ -34,77 +34,25 @@ const settingsPanel = document.getElementById('settings-panel');
 
 window.addEventListener('DOMContentLoaded', async () => {
     await loadCSV();
+    await loadLinkCSV();
     setupButtons();
     setupSettings();
     loadSavedSettings();
     setupPullToRefresh();
-    setupLandscapeLayout();
 
     document.getElementById('btn-enter').onclick = () => {
         entryScreen.style.display = 'none';
         mainUI.style.display = 'flex';
         showTopMenu();
-        setTimeout(applyLandscapeLayout, 100);
     };
 });
 
 // ==========================================
-// 横向きレイアウト動的計算（v2.7）
-// ==========================================
-function applyLandscapeLayout() {
-    const isLandscape = window.innerWidth > window.innerHeight;
-    const imageArea = document.getElementById('image-area');
-    const contentArea = document.getElementById('content-area');
-
-    if (!isLandscape) {
-        imageArea.style.width = '';
-        contentArea.style.width = '';
-        return;
-    }
-
-    const screenW = window.innerWidth;
-    const btnW = 32;
-    const minTextW = 80;
-
-    // Dynamic Island等の左余白（固定値44px）
-   const safeLeft = parseInt(
-    getComputedStyle(document.documentElement)
-    .getPropertyValue('--sal') || '0');
-
-    // 実測値ベースで画像エリアの高さを取得
-    const actualH = Math.round(imageArea.getBoundingClientRect().height);
-
-    // 画像の表示幅（padding-left分を加算して吸収）
-    const idealImageW = Math.floor(actualH * 4 / 3) + safeLeft;
-
-    const availableW = screenW - btnW - safeLeft;
-
-    let imageW, textW;
-    if (idealImageW + minTextW <= availableW + safeLeft) {
-        imageW = idealImageW;
-        textW = availableW + safeLeft - idealImageW;
-    } else {
-        textW = minTextW;
-        imageW = availableW + safeLeft - minTextW;
-    }
-
-    imageArea.style.width = imageW + 'px';
-    contentArea.style.width = textW + 'px';
-}
-
-function setupLandscapeLayout() {
-    window.addEventListener('resize', applyLandscapeLayout);
-    window.addEventListener('orientationchange', () => {
-        setTimeout(applyLandscapeLayout, 300);
-    });
-}
-
-// ==========================================
-// CSVロード
+// CSVロード（カードデータ）
 // ==========================================
 async function loadCSV() {
     try {
-        const res = await fetch('TAKERUcard.csv?v=' + Date.now());
+        const res = await fetch(`TAKERUcard.csv?v=${Date.now()}`);
         const text = await res.text();
         const records = parseCSV(text).slice(1);
         cardData = records.map(c => ({
@@ -116,6 +64,26 @@ async function loadCSV() {
         })).filter(d => d.id);
     } catch (e) {
         console.error('CSVロード失敗:', e);
+    }
+}
+
+// ==========================================
+// CSVロード（リンクデータ）
+// ==========================================
+async function loadLinkCSV() {
+    try {
+        const res = await fetch(`MSlink.csv?v=${Date.now()}`);
+        const text = await res.text();
+        const records = parseCSV(text).slice(1); // ヘッダー行スキップ
+        linkData = records.map(c => ({
+            id: c[0]?.trim() || '',
+            genre: c[1]?.trim() || '',
+            field: c[2]?.trim() || '',
+            name: c[3]?.trim() || '',
+            url: c[4]?.trim() || ''
+        })).filter(d => d.id);
+    } catch (e) {
+        console.error('リンクCSVロード失敗:', e);
     }
 }
 
@@ -161,19 +129,20 @@ function showTopMenu() {
         imagePlaceholder.style.display = 'flex';
     };
 
-    menuContent.innerHTML =
-        '<div class="top-menu-wrap">' +
-        '<button class="top-btn btn-jukou" data-action="jukou">📚 受　講</button>' +
-        '<button class="top-btn btn-library" data-action="library">🏛️ 図書館</button>' +
-        '<button class="top-btn btn-news" data-action="news">📰 ニュース・お知らせ</button>' +
-        '<button class="top-btn btn-links" data-action="links">🔗 リンク集</button>' +
-        '<button class="top-btn btn-exam" data-action="exam">📝 受験案内</button>' +
-        '</div>';
-
+    menuContent.innerHTML = `
+        <div class="top-menu-wrap">
+            <button class="top-btn btn-jukou" data-action="jukou">📚 受　講</button>
+            <button class="top-btn btn-library" data-action="library">🏛️ 図書館</button>
+            <button class="top-btn btn-news" data-action="news">📰 ニュース・お知らせ</button>
+            <button class="top-btn btn-links" data-action="links">🔗 リンク集</button>
+            <button class="top-btn btn-exam" data-action="exam">📝 受験案内</button>
+        </div>
+    `;
     menuContent.onclick = (e) => {
         const btn = e.target.closest('.top-btn');
         if (!btn) return;
         if (btn.dataset.action === 'jukou') showGradeMenu();
+        else if (btn.dataset.action === 'links') showLinkGenreMenu();
         else showPlaceholder(btn.innerText);
     };
     updateToggleBtn('メニュー');
@@ -188,14 +157,23 @@ function showGradeMenu() {
     btnSettings.style.display = 'none';
     showMenuView();
 
-    menuContent.innerHTML =
-        '<div class="menu-label">▶ 受講する級を選んでください</div>' +
-        '<div class="grade-menu-wrap">' +
-        '<button class="grade-btn btn-coming" disabled>１級　将官の心得<span class="grade-sub">ご期待ください</span></button>' +
-        '<button class="grade-btn btn-coming" disabled>２級　士官の心得<span class="grade-sub">ご期待ください</span></button>' +
-        '<button class="grade-btn btn-grade3" data-grade="3級">３級　戦士の心得<span class="grade-sub">開講中</span></button>' +
-        '</div>';
-
+    menuContent.innerHTML = `
+        <div class="menu-label">▶ 受講する級を選んでください</div>
+        <div class="grade-menu-wrap">
+            <button class="grade-btn btn-coming" disabled>
+                １級　将官の心得
+                <span class="grade-sub">ご期待ください</span>
+            </button>
+            <button class="grade-btn btn-coming" disabled>
+                ２級　士官の心得
+                <span class="grade-sub">ご期待ください</span>
+            </button>
+            <button class="grade-btn btn-grade3" data-grade="3級">
+                ３級　戦士の心得
+                <span class="grade-sub">開講中</span>
+            </button>
+        </div>
+    `;
     menuContent.onclick = (e) => {
         const btn = e.target.closest('.grade-btn[data-grade]');
         if (!btn) return;
@@ -212,9 +190,9 @@ function showGenreMenu() {
     isMenuVisible = true;
     showMenuView();
     const genres = [...new Set(cardData.map(d => d.genre))];
-    let html = '<div class="menu-label">▶ ' + curGrade + '　科目・ジャンルを選ぶ</div>';
+    let html = `<div class="menu-label">▶ ${curGrade}　科目・ジャンルを選ぶ</div>`;
     genres.forEach(g => {
-        html += '<div class="menu-item" data-genre="' + g + '">📁 ' + g + '</div>';
+        html += `<div class="menu-item" data-genre="${g}">📁 ${g}</div>`;
     });
     menuContent.innerHTML = html;
     menuContent.onclick = (e) => {
@@ -231,10 +209,10 @@ function showSectionMenu(genre) {
     curGenre = genre;
     showMenuView();
     const sections = [...new Set(cardData.filter(d => d.genre === genre).map(d => d.section))];
-    let html = '<div class="menu-label">◀ ' + genre + '</div>';
+    let html = `<div class="menu-label">◀ ${genre}</div>`;
     sections.forEach(s => {
         const count = cardData.filter(d => d.section === s).length;
-        html += '<div class="menu-item" data-section="' + s + '">🏷️ ' + s + ' <span style="color:#555;margin-left:auto;font-size:0.8em">' + count + '枚</span></div>';
+        html += `<div class="menu-item" data-section="${s}">🏷️ ${s} <span style="color:#555;margin-left:auto;font-size:0.8em">${count}枚</span></div>`;
     });
     menuContent.innerHTML = html;
     menuContent.onclick = (e) => {
@@ -251,9 +229,9 @@ function showCardList(section) {
     curSection = cardData.filter(d => d.section === section);
     curIndex = 0;
     showMenuView();
-    let html = '<div class="menu-label">◀ ' + section + '</div>';
+    let html = `<div class="menu-label">◀ ${section}</div>`;
     curSection.forEach((card, i) => {
-        html += '<div class="menu-item" data-idx="' + i + '">' + (i + 1) + '. ' + card.title + '</div>';
+        html += `<div class="menu-item" data-idx="${i}">${i + 1}. ${card.title}</div>`;
     });
     menuContent.innerHTML = html;
     menuContent.onclick = (e) => {
@@ -266,8 +244,6 @@ function showCardList(section) {
 
 function showCard(idx) {
     if (!curSection.length) return;
-    hideVoiceWarning();
-    mp3Missing = false;
     curIndex = Math.max(0, Math.min(idx, curSection.length - 1));
     const card = curSection[curIndex];
 
@@ -275,17 +251,17 @@ function showCard(idx) {
     isMenuVisible = false;
     showTextView();
 
-    cardProgress.innerText = curSection[0].section + '　' + (curIndex + 1) + ' / ' + curSection.length;
+    cardProgress.innerText = `${curSection[0].section}　${curIndex + 1} / ${curSection.length}`;
     cardTitle.innerText = card.title;
     cardBody.innerText = card.body;
     textView.scrollTop = 0;
 
-    const imgPath = 'images/' + card.id + '.png';
+    const imgPath = `images/${card.id}.png`;
     cardImage.src = imgPath;
     cardImage.style.display = 'block';
     imagePlaceholder.style.display = 'none';
     cardImage.onerror = () => {
-        cardImage.src = 'images/' + card.id + '.jpg';
+        cardImage.src = `images/${card.id}.jpg`;
         cardImage.onerror = () => {
             cardImage.style.display = 'none';
             imagePlaceholder.style.display = 'flex';
@@ -298,6 +274,69 @@ function showCard(idx) {
 
     stopVoice();
     if (autoRead) setTimeout(() => playVoiceDirect(), 300);
+}
+
+// ==========================================
+// リンク集
+// ==========================================
+function showLinkGenreMenu() {
+    navState = 'linkgenre';
+    isMenuVisible = true;
+    btnSettings.style.display = 'none';
+    showMenuView();
+
+    const genres = [...new Set(linkData.map(d => d.genre))];
+    let html = `<div class="menu-label">▶ リンク集　ジャンルを選ぶ</div>`;
+    genres.forEach(g => {
+        const total = linkData.filter(d => d.genre === g).length;
+        const active = linkData.filter(d => d.genre === g && d.url && d.name !== '準備中').length;
+        html += `<div class="menu-item link-genre-item" data-genre="${g}">
+            🔗 ${g}
+            <span class="link-count">${active}/${total}</span>
+        </div>`;
+    });
+    menuContent.innerHTML = html;
+    menuContent.onclick = (e) => {
+        const item = e.target.closest('.link-genre-item');
+        if (!item) return;
+        showLinkList(item.dataset.genre);
+    };
+}
+
+function showLinkList(genre) {
+    navState = 'linklist';
+    isMenuVisible = true;
+    showMenuView();
+
+    const items = linkData.filter(d => d.genre === genre);
+    const fields = [...new Set(items.map(d => d.field))];
+
+    let html = `<div class="menu-label">◀ ${genre}</div>`;
+    fields.forEach(f => {
+        html += `<div class="link-field-header">${f}</div>`;
+        const fieldItems = items.filter(d => d.field === f);
+        fieldItems.forEach(item => {
+            const isReady = item.url && item.name !== '準備中';
+            if (isReady) {
+                html += `<div class="menu-item link-item" data-url="${item.url}">
+                    <span class="link-name">${item.name}</span>
+                    <span class="link-arrow">↗</span>
+                </div>`;
+            } else {
+                html += `<div class="menu-item link-item link-coming">
+                    <span class="link-name">${item.field}（準備中）</span>
+                </div>`;
+            }
+        });
+    });
+    menuContent.innerHTML = html;
+
+    menuContent.onclick = (e) => {
+        const item = e.target.closest('.link-item');
+        if (!item || item.classList.contains('link-coming')) return;
+        const url = item.dataset.url;
+        if (url) window.open(url, '_blank');
+    };
 }
 
 // ==========================================
@@ -348,6 +387,7 @@ function clearCard() {
 // ==========================================
 function setupButtons() {
 
+    // 次へ
     btnNext.onclick = () => {
         if (navState === 'card' && curIndex < curSection.length - 1) {
             showCard(curIndex + 1);
@@ -356,6 +396,7 @@ function setupButtons() {
         }
     };
 
+    // 戻る
     btnBack.onclick = () => {
         if (!isMenuVisible) {
             if (navState === 'card' && curIndex > 0) {
@@ -368,15 +409,19 @@ function setupButtons() {
             else if (navState === 'section') showGenreMenu();
             else if (navState === 'genre') showGradeMenu();
             else if (navState === 'grade') showTopMenu();
+            else if (navState === 'linklist') showLinkGenreMenu();
+            else if (navState === 'linkgenre') showTopMenu();
             else showTopMenu();
         }
     };
 
+    // ホーム
     btnHome.onclick = () => {
         stopVoice();
         showTopMenu();
     };
 
+    // テキスト/メニュー切り替え
     btnToggle.onclick = () => {
         if (!isMenuVisible) {
             if (curSection.length && navState === 'card') {
@@ -396,16 +441,8 @@ function setupButtons() {
         }
     };
 
+    // 読上ON/OFFトグル
     btnVoice.onclick = () => {
-        if (mp3Missing) {
-            hideVoiceWarning();
-            mp3Missing = false;
-            autoRead = true;
-            btnVoice.innerText = '🔊 読上 ON';
-            btnVoice.classList.add('playing');
-            if (navState === 'card') startTTS(curSection[curIndex].body);
-            return;
-        }
         autoRead = !autoRead;
         if (autoRead) {
             btnVoice.innerText = '🔊 読上 ON';
@@ -429,47 +466,46 @@ function showSectionComplete() {
     showTextView();
     cardProgress.innerText = curSection[0]?.section || '';
     cardTitle.innerText = '✅ セクション完了';
-    cardBody.innerText = '全' + curSection.length + '枚を読み終えました。\n\n「🏠」でトップメニューへ戻れます。';
+    cardBody.innerText = `全${curSection.length}枚を読み終えました。\n\n「🏠」でトップメニューへ戻れます。`;
     cardImage.style.display = 'none';
     imagePlaceholder.style.display = 'flex';
 }
 
 // ==========================================
-// 音声再生
+// 音声読み上げ（iPhone対応・v2.3）
 // ==========================================
 function playVoiceDirect() {
     if (!curSection.length || navState !== 'card') return;
     const card = curSection[curIndex];
-    stopVoice();
-    mp3Missing = false;
 
-    voice.src = 'voices/' + card.id + '.mp3';
+    stopVoice();
+
+    const mp3Path = `voices/${card.id}.mp3`;
+    let mp3Started = false;
+    let ttsStarted = false;
+
+    voice.src = mp3Path;
     voice.volume = 1.0;
     voice.play()
         .then(() => {
+            mp3Started = true;
             voice.onended = () => {};
         })
         .catch(() => {
-            voice.src = '';
-            mp3Missing = true;
-            autoRead = false;
-            btnVoice.innerText = '🔊 読上';
-            btnVoice.classList.remove('playing');
-            showVoiceWarning();
+            if (!ttsStarted) {
+                ttsStarted = true;
+                startTTS(card.body);
+            }
         });
-}
 
-function showVoiceWarning() {
-    const el = document.getElementById('voice-warning');
-    el.style.display = 'block';
-    document.getElementById('voice-warning-box').onclick = () => {
-        hideVoiceWarning();
-        mp3Missing = false;
-    };
-}
-
-function hideVoiceWarning() {
-    document.getElementById('voice-warning').style.display = 'none';
+    setTimeout(() => {
+        if (!mp3Started && !ttsStarted) {
+            ttsStarted = true;
+            voice.pause();
+            voice.src = '';
+            startTTS(card.body);
+        }
+    }, 500);
 }
 
 function startTTS(text) {
@@ -488,7 +524,6 @@ function stopVoice() {
     voice.src = '';
     voice.volume = 1.0;
     window.speechSynthesis.cancel();
-    hideVoiceWarning();
 }
 
 // ==========================================
@@ -520,7 +555,7 @@ function setActiveToggle(activeId, allIds) {
 
 function setFontSize(size) {
     document.body.classList.remove('font-small', 'font-medium', 'font-large');
-    document.body.classList.add('font-' + size);
+    document.body.classList.add(`font-${size}`);
 }
 
 function loadSavedSettings() {
@@ -531,11 +566,11 @@ function loadSavedSettings() {
         setActiveToggle('btn-light', ['btn-dark', 'btn-light']);
     }
     setFontSize(font);
-    setActiveToggle('btn-font-' + font, ['btn-font-s','btn-font-m','btn-font-l']);
+    setActiveToggle(`btn-font-${font}`, ['btn-font-s','btn-font-m','btn-font-l']);
 }
 
 // ==========================================
-// プルダウンで更新（220px・誤作動防止強化）
+// プルダウンで更新（PWA対応）
 // ==========================================
 function setupPullToRefresh() {
     let startY = 0;
@@ -543,7 +578,6 @@ function setupPullToRefresh() {
 
     document.addEventListener('touchstart', (e) => {
         startY = e.touches[0].clientY;
-        pulling = false;
     }, { passive: true });
 
     document.addEventListener('touchmove', (e) => {
