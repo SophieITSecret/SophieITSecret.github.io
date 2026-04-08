@@ -34,6 +34,14 @@ function setup() {
             document.getElementById('entry-screen').style.display='none'; 
             document.getElementById('chat-mode').style.display='flex'; 
             
+            // 【イノベーション：YouTubeプレウォーム（事前暖機）】
+            // 入口ボタンのタップ権限を利用し、裏で無音の動画を読み込ませてメディア再生権限をOSに承認させる
+            yt.style.display = 'none';
+            yt.src = "https://www.youtube.com/embed/2vfCbdmKhMw?enablejsapi=1&playsinline=1&mute=1&autoplay=1";
+            setTimeout(() => {
+                try { yt.contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*'); } catch(e){}
+            }, 1500);
+
             const fallbackText = "いらっしゃいませ。";
             talkAudio.src = "./voices_mp3/greeting.mp3";
             talkAudio.onerror = () => { try { media.speak(fallbackText); } catch(e){} };
@@ -149,7 +157,7 @@ function setMon(m, s) {
     yt.style.display='none'; img.style.display='none'; yt.src="";
     if(m==='v') { 
         yt.style.display='block'; 
-        // 【YouTube自動再生ブロック緩和策】&playsinline=1 を追加
+        // YouTube自動再生ブロック緩和策 (&playsinline=1 を維持)
         yt.src=`https://www.youtube.com/embed/${extractYtId(s)}?autoplay=1&enablejsapi=1&playsinline=1`; 
     } else { 
         img.style.display='block'; img.src=s; 
