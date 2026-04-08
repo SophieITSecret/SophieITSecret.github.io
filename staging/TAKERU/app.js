@@ -1,5 +1,5 @@
 // ==========================================
-// TAKERU MSアカデミー app.js v2.6
+// TAKERU MSアカデミー app.js v2.7
 // ==========================================
 
 let cardData = [];
@@ -193,7 +193,7 @@ function showTopMenu() {
 }
 
 // ==========================================
-// 級選択
+// 級選択（看板付き）
 // ==========================================
 function showGradeMenu() {
     navState = 'grade';
@@ -202,6 +202,10 @@ function showGradeMenu() {
     showMenuView();
 
     menuContent.innerHTML = `
+        <div class="section-banner banner-jukou">
+            <span class="banner-icon">📚</span>
+            <span class="banner-title">受　講</span>
+        </div>
         <div class="menu-label">▶ 受講する級を選んでください</div>
         <div class="grade-menu-wrap">
             <button class="grade-btn btn-coming" disabled>
@@ -256,7 +260,7 @@ function showSectionMenu(genre) {
     let html = `<div class="menu-label">◀ ${genre}</div>`;
     sections.forEach(s => {
         const count = cardData.filter(d => d.section === s).length;
-        html += `<div class="menu-item" data-section="${s}">🏷️ ${s} <span style="color:#555;margin-left:auto;font-size:0.8em">${count}枚</span></div>`;
+        html += `<div class="menu-item" data-section="${s}">🏷️ ${s} <span style="margin-left:auto;font-size:0.8em">${count}枚</span></div>`;
     });
     menuContent.innerHTML = html;
     menuContent.onclick = (e) => {
@@ -321,7 +325,7 @@ function showCard(idx) {
 }
 
 // ==========================================
-// リンク集
+// リンク集（看板付き・パネル化）
 // ==========================================
 function showLinkGenreMenu() {
     navState = 'linkgenre';
@@ -330,20 +334,44 @@ function showLinkGenreMenu() {
     showMenuView();
 
     const genres = [...new Set(linkData.map(d => d.genre))];
-    let html = `<div class="menu-label">▶ リンク集　ジャンルを選ぶ</div>`;
-    genres.forEach(g => {
-        const total = linkData.filter(d => d.genre === g).length;
+
+    // ジャンルごとのカラー設定
+    const genreColors = [
+        { bg: 'linear-gradient(135deg, #1a2a3a, #00695c)', border: '#26a69a' },
+        { bg: 'linear-gradient(135deg, #1a3a1a, #2e7d32)', border: '#4caf50' },
+        { bg: 'linear-gradient(135deg, #1a237e, #283593)', border: '#5c6bc0' },
+        { bg: 'linear-gradient(135deg, #2a1a2a, #6a1b9a)', border: '#9c27b0' },
+        { bg: 'linear-gradient(135deg, #3a2a1a, #e65100)', border: '#ff9800' },
+        { bg: 'linear-gradient(135deg, #1a2a3a, #01579b)', border: '#0288d1' },
+        { bg: 'linear-gradient(135deg, #3a1a1a, #b71c1c)', border: '#f44336' },
+    ];
+
+    let html = `
+        <div class="section-banner banner-links">
+            <span class="banner-icon">🔗</span>
+            <span class="banner-title">リンク集</span>
+        </div>
+        <div class="link-genre-wrap">
+    `;
+    genres.forEach((g, i) => {
+        const col = genreColors[i % genreColors.length];
         const active = linkData.filter(d => d.genre === g && d.url && d.name !== '準備中').length;
-        html += `<div class="menu-item link-genre-item" data-genre="${g}">
-            🔗 ${g}
-            <span class="link-count">${active}/${total}</span>
-        </div>`;
+        const total = linkData.filter(d => d.genre === g).length;
+        html += `
+            <button class="link-genre-btn" data-genre="${g}"
+                style="background:${col.bg};border-color:${col.border};">
+                <span class="link-genre-name">${g}</span>
+                <span class="link-genre-count">${active}/${total}</span>
+            </button>
+        `;
     });
+    html += `</div>`;
     menuContent.innerHTML = html;
+
     menuContent.onclick = (e) => {
-        const item = e.target.closest('.link-genre-item');
-        if (!item) return;
-        showLinkList(item.dataset.genre);
+        const btn = e.target.closest('.link-genre-btn');
+        if (!btn) return;
+        showLinkList(btn.dataset.genre);
     };
 }
 
