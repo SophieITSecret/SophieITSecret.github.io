@@ -67,7 +67,9 @@ function applyLandscapeLayout() {
     const minTextW = 80;
 
     // Dynamic Island等の左余白（固定値44px）
-    const safeLeft = 44;
+   const safeLeft = parseInt(
+    getComputedStyle(document.documentElement)
+    .getPropertyValue('--sal') || '0');
 
     // 実測値ベースで画像エリアの高さを取得
     const actualH = Math.round(imageArea.getBoundingClientRect().height);
