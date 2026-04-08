@@ -33,14 +33,22 @@ body { background: var(--bg); color: var(--text); font-family: sans-serif !impor
 .scroll-area { flex: 1; overflow-y: scroll; background: #08080a; -webkit-overflow-scrolling: touch; }
 #nav-main { padding: 12px; display: block; }
 
-/* ★ボタンの視認性：!importantで強制指定 */
 .act-btn { width: 100%; height: 48px; margin-bottom: 10px; border-radius: 8px; border: 1px solid #444; font-weight: bold; color: #fff !important; font-size: 1.1rem; display: block !important; font-family: sans-serif; }
 
 .label { background: #1a1a2e; color: var(--accent); padding: 0 12px; font-size: 0.8rem; font-weight: bold; position: sticky; top: 0; z-index: 100; border-bottom: 1px solid #333; height: 28px; line-height: 28px; font-family: sans-serif; }
 
-/* 変更点: 絶対値height/line-heightを排除し、padding（上3:文字10:下3の比率 = 0.3em）で自然な余白を形成 */
 .item { padding: 0.3em 15px; border-bottom: 1px solid #222; color: #ccc; font-size: 1rem; display: block; width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; font-family: sans-serif; }
 
 .active-item { background: var(--accent) !important; color: #000 !important; font-weight: bold; }
 
 .ver { position: fixed; bottom: 4px; right: 8px; font-size: 9px; color: #444; pointer-events: none; z-index: 10000; }
+
+/* 追加：歌手一覧の2カラムレイアウト設定 */
+.artist-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+}
+/* 奇数番目（左側）のアイテムの右端にのみ境界線を引く */
+.artist-grid .item:nth-child(odd) {
+    border-right: 1px solid #222;
+}

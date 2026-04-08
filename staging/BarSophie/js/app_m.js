@@ -24,6 +24,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     setInterval(checkYT, 1000);
 });
 
+// 自動再生用の標準動作を変数化（退店処理後に復帰させるため）
+const defaultOnEnded = () => { if (isAutoPlay && !isMusicMode) setTimeout(next, 1200); };
+
 function setup() {
     const btnEnter = document.getElementById('btn-enter');
     if(btnEnter) {
@@ -31,7 +34,7 @@ function setup() {
             document.getElementById('entry-screen').style.display='none'; 
             document.getElementById('chat-mode').style.display='flex'; 
             
-            const fallbackText = "いらっしゃいませ。お待ちしておりました。";
+            const fallbackText = "いらっしゃいませ。";
             talkAudio.src = "./voices_mp3/greeting.mp3";
             talkAudio.onerror = () => { try { media.speak(fallbackText); } catch(e){} };
             
@@ -59,8 +62,43 @@ function setup() {
     const sophieWarp = document.getElementById('sophie-warp');
     if(sophieWarp) {
         sophieWarp.onclick = () => { 
-            if(nav.state !== "none") { lv.style.display='none'; nm.style.display='block'; nav.updateNav("none"); } 
-            else { document.getElementById('main-ui').style.display='none'; document.getElementById('chat-mode').style.display='flex'; } 
+            if(nav.state !== "none") { 
+                lv.style.display='none'; nm.style.display='block'; nav.updateNav("none"); 
+            } else { 
+                // 【退店（エグジット）シーケンス】
+                document.getElementById('main-ui').style.display='none'; 
+                document.getElementById('chat-mode').style.display='flex'; 
+                
+                const loungeText = document.getElementById('lounge-text');
+                loungeText.innerText = "ありがとうございました。"; // メッセージ切替
+                
+                // 再生中のメディアをすべて強制停止
+                window.speechSynthesis.cancel();
+                try { yt.contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*'); } catch(e){}
+                try { talkAudio.pause(); } catch(e){}
+                
+                talkAudio.src = "./voices_mp3/goodbye.mp3";
+                
+                // 退店完了処理（1秒後に初期画面へ戻し、テキストをリセット）
+                const finalizeExit = () => {
+                    setTimeout(() => {
+                        document.getElementById('chat-mode').style.display='none';
+                        document.getElementById('entry-screen').style.display='flex';
+                        loungeText.innerText = "いらっしゃいませ。";
+                        talkAudio.onended = defaultOnEnded; // 音声終了後の挙動を元に戻す
+                    }, 1000);
+                };
+                
+                talkAudio.onended = finalizeExit;
+                talkAudio.onerror = finalizeExit; // 音声ファイル不在時のフェイルセーフ
+                
+                try {
+                    const p = talkAudio.play();
+                    if (p !== undefined) p.catch(finalizeExit);
+                } catch(e) {
+                    finalizeExit();
+                }
+            } 
         };
     }
 
@@ -77,7 +115,7 @@ function setup() {
         btnN.onpointerleave = () => { if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; } };
     }
 
-    talkAudio.onended = () => { if (isAutoPlay && !isMusicMode) setTimeout(next, 1200); };
+    talkAudio.onended = defaultOnEnded;
 }
 
 function playHead() {
@@ -111,7 +149,8 @@ function setMon(m, s) {
     yt.style.display='none'; img.style.display='none'; yt.src="";
     if(m==='v') { 
         yt.style.display='block'; 
-        yt.src=`https://www.youtube.com/embed/${extractYtId(s)}?autoplay=1&enablejsapi=1`; 
+        // 【YouTube自動再生ブロック緩和策】&playsinline=1 を追加
+        yt.src=`https://www.youtube.com/embed/${extractYtId(s)}?autoplay=1&enablejsapi=1&playsinline=1`; 
     } else { 
         img.style.display='block'; img.src=s; 
     }
@@ -174,10 +213,8 @@ function openSpecialSongs(type) {
     if(type === 'ソフィー') {
         filtered = nav.jData.filter(m => m.a && m.a.includes("ソフィー"));
     } else if(type === 'BGM') {
-        // C列の文字列（m.a）が「BGM」と完全一致するものを安全に抽出
         filtered = nav.jData.filter(m => m.a === "BGM");
     } else if(type === '昭和ソング') {
-        // C列の文字列（m.a）が該当するジャンルに含まれるものを安全に抽出
         const showaGenres = ["70s", "昭和", "演歌", "歌姫"];
         filtered = nav.jData.filter(m => showaGenres.includes(m.a));
     }
