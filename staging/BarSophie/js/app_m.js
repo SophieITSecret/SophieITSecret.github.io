@@ -7,10 +7,11 @@ window.onerror = function(msg, url, lineNo) {
 };
 
 let isPaused = false, isAutoPlay = false, isMusicMode = false, lastTxt = "", pressTimer = null;
-let yt, img, tel, lv, nm, talkAudio;
+let ytWrapper, img, tel, lv, nm, talkAudio;
+let ytPlayer = null, ytPlayerReady = false;
 
 document.addEventListener('DOMContentLoaded', async () => {
-    yt = document.getElementById('yt-iframe');
+    ytWrapper = document.getElementById('yt-wrapper');
     img = document.getElementById('monitor-img');
     tel = document.getElementById('telop');
     lv = document.getElementById('list-view');
@@ -21,10 +22,35 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     await nav.loadAllData();
     setup();
-    setInterval(checkYT, 1000);
+    
+    // YouTube IFrame APIの動的読み込み
+    const tag = document.createElement('script');
+    tag.src = "https://www.youtube.com/iframe_api";
+    const firstScriptTag = document.getElementsByTagName('script')[0];
+    firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
 });
 
-// 自動再生用の標準動作を変数化（退店処理後に復帰させるため）
+// APIの準備が完了した際に自動的に呼ばれるグローバル関数
+window.onYouTubeIframeAPIReady = function() {
+    ytPlayer = new YT.Player('yt-player', {
+        playerVars: { 
+            'playsinline': 1, 
+            'autoplay': 1, 
+            'rel': 0,
+            'controls': 1 // 念のため最低限のコントロールを許可（ブロック回避に有利）
+        },
+        events: {
+            'onReady': () => { ytPlayerReady = true; },
+            'onStateChange': (e) => {
+                // 動画が最後まで再生された(ENDED)時の自動検知
+                if (e.data === YT.PlayerState.ENDED && isAutoPlay && isMusicMode) {
+                    next();
+                }
+            }
+        }
+    });
+};
+
 const defaultOnEnded = () => { if (isAutoPlay && !isMusicMode) setTimeout(next, 1200); };
 
 function setup() {
@@ -34,13 +60,18 @@ function setup() {
             document.getElementById('entry-screen').style.display='none'; 
             document.getElementById('chat-mode').style.display='flex'; 
             
-            // 【イノベーション：YouTubeプレウォーム（事前暖機）】
-            // 入口ボタンのタップ権限を利用し、裏で無音の動画を読み込ませてメディア再生権限をOSに承認させる
-            yt.style.display = 'none';
-            yt.src = "https://www.youtube.com/embed/2vfCbdmKhMw?enablejsapi=1&playsinline=1&mute=1&autoplay=1";
-            setTimeout(() => {
-                try { yt.contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*'); } catch(e){}
-            }, 1500);
+            // 【究極のプレウォーム（事前暖機）】
+            // 入口ボタンの「タップ権限」を使ってAPIプレイヤーに再生と停止を指示し、メディア権限を確定させる
+            if (ytPlayerReady && ytPlayer && typeof ytPlayer.loadVideoById === 'function') {
+                try {
+                    ytPlayer.mute();
+                    ytPlayer.loadVideoById('2vfCbdmKhMw'); // ソフィーのシグナルで暖機
+                    setTimeout(() => {
+                        ytPlayer.pauseVideo();
+                        ytPlayer.unMute();
+                    }, 1000);
+                } catch(e) {}
+            }
 
             const fallbackText = "いらっしゃいませ。";
             talkAudio.src = "./voices_mp3/greeting.mp3";
@@ -73,32 +104,31 @@ function setup() {
             if(nav.state !== "none") { 
                 lv.style.display='none'; nm.style.display='block'; nav.updateNav("none"); 
             } else { 
-                // 【退店（エグジット）シーケンス】
                 document.getElementById('main-ui').style.display='none'; 
                 document.getElementById('chat-mode').style.display='flex'; 
                 
                 const loungeText = document.getElementById('lounge-text');
-                loungeText.innerText = "ありがとうございました。"; // メッセージ切替
+                loungeText.innerText = "ありがとうございました。"; 
                 
-                // 再生中のメディアをすべて強制停止
                 window.speechSynthesis.cancel();
-                try { yt.contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*'); } catch(e){}
+                if(ytPlayerReady && ytPlayer && typeof ytPlayer.pauseVideo === 'function') {
+                    try { ytPlayer.pauseVideo(); } catch(e){}
+                }
                 try { talkAudio.pause(); } catch(e){}
                 
                 talkAudio.src = "./voices_mp3/goodbye.mp3";
                 
-                // 退店完了処理（1秒後に初期画面へ戻し、テキストをリセット）
                 const finalizeExit = () => {
                     setTimeout(() => {
                         document.getElementById('chat-mode').style.display='none';
                         document.getElementById('entry-screen').style.display='flex';
                         loungeText.innerText = "いらっしゃいませ。";
-                        talkAudio.onended = defaultOnEnded; // 音声終了後の挙動を元に戻す
+                        talkAudio.onended = defaultOnEnded; 
                     }, 1000);
                 };
                 
                 talkAudio.onended = finalizeExit;
-                talkAudio.onerror = finalizeExit; // 音声ファイル不在時のフェイルセーフ
+                talkAudio.onerror = finalizeExit; 
                 
                 try {
                     const p = talkAudio.play();
@@ -127,14 +157,21 @@ function setup() {
 }
 
 function playHead() {
-    yt.contentWindow.postMessage('{"event":"command","func":"seekTo","args":[0, true]}', '*');
-    yt.contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*');
+    if(ytPlayerReady && ytPlayer && typeof ytPlayer.seekTo === 'function') {
+        ytPlayer.seekTo(0, true);
+        ytPlayer.playVideo();
+    }
     if(!isMusicMode) talkAudio.play().catch(()=>{});
 }
 
 function togglePause() {
-    if(!isPaused) { yt.contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*'); talkAudio.pause(); window.speechSynthesis.pause(); isPaused = true; }
-    else { yt.contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*'); if(!isMusicMode) talkAudio.play().catch(()=>{}); window.speechSynthesis.resume(); isPaused = false; }
+    if(!isPaused) { 
+        if(ytPlayerReady && ytPlayer && typeof ytPlayer.pauseVideo === 'function') ytPlayer.pauseVideo(); 
+        talkAudio.pause(); window.speechSynthesis.pause(); isPaused = true; 
+    } else { 
+        if(ytPlayerReady && ytPlayer && typeof ytPlayer.playVideo === 'function') ytPlayer.playVideo(); 
+        if(!isMusicMode) talkAudio.play().catch(()=>{}); window.speechSynthesis.resume(); isPaused = false; 
+    }
 }
 
 function next() {
@@ -154,13 +191,21 @@ function extractYtId(u) {
 }
 
 function setMon(m, s) {
-    yt.style.display='none'; img.style.display='none'; yt.src="";
-    if(m==='v') { 
-        yt.style.display='block'; 
-        // YouTube自動再生ブロック緩和策 (&playsinline=1 を維持)
-        yt.src=`https://www.youtube.com/embed/${extractYtId(s)}?autoplay=1&enablejsapi=1&playsinline=1`; 
+    ytWrapper.style.display = 'none'; 
+    img.style.display = 'none'; 
+    
+    if(m === 'v') { 
+        ytWrapper.style.display = 'block'; 
+        if(ytPlayerReady && ytPlayer && typeof ytPlayer.loadVideoById === 'function') {
+            // URLごと書き換えるのではなく、APIを通じてIDだけを渡して再生（摩擦ゼロ・ブロック回避）
+            ytPlayer.loadVideoById(extractYtId(s));
+        }
     } else { 
-        img.style.display='block'; img.src=s; 
+        img.style.display = 'block'; 
+        img.src = s; 
+        if(ytPlayerReady && ytPlayer && typeof ytPlayer.pauseVideo === 'function') {
+            ytPlayer.pauseVideo();
+        }
     }
 }
 
@@ -184,9 +229,6 @@ function prep(t, isM, id = null) {
         else el.classList.remove('active-item');
     });
 }
-
-function checkYT() { if (isAutoPlay && isMusicMode) yt.contentWindow.postMessage('{"event":"command","func":"getPlayerState","args":[]}', '*'); }
-window.addEventListener('message', (e) => { try { const d = JSON.parse(e.data); if (d.info === 0 && isAutoPlay && isMusicMode) next(); } catch(err){} });
 
 // --- 音楽選曲 ---
 function openMusic() {
