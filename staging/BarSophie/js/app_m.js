@@ -23,26 +23,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     await nav.loadAllData();
     setup();
     
-    // YouTube IFrame APIの動的読み込み
     const tag = document.createElement('script');
     tag.src = "https://www.youtube.com/iframe_api";
     const firstScriptTag = document.getElementsByTagName('script')[0];
     firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
 });
 
-// APIの準備が完了した際に自動的に呼ばれるグローバル関数
 window.onYouTubeIframeAPIReady = function() {
     ytPlayer = new YT.Player('yt-player', {
-        playerVars: { 
-            'playsinline': 1, 
-            'autoplay': 1, 
-            'rel': 0,
-            'controls': 1 // 念のため最低限のコントロールを許可（ブロック回避に有利）
-        },
+        playerVars: { 'playsinline': 1, 'autoplay': 1, 'rel': 0, 'controls': 1 },
         events: {
             'onReady': () => { ytPlayerReady = true; },
             'onStateChange': (e) => {
-                // 動画が最後まで再生された(ENDED)時の自動検知
                 if (e.data === YT.PlayerState.ENDED && isAutoPlay && isMusicMode) {
                     next();
                 }
@@ -53,6 +45,26 @@ window.onYouTubeIframeAPIReady = function() {
 
 const defaultOnEnded = () => { if (isAutoPlay && !isMusicMode) setTimeout(next, 1200); };
 
+// 【新規追加】トップ画面に戻る際の共通処理（front_sophieの表示と拡張の解除）
+function showRootMenu() {
+    lv.style.display = 'none'; 
+    nm.style.display = 'block'; 
+    nav.updateNav("none");
+    
+    // YouTubeは隠すが音楽は止めない。正面写真を優先表示する。
+    ytWrapper.style.display = 'none';
+    img.src = './front_sophie.jpeg';
+    img.style.display = 'block';
+    tel.style.display = 'none';
+    
+    // モニターの拡張状態をリセットし、ボタンを無効化（半透明）にする
+    const monitor = document.querySelector('.monitor');
+    monitor.classList.remove('expanded');
+    const btnExpand = document.getElementById('btn-expand');
+    btnExpand.innerText = '🔽';
+    btnExpand.style.opacity = '0.3'; 
+}
+
 function setup() {
     const btnEnter = document.getElementById('btn-enter');
     if(btnEnter) {
@@ -60,12 +72,10 @@ function setup() {
             document.getElementById('entry-screen').style.display='none'; 
             document.getElementById('chat-mode').style.display='flex'; 
             
-            // 【究極のプレウォーム（事前暖機）】
-            // 入口ボタンの「タップ権限」を使ってAPIプレイヤーに再生と停止を指示し、メディア権限を確定させる
             if (ytPlayerReady && ytPlayer && typeof ytPlayer.loadVideoById === 'function') {
                 try {
                     ytPlayer.mute();
-                    ytPlayer.loadVideoById('2vfCbdmKhMw'); // ソフィーのシグナルで暖機
+                    ytPlayer.loadVideoById('2vfCbdmKhMw'); 
                     setTimeout(() => {
                         ytPlayer.pauseVideo();
                         ytPlayer.unMute();
@@ -91,6 +101,8 @@ function setup() {
             document.getElementById('main-ui').style.display='flex'; 
             window.speechSynthesis.cancel(); 
             talkAudio.pause();
+            // カウンターに入った瞬間にトップ画面（front_sophie）を初期表示
+            showRootMenu();
         };
     }
 
@@ -98,11 +110,22 @@ function setup() {
     document.getElementById('ctrl-pause').onclick = togglePause;
     document.getElementById('ctrl-back').onclick = handleBack;
     
+    // 【新規追加】拡張（下矢印）ボタンのロジック
+    document.getElementById('btn-expand').onclick = () => {
+        // 音楽モード、またはトップ画面では拡張機能を無効化する
+        if (isMusicMode || nav.state === "none") return;
+        
+        const monitor = document.querySelector('.monitor');
+        const btn = document.getElementById('btn-expand');
+        monitor.classList.toggle('expanded');
+        btn.innerText = monitor.classList.contains('expanded') ? '🔼' : '🔽';
+    };
+    
     const sophieWarp = document.getElementById('sophie-warp');
     if(sophieWarp) {
         sophieWarp.onclick = () => { 
             if(nav.state !== "none") { 
-                lv.style.display='none'; nm.style.display='block'; nav.updateNav("none"); 
+                showRootMenu(); 
             } else { 
                 document.getElementById('main-ui').style.display='none'; 
                 document.getElementById('chat-mode').style.display='flex'; 
@@ -124,6 +147,7 @@ function setup() {
                         document.getElementById('entry-screen').style.display='flex';
                         loungeText.innerText = "いらっしゃいませ。";
                         talkAudio.onended = defaultOnEnded; 
+                        img.src = ""; // 退店時に画像をクリア
                     }, 1000);
                 };
                 
@@ -194,15 +218,22 @@ function setMon(m, s) {
     ytWrapper.style.display = 'none'; 
     img.style.display = 'none'; 
     
+    // 表示が切り替わる際、拡張ボタンの状態をリセット
+    document.querySelector('.monitor').classList.remove('expanded');
+    document.getElementById('btn-expand').innerText = '🔽';
+    
     if(m === 'v') { 
         ytWrapper.style.display = 'block'; 
+        // 音楽モード時は拡張ボタンを半透明にし、視覚的に無効化をアピール
+        document.getElementById('btn-expand').style.opacity = '0.3';
         if(ytPlayerReady && ytPlayer && typeof ytPlayer.loadVideoById === 'function') {
-            // URLごと書き換えるのではなく、APIを通じてIDだけを渡して再生（摩擦ゼロ・ブロック回避）
             ytPlayer.loadVideoById(extractYtId(s));
         }
     } else { 
         img.style.display = 'block'; 
         img.src = s; 
+        // テキスト閲覧時は拡張ボタンをクッキリ表示
+        document.getElementById('btn-expand').style.opacity = '1';
         if(ytPlayerReady && ytPlayer && typeof ytPlayer.pauseVideo === 'function') {
             ytPlayer.pauseVideo();
         }
@@ -230,17 +261,14 @@ function prep(t, isM, id = null) {
     });
 }
 
-// --- 音楽選曲 ---
 function openMusic() {
     nav.updateNav("art"); let h = "";
-
     h += `<div class="label">マスターお薦め</div>`;
     h += `<div class="artist-grid">`;
     h += `<div class="item" data-special="ソフィー" style="color: var(--blue);">🎤 ソフィー</div>`;
     h += `<div class="item" data-special="BGM">🎤 BGM</div>`;
     h += `<div class="item" data-special="昭和ソング">🎤 昭和ソング</div>`;
     h += `</div>`;
-
     ['E','F','J','W','I','S'].forEach(f => {
         const arts = [...new Set(nav.jData.filter(d => d.f === f).map(d => d.a))];
         if(arts.length) { 
@@ -250,7 +278,6 @@ function openMusic() {
             h += `</div>`;
         }
     });
-
     render(h, (e) => { 
         const el = e.currentTarget;
         if(el.dataset.special) openSpecialSongs(el.dataset.special);
@@ -284,7 +311,6 @@ function renderSongList(title) {
         const color = isSophie ? `style="color: var(--blue);"` : "";
         h += `<div class="item" data-idx="${i}" ${color}>🎵 ${m.ti}</div>`; 
     });
-    
     render(h, (e) => { 
         const el = e.currentTarget;
         if(el.dataset.idx) {
@@ -298,7 +324,6 @@ function renderSongList(title) {
     });
 }
 
-// --- お酒の話 ---
 function openTalk() {
     nav.updateNav("g"); let h = '<div class="label">お酒のジャンル</div>';
     [...new Set(nav.tData.map(d => d.g))].forEach(g => { h += `<div class="item" data-g="${g}">📁 ${g}</div>`; });
@@ -347,5 +372,5 @@ function handleBack() {
     if (nav.state === "st") openThemes(nav.curG); 
     else if (nav.state === "th") openTalk(); 
     else if (nav.state === "tit") openMusic();
-    else { lv.style.display = 'none'; nm.style.display = 'block'; nav.updateNav("none"); }
+    else { showRootMenu(); }
 }

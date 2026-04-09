@@ -1,7 +1,6 @@
 :root { --bg: #000; --accent: #f0b56e; --blue: #00d2ff; --green: #27ae60; --talk: #2980b9; --text: #eee; }
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
 
-/* セーフエリア（カメラ穴やホームバーの回避）の余白を環境変数(env)で全方位に動的確保 */
 body { 
     background: var(--bg); 
     color: var(--text); 
@@ -33,17 +32,24 @@ body {
 #main-ui { display: none; flex: 1; flex-direction: column; height: 100%; overflow: hidden; }
 @media (orientation: landscape) { #main-ui { flex-direction: row !important; } .l-side { flex: 1.4 !important; border-right: 1px solid #333; } .r-side { flex: 1 !important; } }
 
-.monitor { width: 100%; aspect-ratio: 16/9; background: #000; border-bottom: 2px solid var(--blue); position: relative; flex-shrink: 0; }
+/* モニター領域（拡張クラス対応） */
+.monitor { width: 100%; aspect-ratio: 16/9; background: #000; border-bottom: 2px solid var(--blue); position: relative; flex-shrink: 0; transition: height 0.3s ease; }
+.monitor.expanded { aspect-ratio: auto !important; height: calc((100vw * 9 / 16) + 75px) !important; }
+@media (orientation: landscape) { .monitor.expanded { height: 100% !important; } }
+
 #yt-wrapper iframe { width: 100%; height: 100%; border: none; }
 #monitor-img { width: 100%; height: 100%; border: none; display: none; object-fit: contain; }
 #telop { position: absolute; inset: 0; background: rgba(0,0,0,0.75); padding: 15px; font-size: 1.05rem; display: none; z-index: 1000; color: #fff; overflow-y: auto; line-height: 1.6; font-family: sans-serif; }
 
+/* コントローラー領域（横並びFlexbox化） */
 .console { height: 75px; background: #111; display: flex; border-bottom: 1px solid #333; flex-shrink: 0; }
-.btn-grid { flex: 1; display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px; padding: 4px; }
-.sophie-box { width: 75px; background: #000; display: flex; justify-content: center; align-items: center; border-left: 1px solid #222; }
-.sophie-box img { height: 85%; width: auto; cursor: pointer; }
-.c-btn { background: #222; border: 1px solid #444; color: #eee; border-radius: 4px; font-size: 0.85rem; font-weight: bold; display: flex; align-items: center; justify-content: center; user-select: none; font-family: sans-serif; }
+.btn-grid { flex: 1; display: flex; flex-direction: row; gap: 4px; padding: 4px; }
+.c-btn { flex: 1; background: #222; border: 1px solid #444; color: #eee; border-radius: 4px; font-size: 0.95rem; font-weight: bold; display: flex; align-items: center; justify-content: center; user-select: none; font-family: sans-serif; }
 .auto-active { border-color: var(--green) !important; color: var(--green) !important; }
+
+/* 右端ソフィーアイコン（75px -> 55pxへ圧縮） */
+.sophie-box { width: 55px; background: #000; display: flex; justify-content: center; align-items: center; border-left: 1px solid #222; flex-shrink: 0; }
+.sophie-box img { height: 85%; width: auto; cursor: pointer; }
 
 .r-side { flex: 1; display: flex; flex-direction: column; min-height: 0; }
 .scroll-area { flex: 1; overflow-y: scroll; background: #08080a; -webkit-overflow-scrolling: touch; }
@@ -59,11 +65,5 @@ body {
 
 .ver { position: fixed; bottom: 4px; right: 8px; font-size: 9px; color: #444; pointer-events: none; z-index: 10000; }
 
-/* 歌手一覧の2カラムレイアウト設定 */
-.artist-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-}
-.artist-grid .item:nth-child(odd) {
-    border-right: 1px solid #222;
-}
+.artist-grid { display: grid; grid-template-columns: repeat(2, 1fr); }
+.artist-grid .item:nth-child(odd) { border-right: 1px solid #222; }
