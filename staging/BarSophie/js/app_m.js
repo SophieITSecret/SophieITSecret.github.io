@@ -55,7 +55,6 @@ function showRootMenu() {
     img.style.display = 'block';
     tel.style.display = 'none';
     
-    // トップ画面に戻った時のみ、美観のために拡張状態をリセットする
     const monitor = document.querySelector('.monitor');
     monitor.classList.remove('expanded');
     const btnExpand = document.getElementById('btn-expand');
@@ -198,14 +197,38 @@ function next() {
         nav.updateNav(undefined, undefined, undefined, nav.curI + 1);
         const m = nav.curP[nav.curI];
         
-        // 【追加】「次へ」が押された際、強制的にリスト画面を前面に出す
-        if (lv.style.display === 'none') {
-            nm.style.display = 'none';
-            lv.style.display = 'block';
-        }
+        // 【イノベーション：状況に応じたスマートな表示分岐】
+        if (nav.state === "none") {
+            // ①トップ画面（ソフィーの顔）にいる場合は、リストに飛ばず顔を維持し、短いタイトルだけを作る
+            let topText = isMusicMode ? `🎵 ${m.a}さんの「${m.ti}」です` : `🥃 ${m.th}：「${m.ti}」のお話です`;
+            
+            if (isMusicMode) { 
+                setMon('v', m.u); 
+                prep(topText, true, null, m.txt); 
+            } else { 
+                setMon('i', `./talk_images/${m.id}.jpg`); 
+                prep(topText, false, m.id, m.txt); 
+            }
+        } else {
+            // ②リスト画面などをウロウロしている場合は、一番奥のメニューへ「強制書き換え＆ジャンプ」
+            if (isMusicMode && nav.state !== "tit") {
+                const title = nav.curP[0] && nav.curP[0].a ? nav.curP[0].a : "再生リスト";
+                nav.updateNav("tit");
+                renderSongList(title);
+            } else if (!isMusicMode && nav.state !== "st") {
+                const title = nav.curP[0] && nav.curP[0].th ? nav.curP[0].th : "お酒の話";
+                nav.updateNav("st");
+                renderStoryList(title);
+            }
+            
+            if (lv.style.display === 'none') {
+                nm.style.display = 'none';
+                lv.style.display = 'block';
+            }
 
-        if (isMusicMode) { setMon('v', m.u); prep(`${m.a}さんの${m.ti}です`, true); } 
-        else { setMon('i', `./talk_images/${m.id}.jpg`); prep(m.txt, false, m.id); }
+            if (isMusicMode) { setMon('v', m.u); prep(`${m.a}さんの${m.ti}です`, true); } 
+            else { setMon('i', `./talk_images/${m.id}.jpg`); prep(m.txt, false, m.id); }
+        }
     } else { 
         isAutoPlay = false; 
         const btnN = document.getElementById('btn-next'); 
@@ -221,10 +244,31 @@ function extractYtId(u) {
 }
 
 function setMon(m, s) {
+    // ①トップ画面のままの場合は、裏で読み込ませつつ映像・画像はソフィーで固定
+    if (nav.state === "none") {
+        ytWrapper.style.display = 'none'; 
+        img.style.display = 'block'; 
+        img.src = './front_sophie.jpeg';
+        
+        document.querySelector('.monitor').classList.remove('expanded');
+        document.getElementById('btn-expand').innerText = '🔽';
+        document.getElementById('btn-expand').style.opacity = '0.3';
+        
+        if(m === 'v') { 
+            if(ytPlayerReady && ytPlayer && typeof ytPlayer.loadVideoById === 'function') {
+                ytPlayer.loadVideoById(extractYtId(s));
+            }
+        } else { 
+            if(ytPlayerReady && ytPlayer && typeof ytPlayer.pauseVideo === 'function') {
+                ytPlayer.pauseVideo();
+            }
+        }
+        return;
+    }
+
+    // ②通常時は指定された映像・画像をしっかり表示する
     ytWrapper.style.display = 'none'; 
     img.style.display = 'none'; 
-    
-    // 【撤去】ここで拡張状態をリセットする処理を削除し、広い画面を維持します
     
     if(m === 'v') { 
         ytWrapper.style.display = 'block'; 
@@ -242,26 +286,46 @@ function setMon(m, s) {
     }
 }
 
-function prep(t, isM, id = null) {
+// 【イノベーション】トップ画面のテロップは下部の「帯」にし、ソフィーの顔を隠さない設計
+function prep(t, isM, id = null, originalTxt = null) {
     window.speechSynthesis.cancel(); 
     try { talkAudio.pause(); if (talkAudio.readyState > 0) talkAudio.currentTime = 0; } catch(e){}
     lastTxt = t; isMusicMode = isM; isPaused = false;
-    tel.innerText = t; tel.style.display = 'block'; tel.scrollTop = 0;
+    tel.innerText = t; 
+    tel.style.display = 'block'; 
+    tel.scrollTop = 0;
     
+    // 動的にテロップのCSSスタイルを書き換える
+    if (nav.state === "none") {
+        tel.style.top = 'auto';           // 上からの配置を解除
+        tel.style.bottom = '0';           // 下部にピッタリくっつける
+        tel.style.height = 'auto';        // 文章の長さに合わせる
+        tel.style.background = 'rgba(0,0,0,0.6)'; // 少し透明度を上げて顔を馴染ませる
+    } else {
+        tel.style.top = '0';              // 従来通り全体を覆う
+        tel.style.bottom = 'auto';
+        tel.style.height = '100%';
+        tel.style.background = 'rgba(0,0,0,0.75)';
+    }
+
+    // 音声読み上げエラー時の保険には、元の長文を渡す
+    let speakTxt = originalTxt ? originalTxt : t; 
+
     if(isM) {
         setTimeout(() => { if(tel.innerText === t) tel.style.display = 'none'; }, 5000);
     } else if (id) {
         talkAudio.src = `./voices_mp3/${id}.mp3`;
-        talkAudio.onerror = () => { try { media.speak(t); } catch(e){} };
-        try { const p = talkAudio.play(); if (p !== undefined) p.catch(() => { try { media.speak(t); } catch(e){} }); } 
-        catch(e) { try { media.speak(t); } catch(err){} }
+        talkAudio.onerror = () => { try { media.speak(speakTxt); } catch(e){} };
+        try { const p = talkAudio.play(); if (p !== undefined) p.catch(() => { try { media.speak(speakTxt); } catch(e){} }); } 
+        catch(e) { try { media.speak(speakTxt); } catch(err){} }
     }
     
     document.querySelectorAll('#list-view .item').forEach((el) => {
         if (el.dataset.idx && parseInt(el.dataset.idx) === nav.curI) {
             el.classList.add('active-item');
-            // 【追加】新しくハイライトされた要素を画面中央へスムーズにスクロールさせる
-            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            if (nav.state !== "none") {
+                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
         } else {
             el.classList.remove('active-item');
         }
@@ -343,13 +407,8 @@ function openThemes(g) {
     render(h, (e) => { const t = e.currentTarget.dataset.th; if(t) openStories(t); });
 }
 
-function openStories(t) {
-    const stories = nav.tData.filter(d => d.th === t).sort((a,b) => {
-        const isFixA = (a.fix === "1" || a.fix === "true" || parseInt(a.fix) > 0) ? 1 : 0;
-        const isFixB = (b.fix === "1" || b.fix === "true" || parseInt(b.fix) > 0) ? 1 : 0;
-        return isFixB - isFixA;
-    });
-    nav.updateNav("st", undefined, stories); isMusicMode = false;
+// 【新規分離】奥のメニューを強制生成するための独立関数
+function renderStoryList(t) {
     let h = `<div class="label">${t}</div>`;
     nav.curP.forEach((d, i) => { 
         const isFix = (d.fix === "1" || d.fix === "true" || parseInt(d.fix) > 0);
@@ -367,6 +426,16 @@ function openStories(t) {
             }
         }
     });
+}
+
+function openStories(t) {
+    const stories = nav.tData.filter(d => d.th === t).sort((a,b) => {
+        const isFixA = (a.fix === "1" || a.fix === "true" || parseInt(a.fix) > 0) ? 1 : 0;
+        const isFixB = (b.fix === "1" || b.fix === "true" || parseInt(b.fix) > 0) ? 1 : 0;
+        return isFixB - isFixA;
+    });
+    nav.updateNav("st", undefined, stories); isMusicMode = false;
+    renderStoryList(t);
 }
 
 function render(h, cb) { 
