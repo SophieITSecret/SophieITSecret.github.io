@@ -45,19 +45,17 @@ window.onYouTubeIframeAPIReady = function() {
 
 const defaultOnEnded = () => { if (isAutoPlay && !isMusicMode) setTimeout(next, 1200); };
 
-// 【新規追加】トップ画面に戻る際の共通処理（front_sophieの表示と拡張の解除）
 function showRootMenu() {
     lv.style.display = 'none'; 
     nm.style.display = 'block'; 
     nav.updateNav("none");
     
-    // YouTubeは隠すが音楽は止めない。正面写真を優先表示する。
     ytWrapper.style.display = 'none';
     img.src = './front_sophie.jpeg';
     img.style.display = 'block';
     tel.style.display = 'none';
     
-    // モニターの拡張状態をリセットし、ボタンを無効化（半透明）にする
+    // トップ画面に戻った時のみ、美観のために拡張状態をリセットする
     const monitor = document.querySelector('.monitor');
     monitor.classList.remove('expanded');
     const btnExpand = document.getElementById('btn-expand');
@@ -101,7 +99,6 @@ function setup() {
             document.getElementById('main-ui').style.display='flex'; 
             window.speechSynthesis.cancel(); 
             talkAudio.pause();
-            // カウンターに入った瞬間にトップ画面（front_sophie）を初期表示
             showRootMenu();
         };
     }
@@ -110,9 +107,7 @@ function setup() {
     document.getElementById('ctrl-pause').onclick = togglePause;
     document.getElementById('ctrl-back').onclick = handleBack;
     
-    // 【新規追加】拡張（下矢印）ボタンのロジック
     document.getElementById('btn-expand').onclick = () => {
-        // 音楽モード、またはトップ画面では拡張機能を無効化する
         if (isMusicMode || nav.state === "none") return;
         
         const monitor = document.querySelector('.monitor');
@@ -147,7 +142,7 @@ function setup() {
                         document.getElementById('entry-screen').style.display='flex';
                         loungeText.innerText = "いらっしゃいませ。";
                         talkAudio.onended = defaultOnEnded; 
-                        img.src = ""; // 退店時に画像をクリア
+                        img.src = ""; 
                     }, 1000);
                 };
                 
@@ -202,9 +197,20 @@ function next() {
     if(nav.curI < nav.curP.length - 1) {
         nav.updateNav(undefined, undefined, undefined, nav.curI + 1);
         const m = nav.curP[nav.curI];
+        
+        // 【追加】「次へ」が押された際、強制的にリスト画面を前面に出す
+        if (lv.style.display === 'none') {
+            nm.style.display = 'none';
+            lv.style.display = 'block';
+        }
+
         if (isMusicMode) { setMon('v', m.u); prep(`${m.a}さんの${m.ti}です`, true); } 
         else { setMon('i', `./talk_images/${m.id}.jpg`); prep(m.txt, false, m.id); }
-    } else { isAutoPlay = false; const btnN = document.getElementById('btn-next'); if(btnN) btnN.classList.remove('auto-active'); }
+    } else { 
+        isAutoPlay = false; 
+        const btnN = document.getElementById('btn-next'); 
+        if(btnN) btnN.classList.remove('auto-active'); 
+    }
 }
 
 function extractYtId(u) {
@@ -218,13 +224,10 @@ function setMon(m, s) {
     ytWrapper.style.display = 'none'; 
     img.style.display = 'none'; 
     
-    // 表示が切り替わる際、拡張ボタンの状態をリセット
-    document.querySelector('.monitor').classList.remove('expanded');
-    document.getElementById('btn-expand').innerText = '🔽';
+    // 【撤去】ここで拡張状態をリセットする処理を削除し、広い画面を維持します
     
     if(m === 'v') { 
         ytWrapper.style.display = 'block'; 
-        // 音楽モード時は拡張ボタンを半透明にし、視覚的に無効化をアピール
         document.getElementById('btn-expand').style.opacity = '0.3';
         if(ytPlayerReady && ytPlayer && typeof ytPlayer.loadVideoById === 'function') {
             ytPlayer.loadVideoById(extractYtId(s));
@@ -232,7 +235,6 @@ function setMon(m, s) {
     } else { 
         img.style.display = 'block'; 
         img.src = s; 
-        // テキスト閲覧時は拡張ボタンをクッキリ表示
         document.getElementById('btn-expand').style.opacity = '1';
         if(ytPlayerReady && ytPlayer && typeof ytPlayer.pauseVideo === 'function') {
             ytPlayer.pauseVideo();
@@ -256,8 +258,13 @@ function prep(t, isM, id = null) {
     }
     
     document.querySelectorAll('#list-view .item').forEach((el) => {
-        if (el.dataset.idx && parseInt(el.dataset.idx) === nav.curI) el.classList.add('active-item');
-        else el.classList.remove('active-item');
+        if (el.dataset.idx && parseInt(el.dataset.idx) === nav.curI) {
+            el.classList.add('active-item');
+            // 【追加】新しくハイライトされた要素を画面中央へスムーズにスクロールさせる
+            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        } else {
+            el.classList.remove('active-item');
+        }
     });
 }
 
