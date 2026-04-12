@@ -327,6 +327,7 @@ function prep(t, isM, id = null, originalTxt = null) {
 function openMusic() {
     nav.updateNav("art"); let h = "";
     
+    // ①マスターお薦め（固定枠）
     h += `<div class="label">マスターお薦め</div>`;
     h += `<div class="artist-grid">`;
     h += `<div class="item" data-special="ソフィー" style="color: var(--blue);">🎤 ソフィー</div>`;
@@ -334,10 +335,13 @@ function openMusic() {
     h += `<div class="item" data-special="昭和ソング">🎤 昭和ソング</div>`;
     h += `</div>`;
     
-    // 【改修ポイント】Lを洋楽Wの上に配置し、その他の順序も定義
+    // ②表示順序を定義（Lを洋楽Wの上に配置）
     const preferredOrder = ['E', 'F', 'J', 'L', 'W', 'I', 'S']; 
+    
+    // データ内にある全てのジャンル記号を取得
     const rawFs = [...new Set(nav.jData.map(d => d.f).filter(Boolean))];
     
+    // 定義した順序で並べ替え（定義にない記号は後ろに回す）
     const sortedFs = rawFs.sort((a, b) => {
         let ia = preferredOrder.indexOf(a);
         let ib = preferredOrder.indexOf(b);
@@ -429,4 +433,40 @@ function renderStoryList(t) {
     nav.curP.forEach((d, i) => { 
         const isFix = (d.fix === "1" || d.fix === "true" || parseInt(d.fix) > 0);
         const fixIcon = isFix ? "📌 " : "";
-        h += `<div class="item
+        h += `<div class="item" data-idx="${i}">${fixIcon}${d.ti}</div>`; 
+    });
+    render(h, (e) => { 
+        const el = e.currentTarget;
+        if(el.dataset.idx) {
+            const i = parseInt(el.dataset.idx); 
+            if(!isNaN(i)){ 
+                nav.updateNav(undefined,undefined,undefined,i); 
+                setMon('i', `./talk_images/${nav.curP[i].id}.jpg`); 
+                prep(nav.curP[i].txt, false, nav.curP[i].id); 
+            }
+        }
+    });
+}
+
+function openStories(t) {
+    const stories = nav.tData.filter(d => d.th === t).sort((a,b) => {
+        const isFixA = (a.fix === "1" || a.fix === "true" || parseInt(a.fix) > 0) ? 1 : 0;
+        const isFixB = (b.fix === "1" || b.fix === "true" || parseInt(b.fix) > 0) ? 1 : 0;
+        return isFixB - isFixA;
+    });
+    nav.updateNav("st", undefined, stories); isMusicMode = false;
+    renderStoryList(t);
+}
+
+function render(h, cb) { 
+    nm.style.display = 'none'; lv.style.display = 'block'; lv.innerHTML = h; 
+    document.getElementById('main-scroll').scrollTop = 0; 
+    document.querySelectorAll('#list-view .item').forEach(el => el.onclick = cb);
+}
+
+function handleBack() {
+    if (nav.state === "st") openThemes(nav.curG); 
+    else if (nav.state === "th") openTalk(); 
+    else if (nav.state === "tit") openMusic();
+    else { showRootMenu(); }
+}
