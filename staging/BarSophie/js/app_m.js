@@ -304,7 +304,8 @@ function prep(t, isM, id = null, originalTxt = null) {
     let speakTxt = originalTxt ? originalTxt : t; 
 
     if(isM) {
-        setTimeout(() => { if(tel.innerText === t) tel.style.display = 'none'; }, 5000);
+        // ★ここを修正しました（画面の文字ではなく、裏の記憶「lastTxt」と直接比較して確実に消す）
+        setTimeout(() => { if(lastTxt === t) tel.style.display = 'none'; }, 5000);
     } else if (id) {
         talkAudio.src = `./voices_mp3/${id}.mp3`;
         talkAudio.onerror = () => { try { media.speak(speakTxt); } catch(e){} };
