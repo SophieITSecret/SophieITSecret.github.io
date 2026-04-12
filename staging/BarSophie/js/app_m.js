@@ -58,7 +58,8 @@ function showRootMenu() {
     const monitor = document.querySelector('.monitor');
     monitor.classList.remove('expanded');
     const btnExpand = document.getElementById('btn-expand');
-    btnExpand.innerText = '🔽';
+    // ★矢印を力強い黒三角に太くしました
+    btnExpand.innerText = '▼';
     btnExpand.style.opacity = '0.3'; 
 }
 
@@ -99,6 +100,15 @@ function setup() {
             window.speechSynthesis.cancel(); 
             talkAudio.pause();
             showRootMenu();
+            
+            // ★追加：カウンターに座った時のソフィーの挨拶
+            talkAudio.src = "./voices_mp3/menu_greeting.mp3"; 
+            const fallbackText = "いつもありがとうございます。今日はいかがされますか？";
+            talkAudio.onerror = () => { try { media.speak(fallbackText); } catch(e){} };
+            try {
+                const p = talkAudio.play();
+                if (p !== undefined) p.catch(() => { try { media.speak(fallbackText); } catch(e){} });
+            } catch(e) { try { media.speak(fallbackText); } catch(err){} }
         };
     }
 
@@ -112,7 +122,8 @@ function setup() {
         const monitor = document.querySelector('.monitor');
         const btn = document.getElementById('btn-expand');
         monitor.classList.toggle('expanded');
-        btn.innerText = monitor.classList.contains('expanded') ? '🔼' : '🔽';
+        // ★ここも力強い黒三角に連動させました
+        btn.innerText = monitor.classList.contains('expanded') ? '▲' : '▼';
     };
     
     const sophieWarp = document.getElementById('sophie-warp');
@@ -247,7 +258,7 @@ function setMon(m, s) {
         img.src = './front_sophie.jpeg';
         
         document.querySelector('.monitor').classList.remove('expanded');
-        document.getElementById('btn-expand').innerText = '🔽';
+        btnExpand.innerText = '▼';
         document.getElementById('btn-expand').style.opacity = '0.3';
         
         if(m === 'v') { 
@@ -304,7 +315,6 @@ function prep(t, isM, id = null, originalTxt = null) {
     let speakTxt = originalTxt ? originalTxt : t; 
 
     if(isM) {
-        // ★ここを修正しました（画面の文字ではなく、裏の記憶「lastTxt」と直接比較して確実に消す）
         setTimeout(() => { if(lastTxt === t) tel.style.display = 'none'; }, 5000);
     } else if (id) {
         talkAudio.src = `./voices_mp3/${id}.mp3`;
@@ -328,7 +338,6 @@ function prep(t, isM, id = null, originalTxt = null) {
 function openMusic() {
     nav.updateNav("art"); let h = "";
     
-    // ①マスターお薦め（固定枠）
     h += `<div class="label">マスターお薦め</div>`;
     h += `<div class="artist-grid">`;
     h += `<div class="item" data-special="ソフィー" style="color: var(--blue);">🎤 ソフィー</div>`;
@@ -336,13 +345,8 @@ function openMusic() {
     h += `<div class="item" data-special="昭和ソング">🎤 昭和ソング</div>`;
     h += `</div>`;
     
-    // ②表示順序を定義（Lを洋楽Wの上に配置）
     const preferredOrder = ['E', 'F', 'J', 'L', 'W', 'I', 'S']; 
-    
-    // データ内にある全てのジャンル記号を取得
     const rawFs = [...new Set(nav.jData.map(d => d.f).filter(Boolean))];
-    
-    // 定義した順序で並べ替え（定義にない記号は後ろに回す）
     const sortedFs = rawFs.sort((a, b) => {
         let ia = preferredOrder.indexOf(a);
         let ib = preferredOrder.indexOf(b);
@@ -355,15 +359,12 @@ function openMusic() {
         const arts = [...new Set(nav.jData.filter(d => d.f === f).map(d => d.a))];
         if(arts.length) { 
             let labelName = "";
-            
-            // 【特別ルール】Lの場合は強制的に「特集コーナー」とする
             if (f === 'L') {
                 labelName = "特集コーナー";
             } else {
                 const genreData = nav.jData.find(d => d.f === f && d.gName);
                 labelName = genreData ? genreData.gName : f;
             }
-            
             h += `<div class="label">${labelName}</div>`; 
             h += `<div class="artist-grid">`;
             arts.forEach(a => { h += `<div class="item" data-artist="${a}">🎤 ${a}</div>`; }); 
