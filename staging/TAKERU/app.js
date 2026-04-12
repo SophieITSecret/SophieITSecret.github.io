@@ -1,5 +1,5 @@
 // ==========================================
-// TAKERU MSアカデミー app.js v2.8
+// TAKERU MSアカデミー app.js v2.9
 // ==========================================
 
 let cardData = [];
@@ -9,9 +9,11 @@ let curIndex = 0;
 let navState = 'top';
 let curGenre = '';
 let curGrade = '3級';
+let curLinkGenre = '';
 let autoRead = false;
 let isMenuVisible = false;
 let linkFullscreen = false;
+let mp3Failed = false; // MP3失敗フラグ（次押しでTTS）
 
 const voice = new Audio();
 
@@ -179,7 +181,10 @@ function showTopMenu() {
             <button class="top-btn btn-library" data-action="library">🏛️ 図書館</button>
             <button class="top-btn btn-news" data-action="news">📰 ニュース・お知らせ</button>
             <button class="top-btn btn-links" data-action="links">🔗 リンク集</button>
-            <button class="top-btn btn-exam" data-action="exam">📝 受験案内</button>
+            <div class="top-btn-row">
+                <button class="top-btn btn-exam" data-action="exam">📝 受験案内</button>
+                <button class="top-btn btn-howto" data-action="howto">❓ 使い方</button>
+            </div>
         </div>
     `;
     menuContent.onclick = (e) => {
@@ -230,13 +235,20 @@ function showGradeMenu() {
 
 // ==========================================
 // ジャンル→セクション→カード
+// 受講2層目：「受講」＋「3級 戦士の心得」の2枚看板
 // ==========================================
 function showGenreMenu() {
     navState = 'genre';
     isMenuVisible = true;
     showMenuView();
     const genres = [...new Set(cardData.map(d => d.genre))];
-    let html = `<div class="menu-label">▶ ${curGrade}　科目・ジャンルを選ぶ</div>`;
+    let html = `
+        <div class="double-banner-wrap">
+            <div class="top-btn btn-jukou banner-btn banner-small">📚 受　講</div>
+            <div class="grade-btn btn-grade3 banner-btn banner-small">３級　戦士の心得</div>
+        </div>
+        <div class="menu-label">▶ 科目・ジャンルを選ぶ</div>
+    `;
     genres.forEach(g => {
         html += `<div class="menu-item" data-genre="${g}">📁 ${g}</div>`;
     });
@@ -295,6 +307,8 @@ function showCard(idx) {
 
     navState = 'card';
     isMenuVisible = false;
+    mp3Failed = false; // カード切替でフラグリセット
+    hideVoiceWarning();
     showTextView();
 
     cardProgress.innerText = `${curSection[0].section}　${curIndex + 1} / ${curSection.length}`;
@@ -328,6 +342,7 @@ function showCard(idx) {
 function showLinkGenreMenu() {
     navState = 'linkgenre';
     isMenuVisible = true;
+    curLinkGenre = '';
     enterLinkFullscreen();
     showMenuView();
 
@@ -354,10 +369,12 @@ function showLinkGenreMenu() {
     menuContent.onclick = (e) => {
         const btn = e.target.closest('.link-genre-btn');
         if (!btn) return;
-        showLinkList(btn.dataset.genre);
+        curLinkGenre = btn.dataset.genre;
+        showLinkList(curLinkGenre);
     };
 }
 
+// リンク集2層目：「リンク集」＋「ジャンル名」の2枚看板
 function showLinkList(genre) {
     navState = 'linklist';
     isMenuVisible = true;
@@ -366,7 +383,15 @@ function showLinkList(genre) {
     const items = linkData.filter(d => d.genre === genre);
     const fields = [...new Set(items.map(d => d.field))];
 
-    let html = `<div class="menu-label">◀ ${genre}</div>`;
+    let html = `
+        <div class="double-banner-wrap">
+            <div class="top-btn btn-links banner-btn banner-small">🔗 リンク集</div>
+            <div class="link-genre-btn banner-btn banner-small">
+                <span class="link-genre-name">${genre}</span>
+            </div>
+        </div>
+    `;
+
     fields.forEach(f => {
         html += `<div class="link-field-header">${f}</div>`;
         const fieldItems = items.filter(d => d.field === f);
@@ -497,16 +522,19 @@ function setupButtons() {
         }
     };
 
+    // 読上ボタン：MP3失敗済みなら即TTS、そうでなければMP3試行
     btnVoice.onclick = () => {
-        autoRead = !autoRead;
-        if (autoRead) {
-            btnVoice.innerText = '🔊 読上 ON';
-            btnVoice.classList.add('playing');
-            if (navState === 'card') playVoiceDirect();
+        if (navState !== 'card') return;
+
+        if (mp3Failed) {
+            // 2回目以降：TTSで読み上げ
+            hideVoiceWarning();
+            mp3Failed = false;
+            startTTS(curSection[curIndex].body);
         } else {
-            btnVoice.innerText = '🔇 読上 OFF';
-            btnVoice.classList.remove('playing');
-            stopVoice();
+            // 1回目：MP3試行
+            autoRead = false;
+            playVoiceDirect();
         }
     };
 }
@@ -527,35 +555,56 @@ function showSectionComplete() {
 }
 
 // ==========================================
-// 音声読み上げ（iPhone対応・v2.3）
+// 音声読み上げ（iPhone対応）
+// MP3失敗→警告表示→もう一度押したらTTS
 // ==========================================
 function playVoiceDirect() {
     if (!curSection.length || navState !== 'card') return;
     const card = curSection[curIndex];
     stopVoice();
+    mp3Failed = false;
 
     const mp3Path = `voices/${card.id}.mp3`;
     let mp3Started = false;
-    let ttsStarted = false;
 
     voice.src = mp3Path;
     voice.volume = 1.0;
     voice.play()
         .then(() => {
             mp3Started = true;
-            voice.onended = () => {};
         })
         .catch(() => {
-            if (!ttsStarted) { ttsStarted = true; startTTS(card.body); }
+            // MP3再生失敗→警告表示
+            mp3Failed = true;
+            showVoiceWarning();
         });
 
     setTimeout(() => {
-        if (!mp3Started && !ttsStarted) {
-            ttsStarted = true;
-            voice.pause(); voice.src = '';
-            startTTS(card.body);
+        if (!mp3Started && !mp3Failed) {
+            // 500ms経っても始まらない→警告表示
+            voice.pause();
+            voice.src = '';
+            mp3Failed = true;
+            showVoiceWarning();
         }
     }, 500);
+}
+
+function showVoiceWarning() {
+    let overlay = document.getElementById('voice-warning');
+    if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'voice-warning';
+        overlay.innerHTML = '🔇 音声データがありません<br><span style="font-size:0.8em">もう一度押すとシステム音声で読み上げます</span>';
+        overlay.onclick = () => hideVoiceWarning();
+        document.getElementById('main-ui').appendChild(overlay);
+    }
+    overlay.style.display = 'flex';
+}
+
+function hideVoiceWarning() {
+    const overlay = document.getElementById('voice-warning');
+    if (overlay) overlay.style.display = 'none';
 }
 
 function startTTS(text) {

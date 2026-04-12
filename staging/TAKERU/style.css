@@ -241,6 +241,14 @@ body {
     gap: 9px;
 }
 
+/* 最終行：受験案内＋使い方の横並び */
+.top-btn-row {
+    display: flex;
+    gap: 8px;
+}
+.top-btn-row .btn-exam { flex: 2; }
+.top-btn-row .btn-howto { flex: 1; }
+
 .top-btn {
     width: 100%;
     height: 50px;
@@ -263,6 +271,7 @@ body {
 .btn-news    { background: linear-gradient(135deg, #2a2a1a, #f57f17); border-color: #ffc107; }
 .btn-links   { background: linear-gradient(135deg, #1a2a3a, #00695c); border-color: #26a69a; }
 .btn-exam    { background: linear-gradient(135deg, #3a1a1a, #b71c1c); border-color: #f44336; }
+.btn-howto   { background: linear-gradient(135deg, #2a2a3a, #4a4a6a); border-color: #7a7aaa; font-size: 0.85rem; }
 
 /* ==================== サブメニュー共通構造（看板＋子パネル） ==================== */
 .sub-menu-wrap {
@@ -272,7 +281,7 @@ body {
     gap: 10px;
 }
 
-/* 看板：top-btnと同じスタイルをそのまま使い、pointer-eventsだけ無効 */
+/* 看板：タップ無効 */
 .banner-btn {
     cursor: default !important;
     pointer-events: none;
@@ -288,6 +297,22 @@ body {
     flex-direction: column;
     gap: 8px;
     padding: 0 4px;
+}
+
+/* ==================== 2枚看板（2層目用） ==================== */
+.double-banner-wrap {
+    padding: 10px 12px 0 12px;
+    display: flex;
+    gap: 8px;
+}
+
+/* 2枚看板内のボタン：高さを低めに、flex均等 */
+.banner-small {
+    flex: 1;
+    height: 40px !important;
+    font-size: 0.85rem !important;
+    min-height: unset !important;
+    padding: 0 8px !important;
 }
 
 /* ==================== 級選択パネル ==================== */
@@ -319,7 +344,6 @@ body {
     width: 100%;
     min-height: 48px;
     border-radius: 6px;
-    /* 看板と区別するため単色系でまとめる */
     background: linear-gradient(135deg, #1a2530, #1e3a4a);
     border: 1px solid #2a6a7a;
     font-family: 'Noto Sans JP', sans-serif;
@@ -358,7 +382,7 @@ body {
     color: var(--link-field-color);
     border-bottom: 1px solid var(--border);
     position: sticky;
-    top: 28px;
+    top: 0;
     z-index: 9;
 }
 
@@ -390,6 +414,26 @@ body {
 
 .link-coming { opacity: 0.3; cursor: default; }
 .link-coming:active { background: transparent; }
+
+/* ==================== 音声警告オーバーレイ ==================== */
+#voice-warning {
+    position: absolute;
+    bottom: 60px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(20, 20, 30, 0.92);
+    border: 1px solid #4a5a7a;
+    border-radius: 8px;
+    color: #b0bec5;
+    font-size: 0.85rem;
+    padding: 10px 16px;
+    text-align: center;
+    z-index: 6000;
+    display: none;
+    white-space: nowrap;
+    line-height: 1.6;
+    cursor: pointer;
+}
 
 /* ==================== 下部コントロール（縦向き） ==================== */
 #controls {
