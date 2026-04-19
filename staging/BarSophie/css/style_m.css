@@ -51,29 +51,29 @@ body {
 .active-item { background: var(--accent) !important; color: #000 !important; font-weight: bold; }
 .ver { position: absolute; bottom: 80px; right: 8px; font-size: 9px; color: #444; pointer-events: none; z-index: 10; }
 
-.artist-grid { display: grid; grid-template-columns: repeat(2, 1fr); }
-.artist-grid .item:nth-child(odd) { border-right: 1px solid #222; }
-
-/* --- ギュッと詰めたお酒データベース専用CSS --- */
-
+/* --- お酒データベース（カード・検索）専用CSS --- */
 .lq-card { padding: 12px; }
 
 /* 名前・セリフ・基礎情報 */
 .lq-name { font-size: 1.4rem; font-weight: bold; color: var(--accent); margin-bottom: 2px; }
-.lq-quote { font-size: 0.95rem; color: var(--blue); margin-bottom: 10px; font-weight: bold; padding-left: 2px; }
+.lq-quote { font-size: 0.95rem; color: var(--blue); margin-bottom: 10px; font-weight: bold; padding-left: 2px; font-style: italic; }
 
 .lq-basic-info { font-size: 0.85rem; color: #ccc; margin-bottom: 12px; line-height: 1.5; }
-.lq-btn-small { display: inline-block; background: #222; color: var(--accent); padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; text-decoration: none; border: 1px solid #555; margin-top: 4px; }
+.lq-btn-small { display: inline-block; background: #222; color: var(--accent); padding: 4px 10px; border-radius: 4px; font-size: 0.75rem; text-decoration: none; border: 1px solid #555; margin-top: 6px; }
 
 /* 2カラム分割エリア */
 .lq-split-view { display: flex; gap: 10px; margin-bottom: 12px; }
 
 /* 左側：グラフとコスパ */
 .lq-graph-half { flex: 1; min-width: 0; background: #111; padding: 10px; border-radius: 6px; border: 1px solid #333; }
-.lq-cospa { font-size: 0.85rem; color: #f1c40f; text-align: center; margin-bottom: 8px; font-weight: bold; background: #222; padding: 4px; border-radius: 4px; }
-.graph-row-inline { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
-.graph-label-inline { font-size: 0.65rem; color: #aaa; white-space: nowrap; width: 1.8em; text-align: center; }
+.lq-cospa { font-size: 0.9rem; color: #f1c40f; margin-bottom: 12px; font-weight: bold; background: #222; padding: 4px 10px; border-radius: 4px; display: flex; align-items: center; }
+.lq-cospa span:first-child { color: #aaa; margin-right: 15%; font-size: 0.75rem; font-weight: normal; }
+
+/* グラフ調整：隙間と0目盛り */
+.graph-row-inline { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.graph-label-inline { font-size: 0.65rem; color: #aaa; white-space: nowrap; width: 2.6em; text-align: center; }
 .graph-bar-bg { flex: 1; height: 6px; background: #2a2a2a; border-radius: 3px; position: relative; }
+.graph-zero { position: absolute; left: 50%; top: -2px; bottom: -2px; width: 1px; background: #666; z-index: 0; }
 .graph-point { position: absolute; top: -3px; width: 12px; height: 12px; border-radius: 50%; opacity: 0.9; transform: translateX(-50%); box-shadow: 0 0 3px #000; }
 .pt-gpt { background: #10a37f; z-index: 3; }    
 .pt-gemini { background: #1a73e8; z-index: 2; } 
@@ -92,5 +92,34 @@ body {
 
 .lq-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 12px; }
 .lq-tag { background: #222; color: #aaa; font-size: 0.75rem; padding: 3px 6px; border-radius: 4px; border: 1px solid #444; }
-
 .lq-desc { font-size: 0.9rem; line-height: 1.6; color: #ddd; margin-bottom: 15px; }
+
+/* --- スクリーニング専用UI --- */
+.scr-container { padding: 15px; background: #000; }
+.scr-group { background: #111; border: 1px solid #333; border-radius: 8px; padding: 12px; margin-bottom: 15px; }
+.scr-title { font-size: 0.85rem; color: var(--accent); margin-bottom: 8px; font-weight: bold; border-bottom: 1px dashed #333; padding-bottom: 4px; }
+.scr-row { display: flex; gap: 10px; align-items: center; margin-bottom: 10px; }
+.scr-row input, .scr-row select { flex: 1; background: #222; color: #fff; border: 1px solid #444; padding: 8px; border-radius: 4px; font-size: 0.9rem; }
+.scr-row span { color: #888; font-size: 0.8rem; }
+
+/* デュアルスライダー用（簡易版） */
+.scr-slider-box { margin-bottom: 12px; }
+.scr-slider-labels { display: flex; justify-content: space-between; font-size: 0.75rem; color: #aaa; margin-bottom: 4px; }
+.scr-slider-inputs { display: flex; gap: 8px; align-items: center; }
+.scr-slider-inputs input[type="range"] { flex: 1; }
+.scr-slider-val { width: 35px; text-align: center; font-size: 0.8rem; color: #fff; background: #222; padding: 2px 4px; border-radius: 4px; }
+
+/* タグ選択 */
+.scr-tag-grid { display: flex; flex-wrap: wrap; gap: 6px; }
+.scr-tag-btn { background: #222; color: #aaa; border: 1px solid #444; padding: 6px 10px; border-radius: 20px; font-size: 0.8rem; cursor: pointer; }
+.scr-tag-btn.selected { background: var(--blue); color: #000; border-color: var(--blue); font-weight: bold; }
+
+.scr-actions { display: flex; gap: 10px; margin-top: 20px; }
+.scr-btn { flex: 1; padding: 15px; border-radius: 8px; font-size: 1rem; font-weight: bold; text-align: center; cursor: pointer; border: none; }
+.scr-btn-clear { background: #333; color: #fff; }
+.scr-btn-exec { background: #8e44ad; color: #fff; }
+
+/* ダイレクト検索UI */
+.direct-box { display: flex; gap: 10px; margin: 15px; }
+.direct-box input { flex: 1; padding: 12px; font-size: 1rem; border-radius: 8px; border: 1px solid #444; background: #111; color: #fff; }
+.direct-box button { padding: 0 20px; font-weight: bold; border-radius: 8px; border: none; background: var(--accent); color: #000; }
