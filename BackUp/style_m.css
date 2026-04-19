@@ -32,7 +32,7 @@ body {
 #main-ui { display: none; flex: 1; flex-direction: column; height: 100%; overflow: hidden; }
 @media (orientation: landscape) { #main-ui { flex-direction: row !important; } .l-side { flex: 1.4 !important; border-right: 1px solid #333; } .r-side { flex: 1 !important; } }
 
-/* モニター領域 */
+/* モニター領域（拡張クラス対応） */
 .monitor { width: 100%; aspect-ratio: 16/9; background: #000; border-bottom: 2px solid var(--blue); position: relative; flex-shrink: 0; transition: height 0.3s ease; }
 .monitor.expanded { aspect-ratio: auto !important; height: calc((100vw * 9 / 16) + 75px) !important; }
 @media (orientation: landscape) { .monitor.expanded { height: 100% !important; } }
@@ -41,13 +41,13 @@ body {
 #monitor-img { width: 100%; height: 100%; border: none; display: none; object-fit: contain; }
 #telop { position: absolute; inset: 0; background: rgba(0,0,0,0.75); padding: 15px; font-size: 1.05rem; display: none; z-index: 1000; color: #fff; overflow-y: auto; line-height: 1.6; font-family: sans-serif; }
 
-/* コントローラー領域 */
+/* コントローラー領域（横並びFlexbox化） */
 .console { height: 75px; background: #111; display: flex; border-bottom: 1px solid #333; flex-shrink: 0; }
 .btn-grid { flex: 1; display: flex; flex-direction: row; gap: 4px; padding: 4px; }
 .c-btn { flex: 1; background: #222; border: 1px solid #444; color: #eee; border-radius: 4px; font-size: 0.95rem; font-weight: bold; display: flex; align-items: center; justify-content: center; user-select: none; font-family: sans-serif; }
 .auto-active { border-color: var(--green) !important; color: var(--green) !important; }
 
-/* 右端ソフィーアイコン */
+/* 右端ソフィーアイコン（75px -> 55pxへ圧縮） */
 .sophie-box { width: 55px; background: #000; display: flex; justify-content: center; align-items: center; border-left: 1px solid #222; flex-shrink: 0; }
 .sophie-box img { height: 85%; width: auto; cursor: pointer; }
 
@@ -57,58 +57,13 @@ body {
 
 .act-btn { width: 100%; height: 48px; margin-bottom: 10px; border-radius: 8px; border: 1px solid #444; font-weight: bold; color: #fff !important; font-size: 1.1rem; display: block !important; font-family: sans-serif; }
 
-.label { background: #1a1a2e; color: var(--accent); padding: 0 12px; font-size: 0.8rem; font-weight: bold; position: sticky; top: 0; z-index: 100; border-bottom: 1px solid #333; height: 28px; line-height: 28px; font-family: sans-serif; display: flex; justify-content: space-between; align-items: center; }
+.label { background: #1a1a2e; color: var(--accent); padding: 0 12px; font-size: 0.8rem; font-weight: bold; position: sticky; top: 0; z-index: 100; border-bottom: 1px solid #333; height: 28px; line-height: 28px; font-family: sans-serif; }
 
 .item { padding: 0.3em 15px; border-bottom: 1px solid #222; color: #ccc; font-size: 1rem; display: block; width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; font-family: sans-serif; }
+
 .active-item { background: var(--accent) !important; color: #000 !important; font-weight: bold; }
 
 .ver { position: fixed; bottom: 4px; right: 8px; font-size: 9px; color: #444; pointer-events: none; z-index: 10000; }
 
 .artist-grid { display: grid; grid-template-columns: repeat(2, 1fr); }
 .artist-grid .item:nth-child(odd) { border-right: 1px solid #222; }
-
-/* --- ここからお酒データベース専用CSS --- */
-
-/* フィルターエリア */
-.filter-area { padding: 10px; background: #111; border-bottom: 1px solid #333; display: flex; gap: 8px; overflow-x: auto; white-space: nowrap; -webkit-overflow-scrolling: touch; }
-.filter-btn { background: #222; border: 1px solid #555; color: #ddd; padding: 6px 12px; border-radius: 20px; font-size: 0.85rem; cursor: pointer; }
-.filter-btn.active { background: #8e44ad; color: #fff; border-color: #8e44ad; }
-
-/* お酒カード */
-.lq-card { background: #151515; border: 1px solid #333; border-radius: 8px; margin: 10px; padding: 15px; }
-.lq-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px; border-bottom: 1px solid #222; padding-bottom: 10px; }
-.lq-title-area { flex: 1; }
-.lq-name { font-size: 1.2rem; font-weight: bold; color: var(--accent); margin-bottom: 4px; }
-.lq-sub { font-size: 0.8rem; color: #888; }
-.lq-price { font-size: 0.85rem; color: #aaa; text-align: right; }
-
-/* 中央エリア：グラフとスペック */
-.lq-body { display: flex; gap: 15px; margin-bottom: 15px; }
-
-/* 4段重ねグラフ */
-.lq-graph-area { flex: 1; min-width: 120px; }
-.graph-row { margin-bottom: 8px; }
-.graph-label { font-size: 0.7rem; color: #999; display: flex; justify-content: space-between; margin-bottom: 2px; }
-.graph-bar-bg { width: 100%; height: 6px; background: #333; border-radius: 3px; position: relative; }
-.graph-point { position: absolute; top: -2px; width: 10px; height: 10px; border-radius: 50%; opacity: 0.8; transform: translateX(-50%); }
-.pt-gpt { background: #10a37f; z-index: 3; }    /* ChatGPT色 */
-.pt-gemini { background: #1a73e8; z-index: 2; } /* Gemini色 */
-.pt-claude { background: #d97757; z-index: 1; } /* Claude色 */
-
-/* スペック表 */
-.lq-specs { flex: 1.2; font-size: 0.8rem; color: #ccc; }
-.spec-row { display: flex; margin-bottom: 4px; border-bottom: 1px dashed #222; padding-bottom: 2px; }
-.spec-key { color: #888; width: 60px; flex-shrink: 0; }
-.spec-val { flex: 1; text-align: right; }
-
-/* タグとテキスト */
-.lq-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 12px; }
-.lq-tag { background: #222; color: #aaa; font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; border: 1px solid #333; }
-.lq-desc { font-size: 0.85rem; line-height: 1.5; color: #ddd; margin-bottom: 10px; }
-.lq-sophie-talk { font-size: 0.85rem; line-height: 1.5; color: #a4c639; background: rgba(164, 198, 57, 0.1); padding: 8px; border-left: 3px solid #a4c639; border-radius: 0 4px 4px 0; }
-
-/* カードアクションボタン */
-.lq-actions { display: flex; gap: 10px; margin-top: 15px; }
-.lq-btn { flex: 1; padding: 8px; border-radius: 4px; font-size: 0.8rem; text-align: center; font-weight: bold; cursor: pointer; text-decoration: none; display: block; }
-.btn-amazon { background: #333; color: #f90; border: 1px solid #f90; }
-.btn-story { background: var(--talk); color: #fff; border: 1px solid #1f6391; }

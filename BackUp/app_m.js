@@ -58,6 +58,7 @@ function showRootMenu() {
     const monitor = document.querySelector('.monitor');
     monitor.classList.remove('expanded');
     const btnExpand = document.getElementById('btn-expand');
+    // ★矢印を力強い黒三角に太くしました
     btnExpand.innerText = '▼';
     btnExpand.style.opacity = '0.3'; 
 }
@@ -100,6 +101,7 @@ function setup() {
             talkAudio.pause();
             showRootMenu();
             
+            // ★追加：カウンターに座った時のソフィーの挨拶
             talkAudio.src = "./voices_mp3/menu_greeting.mp3"; 
             const fallbackText = "いつもありがとうございます。今日はいかがされますか？";
             talkAudio.onerror = () => { try { media.speak(fallbackText); } catch(e){} };
@@ -116,9 +118,11 @@ function setup() {
     
     document.getElementById('btn-expand').onclick = () => {
         if (isMusicMode || nav.state === "none") return;
+        
         const monitor = document.querySelector('.monitor');
         const btn = document.getElementById('btn-expand');
         monitor.classList.toggle('expanded');
+        // ★ここも力強い黒三角に連動させました
         btn.innerText = monitor.classList.contains('expanded') ? '▲' : '▼';
     };
     
@@ -158,17 +162,15 @@ function setup() {
                 try {
                     const p = talkAudio.play();
                     if (p !== undefined) p.catch(finalizeExit);
-                } catch(e) { finalizeExit(); }
+                } catch(e) {
+                    finalizeExit();
+                }
             } 
         };
     }
 
     document.getElementById('btn-music').onclick = openMusic;
     document.getElementById('btn-talk').onclick = openTalk;
-    
-    // ★追加：お酒データベースボタンの処理
-    const btnLiquor = document.getElementById('btn-liquor');
-    if(btnLiquor) btnLiquor.onclick = openLiquorDB;
 
     const btnN = document.getElementById('btn-next');
     if(btnN) {
@@ -208,17 +210,30 @@ function next() {
         
         if (nav.state === "none") {
             let topText = isMusicMode ? `🎵 ${m.a}さんの「${m.ti}」です` : `🥃 ${m.th}：「${m.ti}」のお話です`;
-            if (isMusicMode) { setMon('v', m.u); prep(topText, true, null, m.txt); } 
-            else { setMon('i', `./talk_images/${m.id}.jpg`); prep(topText, false, m.id, m.txt); }
+            
+            if (isMusicMode) { 
+                setMon('v', m.u); 
+                prep(topText, true, null, m.txt); 
+            } else { 
+                setMon('i', `./talk_images/${m.id}.jpg`); 
+                prep(topText, false, m.id, m.txt); 
+            }
         } else {
             if (isMusicMode && nav.state !== "tit") {
                 const title = nav.curP[0] && nav.curP[0].a ? nav.curP[0].a : "再生リスト";
-                nav.updateNav("tit"); renderSongList(title);
+                nav.updateNav("tit");
+                renderSongList(title);
             } else if (!isMusicMode && nav.state !== "st") {
                 const title = nav.curP[0] && nav.curP[0].th ? nav.curP[0].th : "お酒の話";
-                nav.updateNav("st"); renderStoryList(title);
+                nav.updateNav("st");
+                renderStoryList(title);
             }
-            if (lv.style.display === 'none') { nm.style.display = 'none'; lv.style.display = 'block'; }
+            
+            if (lv.style.display === 'none') {
+                nm.style.display = 'none';
+                lv.style.display = 'block';
+            }
+
             if (isMusicMode) { setMon('v', m.u); prep(`${m.a}さんの${m.ti}です`, true); } 
             else { setMon('i', `./talk_images/${m.id}.jpg`); prep(m.txt, false, m.id); }
         }
@@ -238,22 +253,42 @@ function extractYtId(u) {
 
 function setMon(m, s) {
     if (nav.state === "none") {
-        ytWrapper.style.display = 'none'; img.style.display = 'block'; img.src = './front_sophie.jpeg';
+        ytWrapper.style.display = 'none'; 
+        img.style.display = 'block'; 
+        img.src = './front_sophie.jpeg';
+        
         document.querySelector('.monitor').classList.remove('expanded');
-        document.getElementById('btn-expand').innerText = '▼';
+        btnExpand.innerText = '▼';
         document.getElementById('btn-expand').style.opacity = '0.3';
-        if(m === 'v') { if(ytPlayerReady && ytPlayer && typeof ytPlayer.loadVideoById === 'function') ytPlayer.loadVideoById(extractYtId(s)); } 
-        else { if(ytPlayerReady && ytPlayer && typeof ytPlayer.pauseVideo === 'function') ytPlayer.pauseVideo(); }
+        
+        if(m === 'v') { 
+            if(ytPlayerReady && ytPlayer && typeof ytPlayer.loadVideoById === 'function') {
+                ytPlayer.loadVideoById(extractYtId(s));
+            }
+        } else { 
+            if(ytPlayerReady && ytPlayer && typeof ytPlayer.pauseVideo === 'function') {
+                ytPlayer.pauseVideo();
+            }
+        }
         return;
     }
 
-    ytWrapper.style.display = 'none'; img.style.display = 'none'; 
+    ytWrapper.style.display = 'none'; 
+    img.style.display = 'none'; 
+    
     if(m === 'v') { 
-        ytWrapper.style.display = 'block'; document.getElementById('btn-expand').style.opacity = '0.3';
-        if(ytPlayerReady && ytPlayer && typeof ytPlayer.loadVideoById === 'function') ytPlayer.loadVideoById(extractYtId(s));
+        ytWrapper.style.display = 'block'; 
+        document.getElementById('btn-expand').style.opacity = '0.3';
+        if(ytPlayerReady && ytPlayer && typeof ytPlayer.loadVideoById === 'function') {
+            ytPlayer.loadVideoById(extractYtId(s));
+        }
     } else { 
-        img.style.display = 'block'; img.src = s; document.getElementById('btn-expand').style.opacity = '1';
-        if(ytPlayerReady && ytPlayer && typeof ytPlayer.pauseVideo === 'function') ytPlayer.pauseVideo();
+        img.style.display = 'block'; 
+        img.src = s; 
+        document.getElementById('btn-expand').style.opacity = '1';
+        if(ytPlayerReady && ytPlayer && typeof ytPlayer.pauseVideo === 'function') {
+            ytPlayer.pauseVideo();
+        }
     }
 }
 
@@ -261,15 +296,24 @@ function prep(t, isM, id = null, originalTxt = null) {
     window.speechSynthesis.cancel(); 
     try { talkAudio.pause(); if (talkAudio.readyState > 0) talkAudio.currentTime = 0; } catch(e){}
     lastTxt = t; isMusicMode = isM; isPaused = false;
-    tel.innerText = t; tel.style.display = 'block'; tel.scrollTop = 0;
+    tel.innerText = t; 
+    tel.style.display = 'block'; 
+    tel.scrollTop = 0;
     
     if (nav.state === "none") {
-        tel.style.top = 'auto'; tel.style.bottom = '0'; tel.style.height = 'auto'; tel.style.background = 'rgba(0,0,0,0.6)'; 
+        tel.style.top = 'auto';           
+        tel.style.bottom = '0';           
+        tel.style.height = 'auto';        
+        tel.style.background = 'rgba(0,0,0,0.6)'; 
     } else {
-        tel.style.top = '0'; tel.style.bottom = 'auto'; tel.style.height = '100%'; tel.style.background = 'rgba(0,0,0,0.75)';
+        tel.style.top = '0';              
+        tel.style.bottom = 'auto';
+        tel.style.height = '100%';
+        tel.style.background = 'rgba(0,0,0,0.75)';
     }
 
     let speakTxt = originalTxt ? originalTxt : t; 
+
     if(isM) {
         setTimeout(() => { if(lastTxt === t) tel.style.display = 'none'; }, 5000);
     } else if (id) {
@@ -282,13 +326,18 @@ function prep(t, isM, id = null, originalTxt = null) {
     document.querySelectorAll('#list-view .item').forEach((el) => {
         if (el.dataset.idx && parseInt(el.dataset.idx) === nav.curI) {
             el.classList.add('active-item');
-            if (nav.state !== "none") el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        } else { el.classList.remove('active-item'); }
+            if (nav.state !== "none") {
+                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        } else {
+            el.classList.remove('active-item');
+        }
     });
 }
 
 function openMusic() {
     nav.updateNav("art"); let h = "";
+    
     h += `<div class="label">マスターお薦め</div>`;
     h += `<div class="artist-grid">`;
     h += `<div class="item" data-special="ソフィー" style="color: var(--blue);">🎤 ソフィー</div>`;
@@ -299,14 +348,23 @@ function openMusic() {
     const preferredOrder = ['E', 'F', 'J', 'L', 'W', 'I', 'S']; 
     const rawFs = [...new Set(nav.jData.map(d => d.f).filter(Boolean))];
     const sortedFs = rawFs.sort((a, b) => {
-        let ia = preferredOrder.indexOf(a); let ib = preferredOrder.indexOf(b);
-        if (ia === -1) ia = 999; if (ib === -1) ib = 999; return ia - ib;
+        let ia = preferredOrder.indexOf(a);
+        let ib = preferredOrder.indexOf(b);
+        if (ia === -1) ia = 999;
+        if (ib === -1) ib = 999;
+        return ia - ib;
     });
 
     sortedFs.forEach(f => {
         const arts = [...new Set(nav.jData.filter(d => d.f === f).map(d => d.a))];
         if(arts.length) { 
-            let labelName = (f === 'L') ? "特集コーナー" : (nav.jData.find(d => d.f === f && d.gName) ? nav.jData.find(d => d.f === f && d.gName).gName : f);
+            let labelName = "";
+            if (f === 'L') {
+                labelName = "特集コーナー";
+            } else {
+                const genreData = nav.jData.find(d => d.f === f && d.gName);
+                labelName = genreData ? genreData.gName : f;
+            }
             h += `<div class="label">${labelName}</div>`; 
             h += `<div class="artist-grid">`;
             arts.forEach(a => { h += `<div class="item" data-artist="${a}">🎤 ${a}</div>`; }); 
@@ -323,28 +381,39 @@ function openMusic() {
 
 function openSpecialSongs(type) {
     let filtered = [];
-    if(type === 'ソフィー') filtered = nav.jData.filter(m => m.a && m.a.includes("ソフィー"));
-    else if(type === 'BGM') filtered = nav.jData.filter(m => m.a === "BGM");
-    else if(type === '昭和ソング') {
+    if(type === 'ソフィー') {
+        filtered = nav.jData.filter(m => m.a && m.a.includes("ソフィー"));
+    } else if(type === 'BGM') {
+        filtered = nav.jData.filter(m => m.a === "BGM");
+    } else if(type === '昭和ソング') {
         const showaGenres = ["70s", "昭和", "演歌", "歌姫"];
         filtered = nav.jData.filter(m => showaGenres.includes(m.a));
     }
-    nav.updateNav("tit", undefined, filtered); isMusicMode = true; renderSongList(type);
+    nav.updateNav("tit", undefined, filtered); isMusicMode = true;
+    renderSongList(type);
 }
 
-function openSongs(a) { nav.updateNav("tit", undefined, nav.jData.filter(m => m.a === a)); isMusicMode = true; renderSongList(a); }
+function openSongs(a) {
+    nav.updateNav("tit", undefined, nav.jData.filter(m => m.a === a)); isMusicMode = true;
+    renderSongList(a);
+}
 
 function renderSongList(title) {
     let h = `<div class="label">${title}</div>`;
     nav.curP.forEach((m, i) => { 
-        const color = (m.ti && (m.ti.includes("みずいろのシグナル") || m.ti.includes("水色のシグナル"))) ? `style="color: var(--blue);"` : "";
+        const isSophie = m.ti && (m.ti.includes("みずいろのシグナル") || m.ti.includes("水色のシグナル"));
+        const color = isSophie ? `style="color: var(--blue);"` : "";
         h += `<div class="item" data-idx="${i}" ${color}>🎵 ${m.ti}</div>`; 
     });
     render(h, (e) => { 
         const el = e.currentTarget;
         if(el.dataset.idx) {
             const i = parseInt(el.dataset.idx); 
-            if(!isNaN(i)){ nav.updateNav(undefined,undefined,undefined,i); setMon('v', nav.curP[i].u); prep(`${nav.curP[i].a}さんの${nav.curP[i].ti}です`, true); }
+            if(!isNaN(i)){ 
+                nav.updateNav(undefined,undefined,undefined,i); 
+                setMon('v', nav.curP[i].u); 
+                prep(`${nav.curP[i].a}さんの${nav.curP[i].ti}です`, true); 
+            }
         }
     });
 }
@@ -364,14 +433,19 @@ function openThemes(g) {
 function renderStoryList(t) {
     let h = `<div class="label">${t}</div>`;
     nav.curP.forEach((d, i) => { 
-        const fixIcon = (d.fix === "1" || d.fix === "true" || parseInt(d.fix) > 0) ? "📌 " : "";
+        const isFix = (d.fix === "1" || d.fix === "true" || parseInt(d.fix) > 0);
+        const fixIcon = isFix ? "📌 " : "";
         h += `<div class="item" data-idx="${i}">${fixIcon}${d.ti}</div>`; 
     });
     render(h, (e) => { 
         const el = e.currentTarget;
         if(el.dataset.idx) {
             const i = parseInt(el.dataset.idx); 
-            if(!isNaN(i)){ nav.updateNav(undefined,undefined,undefined,i); setMon('i', `./talk_images/${nav.curP[i].id}.jpg`); prep(nav.curP[i].txt, false, nav.curP[i].id); }
+            if(!isNaN(i)){ 
+                nav.updateNav(undefined,undefined,undefined,i); 
+                setMon('i', `./talk_images/${nav.curP[i].id}.jpg`); 
+                prep(nav.curP[i].txt, false, nav.curP[i].id); 
+            }
         }
     });
 }
@@ -382,159 +456,18 @@ function openStories(t) {
         const isFixB = (b.fix === "1" || b.fix === "true" || parseInt(b.fix) > 0) ? 1 : 0;
         return isFixB - isFixA;
     });
-    nav.updateNav("st", undefined, stories); isMusicMode = false; renderStoryList(t);
-}
-
-// ==========================================
-// ★新規：お酒データベース（800銘柄）の描画処理
-// ==========================================
-function openLiquorDB(filterVal = "all") {
-    nav.updateNav("liquor");
-    isMusicMode = false;
-
-    // ①フィルターエリアの作成
-    let h = `<div class="filter-area">`;
-    h += `<div class="filter-btn ${filterVal === 'all' ? 'active' : ''}" data-filter="all">すべて</div>`;
-    
-    // データ内にある中分類（ウイスキー系カクテルなど）を重複なく抽出してボタン化
-    const categories = [...new Set(nav.liquorData.map(d => d["中分類"]).filter(Boolean))];
-    categories.forEach(c => {
-        h += `<div class="filter-btn ${filterVal === c ? 'active' : ''}" data-filter="${c}">${c}</div>`;
-    });
-    h += `</div>`;
-    h += `<div class="label">銘柄一覧 <span style="font-size:0.7em;color:#888;">(タップで詳細)</span></div>`;
-
-    // ②表示するデータを絞り込み
-    let displayData = nav.liquorData;
-    if (filterVal !== "all") {
-        displayData = nav.liquorData.filter(d => d["中分類"] === filterVal);
-    }
-
-    // ③リスト描画
-    displayData.forEach((d, i) => {
-        // データ本体の本当のインデックス（番号）を探しておく
-        const realIndex = nav.liquorData.indexOf(d);
-        h += `<div class="item" data-lqidx="${realIndex}">🥃 ${d["銘柄名"]}</div>`;
-    });
-
-    render(h, (e) => {
-        const el = e.currentTarget;
-        if(el.dataset.filter) {
-            // フィルターボタンが押されたら再描画
-            openLiquorDB(el.dataset.filter);
-        } else if(el.dataset.lqidx) {
-            // 銘柄が選ばれたらカードを表示
-            const i = parseInt(el.dataset.lqidx);
-            showLiquorCard(i);
-        }
-    });
-}
-
-// ★新規：4段重ねグラフ付き・お酒プロファイルカードの表示
-function showLiquorCard(index) {
-    nav.updateNav("liquorCard");
-    const d = nav.liquorData[index];
-    if(!d) return;
-
-    // 数値をグラフ用に変換（-2.0〜2.0 のスコアを 0〜100% の位置に変換）
-    const getPos = (valStr) => {
-        let v = parseFloat(valStr);
-        if(isNaN(v)) return -1;
-        return Math.min(100, Math.max(0, ((v + 2.0) / 4.0) * 100)); // 中央0=50%
-    };
-
-    const makeGraphRow = (labelLeft, labelRight, gptVal, geminiVal, claudeVal) => {
-        let h = `<div class="graph-row">
-                    <div class="graph-label"><span>${labelLeft}</span><span>${labelRight}</span></div>
-                    <div class="graph-bar-bg">`;
-        const pGpt = getPos(gptVal);
-        const pGem = getPos(geminiVal);
-        const pCla = getPos(claudeVal);
-        if(pGpt >= 0) h += `<div class="graph-point pt-gpt" style="left:${pGpt}%"></div>`;
-        if(pGem >= 0) h += `<div class="graph-point pt-gemini" style="left:${pGem}%"></div>`;
-        if(pCla >= 0) h += `<div class="graph-point pt-claude" style="left:${pCla}%"></div>`;
-        h += `</div></div>`;
-        return h;
-    };
-
-    // タグの生成
-    let tagsHtml = "";
-    if(d["味わいタグ"]) {
-        d["味わいタグ"].split(',').forEach(t => {
-            if(t.trim()) tagsHtml += `<span class="lq-tag">${t.trim()}</span>`;
-        });
-    }
-
-    let h = `<div class="label" style="justify-content:flex-start; gap:10px;">
-                <button id="btn-lq-back" style="background:none;border:none;color:#fff;font-size:1.2rem;">◀</button>
-                No.${d["No"]}
-             </div>`;
-             
-    h += `<div class="lq-card">`;
-    // 上部：銘柄と価格
-    h += `<div class="lq-header">
-            <div class="lq-title-area">
-                <div class="lq-name">${d["銘柄名"]}</div>
-                <div class="lq-sub">${d["中分類"]} / ${d["産地"]}</div>
-            </div>
-            <div class="lq-price">${d["バー価格"]}<br><span style="font-size:0.7em;color:#666">市販: ${d["市販価格"]}</span></div>
-          </div>`;
-
-    // 中央：4段グラフとスペック
-    h += `<div class="lq-body">
-            <div class="lq-graph-area">
-                <div style="font-size:0.6rem;color:#666;margin-bottom:4px;text-align:right;">
-                    <span style="color:#10a37f">●GPT</span> <span style="color:#1a73e8">●Gemini</span> <span style="color:#d97757">●Claude</span>
-                </div>
-                ${makeGraphRow("辛口", "甘口", d["GPT_甘辛"], d["Gemini_甘辛"], d["Claude_甘辛"])}
-                ${makeGraphRow("軽快", "濃厚", d["GPT_ボディ"], d["Gemini_ボディ"], d["Claude_ボディ"])}
-                ${makeGraphRow("清涼", "華やか", d["GPT_華やかさ"], d["Gemini_華やかさ(参考)"], d["Claude_個性"])}
-                ${makeGraphRow("常道", "独自", d["GPT_第4軸"], d["Gemini_第4軸"], d["Claude_第4軸"])}
-            </div>
-            <div class="lq-specs">
-                <div class="spec-row"><div class="spec-key">度数</div><div class="spec-val">${d["度数"]}</div></div>
-                <div class="spec-row"><div class="spec-key">国</div><div class="spec-val">${d["国"]}</div></div>
-                <div class="spec-row"><div class="spec-key">知名度</div><div class="spec-val">Lv.${d["知名度"]}</div></div>
-                <div class="spec-row"><div class="spec-key">誕生年</div><div class="spec-val">${d["銘柄誕生年"]}</div></div>
-            </div>
-          </div>`;
-
-    // 下部：タグ、テキスト、ボタン
-    if(tagsHtml) h += `<div class="lq-tags">${tagsHtml}</div>`;
-    
-    if(d["ソフィーの裏話"]) {
-        h += `<div class="lq-sophie-talk">「${d["ソフィーの裏話"]}」</div><br>`;
-    }
-    
-    if(d["鑑定評価(200字)"]) {
-        h += `<div class="lq-desc">${d["鑑定評価(200字)"]}</div>`;
-    }
-
-    h += `<div class="lq-actions">`;
-    if(d["公式URL"] && d["公式URL"] !== "-") {
-        h += `<a href="${d["公式URL"]}" target="_blank" class="lq-btn btn-amazon">公式情報を見る</a>`;
-    }
-    // TODO: ここに「お酒の話」とリンクさせるボタンを後日追加可能
-    h += `</div>`;
-
-    h += `</div>`; // .lq-card 終了
-
-    render(h, (e) => {});
-    
-    // 戻るボタンの処理
-    document.getElementById('btn-lq-back').onclick = () => openLiquorDB(d["中分類"]);
+    nav.updateNav("st", undefined, stories); isMusicMode = false;
+    renderStoryList(t);
 }
 
 function render(h, cb) { 
     nm.style.display = 'none'; lv.style.display = 'block'; lv.innerHTML = h; 
     document.getElementById('main-scroll').scrollTop = 0; 
-    document.querySelectorAll('#list-view .item, .filter-btn').forEach(el => el.onclick = cb);
+    document.querySelectorAll('#list-view .item').forEach(el => el.onclick = cb);
 }
 
 function handleBack() {
-    if (nav.state === "liquorCard") openLiquorDB();
-    else if (nav.state === "liquor") showRootMenu();
-    else if (nav.state === "st") openThemes(nav.curG); 
+    if (nav.state === "st") openThemes(nav.curG); 
     else if (nav.state === "th") openTalk(); 
     else if (nav.state === "tit") openMusic();
     else { showRootMenu(); }
