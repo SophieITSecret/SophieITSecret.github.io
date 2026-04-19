@@ -7,6 +7,18 @@ let isPaused = false, isAutoPlay = false, isMusicMode = false, lastTxt = "", pre
 let ytWrapper, img, tel, lv, nm, talkAudio;
 let ytPlayer = null, ytPlayerReady = false;
 
+// ★ スクリーニングの条件を記憶する箱
+let scrState = null;
+function initScrState() {
+    scrState = {
+        keyword: "", major: "",
+        pMin: "", pMax: "", aMin: "", aMax: "",
+        s1Min: "-2.0", s1Max: "2.0", s2Min: "-2.0", s2Max: "2.0",
+        s3Min: "-2.0", s3Max: "2.0", s4Min: "-2.0", s4Max: "2.0",
+        tags: []
+    };
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
     ytWrapper = document.getElementById('yt-wrapper'); img = document.getElementById('monitor-img');
     tel = document.getElementById('telop'); lv = document.getElementById('list-view'); nm = document.getElementById('nav-main');
@@ -14,7 +26,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     if(!talkAudio.id) { talkAudio.id = 'talk-audio'; document.body.appendChild(talkAudio); }
 
     await nav.loadAllData();
+    initScrState(); // スクリーニング状態の初期化
     setup();
+    
     const tag = document.createElement('script'); tag.src = "https://www.youtube.com/iframe_api";
     const firstScriptTag = document.getElementsByTagName('script')[0]; firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
 });
@@ -68,9 +82,10 @@ function setup() {
     document.getElementById('ctrl-back').onclick = handleBack;
     
     document.getElementById('btn-expand').onclick = () => {
-        if (nav.state === "lq_card") {
+        // 鑑定カード画面 or スクリーニング画面ではソフィー召喚ボタンになる
+        if (nav.state === "lq_card" || nav.state === "lq_scr") {
             const lSide = document.querySelector('.l-side');
-            if (lSide) { lSide.style.display = ''; setTimeout(() => { if (nav.state === "lq_card") lSide.style.display = 'none'; }, 4000); }
+            if (lSide) { lSide.style.display = ''; setTimeout(() => { if (nav.state === "lq_card" || nav.state === "lq_scr") lSide.style.display = 'none'; }, 4000); }
             window.speechSynthesis.cancel(); try { talkAudio.pause(); } catch(e){}
             const msg = "何になさいますか？"; talkAudio.src = "./voices_mp3/what_order.mp3"; 
             talkAudio.onerror = () => { try { media.speak(msg); } catch(e){} };
@@ -119,7 +134,7 @@ function playHead() {
             const currentItem = nav.liquorData[nav.curI];
             let listIdx = currentList.indexOf(currentItem);
             if (listIdx >= 0) {
-                let nextListIdx = (listIdx + 1) % currentList.length; // ループ
+                let nextListIdx = (listIdx + 1) % currentList.length; // ループ処理
                 let nextGlobalIdx = nav.liquorData.indexOf(currentList[nextListIdx]);
                 showLiquorCard(nextGlobalIdx, currentList);
             }
@@ -255,18 +270,20 @@ function openStories(t) {
 
 
 // ==========================================
-// ★お酒データベース (3つの入り口)
+// ★お酒データベース (3つの入り口 ＋ スクリーニング)
 // ==========================================
 function openLiquorRoot() {
     nav.updateNav("lq_root"); isMusicMode = false;
-    let h = `<div class="label">データベース・メニュー</div>`;
-    h += `<div class="act-btn" id="btn-scr" style="background:#d35400; display:flex; align-items:center; justify-content:center; margin:15px; width:auto; border:none; cursor:pointer;">🔍 条件で絞り込む (スクリーニング)</div>`;
-    h += `<div class="act-btn" id="btn-lq-cat" style="background:#2c3e50; display:flex; align-items:center; justify-content:center; margin:15px; width:auto; border:none; cursor:pointer;">📁 お酒メニューから探す</div>`;
+    let h = `<div class="label" style="justify-content:center;">お酒を選ぶ</div>`;
     
-    // ダイレクト検索ボックス
-    h += `<div class="label" style="margin-top:20px;">No.でダイレクト検索</div>`;
-    h += `<div class="direct-box">
-            <input type="number" id="direct-num" placeholder="例: 293">
+    // 順番変更：メニューが先、スクリーニングが次
+    h += `<button class="act-btn" id="btn-lq-cat" style="background:#2c3e50; margin:15px; width:calc(100% - 30px);">📁 メニューをひらく</button>`;
+    h += `<button class="act-btn" id="btn-scr" style="background:#d35400; margin:0 15px; width:calc(100% - 30px);">🔍 スクリーニング</button>`;
+    
+    // ダイレクト検索の美しいパネル
+    h += `<div class="direct-box-new">
+            <div class="direct-lbl">ダイレクト検索</div>
+            <input type="number" id="direct-num" placeholder="No.">
             <button id="btn-direct-go">開く</button>
           </div>`;
 
@@ -282,128 +299,148 @@ function openLiquorRoot() {
     };
 }
 
-// ★スクリーニングUI
+// ★スクリーニングUI (フルスクリーン)
 function openScreeningUI() {
     nav.updateNav("lq_scr");
-    let h = `<div class="label">スクリーニング検索</div>`;
+    let h = `<div class="label" style="justify-content:flex-start; gap:10px;"><button style="background:none;border:none;color:#fff;font-size:1.2rem;" onclick="openLiquorRoot()">◀</button> スクリーニング</div>`;
     h += `<div class="scr-container">`;
 
-    // 金額・度数
+    // ジャンル＆テキスト検索
+    const majors = [...new Set(nav.liquorData.map(d => d["大分類"]).filter(Boolean))];
+    const majorOpts = `<option value="">問わない</option>` + majors.map(m => `<option value="${m}" ${scrState.major === m ? 'selected':''}>${m}</option>`).join('');
+    
     h += `<div class="scr-group">
-            <div class="scr-title">基本条件</div>
-            <div class="scr-row"><span>Bar価格:</span><input type="number" id="scr-prc-min" placeholder="下限"> 〜 <input type="number" id="scr-prc-max" placeholder="上限"></div>
-            <div class="scr-row"><span>度数(%):</span><input type="number" id="scr-abv-min" placeholder="下限"> 〜 <input type="number" id="scr-abv-max" placeholder="上限"></div>
+            <div class="scr-title">キーワード・ジャンル</div>
+            <div class="scr-row"><span class="scr-row-label">銘柄名:</span><input type="text" id="scr-kw" placeholder="文字で検索" value="${scrState.keyword}"></div>
+            <div class="scr-row"><span class="scr-row-label">大分類:</span><select id="scr-mj">${majorOpts}</select></div>
           </div>`;
 
-    // 評価軸レンジ (2つのスライダー)
-    const makeRangeSlider = (id, labelL, labelR) => {
-        return `<div class="scr-slider-box">
-                    <div class="scr-slider-labels"><span>${labelL} (-2.0)</span><span>${labelR} (+2.0)</span></div>
-                    <div class="scr-slider-inputs">
-                        <input type="range" id="${id}-min" min="-2.0" max="2.0" step="0.5" value="-2.0" oninput="this.nextElementSibling.innerText=this.value">
-                        <div class="scr-slider-val">-2.0</div> 〜 
-                        <input type="range" id="${id}-max" min="-2.0" max="2.0" step="0.5" value="2.0" oninput="this.nextElementSibling.innerText=this.value">
-                        <div class="scr-slider-val">2.0</div>
-                    </div>
-                </div>`;
-    };
+    // 価格・度数 (セレクトボックス化)
+    const pVals = ["", 1000, 2000, 3000, 4000, 5000, 7000, 10000, 20000, 30000, 50000];
+    const pOpts = pVals.map(v => `<option value="${v}">${v===""?"問わない":v.toLocaleString()+"円"}</option>`).join('');
+    const aVals = ["", 0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50];
+    const aOpts = aVals.map(v => `<option value="${v}">${v===""?"問わない":v+"%"}</option>`).join('');
+    const sel = (opts, val) => opts.replace(`value="${val}"`, `value="${val}" selected`);
+
+    h += `<div class="scr-group">
+            <div class="scr-title">市場価格・度数</div>
+            <div class="scr-row"><span class="scr-row-label">市場価格:</span> <select id="scr-p-min">${sel(pOpts, scrState.pMin)}</select> 〜 <select id="scr-p-max">${sel(pOpts, scrState.pMax)}</select></div>
+            <div class="scr-row"><span class="scr-row-label">度数(%):</span> <select id="scr-a-min">${sel(aOpts, scrState.aMin)}</select> 〜 <select id="scr-a-max">${sel(aOpts, scrState.aMax)}</select></div>
+          </div>`;
+
+    // 評価軸 (コンパクトな1行ダブルスライダー風)
+    const makeRange = (id, lbl, minV, maxV) => `
+        <div class="scr-slider-box">
+            <div class="scr-slider-lbl">${lbl}</div>
+            <div class="scr-slider-val">${parseFloat(minV).toFixed(1)}</div>
+            <div class="scr-slider-wrap">
+                <input type="range" id="${id}-min" min="-2.0" max="2.0" step="0.5" value="${minV}" oninput="this.parentElement.previousElementSibling.innerText=parseFloat(this.value).toFixed(1)">
+                <input type="range" id="${id}-max" min="-2.0" max="2.0" step="0.5" value="${maxV}" oninput="this.parentElement.nextElementSibling.innerText=parseFloat(this.value).toFixed(1)">
+            </div>
+            <div class="scr-slider-val">${parseFloat(maxV).toFixed(1)}</div>
+        </div>`;
 
     h += `<div class="scr-group">
             <div class="scr-title">AI評価軸 (3社平均)</div>
-            ${makeRangeSlider("scr-s1", "辛口", "甘口")}
-            ${makeRangeSlider("scr-s2", "軽快", "濃厚")}
-            ${makeRangeSlider("scr-s3", "常道", "独特")}
-            ${makeRangeSlider("scr-s4", "淡麗", "コク")}
+            ${makeRange("scr-s1", "辛/甘", scrState.s1Min, scrState.s1Max)}
+            ${makeRange("scr-s2", "軽/濃", scrState.s2Min, scrState.s2Max)}
+            ${makeRange("scr-s3", "道/独", scrState.s3Min, scrState.s3Max)}
+            ${makeRange("scr-s4", "淡/コク", scrState.s4Min, scrState.s4Max)}
           </div>`;
 
-    // タグ (例として頻出タグをいくつか)
+    // タグ (全自動抽出)
+    let allTags = new Set();
+    nav.liquorData.forEach(d => { ((d["味わいタグ"]||"") + "," + (d["検索タグ"]||"")).split(',').forEach(t => { if(t.trim()) allTags.add(t.trim()); }); });
+    
     h += `<div class="scr-group">
             <div class="scr-title">味わいタグ</div>
-            <div class="scr-tag-grid" id="scr-tag-grid">
-                <div class="scr-tag-btn" data-tag="甘口">甘口</div><div class="scr-tag-btn" data-tag="辛口">辛口</div>
-                <div class="scr-tag-btn" data-tag="フルーティー">フルーティー</div><div class="scr-tag-btn" data-tag="スパイシー">スパイシー</div>
-                <div class="scr-tag-btn" data-tag="ぽかぽか広がる">ぽかぽか広がる</div><div class="scr-tag-btn" data-tag="余韻が長い">余韻が長い</div>
-            </div>
-          </div>`;
+            <div class="scr-tag-grid">`;
+    Array.from(allTags).sort().forEach(t => {
+        const isSel = scrState.tags.includes(t) ? "selected" : "";
+        h += `<div class="scr-tag-btn ${isSel}" data-tag="${t}">${t}</div>`;
+    });
+    h += `</div></div>`;
 
     h += `<div class="scr-actions">
-            <button class="scr-btn scr-btn-clear" onclick="openScreeningUI()">クリア</button>
+            <button class="scr-btn scr-btn-clear" id="btn-scr-clear">条件クリア</button>
             <button class="scr-btn scr-btn-exec" id="btn-scr-exec">検索実行</button>
           </div>`;
     h += `</div>`;
 
+    // ★ スクリーニング画面もソフィーに下がってもらう（isFullScreen = true）
     render(h, (e) => {
         if(e.currentTarget.classList.contains('scr-tag-btn')) e.currentTarget.classList.toggle('selected');
-    });
+    }, true);
 
     document.getElementById('btn-scr-exec').onclick = executeScreening;
+    document.getElementById('btn-scr-clear').onclick = () => { initScrState(); openScreeningUI(); };
 }
 
-// ★スクリーニング実行ロジック
+// ★スクリーニング実行と状態保存
 function executeScreening() {
-    const pMin = parseFloat(document.getElementById('scr-prc-min').value) || 0;
-    const pMax = parseFloat(document.getElementById('scr-prc-max').value) || 999999;
-    const aMin = parseFloat(document.getElementById('scr-abv-min').value) || 0;
-    const aMax = parseFloat(document.getElementById('scr-abv-max').value) || 100;
+    // 状態の保存
+    scrState.keyword = document.getElementById('scr-kw').value.trim().toLowerCase();
+    scrState.major = document.getElementById('scr-mj').value;
+    scrState.pMin = document.getElementById('scr-p-min').value; scrState.pMax = document.getElementById('scr-p-max').value;
+    scrState.aMin = document.getElementById('scr-a-min').value; scrState.aMax = document.getElementById('scr-a-max').value;
+    scrState.s1Min = document.getElementById('scr-s1-min').value; scrState.s1Max = document.getElementById('scr-s1-max').value;
+    scrState.s2Min = document.getElementById('scr-s2-min').value; scrState.s2Max = document.getElementById('scr-s2-max').value;
+    scrState.s3Min = document.getElementById('scr-s3-min').value; scrState.s3Max = document.getElementById('scr-s3-max').value;
+    scrState.s4Min = document.getElementById('scr-s4-min').value; scrState.s4Max = document.getElementById('scr-s4-max').value;
+    scrState.tags = Array.from(document.querySelectorAll('.scr-tag-btn.selected')).map(el => el.dataset.tag);
+
+    const pMinVal = scrState.pMin === "" ? 0 : parseFloat(scrState.pMin);
+    const pMaxVal = scrState.pMax === "" ? 999999 : parseFloat(scrState.pMax);
+    const aMinVal = scrState.aMin === "" ? 0 : parseFloat(scrState.aMin);
+    const aMaxVal = scrState.aMax === "" ? 100 : parseFloat(scrState.aMax);
 
     const getAvg = (d, keyGPT, keyGem, keyCla) => {
         let vals = [parseFloat(d[keyGPT]), parseFloat(d[keyGem]), parseFloat(d[keyCla])].filter(v => !isNaN(v));
         return vals.length > 0 ? vals.reduce((a,b)=>a+b,0)/vals.length : 0;
     };
 
-    const s1Min = parseFloat(document.getElementById('scr-s1-min').value); const s1Max = parseFloat(document.getElementById('scr-s1-max').value);
-    const s2Min = parseFloat(document.getElementById('scr-s2-min').value); const s2Max = parseFloat(document.getElementById('scr-s2-max').value);
-    const s3Min = parseFloat(document.getElementById('scr-s3-min').value); const s3Max = parseFloat(document.getElementById('scr-s3-max').value);
-    const s4Min = parseFloat(document.getElementById('scr-s4-min').value); const s4Max = parseFloat(document.getElementById('scr-s4-max').value);
-
-    // 選択されたタグを取得
-    const selectedTags = Array.from(document.querySelectorAll('.scr-tag-btn.selected')).map(el => el.dataset.tag);
-
     const results = nav.liquorData.filter(d => {
-        // 価格チェック (カンマ等を除去して数値化)
-        const priceStr = (d["バー価格"]||"0").replace(/[^0-9]/g, '');
-        const price = parseInt(priceStr) || 0;
-        if(price < pMin || price > pMax) return false;
+        if(scrState.keyword && !(d["銘柄名"]||"").toLowerCase().includes(scrState.keyword)) return false;
+        if(scrState.major && d["大分類"] !== scrState.major) return false;
 
-        // 度数チェック (0.4 等の小数は % に直して比較)
-        let abvStr = d["度数"] || "0";
-        let abv = parseFloat(abvStr);
+        const priceStr = (d["市販価格"]||"0").replace(/[^0-9]/g, '');
+        const price = parseInt(priceStr) || 0;
+        if(price < pMinVal || price > pMaxVal) return false;
+
+        let abvStr = d["度数"] || "0"; let abv = parseFloat(abvStr);
         if (!isNaN(abv) && abv > 0 && abv <= 1.0 && !abvStr.includes('%')) abv *= 100;
         if(isNaN(abv)) abv = 0;
-        if(abv < aMin || abv > aMax) return false;
+        if(abv < aMinVal || abv > aMaxVal) return false;
 
-        // AI 評価軸チェック (3社平均)
         const avg1 = getAvg(d, "GPT_甘辛", "Gemini_甘辛", "Claude_甘辛");
         const avg2 = getAvg(d, "GPT_ボディ", "Gemini_ボディ", "Claude_ボディ");
         const avg3 = getAvg(d, "GPT_個性", "Gemini_個性", "Claude_個性");
         const avg4 = getAvg(d, "GPT_第4軸", "Gemini_第4軸", "Claude_第4軸");
         
-        if(avg1 < s1Min || avg1 > s1Max) return false;
-        if(avg2 < s2Min || avg2 > s2Max) return false;
-        if(avg3 < s3Min || avg3 > s3Max) return false;
-        if(avg4 < s4Min || avg4 > s4Max) return false;
+        if(avg1 < parseFloat(scrState.s1Min) || avg1 > parseFloat(scrState.s1Max)) return false;
+        if(avg2 < parseFloat(scrState.s2Min) || avg2 > parseFloat(scrState.s2Max)) return false;
+        if(avg3 < parseFloat(scrState.s3Min) || avg3 > parseFloat(scrState.s3Max)) return false;
+        if(avg4 < parseFloat(scrState.s4Min) || avg4 > parseFloat(scrState.s4Max)) return false;
 
-        // タグチェック (一つでも選択されていれば、それが含まれるか確認)
-        if(selectedTags.length > 0) {
+        if(scrState.tags.length > 0) {
             const dTags = ((d["味わいタグ"]||"") + "," + (d["検索タグ"]||"")).split(',').map(t=>t.trim());
-            const hasTag = selectedTags.some(t => dTags.includes(t));
+            const hasTag = scrState.tags.some(t => dTags.includes(t));
             if(!hasTag) return false;
         }
-
         return true;
     });
 
-    // 検索結果のリスト表示へ
-    nav.updateNav("lq_res", null, results); // curP に結果配列を保持
+    nav.updateNav("lq_res", null, results);
     let h = `<div class="label" style="justify-content:flex-start; gap:10px;"><button style="background:none;border:none;color:#fff;font-size:1.2rem;" onclick="openScreeningUI()">◀</button> 検索結果: ${results.length}件</div>`;
     results.forEach(d => {
         const globalIdx = nav.liquorData.indexOf(d);
         h += `<div class="item" data-lqidx="${globalIdx}">🥃 ${(d["銘柄名"]||"").replace(/"/g,'')}</div>`;
     });
     
+    // 結果一覧もフルスクリーン表示
     render(h, (e) => {
         if(e.currentTarget.dataset.lqidx) showLiquorCard(parseInt(e.currentTarget.dataset.lqidx), results);
-    });
+    }, true);
 }
 
 // ★既存の階層メニュー
@@ -425,7 +462,7 @@ function openLiquorSub(major) {
 
 function openLiquorList(sub) {
     const items = nav.liquorData.filter(d => d["中分類"] === sub);
-    nav.updateNav("lq_list", nav.curG, items); // curPにリスト配列を保持
+    nav.updateNav("lq_list", nav.curG, items); 
     let h = `<div class="label">${sub} 銘柄一覧</div>`;
     items.forEach(d => {
         const idx = nav.liquorData.indexOf(d); h += `<div class="item" data-lqidx="${idx}">🥃 ${(d["銘柄名"]||"").replace(/"/g, '')}</div>`;
@@ -433,9 +470,8 @@ function openLiquorList(sub) {
     render(h, (e) => { if(e.currentTarget.dataset.lqidx) showLiquorCard(parseInt(e.currentTarget.dataset.lqidx), items); });
 }
 
-// ★フルスクリーン鑑定カード（表示リストを引数で受け取る）
+// ★フルスクリーン鑑定カード
 function showLiquorCard(globalIndex, currentListArray = null) {
-    // どこから来たか（階層か検索か）を維持するため、curPにリストを保持
     if(currentListArray) nav.updateNav("lq_card", nav.curG, currentListArray, globalIndex);
     else nav.updateNav("lq_card", nav.curG, nav.curP, globalIndex);
 
@@ -526,15 +562,14 @@ function render(h, cb, isFullScreen = false) {
 
 function handleBack() {
     if (nav.state === "lq_card") {
-        // 直前が検索結果か、階層メニューかで戻り先を変える
         if(nav.curP && nav.curP.length > 0 && !nav.curP[0]["中分類"]) {
             // 中分類がない（または混ざっている）＝検索結果
-            executeScreening(); // 再度同じ条件で結果を描画
+            executeScreening(); // 再度同じ条件で結果を描画（状態も維持）
         } else {
             openLiquorList(nav.curP[0]["中分類"]); 
         }
     }
-    else if (nav.state === "lq_res") openLiquorRoot();
+    else if (nav.state === "lq_res") openScreeningUI(); // 検索結果からは状態を維持してスクリーニングへ戻る
     else if (nav.state === "lq_list") openLiquorSub(nav.curG);
     else if (nav.state === "lq_sub") openLiquorMajor();
     else if (nav.state === "lq_major") openLiquorRoot();
