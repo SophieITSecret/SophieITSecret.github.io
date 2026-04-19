@@ -1,4 +1,5 @@
 export let jData = [], tData = [], state = "none", curG = "", curP = [], curI = -1;
+export let liquorData = [];
 
 export async function loadAllData() {
     try {
@@ -20,7 +21,24 @@ export async function loadAllData() {
             return { id: c[0], g: c[1], th: c[2], ti: c[3], txt: c[5] };
         }).filter(d => d && d.g); // ジャンル（g）があるものだけ残す
 
-        console.log("Navigation Ready:", { music: jData.length, talk: tData.length });
+        // ▼▼▼ 今回追加する「お酒データベース(TSV)」の読み込み処理 ▼▼▼
+        try {
+            const resL = await fetch('liquor_db.tsv');
+            const tsvL = await resL.text();
+            const lines = tsvL.trim().split('\n');
+            const headers = lines[0].split('\t'); // タブで分割
+            liquorData = lines.slice(1).map(line => {
+                const vals = line.split('\t');
+                let obj = {};
+                headers.forEach((h, i) => obj[h.trim()] = vals[i] ? vals[i].trim() : "");
+                return obj;
+            });
+        } catch (e) {
+            console.log("お酒データの読み込みをスキップしました", e);
+        }
+        // ▲▲▲ 追加ここまで ▲▲▲
+
+        console.log("Navigation Ready:", { music: jData.length, talk: tData.length, liquor: liquorData.length });
     } catch (e) {
         console.error("Critical Data Load Error:", e);
     }
