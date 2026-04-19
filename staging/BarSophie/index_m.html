@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Bar Sophie v14.0 Modular</title>
+    <title>Bar Sophie v15.0 Modular</title>
     <link rel="apple-touch-icon" href="bar_sophie.jpeg">
     <meta name="apple-mobile-web-app-title" content="BARソフィー">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -33,6 +33,15 @@
             </div>
         </div>
         <div class="r-side">
+            <div class="scroll-area" id="main-scroll">
+                <div id="nav-main">
+                    <button class="act-btn" style="background:var(--green)" id="btn-music">🎵 音楽選曲 (リクエスト)</button>
+                    <button class="act-btn" style="background:var(--talk)" id="btn-talk">🥃 お酒の話 (360本の物語)</button>
+                    <button class="act-btn" style="background:#8e44ad" id="btn-liquor">🍸 お酒データベース (800銘柄)</button>
+                </div>
+                <div id="list-view" style="display:none;"></div>
+            </div>
+            
             <div class="console">
                 <div class="btn-grid">
                     <button class="c-btn" id="btn-expand">▼</button>
@@ -43,15 +52,7 @@
                 </div>
                 <div class="sophie-box" id="sophie-warp"><img src="./sophie_shake.png"></div>
             </div>
-            <div class="scroll-area" id="main-scroll">
-                <div id="nav-main">
-                    <button class="act-btn" style="background:var(--green)" id="btn-music">🎵 音楽選曲 (リクエスト)</button>
-                    <button class="act-btn" style="background:var(--talk)" id="btn-talk">🥃 お酒の話 (360本の物語)</button>
-                    <button class="act-btn" style="background:#8e44ad" id="btn-liquor">🍸 お酒データベース (800銘柄)</button>
-                </div>
-                <div id="list-view" style="display:none;"></div>
-            </div>
-            <div class="ver">v14.0</div>
+            <div class="ver">v15.0</div>
         </div>
     </div>
 

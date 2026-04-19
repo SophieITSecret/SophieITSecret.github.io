@@ -2,26 +2,16 @@
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
 
 body { 
-    background: var(--bg); 
-    color: var(--text); 
-    font-family: sans-serif !important; 
-    height: 100dvh; 
-    width: 100vw; 
-    overflow: hidden; 
-    display: flex; 
-    flex-direction: column; 
-    padding-top: env(safe-area-inset-top);
-    padding-left: env(safe-area-inset-left);
-    padding-right: env(safe-area-inset-right);
-    padding-bottom: env(safe-area-inset-bottom);
+    background: var(--bg); color: var(--text); font-family: sans-serif !important; 
+    height: 100dvh; width: 100vw; overflow: hidden; display: flex; flex-direction: column; 
+    padding-top: env(safe-area-inset-top); padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right); padding-bottom: env(safe-area-inset-bottom);
 }
 
-/* 入口 */
+/* 入口 & ラウンジ */
 #entry-screen { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; }
 #entry-sophie { height: 45dvh !important; max-width: 80vw; object-fit: contain; margin-bottom: 30px; }
 .btn-enter { padding: 15px 45px; font-size: 1.2rem; background: #111; border: 2px solid var(--accent); color: var(--accent); border-radius: 40px; font-weight: bold; font-family: sans-serif; }
 
-/* ラウンジ */
 #chat-mode { display: none; flex-direction: column; height: 100%; background: #000; }
 .portrait { flex: 1; display: flex; justify-content: center; align-items: center; padding: 20px; }
 .portrait img { height: 50dvh; width: auto; object-fit: contain; }
@@ -41,69 +31,66 @@ body {
 #monitor-img { width: 100%; height: 100%; border: none; display: none; object-fit: contain; }
 #telop { position: absolute; inset: 0; background: rgba(0,0,0,0.75); padding: 15px; font-size: 1.05rem; display: none; z-index: 1000; color: #fff; overflow-y: auto; line-height: 1.6; font-family: sans-serif; }
 
+/* 右側レイアウト（スクロール＆コントローラー） */
+.r-side { flex: 1; display: flex; flex-direction: column; min-height: 0; position: relative; }
+.scroll-area { flex: 1; overflow-y: scroll; background: #08080a; -webkit-overflow-scrolling: touch; }
+#nav-main { padding: 12px; display: block; }
+.act-btn { width: 100%; height: 48px; margin-bottom: 10px; border-radius: 8px; border: 1px solid #444; font-weight: bold; color: #fff !important; font-size: 1.1rem; display: block !important; font-family: sans-serif; }
+
 /* コントローラー領域 */
-.console { height: 75px; background: #111; display: flex; border-bottom: 1px solid #333; flex-shrink: 0; }
+.console { height: 75px; background: #111; display: flex; border-top: 1px solid #333; flex-shrink: 0; z-index: 50; }
 .btn-grid { flex: 1; display: flex; flex-direction: row; gap: 4px; padding: 4px; }
 .c-btn { flex: 1; background: #222; border: 1px solid #444; color: #eee; border-radius: 4px; font-size: 0.95rem; font-weight: bold; display: flex; align-items: center; justify-content: center; user-select: none; font-family: sans-serif; }
 .auto-active { border-color: var(--green) !important; color: var(--green) !important; }
-
-/* 右端ソフィーアイコン */
 .sophie-box { width: 55px; background: #000; display: flex; justify-content: center; align-items: center; border-left: 1px solid #222; flex-shrink: 0; }
 .sophie-box img { height: 85%; width: auto; cursor: pointer; }
 
-.r-side { flex: 1; display: flex; flex-direction: column; min-height: 0; }
-.scroll-area { flex: 1; overflow-y: scroll; background: #08080a; -webkit-overflow-scrolling: touch; }
-#nav-main { padding: 12px; display: block; }
-
-.act-btn { width: 100%; height: 48px; margin-bottom: 10px; border-radius: 8px; border: 1px solid #444; font-weight: bold; color: #fff !important; font-size: 1.1rem; display: block !important; font-family: sans-serif; }
-
+/* リストアイテム */
 .label { background: #1a1a2e; color: var(--accent); padding: 0 12px; font-size: 0.8rem; font-weight: bold; position: sticky; top: 0; z-index: 100; border-bottom: 1px solid #333; height: 28px; line-height: 28px; font-family: sans-serif; display: flex; justify-content: space-between; align-items: center; }
-
 .item { padding: 0.4em 15px; border-bottom: 1px solid #222; color: #ccc; font-size: 1rem; display: block; width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; font-family: sans-serif; }
 .active-item { background: var(--accent) !important; color: #000 !important; font-weight: bold; }
-
-.ver { position: fixed; bottom: 4px; right: 8px; font-size: 9px; color: #444; pointer-events: none; z-index: 10000; }
+.ver { position: absolute; bottom: 80px; right: 8px; font-size: 9px; color: #444; pointer-events: none; z-index: 10; }
 
 .artist-grid { display: grid; grid-template-columns: repeat(2, 1fr); }
 .artist-grid .item:nth-child(odd) { border-right: 1px solid #222; }
 
-/* --- お酒データベース専用CSS --- */
+/* --- ギュッと詰めたお酒データベース専用CSS --- */
 
-/* お酒カード全般 */
-.lq-card { padding: 15px; }
+.lq-card { padding: 12px; }
 
-/* ヘッダー・名前・セリフ */
-.lq-name { font-size: 1.4rem; font-weight: bold; color: var(--accent); margin-bottom: 4px; }
-.lq-quote { font-size: 0.95rem; color: #bbb; font-style: italic; margin-bottom: 15px; border-left: 3px solid var(--accent); padding-left: 10px; line-height: 1.4; }
+/* 名前・セリフ・基礎情報 */
+.lq-name { font-size: 1.4rem; font-weight: bold; color: var(--accent); margin-bottom: 2px; }
+.lq-quote { font-size: 0.95rem; color: var(--blue); margin-bottom: 10px; font-weight: bold; padding-left: 2px; }
 
-/* スペック表 */
-.lq-specs-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 20px; font-size: 0.85rem; color: #ccc; background: #111; padding: 10px; border-radius: 8px; border: 1px solid #333; }
-.spec-item { display: flex; flex-direction: column; }
-.spec-key { color: #888; font-size: 0.7rem; margin-bottom: 2px; }
-.spec-val { color: #fff; font-weight: bold; }
+.lq-basic-info { font-size: 0.85rem; color: #ccc; margin-bottom: 12px; line-height: 1.5; }
+.lq-btn-small { display: inline-block; background: #222; color: var(--accent); padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; text-decoration: none; border: 1px solid #555; margin-top: 4px; }
 
-/* グラフ領域 */
-.lq-graph-box { background: #151515; border: 1px solid #333; border-radius: 8px; padding: 12px; margin-bottom: 20px; }
-.lq-cospa { font-size: 0.9rem; color: #f1c40f; text-align: center; margin-bottom: 12px; font-weight: bold; background: #222; padding: 6px; border-radius: 4px; }
+/* 2カラム分割エリア */
+.lq-split-view { display: flex; gap: 10px; margin-bottom: 12px; }
 
-.graph-row { margin-bottom: 10px; }
-.graph-label { font-size: 0.75rem; color: #aaa; display: flex; justify-content: space-between; margin-bottom: 4px; }
-.graph-bar-bg { width: 100%; height: 8px; background: #2a2a2a; border-radius: 4px; position: relative; }
-.graph-point { position: absolute; top: -3px; width: 14px; height: 14px; border-radius: 50%; opacity: 0.9; transform: translateX(-50%); box-shadow: 0 0 4px #000; }
+/* 左側：グラフとコスパ */
+.lq-graph-half { flex: 1; min-width: 0; background: #111; padding: 10px; border-radius: 6px; border: 1px solid #333; }
+.lq-cospa { font-size: 0.85rem; color: #f1c40f; text-align: center; margin-bottom: 8px; font-weight: bold; background: #222; padding: 4px; border-radius: 4px; }
+.graph-row-inline { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
+.graph-label-inline { font-size: 0.65rem; color: #aaa; white-space: nowrap; width: 1.8em; text-align: center; }
+.graph-bar-bg { flex: 1; height: 6px; background: #2a2a2a; border-radius: 3px; position: relative; }
+.graph-point { position: absolute; top: -3px; width: 12px; height: 12px; border-radius: 50%; opacity: 0.9; transform: translateX(-50%); box-shadow: 0 0 3px #000; }
 .pt-gpt { background: #10a37f; z-index: 3; }    
 .pt-gemini { background: #1a73e8; z-index: 2; } 
 .pt-claude { background: #d97757; z-index: 1; } 
-.graph-legend { font-size: 0.7rem; color: #888; text-align: right; margin-top: 8px; }
 
-/* テキスト・裏話・タグ */
-.lq-desc { font-size: 0.95rem; line-height: 1.6; color: #ddd; margin-bottom: 15px; }
-.lq-sophie-talk { font-size: 0.95rem; line-height: 1.6; color: #eee; background: #1a1a1a; padding: 12px; border-radius: 6px; margin-bottom: 15px; border: 1px solid #222; }
+/* 右側：縦積みスペック */
+.lq-specs-half { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+.spec-row-compact { display: flex; justify-content: space-between; align-items: center; background: #111; padding: 6px 10px; border-radius: 4px; border: 1px solid #333; font-size: 0.8rem; }
+.spec-row-compact span:first-child { color: #888; font-size: 0.75rem; }
+.spec-row-compact span:last-child { color: #fff; font-weight: bold; }
+.price-bar { color: var(--accent) !important; font-size: 0.9rem !important; }
+
+/* テキストエリア（ソフィー・タグ・説明） */
+.lq-sophie-talk { font-size: 0.95rem; line-height: 1.6; color: #eee; background: #1a1a1a; padding: 10px; border-radius: 6px; margin-bottom: 10px; border: 1px solid #222; }
 .sophie-prefix { color: #ff69b4; font-weight: bold; margin-right: 6px; }
 
-.lq-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 15px; }
-.lq-tag { background: #222; color: #aaa; font-size: 0.8rem; padding: 4px 8px; border-radius: 4px; border: 1px solid #444; }
+.lq-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 12px; }
+.lq-tag { background: #222; color: #aaa; font-size: 0.75rem; padding: 3px 6px; border-radius: 4px; border: 1px solid #444; }
 
-/* アクションボタン */
-.lq-actions { display: flex; gap: 10px; margin-top: 10px; }
-.lq-btn { flex: 1; padding: 12px; border-radius: 6px; font-size: 0.9rem; text-align: center; font-weight: bold; cursor: pointer; text-decoration: none; display: block; }
-.btn-amazon { background: #333; color: #f90; border: 1px solid #f90; }
+.lq-desc { font-size: 0.9rem; line-height: 1.6; color: #ddd; margin-bottom: 15px; }
