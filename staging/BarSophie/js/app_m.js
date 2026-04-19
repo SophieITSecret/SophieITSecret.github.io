@@ -11,7 +11,7 @@ let ytPlayer = null, ytPlayerReady = false;
 let scrState = null;
 function initScrState() {
     scrState = {
-        keyword: "", major: "",
+        major: "", sub: "", keyword: "",
         pMin: "", pMax: "", aMin: "", aMax: "",
         s1Min: "-2.0", s1Max: "2.0", s2Min: "-2.0", s2Max: "2.0",
         s3Min: "-2.0", s3Max: "2.0", s4Min: "-2.0", s4Max: "2.0",
@@ -82,10 +82,9 @@ function setup() {
     document.getElementById('ctrl-back').onclick = handleBack;
     
     document.getElementById('btn-expand').onclick = () => {
-        // 鑑定カード画面 or スクリーニング画面ではソフィー召喚ボタンになる
-        if (nav.state === "lq_card" || nav.state === "lq_scr") {
+        if (nav.state === "lq_card") {
             const lSide = document.querySelector('.l-side');
-            if (lSide) { lSide.style.display = ''; setTimeout(() => { if (nav.state === "lq_card" || nav.state === "lq_scr") lSide.style.display = 'none'; }, 4000); }
+            if (lSide) { lSide.style.display = ''; setTimeout(() => { if (nav.state === "lq_card") lSide.style.display = 'none'; }, 4000); }
             window.speechSynthesis.cancel(); try { talkAudio.pause(); } catch(e){}
             const msg = "何になさいますか？"; talkAudio.src = "./voices_mp3/what_order.mp3"; 
             talkAudio.onerror = () => { try { media.speak(msg); } catch(e){} };
@@ -127,14 +126,13 @@ function setup() {
 }
 
 function playHead() {
-    // 鑑定画面中：リスト（nav.curP）内をループして「次へ」
     if (nav.state === "lq_card") {
         const currentList = Array.isArray(nav.curP) ? nav.curP : [];
         if(currentList.length > 0) {
             const currentItem = nav.liquorData[nav.curI];
             let listIdx = currentList.indexOf(currentItem);
             if (listIdx >= 0) {
-                let nextListIdx = (listIdx + 1) % currentList.length; // ループ処理
+                let nextListIdx = (listIdx + 1) % currentList.length; // ループ
                 let nextGlobalIdx = nav.liquorData.indexOf(currentList[nextListIdx]);
                 showLiquorCard(nextGlobalIdx, currentList);
             }
@@ -151,7 +149,6 @@ function togglePause() {
 }
 
 function next() {
-    // 鑑定画面中：次の中分類へ
     if (nav.state === "lq_card") {
         const major = nav.curG; const sub = nav.liquorData[nav.curI]["中分類"];
         const subs = [...new Set(nav.liquorData.filter(d => d["大分類"] === major).map(d => d["中分類"]).filter(Boolean))];
@@ -219,7 +216,7 @@ function prep(t, isM, id = null, originalTxt = null) {
 }
 
 // ==========================================
-// ★音楽・お話 既存処理
+// ★音楽・お話 既存処理 (省略なし)
 // ==========================================
 function openMusic() {
     nav.updateNav("art"); let h = "";
@@ -276,11 +273,10 @@ function openLiquorRoot() {
     nav.updateNav("lq_root"); isMusicMode = false;
     let h = `<div class="label" style="justify-content:center;">お酒を選ぶ</div>`;
     
-    // 順番変更：メニューが先、スクリーニングが次
     h += `<button class="act-btn" id="btn-lq-cat" style="background:#2c3e50; margin:15px; width:calc(100% - 30px);">📁 メニューをひらく</button>`;
     h += `<button class="act-btn" id="btn-scr" style="background:#d35400; margin:0 15px; width:calc(100% - 30px);">🔍 スクリーニング</button>`;
     
-    // ダイレクト検索の美しいパネル
+    // ダイレクト検索
     h += `<div class="direct-box-new">
             <div class="direct-lbl">ダイレクト検索</div>
             <input type="number" id="direct-num" placeholder="No.">
@@ -299,20 +295,50 @@ function openLiquorRoot() {
     };
 }
 
-// ★スクリーニングUI (フルスクリーン)
+// ★ダブルスライダーを動かすJS
+function attachMultiSlider(id) {
+    const minEl = document.getElementById(id + '-min');
+    const maxEl = document.getElementById(id + '-max');
+    const fillEl = document.getElementById(id + '-fill');
+    const minDisp = document.getElementById(id + '-min-disp');
+    const maxDisp = document.getElementById(id + '-max-disp');
+
+    const update = () => {
+        let minV = parseFloat(minEl.value); let maxV = parseFloat(maxEl.value);
+        if (minV > maxV) { let tmp = minV; minV = maxV; maxV = tmp; minEl.value = minV; maxEl.value = maxV; }
+        minDisp.innerText = minV.toFixed(1); maxDisp.innerText = maxV.toFixed(1);
+        const percentMin = ((minV + 2.0) / 4.0) * 100;
+        const percentMax = ((maxV + 2.0) / 4.0) * 100;
+        fillEl.style.left = percentMin + '%'; fillEl.style.width = (percentMax - percentMin) + '%';
+        
+        // 状態保存
+        scrState[id.replace('scr-', '') + 'Min'] = minV.toFixed(1);
+        scrState[id.replace('scr-', '') + 'Max'] = maxV.toFixed(1);
+    };
+    minEl.addEventListener('input', update); maxEl.addEventListener('input', update);
+    update();
+}
+
+// ★スクリーニングUI (フルスクリーン・固定フッター)
 function openScreeningUI() {
     nav.updateNav("lq_scr");
     let h = `<div class="label" style="justify-content:flex-start; gap:10px;"><button style="background:none;border:none;color:#fff;font-size:1.2rem;" onclick="openLiquorRoot()">◀</button> スクリーニング</div>`;
     h += `<div class="scr-container">`;
 
-    // ジャンル＆テキスト検索
+    // ジャンル（大分類）と 品目（中分類）の連動プルダウン
     const majors = [...new Set(nav.liquorData.map(d => d["大分類"]).filter(Boolean))];
     const majorOpts = `<option value="">問わない</option>` + majors.map(m => `<option value="${m}" ${scrState.major === m ? 'selected':''}>${m}</option>`).join('');
     
+    let subs = [];
+    if(scrState.major) subs = [...new Set(nav.liquorData.filter(d => d["大分類"] === scrState.major).map(d => d["中分類"]).filter(Boolean))];
+    else subs = [...new Set(nav.liquorData.map(d => d["中分類"]).filter(Boolean))];
+    const subOpts = `<option value="">問わない</option>` + subs.map(s => `<option value="${s}" ${scrState.sub === s ? 'selected':''}>${s}</option>`).join('');
+
     h += `<div class="scr-group">
-            <div class="scr-title">キーワード・ジャンル</div>
-            <div class="scr-row"><span class="scr-row-label">銘柄名:</span><input type="text" id="scr-kw" placeholder="文字で検索" value="${scrState.keyword}"></div>
-            <div class="scr-row"><span class="scr-row-label">大分類:</span><select id="scr-mj">${majorOpts}</select></div>
+            <div class="scr-title">ジャンル・品目・キーワード</div>
+            <div class="scr-row"><span class="scr-row-label">ジャンル:</span><select id="scr-mj">${majorOpts}</select></div>
+            <div class="scr-row"><span class="scr-row-label">品目:</span><select id="scr-sb">${subOpts}</select></div>
+            <div class="scr-row"><span class="scr-row-label">検索:</span><input type="text" id="scr-kw" placeholder="すべての文字から探す" value="${scrState.keyword}"></div>
           </div>`;
 
     // 価格・度数 (セレクトボックス化)
@@ -328,24 +354,26 @@ function openScreeningUI() {
             <div class="scr-row"><span class="scr-row-label">度数(%):</span> <select id="scr-a-min">${sel(aOpts, scrState.aMin)}</select> 〜 <select id="scr-a-max">${sel(aOpts, scrState.aMax)}</select></div>
           </div>`;
 
-    // 評価軸 (コンパクトな1行ダブルスライダー風)
-    const makeRange = (id, lbl, minV, maxV) => `
+    // 評価軸 (ダブルスライダー)
+    const makeDoubleSlider = (id, lbl, minV, maxV) => `
         <div class="scr-slider-box">
             <div class="scr-slider-lbl">${lbl}</div>
-            <div class="scr-slider-val">${parseFloat(minV).toFixed(1)}</div>
-            <div class="scr-slider-wrap">
-                <input type="range" id="${id}-min" min="-2.0" max="2.0" step="0.5" value="${minV}" oninput="this.parentElement.previousElementSibling.innerText=parseFloat(this.value).toFixed(1)">
-                <input type="range" id="${id}-max" min="-2.0" max="2.0" step="0.5" value="${maxV}" oninput="this.parentElement.nextElementSibling.innerText=parseFloat(this.value).toFixed(1)">
+            <div class="scr-slider-val" id="${id}-min-disp">${parseFloat(minV).toFixed(1)}</div>
+            <div class="multi-range-wrap">
+                <div class="multi-range-track"></div>
+                <div class="multi-range-fill" id="${id}-fill"></div>
+                <input type="range" id="${id}-min" min="-2.0" max="2.0" step="0.5" value="${minV}">
+                <input type="range" id="${id}-max" min="-2.0" max="2.0" step="0.5" value="${maxV}">
             </div>
-            <div class="scr-slider-val">${parseFloat(maxV).toFixed(1)}</div>
+            <div class="scr-slider-val" id="${id}-max-disp">${parseFloat(maxV).toFixed(1)}</div>
         </div>`;
 
     h += `<div class="scr-group">
             <div class="scr-title">AI評価軸 (3社平均)</div>
-            ${makeRange("scr-s1", "辛/甘", scrState.s1Min, scrState.s1Max)}
-            ${makeRange("scr-s2", "軽/濃", scrState.s2Min, scrState.s2Max)}
-            ${makeRange("scr-s3", "道/独", scrState.s3Min, scrState.s3Max)}
-            ${makeRange("scr-s4", "淡/コク", scrState.s4Min, scrState.s4Max)}
+            ${makeDoubleSlider("scr-s1", "辛/甘", scrState.s1Min, scrState.s1Max)}
+            ${makeDoubleSlider("scr-s2", "軽/濃", scrState.s2Min, scrState.s2Max)}
+            ${makeDoubleSlider("scr-s3", "道/独", scrState.s3Min, scrState.s3Max)}
+            ${makeDoubleSlider("scr-s4", "淡/コク", scrState.s4Min, scrState.s4Max)}
           </div>`;
 
     // タグ (全自動抽出)
@@ -359,18 +387,27 @@ function openScreeningUI() {
         const isSel = scrState.tags.includes(t) ? "selected" : "";
         h += `<div class="scr-tag-btn ${isSel}" data-tag="${t}">${t}</div>`;
     });
-    h += `</div></div>`;
+    h += `</div></div></div>`; // container end
 
-    h += `<div class="scr-actions">
+    // 固定フッター（コントローラーの代わり）
+    h += `<div class="scr-fixed-bottom">
             <button class="scr-btn scr-btn-clear" id="btn-scr-clear">条件クリア</button>
             <button class="scr-btn scr-btn-exec" id="btn-scr-exec">検索実行</button>
           </div>`;
-    h += `</div>`;
 
-    // ★ スクリーニング画面もソフィーに下がってもらう（isFullScreen = true）
+    // スクリーニング画面はソフィーを隠し（フルスクリーン）、かつ既存の.consoleも隠す
     render(h, (e) => {
         if(e.currentTarget.classList.contains('scr-tag-btn')) e.currentTarget.classList.toggle('selected');
-    }, true);
+    }, true, true);
+
+    // ダブルスライダーの初期化
+    attachMultiSlider('scr-s1'); attachMultiSlider('scr-s2'); attachMultiSlider('scr-s3'); attachMultiSlider('scr-s4');
+
+    // ジャンルが変わったら品目リストを更新するため再描画
+    document.getElementById('scr-mj').onchange = (e) => {
+        scrState.major = e.target.value; scrState.sub = ""; // 品目リセット
+        openScreeningUI();
+    };
 
     document.getElementById('btn-scr-exec').onclick = executeScreening;
     document.getElementById('btn-scr-clear').onclick = () => { initScrState(); openScreeningUI(); };
@@ -378,15 +415,12 @@ function openScreeningUI() {
 
 // ★スクリーニング実行と状態保存
 function executeScreening() {
-    // 状態の保存
     scrState.keyword = document.getElementById('scr-kw').value.trim().toLowerCase();
     scrState.major = document.getElementById('scr-mj').value;
+    scrState.sub = document.getElementById('scr-sb').value;
     scrState.pMin = document.getElementById('scr-p-min').value; scrState.pMax = document.getElementById('scr-p-max').value;
     scrState.aMin = document.getElementById('scr-a-min').value; scrState.aMax = document.getElementById('scr-a-max').value;
-    scrState.s1Min = document.getElementById('scr-s1-min').value; scrState.s1Max = document.getElementById('scr-s1-max').value;
-    scrState.s2Min = document.getElementById('scr-s2-min').value; scrState.s2Max = document.getElementById('scr-s2-max').value;
-    scrState.s3Min = document.getElementById('scr-s3-min').value; scrState.s3Max = document.getElementById('scr-s3-max').value;
-    scrState.s4Min = document.getElementById('scr-s4-min').value; scrState.s4Max = document.getElementById('scr-s4-max').value;
+    // スライダーの値は attachMultiSlider 内で随時 scrState に保存済み
     scrState.tags = Array.from(document.querySelectorAll('.scr-tag-btn.selected')).map(el => el.dataset.tag);
 
     const pMinVal = scrState.pMin === "" ? 0 : parseFloat(scrState.pMin);
@@ -400,8 +434,14 @@ function executeScreening() {
     };
 
     const results = nav.liquorData.filter(d => {
-        if(scrState.keyword && !(d["銘柄名"]||"").toLowerCase().includes(scrState.keyword)) return false;
+        // キーワード全結合検索
+        if(scrState.keyword) {
+            const allText = ((d["銘柄名"]||"") + " " + (d["鑑定評価(200字)"]||"") + " " + (d["ソフィーの裏話"]||"") + " " + (d["味わいタグ"]||"") + " " + (d["検索タグ"]||"")).toLowerCase();
+            if(!allText.includes(scrState.keyword)) return false;
+        }
+
         if(scrState.major && d["大分類"] !== scrState.major) return false;
+        if(scrState.sub && d["中分類"] !== scrState.sub) return false;
 
         const priceStr = (d["市販価格"]||"0").replace(/[^0-9]/g, '');
         const price = parseInt(priceStr) || 0;
@@ -431,13 +471,16 @@ function executeScreening() {
     });
 
     nav.updateNav("lq_res", null, results);
-    let h = `<div class="label" style="justify-content:flex-start; gap:10px;"><button style="background:none;border:none;color:#fff;font-size:1.2rem;" onclick="openScreeningUI()">◀</button> 検索結果: ${results.length}件</div>`;
+    
+    // ★ 検索結果の頭に「条件変更へ戻る」ボタンを配置
+    let h = `<div class="label" style="justify-content:flex-start; gap:10px;"><button style="background:none;border:none;color:#fff;font-size:1.2rem;" onclick="openLiquorRoot()">◀</button> 検索結果: ${results.length}件</div>`;
+    h += `<button class="btn-back-scr" onclick="openScreeningUI()">🔍 検索条件を変更する</button>`;
+    
     results.forEach(d => {
         const globalIdx = nav.liquorData.indexOf(d);
         h += `<div class="item" data-lqidx="${globalIdx}">🥃 ${(d["銘柄名"]||"").replace(/"/g,'')}</div>`;
     });
     
-    // 結果一覧もフルスクリーン表示
     render(h, (e) => {
         if(e.currentTarget.dataset.lqidx) showLiquorCard(parseInt(e.currentTarget.dataset.lqidx), results);
     }, true);
@@ -446,7 +489,7 @@ function executeScreening() {
 // ★既存の階層メニュー
 function openLiquorMajor() {
     nav.updateNav("lq_major"); 
-    let h = `<div class="label" style="justify-content:flex-start; gap:10px;"><button style="background:none;border:none;color:#fff;font-size:1.2rem;" onclick="openLiquorRoot()">◀</button> お酒の種類 (大分類)</div>`;
+    let h = `<div class="label" style="justify-content:flex-start; gap:10px;"><button style="background:none;border:none;color:#fff;font-size:1.2rem;" onclick="openLiquorRoot()">◀</button> ジャンル (大分類)</div>`;
     const majors = [...new Set(nav.liquorData.map(d => d["大分類"]).filter(Boolean))];
     majors.forEach(m => { h += `<div class="item" data-lqmajor="${m}">📁 ${m}</div>`; });
     render(h, (e) => { if(e.currentTarget.dataset.lqmajor) openLiquorSub(e.currentTarget.dataset.lqmajor); });
@@ -549,13 +592,18 @@ function resetCtrlBack() {
     if(btnBack) { btnBack.innerText = '▲'; btnBack.style.fontSize = ''; }
 }
 
-function render(h, cb, isFullScreen = false) { 
+// render関数の第4引数に isHideConsole を追加
+function render(h, cb, isFullScreen = false, isHideConsole = false) { 
     nm.style.display = 'none'; lv.style.display = 'block'; lv.innerHTML = h; 
     document.getElementById('main-scroll').scrollTop = 0; 
-    document.querySelectorAll('#list-view .item, .filter-btn').forEach(el => el.onclick = cb);
+    document.querySelectorAll('#list-view .item, .filter-btn, .scr-tag-btn').forEach(el => el.onclick = cb);
     
     const lSide = document.querySelector('.l-side');
     if(lSide) lSide.style.display = isFullScreen ? 'none' : '';
+
+    // コントローラー(.console)の表示・非表示
+    const consoleEl = document.querySelector('.console');
+    if(consoleEl) consoleEl.style.display = isHideConsole ? 'none' : 'flex';
 
     if(!isFullScreen) resetCtrlBack();
 }
@@ -563,13 +611,13 @@ function render(h, cb, isFullScreen = false) {
 function handleBack() {
     if (nav.state === "lq_card") {
         if(nav.curP && nav.curP.length > 0 && !nav.curP[0]["中分類"]) {
-            // 中分類がない（または混ざっている）＝検索結果
-            executeScreening(); // 再度同じ条件で結果を描画（状態も維持）
+            // 検索結果（リスト）に戻る
+            executeScreening(); 
         } else {
             openLiquorList(nav.curP[0]["中分類"]); 
         }
     }
-    else if (nav.state === "lq_res") openScreeningUI(); // 検索結果からは状態を維持してスクリーニングへ戻る
+    else if (nav.state === "lq_res") openScreeningUI(); 
     else if (nav.state === "lq_list") openLiquorSub(nav.curG);
     else if (nav.state === "lq_sub") openLiquorMajor();
     else if (nav.state === "lq_major") openLiquorRoot();

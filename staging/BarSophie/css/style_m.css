@@ -33,7 +33,7 @@ body {
 
 /* 右側レイアウト（スクロール＆コントローラー） */
 .r-side { flex: 1; display: flex; flex-direction: column; min-height: 0; position: relative; }
-.scroll-area { flex: 1; overflow-y: scroll; background: #08080a; -webkit-overflow-scrolling: touch; }
+.scroll-area { flex: 1; overflow-y: auto; background: #08080a; -webkit-overflow-scrolling: touch; position: relative; padding-bottom: 80px; }
 #nav-main { padding: 12px; display: block; }
 .act-btn { width: 100%; height: 48px; margin-bottom: 10px; border-radius: 8px; border: 1px solid #444; font-weight: bold; color: #fff !important; font-size: 1.1rem; display: block !important; font-family: sans-serif; }
 
@@ -51,7 +51,7 @@ body {
 .active-item { background: var(--accent) !important; color: #000 !important; font-weight: bold; }
 .ver { position: absolute; bottom: 80px; right: 8px; font-size: 9px; color: #444; pointer-events: none; z-index: 10; }
 
-/* --- ダイレクト検索専用パネル --- */
+/* ダイレクト検索専用パネル */
 .direct-box-new { display: flex; align-items: stretch; background: #151515; padding: 12px; margin: 15px 12px; border-radius: 8px; border: 1px solid #444; gap: 8px; }
 .direct-lbl { background: #2980b9; color: #fff; font-size: 0.8rem; display: flex; align-items: center; justify-content: center; padding: 0 10px; border-radius: 4px; font-weight: bold; white-space: nowrap; }
 .direct-box-new input { flex: 1; min-width: 0; background: #000; border: 1px solid #555; color: #fff; text-align: center; font-size: 1rem; border-radius: 4px; }
@@ -95,33 +95,49 @@ body {
 /* テキストエリア（ソフィー・タグ・説明） */
 .lq-sophie-talk { font-size: 0.95rem; line-height: 1.6; color: #eee; background: #1a1a1a; padding: 10px; border-radius: 6px; margin-bottom: 10px; border: 1px solid #222; }
 .sophie-prefix { color: #ff69b4; font-weight: bold; margin-right: 6px; }
-
 .lq-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 12px; }
 .lq-tag { background: #222; color: #aaa; font-size: 0.75rem; padding: 3px 6px; border-radius: 4px; border: 1px solid #444; }
 .lq-desc { font-size: 0.9rem; line-height: 1.6; color: #ddd; margin-bottom: 15px; }
 
 /* --- スクリーニング専用UI --- */
-.scr-container { padding: 15px; background: #050505; }
+.scr-container { padding: 15px 15px 100px 15px; background: #050505; }
 .scr-group { background: #111; border: 1px solid #333; border-radius: 8px; padding: 12px; margin-bottom: 15px; }
 .scr-title { font-size: 0.85rem; color: var(--accent); margin-bottom: 10px; font-weight: bold; border-bottom: 1px dashed #333; padding-bottom: 4px; }
 
 .scr-row { display: flex; gap: 10px; align-items: center; margin-bottom: 10px; }
-.scr-row input, .scr-row select { flex: 1; background: #222; color: #fff; border: 1px solid #444; padding: 8px; border-radius: 4px; font-size: 0.9rem; }
-.scr-row-label { width: 4.5em; color: #888; font-size: 0.8rem; flex-shrink: 0; text-align: right; }
+.scr-row input, .scr-row select { flex: 1; background: #222; color: #fff; border: 1px solid #444; padding: 8px; border-radius: 4px; font-size: 0.9rem; width: 100%; }
+.scr-row-label { width: 5em; color: #888; font-size: 0.8rem; flex-shrink: 0; text-align: right; }
 
-/* コンパクト・ダブルスライダー風 */
-.scr-slider-box { display: flex; align-items: center; gap: 6px; background: #1a1a1a; padding: 8px; border-radius: 6px; margin-bottom: 8px; border: 1px solid #2a2a2a; }
+/* ★美しきダブルスライダー（1本のバーに2つのツマミ） */
+.scr-slider-box { display: flex; align-items: center; gap: 6px; background: #1a1a1a; padding: 12px 8px; border-radius: 6px; margin-bottom: 8px; border: 1px solid #2a2a2a; }
 .scr-slider-lbl { width: 3em; font-size: 0.75rem; color: #aaa; text-align: center; }
 .scr-slider-val { width: 2.2em; font-size: 0.75rem; background: #000; color: #fff; text-align: center; border-radius: 4px; padding: 4px 0; border: 1px solid #444; }
-.scr-slider-wrap { flex: 1; display: flex; align-items: center; gap: 4px; }
-.scr-slider-wrap input[type=range] { flex: 1; height: 4px; margin: 0; padding: 0; }
+
+.multi-range-wrap { flex: 1; position: relative; height: 30px; display: flex; align-items: center; }
+.multi-range-track { position: absolute; width: 100%; height: 6px; background: #333; border-radius: 3px; z-index: 1; }
+.multi-range-fill { position: absolute; height: 6px; background: var(--blue); border-radius: 3px; z-index: 2; }
+.multi-range-wrap input[type=range] { 
+    position: absolute; width: 100%; height: 30px; appearance: none; background: transparent; 
+    pointer-events: none; z-index: 3; margin: 0; 
+}
+.multi-range-wrap input[type=range]::-webkit-slider-thumb {
+    pointer-events: auto; appearance: none; width: 18px; height: 18px; 
+    border-radius: 50%; background: var(--accent); box-shadow: 0 0 4px #000; cursor: pointer;
+}
 
 /* タグ選択 */
-.scr-tag-grid { display: flex; flex-wrap: wrap; gap: 6px; max-height: 200px; overflow-y: auto; padding-right: 5px; }
+.scr-tag-grid { display: flex; flex-wrap: wrap; gap: 6px; max-height: 220px; overflow-y: auto; padding-right: 5px; }
 .scr-tag-btn { background: #222; color: #aaa; border: 1px solid #444; padding: 6px 10px; border-radius: 20px; font-size: 0.8rem; cursor: pointer; }
 .scr-tag-btn.selected { background: var(--blue); color: #000; border-color: var(--blue); font-weight: bold; }
 
-.scr-actions { display: flex; gap: 10px; margin-top: 20px; }
-.scr-btn { flex: 1; padding: 15px; border-radius: 8px; font-size: 1rem; font-weight: bold; text-align: center; cursor: pointer; border: none; }
+/* ★スクリーニング中の固定フッター（コントローラーと入れ替え） */
+.scr-fixed-bottom { 
+    position: absolute; bottom: 0; left: 0; right: 0; height: 75px; 
+    background: #111; border-top: 1px solid #333; display: flex; gap: 10px; padding: 12px; z-index: 200; 
+}
+.scr-btn { flex: 1; border-radius: 8px; font-size: 1.1rem; font-weight: bold; text-align: center; cursor: pointer; border: none; }
 .scr-btn-clear { background: #333; color: #fff; }
 .scr-btn-exec { background: #8e44ad; color: #fff; }
+
+/* 検索結果から戻るボタン */
+.btn-back-scr { display: block; width: calc(100% - 24px); margin: 12px auto; background: #2980b9; color: #fff; padding: 12px; text-align: center; border-radius: 8px; font-weight: bold; font-size: 1rem; border: none; }
