@@ -19,9 +19,8 @@ function initScrState() {
     };
 }
 
-// ★ 入力途中の条件を保存する機能（連動プルダウンで画面が書き換わっても入力内容を消さないため）
 function saveScrFormState() {
-    if(!document.getElementById('scr-mj')) return; // 画面が開いていない時は無視
+    if(!document.getElementById('scr-mj')) return; 
     scrState.keyword = document.getElementById('scr-kw').value;
     scrState.major = document.getElementById('scr-mj').value;
     scrState.sub = document.getElementById('scr-sb').value;
@@ -31,7 +30,6 @@ function saveScrFormState() {
     scrState.aMin = document.getElementById('scr-a-min').value;
     scrState.aMax = document.getElementById('scr-a-max').value;
     scrState.tags = Array.from(document.querySelectorAll('.scr-tag-btn.selected')).map(el => el.dataset.tag);
-    // スライダーの値は attachMultiSlider 内でリアルタイムに scrState へ保存済み
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -322,18 +320,15 @@ function openLiquorRoot() {
     };
 }
 
-// ★ダブルスライダーを動かすJS
+// ★目盛り付きダブルスライダーを動かすJS (数値表示排除版)
 function attachMultiSlider(id) {
     const minEl = document.getElementById(id + '-min');
     const maxEl = document.getElementById(id + '-max');
     const fillEl = document.getElementById(id + '-fill');
-    const minDisp = document.getElementById(id + '-min-disp');
-    const maxDisp = document.getElementById(id + '-max-disp');
 
     const update = () => {
         let minV = parseFloat(minEl.value); let maxV = parseFloat(maxEl.value);
         if (minV > maxV) { let tmp = minV; minV = maxV; maxV = tmp; minEl.value = minV; maxEl.value = maxV; }
-        minDisp.innerText = minV.toFixed(1); maxDisp.innerText = maxV.toFixed(1);
         const percentMin = ((minV + 2.0) / 4.0) * 100; const percentMax = ((maxV + 2.0) / 4.0) * 100;
         fillEl.style.left = percentMin + '%'; fillEl.style.width = (percentMax - percentMin) + '%';
         scrState[id.replace('scr-', '') + 'Min'] = minV.toFixed(1); scrState[id.replace('scr-', '') + 'Max'] = maxV.toFixed(1);
@@ -342,7 +337,7 @@ function attachMultiSlider(id) {
     update();
 }
 
-// ★スクリーニングUI (フルスクリーン・コントローラー書き換え・連動プルダウン)
+// ★スクリーニングUI (連動プルダウン・目盛りスライダー・下部固定ボタン)
 function openScreeningUI() {
     nav.updateNav("lq_scr");
     let h = `<div class="label" style="justify-content:flex-start; gap:10px;"><button style="background:none;border:none;color:#fff;font-size:1.2rem;" onclick="openLiquorRoot()">◀</button> お好みで絞り込む</div>`;
@@ -356,12 +351,12 @@ function openScreeningUI() {
     else subs = [...new Set(nav.liquorData.map(d => d["中分類"]).filter(Boolean))];
     const subOpts = `<option value="">問わない</option>` + subs.map(s => `<option value="${s}" ${scrState.sub === s ? 'selected':''}>${s}</option>`).join('');
 
-    // ★国と地域の連動合体プルダウン（選択したジャンル・品目に属するものだけ抽出）
+    // ★国と地域の連動合体プルダウン（マップ産地を排除！）
     let areaFilterData = nav.liquorData;
     if(scrState.major) areaFilterData = areaFilterData.filter(d => d["大分類"] === scrState.major);
     if(scrState.sub) areaFilterData = areaFilterData.filter(d => d["中分類"] === scrState.sub);
     const areas = [...new Set(areaFilterData.map(d => {
-        const c = d["国"] || ""; const p = d["マップ産地"] || d["産地"] || "";
+        const c = d["国"] || ""; const p = d["産地"] || ""; 
         if (c && p) return `${c} / ${p}`; if (c) return c; return "";
     }).filter(Boolean))].sort();
     const areaOpts = `<option value="">問わない</option>` + areas.map(a => `<option value="${a}" ${scrState.area === a ? 'selected':''}>${a}</option>`).join('');
@@ -374,17 +369,17 @@ function openScreeningUI() {
             <div class="scr-row" style="margin-top:10px;"><span class="scr-row-label">ｷーﾜｰﾄﾞ:</span><input type="text" id="scr-kw" placeholder="銘柄・解説・タグ等すべて" value="${scrState.keyword}"></div>
           </div>`;
 
+    // ★数値なし・目盛り付きダブルスライダー
     const makeDoubleSlider = (id, lblL, lblR, minV, maxV) => `
         <div class="scr-slider-box">
             <div class="scr-slider-label-edge">${lblL}</div>
-            <div class="scr-slider-val" id="${id}-min-disp">${parseFloat(minV).toFixed(1)}</div>
             <div class="multi-range-wrap">
                 <div class="multi-range-track"></div>
+                <div class="slider-ticks"><div class="tick"></div><div class="tick"></div><div class="tick center"></div><div class="tick"></div><div class="tick"></div></div>
                 <div class="multi-range-fill" id="${id}-fill"></div>
                 <input type="range" id="${id}-min" min="-2.0" max="2.0" step="0.5" value="${minV}">
                 <input type="range" id="${id}-max" min="-2.0" max="2.0" step="0.5" value="${maxV}">
             </div>
-            <div class="scr-slider-val" id="${id}-max-disp">${parseFloat(maxV).toFixed(1)}</div>
             <div class="scr-slider-label-edge">${lblR}</div>
         </div>`;
 
@@ -419,29 +414,25 @@ function openScreeningUI() {
     });
     h += `</div></div></div>`; 
 
+    // コントローラーを「クリア＆実行」ボタンに化けさせる
     render(h, (e) => {
         if(e.currentTarget.classList.contains('scr-tag-btn')) e.currentTarget.classList.toggle('selected');
     }, true, 'screening');
 
     attachMultiSlider('scr-s1'); attachMultiSlider('scr-s2'); attachMultiSlider('scr-s3'); attachMultiSlider('scr-s4');
 
-    // ★連動プルダウンの更新イベント
     document.getElementById('scr-mj').onchange = (e) => {
-        saveScrFormState(); // 今入力しているキーワードなどを保存
-        scrState.major = e.target.value; scrState.sub = ""; scrState.area = ""; 
-        openScreeningUI();
+        saveScrFormState(); scrState.major = e.target.value; scrState.sub = ""; scrState.area = ""; openScreeningUI();
     };
     document.getElementById('scr-sb').onchange = (e) => {
-        saveScrFormState(); 
-        scrState.sub = e.target.value; scrState.area = ""; 
-        openScreeningUI();
+        saveScrFormState(); scrState.sub = e.target.value; scrState.area = ""; openScreeningUI();
     };
     document.getElementById('scr-ar').onchange = (e) => { scrState.area = e.target.value; };
 }
 
 // ★スクリーニング実行と状態保存
 function executeScreening() {
-    saveScrFormState(); // 実行直前にも最新状態を保存
+    saveScrFormState(); 
 
     const pMinVal = scrState.pMin === "" ? 0 : parseFloat(scrState.pMin);
     const pMaxVal = scrState.pMax === "" ? 999999 : parseFloat(scrState.pMax);
@@ -454,7 +445,6 @@ function executeScreening() {
     };
 
     const results = nav.liquorData.filter(d => {
-        // キーワード全結合検索
         if(scrState.keyword) {
             const allText = ((d["銘柄名"]||"") + " " + (d["鑑定評価(200字)"]||"") + " " + (d["ソフィーの裏話"]||"") + " " + (d["味わいタグ"]||"") + " " + (d["検索タグ"]||"")).toLowerCase();
             if(!allText.includes(scrState.keyword.toLowerCase())) return false;
@@ -464,7 +454,7 @@ function executeScreening() {
         if(scrState.sub && d["中分類"] !== scrState.sub) return false;
 
         if(scrState.area) {
-            const c = d["国"] || ""; const p = d["マップ産地"] || d["産地"] || "";
+            const c = d["国"] || ""; const p = d["産地"] || ""; // マップ産地排除
             const itemArea = (c && p) ? `${c} / ${p}` : c;
             if(itemArea !== scrState.area) return false;
         }
@@ -503,6 +493,7 @@ function executeScreening() {
         h += `<div class="item" data-lqidx="${globalIdx}">🥃 ${(d["銘柄名"]||"").replace(/"/g,'')}</div>`;
     });
     
+    // コントローラーを「検索条件を変更する」ボタンに化けさせる
     render(h, (e) => {
         if(e.currentTarget.dataset.lqidx) showLiquorCard(parseInt(e.currentTarget.dataset.lqidx), results);
     }, true, 'result');
@@ -604,15 +595,33 @@ function showLiquorCard(globalIndex, currentListArray = null) {
 
     render(h, (e) => {}, true, 'standard');
 
+    // ★ 検索結果から来た場合は、戻るボタンをオレンジ色で「候補へ戻る」にする
     const btnBack = document.getElementById('ctrl-back');
-    if(btnBack) { btnBack.innerText = 'メニュー'; btnBack.style.fontSize = '0.75rem'; }
+    if(btnBack) { 
+        if (nav.curG === null) {
+            btnBack.innerText = '候補へ戻る'; 
+            btnBack.style.fontSize = '0.8rem';
+            btnBack.style.background = '#d35400';
+            btnBack.style.color = '#fff';
+            btnBack.style.border = '1px solid #e67e22';
+        } else {
+            btnBack.innerText = 'リストへ'; 
+            btnBack.style.fontSize = '0.8rem';
+        }
+    }
     const btnExpand = document.getElementById('btn-expand');
-    if(btnExpand) { btnExpand.style.opacity = '1'; }
+    if(btnExpand) btnExpand.style.opacity = '1';
 }
 
 function resetCtrlBack() {
     const btnBack = document.getElementById('ctrl-back');
-    if(btnBack) { btnBack.innerText = '▲'; btnBack.style.fontSize = ''; }
+    if(btnBack) { 
+        btnBack.innerText = '▲'; 
+        btnBack.style.fontSize = ''; 
+        btnBack.style.background = '';
+        btnBack.style.color = '';
+        btnBack.style.border = '';
+    }
 }
 
 function render(h, cb, isFullScreen = false, consoleMode = 'standard') { 
@@ -631,7 +640,7 @@ function render(h, cb, isFullScreen = false, consoleMode = 'standard') {
 function handleBack() {
     if (nav.state === "lq_card") {
         if(nav.curP && nav.curP.length > 0 && !nav.curP[0]["中分類"]) {
-            executeScreening(); 
+            executeScreening(); // 検索結果リストへ戻る
         } else {
             openLiquorList(nav.curP[0]["中分類"]); 
         }
