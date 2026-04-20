@@ -1,474 +1,284 @@
-import * as media from './media.js';
-import * as nav from './navigation.js';
+/**
+ * Bar Sophie v22.0 — app_m.js
+ * ★ このファイルは「司令塔」です。各機能の呼び出しのみ行います。
+ * ★ 音楽・お酒の話の実装は music.js（封印）
+ * ★ データベース・スクリーニングの実装は liquor.js（作業対象）
+ * ★ 共通ユーティリティは utils.js（封印）
+ */
 
-window.onerror = function(msg, url, lineNo) {
-    alert("System Error:\n" + msg + "\nLine: " + lineNo);
-    return true;
-};
+import * as media    from './media.js';
+import * as nav      from './navigation.js';
+import * as utils    from './utils.js';
+import * as music    from './music.js';
+import * as liquor   from './liquor.js';
 
-let isPaused = false, isAutoPlay = false, isMusicMode = false, lastTxt = "", pressTimer = null;
-let ytWrapper, img, tel, lv, nm, talkAudio;
-let ytPlayer = null, ytPlayerReady = false;
+// =============================================
+// グローバル変数
+// =============================================
+let talkAudio;
+let ytPlayer = null;
+let ytPlayerReady = false;
+let pressTimer = null;
 
+// =============================================
+// 初期化
+// =============================================
 document.addEventListener('DOMContentLoaded', async () => {
-    ytWrapper = document.getElementById('yt-wrapper');
-    img = document.getElementById('monitor-img');
-    tel = document.getElementById('telop');
-    lv = document.getElementById('list-view');
-    nm = document.getElementById('nav-main');
+    utils.initDom();
 
     talkAudio = document.getElementById('talk-audio') || document.createElement('audio');
-    if(!talkAudio.id) { talkAudio.id = 'talk-audio'; document.body.appendChild(talkAudio); }
+    if (!talkAudio.id) { talkAudio.id = 'talk-audio'; document.body.appendChild(talkAudio); }
 
-    await nav.loadAllData();
-    setup();
-    
-    const tag = document.createElement('script');
-    tag.src = "https://www.youtube.com/iframe_api";
-    const firstScriptTag = document.getElementsByTagName('script')[0];
-    firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
-});
-
-window.onYouTubeIframeAPIReady = function() {
-    ytPlayer = new YT.Player('yt-player', {
-        playerVars: { 'playsinline': 1, 'autoplay': 1, 'rel': 0, 'controls': 1 },
-        events: {
-            'onReady': () => { ytPlayerReady = true; },
-            'onStateChange': (e) => {
-                if (e.data === YT.PlayerState.ENDED && isAutoPlay && isMusicMode) {
-                    next();
-                }
-            }
-        }
-    });
-};
-
-const defaultOnEnded = () => { if (isAutoPlay && !isMusicMode) setTimeout(next, 1200); };
-
-function showRootMenu() {
-    lv.style.display = 'none'; 
-    nm.style.display = 'block'; 
-    nav.updateNav("none");
-    
-    ytWrapper.style.display = 'none';
-    img.src = './front_sophie.jpeg';
-    img.style.display = 'block';
-    tel.style.display = 'none';
-    
-    const monitor = document.querySelector('.monitor');
-    monitor.classList.remove('expanded');
-    const btnExpand = document.getElementById('btn-expand');
-    // ★矢印を力強い黒三角に太くしました
-    btnExpand.innerText = '▼';
-    btnExpand.style.opacity = '0.3'; 
-}
-
-function setup() {
-    const btnEnter = document.getElementById('btn-enter');
-    if(btnEnter) {
-        btnEnter.onclick = () => { 
-            document.getElementById('entry-screen').style.display='none'; 
-            document.getElementById('chat-mode').style.display='flex'; 
-            
-            if (ytPlayerReady && ytPlayer && typeof ytPlayer.loadVideoById === 'function') {
-                try {
-                    ytPlayer.mute();
-                    ytPlayer.loadVideoById('2vfCbdmKhMw'); 
-                    setTimeout(() => {
-                        ytPlayer.pauseVideo();
-                        ytPlayer.unMute();
-                    }, 1000);
-                } catch(e) {}
-            }
-
-            const fallbackText = "いらっしゃいませ。";
-            talkAudio.src = "./voices_mp3/greeting.mp3";
-            talkAudio.onerror = () => { try { media.speak(fallbackText); } catch(e){} };
-            
-            try {
-                const p = talkAudio.play();
-                if (p !== undefined) p.catch(() => { try { media.speak(fallbackText); } catch(e){} });
-            } catch(e) { try { media.speak(fallbackText); } catch(err){} }
-        };
-    }
-
-    const btnToBar = document.getElementById('btn-to-bar');
-    if(btnToBar) {
-        btnToBar.onclick = () => { 
-            document.getElementById('chat-mode').style.display='none'; 
-            document.getElementById('main-ui').style.display='flex'; 
-            window.speechSynthesis.cancel(); 
-            talkAudio.pause();
-            showRootMenu();
-            
-            // ★追加：カウンターに座った時のソフィーの挨拶
-            talkAudio.src = "./voices_mp3/menu_greeting.mp3"; 
-            const fallbackText = "いつもありがとうございます。今日はいかがされますか？";
-            talkAudio.onerror = () => { try { media.speak(fallbackText); } catch(e){} };
-            try {
-                const p = talkAudio.play();
-                if (p !== undefined) p.catch(() => { try { media.speak(fallbackText); } catch(e){} });
-            } catch(e) { try { media.speak(fallbackText); } catch(err){} }
-        };
-    }
-
-    document.getElementById('ctrl-play').onclick = playHead;
-    document.getElementById('ctrl-pause').onclick = togglePause;
-    document.getElementById('ctrl-back').onclick = handleBack;
-    
-    document.getElementById('btn-expand').onclick = () => {
-        if (isMusicMode || nav.state === "none") return;
-        
-        const monitor = document.querySelector('.monitor');
-        const btn = document.getElementById('btn-expand');
-        monitor.classList.toggle('expanded');
-        // ★ここも力強い黒三角に連動させました
-        btn.innerText = monitor.classList.contains('expanded') ? '▲' : '▼';
-    };
-    
-    const sophieWarp = document.getElementById('sophie-warp');
-    if(sophieWarp) {
-        sophieWarp.onclick = () => { 
-            if(nav.state !== "none") { 
-                showRootMenu(); 
-            } else { 
-                document.getElementById('main-ui').style.display='none'; 
-                document.getElementById('chat-mode').style.display='flex'; 
-                
-                const loungeText = document.getElementById('lounge-text');
-                loungeText.innerText = "ありがとうございました。"; 
-                
-                window.speechSynthesis.cancel();
-                if(ytPlayerReady && ytPlayer && typeof ytPlayer.pauseVideo === 'function') {
-                    try { ytPlayer.pauseVideo(); } catch(e){}
-                }
-                try { talkAudio.pause(); } catch(e){}
-                
-                talkAudio.src = "./voices_mp3/goodbye.mp3";
-                
-                const finalizeExit = () => {
-                    setTimeout(() => {
-                        document.getElementById('chat-mode').style.display='none';
-                        document.getElementById('entry-screen').style.display='flex';
-                        loungeText.innerText = "いらっしゃいませ。";
-                        talkAudio.onended = defaultOnEnded; 
-                        img.src = ""; 
-                    }, 1000);
-                };
-                
-                talkAudio.onended = finalizeExit;
-                talkAudio.onerror = finalizeExit; 
-                
-                try {
-                    const p = talkAudio.play();
-                    if (p !== undefined) p.catch(finalizeExit);
-                } catch(e) {
-                    finalizeExit();
-                }
-            } 
-        };
-    }
-
-    document.getElementById('btn-music').onclick = openMusic;
-    document.getElementById('btn-talk').onclick = openTalk;
-
-    const btnN = document.getElementById('btn-next');
-    if(btnN) {
-        btnN.onpointerdown = (e) => { 
-            e.preventDefault();
-            pressTimer = setTimeout(() => { isAutoPlay = !isAutoPlay; btnN.classList.toggle('auto-active', isAutoPlay); pressTimer = null; }, 600); 
-        };
-        btnN.onpointerup = () => { if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; next(); } };
-        btnN.onpointerleave = () => { if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; } };
-    }
-
-    talkAudio.onended = defaultOnEnded;
-}
-
-function playHead() {
-    if(ytPlayerReady && ytPlayer && typeof ytPlayer.seekTo === 'function') {
-        ytPlayer.seekTo(0, true);
-        ytPlayer.playVideo();
-    }
-    if(!isMusicMode) talkAudio.play().catch(()=>{});
-}
-
-function togglePause() {
-    if(!isPaused) { 
-        if(ytPlayerReady && ytPlayer && typeof ytPlayer.pauseVideo === 'function') ytPlayer.pauseVideo(); 
-        talkAudio.pause(); window.speechSynthesis.pause(); isPaused = true; 
-    } else { 
-        if(ytPlayerReady && ytPlayer && typeof ytPlayer.playVideo === 'function') ytPlayer.playVideo(); 
-        if(!isMusicMode) talkAudio.play().catch(()=>{}); window.speechSynthesis.resume(); isPaused = false; 
-    }
-}
-
-function next() {
-    if(nav.curI < nav.curP.length - 1) {
-        nav.updateNav(undefined, undefined, undefined, nav.curI + 1);
-        const m = nav.curP[nav.curI];
-        
-        if (nav.state === "none") {
-            let topText = isMusicMode ? `🎵 ${m.a}さんの「${m.ti}」です` : `🥃 ${m.th}：「${m.ti}」のお話です`;
-            
-            if (isMusicMode) { 
-                setMon('v', m.u); 
-                prep(topText, true, null, m.txt); 
-            } else { 
-                setMon('i', `./talk_images/${m.id}.jpg`); 
-                prep(topText, false, m.id, m.txt); 
-            }
-        } else {
-            if (isMusicMode && nav.state !== "tit") {
-                const title = nav.curP[0] && nav.curP[0].a ? nav.curP[0].a : "再生リスト";
-                nav.updateNav("tit");
-                renderSongList(title);
-            } else if (!isMusicMode && nav.state !== "st") {
-                const title = nav.curP[0] && nav.curP[0].th ? nav.curP[0].th : "お酒の話";
-                nav.updateNav("st");
-                renderStoryList(title);
-            }
-            
-            if (lv.style.display === 'none') {
-                nm.style.display = 'none';
-                lv.style.display = 'block';
-            }
-
-            if (isMusicMode) { setMon('v', m.u); prep(`${m.a}さんの${m.ti}です`, true); } 
-            else { setMon('i', `./talk_images/${m.id}.jpg`); prep(m.txt, false, m.id); }
-        }
-    } else { 
-        isAutoPlay = false; 
-        const btnN = document.getElementById('btn-next'); 
-        if(btnN) btnN.classList.remove('auto-active'); 
-    }
-}
-
-function extractYtId(u) {
-    if(!u) return "";
-    const reg = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i;
-    const match = u.match(reg);
-    return match ? match[1] : u;
-}
-
-function setMon(m, s) {
-    if (nav.state === "none") {
-        ytWrapper.style.display = 'none'; 
-        img.style.display = 'block'; 
-        img.src = './front_sophie.jpeg';
-        
-        document.querySelector('.monitor').classList.remove('expanded');
-        btnExpand.innerText = '▼';
-        document.getElementById('btn-expand').style.opacity = '0.3';
-        
-        if(m === 'v') { 
-            if(ytPlayerReady && ytPlayer && typeof ytPlayer.loadVideoById === 'function') {
-                ytPlayer.loadVideoById(extractYtId(s));
-            }
-        } else { 
-            if(ytPlayerReady && ytPlayer && typeof ytPlayer.pauseVideo === 'function') {
-                ytPlayer.pauseVideo();
-            }
-        }
+    try {
+        await nav.loadAllData();
+    } catch (e) {
+        alert("データの読み込みに失敗しました。");
         return;
     }
 
-    ytWrapper.style.display = 'none'; 
-    img.style.display = 'none'; 
-    
-    if(m === 'v') { 
-        ytWrapper.style.display = 'block'; 
-        document.getElementById('btn-expand').style.opacity = '0.3';
-        if(ytPlayerReady && ytPlayer && typeof ytPlayer.loadVideoById === 'function') {
-            ytPlayer.loadVideoById(extractYtId(s));
-        }
-    } else { 
-        img.style.display = 'block'; 
-        img.src = s; 
-        document.getElementById('btn-expand').style.opacity = '1';
-        if(ytPlayerReady && ytPlayer && typeof ytPlayer.pauseVideo === 'function') {
-            ytPlayer.pauseVideo();
-        }
-    }
-}
+    // liquor.jsにコンソール切替関数を渡す
+    liquor.setRenderConsole(renderConsole);
 
-function prep(t, isM, id = null, originalTxt = null) {
-    window.speechSynthesis.cancel(); 
-    try { talkAudio.pause(); if (talkAudio.readyState > 0) talkAudio.currentTime = 0; } catch(e){}
-    lastTxt = t; isMusicMode = isM; isPaused = false;
-    tel.innerText = t; 
-    tel.style.display = 'block'; 
-    tel.scrollTop = 0;
-    
-    if (nav.state === "none") {
-        tel.style.top = 'auto';           
-        tel.style.bottom = '0';           
-        tel.style.height = 'auto';        
-        tel.style.background = 'rgba(0,0,0,0.6)'; 
-    } else {
-        tel.style.top = '0';              
-        tel.style.bottom = 'auto';
-        tel.style.height = '100%';
-        tel.style.background = 'rgba(0,0,0,0.75)';
-    }
+    setup();
 
-    let speakTxt = originalTxt ? originalTxt : t; 
+    // YouTube IFrame API 読み込み
+    const tag = document.createElement('script');
+    tag.src = "https://www.youtube.com/iframe_api";
+    document.getElementsByTagName('script')[0].parentNode.insertBefore(tag, document.getElementsByTagName('script')[0]);
+});
 
-    if(isM) {
-        setTimeout(() => { if(lastTxt === t) tel.style.display = 'none'; }, 5000);
-    } else if (id) {
-        talkAudio.src = `./voices_mp3/${id}.mp3`;
-        talkAudio.onerror = () => { try { media.speak(speakTxt); } catch(e){} };
-        try { const p = talkAudio.play(); if (p !== undefined) p.catch(() => { try { media.speak(speakTxt); } catch(e){} }); } 
-        catch(e) { try { media.speak(speakTxt); } catch(err){} }
-    }
-    
-    document.querySelectorAll('#list-view .item').forEach((el) => {
-        if (el.dataset.idx && parseInt(el.dataset.idx) === nav.curI) {
-            el.classList.add('active-item');
-            if (nav.state !== "none") {
-                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+window.onYouTubeIframeAPIReady = function () {
+    ytPlayer = new YT.Player('yt-player', {
+        playerVars: { playsinline: 1, autoplay: 1, rel: 0, controls: 1 },
+        events: {
+            onReady: () => {
+                ytPlayerReady = true;
+                music.setYtReady(ytPlayer);
+                music.initMusic(talkAudio, ytPlayer, true, document.getElementById('telop'));
+            },
+            onStateChange: (e) => {
+                if (e.data === YT.PlayerState.ENDED && music.isAutoPlay && music.isMusicMode) {
+                    music.next();
+                }
             }
+        }
+    });
+};
+
+// =============================================
+// セットアップ
+// =============================================
+function setup() {
+    // musicモジュールに必要な参照を渡す（YT準備前でも音声は使える）
+    music.initMusic(talkAudio, null, false, document.getElementById('telop'));
+
+    talkAudio.onended = music.defaultOnEnded;
+
+    // 入口ボタン
+    document.getElementById('btn-enter').onclick = () => {
+        document.getElementById('entry-screen').style.display = 'none';
+        document.getElementById('chat-mode').style.display = 'flex';
+
+        if (ytPlayerReady && ytPlayer) {
+            try { ytPlayer.mute(); ytPlayer.loadVideoById('2vfCbdmKhMw'); setTimeout(() => { ytPlayer.pauseVideo(); ytPlayer.unMute(); }, 1000); } catch(e) {}
+        }
+
+        playVoice("./voices_mp3/greeting.mp3", "いらっしゃいませ。");
+    };
+
+    // カウンターへ進む
+    document.getElementById('btn-to-bar').onclick = () => {
+        document.getElementById('chat-mode').style.display = 'none';
+        document.getElementById('main-ui').style.display = 'flex';
+        window.speechSynthesis.cancel();
+        talkAudio.pause();
+        showRootMenu();
+        playVoice("./voices_mp3/menu_greeting.mp3", "いつもありがとうございます。今日はいかがされますか？");
+    };
+
+    // メインメニューボタン
+    document.getElementById('btn-music').onclick  = music.openMusic;
+    document.getElementById('btn-talk').onclick   = music.openTalk;
+    document.getElementById('btn-liquor').onclick = liquor.openLiquorPortal;
+
+    // コントローラーボタン
+    document.getElementById('ctrl-play').onclick  = music.playHead;
+    document.getElementById('ctrl-pause').onclick = music.togglePause;
+    document.getElementById('ctrl-back').onclick  = handleBack;
+
+    // 拡大ボタン
+    document.getElementById('btn-expand').onclick = () => {
+        if (music.isMusicMode || nav.state === "none") return;
+        const monitor = document.querySelector('.monitor');
+        const btn = document.getElementById('btn-expand');
+        monitor.classList.toggle('expanded');
+        btn.innerText = monitor.classList.contains('expanded') ? '▲' : '▼';
+    };
+
+    // ソフィーアイコン（メニューへ戻る or 退店）
+    document.getElementById('sophie-warp').onclick = () => {
+        if (nav.state !== "none") {
+            showRootMenu();
         } else {
-            el.classList.remove('active-item');
+            // 退店シーケンス
+            document.getElementById('main-ui').style.display = 'none';
+            document.getElementById('chat-mode').style.display = 'flex';
+            const loungeText = document.getElementById('lounge-text');
+            loungeText.innerText = "ありがとうございました。";
+            window.speechSynthesis.cancel();
+            if (ytPlayerReady && ytPlayer) { try { ytPlayer.pauseVideo(); } catch(e){} }
+            try { talkAudio.pause(); } catch(e){}
+            talkAudio.src = "./voices_mp3/goodbye.mp3";
+            const finalize = () => {
+                setTimeout(() => {
+                    document.getElementById('chat-mode').style.display = 'none';
+                    document.getElementById('entry-screen').style.display = 'flex';
+                    loungeText.innerText = "いらっしゃいませ。";
+                    talkAudio.onended = music.defaultOnEnded;
+                    document.getElementById('monitor-img').src = "";
+                }, 1000);
+            };
+            talkAudio.onended = finalize;
+            talkAudio.onerror = finalize;
+            try { const p = talkAudio.play(); if (p) p.catch(finalize); } catch(e) { finalize(); }
         }
-    });
-}
+    };
 
-function openMusic() {
-    nav.updateNav("art"); let h = "";
-    
-    h += `<div class="label">マスターお薦め</div>`;
-    h += `<div class="artist-grid">`;
-    h += `<div class="item" data-special="ソフィー" style="color: var(--blue);">🎤 ソフィー</div>`;
-    h += `<div class="item" data-special="BGM">🎤 BGM</div>`;
-    h += `<div class="item" data-special="昭和ソング">🎤 昭和ソング</div>`;
-    h += `</div>`;
-    
-    const preferredOrder = ['E', 'F', 'J', 'L', 'W', 'I', 'S']; 
-    const rawFs = [...new Set(nav.jData.map(d => d.f).filter(Boolean))];
-    const sortedFs = rawFs.sort((a, b) => {
-        let ia = preferredOrder.indexOf(a);
-        let ib = preferredOrder.indexOf(b);
-        if (ia === -1) ia = 999;
-        if (ib === -1) ib = 999;
-        return ia - ib;
-    });
-
-    sortedFs.forEach(f => {
-        const arts = [...new Set(nav.jData.filter(d => d.f === f).map(d => d.a))];
-        if(arts.length) { 
-            let labelName = "";
-            if (f === 'L') {
-                labelName = "特集コーナー";
-            } else {
-                const genreData = nav.jData.find(d => d.f === f && d.gName);
-                labelName = genreData ? genreData.gName : f;
-            }
-            h += `<div class="label">${labelName}</div>`; 
-            h += `<div class="artist-grid">`;
-            arts.forEach(a => { h += `<div class="item" data-artist="${a}">🎤 ${a}</div>`; }); 
-            h += `</div>`;
-        }
-    });
-    
-    render(h, (e) => { 
-        const el = e.currentTarget;
-        if(el.dataset.special) openSpecialSongs(el.dataset.special);
-        else if(el.dataset.artist) openSongs(el.dataset.artist); 
-    });
-}
-
-function openSpecialSongs(type) {
-    let filtered = [];
-    if(type === 'ソフィー') {
-        filtered = nav.jData.filter(m => m.a && m.a.includes("ソフィー"));
-    } else if(type === 'BGM') {
-        filtered = nav.jData.filter(m => m.a === "BGM");
-    } else if(type === '昭和ソング') {
-        const showaGenres = ["70s", "昭和", "演歌", "歌姫"];
-        filtered = nav.jData.filter(m => showaGenres.includes(m.a));
+    // 次へボタン（長押しで自動再生）
+    const btnN = document.getElementById('btn-next');
+    if (btnN) {
+        btnN.onpointerdown = (e) => {
+            e.preventDefault();
+            pressTimer = setTimeout(() => {
+                // isAutoPlayはmusicモジュール内で管理 → nextで自動的にトグル
+                music.next(); // 長押し時も次へ
+                btnN.classList.toggle('auto-active');
+                pressTimer = null;
+            }, 600);
+        };
+        btnN.onpointerup = () => {
+            if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; music.next(); }
+        };
+        btnN.onpointerleave = () => {
+            if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
+        };
     }
-    nav.updateNav("tit", undefined, filtered); isMusicMode = true;
-    renderSongList(type);
+
+    renderConsole('standard');
+    showRootMenu();
 }
 
-function openSongs(a) {
-    nav.updateNav("tit", undefined, nav.jData.filter(m => m.a === a)); isMusicMode = true;
-    renderSongList(a);
+// =============================================
+// ユーティリティ
+// =============================================
+function playVoice(src, txt) {
+    talkAudio.src = src;
+    talkAudio.onerror = () => { try { media.speak(txt); } catch(e){} };
+    try {
+        const p = talkAudio.play();
+        if (p !== undefined) p.catch(() => { try { media.speak(txt); } catch(e){} });
+    } catch(e) { try { media.speak(txt); } catch(err){} }
 }
 
-function renderSongList(title) {
-    let h = `<div class="label">${title}</div>`;
-    nav.curP.forEach((m, i) => { 
-        const isSophie = m.ti && (m.ti.includes("みずいろのシグナル") || m.ti.includes("水色のシグナル"));
-        const color = isSophie ? `style="color: var(--blue);"` : "";
-        h += `<div class="item" data-idx="${i}" ${color}>🎵 ${m.ti}</div>`; 
-    });
-    render(h, (e) => { 
-        const el = e.currentTarget;
-        if(el.dataset.idx) {
-            const i = parseInt(el.dataset.idx); 
-            if(!isNaN(i)){ 
-                nav.updateNav(undefined,undefined,undefined,i); 
-                setMon('v', nav.curP[i].u); 
-                prep(`${nav.curP[i].a}さんの${nav.curP[i].ti}です`, true); 
-            }
-        }
-    });
+function showRootMenu() {
+    const lv  = document.getElementById('list-view');
+    const nm  = document.getElementById('nav-main');
+    const img = document.getElementById('monitor-img');
+    const yt  = document.getElementById('yt-wrapper');
+    const tel = document.getElementById('telop');
+    const mon = document.querySelector('.monitor');
+
+    lv.style.display  = 'none';
+    nm.style.display  = 'block';
+    nav.updateNav("none");
+    yt.style.display  = 'none';
+    img.src = './front_sophie.jpeg';
+    img.style.display = 'block';
+    if (tel) tel.style.display = 'none';
+    if (mon) { mon.classList.remove('expanded'); }
+    utils.showLSide();
+
+    const btnExp = document.getElementById('btn-expand');
+    if (btnExp) { btnExp.innerText = '▼'; btnExp.style.opacity = '0.3'; }
+
+    renderConsole('standard');
 }
 
-function openTalk() {
-    nav.updateNav("g"); let h = '<div class="label">お酒のジャンル</div>';
-    [...new Set(nav.tData.map(d => d.g))].forEach(g => { h += `<div class="item" data-g="${g}">📁 ${g}</div>`; });
-    render(h, (e) => { const g = e.currentTarget.dataset.g; if(g) { nav.updateNav("th", g); openThemes(nav.curG); } });
-}
-
-function openThemes(g) {
-    nav.updateNav("th"); let h = `<div class="label">${g}</div>`;
-    [...new Set(nav.tData.filter(d => d.g === g).map(d => d.th))].forEach(t => { h += `<div class="item" data-th="${t}">🏷️ ${t}</div>`; });
-    render(h, (e) => { const t = e.currentTarget.dataset.th; if(t) openStories(t); });
-}
-
-function renderStoryList(t) {
-    let h = `<div class="label">${t}</div>`;
-    nav.curP.forEach((d, i) => { 
-        const isFix = (d.fix === "1" || d.fix === "true" || parseInt(d.fix) > 0);
-        const fixIcon = isFix ? "📌 " : "";
-        h += `<div class="item" data-idx="${i}">${fixIcon}${d.ti}</div>`; 
-    });
-    render(h, (e) => { 
-        const el = e.currentTarget;
-        if(el.dataset.idx) {
-            const i = parseInt(el.dataset.idx); 
-            if(!isNaN(i)){ 
-                nav.updateNav(undefined,undefined,undefined,i); 
-                setMon('i', `./talk_images/${nav.curP[i].id}.jpg`); 
-                prep(nav.curP[i].txt, false, nav.curP[i].id); 
-            }
-        }
-    });
-}
-
-function openStories(t) {
-    const stories = nav.tData.filter(d => d.th === t).sort((a,b) => {
-        const isFixA = (a.fix === "1" || a.fix === "true" || parseInt(a.fix) > 0) ? 1 : 0;
-        const isFixB = (b.fix === "1" || b.fix === "true" || parseInt(b.fix) > 0) ? 1 : 0;
-        return isFixB - isFixA;
-    });
-    nav.updateNav("st", undefined, stories); isMusicMode = false;
-    renderStoryList(t);
-}
-
-function render(h, cb) { 
-    nm.style.display = 'none'; lv.style.display = 'block'; lv.innerHTML = h; 
-    document.getElementById('main-scroll').scrollTop = 0; 
-    document.querySelectorAll('#list-view .item').forEach(el => el.onclick = cb);
-}
-
+// =============================================
+// 戻るハンドラ
+// =============================================
 function handleBack() {
-    if (nav.state === "st") openThemes(nav.curG); 
-    else if (nav.state === "th") openTalk(); 
-    else if (nav.state === "tit") openMusic();
-    else { showRootMenu(); }
+    // まずliquor.jsで処理できるか試みる
+    if (liquor.handleLiquorBack()) return;
+    // 次にmusic.jsで処理できるか試みる
+    if (music.handleBack()) return;
+    // どちらでもなければルートへ
+    showRootMenu();
+}
+
+// =============================================
+// コンソール（下部ボタンエリア）
+// ※ スクリーニング時はliquor.jsから呼ばれる
+// =============================================
+function renderConsole(mode) {
+    // v13.0の固定HTMLコンソールを使う（ボタンIDはそのまま）
+    // screening / result モードはliquor.jsが必要な時だけ呼ぶ
+    if (mode === 'screening') {
+        // スクリーニング画面：クリア＋実行ボタン
+        // btn-gridが固定HTMLなので、ボタンのテキストとイベントだけ差し替える
+        const grid = document.querySelector('.btn-grid');
+        if (!grid) return;
+        grid.innerHTML = `
+            <button class="c-btn" id="c-clr" style="background:#444;">クリア</button>
+            <button class="c-btn" id="c-ex"  style="background:#8e44ad; color:#fff; flex:2;">検索実行</button>`;
+        document.getElementById('c-clr').onclick = liquor.clearScr;
+        document.getElementById('c-ex').onclick  = liquor.execScr;
+
+    } else if (mode === 'result') {
+        const grid = document.querySelector('.btn-grid');
+        if (!grid) return;
+        grid.innerHTML = `
+            <button class="c-btn" id="c-mod" style="background:#2980b9; color:#fff;">🔍 条件変更</button>`;
+        document.getElementById('c-mod').onclick = () => nav.updateNav("lq_scr"); // openScreeningはliquor内
+
+    } else {
+        // 通常モード：v13.0の元のボタン構成を復元
+        const grid = document.querySelector('.btn-grid');
+        if (!grid) return;
+        grid.innerHTML = `
+            <button class="c-btn" id="btn-expand">▼</button>
+            <button class="c-btn" id="ctrl-back">▲</button>
+            <button class="c-btn" id="ctrl-pause">⏹️</button>
+            <button class="c-btn" id="ctrl-play" style="flex:1.5; font-size:1.2rem;">▶</button>
+            <button class="c-btn" id="btn-next">⏭</button>`;
+
+        document.getElementById('ctrl-play').onclick  = music.playHead;
+        document.getElementById('ctrl-pause').onclick = music.togglePause;
+        document.getElementById('ctrl-back').onclick  = handleBack;
+
+        document.getElementById('btn-expand').onclick = () => {
+            if (music.isMusicMode || nav.state === "none") return;
+            const monitor = document.querySelector('.monitor');
+            const btn = document.getElementById('btn-expand');
+            monitor.classList.toggle('expanded');
+            btn.innerText = monitor.classList.contains('expanded') ? '▲' : '▼';
+        };
+
+        const btnN = document.getElementById('btn-next');
+        if (btnN) {
+            btnN.onpointerdown = (e) => {
+                e.preventDefault();
+                pressTimer = setTimeout(() => {
+                    btnN.classList.toggle('auto-active');
+                    pressTimer = null;
+                }, 600);
+            };
+            btnN.onpointerup = () => {
+                if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; music.next(); }
+            };
+            btnN.onpointerleave = () => {
+                if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
+            };
+        }
+    }
 }
