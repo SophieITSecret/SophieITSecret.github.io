@@ -238,8 +238,8 @@ function renderConsole(mode) {
         const grid = document.querySelector('.btn-grid');
         if (!grid) return;
         grid.innerHTML = `
-            <button class="c-btn" id="c-mod" style="background:#2980b9; color:#fff;">🔍 条件変更</button>`;
-        document.getElementById('c-mod').onclick = () => nav.updateNav("lq_scr"); // openScreeningはliquor内
+            <button class="c-btn" id="c-mod" style="background:#2980b9; color:#fff; font-size:0.85rem;">🔍 検索条件を変更する</button>`;
+        document.getElementById('c-mod').onclick = liquor.openScreeningFromConsole;
 
     } else {
         // 通常モード：v13.0の元のボタン構成を復元

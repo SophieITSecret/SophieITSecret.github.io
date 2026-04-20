@@ -132,17 +132,18 @@ function openScreening() {
     const a4    = (scrState.sub && AXIS4_MAP[scrState.sub]) ? AXIS4_MAP[scrState.sub] : AXIS4_DEFAULT;
     const a4dis = !scrState.sub;
 
+    // ★ 軸名を左右端に配置した1行レイアウト
     const mkSlider = (id, lbl, left, right, min, max, disabled) => `
-        <div class="scr-axis-title">${lbl}</div>
-        <div class="scr-slider-box" style="opacity:${disabled ? 0.35 : 1}; pointer-events:${disabled ? 'none' : 'auto'};">
-            <div class="scr-slider-label-edge">${left}</div>
+        <div class="scr-slider-row" style="opacity:${disabled ? 0.35 : 1}; pointer-events:${disabled ? 'none' : 'auto'};">
+            <div class="scr-slider-label-name">${lbl}</div>
+            <div class="scr-slider-label-left">${left}</div>
             <div class="multi-range-wrap">
                 <div class="multi-range-track"></div>
                 <div class="multi-range-fill" id="${id}-fill"></div>
                 <input type="range" id="${id}-min" min="-2.0" max="2.0" step="0.5" value="${min}" style="z-index:3;">
                 <input type="range" id="${id}-max" min="-2.0" max="2.0" step="0.5" value="${max}" style="z-index:2;">
             </div>
-            <div class="scr-slider-label-edge">${right}</div>
+            <div class="scr-slider-label-right">${right}</div>
         </div>`;
 
     const allTags = new Set();
@@ -301,7 +302,6 @@ function executeScr() {
 function renderResults(results, scrollToGlobalIdx = null) {
     nav.updateNav('lq_res', null, results);
     let h = `<div class="label" id="lbl-back-res">◀ 検索結果: ${results.length}件</div>`;
-    h += `<button class="btn-back-scr" id="btn-mod-scr">🔍 検索条件を変更する</button>`;
     results.forEach(d => {
         const gIdx = nav.liquorData.indexOf(d);
         h += `<div class="item res-item" data-gidx="${gIdx}">🥃 ${clean(d['銘柄名'])}</div>`;
@@ -310,7 +310,6 @@ function renderResults(results, scrollToGlobalIdx = null) {
     if (_renderConsole) _renderConsole('result');
 
     document.getElementById('lbl-back-res').addEventListener('click', openLiquorPortal);
-    document.getElementById('btn-mod-scr').addEventListener('click', openScreening);
     document.querySelectorAll('.res-item').forEach(el => {
         el.addEventListener('click', () => showCard(parseInt(el.dataset.gidx), results));
     });
@@ -457,5 +456,6 @@ export function handleLiquorBack() {
 // =============================================
 // コンソール用：スクリーニング実行・クリア
 // =============================================
-export function execScr()   { executeScr(); }
-export function clearScr()  { scrState = initScrState(); openScreening(); }
+export function execScr()               { executeScr(); }
+export function clearScr()              { scrState = initScrState(); openScreening(); }
+export function openScreeningFromConsole() { openScreening(); }
