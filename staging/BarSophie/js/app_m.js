@@ -1,7 +1,7 @@
 import * as media from './media.js';
 import * as nav from './navigation.js';
 
-// --- 第4軸・詳細定義マッピング ---
+// --- 第4軸・詳細定義マッピング（ご提示の基準を完全反映） ---
 const AXIS4_MAP = {
     "スコッチ・シングルモルト": { label: "スモーキー度", left: "無煙", right: "煙強" },
     "スコッチ・ブレンデッド": { label: "スモーキー度", left: "無煙", right: "煙強" },
@@ -9,39 +9,29 @@ const AXIS4_MAP = {
     "カナディアンウイスキー": { label: "スモーキー度", left: "無煙", right: "煙強" },
     "ジャパニーズウイスキー": { label: "スモーキー度", left: "無煙", right: "煙強" },
     "ライウイスキー": { label: "スモーキー度", left: "無煙", right: "煙強" },
-    "その他ウイスキー": { label: "スモーキー度", left: "無煙", right: "煙強" },
-    "バーボン": { label: "樽熟成感", left: "ﾌﾚｯｼｭ", right: "深熟" },
-    "テネシーウイスキー": { label: "樽熟成感", left: "ﾌﾚｯｼｭ", right: "深熟" },
-    "コニャック": { label: "樽熟成感", left: "ﾌﾚｯｼｭ", right: "深熟" },
-    "アルマニャック": { label: "樽熟成感", left: "ﾌﾚｯｼｭ", right: "深熟" },
-    "カルヴァドス": { label: "樽熟成感", left: "ﾌﾚｯｼｭ", right: "深熟" },
+    "バーボン": { label: "樽熟成感", left: "フレッシュ", right: "深熟" },
+    "テネシーウイスキー": { label: "樽熟成感", left: "フレッシュ", right: "深熟" },
+    "コニャック": { label: "樽熟成感", left: "フレッシュ", right: "深熟" },
+    "アルマニャック": { label: "樽熟成感", left: "フレッシュ", right: "深熟" },
     "赤ワイン": { label: "タンニン", left: "なめらか", right: "力強い渋" },
-    "白ワイン": { label: "酸味", left: "丸酸", right: "シャープ" },
-    "ロゼワイン": { label: "酸味", left: "丸酸", right: "シャープ" },
-    "オレンジワイン": { label: "酸味", left: "丸酸", right: "シャープ" },
-    "シェリー・酒精強化": { label: "ナッツ感", left: "淡果", right: "強果" },
+    "白ワイン": { label: "酸味", left: "丸く", right: "シャープ" },
+    "ロゼワイン": { label: "酸味", left: "丸く", right: "シャープ" },
     "シャンパン": { label: "辛口度", left: "甘泡", right: "辛泡" },
     "プロセッコ・フランチャコルタ": { label: "辛口度", left: "甘泡", right: "辛泡" },
     "純米大吟醸": { label: "旨味", left: "淡麗", right: "濃醇" },
     "純米吟醸": { label: "旨味", left: "淡麗", right: "濃醇" },
     "特別純米・純米": { label: "旨味", left: "淡麗", right: "濃醇" },
-    "本醸造・その他": { label: "旨味", left: "淡麗", right: "濃醇" },
-    "スパークリング日本酒": { label: "旨味", left: "淡麗", right: "濃醇" },
-    "芋焼酎": { label: "芋の素材感", left: "ｸﾘｰﾝ", right: "素材前面" },
-    "麦焼酎": { label: "麦の素材感", left: "ｸﾘｰﾝ", right: "香ばしい" },
-    "米焼酎": { label: "米の素材感", left: "ｸﾘｰﾝ", right: "米の甘み" },
-    "黒糖焼酎": { label: "黒糖感", left: "あっさり", right: "甘み深み" },
+    "芋焼酎": { label: "芋の素材感", left: "クリーン", right: "素材前面" },
+    "麦焼酎": { label: "麦の素材感", left: "クリーン", right: "香ばしい" },
+    "米焼酎": { label: "米の素材感", left: "クリーン", right: "米の甘み" },
+    "黒糖焼酎": { label: "黒糖感", left: "あっさり", right: "深み強い" },
     "泡盛": { label: "古酒感", left: "若い", right: "深み" },
-    "ジン（銘柄）": { label: "ﾎﾞﾀﾆｶﾙ感", left: "ｸﾘｰﾝ", right: "複雑個性" },
+    "ジン（銘柄）": { label: "ボタニカル感", left: "クリーン", right: "複雑個性" },
     "ウォッカ（銘柄）": { label: "クリーン度", left: "個性あり", right: "純粋" },
     "テキーラ（銘柄）": { label: "アガベ感", left: "弱い", right: "強く主張" },
     "ラム（銘柄）": { label: "糖蜜・樽感", left: "ライト", right: "濃厚" },
-    "国内プレミアム": { label: "苦味", left: "無苦", right: "苦強" },
-    "海外メジャー": { label: "苦味", left: "無苦", right: "苦強" },
-    "クラフトビール": { label: "苦味", left: "無苦", right: "苦強" },
-    "梅酒": { label: "梅の酸味", left: "まろやか", right: "酸鮮烈" },
-    "ウイスキー系カクテル": { label: "酸味", left: "無酸", right: "酸強" },
-    "ベルモット・アペリティフ": { label: "薬草感", left: "淡草", right: "強草" }
+    "クラフトビール": { label: "苦味", left: "苦みなし", right: "苦味強" },
+    "梅酒": { label: "梅の酸味", left: "まろやか", right: "酸鮮烈" }
 };
 const AXIS4_DEFAULT = { label: "第4軸", left: "←", right: "→", disabled: true };
 
@@ -55,11 +45,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     setup();
 });
 
-// グローバル登録
+// window登録
 window.openLiquorPortal = openLiquorPortal;
 window.openScreening = openScreening;
 window.executeScr = executeScr;
 window.refreshScr = () => { saveForm(); openScreening(); };
+window.openMajor = openMajor;
 
 function setup() {
     document.getElementById('btn-enter').onclick = () => { document.getElementById('entry-screen').style.display='none'; document.getElementById('chat-mode').style.display='flex'; playV("./voices_mp3/greeting.mp3", "いらっしゃいませ。"); };
@@ -95,18 +86,17 @@ function openScreening() {
         <div class="scr-row"><span class="scr-row-label">品目:</span><select id="s-sb" onchange="window.refreshScr()"><option value="">問わない</option>${subs.map(s=>`<option value="${s}" ${scrState.sub===s?'selected':''}>${s}</option>`).join('')}</select></div>
         <div class="scr-row"><span class="scr-row-label">国:</span><select id="s-cn" onchange="window.refreshScr()"><option value="">問わない</option>${countries.map(c=>`<option value="${c}" ${scrState.country===c?'selected':''}>${c}</option>`).join('')}</select></div>
         <div class="scr-row"><span class="scr-row-label">地域:</span><select id="s-rg"><option value="">問わない</option>${regions.map(r=>`<option value="${r}" ${scrState.region===r?'selected':''}>${r}</option>`).join('')}</select></div>
-        <div class="scr-row"><span class="scr-row-label">検索:</span><input type="text" id="s-kw" value="${scrState.keyword}" placeholder="名称・タグなどで検索"></div>
+        <div class="scr-row"><span class="scr-row-label">検索:</span><input type="text" id="s-kw" value="${scrState.keyword}" placeholder="名称・タグなど"></div>
     </div>`;
 
-    const cospaOpts = `<option value="">問わない</option><option value="1" ${scrState.cospa==='1'?'selected':''}>☆1以上</option><option value="2" ${scrState.cospa==='2'?'selected':''}>☆2以上</option><option value="3" ${scrState.cospa==='3'?'selected':''}>☆3のみ</option>`;
     h += `<div class="scr-group">
         <div class="scr-row"><span class="scr-row-label">定番:</span><select id="s-std"><option value="">問わない</option><option value="1" ${scrState.isStandard==='1'?'selected':''}>定番に絞る</option></select></div>
         <div class="scr-row"><span class="scr-row-label">推し:</span><select id="s-sop"><option value="">問わない</option><option value="1" ${scrState.isSophieRecom==='1'?'selected':''}>推しを聞く</option></select></div>
-        <div class="scr-row"><span class="scr-row-label">ｺｽﾊﾟ:</span><select id="s-cospa">${cospaOpts}</select></div>
+        <div class="scr-row"><span class="scr-row-label">ｺｽﾊﾟ:</span><select id="s-cospa"><option value="">問わない</option><option value="1" ${scrState.cospa==='1'?'selected':''}>☆1以上</option><option value="2" ${scrState.cospa==='2'?'selected':''}>☆2以上</option><option value="3" ${scrState.cospa==='3'?'selected':''}>☆3のみ</option></select></div>
     </div>`;
 
-    const mkS = (id, l, r, min, max, dis) => `<div class="scr-slider-box" style="opacity:${dis?0.4:1}"><div class="scr-slider-label-edge">${l}</div><div class="multi-range-wrap"><div class="multi-range-track"></div><div class="multi-range-fill" id="${id}-fill"></div><input type="range" id="${id}-min" min="-2" max="2" step="0.5" value="${min}"><input type="range" id="${id}-max" min="-2" max="2" step="0.5" value="${max}"></div><div class="scr-slider-label-edge">${r}</div></div>`;
-    h += `<div class="scr-group">`;
+    const mkS = (id, l, r, min, max, dis) => `<div class="scr-slider-box" style="opacity:${dis?0.4:1}"><div class="scr-slider-label-edge">${l}</div><div class="multi-range-wrap"><div class="multi-range-track"></div><div class="multi-range-fill" id="${id}-fill"></div><input type="range" id="${id}-min" min="-2.0" max="2.0" step="0.5" value="${min}"><input type="range" id="${id}-max" min="-2.0" max="2.0" step="0.5" value="${max}"></div><div class="scr-slider-label-edge">${r}</div></div>`;
+    h += `<div class="scr-group"><div class="scr-title">味わい指定</div>`;
     h += mkS('s1','辛口','甘口',scrState.s1Min,scrState.s1Max,false);
     h += mkS('s2','軽快','濃厚',scrState.s2Min,scrState.s2Max,false);
     h += mkS('s3','常道','独特',scrState.s3Min,scrState.s3Max,false);
@@ -114,7 +104,6 @@ function openScreening() {
     h += mkS('s4', a4.left, a4.right, scrState.s4Min, scrState.s4Max, !scrState.sub);
     h += `</div>`;
 
-    // タグ選択
     let allT = new Set();
     nav.liquorData.forEach(d => { ((d["味わいタグ"]||"") + "," + (d["検索タグ"]||"")).split(',').forEach(t => { if(t.trim()) allT.add(t.trim()); }); });
     h += `<div class="scr-group"><div class="scr-title">タグ選択</div><div class="scr-tag-grid">`;
@@ -148,14 +137,10 @@ function executeScr() {
         if(scrState.isStandard === "1" && d["定番フラグ"] !== "1") return false;
         if(scrState.isSophieRecom === "1" && d["ソフィーの推し"] !== "1") return false;
         if(scrState.cospa) { const c = (d["Gemini_コスパ"]||"").split('☆').length - 1; if(parseInt(scrState.cospa) > c) return false; }
-        if(scrState.tags.length > 0) {
-            const dTags = ((d["味わいタグ"]||"") + "," + (d["検索タグ"]||"")).split(',').map(t=>t.trim());
-            if(!scrState.tags.every(t => dTags.includes(t))) return false;
-        }
-        if(scrState.keyword) {
-            const allT = (d["銘柄名"]+d["国"]+d["産地"]+d["味わいタグ"]+d["検索タグ"]+d["鑑定評価(200字)"]+d["ソフィーの裏話"]).toLowerCase();
-            if(!allT.includes(scrState.keyword.toLowerCase())) return false;
-        }
+        if(scrState.tags.length > 0 && !scrState.tags.every(t => ((d["味わいタグ"]||"")+(d["検索タグ"]||"")).includes(t))) return false;
+        const avg1 = (parseFloat(d["GPT_甘辛"])+parseFloat(d["Gemini_甘辛"])+parseFloat(d["Claude_甘辛"]))/3;
+        if(avg1 < scrState.s1Min || avg1 > scrState.s1Max) return false;
+        if(scrState.keyword && !d["銘柄名"].includes(scrState.keyword)) return false;
         return true;
     });
     renderResults(res);
@@ -184,40 +169,24 @@ function showCard(gIdx, list) {
 
     let h = `<div class="label">No.${d["No"]}</div><div class="lq-card">`;
     h += `<div class="lq-name">${d["銘柄名"]}</div><div class="lq-quote">${(d["ソフィーのセリフ"]||"").replace(/[「」『』"']/g,'')}</div>`;
-    
-    // 基本情報（▶色入れ替え）
-    h += `<div class="lq-basic-info" style="font-size:0.85rem; margin-bottom:10px;">
-        <div><span style="color:var(--blue)">▶</span> ${d["大分類"]}　<span style="color:#e74c3c">▶</span> ${d["中分類"]}</div>
-        <div><span style="color:#888">産地:</span> ${d["国"]} / ${d["産地"]}</div>`;
+    h += `<div class="lq-basic-info"><div><span style="color:var(--blue)">▶</span> ${d["大分類"]}　<span style="color:#e74c3c">▶</span> ${d["中分類"]}</div><div><span style="color:#888">産地:</span> ${d["国"]} / ${d["産地"]}</div>`;
     if(d["製造元と創業年"] && d["製造元と創業年"] !== "-") h += `<div><span style="color:#888">製造:</span> ${d["製造元と創業年"]}</div>`;
     if(d["公式URL"] && d["公式URL"]!=="-") h+=`<a href="${d["公式URL"]}" target="_blank" class="lq-btn-small">🔗 メーカーサイト</a>`;
-    h += `</div>`;
-
-    h += `<div class="lq-split-view"><div class="lq-graph-half">`;
+    h += `</div><div class="lq-split-view"><div class="lq-graph-half">`;
     if(d["Gemini_コスパ"]) h += `<div class="lq-cospa"><span>コスパ</span> ${d["Gemini_コスパ"]}</div>`;
     h += mkBar("辛口", "甘口", d["GPT_甘辛"], d["Gemini_甘辛"], d["Claude_甘辛"]);
     h += mkBar("軽快", "濃厚", d["GPT_ボディ"], d["Gemini_ボディ"], d["Claude_ボディ"]);
     h += mkBar("常道", "独特", "", "", d["Claude_個性"], true);
     const a4 = AXIS4_MAP[d["中分類"]] || AXIS4_DEFAULT;
-    h += `<div style="font-size:0.6rem; color:var(--accent); text-align:center;">${a4.label}</div>${mkBar(a4.left, a4.right, "", "", d["Claude_第4軸"], true)}`;
+    h += `<div style="font-size:0.6rem; color:var(--accent); text-align:center; margin-bottom:2px;">${a4.label}</div>${mkBar(a4.left, a4.right, "", "", d["Claude_第4軸"], true)}`;
+    h += `<div style="font-size:0.6rem; color:#888; text-align:right; margin-top:8px;"><span style="color:#10a37f">●GPT</span> <span style="color:#1a73e8">●Gem</span> <span style="color:#d97757">●Claude</span></div>`;
     h += `</div><div class="lq-specs-half">`;
-    
-    // スペック（価格色入れ替え）
-    h += `<div class="spec-row-compact"><span>知名度</span><span>${d["知名度"]}</span></div>
-          <div class="spec-row-compact"><span>度数</span><span>${d["度数"]}</span></div>
-          <div class="spec-row-compact"><span>市販</span><span class="price-retail">${d["市販価格"]}</span></div>
-          <div class="spec-row-compact"><span>Bar</span><span class="price-bar">${d["バー価格"]}</span></div>`;
+    h += `<div class="spec-row-compact"><span>知名度</span><span>${d["知名度"]}</span></div><div class="spec-row-compact"><span>度数</span><span>${d["度数"]}</span></div><div class="spec-row-compact"><span>発売</span><span>${d["銘柄誕生年"]}</span></div><div class="spec-row-compact"><span>市販</span><span class="price-retail">${d["市販価格"]}</span></div><div class="spec-row-compact"><span>Bar</span><span class="price-bar">${d["バー価格"]}</span></div>`;
     h += `</div></div>`;
-
     if(d["ソフィーの裏話"]) h += `<div class="lq-sophie-talk"><span class="sophie-prefix">[ソフィー]</span> ${d["ソフィーの裏話"]}</div>`;
-    
-    // タグ一覧
     let tags = ((d["味わいタグ"]||"") + "," + (d["検索タグ"]||"")).split(',').filter(t=>t.trim());
     if(tags.length) h += `<div class="lq-tags">${tags.map(t=>`<span class="lq-tag">${t}</span>`).join('')}</div>`;
-    
-    // 解説文
     if(d["鑑定評価(200字)"]) h += `<div class="lq-desc">${d["鑑定評価(200字)"]}</div>`;
-    
     h += `</div>`;
     render(h, 'standard', true);
     const b = document.getElementById('c-back'); if(nav.curG === null) { b.innerText = '候補へ戻る'; b.style.background = '#d35400'; }
@@ -244,11 +213,11 @@ function saveForm() {
     scrState.tags = Array.from(document.querySelectorAll('.scr-tag-btn.selected')).map(el => el.dataset.tag);
 }
 
-window.openMajor = () => {
+function openMajor() {
     nav.updateNav("lq_major"); let h = `<div class="label" onclick="window.openLiquorPortal()">◀ ジャンルを選択</div>`;
     [...new Set(nav.liquorData.map(d => d["大分類"]))].forEach(m => { h += `<div class="item" onclick="window.openSub('${m}')">📁 ${m}</div>`; });
     render(h);
-};
+}
 window.openSub = (mj) => {
     nav.updateNav("lq_sub", mj); let h = `<div class="label" onclick="window.openMajor()">◀ ${mj}</div>`;
     [...new Set(nav.liquorData.filter(d => d["大分類"] === mj).map(d => d["中分類"]))].forEach(s => { h += `<div class="item" onclick="window.openItems('${s}')">📁 ${s}</div>`; });
@@ -270,7 +239,7 @@ function renderConsole(mode) {
         document.getElementById('c-ex').onclick = () => window.executeScr();
     } else if (mode === 'result') {
         grid.innerHTML = `<button class="console-scr-btn btn-c-mod" id="c-mod">🔍 条件変更</button>`;
-        document.getElementById('c-mod').onclick = () => window.openScreening();
+        document.getElementById('btn-mod').onclick = () => window.openScreening();
     } else {
         grid.innerHTML = `<button class="c-btn" id="c-exp">▼</button><button class="c-btn" id="c-back">▲</button><button class="c-btn">⏹️</button><button class="c-btn" id="c-next" style="flex:1.5">▶</button><button class="c-btn">⏭</button>`;
         document.getElementById('c-back').onclick = handleBack;
