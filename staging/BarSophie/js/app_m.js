@@ -1,27 +1,32 @@
 import * as media from './media.js';
 import * as nav from './navigation.js';
 
-// --- 第4軸・完全定義マッピング ---
+// --- 第4軸・詳細定義マッピング ---
 const AXIS4_MAP = {
     "スコッチ・シングルモルト": { label: "スモーキー度", left: "無煙", right: "煙強" },
     "スコッチ・ブレンデッド": { label: "スモーキー度", left: "無煙", right: "煙強" },
     "アイリッシュウイスキー": { label: "スモーキー度", left: "無煙", right: "煙強" },
     "カナディアンウイスキー": { label: "スモーキー度", left: "無煙", right: "煙強" },
     "ジャパニーズウイスキー": { label: "スモーキー度", left: "無煙", right: "煙強" },
+    "ライウイスキー": { label: "スモーキー度", left: "無煙", right: "煙強" },
+    "その他ウイスキー": { label: "スモーキー度", left: "無煙", right: "煙強" },
     "バーボン": { label: "樽熟成感", left: "ﾌﾚｯｼｭ", right: "深熟" },
     "テネシーウイスキー": { label: "樽熟成感", left: "ﾌﾚｯｼｭ", right: "深熟" },
     "コニャック": { label: "樽熟成感", left: "ﾌﾚｯｼｭ", right: "深熟" },
     "アルマニャック": { label: "樽熟成感", left: "ﾌﾚｯｼｭ", right: "深熟" },
     "カルヴァドス": { label: "樽熟成感", left: "ﾌﾚｯｼｭ", right: "深熟" },
     "赤ワイン": { label: "タンニン", left: "なめらか", right: "力強い渋" },
-    "白ワイン": { label: "酸味", left: "丸く", right: "シャープ" },
-    "ロゼワイン": { label: "酸味", left: "丸く", right: "シャープ" },
-    "シャンパン": { label: "辛口度", left: "甘口", right: "超辛口" },
-    "プロセッコ・フランチャコルタ": { label: "辛口度", left: "甘口", right: "超辛口" },
+    "白ワイン": { label: "酸味", left: "丸酸", right: "シャープ" },
+    "ロゼワイン": { label: "酸味", left: "丸酸", right: "シャープ" },
+    "オレンジワイン": { label: "酸味", left: "丸酸", right: "シャープ" },
+    "シェリー・酒精強化": { label: "ナッツ感", left: "淡果", right: "強果" },
+    "シャンパン": { label: "辛口度", left: "甘泡", right: "辛泡" },
+    "プロセッコ・フランチャコルタ": { label: "辛口度", left: "甘泡", right: "辛泡" },
     "純米大吟醸": { label: "旨味", left: "淡麗", right: "濃醇" },
     "純米吟醸": { label: "旨味", left: "淡麗", right: "濃醇" },
     "特別純米・純米": { label: "旨味", left: "淡麗", right: "濃醇" },
     "本醸造・その他": { label: "旨味", left: "淡麗", right: "濃醇" },
+    "スパークリング日本酒": { label: "旨味", left: "淡麗", right: "濃醇" },
     "芋焼酎": { label: "芋の素材感", left: "ｸﾘｰﾝ", right: "素材前面" },
     "麦焼酎": { label: "麦の素材感", left: "ｸﾘｰﾝ", right: "香ばしい" },
     "米焼酎": { label: "米の素材感", left: "ｸﾘｰﾝ", right: "米の甘み" },
@@ -31,41 +36,40 @@ const AXIS4_MAP = {
     "ウォッカ（銘柄）": { label: "クリーン度", left: "個性あり", right: "純粋" },
     "テキーラ（銘柄）": { label: "アガベ感", left: "弱い", right: "強く主張" },
     "ラム（銘柄）": { label: "糖蜜・樽感", left: "ライト", right: "濃厚" },
-    "国内プレミアム": { label: "苦味", left: "ほぼなし", right: "苦味強" },
-    "クラフトビール": { label: "苦味", left: "ほぼなし", right: "苦味強" },
+    "国内プレミアム": { label: "苦味", left: "無苦", right: "苦強" },
+    "海外メジャー": { label: "苦味", left: "無苦", right: "苦強" },
+    "クラフトビール": { label: "苦味", left: "無苦", right: "苦強" },
     "梅酒": { label: "梅の酸味", left: "まろやか", right: "酸鮮烈" },
-    "ウイスキー系カクテル": { label: "酸味", left: "ほぼなし", right: "酸強" },
-    "ジン系カクテル": { label: "酸味", left: "ほぼなし", right: "酸強" }
+    "ウイスキー系カクテル": { label: "酸味", left: "無酸", right: "酸強" },
+    "ベルモット・アペリティフ": { label: "薬草感", left: "淡草", right: "強草" }
 };
 const AXIS4_DEFAULT = { label: "第4軸", left: "←", right: "→", disabled: true };
 
-// 状態管理
-let scrState = { major: "", sub: "", country: "", region: "", keyword: "", cospa: "", isStandard: "", isSophieRecom: "", s1Min: -2.0, s1Max: 2.0, s2Min: -2.0, s2Max: 2.0, s3Min: -2.0, s3Max: 2.0, s4Min: -2.0, s4Max: 2.0 };
-let isAutoPlay = false, talkAudio;
+let scrState = { major: "", sub: "", country: "", region: "", keyword: "", cospa: "", isStandard: "", isSophieRecom: "", s1Min: -2.0, s1Max: 2.0, s2Min: -2.0, s2Max: 2.0, s3Min: -2.0, s3Max: 2.0, s4Min: -2.0, s4Max: 2.0, tags: [] };
+let talkAudio;
 const lv = document.getElementById('list-view'), nm = document.getElementById('nav-main');
 
-// --- 初期化 ---
 document.addEventListener('DOMContentLoaded', async () => {
     talkAudio = document.createElement('audio'); document.body.appendChild(talkAudio);
     try { await nav.loadAllData(); } catch (e) { alert("Data Error"); }
-    
-    // イベント登録
+    setup();
+});
+
+// グローバル登録
+window.openLiquorPortal = openLiquorPortal;
+window.openScreening = openScreening;
+window.executeScr = executeScr;
+window.refreshScr = () => { saveForm(); openScreening(); };
+
+function setup() {
     document.getElementById('btn-enter').onclick = () => { document.getElementById('entry-screen').style.display='none'; document.getElementById('chat-mode').style.display='flex'; playV("./voices_mp3/greeting.mp3", "いらっしゃいませ。"); };
     document.getElementById('btn-to-bar').onclick = () => { document.getElementById('chat-mode').style.display='none'; document.getElementById('main-ui').style.display='flex'; showRoot(); playV("./voices_mp3/menu_greeting.mp3", "今日はいかがされますか？"); };
     document.getElementById('btn-liquor').onclick = () => openLiquorPortal();
     document.getElementById('sophie-warp').onclick = () => { if(nav.state !== "none") showRoot(); };
     renderConsole('standard');
-});
-
-// 関数をwindowに登録（絶対動くようにするため）
-window.openLiquorPortal = openLiquorPortal;
-window.openScreening = openScreening;
-window.executeScr = executeScr;
-window.refreshScr = () => { saveForm(); openScreening(); };
-window.openMajor = openMajor;
+}
 
 function playV(src, txt) { talkAudio.src = src; talkAudio.play().catch(() => media.speak(txt)); }
-
 function showRoot() { lv.style.display='none'; nm.style.display='block'; nav.updateNav("none"); document.getElementById('monitor-img').src='./front_sophie.jpeg'; renderConsole('standard'); }
 
 function openLiquorPortal() {
@@ -91,12 +95,14 @@ function openScreening() {
         <div class="scr-row"><span class="scr-row-label">品目:</span><select id="s-sb" onchange="window.refreshScr()"><option value="">問わない</option>${subs.map(s=>`<option value="${s}" ${scrState.sub===s?'selected':''}>${s}</option>`).join('')}</select></div>
         <div class="scr-row"><span class="scr-row-label">国:</span><select id="s-cn" onchange="window.refreshScr()"><option value="">問わない</option>${countries.map(c=>`<option value="${c}" ${scrState.country===c?'selected':''}>${c}</option>`).join('')}</select></div>
         <div class="scr-row"><span class="scr-row-label">地域:</span><select id="s-rg"><option value="">問わない</option>${regions.map(r=>`<option value="${r}" ${scrState.region===r?'selected':''}>${r}</option>`).join('')}</select></div>
-        <div class="scr-row"><span class="scr-row-label">検索:</span><input type="text" id="s-kw" value="${scrState.keyword}" placeholder="銘柄名などで検索"></div>
+        <div class="scr-row"><span class="scr-row-label">検索:</span><input type="text" id="s-kw" value="${scrState.keyword}" placeholder="名称・タグなどで検索"></div>
     </div>`;
 
+    const cospaOpts = `<option value="">問わない</option><option value="1" ${scrState.cospa==='1'?'selected':''}>☆1以上</option><option value="2" ${scrState.cospa==='2'?'selected':''}>☆2以上</option><option value="3" ${scrState.cospa==='3'?'selected':''}>☆3のみ</option>`;
     h += `<div class="scr-group">
         <div class="scr-row"><span class="scr-row-label">定番:</span><select id="s-std"><option value="">問わない</option><option value="1" ${scrState.isStandard==='1'?'selected':''}>定番に絞る</option></select></div>
         <div class="scr-row"><span class="scr-row-label">推し:</span><select id="s-sop"><option value="">問わない</option><option value="1" ${scrState.isSophieRecom==='1'?'selected':''}>推しを聞く</option></select></div>
+        <div class="scr-row"><span class="scr-row-label">ｺｽﾊﾟ:</span><select id="s-cospa">${cospaOpts}</select></div>
     </div>`;
 
     const mkS = (id, l, r, min, max, dis) => `<div class="scr-slider-box" style="opacity:${dis?0.4:1}"><div class="scr-slider-label-edge">${l}</div><div class="multi-range-wrap"><div class="multi-range-track"></div><div class="multi-range-fill" id="${id}-fill"></div><input type="range" id="${id}-min" min="-2" max="2" step="0.5" value="${min}"><input type="range" id="${id}-max" min="-2" max="2" step="0.5" value="${max}"></div><div class="scr-slider-label-edge">${r}</div></div>`;
@@ -106,7 +112,14 @@ function openScreening() {
     h += mkS('s3','常道','独特',scrState.s3Min,scrState.s3Max,false);
     const a4 = (scrState.sub && AXIS4_MAP[scrState.sub]) ? AXIS4_MAP[scrState.sub] : AXIS4_DEFAULT;
     h += mkS('s4', a4.left, a4.right, scrState.s4Min, scrState.s4Max, !scrState.sub);
-    h += `</div></div>`;
+    h += `</div>`;
+
+    // タグ選択
+    let allT = new Set();
+    nav.liquorData.forEach(d => { ((d["味わいタグ"]||"") + "," + (d["検索タグ"]||"")).split(',').forEach(t => { if(t.trim()) allT.add(t.trim()); }); });
+    h += `<div class="scr-group"><div class="scr-title">タグ選択</div><div class="scr-tag-grid">`;
+    Array.from(allT).sort().forEach(t => { h += `<div class="scr-tag-btn ${scrState.tags.includes(t)?'selected':''}" data-tag="${t}">${t}</div>`; });
+    h += `</div></div></div>`;
     
     render(h, 'screening', true);
     ['s1','s2','s3','s4'].forEach(id => attachSlider(id));
@@ -134,9 +147,15 @@ function executeScr() {
         if(scrState.region && d["産地"] !== scrState.region) return false;
         if(scrState.isStandard === "1" && d["定番フラグ"] !== "1") return false;
         if(scrState.isSophieRecom === "1" && d["ソフィーの推し"] !== "1") return false;
-        const avg1 = (parseFloat(d["GPT_甘辛"])+parseFloat(d["Gemini_甘辛"])+parseFloat(d["Claude_甘辛"]))/3;
-        if(avg1 < scrState.s1Min || avg1 > scrState.s1Max) return false;
-        if(scrState.keyword && !d["銘柄名"].includes(scrState.keyword)) return false;
+        if(scrState.cospa) { const c = (d["Gemini_コスパ"]||"").split('☆').length - 1; if(parseInt(scrState.cospa) > c) return false; }
+        if(scrState.tags.length > 0) {
+            const dTags = ((d["味わいタグ"]||"") + "," + (d["検索タグ"]||"")).split(',').map(t=>t.trim());
+            if(!scrState.tags.every(t => dTags.includes(t))) return false;
+        }
+        if(scrState.keyword) {
+            const allT = (d["銘柄名"]+d["国"]+d["産地"]+d["味わいタグ"]+d["検索タグ"]+d["鑑定評価(200字)"]+d["ソフィーの裏話"]).toLowerCase();
+            if(!allT.includes(scrState.keyword.toLowerCase())) return false;
+        }
         return true;
     });
     renderResults(res);
@@ -165,19 +184,40 @@ function showCard(gIdx, list) {
 
     let h = `<div class="label">No.${d["No"]}</div><div class="lq-card">`;
     h += `<div class="lq-name">${d["銘柄名"]}</div><div class="lq-quote">${(d["ソフィーのセリフ"]||"").replace(/[「」『』"']/g,'')}</div>`;
-    // ★矢印の色入れ替え（大：青、中：赤）
-    h += `<div class="lq-basic-info" style="font-size:0.85rem; margin-bottom:10px;"><div><span style="color:var(--blue)">▶</span> ${d["大分類"]}　<span style="color:#e74c3c">▶</span> ${d["中分類"]}</div><div><span style="color:#888">産地:</span> ${d["国"]} / ${d["産地"]}</div></div>`;
+    
+    // 基本情報（▶色入れ替え）
+    h += `<div class="lq-basic-info" style="font-size:0.85rem; margin-bottom:10px;">
+        <div><span style="color:var(--blue)">▶</span> ${d["大分類"]}　<span style="color:#e74c3c">▶</span> ${d["中分類"]}</div>
+        <div><span style="color:#888">産地:</span> ${d["国"]} / ${d["産地"]}</div>`;
+    if(d["製造元と創業年"] && d["製造元と創業年"] !== "-") h += `<div><span style="color:#888">製造:</span> ${d["製造元と創業年"]}</div>`;
+    if(d["公式URL"] && d["公式URL"]!=="-") h+=`<a href="${d["公式URL"]}" target="_blank" class="lq-btn-small">🔗 メーカーサイト</a>`;
+    h += `</div>`;
+
     h += `<div class="lq-split-view"><div class="lq-graph-half">`;
+    if(d["Gemini_コスパ"]) h += `<div class="lq-cospa"><span>コスパ</span> ${d["Gemini_コスパ"]}</div>`;
     h += mkBar("辛口", "甘口", d["GPT_甘辛"], d["Gemini_甘辛"], d["Claude_甘辛"]);
     h += mkBar("軽快", "濃厚", d["GPT_ボディ"], d["Gemini_ボディ"], d["Claude_ボディ"]);
     h += mkBar("常道", "独特", "", "", d["Claude_個性"], true);
     const a4 = AXIS4_MAP[d["中分類"]] || AXIS4_DEFAULT;
-    h += `<div style="font-size:0.6rem; color:var(--accent); text-align:center; margin-bottom:2px;">${a4.label}</div>${mkBar(a4.left, a4.right, "", "", d["Claude_第4軸"], true)}`;
+    h += `<div style="font-size:0.6rem; color:var(--accent); text-align:center;">${a4.label}</div>${mkBar(a4.left, a4.right, "", "", d["Claude_第4軸"], true)}`;
     h += `</div><div class="lq-specs-half">`;
-    // ★価格の色入れ替え
-    h += `<div class="spec-row-compact"><span>知名度</span><span>${d["知名度"]}</span></div><div class="spec-row-compact"><span>市販</span><span class="price-retail">${d["市販価格"]}</span></div><div class="spec-row-compact"><span>Bar</span><span class="price-bar">${d["バー価格"]}</span></div>`;
+    
+    // スペック（価格色入れ替え）
+    h += `<div class="spec-row-compact"><span>知名度</span><span>${d["知名度"]}</span></div>
+          <div class="spec-row-compact"><span>度数</span><span>${d["度数"]}</span></div>
+          <div class="spec-row-compact"><span>市販</span><span class="price-retail">${d["市販価格"]}</span></div>
+          <div class="spec-row-compact"><span>Bar</span><span class="price-bar">${d["バー価格"]}</span></div>`;
     h += `</div></div>`;
+
     if(d["ソフィーの裏話"]) h += `<div class="lq-sophie-talk"><span class="sophie-prefix">[ソフィー]</span> ${d["ソフィーの裏話"]}</div>`;
+    
+    // タグ一覧
+    let tags = ((d["味わいタグ"]||"") + "," + (d["検索タグ"]||"")).split(',').filter(t=>t.trim());
+    if(tags.length) h += `<div class="lq-tags">${tags.map(t=>`<span class="lq-tag">${t}</span>`).join('')}</div>`;
+    
+    // 解説文
+    if(d["鑑定評価(200字)"]) h += `<div class="lq-desc">${d["鑑定評価(200字)"]}</div>`;
+    
     h += `</div>`;
     render(h, 'standard', true);
     const b = document.getElementById('c-back'); if(nav.curG === null) { b.innerText = '候補へ戻る'; b.style.background = '#d35400'; }
@@ -185,6 +225,7 @@ function showCard(gIdx, list) {
 
 function render(h, mode = 'standard', isFS = false) {
     nm.style.display='none'; lv.style.display='block'; lv.innerHTML=h;
+    document.querySelectorAll('.scr-tag-btn').forEach(btn => btn.onclick = (e) => { e.target.classList.toggle('selected'); saveForm(); });
     const ls = document.querySelector('.l-side'); ls.style.display = isFS ? 'none' : 'block';
     renderConsole(mode);
 }
@@ -196,43 +237,39 @@ function handleBack() {
 }
 
 function saveForm() {
-    const mj = document.getElementById('s-mj'); if(mj) scrState.major = mj.value;
-    const sb = document.getElementById('s-sb'); if(sb) scrState.sub = sb.value;
-    const cn = document.getElementById('s-cn'); if(cn) scrState.country = cn.value;
-    const rg = document.getElementById('s-rg'); if(rg) scrState.region = rg.value;
-    const kw = document.getElementById('s-kw'); if(kw) scrState.keyword = kw.value;
-    const std = document.getElementById('s-std'); if(std) scrState.isStandard = std.value;
-    const sop = document.getElementById('s-sop'); if(sop) scrState.isSophieRecom = sop.value;
+    const get = (id) => document.getElementById(id)?.value || "";
+    scrState.major = get('s-mj'); scrState.sub = get('s-sb'); scrState.country = get('s-cn'); scrState.region = get('s-rg');
+    scrState.keyword = get('s-kw'); scrState.isStandard = get('s-std'); scrState.isSophieRecom = get('s-sop');
+    scrState.cospa = get('s-cospa');
+    scrState.tags = Array.from(document.querySelectorAll('.scr-tag-btn.selected')).map(el => el.dataset.tag);
 }
 
-function openMajor() {
+window.openMajor = () => {
     nav.updateNav("lq_major"); let h = `<div class="label" onclick="window.openLiquorPortal()">◀ ジャンルを選択</div>`;
-    [...new Set(nav.liquorData.map(d => d["大分類"]))].forEach(m => { h += `<div class="item" data-mj="${m}">📁 ${m}</div>`; });
+    [...new Set(nav.liquorData.map(d => d["大分類"]))].forEach(m => { h += `<div class="item" onclick="window.openSub('${m}')">📁 ${m}</div>`; });
     render(h);
-    document.querySelectorAll('#list-view .item').forEach(el => { el.onclick = () => openSub(el.dataset.mj); });
-}
-function openSub(mj) {
+};
+window.openSub = (mj) => {
     nav.updateNav("lq_sub", mj); let h = `<div class="label" onclick="window.openMajor()">◀ ${mj}</div>`;
-    [...new Set(nav.liquorData.filter(d => d["大分類"] === mj).map(d => d["中分類"]))].forEach(s => { h += `<div class="item" data-sb="${s}">📁 ${s}</div>`; });
+    [...new Set(nav.liquorData.filter(d => d["大分類"] === mj).map(d => d["中分類"]))].forEach(s => { h += `<div class="item" onclick="window.openItems('${s}')">📁 ${s}</div>`; });
     render(h);
-    document.querySelectorAll('#list-view .item').forEach(el => { el.onclick = () => {
-        const list = nav.liquorData.filter(d => d["中分類"] === el.dataset.sb);
-        nav.updateNav("lq_list", null, list);
-        let h2 = `<div class="label" onclick="window.openSub('${mj}')">◀ ${el.dataset.sb}</div>`;
-        list.forEach((d, i) => { h2 += `<div class="item" data-idx="${i}">🥃 ${d["銘柄名"]}</div>`; });
-        render(h2);
-        document.querySelectorAll('#list-view .item').forEach(e2 => { e2.onclick = () => showCard(nav.liquorData.indexOf(list[e2.dataset.idx]), list); });
-    }; });
-}
+};
+window.openItems = (sb) => {
+    const list = nav.liquorData.filter(d => d["中分類"] === sb); nav.updateNav("lq_list", null, list);
+    let h = `<div class="label" onclick="window.openSub('${list[0]["大分類"]}')">◀ ${sb}</div>`;
+    list.forEach((d, i) => { h += `<div class="item" data-idx="${i}">🥃 ${d["銘柄名"]}</div>`; });
+    render(h);
+    document.querySelectorAll('#list-view .item').forEach(el => { el.onclick = () => showCard(nav.liquorData.indexOf(list[el.dataset.idx]), list); });
+};
 
 function renderConsole(mode) {
     const grid = document.getElementById('console-grid');
     if (mode === 'screening') {
         grid.innerHTML = `<button class="console-scr-btn" id="c-clr">クリア</button><button class="console-scr-btn btn-c-exec" id="c-ex">検索実行</button>`;
-        document.getElementById('c-clr').onclick = () => { scrState = { major: "", sub: "", country: "", region: "", keyword: "", cospa: "", isStandard: "", isSophieRecom: "", s1Min: -2.0, s1Max: 2.0, s2Min: -2.0, s2Max: 2.0, s3Min: -2.0, s3Max: 2.0, s4Min: -2.0, s4Max: 2.0 }; openScreening(); };
+        document.getElementById('c-clr').onclick = () => { scrState = { major: "", sub: "", country: "", region: "", keyword: "", cospa: "", isStandard: "", isSophieRecom: "", s1Min: -2.0, s1Max: 2.0, s2Min: -2.0, s2Max: 2.0, s3Min: -2.0, s3Max: 2.0, s4Min: -2.0, s4Max: 2.0, tags: [] }; openScreening(); };
         document.getElementById('c-ex').onclick = () => window.executeScr();
     } else if (mode === 'result') {
-        grid.innerHTML = `<button class="console-scr-btn btn-c-mod" id="c-mod">🔍 検索条件を変更する</button>`;
+        grid.innerHTML = `<button class="console-scr-btn btn-c-mod" id="c-mod">🔍 条件変更</button>`;
         document.getElementById('c-mod').onclick = () => window.openScreening();
     } else {
         grid.innerHTML = `<button class="c-btn" id="c-exp">▼</button><button class="c-btn" id="c-back">▲</button><button class="c-btn">⏹️</button><button class="c-btn" id="c-next" style="flex:1.5">▶</button><button class="c-btn">⏭</button>`;
