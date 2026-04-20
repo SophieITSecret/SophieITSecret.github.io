@@ -32,7 +32,7 @@ body { background: var(--bg); color: var(--text); font-family: sans-serif; heigh
 .sophie-box img { height: 80%; object-fit: contain; }
 
 /* 鑑定カード */
-.label { background: #1a1a2e; color: var(--accent); padding: 0 12px; font-size: 0.8rem; font-weight: bold; position: sticky; top: 0; z-index: 100; border-bottom: 1px solid #333; height: 32px; line-height: 32px; display: flex; align-items: center; gap: 10px; }
+.label { background: #1a1a2e; color: var(--accent); padding: 0 12px; font-size: 0.8rem; font-weight: bold; position: sticky; top: 0; z-index: 100; border-bottom: 1px solid #333; height: 32px; line-height: 32px; display: flex; align-items: center; gap: 10px; cursor: pointer; }
 .lq-card { padding: 12px; }
 .lq-name { font-size: 1.4rem; color: var(--accent); font-weight: bold; }
 .lq-quote { color: var(--blue); font-weight: bold; margin: 5px 0 12px; font-style: normal; font-size: 0.95rem; }
@@ -40,12 +40,9 @@ body { background: var(--bg); color: var(--text); font-family: sans-serif; heigh
 .lq-btn-small { display: inline-block; background: #222; color: var(--accent); padding: 4px 10px; border-radius: 4px; font-size: 0.75rem; text-decoration: none; border: 1px solid #555; margin-top: 6px; }
 
 .lq-split-view { display: flex; gap: 10px; margin-top: 10px; }
-/* ★幅を50%より少し大きく調整 */
 .lq-graph-half { flex: 1.6; background: #111; padding: 10px; border-radius: 6px; border: 1px solid #333; }
 .lq-specs-half { flex: 1; display: flex; flex-direction: column; gap: 4px; }
 .spec-row-compact { display: flex; justify-content: space-between; background: #111; padding: 6px; border-radius: 4px; font-size: 0.8rem; border: 1px solid #222; }
-
-/* ★価格とタイトルの色指定 */
 .price-retail { color: var(--accent) !important; font-weight: bold; }
 .price-bar { color: #eee !important; }
 
@@ -63,17 +60,15 @@ body { background: var(--bg); color: var(--text); font-family: sans-serif; heigh
 .graph-point { position: absolute; top: -3px; width: 12px; height: 12px; border-radius: 50%; transform: translateX(-50%); box-shadow: 0 0 3px #000; }
 .pt-gpt { background: #10a37f; z-index: 1; } .pt-gemini { background: #1a73e8; z-index: 2; } .pt-claude { background: #d97757; z-index: 3; }
 
-/* スクリーニングフォーム（ゆとりのある配置） */
+/* スクリーニング */
 .scr-container { padding: 12px; }
 .scr-group { background: #111; border: 1px solid #333; border-radius: 8px; padding: 12px; margin-bottom: 15px; }
 .scr-title { font-size: 0.85rem; color: var(--accent); margin-bottom: 10px; border-bottom: 1px dashed #333; padding-bottom: 5px; font-weight: bold; }
-/* ★上下幅にゆとりを */
 .scr-row { display: flex; gap: 10px; align-items: center; margin-bottom: 12px; }
 .scr-row select, .scr-row input { flex: 1; background: #222; color: #fff; border: 1px solid #555; height: 40px; padding: 0 10px; border-radius: 4px; font-size: 0.95rem; appearance: none; }
 .scr-row select { background-image: url('data:image/svg+xml;utf8,<svg fill="%23aaa" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/></svg>'); background-repeat: no-repeat; background-position: right 8px center; }
 .scr-row-label { width: 5em; font-size: 0.8rem; color: #aaa; text-align: right; font-weight: bold; }
 
-/* ★ダブルスライダー復活設定 */
 .scr-slider-box { display: flex; align-items: center; gap: 8px; background: #1a1a1a; padding: 15px 10px; border-radius: 6px; margin-bottom: 8px; }
 .scr-slider-label-edge { width: 3.8em; font-size: 1rem; color: #fff; text-align: center; font-weight: bold; }
 .multi-range-wrap { flex: 1; position: relative; height: 30px; display: flex; align-items: center; }
