@@ -7,7 +7,7 @@ let isPaused = false, isAutoPlay = false, isMusicMode = false, lastTxt = "", pre
 let ytWrapper, img, tel, lv, nm, talkAudio;
 let ytPlayer = null, ytPlayerReady = false;
 
-// 第4軸マッピング
+// 第4軸定義データ（ Claude殿の全マッピングを内包 ）
 const AXIS4_MAP = {
     "スコッチ・シングルモルト": { label: "スモーキー度", left: "無煙", right: "煙強" },
     "スコッチ・ブレンデッド": { label: "スモーキー度", left: "無煙", right: "煙強" },
@@ -50,7 +50,7 @@ const AXIS4_MAP = {
     "和リキュール": { label: "素材感", left: "淡素", right: "強素" },
     "ウイスキー系カクテル": { label: "酸味", left: "無酸", right: "酸強" },
     "ウォッカ系カクテル": { label: "酸味", left: "無酸", right: "酸強" },
-    "ジン系カクテル": { label: "酸味", left: "無酸", right: "酸強" },
+    "ジン系カカクテル": { label: "酸味", left: "無酸", right: "酸強" },
     "ラム系カクテル": { label: "酸味", left: "無酸", right: "酸強" },
     "テキーラ系カクテル": { label: "酸味", left: "無酸", right: "酸強" },
     "ブランデー系カクテル": { label: "酸味", left: "無酸", right: "酸強" },
@@ -59,19 +59,31 @@ const AXIS4_MAP = {
 };
 const AXIS4_DEFAULT = { label: "第4軸(品目指定)", left: "←", right: "→", disabled: true };
 
+// ★ スクリーニング条件記憶
 let scrState = null;
 function initScrState() {
     scrState = { major: "", sub: "", country: "", region: "", keyword: "", cospa: "", isStandard: "", isSophieRecom: "", pMin: "", pMax: "", aMin: "", aMax: "", s1Min: "-2.0", s1Max: "2.0", s2Min: "-2.0", s2Max: "2.0", s3Min: "-2.0", s3Max: "2.0", s4Min: "-2.0", s4Max: "2.0", tags: [] };
 }
 
+// ★ 安全な入力値保存（要素がないときは無視するように修正）
 function saveScrFormState() {
+    const getVal = (id) => {
+        const el = document.getElementById(id);
+        return el ? el.value : (scrState[id.replace('scr-','')] || "");
+    };
     if(!document.getElementById('scr-mj')) return; 
-    scrState.keyword = document.getElementById('scr-kw').value; scrState.major = document.getElementById('scr-mj').value;
-    scrState.sub = document.getElementById('scr-sb').value; scrState.country = document.getElementById('scr-cn').value;
-    scrState.region = document.getElementById('scr-rg').value; scrState.cospa = document.getElementById('scr-cospa').value;
-    scrState.isStandard = document.getElementById('scr-std').value; scrState.isSophieRecom = document.getElementById('scr-sophie').value;
-    scrState.pMin = document.getElementById('scr-p-min').value; scrState.pMax = document.getElementById('scr-p-max').value;
-    scrState.aMin = document.getElementById('scr-a-min').value; scrState.aMax = document.getElementById('scr-a-max').value;
+    scrState.keyword = getVal('scr-kw');
+    scrState.major = getVal('scr-mj');
+    scrState.sub = getVal('scr-sb');
+    scrState.country = getVal('scr-cn');
+    scrState.region = getVal('scr-rg');
+    scrState.cospa = getVal('scr-cospa');
+    scrState.isStandard = getVal('scr-std');
+    scrState.isSophieRecom = getVal('scr-sophie');
+    scrState.pMin = getVal('scr-p-min');
+    scrState.pMax = getVal('scr-p-max');
+    scrState.aMin = getVal('scr-a-min');
+    scrState.aMax = getVal('scr-a-max');
     scrState.tags = Array.from(document.querySelectorAll('.scr-tag-btn.selected')).map(el => el.dataset.tag);
 }
 
@@ -84,7 +96,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     initScrState(); setup();
 });
 
-// ★ モジュール外から関数を呼べるようにグローバルに登録
+// グローバル関数登録（HTMLのonclickから呼べるようにする）
 window.openLiquorRoot = openLiquorRoot;
 window.openScreeningUI = openScreeningUI;
 window.openLiquorMajor = openLiquorMajor;
@@ -162,6 +174,18 @@ function openLiquorRoot() {
     };
 }
 
+function attachMultiSlider(id) {
+    const minEl = document.getElementById(id + '-min'), maxEl = document.getElementById(id + '-max'), fillEl = document.getElementById(id + '-fill');
+    const up = () => {
+        let v1 = parseFloat(minEl.value), v2 = parseFloat(maxEl.value);
+        if (v1 > v2) { let t = v1; v1 = v2; v2 = t; minEl.value = v1; maxEl.value = v2; }
+        const p1 = ((v1 + 2) / 4) * 100, p2 = ((v2 + 2) / 4) * 100;
+        fillEl.style.left = p1 + '%'; fillEl.style.width = (p2 - p1) + '%';
+        scrState[id.replace('scr-', '') + 'Min'] = v1.toFixed(1); scrState[id.replace('scr-', '') + 'Max'] = v2.toFixed(1);
+    };
+    if(minEl && maxEl) { minEl.addEventListener('input', up); maxEl.addEventListener('input', up); up(); }
+}
+
 function openScreeningUI() {
     nav.updateNav("lq_scr");
     let h = `<div class="label"><button style="background:none;border:none;color:#fff;font-size:1.2rem;" onclick="window.openLiquorRoot()">◀</button> お好みでスクリーニング</div>`;
@@ -175,17 +199,17 @@ function openScreeningUI() {
     const countryOpts = `<option value="">問わない</option>` + countries.map(c => `<option value="${c}" ${scrState.country === c ? 'selected':''}>${c}</option>`).join('');
     const regionOpts = `<option value="">問わない</option>` + regions.map(r => `<option value="${r}" ${scrState.region === r ? 'selected':''}>${r}</option>`).join('');
     h += `<div class="scr-group">
+            <div class="scr-title">基本条件</div>
             <div class="scr-row"><span class="scr-row-label">ジャンル:</span><select id="scr-mj">${majorOpts}</select></div>
             <div class="scr-row"><span class="scr-row-label">品目:</span><select id="scr-sb">${subOpts}</select></div>
             <div class="scr-row"><span class="scr-row-label">国:</span><select id="scr-cn">${countryOpts}</select></div>
             <div class="scr-row"><span class="scr-row-label">地域:</span><select id="scr-rg">${regionOpts}</select></div>
-            <div class="scr-row" style="margin-top:6px;"><span class="scr-row-label">検索:</span><input type="text" id="scr-kw" placeholder="銘柄・解説・タグ等" value="${scrState.keyword}"></div>
+            <div class="scr-row" style="margin-top:10px;"><span class="scr-row-label">検索:</span><input type="text" id="scr-kw" placeholder="銘柄・解説・タグ等" value="${scrState.keyword}"></div>
           </div>`;
-    const cospaOpts = `<option value="">問わない</option><option value="1" ${scrState.cospa==='1'?'selected':''}>☆1以上</option><option value="2" ${scrState.cospa==='2'?'selected':''}>☆2以上</option><option value="3" ${scrState.cospa==='3'?'selected':''}>☆3のみ</option>`;
     h += `<div class="scr-group">
             <div class="scr-row"><span class="scr-row-label">定番:</span><select id="scr-std"><option value="">問わない</option><option value="1" ${scrState.isStandard==='1'?'selected':''}>定番に絞る</option></select></div>
             <div class="scr-row"><span class="scr-row-label">推し:</span><select id="scr-sophie"><option value="">問わない</option><option value="1" ${scrState.isSophieRecom==='1'?'selected':''}>推しを聞く</option></select></div>
-            <div class="scr-row"><span class="scr-row-label">ｺｽﾊﾟ:</span><select id="scr-cospa">${cospaOpts}</select></div>
+            <div class="scr-row"><span class="scr-row-label">ｺｽﾊﾟ:</span><select id="scr-cospa"><option value="">問わない</option><option value="1" ${scrState.cospa==='1'?'selected':''}>☆1以上</option><option value="2" ${scrState.cospa==='2'?'selected':''}>☆2以上</option><option value="3" ${scrState.cospa==='3'?'selected':''}>☆3のみ</option></select></div>
           </div>`;
     const makeDS = (id, l, r, minV, maxV, dis) => `<div class="scr-slider-box" style="opacity:${dis?0.4:1}; pointer-events:${dis?'none':'auto'};"><div class="scr-slider-label-edge">${l}</div><div class="multi-range-wrap"><div class="multi-range-track"></div><div class="slider-ticks"><div class="tick"></div><div class="tick"></div><div class="tick center"></div><div class="tick"></div><div class="tick"></div></div><div class="multi-range-fill" id="${id}-fill"></div><input type="range" id="${id}-min" min="-2.0" max="2.0" step="0.5" value="${minV}"><input type="range" id="${id}-max" min="-2.0" max="2.0" step="0.5" value="${maxV}"></div><div class="scr-slider-label-edge">${r}</div></div>`;
     h += `<div class="scr-group">`;
@@ -195,6 +219,14 @@ function openScreeningUI() {
     const axis4 = (scrState.sub && AXIS4_MAP[scrState.sub]) ? AXIS4_MAP[scrState.sub] : AXIS4_DEFAULT;
     h += makeDS("scr-s4", axis4.left, axis4.right, scrState.s4Min, scrState.s4Max, !scrState.sub);
     h += `</div>`;
+    const pVals = ["", 1000, 2000, 3000, 4000, 5000, 7000, 10000, 20000, 30000, 50000];
+    const pOpts = pVals.map(v => `<option value="${v}">${v===""?"問わない":v.toLocaleString()+"円"}</option>`).join('');
+    const aVals = ["", 0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50];
+    const aOpts = aVals.map(v => `<option value="${v}">${v===""?"問わない":v+"%"}</option>`).join('');
+    h += `<div class="scr-group">
+            <div class="scr-row"><span class="scr-row-label">価格:</span><select id="scr-p-min">${pOpts.replace('value="'+scrState.pMin+'"', 'value="'+scrState.pMin+'" selected')}</select> 〜 <select id="scr-p-max">${pOpts.replace('value="'+scrState.pMax+'"', 'value="'+scrState.pMax+'" selected')}</select></div>
+            <div class="scr-row"><span class="scr-row-label">度数:</span><select id="scr-a-min">${aOpts.replace('value="'+scrState.aMin+'"', 'value="'+scrState.aMin+'" selected')}</select> 〜 <select id="scr-a-max">${aOpts.replace('value="'+scrState.aMax+'"', 'value="'+scrState.aMax+'" selected')}</select></div>
+          </div>`;
     render(h, (e) => { if(e.currentTarget.classList.contains('scr-tag-btn')) e.currentTarget.classList.toggle('selected'); }, true, 'screening');
     attachMultiSlider('scr-s1'); attachMultiSlider('scr-s2'); attachMultiSlider('scr-s3'); attachMultiSlider('scr-s4');
     document.getElementById('scr-mj').onchange = (e) => { saveScrFormState(); scrState.major = e.target.value; scrState.sub = ""; openScreeningUI(); };
@@ -223,11 +255,12 @@ function executeScreening() {
 }
 
 function renderSearchResults(results, scrollToIdx = null) {
-    nav.updateNav('lq_res', null, results);
-    let h = `<div class='label'><button style='background:none;border:none;color:#fff;font-size:1.2rem;' onclick="window.openLiquorRoot()">◀</button>検索結果: ${results.length}件</div>`;
+    nav.updateNav('lq_res', null, results); // 検索モードとして保存 [cite: 16]
+    let h = `<div class='label'><button style='background:none;border:none;color:#fff;font-size:1.2rem;' id="btn-res-back">◀</button>検索結果: ${results.length}件</div>`;
     h += `<button class="btn-back-scr" onclick="window.openScreeningUI()">🔍 検索条件を変更する</button>`;
     results.forEach(d => { h += `<div class='item' data-lqidx='${nav.liquorData.indexOf(d)}'>🥃 ${d['銘柄名']}</div>`; });
     render(h, (e) => { if(e.currentTarget.dataset.lqidx) showLiquorCard(parseInt(e.currentTarget.dataset.lqidx), results); }, true, 'result');
+    document.getElementById('btn-res-back').onclick = openLiquorRoot;
     if(scrollToIdx !== null) setTimeout(() => { const t = document.querySelector(`[data-lqidx='${scrollToIdx}']`); if(t) t.scrollIntoView({ block: 'center' }); }, 50);
 }
 
@@ -245,11 +278,14 @@ function showLiquorCard(gIdx, list = null) {
         return hg + `</div><div class="graph-label-inline">${r}</div></div>`;
     };
     let abv = d["度数"] || "-"; if (parseFloat(abv) > 0 && parseFloat(abv) <= 1.0) abv = (parseFloat(abv) * 100).toFixed(0) + '%';
+
+    // ★Noを左上に。矢印の色入れ替え（大：青、中：赤）
     let h = `<div class="label">No.${d["No"]}</div><div class="lq-card">`;
     h += `<div class="lq-name">${d["銘柄名"]}</div><div class="lq-quote">${(d["ソフィーのセリフ"]||"").replace(/[「」『』"']/g,'')}</div>`;
     h += `<div class="lq-basic-info"><div><span style="color:var(--blue)">▶</span> ${d["大分類"]}　<span style="color:#e74c3c">▶</span> ${d["中分類"]}</div><div><span style="color:#888">産地:</span> ${d["国"]} / ${d["産地"]}</div>`;
     if(d["公式URL"] && d["公式URL"]!=="-") h+=`<a href="${d["公式URL"]}" target="_blank" class="lq-btn-small">🔗 メーカーサイト</a>`;
     h += `</div><div class="lq-split-view"><div class="lq-graph-half">`;
+    if(d["Gemini_コスパ"]) h += `<div class="lq-cospa"><span>コスパ</span> ${d["Gemini_コスパ"]}</div>`;
     h += makeBar("辛口", "甘口", d["GPT_甘辛"], d["Gemini_甘辛"], d["Claude_甘辛"]);
     h += makeBar("軽快", "濃厚", d["GPT_ボディ"], d["Gemini_ボディ"], d["Claude_ボディ"]);
     h += makeBar("常道", "独特", "", "", d["Claude_個性"], true);
@@ -257,7 +293,13 @@ function showLiquorCard(gIdx, list = null) {
     h += `<div style="font-size:0.65rem; color:var(--accent); text-align:center; margin-top:5px;">${a4.label}</div>`;
     h += makeBar(a4.left, a4.right, "", "", d["Claude_第4軸"], true);
     h += `<div style="font-size:0.6rem; color:#888; text-align:right; margin-top:8px;"><span style="color:#10a37f">●GPT</span> <span style="color:#1a73e8">●Gem</span> <span style="color:#d97757">●Claude</span></div></div>`;
-    h += `<div class="lq-specs-half"><div class="spec-row-compact"><span>知名度</span><span>${d["知名度"]}</span></div><div class="spec-row-compact"><span>度数</span><span>${abv}</span></div><div class="spec-row-compact"><span>市販</span><span class="price-retail">${d["市販価格"]}</span></div><div class="spec-row-compact"><span>Bar</span><span>${d["バー価格"]}</span></div></div></div>`;
+    // ★価格色入れ替え（市販：オレンジ、Bar：白）
+    h += `<div class="lq-specs-half">
+            <div class="spec-row-compact"><span>知名度</span><span>${d["知名度"]}</span></div>
+            <div class="spec-row-compact"><span>度数</span><span>${abv}</span></div>
+            <div class="spec-row-compact"><span>市販</span><span class="price-retail">${d["市販価格"]}</span></div>
+            <div class="spec-row-compact"><span>Bar</span><span>${d["バー価格"]}</span></div>
+          </div></div>`;
     if(d["ソフィーの裏話"]) h += `<div class="lq-sophie-talk"><span class="sophie-prefix">[ソフィー]</span> ${d["ソフィーの裏話"]}</div>`;
     h += `</div>`;
     render(h, () => {}, true, 'standard');
@@ -273,7 +315,10 @@ function render(h, cb, isFS = false, conMode = 'standard') {
 }
 
 function handleBack() {
-    if (nav.state === "lq_card") { if(nav.curG === null) renderSearchResults(nav.curP, nav.curI); else openLiquorList(nav.curP); }
+    if (nav.state === "lq_card") { 
+        if(nav.curG === null && Array.isArray(nav.curP)) renderSearchResults(nav.curP, nav.curI); 
+        else openLiquorList(nav.curP); 
+    }
     else if (nav.state === "lq_res") openScreeningUI(); 
     else if (nav.state === "lq_list") openLiquorSub(nav.curG);
     else if (nav.state === "lq_sub") openLiquorMajor();
@@ -281,7 +326,7 @@ function handleBack() {
     else showRootMenu();
 }
 
-function resetCtrlBack() { const b = document.getElementById('ctrl-back'); if(b){ b.innerText='▲'; b.style.background=''; } }
+function resetCtrlBack() { const b = document.getElementById('ctrl-back'); if(b){ b.innerText='▲'; b.style.background=''; b.style.color=''; } }
 
 function openLiquorMajor() {
     nav.updateNav("lq_major"); let h = `<div class="label">ジャンルを選択</div>`;
@@ -294,23 +339,13 @@ function openLiquorSub(mj) {
     render(h, (e) => openLiquorList(e.currentTarget.dataset.sb));
 }
 function openLiquorList(sb) {
-    const list = nav.liquorData.filter(d => d["中分類"] === sb); nav.updateNav("lq_list", nav.curG, list);
-    let h = `<div class="label">${sb} 一覧</div>`;
+    let list = Array.isArray(sb) ? sb : nav.liquorData.filter(d => d["中分類"] === sb);
+    let title = Array.isArray(sb) ? list[0]["中分類"] : sb;
+    nav.updateNav("lq_list", nav.curG, list);
+    let h = `<div class="label">${title} 一覧</div>`;
     list.forEach(d => { h += `<div class="item" data-lqidx="${nav.liquorData.indexOf(d)}">🥃 ${d["銘柄名"]}</div>`; });
     render(h, (e) => showLiquorCard(parseInt(e.currentTarget.dataset.lqidx), list));
 }
 
 function openMusic() { nav.updateNav("art"); render('<div class="label">Music Request</div>', ()=>{}); }
 function openTalk() { nav.updateNav("g"); render('<div class="label">Story Menu</div>', ()=>{}); }
-
-function attachMultiSlider(id) {
-    const minEl = document.getElementById(id + '-min'), maxEl = document.getElementById(id + '-max'), fillEl = document.getElementById(id + '-fill');
-    const up = () => {
-        let v1 = parseFloat(minEl.value), v2 = parseFloat(maxEl.value);
-        if (v1 > v2) { let t = v1; v1 = v2; v2 = t; minEl.value = v1; maxEl.value = v2; }
-        const p1 = ((v1 + 2) / 4) * 100, p2 = ((v2 + 2) / 4) * 100;
-        fillEl.style.left = p1 + '%'; fillEl.style.width = (p2 - p1) + '%';
-        scrState[id.replace('scr-', '') + 'Min'] = v1.toFixed(1); scrState[id.replace('scr-', '') + 'Max'] = v2.toFixed(1);
-    };
-    if(minEl && maxEl) { minEl.addEventListener('input', up); maxEl.addEventListener('input', up); up(); }
-}
