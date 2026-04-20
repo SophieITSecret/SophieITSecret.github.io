@@ -1,7 +1,7 @@
 import * as media from './media.js';
 import * as nav from './navigation.js';
 
-// --- 第4軸・完全定義マッピング（ご提示の全基準を反映） ---
+// --- 第4軸・詳細定義マッピング ---
 const AXIS4_MAP = {
     "スコッチ・シングルモルト": { label: "スモーキー度", left: "無煙", right: "煙強" },
     "スコッチ・ブレンデッド": { label: "スモーキー度", left: "無煙", right: "煙強" },
@@ -20,12 +20,13 @@ const AXIS4_MAP = {
     "ロゼワイン": { label: "酸味", left: "丸く", right: "シャープ" },
     "オレンジワイン": { label: "酸味", left: "丸く", right: "シャープ" },
     "シェリー・酒精強化": { label: "ナッツ感", left: "淡果", right: "強果" },
-    "シャンパン": { label: "辛口度", left: "甘口", right: "超辛口" },
-    "プロセッコ・フランチャコルタ": { label: "辛口度", left: "甘口", right: "超辛口" },
+    "シャンパン": { label: "辛口度", left: "甘泡", right: "辛泡" },
+    "プロセッコ・フランチャコルタ": { label: "辛口度", left: "甘泡", right: "辛泡" },
     "純米大吟醸": { label: "旨味", left: "淡麗", right: "濃醇" },
     "純米吟醸": { label: "旨味", left: "淡麗", right: "濃醇" },
     "特別純米・純米": { label: "旨味", left: "淡麗", right: "濃醇" },
     "本醸造・その他": { label: "旨味", left: "淡麗", right: "濃醇" },
+    "スパークリング日本酒": { label: "旨味", left: "淡麗", right: "濃醇" },
     "芋焼酎": { label: "芋の素材感", left: "クリーン", right: "素材前面" },
     "麦焼酎": { label: "麦の素材感", left: "クリーン", right: "香ばしい" },
     "米焼酎": { label: "米の素材感", left: "クリーン", right: "米の甘み" },
@@ -39,20 +40,17 @@ const AXIS4_MAP = {
     "テキーラ（銘柄）": { label: "アガベ感", left: "弱い", right: "強く主張" },
     "ラム（銘柄）": { label: "糖蜜・樽感", left: "ライト", right: "濃厚" },
     "梅酒": { label: "梅の酸味", left: "まろやか", right: "酸鮮烈" },
-    "ベルモット・アペリティフ": { label: "薬草感", left: "淡草", right: "強草" },
-    "ウイスキー系カクテル": { label: "酸味", left: "なし", right: "酸強" },
-    "ジン系カクテル": { label: "酸味", left: "なし", right: "酸強" },
-    "ラム系カクテル": { label: "酸味", left: "なし", right: "酸強" },
-    "ウォッカ系カクテル": { label: "酸味", left: "なし", right: "酸強" },
-    "テキーラ系カクテル": { label: "酸味", left: "なし", right: "酸強" },
-    "ブランデー系カクテル": { label: "酸味", left: "なし", right: "酸強" },
-    "リキュール系カクテル": { label: "酸味", left: "なし", right: "酸強" }
+    "ベルモット・アペリティフ": { label: "薬草感", left: "淡草", right: "強草" }
 };
 const AXIS4_DEFAULT = { label: "第4軸", left: "←", right: "→", disabled: true };
 
+// 状態管理
 let scrState = { major: "", sub: "", country: "", region: "", keyword: "", cospa: "", isStandard: "", isSophieRecom: "", s1Min: -2.0, s1Max: 2.0, s2Min: -2.0, s2Max: 2.0, s3Min: -2.0, s3Max: 2.0, s4Min: -2.0, s4Max: 2.0, tags: [] };
 let talkAudio;
 const lv = document.getElementById('list-view'), nm = document.getElementById('nav-main');
+
+// 文字クリーン関数
+const clean = (s) => (s || "").toString().replace(/"/g, '');
 
 document.addEventListener('DOMContentLoaded', async () => {
     talkAudio = document.createElement('audio'); document.body.appendChild(talkAudio);
@@ -60,62 +58,43 @@ document.addEventListener('DOMContentLoaded', async () => {
     setup();
 });
 
-// window登録（ボタンを確実に動かすため）
-window.openLiquorPortal = openLiquorPortal;
-window.openScreening = openScreening;
-window.executeScr = executeScr;
-window.refreshScr = () => { saveForm(); openScreening(); };
-window.openMajor = openMajor;
-window.showCard = (gIdx, listJson) => {
-    const list = listJson ? JSON.parse(decodeURIComponent(listJson)) : null;
-    showCard(gIdx, list);
-};
-
 function setup() {
-    document.getElementById('btn-enter').onclick = () => { 
-        document.getElementById('entry-screen').style.display='none'; document.getElementById('chat-mode').style.display='flex'; 
-        playVoice("./voices_mp3/greeting.mp3", "いらっしゃいませ。");
-    };
-    document.getElementById('btn-to-bar').onclick = () => { 
-        document.getElementById('chat-mode').style.display='none'; document.getElementById('main-ui').style.display='flex'; 
-        showRoot(); playVoice("./voices_mp3/menu_greeting.mp3", "今日はいかがされますか？");
-    };
+    document.getElementById('btn-enter').onclick = () => { document.getElementById('entry-screen').style.display='none'; document.getElementById('chat-mode').style.display='flex'; playV("./voices_mp3/greeting.mp3", "いらっしゃいませ。"); };
+    document.getElementById('btn-to-bar').onclick = () => { document.getElementById('chat-mode').style.display='none'; document.getElementById('main-ui').style.display='flex'; showRoot(); playV("./voices_mp3/menu_greeting.mp3", "今日はいかがされますか？"); };
     document.getElementById('btn-liquor').onclick = () => openLiquorPortal();
     document.getElementById('sophie-warp').onclick = () => { if(nav.state !== "none") showRoot(); };
     renderConsole('standard');
 }
 
-function playVoice(src, txt) { talkAudio.src = src; talkAudio.play().catch(() => media.speak(txt)); }
+function playV(src, txt) { talkAudio.src = src; talkAudio.play().catch(() => media.speak(txt)); }
 function showRoot() { lv.style.display='none'; nm.style.display='block'; nav.updateNav("none"); document.getElementById('monitor-img').src='./front_sophie.jpeg'; renderConsole('standard'); }
 
 function openLiquorPortal() {
     nav.updateNav("lq_root");
     let h = `<div class="label" style="justify-content:center;">お酒を選ぶ</div>`;
-    h += `<button class="act-btn" onclick="window.openMajor()" style="background:#2c3e50; margin:15px; width:calc(100% - 30px);">📁 リストから探す</button>`;
-    h += `<button class="act-btn" onclick="window.openScreening()" style="background:#d35400; margin:0 15px; width:calc(100% - 30px);">🔍 お好みでスクリーニング</button>`;
+    h += `<button class="act-btn btn-portal-cat" style="background:#2c3e50; margin:15px; width:calc(100% - 30px);">📁 リストから探す</button>`;
+    h += `<button class="act-btn btn-portal-scr" style="background:#d35400; margin:0 15px; width:calc(100% - 30px);">🔍 お好みでスクリーニング</button>`;
     h += `<div class="direct-box-new"><div class="direct-lbl">No.検索</div><input type="number" id="dir-num"><button id="dir-go">開く</button></div>`;
     render(h);
-    document.getElementById('dir-go').onclick = () => { 
-        const v = document.getElementById('dir-num').value; 
-        const t = nav.liquorData.find(d => d["No"] == v); 
-        if(t) showCard(nav.liquorData.indexOf(t), nav.liquorData); 
-    };
+    document.querySelector('.btn-portal-cat').onclick = () => openMajor();
+    document.querySelector('.btn-portal-scr').onclick = () => openScreening();
+    document.getElementById('dir-go').onclick = () => { const v = document.getElementById('dir-num').value; const t = nav.liquorData.find(d => d["No"] == v); if(t) showCard(nav.liquorData.indexOf(t), nav.liquorData); };
 }
 
 function openScreening() {
     nav.updateNav("lq_scr");
-    let h = `<div class="label" onclick="window.openLiquorPortal()">◀ お好みでスクリーニング</div><div class="scr-container">`;
+    let h = `<div class="label label-back-portal">◀ お好みでスクリーニング</div><div class="scr-container">`;
     const majors = [...new Set(nav.liquorData.map(d => d["大分類"]))];
     const subs = scrState.major ? [...new Set(nav.liquorData.filter(d => d["大分類"] === scrState.major).map(d => d["中分類"]))] : [];
     const countries = [...new Set(nav.liquorData.filter(d => (!scrState.major || d["大分類"] === scrState.major) && (!scrState.sub || d["中分類"] === scrState.sub)).map(d => d["国"]))].filter(Boolean).sort();
     const regions = [...new Set(nav.liquorData.filter(d => (!scrState.country || d["国"] === scrState.country)).map(d => d["産地"]))].filter(Boolean).sort();
 
     h += `<div class="scr-group">
-        <div class="scr-row"><span class="scr-row-label">ジャンル:</span><select id="s-mj" onchange="window.refreshScr()"><option value="">問わない</option>${majors.map(m=>`<option value="${m}" ${scrState.major===m?'selected':''}>${m}</option>`).join('')}</select></div>
-        <div class="scr-row"><span class="scr-row-label">品目:</span><select id="s-sb" onchange="window.refreshScr()"><option value="">問わない</option>${subs.map(s=>`<option value="${s}" ${scrState.sub===s?'selected':''}>${s}</option>`).join('')}</select></div>
-        <div class="scr-row"><span class="scr-row-label">国:</span><select id="s-cn" onchange="window.refreshScr()"><option value="">問わない</option>${countries.map(c=>`<option value="${c}" ${scrState.country===c?'selected':''}>${c}</option>`).join('')}</select></div>
+        <div class="scr-row"><span class="scr-row-label">ジャンル:</span><select id="s-mj"><option value="">問わない</option>${majors.map(m=>`<option value="${m}" ${scrState.major===m?'selected':''}>${m}</option>`).join('')}</select></div>
+        <div class="scr-row"><span class="scr-row-label">品目:</span><select id="s-sb"><option value="">問わない</option>${subs.map(s=>`<option value="${s}" ${scrState.sub===s?'selected':''}>${s}</option>`).join('')}</select></div>
+        <div class="scr-row"><span class="scr-row-label">国:</span><select id="s-cn"><option value="">問わない</option>${countries.map(c=>`<option value="${c}" ${scrState.country===c?'selected':''}>${c}</option>`).join('')}</select></div>
         <div class="scr-row"><span class="scr-row-label">地域:</span><select id="s-rg"><option value="">問わない</option>${regions.map(r=>`<option value="${r}" ${scrState.region===r?'selected':''}>${r}</option>`).join('')}</select></div>
-        <div class="scr-row"><span class="scr-row-label">検索:</span><input type="text" id="s-kw" value="${scrState.keyword}" placeholder="名称・タグなどで検索"></div>
+        <div class="scr-row"><span class="scr-row-label">検索:</span><input type="text" id="s-kw" value="${scrState.keyword}" placeholder="キーワード検索"></div>
     </div>`;
 
     h += `<div class="scr-group">
@@ -140,9 +119,15 @@ function openScreening() {
     h += `</div></div></div>`;
     
     render(h, 'screening', true);
+
+    // イベント紐付け（確実版）
+    document.querySelector('.label-back-portal').onclick = () => openLiquorPortal();
+    ['s-mj','s-sb','s-cn'].forEach(id => document.getElementById(id).onchange = () => { saveForm(); openScreening(); });
     ['s1','s2','s3','s4'].forEach(id => attachSlider(id));
+    document.querySelectorAll('.scr-tag-btn').forEach(btn => btn.onclick = (e) => { e.target.classList.toggle('selected'); saveForm(); });
 }
 
+// ★ダブルスライダー重なり制御（左が動かない問題を解消）
 function attachSlider(id) {
     const min = document.getElementById(id+'-min'), max = document.getElementById(id+'-max'), fill = document.getElementById(id+'-fill');
     if(!min) return;
@@ -170,7 +155,10 @@ function executeScr() {
         if(scrState.tags.length > 0 && !scrState.tags.every(t => ((d["味わいタグ"]||"")+(d["検索タグ"]||"")).includes(t))) return false;
         const avg1 = (parseFloat(d["GPT_甘辛"])+parseFloat(d["Gemini_甘辛"])+parseFloat(d["Claude_甘辛"]))/3;
         if(avg1 < scrState.s1Min || avg1 > scrState.s1Max) return false;
-        if(scrState.keyword && !d["銘柄名"].includes(scrState.keyword)) return false;
+        if(scrState.keyword) {
+            const allT = (d["銘柄名"]+d["国"]+d["産地"]+d["味わいタグ"]+d["検索タグ"]+d["鑑定評価(200字)"]+d["ソフィーの裏話"]).toLowerCase();
+            if(!allT.includes(scrState.keyword.toLowerCase())) return false;
+        }
         return true;
     });
     renderResults(res);
@@ -178,17 +166,17 @@ function executeScr() {
 
 function renderResults(results, scrollIdx = null) {
     nav.updateNav('lq_res', null, results);
-    let h = `<div class='label' onclick="window.openLiquorPortal()">◀ 検索結果: ${results.length}件</div>`;
-    h += `<button class="btn-back-scr" onclick="window.openScreening()">🔍 検索条件を変更する</button>`;
-    
-    // ★ 物理onclick属性を付与してクリックを確実に
-    results.forEach((d, i) => { 
-        const gIdx = nav.liquorData.indexOf(d);
-        h += `<div class='item' onclick="window.showCard(${gIdx}, null)">🥃 ${d['銘柄名']}</div>`; 
-    });
-    
+    let h = `<div class='label label-back-portal'>◀ 検索結果: ${results.length}件</div>`;
+    h += `<button class="btn-back-scr" id="btn-mod-scr">🔍 検索条件を変更する</button>`;
+    results.forEach((d, i) => { h += `<div class='item res-item' data-idx='${i}'>🥃 ${clean(d['銘柄名'])}</div>`; });
     render(h, 'result', true);
-    if(scrollIdx !== null) setTimeout(() => { const t = document.querySelector(`[onclick*="window.showCard(${nav.liquorData.indexOf(results[scrollIdx])}"]`); if(t) t.scrollIntoView({ block: 'center' }); }, 50);
+    
+    document.querySelector('.label-back-portal').onclick = () => openLiquorPortal();
+    document.getElementById('btn-mod-scr').onclick = () => openScreening();
+    document.querySelectorAll('.res-item').forEach(el => {
+        el.onclick = () => { const i = parseInt(el.dataset.idx); showCard(nav.liquorData.indexOf(results[i]), results); };
+    });
+    if(scrollIdx !== null) setTimeout(() => { const t = document.querySelector(`[data-idx='${scrollIdx}']`); if(t) t.scrollIntoView({ block: 'center' }); }, 50);
 }
 
 function showCard(gIdx, list) {
@@ -202,14 +190,13 @@ function showCard(gIdx, list) {
         return hg + `</div><div class="graph-label-inline">${r}</div></div>`;
     };
 
-    // 度数計算
     let abvRaw = d["度数"] || "-"; let abvDisp = abvRaw;
     if (typeof abvRaw === 'number' || (!isNaN(parseFloat(abvRaw)) && !abvRaw.toString().includes('%'))) {
         let n = parseFloat(abvRaw); if (n > 0 && n <= 1.0) abvDisp = Math.round(n * 100) + "%"; else if (n > 1.0) abvDisp = n + "%";
     }
 
     let h = `<div class="label">No.${d["No"]}</div><div class="lq-card">`;
-    h += `<div class="lq-name">${d["銘柄名"]}</div><div class="lq-quote">${(d["ソフィーのセリフ"]||"").replace(/[「」『』"']/g,'')}</div>`;
+    h += `<div class="lq-name">${clean(d["銘柄名"])}</div><div class="lq-quote">${clean(d["ソフィーのセリフ"])}</div>`;
     h += `<div class="lq-basic-info"><div><span style="color:var(--blue)">▶</span> ${d["大分類"]}　<span style="color:#e74c3c">▶</span> ${d["中分類"]}</div><div><span style="color:#888">産地:</span> ${d["国"]} / ${d["産地"]}</div>`;
     if(d["製造元と創業年"] && d["製造元と創業年"] !== "-") h += `<div><span style="color:#888">製造:</span> ${d["製造元と創業年"]}</div>`;
     if(d["公式URL"] && d["公式URL"]!=="-") h+=`<a href="${d["公式URL"]}" target="_blank" class="lq-btn-small">🔗 メーカーサイト</a>`;
@@ -219,11 +206,10 @@ function showCard(gIdx, list) {
     h += mkBar("軽快", "濃厚", d["GPT_ボディ"], d["Gemini_ボディ"], d["Claude_ボディ"]);
     h += mkBar("常道", "独特", "", "", d["Claude_個性"], true);
     
-    // ★第四軸の表題（ラベル）表示
+    // ★第四軸の表題
     const sub = (d["中分類"] || "").trim();
     const a4 = AXIS4_MAP[sub] || AXIS4_DEFAULT;
-    h += `<div style="font-size:0.6rem; color:var(--accent); text-align:center; margin-top:4px; margin-bottom:2px;">${a4.label}</div>`;
-    h += mkBar(a4.left, a4.right, "", "", d["Claude_第4軸"], true);
+    h += `<div style="font-size:0.6rem; color:var(--accent); text-align:center; margin-top:4px; margin-bottom:2px;">${a4.label}</div>${mkBar(a4.left, a4.right, "", "", d["Claude_第4軸"], true)}`;
     
     h += `<div style="font-size:0.55rem; color:#888; text-align:right; margin-top:5px;"><span style="color:#10a37f">●GPT</span> <span style="color:#1a73e8">●Gem</span> <span style="color:#d97757">●Claude</span></div>`;
     h += `</div><div class="lq-specs-half">`;
@@ -240,7 +226,6 @@ function showCard(gIdx, list) {
 
 function render(h, mode = 'standard', isFS = false) {
     nm.style.display='none'; lv.style.display='block'; lv.innerHTML=h;
-    document.querySelectorAll('.scr-tag-btn').forEach(btn => btn.onclick = (e) => { e.target.classList.toggle('selected'); saveForm(); });
     const ls = document.querySelector('.l-side'); ls.style.display = isFS ? 'none' : 'block';
     renderConsole(mode);
 }
@@ -259,42 +244,47 @@ function saveForm() {
     scrState.tags = Array.from(document.querySelectorAll('.scr-tag-btn.selected')).map(el => el.dataset.tag);
 }
 
-window.openMajor = () => {
-    nav.updateNav("lq_major"); let h = `<div class="label" onclick="window.openLiquorPortal()">◀ ジャンルを選択</div>`;
-    [...new Set(nav.liquorData.map(d => d["大分類"]))].forEach(m => { h += `<div class="item" onclick="window.openSub('${m}')">📁 ${m}</div>`; });
+function openMajor() {
+    nav.updateNav("lq_major"); let h = `<div class="label label-back-portal">◀ ジャンルを選択</div>`;
+    [...new Set(nav.liquorData.map(d => d["大分類"]))].forEach((m, i) => { h += `<div class="item mj-item" data-mj="${m}">📁 ${m}</div>`; });
     render(h);
-};
-window.openSub = (mj) => {
-    nav.updateNav("lq_sub", mj); let h = `<div class="label" onclick="window.openMajor()">◀ ${mj}</div>`;
-    [...new Set(nav.liquorData.filter(d => d["大分類"] === mj).map(d => d["中分類"]))].forEach(s => { h += `<div class="item" onclick="window.openItems('${s}')">📁 ${s}</div>`; });
+    document.querySelector('.label-back-portal').onclick = () => openLiquorPortal();
+    document.querySelectorAll('.mj-item').forEach(el => el.onclick = () => openSub(el.dataset.mj));
+}
+function openSub(mj) {
+    nav.updateNav("lq_sub", mj); let h = `<div class="label label-back-mj">◀ ${mj}</div>`;
+    [...new Set(nav.liquorData.filter(d => d["大分類"] === mj).map(d => d["中分類"]))].forEach(s => { h += `<div class="item sb-item" data-sb="${s}">📁 ${s}</div>`; });
     render(h);
-};
-window.openItems = (sb) => {
+    document.querySelector('.label-back-mj').onclick = () => openMajor();
+    document.querySelectorAll('.sb-item').forEach(el => el.onclick = () => openItems(el.dataset.sb));
+}
+function openItems(sb) {
     const list = nav.liquorData.filter(d => d["中分類"] === sb); nav.updateNav("lq_list", null, list);
-    let h = `<div class="label" onclick="window.openSub('${list[0]["大分類"]}')">◀ ${sb}</div>`;
-    list.forEach((d, i) => { 
-        const gIdx = nav.liquorData.indexOf(d);
-        h += `<div class='item' onclick="window.showCard(${gIdx}, null)">🥃 ${d['銘柄名']}</div>`; 
-    });
+    let h = `<div class="label label-back-sb">◀ ${sb}</div>`;
+    list.forEach((d, i) => { h += `<div class='item list-item' data-idx='${i}'>🥃 ${clean(d['銘柄名'])}</div>`; });
     render(h);
-};
+    document.querySelector('.label-back-sb').onclick = () => openSub(list[0]["大分類"]);
+    document.querySelectorAll('.list-item').forEach(el => {
+        el.onclick = () => { const i = parseInt(el.dataset.idx); showCard(nav.liquorData.indexOf(list[i]), list); };
+    });
+}
 
 function renderConsole(mode) {
     const grid = document.getElementById('console-grid');
     if (mode === 'screening') {
         grid.innerHTML = `<button class="console-scr-btn" id="c-clr">クリア</button><button class="console-scr-btn btn-c-exec" id="c-ex">検索実行</button>`;
         document.getElementById('c-clr').onclick = () => { scrState = { major: "", sub: "", country: "", region: "", keyword: "", cospa: "", isStandard: "", isSophieRecom: "", s1Min: -2.0, s1Max: 2.0, s2Min: -2.0, s2Max: 2.0, s3Min: -2.0, s3Max: 2.0, s4Min: -2.0, s4Max: 2.0, tags: [] }; openScreening(); };
-        document.getElementById('c-ex').onclick = () => window.executeScr();
+        document.getElementById('c-ex').onclick = () => executeScr();
     } else if (mode === 'result') {
         grid.innerHTML = `<button class="console-scr-btn btn-c-mod" id="c-mod">🔍 条件変更</button>`;
-        document.getElementById('btn-mod').onclick = () => window.openScreening();
+        document.getElementById('btn-mod').onclick = () => openScreening();
     } else {
         grid.innerHTML = `<button class="c-btn" id="c-exp">▼</button><button class="c-btn" id="c-back">▲</button><button class="c-btn">⏹️</button><button class="c-btn" id="c-next" style="flex:1.5">▶</button><button class="c-btn">⏭</button>`;
         document.getElementById('c-back').onclick = handleBack;
         document.getElementById('c-exp').onclick = () => { 
             const ls = document.querySelector('.l-side'); ls.style.display='block'; 
             setTimeout(() => { if(nav.state.includes('lq')) ls.style.display='none'; }, 4000);
-            playVoice("./voices_mp3/what_order.mp3", "何になさいますか？");
+            playV("./voices_mp3/what_order.mp3", "何になさいますか？");
         };
         document.getElementById('c-next').onclick = () => { if(nav.state === "lq_card") { let list = nav.curP; let idx = (list.indexOf(nav.liquorData[nav.curI]) + 1) % list.length; showCard(nav.liquorData.indexOf(list[idx]), list); } };
     }
