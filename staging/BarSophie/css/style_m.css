@@ -226,3 +226,6 @@ body {
 
 /* ★カードボタン */
 .card-btn { font-family: sans-serif; line-height: 1.2; }
+
+/* 免責バー：通常は非表示、メインメニュー時だけJSで表示 */
+#disclaimer-bar { display: none; }

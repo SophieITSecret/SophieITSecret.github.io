@@ -201,6 +201,10 @@ function showRootMenu() {
     const btnExp = document.getElementById('btn-expand');
     if (btnExp) { btnExp.innerText = '▼'; btnExp.style.opacity = '0.3'; }
 
+    // ★メインメニュー時だけ免責を表示
+    const db = document.getElementById('disclaimer-bar');
+    if (db) db.style.display = 'block';
+
     renderConsole('standard');
 }
 

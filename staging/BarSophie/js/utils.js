@@ -59,6 +59,9 @@ export function setListView(h, fullScreen) {
     lv.innerHTML = h;
     document.getElementById('main-scroll').scrollTop = 0;
     if (fullScreen) hideLSide(); else showLSide();
+    // メインメニュー以外では免責を非表示
+    const db = document.getElementById('disclaimer-bar');
+    if (db) db.style.display = 'none';
 }
 
 // アクティブ強調
