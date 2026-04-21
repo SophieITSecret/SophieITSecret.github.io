@@ -5,7 +5,7 @@
  */
 
 import * as nav from './navigation.js';
-import { clean, formatAbv, avg3, setListView, hideLSide } from './utils.js';
+import { clean, formatAbv, avg3, setListView } from './utils.js';
 
 // =============================================
 // 第4軸マッピング
@@ -62,11 +62,39 @@ const AXIS4_MAP = {
 const AXIS4_DEFAULT = { label: "第4軸(品目選択後)", left: "←", right: "→", disabled: true };
 
 // =============================================
+// 価格帯バッジ
+// =============================================
+const PRICE_LEVELS = [
+    { max: 2000,   num: "2",  color: "#27ae60" },  // 緑
+    { max: 5000,   num: "5",  color: "#27ae60" },  // 緑
+    { max: 10000,  num: "1",  color: "#f0b56e" },  // ゴールド（万単位）
+    { max: 20000,  num: "2",  color: "#f0b56e" },  // ゴールド
+    { max: 50000,  num: "5",  color: "#f0b56e" },  // ゴールド
+];
+
+function priceBadge(priceStr) {
+    if (!priceStr) return "　";
+    const n = parseInt((priceStr || "").replace(/[^0-9]/g, ''));
+    if (isNaN(n)) return "　";
+    if (n > 50000) return `💎`;
+    for (const lv of PRICE_LEVELS) {
+        if (n <= lv.max) {
+            return `<svg width="16" height="16" viewBox="0 0 16 16" style="vertical-align:middle; margin-right:3px; flex-shrink:0;">` +
+                   `<circle cx="8" cy="8" r="8" fill="${lv.color}"/>` +
+                   `<text x="8" y="12" text-anchor="middle" fill="white" font-size="9" font-weight="bold" font-family="sans-serif">${lv.num}</text>` +
+                   `</svg>`;
+        }
+    }
+    return "　";
+}
+
+// =============================================
 // スクリーニング状態
 // =============================================
 const initScrState = () => ({
     major: "", sub: "", country: "", region: "", keyword: "",
     cospa: "", isStandard: "", isSophieRecom: "",
+    pMin: "", pMax: "",
     s1Min: -2.0, s1Max: 2.0,
     s2Min: -2.0, s2Max: 2.0,
     s3Min: -2.0, s3Max: 2.0,
@@ -75,11 +103,13 @@ const initScrState = () => ({
 });
 let scrState = initScrState();
 
-// =============================================
-// コールバック（コンソール切替をapp_m.jsに委譲）
-// =============================================
+// コールバック
 let _renderConsole = null;
 export function setRenderConsole(fn) { _renderConsole = fn; }
+
+// 現在のリスト（コンソールから参照）
+let _currentList = [];
+let _currentState = ""; // "scr" or "list"
 
 // =============================================
 // お酒データベース — 入口
@@ -103,7 +133,7 @@ export function openLiquorPortal() {
     document.getElementById('dir-go').addEventListener('click', () => {
         const v = document.getElementById('dir-num').value;
         const t = nav.liquorData.find(d => d["No"] == v);
-        if (t) showCard(nav.liquorData.indexOf(t), nav.liquorData);
+        if (t) showCard(nav.liquorData.indexOf(t), nav.liquorData, 'list');
         else alert("No." + v + " は見つかりませんでした。");
     });
 }
@@ -129,16 +159,32 @@ function openScreening() {
     const sel = (id, cur, arr) =>
         `<select id="${id}"><option value="">問わない</option>${arr.map(v => opt(v, cur)).join('')}</select>`;
 
+    // 価格帯選択肢
+    const priceVals = ["", 1000, 2000, 3000, 4000, 5000, 10000, 20000, 30000, 50000, 100000];
+    const priceOpts = priceVals.map(v =>
+        `<option value="${v}" ${scrState.pMin == v && v !== "" ? 'selected' : ''}>${v === "" ? "決めない" : v.toLocaleString() + "円"}</option>`
+    ).join('');
+    const priceOptsMax = priceVals.map(v =>
+        `<option value="${v}" ${scrState.pMax == v && v !== "" ? 'selected' : ''}>${v === "" ? "決めない" : v.toLocaleString() + "円"}</option>`
+    ).join('');
+
     const a4    = (scrState.sub && AXIS4_MAP[scrState.sub]) ? AXIS4_MAP[scrState.sub] : AXIS4_DEFAULT;
     const a4dis = !scrState.sub;
 
-    // ★ 軸名を左右端に配置した1行レイアウト
+    // スライダー（目盛り付き）
     const mkSlider = (id, lbl, left, right, min, max, disabled) => `
         <div class="scr-slider-row" style="opacity:${disabled ? 0.35 : 1}; pointer-events:${disabled ? 'none' : 'auto'};">
             <div class="scr-slider-label-name">${lbl}</div>
             <div class="scr-slider-label-left">${left}</div>
             <div class="multi-range-wrap">
                 <div class="multi-range-track"></div>
+                <div class="slider-ticks">
+                    <div class="stick stick-sm"></div>
+                    <div class="stick stick-md"></div>
+                    <div class="stick stick-lg"></div>
+                    <div class="stick stick-md"></div>
+                    <div class="stick stick-sm"></div>
+                </div>
                 <div class="multi-range-fill" id="${id}-fill"></div>
                 <input type="range" id="${id}-min" min="-2.0" max="2.0" step="0.5" value="${min}" style="z-index:3;">
                 <input type="range" id="${id}-max" min="-2.0" max="2.0" step="0.5" value="${max}" style="z-index:2;">
@@ -180,6 +226,12 @@ function openScreening() {
                         <option value="1" ${scrState.cospa === '1' ? 'selected' : ''}>☆1以上</option>
                         <option value="2" ${scrState.cospa === '2' ? 'selected' : ''}>☆☆以上</option>
                         <option value="3" ${scrState.cospa === '3' ? 'selected' : ''}>☆☆☆のみ</option></select></div>
+                <div class="scr-row">
+                    <span class="scr-row-label">市場価格:</span>
+                    <select id="s-pmin" class="scr-price-sel">${priceOpts}</select>
+                    <span class="scr-price-sep">〜</span>
+                    <select id="s-pmax" class="scr-price-sel">${priceOptsMax}</select>
+                </div>
             </div>
             <div class="scr-group">
                 <div class="scr-title">味わい指定</div>
@@ -252,6 +304,8 @@ function saveForm() {
     scrState.isStandard    = g('s-std');
     scrState.isSophieRecom = g('s-sop');
     scrState.cospa         = g('s-cos');
+    scrState.pMin          = g('s-pmin');
+    scrState.pMax          = g('s-pmax');
     scrState.tags = Array.from(document.querySelectorAll('.scr-tag-btn.selected')).map(el => el.dataset.tag);
 }
 
@@ -260,6 +314,9 @@ function saveForm() {
 // =============================================
 function executeScr() {
     saveForm();
+    const pMinN = scrState.pMin ? parseInt(scrState.pMin) : 0;
+    const pMaxN = scrState.pMax ? parseInt(scrState.pMax) : Infinity;
+
     const results = nav.liquorData.filter(d => {
         if (scrState.major         && d["大分類"]         !== scrState.major)         return false;
         if (scrState.sub           && d["中分類"]         !== scrState.sub)           return false;
@@ -270,6 +327,12 @@ function executeScr() {
         if (scrState.cospa) {
             const stars = (d["Gemini_コスパ"] || "").split('☆').length - 1;
             if (stars < parseInt(scrState.cospa)) return false;
+        }
+        // 市場価格フィルター
+        if (scrState.pMin || scrState.pMax) {
+            const price = parseInt((d["市販価格"] || "").replace(/[^0-9]/g, '')) || 0;
+            if (scrState.pMin && price < pMinN) return false;
+            if (scrState.pMax && price > pMaxN) return false;
         }
         const v1 = avg3(d["GPT_甘辛"],  d["Gemini_甘辛"],  d["Claude_甘辛"]);
         if (v1 < scrState.s1Min || v1 > scrState.s1Max) return false;
@@ -301,17 +364,21 @@ function executeScr() {
 // =============================================
 function renderResults(results, scrollToGlobalIdx = null) {
     nav.updateNav('lq_res', null, results);
+    _currentList = results;
+    _currentState = "scr";
+
     let h = `<div class="label" id="lbl-back-res">◀ 検索結果: ${results.length}件</div>`;
     results.forEach(d => {
         const gIdx = nav.liquorData.indexOf(d);
-        h += `<div class="item res-item" data-gidx="${gIdx}">🥃 ${clean(d['銘柄名'])}</div>`;
+        const badge = priceBadge(d["市販価格"]);
+        h += `<div class="item res-item" data-gidx="${gIdx}" style="display:flex; align-items:center; gap:4px;">${badge}<span style="overflow:hidden; text-overflow:ellipsis;">${clean(d['銘柄名'])}</span></div>`;
     });
     setListView(h, true);
     if (_renderConsole) _renderConsole('result');
 
     document.getElementById('lbl-back-res').addEventListener('click', openLiquorPortal);
     document.querySelectorAll('.res-item').forEach(el => {
-        el.addEventListener('click', () => showCard(parseInt(el.dataset.gidx), results));
+        el.addEventListener('click', () => showCard(parseInt(el.dataset.gidx), results, 'scr'));
     });
     if (scrollToGlobalIdx !== null) {
         setTimeout(() => {
@@ -324,8 +391,10 @@ function renderResults(results, scrollToGlobalIdx = null) {
 // =============================================
 // 個別銘柄カード
 // =============================================
-function showCard(gIdx, list) {
+function showCard(gIdx, list, fromState) {
     nav.updateNav("lq_card", null, list, gIdx);
+    _currentList  = list;
+    _currentState = fromState || "list";
     const d = nav.liquorData[gIdx];
     if (!d) return;
 
@@ -347,8 +416,9 @@ function showCard(gIdx, list) {
     let h = `<div class="label">No.${d["No"]}</div><div class="lq-card">`;
     h += `<div class="lq-name">${clean(d["銘柄名"])}</div>`;
     if (d["ソフィーのセリフ"]) h += `<div class="lq-quote">${clean(d["ソフィーのセリフ"])}</div>`;
+    // ★大分類の▶を青（#1a73e8）に変更
     h += `<div class="lq-basic-info">
-        <div><span style="color:var(--blue)">▶</span> ${d["大分類"]}&nbsp;&nbsp;<span style="color:#e74c3c">▶</span> ${d["中分類"]}</div>
+        <div><span style="color:#1a73e8">▶</span> ${d["大分類"]}&nbsp;&nbsp;<span style="color:#e74c3c">▶</span> ${d["中分類"]}</div>
         <div><span style="color:#888">産地:</span> ${d["国"] || ""}${d["産地"] ? ' / ' + d["産地"] : ''}</div>`;
     if (d["製造元と創業年"] && d["製造元と創業年"] !== "-")
         h += `<div><span style="color:#888">製造:</span> ${d["製造元と創業年"]}</div>`;
@@ -371,21 +441,39 @@ function showCard(gIdx, list) {
     h += `</div></div>`;
     if (d["ソフィーの裏話"])   h += `<div class="lq-sophie-talk"><span class="sophie-prefix">[ソフィー]</span> ${d["ソフィーの裏話"]}</div>`;
     if (tags.length)           h += `<div class="lq-tags">${tags.map(t => `<span class="lq-tag">${t}</span>`).join('')}</div>`;
-    if (d["鑑定評価(200字)"]) h += `<div class="lq-desc">${d["鑑定評価(200字)"]}</div>`;
+    // ★解説ヘッダーを緑色で追加
+    if (d["鑑定評価(200字)"]) h += `<div class="lq-desc-header">[解説]</div><div class="lq-desc">${d["鑑定評価(200字)"]}</div>`;
     h += `</div>`;
 
     setListView(h, true);
-    if (_renderConsole) _renderConsole('standard');
+    if (_renderConsole) _renderConsole('card');
+}
 
-    const btnBack = document.getElementById('c-back');
-    if (btnBack && nav.curG === null) {
-        btnBack.textContent      = '候補へ戻る';
-        btnBack.style.background = '#d35400';
-        btnBack.style.color      = '#fff';
-        btnBack.style.border     = '1px solid #e67e22';
-        btnBack.style.fontSize   = '0.75rem';
+// =============================================
+// カード画面のコンソール用ナビ関数（app_m.jsから呼ぶ）
+// =============================================
+export function cardNavPrev() {
+    const cur  = nav.liquorData[nav.curI];
+    const idx  = _currentList.indexOf(cur);
+    const prev = _currentList[(idx - 1 + _currentList.length) % _currentList.length];
+    showCard(nav.liquorData.indexOf(prev), _currentList, _currentState);
+}
+export function cardNavNext() {
+    const cur  = nav.liquorData[nav.curI];
+    const idx  = _currentList.indexOf(cur);
+    const next = _currentList[(idx + 1) % _currentList.length];
+    showCard(nav.liquorData.indexOf(next), _currentList, _currentState);
+}
+export function cardNavToList() {
+    if (_currentState === 'scr') {
+        renderResults(_currentList, nav.curI);
+    } else {
+        const sb = _currentList[0] ? _currentList[0]["中分類"] : null;
+        if (sb) openItems(sb); else openLiquorPortal();
     }
 }
+export function cardNavToScr() { openScreening(); }
+export function getCurrentState() { return _currentState; }
 
 // =============================================
 // ジャンル階層ナビ
@@ -419,43 +507,39 @@ function openSub(mj) {
 function openItems(sb) {
     const list = nav.liquorData.filter(d => d["中分類"] === sb);
     nav.updateNav("lq_list", null, list);
+    _currentList  = list;
+    _currentState = "list";
     const mj = list[0] ? list[0]["大分類"] : "";
     let h = `<div class="label" id="lbl-back-items">◀ ${sb}</div>`;
     list.forEach(d => {
-        h += `<div class="item list-item" data-gidx="${nav.liquorData.indexOf(d)}">🥃 ${clean(d['銘柄名'])}</div>`;
+        const badge = priceBadge(d["市販価格"]);
+        h += `<div class="item list-item" data-gidx="${nav.liquorData.indexOf(d)}" style="display:flex; align-items:center; gap:4px;">${badge}<span style="overflow:hidden; text-overflow:ellipsis;">${clean(d['銘柄名'])}</span></div>`;
     });
     setListView(h, false);
     if (_renderConsole) _renderConsole('standard');
     document.getElementById('lbl-back-items').addEventListener('click', () => openSub(mj));
     document.querySelectorAll('.list-item').forEach(el =>
-        el.addEventListener('click', () => showCard(parseInt(el.dataset.gidx), list)));
+        el.addEventListener('click', () => showCard(parseInt(el.dataset.gidx), list, 'list')));
 }
 
 // =============================================
-// 戻るハンドラ（app_m.jsから呼ぶ）
+// 戻るハンドラ
 // =============================================
 export function handleLiquorBack() {
     switch (nav.state) {
-        case "lq_card":
-            if (nav.curG === null) {
-                renderResults(nav.curP, nav.curI);
-            } else {
-                const sub = nav.curP && nav.curP[0] ? nav.curP[0]["中分類"] : null;
-                if (sub) openItems(sub); else openLiquorPortal();
-            }
-            return true;
-        case "lq_res":    openScreening();          return true;
-        case "lq_list":   openSub(nav.curG);        return true;
-        case "lq_sub":    openMajor();              return true;
-        case "lq_major":  openLiquorPortal();       return true;
-        case "lq_scr":    openLiquorPortal();       return true;
-        default:          return false;
+        case "lq_card":    cardNavToList();     return true;
+        case "lq_res":     openScreening();     return true;
+        case "lq_list":    openSub(nav.curG);   return true;
+        case "lq_sub":     openMajor();         return true;
+        case "lq_major":   openLiquorPortal();  return true;
+        case "lq_scr":     openLiquorPortal();  return true;
+        default:           return false;
     }
 }
 
 // =============================================
-// コンソール用：スクリーニング実行・クリア
+// コンソール用export
 // =============================================
-export function execScr()               { executeScr(); }
-export function clearScr()              { scrState = initScrState(); openScreening(); }
+export function execScr()                  { executeScr(); }
+export function clearScr()                 { scrState = initScrState(); openScreening(); }
 export function openScreeningFromConsole() { openScreening(); }

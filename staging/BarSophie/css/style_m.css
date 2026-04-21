@@ -146,13 +146,28 @@ body {
 .multi-range-wrap input[type=range]::-webkit-slider-thumb {
     appearance: none; -webkit-appearance: none;
     width: 24px; height: 24px; border-radius: 50%;
-    background: var(--accent); cursor: pointer; box-shadow: 0 0 4px rgba(0,0,0,0.8);
+    background: #8e1a2e; cursor: pointer; box-shadow: 0 0 4px rgba(0,0,0,0.8);  /* ★ワインレッド */
 }
+
+/* ★スライダー目盛り */
+.slider-ticks {
+    position: absolute; width: 100%; display: flex;
+    justify-content: space-between; align-items: center;
+    pointer-events: none; z-index: 1;
+}
+.stick { background: #666; border-radius: 1px; }
+.stick-lg { width: 2px; height: 12px; }   /* 中央(0) */
+.stick-md { width: 1px; height: 7px;  }   /* ±1 */
+.stick-sm { width: 1px; height: 4px;  }   /* ±2（端） */
 
 /* タグ */
 .scr-tag-grid { display: flex; flex-wrap: wrap; gap: 5px; max-height: 180px; overflow-y: auto; padding: 3px 1px; }
 .scr-tag-btn { background: #222; color: #bbb; border: 1px solid #444; padding: 4px 10px; border-radius: 15px; font-size: 0.78rem; cursor: pointer; }
 .scr-tag-btn.selected { background: var(--blue); color: #000; font-weight: bold; border-color: var(--blue); }
+
+/* ★市場価格選択（横並び） */
+.scr-price-sel { flex: 1; min-width: 0; }
+.scr-price-sep { color: #888; font-size: 0.9rem; flex-shrink: 0; padding: 0 2px; }
 
 /* 鑑定カード追加要素 */
 .lq-cospa { font-size: 0.78rem; color: #f1c40f; font-weight: bold; text-align: center; background: #222; border-radius: 4px; padding: 3px 6px; margin-bottom: 10px; }
@@ -163,5 +178,9 @@ body {
 .graph-legend { font-size: 0.55rem; color: #888; text-align: right; margin-top: 5px; }
 .leg-gpt { color: #10a37f; } .leg-gem { color: #1a73e8; } .leg-cla { color: #d97757; }
 
-/* ★ 銘柄一言コメントをイタリックなし */
-.lq-quote { font-style: normal !important; }
+/* ★解説ヘッダー */
+.lq-desc-header { color: #27ae60; font-weight: bold; font-size: 0.8rem; margin-top: 10px; margin-bottom: 4px; }
+
+/* ★銘柄カード専用コンソールボタン */
+.card-btn { font-family: sans-serif; line-height: 1.2; }
+

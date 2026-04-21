@@ -241,6 +241,22 @@ function renderConsole(mode) {
             <button class="c-btn" id="c-mod" style="background:#2980b9; color:#fff; font-size:0.85rem;">🔍 検索条件を変更する</button>`;
         document.getElementById('c-mod').onclick = liquor.openScreeningFromConsole;
 
+    } else if (mode === 'card') {
+        // ★個別銘柄カード専用コンソール
+        const grid = document.querySelector('.btn-grid');
+        if (!grid) return;
+        grid.innerHTML = `
+            <button class="c-btn card-btn" id="c-sophie" style="font-size:0.7rem; line-height:1.1;">S</button>
+            <button class="c-btn card-btn" id="c-scr"    style="font-size:0.62rem; line-height:1.1;">選択<br>画面</button>
+            <button class="c-btn card-btn" id="c-list"   style="font-size:0.75rem;">リスト</button>
+            <button class="c-btn card-btn" id="c-prev"   style="font-size:1.1rem;">◀</button>
+            <button class="c-btn card-btn" id="c-next2"  style="font-size:1.1rem;">▶</button>`;
+        document.getElementById('c-sophie').onclick = () => { /* 将来のソフィー機能 */ };
+        document.getElementById('c-scr').onclick    = liquor.cardNavToScr;
+        document.getElementById('c-list').onclick   = liquor.cardNavToList;
+        document.getElementById('c-prev').onclick   = liquor.cardNavPrev;
+        document.getElementById('c-next2').onclick  = liquor.cardNavNext;
+
     } else {
         // 通常モード：v13.0の元のボタン構成を復元
         const grid = document.querySelector('.btn-grid');
