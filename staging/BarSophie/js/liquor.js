@@ -456,7 +456,6 @@ function showCard(gIdx, list, fromState) {
         // メーカーサイト・G・Amazon を1行に（メーカーサイトは製造元の真下）
         h += `<div class="card-link-row">`;
         if (d["公式URL"] && d["公式URL"] !== "-") {
-            // 通常タップ→直接、長押し→翻訳
             const directUrl = d["公式URL"];
             const transUrl  = `https://translate.google.com/translate?sl=auto&tl=ja&u=${encodeURIComponent(d["公式URL"])}`;
             h += `<a href="${directUrl}" target="_blank" class="lq-btn-small"
@@ -468,9 +467,10 @@ function showCard(gIdx, list, fromState) {
             const gUrl = `https://www.google.com/search?q=${gKw}`;
             h += `<a href="${gUrl}" target="_blank" class="lq-btn-g">G</a>`;
         }
-        // 固定スペーサーでAmazonを右へ
+        // 固定スペーサーでAmazonを右へ・免責を添える
         h += `<span style="flex:1;"></span>`;
         h += `<a href="${amzUrl}" target="_blank" class="lq-btn-amz-small">Amazon↗</a>`;
+        h += `<span class="amz-disclaimer">※広告</span>`;
         h += `</div>`;
     } else {
         // 製造元なし：AmazonだけでもOK
