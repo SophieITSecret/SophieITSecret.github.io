@@ -3,61 +3,57 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Bar Sophie v13.0 Modular</title>
+    <title>Bar Sophie v22.1 Fixed</title>
     <link rel="apple-touch-icon" href="bar_sophie.jpeg">
     <meta name="apple-mobile-web-app-title" content="BARソフィー">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <link rel="stylesheet" href="css/style_m.css?v=22">
+    <link rel="stylesheet" href="style_m.css?v=22_1">
 </head>
 <body>
     <div id="entry-screen">
-        <img id="entry-sophie" src="./sophie_shake.png">
+        <img id="entry-sophie" src="./sophie_shake.jpg">
         <button class="btn-enter" id="btn-enter">🥃 ＢＡＲソフィーに入る</button>
     </div>
 
     <div id="chat-mode">
-        <div class="portrait"><img src="./sophie_shake.png" id="lounge-sophie"></div>
+        <div class="portrait"><img src="./sophie_shake.jpg" id="lounge-sophie"></div>
         <div class="chat-area" id="lounge-text">いらっしゃいませ。</div>
         <button class="btn-to-bar" id="btn-to-bar">カウンターへ進む</button>
     </div>
 
-    <div id="main-ui">
-        <div class="l-side">
-            <div class="monitor">
-                <div id="yt-wrapper" style="display:none; width:100%; height:100%;">
+    <div id="main-ui" style="display:none;">
+        <div class="main-container">
+            <div class="l-side">
+                <div class="monitor" id="yt-wrapper">
+                    <img id="monitor-img" src="./front_sophie.jpeg">
                     <div id="yt-player"></div>
                 </div>
-                <img id="monitor-img" style="display:none;">
-                <div id="telop"></div>
+                <div class="telop-area"><div id="telop">Welcome to Bar Sophie</div></div>
+            </div>
+
+            <div class="r-side">
+                <div id="main-panel">
+                    <div id="nav-main">
+                        <div id="main-btns">
+                            </div>
+                        <div id="main-credits" style="font-size:0.58rem; color:#444; text-align:center; padding:10px 4px 4px; line-height:1.7;">
+                            Amazonのアソシエイトとして、当サイトは適正販売により収入を得ています。<br>
+                            当サイトの一部コンテンツは、生成AIで作成・編集されています。
+                        </div>
+                    </div>
+                    <div id="list-view" style="display:none;"></div>
+                </div>
             </div>
         </div>
-        <div class="r-side">
-            <div class="scroll-area" id="main-scroll">
-                <div id="nav-main">
-                    <button class="act-btn" style="background:var(--green)" id="btn-music">🎵 音楽選曲 (リクエスト)</button>
-                    <button class="act-btn" style="background:var(--talk)" id="btn-talk">🥃 お酒の話 (360本の物語)</button>
-                    <button class="act-btn" style="background:#8e44ad" id="btn-liquor">🍸 お酒データベース (800銘柄)</button>
-                    <div style="font-size:0.58rem; color:#444; text-align:center; padding:10px 4px 4px; line-height:1.7;">
-                        Amazonのアソシエイトとして、当サイトは適正販売により収入を得ています。<br>
-                        当サイトの一部コンテンツは、生成AIで作成・編集されています。
-                    </div>
+
+        <div class="console">
+            <div class="btn-grid" id="console-grid">
                 </div>
-                <div id="list-view" style="display:none;"></div>
-            </div>
-            <div class="console">
-                <div class="btn-grid" id="console-grid">
-                    <button class="c-btn" id="btn-expand">🔽</button>
-                    <button class="c-btn" id="ctrl-back">▲</button>
-                    <button class="c-btn" id="ctrl-pause">⏹️</button>
-                    <button class="c-btn" id="ctrl-play" style="flex: 1.5; font-size: 1.2rem;">▶</button>
-                    <button class="c-btn" id="btn-next">⏭</button>
-                </div>
-                <div class="sophie-box" id="sophie-warp"><img src="./sophie_shake.png"></div>
-            </div>
         </div>
     </div>
 
-    <script type="module" src="js/app_m.js?v=22"></script>
+    <audio id="talk-audio"></audio>
+    <script type="module" src="app_m.js"></script>
 </body>
 </html>
