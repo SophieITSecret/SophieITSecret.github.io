@@ -63,7 +63,7 @@ body {
 .lq-quote { font-size: 0.95rem; color: var(--blue); margin-bottom: 10px; font-weight: bold; padding-left: 2px; font-style: italic; }
 
 .lq-basic-info { font-size: 0.85rem; color: #ccc; margin-bottom: 12px; line-height: 1.5; }
-.lq-btn-small { display: inline-block; background: #222; color: var(--accent); padding: 4px 10px; border-radius: 4px; font-size: 0.75rem; text-decoration: none; border: 1px solid #555; margin-top: 6px; }
+.lq-btn-small { display: inline-flex; align-items: center; background: #222; color: var(--accent); padding: 0 10px; height: 26px; border-radius: 4px; font-size: 0.75rem; text-decoration: none; border: 1px solid #555; white-space: nowrap; }
 
 /* 2カラム分割エリア */
 .lq-split-view { display: flex; gap: 10px; margin-bottom: 12px; }
@@ -190,17 +190,13 @@ body {
     margin-top: 6px; flex-wrap: nowrap;
 }
 
-/* メーカーサイトボタン（lq-btn-smallを縦揃え対応に上書き） */
-.lq-btn-small {
-    display: inline-flex !important; align-items: center;
-    height: 26px; padding: 0 8px;
-    background: #222; color: var(--accent);
-    text-decoration: none; font-size: 0.75rem;
-    border: 1px solid #555; border-radius: 4px;
-    white-space: nowrap;
+/* ★カードリンク行 */
+.card-link-row {
+    display: flex; align-items: center; gap: 4px;
+    margin-top: 6px; flex-wrap: nowrap;
 }
 
-/* Amazonボタン（控えめ・右端・同高さ） */
+/* Amazonボタン（控えめ・右端） */
 .lq-btn-amz-small {
     display: inline-flex; align-items: center;
     height: 26px; padding: 0 10px;
@@ -211,13 +207,14 @@ body {
 }
 .lq-btn-amz-small:active { background: #2a2000; }
 
-/* Gボタン（少し大きく・同高さ） */
+/* Gボタン（メーカーリンクから少し離す） */
 .lq-btn-g {
     display: inline-flex; align-items: center; justify-content: center;
     width: 26px; height: 26px; border-radius: 50%;
     background: #1a1a2e; color: #4285f4;
     font-weight: bold; font-size: 0.95rem; text-decoration: none;
     border: 1px solid #333; flex-shrink: 0;
+    margin-left: 6px;
 }
 .lq-btn-g:active { background: #222; }
 
