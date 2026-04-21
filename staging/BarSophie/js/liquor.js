@@ -441,8 +441,20 @@ function showCard(gIdx, list, fromState) {
         <div><span style="color:#888">産地:</span> ${d["国"] || ""}${d["産地"] ? ' / ' + d["産地"] : ''}</div>`;
     if (d["製造元と創業年"] && d["製造元と創業年"] !== "-")
         h += `<div><span style="color:#888">製造:</span> ${d["製造元と創業年"]}</div>`;
-    if (d["公式URL"] && d["公式URL"] !== "-")
-        h += `<div style="margin-top:6px;"><a href="${d["公式URL"]}" target="_blank" class="lq-btn-small">🔗 メーカーサイト</a></div>`;
+
+    // ★ボタン行：メーカー(翻訳経由) ＋ Amazon ＋ G検索 ＋ 免責（右端）
+    const amzKw  = encodeURIComponent(clean(d["銘柄名"]) + " " + d["大分類"]);
+    const amzUrl = `https://www.amazon.co.jp/s?k=${amzKw}&tag=itsophie-22`;
+    const gUrl   = `https://www.google.com/search?q=${encodeURIComponent(clean(d["銘柄名"]) + " " + d["大分類"])}`;
+    h += `<div class="card-link-row">`;
+    if (d["公式URL"] && d["公式URL"] !== "-") {
+        const transUrl = `https://translate.google.com/translate?sl=auto&tl=ja&u=${encodeURIComponent(d["公式URL"])}`;
+        h += `<a href="${transUrl}" target="_blank" class="lq-btn-small">🔗</a>`;
+    }
+    h += `<a href="${amzUrl}" target="_blank" class="lq-btn-amz">🛒 Amazon</a>`;
+    h += `<a href="${gUrl}"   target="_blank" class="lq-btn-g">G</a>`;
+    h += `<span class="card-disclaimer">※広告/AI</span>`;
+    h += `</div>`;
     h += `</div><div class="lq-split-view"><div class="lq-graph-half">`;
     if (d["Gemini_コスパ"]) h += `<div class="lq-cospa">コスパ ${d["Gemini_コスパ"]}</div>`;
     h += mkBar("辛口", "甘口", d["GPT_甘辛"],  d["Gemini_甘辛"],  d["Claude_甘辛"]);
