@@ -470,7 +470,6 @@ function showCard(gIdx, list, fromState) {
         // 固定スペーサーでAmazonを右へ・免責を添える
         h += `<span style="flex:1;"></span>`;
         h += `<a href="${amzUrl}" target="_blank" class="lq-btn-amz-small">Amazon↗</a>`;
-        h += `<span class="amz-disclaimer">※広告</span>`;
         h += `</div>`;
     } else {
         // 製造元なし：AmazonだけでもOK
