@@ -72,11 +72,29 @@ const PRICE_LEVELS = [
     { max: 50000,  num: "5",  color: "#8e1a2e" },  // ボルドーワインレッド
 ];
 
-function priceBadge(priceStr) {
-    if (!priceStr) return "　";
-    const n = parseInt((priceStr || "").replace(/[^0-9]/g, ''));
-    if (isNaN(n)) return "　";
-    if (n > 50000) return `💎`;
+// 価格文字列から数値を抽出（万円対応・範囲表記は最小値採用）
+function parsePrice(priceStr) {
+    if (!priceStr) return null;
+    const s = priceStr.replace(/,|，|、/g, '');  // カンマ等を除去
+
+    // 「万」が含まれる場合：最初の数字×10000
+    if (s.includes('万')) {
+        const m = s.match(/([0-9]+(?:\.[0-9]+)?)\s*万/);
+        if (m) return Math.round(parseFloat(m[1]) * 10000);
+    }
+
+    // 通常：最初に現れる数字を使う（範囲表記は最小値を採用）
+    const m = s.match(/[0-9]+/);
+    return m ? parseInt(m[0]) : null;
+}
+
+function priceBadge(priceStr, major) {
+    // カクテルはグラスアイコン
+    if (major === 'カクテル') return `<span style="font-size:1rem; margin-right:3px;">🍸</span>`;
+
+    const n = parsePrice(priceStr);
+    if (n === null) return "　";
+    if (n > 50000) return `<span style="font-size:1rem; margin-right:3px;">💎</span>`;
     for (const lv of PRICE_LEVELS) {
         if (n <= lv.max) {
             return `<svg width="16" height="16" viewBox="0 0 16 16" style="vertical-align:middle; margin-right:3px; flex-shrink:0;">` +
@@ -328,9 +346,10 @@ function executeScr() {
             const stars = (d["Gemini_コスパ"] || "").split('☆').length - 1;
             if (stars < parseInt(scrState.cospa)) return false;
         }
-        // 市場価格フィルター
+        // 市場価格フィルター（万円対応）
         if (scrState.pMin || scrState.pMax) {
-            const price = parseInt((d["市販価格"] || "").replace(/[^0-9]/g, '')) || 0;
+            const price = parsePrice(d["市販価格"]);
+            if (price === null) return false;
             if (scrState.pMin && price < pMinN) return false;
             if (scrState.pMax && price > pMaxN) return false;
         }
@@ -370,7 +389,7 @@ function renderResults(results, scrollToGlobalIdx = null) {
     let h = `<div class="label" id="lbl-back-res">◀ 検索結果: ${results.length}件</div>`;
     results.forEach(d => {
         const gIdx = nav.liquorData.indexOf(d);
-        const badge = priceBadge(d["市販価格"]);
+        const badge = priceBadge(d["市販価格"], d["大分類"]);
         h += `<div class="item res-item" data-gidx="${gIdx}" style="display:flex; align-items:center; gap:4px;">${badge}<span style="overflow:hidden; text-overflow:ellipsis;">${clean(d['銘柄名'])}</span></div>`;
     });
     setListView(h, true);
@@ -512,7 +531,7 @@ function openItems(sb) {
     const mj = list[0] ? list[0]["大分類"] : "";
     let h = `<div class="label" id="lbl-back-items">◀ ${sb}</div>`;
     list.forEach(d => {
-        const badge = priceBadge(d["市販価格"]);
+        const badge = priceBadge(d["市販価格"], d["大分類"]);
         h += `<div class="item list-item" data-gidx="${nav.liquorData.indexOf(d)}" style="display:flex; align-items:center; gap:4px;">${badge}<span style="overflow:hidden; text-overflow:ellipsis;">${clean(d['銘柄名'])}</span></div>`;
     });
     setListView(h, false);
