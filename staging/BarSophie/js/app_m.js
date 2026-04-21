@@ -96,12 +96,6 @@ function setup() {
         playVoice("./voices_mp3/menu_greeting.mp3", "いつもありがとうございます。今日はいかがされますか？");
     };
 
-    // ★免責表記をラウンジ画面に追加
-    const disclaimer = document.createElement('div');
-    disclaimer.style.cssText = 'font-size:0.65rem; color:#555; text-align:center; padding:8px 20px; line-height:1.5;';
-    disclaimer.innerHTML = `Amazonのアソシエイトとして、BAR SOPHIEは適格販売により収入を得ています。<br>当サイトの一部コンテンツはAI（生成AI）を利用して作成・編集されています。`;
-    document.getElementById('chat-mode').appendChild(disclaimer);
-
     // メインメニューボタン
     document.getElementById('btn-music').onclick  = music.openMusic;
     document.getElementById('btn-talk').onclick   = music.openTalk;

@@ -184,29 +184,27 @@ body {
 /* ★銘柄一言コメントをイタリックなし */
 .lq-quote { font-style: normal !important; }
 
-/* ★カードリンク行（メーカー・Amazon・G・免責） */
-.card-link-row {
-    display: flex; align-items: center; gap: 6px;
-    margin-top: 8px; margin-bottom: 4px; flex-wrap: wrap;
+/* ★カードリンク行 */
+.card-link-row { display: flex; align-items: center; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+
+/* Amazonボタン（控えめ・右端） */
+.lq-btn-amz-small {
+    font-size: 0.65rem; color: #a88734;
+    text-decoration: none; background: #1a1500;
+    border: 1px solid #4a3a00; border-radius: 3px;
+    padding: 2px 7px;
 }
-.lq-btn-amz {
-    display: inline-block; background: #f3a847; color: #111;
-    text-decoration: none; font-weight: bold; font-size: 0.78rem;
-    padding: 4px 10px; border-radius: 4px; border: 1px solid #a88734;
-}
-.lq-btn-amz:active { background: #e29736; }
+.lq-btn-amz-small:active { background: #2a2000; }
+
+/* Gボタン */
 .lq-btn-g {
     display: inline-flex; align-items: center; justify-content: center;
-    width: 26px; height: 26px; border-radius: 50%;
-    background: #fff; color: #4285f4;
-    font-weight: bold; font-size: 0.85rem; text-decoration: none;
-    border: 1px solid #ddd; flex-shrink: 0;
+    width: 22px; height: 22px; border-radius: 50%;
+    background: #1a1a2e; color: #4285f4;
+    font-weight: bold; font-size: 0.8rem; text-decoration: none;
+    border: 1px solid #333; flex-shrink: 0;
 }
-.lq-btn-g:active { background: #f0f0f0; }
-.card-disclaimer {
-    margin-left: auto; font-size: 0.6rem; color: #555;
-    white-space: nowrap; cursor: default;
-}
+.lq-btn-g:active { background: #222; }
 
 /* ★カードボタン */
 .card-btn { font-family: sans-serif; line-height: 1.2; }
