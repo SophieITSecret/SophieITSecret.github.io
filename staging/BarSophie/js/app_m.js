@@ -1,6 +1,6 @@
 /**
  * Bar Sophie v22.1 — app_m.js
- * ★ 変更点：クレジット保護構造への対応、コンテキストに応じた左端ボタンの切り替え
+ * ★ 変更点：トップメニューでのみ左端ボタンを売店(🛍️)に切り替えるロジックを統合
  */
 
 import * as media    from './media.js';
@@ -62,31 +62,22 @@ function setup() {
         playVoice("menu_greeting", "今日はいかがされますか？");
     };
 
+    document.getElementById('btn-music').onclick  = () => music.openMusic();
+    document.getElementById('btn-talk').onclick   = () => music.openTalk();
+    document.getElementById('btn-liquor').onclick = () => liquor.openLiquorPortal();
+
+    document.getElementById('sophie-warp').onclick = () => {
+        if (nav.state !== "none") showRootMenu();
+    };
+
     renderConsole('standard');
 }
 
-/**
- * メインメニューを表示（クレジットを維持しながらボタンのみ描画）
- */
 function showRootMenu() {
     utils.lv.style.display = 'none';
     utils.nm.style.display = 'block';
     nav.updateNav("none");
     utils.showLSide();
-
-    // ボタンエリアのみを書き換え
-    const btnArea = document.getElementById('main-btns');
-    if (btnArea) {
-        btnArea.innerHTML = `
-            <button class="act-btn" style="background:var(--green); margin-bottom:10px;" id="btn-music">🎵 音楽選曲 (リクエスト)</button>
-            <button class="act-btn" style="background:var(--talk); margin-bottom:10px;" id="btn-talk">🥃 お酒の話 (360本の物語)</button>
-            <button class="act-btn" style="background:#8e44ad;" id="btn-liquor">🍸 お酒データベース (800銘柄)</button>
-        `;
-        document.getElementById('btn-music').onclick  = () => music.openMusic();
-        document.getElementById('btn-talk').onclick   = () => music.openTalk();
-        document.getElementById('btn-liquor').onclick = () => liquor.openLiquorPortal();
-    }
-    
     renderConsole('standard');
 }
 
@@ -95,42 +86,50 @@ function playVoice(id, altTxt) {
     talkAudio.play().catch(() => media.speak(altTxt));
 }
 
-/**
- * コンソール描画（左端ボタンの機能を文脈で切り替え）
- */
 function renderConsole(mode) {
     const grid = document.getElementById('console-grid');
     if (!grid) return;
 
     if (mode === 'screening') {
-        grid.innerHTML = `<button class="c-btn" id="c-clr">クリア</button><button class="c-btn auto-active" id="c-ex">検索実行</button>`;
+        grid.innerHTML = `
+            <button class="c-btn" id="c-clr">クリア</button>
+            <button class="c-btn auto-active" id="c-ex" style="flex:1.2;">検索実行</button>`;
         document.getElementById('c-clr').onclick = () => liquor.clearScr();
         document.getElementById('c-ex').onclick  = () => liquor.execScr();
+
     } else if (mode === 'result') {
-        grid.innerHTML = `<button class="c-btn" id="c-mod" style="flex:1;">🔍 条件を変更する</button>`;
+        grid.innerHTML = `
+            <button class="c-btn" id="c-mod" style="flex:1;">🔍 条件を変更する</button>`;
         document.getElementById('c-mod').onclick = () => liquor.openScreening();
+
     } else {
-        // 標準モード：トップメニュー(none)なら売店、それ以外はモニター拡張
+        // 標準モード：トップメニュー(none)の時だけ左端を 🛍️ にする
         const leftBtnIcon = (nav.state === "none") ? "🛍️" : "🔽";
         
         grid.innerHTML = `
-            <button class="c-btn" id="btn-left-action">${leftBtnIcon}</button>
+            <button class="c-btn" id="btn-expand">${leftBtnIcon}</button>
             <button class="c-btn" id="ctrl-back">▲</button>
             <button class="c-btn" id="ctrl-pause">⏹️</button>
             <button class="c-btn" id="ctrl-play" style="flex:1.5; font-size:1.2rem;">▶</button>
             <button class="c-btn" id="btn-next">⏭</button>`;
 
-        const leftBtn = document.getElementById('btn-left-action');
-        if (nav.state === "none") {
-            leftBtn.style.color = "#f0c040";
-            leftBtn.onclick = () => import('./shop.js').then(m => m.openShopPortal());
-        } else {
-            leftBtn.onclick = () => {
+        const btnExp = document.getElementById('btn-expand');
+        
+        // 左端ボタンの機能分岐
+        btnExp.onclick = () => {
+            if (nav.state === "none") {
+                // トップメニューなら売店へ
+                import('./shop.js').then(m => m.openShopPortal());
+            } else {
+                // それ以外ならモニター拡張（本来の動作）
+                if (music.isMusicMode) return;
                 const monitor = document.querySelector('.monitor');
                 monitor.classList.toggle('expanded');
-                leftBtn.innerText = monitor.classList.contains('expanded') ? '▲' : '🔽';
-            };
-        }
+                btnExp.innerText = monitor.classList.contains('expanded') ? '▲' : '🔽';
+            }
+        };
+        
+        if (nav.state === "none") btnExp.style.color = "#f0c040";
 
         document.getElementById('ctrl-play').onclick  = music.playHead;
         document.getElementById('ctrl-pause').onclick = music.togglePause;
