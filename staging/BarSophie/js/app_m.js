@@ -1,6 +1,6 @@
 /**
  * Bar Sophie v22.1 — app_m.js
- * ★ 変更点：トップメニューでのみ左端ボタンを売店(🛍️)に切り替えるロジックを統合
+ * ★ 変更点：原本の構造を維持し、トップメニューでのみ btn-expand を売店ボタンに切り替え
  */
 
 import * as media    from './media.js';
@@ -26,9 +26,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
 
+    // liquor.jsにコンソール切替関数を渡す
     liquor.setRenderConsole(renderConsole);
+
     setup();
 
+    // YouTube IFrame API 読み込み
     const tag = document.createElement('script');
     tag.src = "https://www.youtube.com/iframe_api";
     document.head.appendChild(tag);
@@ -98,14 +101,12 @@ function renderConsole(mode) {
         document.getElementById('c-ex').onclick  = () => liquor.execScr();
 
     } else if (mode === 'result') {
-        grid.innerHTML = `
-            <button class="c-btn" id="c-mod" style="flex:1;">🔍 条件を変更する</button>`;
+        grid.innerHTML = `<button class="c-btn" id="c-mod" style="flex:1;">🔍 条件を変更する</button>`;
         document.getElementById('c-mod').onclick = () => liquor.openScreening();
 
     } else {
-        // 標準モード：トップメニュー(none)の時だけ左端を 🛍️ にする
+        // 標準モード：原本のHTMLボタン構造を利用
         const leftBtnIcon = (nav.state === "none") ? "🛍️" : "🔽";
-        
         grid.innerHTML = `
             <button class="c-btn" id="btn-expand">${leftBtnIcon}</button>
             <button class="c-btn" id="ctrl-back">▲</button>
@@ -114,14 +115,10 @@ function renderConsole(mode) {
             <button class="c-btn" id="btn-next">⏭</button>`;
 
         const btnExp = document.getElementById('btn-expand');
-        
-        // 左端ボタンの機能分岐
         btnExp.onclick = () => {
             if (nav.state === "none") {
-                // トップメニューなら売店へ
                 import('./shop.js').then(m => m.openShopPortal());
             } else {
-                // それ以外ならモニター拡張（本来の動作）
                 if (music.isMusicMode) return;
                 const monitor = document.querySelector('.monitor');
                 monitor.classList.toggle('expanded');
