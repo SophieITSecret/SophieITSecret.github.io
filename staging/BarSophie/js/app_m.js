@@ -1,5 +1,5 @@
 /**
- * Bar Sophie v22.1 — app_m.js
+ * Bar Sophie v23.2 — app_m.js
  * ★ ソフィーの写真表示復旧、コンソール制御、戻り処理の統合。
  */
 
@@ -30,12 +30,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
 
-    // liquor.jsにコンソール切替関数を渡す
     liquor.setRenderConsole(renderConsole);
-
     setup();
 
-    // YouTube API
     const tag = document.createElement('script');
     tag.src = "https://www.youtube.com/iframe_api";
     document.head.appendChild(tag);
@@ -56,17 +53,17 @@ window.onYouTubeIframeAPIReady = () => {
 };
 
 // =============================================
-// 基本セットアップ
+// セットアップ
 // =============================================
 function setup() {
-    // 1. 入口
+    // 1. 入口画面
     document.getElementById('btn-enter').onclick = () => {
         document.getElementById('entry-screen').style.display = 'none';
         document.getElementById('chat-mode').style.display = 'flex';
         playVoice("greeting", "いらっしゃいませ。");
     };
 
-    // 2. ラウンジ
+    // 2. ラウンジ画面
     document.getElementById('btn-to-bar').onclick = () => {
         document.getElementById('chat-mode').style.display = 'none';
         document.getElementById('main-ui').style.display = 'flex';
@@ -74,12 +71,12 @@ function setup() {
         playVoice("menu_greeting", "今日はいかがされますか？");
     };
 
-    // 3. メインボタン
+    // 3. メインメニューボタン
     document.getElementById('btn-music').onclick  = () => music.openMusic();
     document.getElementById('btn-talk').onclick   = () => music.openTalk();
     document.getElementById('btn-liquor').onclick = () => liquor.openLiquorPortal();
 
-    // 4. ソフィーアイコン（メインメニューへのワープ）
+    // 4. 右下のソフィーワープ
     document.getElementById('sophie-warp').onclick = () => {
         if (nav.state !== "none") showRootMenu();
     };
@@ -88,14 +85,14 @@ function setup() {
 }
 
 /**
- * メインメニューを表示（写真の復旧処理を含む）
+ * メインメニュー表示（写真を確実に復帰させる）
  */
 function showRootMenu() {
     utils.lv.style.display = 'none';
     utils.nm.style.display = 'block';
     nav.updateNav("none");
     
-    // 写真が消える問題を修正：表示を戻して画像を再セット
+    // モニターを表示し、カウンターのソフィーを再掲
     utils.showLSide();
     if (utils.monImg) {
         utils.monImg.src = './front_sophie.jpeg';
@@ -122,12 +119,10 @@ function renderConsole(mode) {
             <button class="console-scr-btn btn-c-exec" id="c-ex">検索実行</button>`;
         document.getElementById('c-clr').onclick = () => liquor.clearScr();
         document.getElementById('c-ex').onclick  = () => liquor.execScr();
-
     } else if (mode === 'result') {
         grid.innerHTML = `
             <button class="console-scr-btn btn-c-mod" id="c-mod">🔍 条件を変更</button>`;
         document.getElementById('c-mod').onclick = () => liquor.openScreening();
-
     } else {
         grid.innerHTML = `
             <button class="c-btn" id="btn-expand" style="color:#f0c040;">🛍️</button>
@@ -136,7 +131,6 @@ function renderConsole(mode) {
             <button class="c-btn" id="ctrl-play" style="flex:1.5; font-size:1.2rem;">▶</button>
             <button class="c-btn" id="btn-next">⏭</button>`;
 
-        // 売店ポータルへの配線
         document.getElementById('btn-expand').onclick = () => {
             import('./shop.js').then(m => m.openShopPortal());
         };
@@ -161,9 +155,6 @@ function renderConsole(mode) {
     }
 }
 
-/**
- * 戻るボタンの共通処理
- */
 function handleBack() {
     if (nav.state === "shop_root") {
         showRootMenu();
