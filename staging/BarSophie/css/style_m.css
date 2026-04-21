@@ -138,7 +138,7 @@ body {
 
 .multi-range-wrap { flex: 1; position: relative; height: 28px; display: flex; align-items: center; }
 .multi-range-track { position: absolute; width: 100%; height: 4px; background: #333; border-radius: 2px; }
-.multi-range-fill { position: absolute; height: 4px; background: var(--blue); border-radius: 2px; }
+.multi-range-fill { position: absolute; height: 4px; background: #8e44ad; border-radius: 2px; }  /* ★薄紫 */
 .multi-range-wrap input[type=range] {
     position: absolute; width: 100%; height: 28px; margin: 0;
     background: transparent; appearance: none; -webkit-appearance: none; pointer-events: auto;
@@ -178,9 +178,12 @@ body {
 .graph-legend { font-size: 0.55rem; color: #888; text-align: right; margin-top: 5px; }
 .leg-gpt { color: #10a37f; } .leg-gem { color: #1a73e8; } .leg-cla { color: #d97757; }
 
-/* ★解説ヘッダー */
-.lq-desc-header { color: #27ae60; font-weight: bold; font-size: 0.8rem; margin-top: 10px; margin-bottom: 4px; }
+/* ★解説ヘッダー（インライン） */
+.lq-desc-header { color: #27ae60; font-weight: bold; font-size: 0.85rem; display: inline; margin-right: 4px; }
 
-/* ★銘柄カード専用コンソールボタン */
+/* ★銘柄一言コメントをイタリックなし */
+.lq-quote { font-style: normal !important; }
+
+/* ★カードボタン */
 .card-btn { font-family: sans-serif; line-height: 1.2; }
 

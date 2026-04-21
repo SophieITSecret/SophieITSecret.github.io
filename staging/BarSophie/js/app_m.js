@@ -238,7 +238,7 @@ function renderConsole(mode) {
         const grid = document.querySelector('.btn-grid');
         if (!grid) return;
         grid.innerHTML = `
-            <button class="c-btn" id="c-mod" style="background:#2980b9; color:#fff; font-size:0.85rem;">🔍 検索条件を変更する</button>`;
+            <button class="c-btn" id="c-mod" style="background:#8e44ad; color:#fff; font-size:0.85rem;">🔍 検索条件を変更する</button>`;
         document.getElementById('c-mod').onclick = liquor.openScreeningFromConsole;
 
     } else if (mode === 'card') {
@@ -246,16 +246,26 @@ function renderConsole(mode) {
         const grid = document.querySelector('.btn-grid');
         if (!grid) return;
         grid.innerHTML = `
-            <button class="c-btn card-btn" id="c-sophie" style="font-size:0.7rem; line-height:1.1;">S</button>
-            <button class="c-btn card-btn" id="c-scr"    style="font-size:0.62rem; line-height:1.1;">選択<br>画面</button>
-            <button class="c-btn card-btn" id="c-list"   style="font-size:0.75rem;">リスト</button>
-            <button class="c-btn card-btn" id="c-prev"   style="font-size:1.1rem;">◀</button>
-            <button class="c-btn card-btn" id="c-next2"  style="font-size:1.1rem;">▶</button>`;
-        document.getElementById('c-sophie').onclick = () => { /* 将来のソフィー機能 */ };
-        document.getElementById('c-scr').onclick    = liquor.cardNavToScr;
-        document.getElementById('c-list').onclick   = liquor.cardNavToList;
-        document.getElementById('c-prev').onclick   = liquor.cardNavPrev;
-        document.getElementById('c-next2').onclick  = liquor.cardNavNext;
+            <button class="c-btn card-btn" id="c-sophie" style="background:#1a3a4a; color:#00d2ff; font-size:1.1rem; font-weight:bold;">S</button>
+            <button class="c-btn card-btn" id="c-scr"    style="background:#5b2d8e; color:#fff; font-size:0.62rem; line-height:1.2;">選択<br>画面</button>
+            <button class="c-btn card-btn" id="c-list"   style="background:#7a3a00; color:#f0b56e; font-size:0.75rem;">リスト</button>
+            <button class="c-btn card-btn" id="c-prev"   style="background:#1a3a1a; color:#7fd97f; font-size:1.1rem;">&#9664;</button>
+            <button class="c-btn card-btn" id="c-next2"  style="background:#1a3a1a; color:#7fd97f; font-size:1.1rem;">&#9654;</button>`;
+
+        // Sボタン：ソフィーの顔を表示＋音声
+        document.getElementById('c-sophie').addEventListener('click', () => {
+            const ls = document.querySelector('.l-side');
+            if (ls) {
+                ls.style.display = 'block';
+                setTimeout(() => { if (nav.state === 'lq_card') ls.style.display = 'none'; }, 4000);
+            }
+            talkAudio.src = "./voices_mp3/what_order.mp3";
+            talkAudio.play().catch(() => { try { media.speak("何になさいますか？"); } catch(e){} });
+        });
+        document.getElementById('c-scr').addEventListener('click',   liquor.cardNavToScr);
+        document.getElementById('c-list').addEventListener('click',  liquor.cardNavToList);
+        document.getElementById('c-prev').addEventListener('click',  liquor.cardNavPrev);
+        document.getElementById('c-next2').addEventListener('click', liquor.cardNavNext);
 
     } else {
         // 通常モード：v13.0の元のボタン構成を復元

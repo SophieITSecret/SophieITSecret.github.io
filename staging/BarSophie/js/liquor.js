@@ -67,9 +67,9 @@ const AXIS4_DEFAULT = { label: "第4軸(品目選択後)", left: "←", right: "
 const PRICE_LEVELS = [
     { max: 2000,   num: "2",  color: "#27ae60" },  // 緑
     { max: 5000,   num: "5",  color: "#27ae60" },  // 緑
-    { max: 10000,  num: "1",  color: "#f0b56e" },  // ゴールド（万単位）
-    { max: 20000,  num: "2",  color: "#f0b56e" },  // ゴールド
-    { max: 50000,  num: "5",  color: "#f0b56e" },  // ゴールド
+    { max: 10000,  num: "1",  color: "#8e1a2e" },  // ボルドーワインレッド
+    { max: 20000,  num: "2",  color: "#8e1a2e" },  // ボルドーワインレッド
+    { max: 50000,  num: "5",  color: "#8e1a2e" },  // ボルドーワインレッド
 ];
 
 function priceBadge(priceStr) {
@@ -118,8 +118,8 @@ export function openLiquorPortal() {
     nav.updateNav("lq_root");
     const h = `
         <div class="label" style="justify-content:center; cursor:default;">お酒を選ぶ</div>
-        <button class="act-btn" id="btn-portal-cat" style="background:#2c3e50; margin:15px; width:calc(100% - 30px);">📁 リストから探す</button>
-        <button class="act-btn" id="btn-portal-scr" style="background:#d35400; margin:0 15px 15px; width:calc(100% - 30px);">🔍 お好みでスクリーニング</button>
+        <button class="act-btn" id="btn-portal-cat" style="background:#27ae60; margin:15px; width:calc(100% - 30px);">📁 リストから探す</button>
+        <button class="act-btn" id="btn-portal-scr" style="background:#8e44ad; margin:0 15px 15px; width:calc(100% - 30px);">🔍 お好みでスクリーニング</button>
         <div class="direct-box-new">
             <div class="direct-lbl">No.検索</div>
             <input type="number" id="dir-num" placeholder="番号">
@@ -215,6 +215,12 @@ function openScreening() {
             </div>
             <div class="scr-group">
                 <div class="scr-title">フィルター</div>
+                <div class="scr-row">
+                    <span class="scr-row-label">市場価格:</span>
+                    <select id="s-pmin" class="scr-price-sel">${priceOpts}</select>
+                    <span class="scr-price-sep">〜</span>
+                    <select id="s-pmax" class="scr-price-sel">${priceOptsMax}</select>
+                </div>
                 <div class="scr-row"><span class="scr-row-label">定番:</span>
                     <select id="s-std"><option value="">問わない</option>
                         <option value="○" ${scrState.isStandard === '○' ? 'selected' : ''}>定番に絞る</option></select></div>
@@ -226,12 +232,6 @@ function openScreening() {
                         <option value="1" ${scrState.cospa === '1' ? 'selected' : ''}>☆1以上</option>
                         <option value="2" ${scrState.cospa === '2' ? 'selected' : ''}>☆☆以上</option>
                         <option value="3" ${scrState.cospa === '3' ? 'selected' : ''}>☆☆☆のみ</option></select></div>
-                <div class="scr-row">
-                    <span class="scr-row-label">市場価格:</span>
-                    <select id="s-pmin" class="scr-price-sel">${priceOpts}</select>
-                    <span class="scr-price-sep">〜</span>
-                    <select id="s-pmax" class="scr-price-sel">${priceOptsMax}</select>
-                </div>
             </div>
             <div class="scr-group">
                 <div class="scr-title">味わい指定</div>
@@ -441,8 +441,8 @@ function showCard(gIdx, list, fromState) {
     h += `</div></div>`;
     if (d["ソフィーの裏話"])   h += `<div class="lq-sophie-talk"><span class="sophie-prefix">[ソフィー]</span> ${d["ソフィーの裏話"]}</div>`;
     if (tags.length)           h += `<div class="lq-tags">${tags.map(t => `<span class="lq-tag">${t}</span>`).join('')}</div>`;
-    // ★解説ヘッダーを緑色で追加
-    if (d["鑑定評価(200字)"]) h += `<div class="lq-desc-header">[解説]</div><div class="lq-desc">${d["鑑定評価(200字)"]}</div>`;
+    // ★解説：ヘッダーをインラインで文章に続ける
+    if (d["鑑定評価(200字)"]) h += `<div class="lq-desc"><span class="lq-desc-header">[解説]</span> ${d["鑑定評価(200字)"]}</div>`;
     h += `</div>`;
 
     setListView(h, true);
