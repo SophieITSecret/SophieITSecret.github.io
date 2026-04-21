@@ -449,26 +449,36 @@ function showCard(gIdx, list, fromState) {
         <div><span style="color:#1a73e8">▶</span> ${d["大分類"]}&nbsp;&nbsp;<span style="color:#e74c3c">▶</span> ${d["中分類"]}</div>
         <div><span style="color:#888">産地:</span> ${d["国"] || ""}${region ? ' / ' + region : ''}</div>`;
 
-    // 製造元行：名前 ＋ メーカーサイト(翻訳) ＋ G検索
+    // 製造元行：名前を表示
     if (makerRaw && makerRaw !== "-") {
-        h += `<div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin-top:2px;">`;
-        h += `<span style="color:#888; font-size:0.85rem;">製造:</span>`;
-        h += `<span style="font-size:0.85rem; color:#ccc;">${makerRaw}</span>`;
+        h += `<div style="margin-top:2px;"><span style="color:#888; font-size:0.85rem;">製造:</span> <span style="font-size:0.85rem; color:#ccc;">${makerRaw}</span></div>`;
+
+        // メーカーサイト・G・Amazon を1行に（メーカーサイトは製造元の真下）
+        h += `<div class="card-link-row">`;
         if (d["公式URL"] && d["公式URL"] !== "-") {
-            const transUrl = `https://translate.google.com/translate?sl=auto&tl=ja&u=${encodeURIComponent(d["公式URL"])}`;
-            h += `<a href="${transUrl}" target="_blank" class="lq-btn-small">🔗 メーカーサイト</a>`;
+            // 通常タップ→直接、長押し→翻訳
+            const directUrl = d["公式URL"];
+            const transUrl  = `https://translate.google.com/translate?sl=auto&tl=ja&u=${encodeURIComponent(d["公式URL"])}`;
+            h += `<a href="${directUrl}" target="_blank" class="lq-btn-small"
+                     ontouchstart="this._t=setTimeout(()=>{window.open('${transUrl}','_blank');this._t=null;},600)"
+                     ontouchend="if(this._t){clearTimeout(this._t);this._t=null;}"
+                     ontouchmove="if(this._t){clearTimeout(this._t);this._t=null;}">🔗 メーカーサイト</a>`;
         }
         if (gKw) {
             const gUrl = `https://www.google.com/search?q=${gKw}`;
             h += `<a href="${gUrl}" target="_blank" class="lq-btn-g">G</a>`;
         }
+        // 固定スペーサーでAmazonを右へ
+        h += `<span style="flex:1;"></span>`;
+        h += `<a href="${amzUrl}" target="_blank" class="lq-btn-amz-small">Amazon↗</a>`;
+        h += `</div>`;
+    } else {
+        // 製造元なし：AmazonだけでもOK
+        h += `<div class="card-link-row">`;
+        h += `<span style="flex:1;"></span>`;
+        h += `<a href="${amzUrl}" target="_blank" class="lq-btn-amz-small">Amazon↗</a>`;
         h += `</div>`;
     }
-
-    // Amazon：右端に控えめに
-    h += `<div style="text-align:right; margin-top:4px;">`;
-    h += `<a href="${amzUrl}" target="_blank" class="lq-btn-amz-small">Amazon↗</a>`;
-    h += `</div>`;
     h += `</div><div class="lq-split-view"><div class="lq-graph-half">`;
     if (d["Gemini_コスパ"]) h += `<div class="lq-cospa">コスパ ${d["Gemini_コスパ"]}</div>`;
     h += mkBar("辛口", "甘口", d["GPT_甘辛"],  d["Gemini_甘辛"],  d["Claude_甘辛"]);

@@ -187,21 +187,22 @@ body {
 /* ★カードリンク行 */
 .card-link-row { display: flex; align-items: center; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
 
-/* Amazonボタン（控えめ・右端） */
+/* Amazonボタン（控えめ・右端・lq-btn-smallと同高さ） */
 .lq-btn-amz-small {
-    font-size: 0.65rem; color: #a88734;
+    display: inline-block;
+    font-size: 0.75rem; color: #c8a84b;
     text-decoration: none; background: #1a1500;
-    border: 1px solid #4a3a00; border-radius: 3px;
-    padding: 2px 7px;
+    border: 1px solid #6a5200; border-radius: 4px;
+    padding: 4px 10px; white-space: nowrap;
 }
 .lq-btn-amz-small:active { background: #2a2000; }
 
-/* Gボタン */
+/* Gボタン（少し大きく） */
 .lq-btn-g {
     display: inline-flex; align-items: center; justify-content: center;
-    width: 22px; height: 22px; border-radius: 50%;
+    width: 28px; height: 28px; border-radius: 50%;
     background: #1a1a2e; color: #4285f4;
-    font-weight: bold; font-size: 0.8rem; text-decoration: none;
+    font-weight: bold; font-size: 0.95rem; text-decoration: none;
     border: 1px solid #333; flex-shrink: 0;
 }
 .lq-btn-g:active { background: #222; }
