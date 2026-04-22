@@ -11,7 +11,7 @@ import * as nav      from './navigation.js';
 import * as utils    from './utils.js';
 import * as music    from './music.js';
 import * as liquor   from './liquor.js';
-import * as shop     from './shop.js';  // ＋追加：売店モジュール
+import * as shop     from './shop.js';
 
 // =============================================
 // グローバル変数
@@ -32,18 +32,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     try {
         await nav.loadAllData();
-        await shop.initShop();  // ＋追加：売店のCSVも一緒に読み込む
+        await shop.initShop();
     } catch (e) {
         alert("データの読み込みに失敗しました。");
         return;
     }
 
-    // liquor.jsにコンソール切替関数を渡す
     liquor.setRenderConsole(renderConsole);
-
     setup();
 
-    // YouTube IFrame API 読み込み
     const tag = document.createElement('script');
     tag.src = "https://www.youtube.com/iframe_api";
     document.getElementsByTagName('script')[0].parentNode.insertBefore(tag, document.getElementsByTagName('script')[0]);
@@ -71,12 +68,9 @@ window.onYouTubeIframeAPIReady = function () {
 // セットアップ
 // =============================================
 function setup() {
-    // musicモジュールに必要な参照を渡す（YT準備前でも音声は使える）
     music.initMusic(talkAudio, null, false, document.getElementById('telop'));
-
     talkAudio.onended = music.defaultOnEnded;
 
-    // 入口ボタン
     document.getElementById('btn-enter').onclick = () => {
         document.getElementById('entry-screen').style.display = 'none';
         document.getElementById('chat-mode').style.display = 'flex';
@@ -84,11 +78,9 @@ function setup() {
         if (ytPlayerReady && ytPlayer) {
             try { ytPlayer.mute(); ytPlayer.loadVideoById('2vfCbdmKhMw'); setTimeout(() => { ytPlayer.pauseVideo(); ytPlayer.unMute(); }, 1000); } catch(e) {}
         }
-
         playVoice("./voices_mp3/greeting.mp3", "いらっしゃいませ。");
     };
 
-    // カウンターへ進む
     document.getElementById('btn-to-bar').onclick = () => {
         document.getElementById('chat-mode').style.display = 'none';
         document.getElementById('main-ui').style.display = 'flex';
@@ -98,17 +90,14 @@ function setup() {
         playVoice("./voices_mp3/menu_greeting.mp3", "いつもありがとうございます。今日はいかがされますか？");
     };
 
-    // メインメニューボタン
     document.getElementById('btn-music').onclick  = music.openMusic;
     document.getElementById('btn-talk').onclick   = music.openTalk;
     document.getElementById('btn-liquor').onclick = liquor.openLiquorPortal;
 
-    // コントローラーボタン
     document.getElementById('ctrl-play').onclick  = music.playHead;
     document.getElementById('ctrl-pause').onclick = music.togglePause;
     document.getElementById('ctrl-back').onclick  = handleBack;
 
-    // 拡大ボタン
     document.getElementById('btn-expand').onclick = () => {
         if (music.isMusicMode || nav.state === "none") return;
         const monitor = document.querySelector('.monitor');
@@ -117,12 +106,10 @@ function setup() {
         btn.innerText = monitor.classList.contains('expanded') ? '▲' : '▼';
     };
 
-    // ソフィーアイコン（メニューへ戻る or 退店）
     document.getElementById('sophie-warp').onclick = () => {
         if (nav.state !== "none") {
             showRootMenu();
         } else {
-            // 退店シーケンス
             document.getElementById('main-ui').style.display = 'none';
             document.getElementById('chat-mode').style.display = 'flex';
             const loungeText = document.getElementById('lounge-text');
@@ -146,14 +133,12 @@ function setup() {
         }
     };
 
-    // 次へボタン（長押しで自動再生）
     const btnN = document.getElementById('btn-next');
     if (btnN) {
         btnN.onpointerdown = (e) => {
             e.preventDefault();
             pressTimer = setTimeout(() => {
-                // isAutoPlayはmusicモジュール内で管理 → nextで自動的にトグル
-                music.next(); // 長押し時も次へ
+                music.next();
                 btnN.classList.toggle('auto-active');
                 pressTimer = null;
             }, 600);
@@ -200,10 +185,8 @@ function showRootMenu() {
     if (mon) { mon.classList.remove('expanded'); }
     utils.showLSide();
 
-    // ★ メニューに戻ったタイミングでコンソールを再描画（ピンクボタンの表示）
     renderConsole('standard');
 
-    // ★メインメニュー時だけ免責を表示
     const db = document.getElementById('disclaimer-bar');
     if (db) db.style.display = 'block';
 }
@@ -212,26 +195,17 @@ function showRootMenu() {
 // 戻るハンドラ
 // =============================================
 function handleBack() {
-    // ＋追加：売店から戻る処理
     if (nav.state === "shop") { showRootMenu(); return; }
-
-    // まずliquor.jsで処理できるか試みる
     if (liquor.handleLiquorBack()) return;
-    // 次にmusic.jsで処理できるか試みる
     if (music.handleBack()) return;
-    // どちらでもなければルートへ
     showRootMenu();
 }
 
 // =============================================
 // コンソール（下部ボタンエリア）
-// ※ スクリーニング時はliquor.jsから呼ばれる
 // =============================================
 function renderConsole(mode) {
-    // v13.0の固定HTMLコンソールを使う（ボタンIDはそのまま）
-    // screening / result モードはliquor.jsが必要な時だけ呼ぶ
     if (mode === 'screening') {
-        // スクリーニング画面：クリア＋実行ボタン
         const grid = document.querySelector('.btn-grid');
         if (!grid) return;
         grid.innerHTML = `
@@ -248,7 +222,6 @@ function renderConsole(mode) {
         document.getElementById('c-mod').onclick = liquor.openScreeningFromConsole;
 
     } else if (mode === 'card') {
-        // ★個別銘柄カード専用コンソール
         const grid = document.querySelector('.btn-grid');
         if (!grid) return;
         grid.innerHTML = `
@@ -258,7 +231,6 @@ function renderConsole(mode) {
             <button class="c-btn card-btn" id="c-prev"   style="background:#1a3a1a; color:#7fd97f; font-size:1.1rem;">&#9664;</button>
             <button class="c-btn card-btn" id="c-next2"  style="background:#1a3a1a; color:#7fd97f; font-size:1.1rem;">&#9654;</button>`;
 
-        // Sボタン：ソフィーの顔を表示＋音声
         document.getElementById('c-sophie').addEventListener('click', () => {
             const ls = document.querySelector('.l-side');
             if (ls) {
@@ -274,14 +246,13 @@ function renderConsole(mode) {
         document.getElementById('c-next2').addEventListener('click', liquor.cardNavNext);
 
     } else {
-        // 通常モード：v13.0の元のボタン構成を復元
         const grid = document.querySelector('.btn-grid');
         if (!grid) return;
 
-        // ＋追加：HOME画面の時だけ、左端のボタンをピンクの「隠し扉」にする
+        // ★修正点：ピンク背景・水色ボーダー・ワインレッド文字に指定
         const isHome = (nav.state === "none");
         const expandBtnHtml = isHome
-            ? `<button class="c-btn" id="btn-expand" style="background:#ffb6c1; color:#1a0a10; font-size:0.75rem; line-height:1.2; font-weight:bold; letter-spacing:0.5px;">ソフィー<br>お薦め</button>`
+            ? `<button class="c-btn" id="btn-expand" style="background:#ffb6c1; border:1.5px solid #00d2ff; color:#8e1a2e; font-size:0.75rem; line-height:1.2; font-weight:bold; letter-spacing:0.5px;">ソフィー<br>お薦め</button>`
             : `<button class="c-btn" id="btn-expand">▼</button>`;
 
         grid.innerHTML = `
@@ -295,14 +266,11 @@ function renderConsole(mode) {
         document.getElementById('ctrl-pause').onclick = music.togglePause;
         document.getElementById('ctrl-back').onclick  = handleBack;
 
-        // ＋追加：隠し扉のクリックイベント
         document.getElementById('btn-expand').onclick = () => {
-            // HOME画面なら売店を開く
             if (nav.state === "none") {
                 shop.openShop();
                 return;
             }
-            // それ以外なら通常のモニター拡大処理
             if (music.isMusicMode || nav.state === "none") return;
             const monitor = document.querySelector('.monitor');
             const btn = document.getElementById('btn-expand');
@@ -315,6 +283,7 @@ function renderConsole(mode) {
             btnN.onpointerdown = (e) => {
                 e.preventDefault();
                 pressTimer = setTimeout(() => {
+                    music.next();
                     btnN.classList.toggle('auto-active');
                     pressTimer = null;
                 }, 600);

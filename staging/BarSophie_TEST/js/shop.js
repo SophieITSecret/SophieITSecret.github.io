@@ -31,15 +31,26 @@ export async function initShop() {
 export function openShop() {
     nav.updateNav("shop");
 
-    // 【1】上部の固定ボタンエリア（ジャンル別特設会場）
     let h = `<div class="label" id="lbl-back-shop" style="cursor:pointer;">◀ メインカウンターへ戻る</div>`;
     
-    h += `<div style="padding: 12px;">`;
-    // 本日のお買い得（総合）
-    h += `<a href="https://www.amazon.co.jp/b?node=2221087051&tag=itsophie-22" target="_blank" class="act-btn" style="background:#c8a84b; color:#000!important; border:1px solid #ffe699; font-size:1.05rem;">🎁 Amazon 本日のお買い得</a>`;
+    // 【看板エリア】Sophie's Selection
+    h += `<div style="text-align:center; padding:20px 0 10px;">
+            <div style="color:var(--accent); font-size:1.2rem; font-weight:bold; letter-spacing:1px; font-family:serif;">Sophie's Selection</div>
+            <div style="color:#888; font-size:0.75rem; margin-top:4px;">- ソフィーの特選・お買い得情報 -</div>
+          </div>`;
+
+    h += `<div style="padding: 0 12px 12px;">`;
+
+    // 🎁 総合タイムセール（立体感のあるプレミアムボタン）
+    h += `<a href="https://www.amazon.co.jp/gp/goldbox?tag=itsophie-22" target="_blank" class="act-btn" style="background: linear-gradient(135deg, #3a2a00, #1a1500); color:#f1c40f!important; border:1px solid #c8a84b; font-size:1rem; box-shadow: 0 4px 6px rgba(0,0,0,0.5); margin-bottom:15px;">🎁 Amazon 総合タイムセール会場</a>`;
     
-    // 4ジャンル分割ボタン
-    h += `<div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:8px;">`;
+    h += `<div style="font-size:0.8rem; color:#aaa; margin:0 0 8px; text-align:center;">▼ 本日の飲料タイムセール（Amazon） ▼</div>`;
+
+    // タイムセール専用URL生成関数（元締めの隠しコマンド入り）
+    const getSaleUrl = (kw) => `https://www.amazon.co.jp/s?k=${encodeURIComponent(kw)}&rh=p_n_specials_match%3A21213692051&tag=itsophie-22`;
+
+    // 🍺 お酒4ジャンル分割ボタン
+    h += `<div style="display:flex; flex-wrap:wrap; gap:8px;">`;
     const cats = [
         { name: "🍺 ビール", kw: "ビール" },
         { name: "🥃 洋酒", kw: "ウイスキー スピリッツ" },
@@ -47,12 +58,22 @@ export function openShop() {
         { name: "🍶 日本酒・焼酎", kw: "日本酒 焼酎" }
     ];
     cats.forEach(c => {
-        const url = `https://www.amazon.co.jp/s?k=${encodeURIComponent(c.kw)}&tag=itsophie-22`;
-        h += `<a href="${url}" target="_blank" class="act-btn" style="flex:1; min-width:40%; background:#1a1a2e; border:1px solid #333; font-size:0.9rem; margin-bottom:0; height:44px; display:flex!important; align-items:center; justify-content:center; text-decoration:none;">${c.name}</a>`;
+        h += `<a href="${getSaleUrl(c.kw)}" target="_blank" class="act-btn" style="flex:1; min-width:40%; background:#1a1a2e; border:1px solid #444; font-size:0.9rem; margin-bottom:0; height:44px; display:flex!important; align-items:center; justify-content:center; text-decoration:none; box-shadow: 0 2px 4px rgba(0,0,0,0.3);">${c.name}</a>`;
+    });
+    h += `</div>`;
+
+    // 💧 水・清涼飲料の小ボタン（破線で控えめに）
+    h += `<div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:8px;">`;
+    const softCats = [
+        { name: "💧 ミネラルウォーター", kw: "水 ミネラルウォーター" },
+        { name: "🥤 炭酸水・清涼飲料", kw: "炭酸水 清涼飲料" }
+    ];
+    softCats.forEach(c => {
+        h += `<a href="${getSaleUrl(c.kw)}" target="_blank" class="act-btn" style="flex:1; min-width:40%; background:#111; border:1px dashed #555; color:#aaa!important; font-size:0.8rem; margin-bottom:0; height:36px; display:flex!important; align-items:center; justify-content:center; text-decoration:none;">${c.name}</a>`;
     });
     h += `</div></div>`;
 
-    // 【2】下部のCSV特選リストエリア
+    // 【下部】CSV特選リストエリア
     if (shopData.length > 0) {
         const grouped = {};
         shopData.forEach(d => {
@@ -65,7 +86,6 @@ export function openShop() {
             grouped[cat].forEach(item => {
                 const amzUrl = `https://www.amazon.co.jp/s?k=${encodeURIComponent(clean(item.keyword))}&tag=itsophie-22`;
                 
-                // .item のスタイルを上書きして複数行対応にする
                 h += `<div class="item" style="padding:12px 15px; cursor:default; white-space:normal; overflow:visible; height:auto;">
                         <div style="display:flex; justify-content:space-between; align-items:flex-start;">
                             <div style="font-weight:bold; color:#eee; font-size:1rem; margin-bottom:6px; line-height:1.4;">${clean(item.name)}</div>
@@ -79,10 +99,8 @@ export function openShop() {
         h += `<div style="padding:20px; text-align:center; color:#888;">特選リストの準備中です...</div>`;
     }
 
-    // utilsの共通関数で描画（fullScreen=true にすることで左の画像を消し、免責も自動で消える）
     setListView(h, true);
 
-    // 戻るボタンのイベント（既存のコンソールの▲ボタンを押したのと同じ挙動にさせる）
     document.getElementById('lbl-back-shop').addEventListener('click', () => {
         const backBtn = document.getElementById('ctrl-back');
         if (backBtn) backBtn.click();
