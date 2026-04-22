@@ -249,10 +249,10 @@ function renderConsole(mode) {
         const grid = document.querySelector('.btn-grid');
         if (!grid) return;
 
-        // ★修正点：ピンク背景・水色ボーダー・ワインレッド文字に指定
+        // ★修正：ピンクを薄く(#ffe4e1)、水色の縁取りを太く強く(2px solid #00bfff)調整
         const isHome = (nav.state === "none");
         const expandBtnHtml = isHome
-            ? `<button class="c-btn" id="btn-expand" style="background:#ffb6c1; border:1.5px solid #00d2ff; color:#8e1a2e; font-size:0.75rem; line-height:1.2; font-weight:bold; letter-spacing:0.5px;">ソフィー<br>お薦め</button>`
+            ? `<button class="c-btn" id="btn-expand" style="background:#ffe4e1; border:2px solid #00bfff; color:#8e1a2e; font-size:0.75rem; line-height:1.2; font-weight:bold; letter-spacing:0.5px;">ソフィー<br>お薦め</button>`
             : `<button class="c-btn" id="btn-expand">▼</button>`;
 
         grid.innerHTML = `

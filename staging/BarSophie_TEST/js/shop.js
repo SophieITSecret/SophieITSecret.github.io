@@ -41,13 +41,13 @@ export function openShop() {
 
     h += `<div style="padding: 0 12px 12px;">`;
 
-    // 🎁 総合タイムセール（立体感のあるプレミアムボタン）
-    h += `<a href="https://www.amazon.co.jp/gp/goldbox?tag=itsophie-22" target="_blank" class="act-btn" style="background: linear-gradient(135deg, #3a2a00, #1a1500); color:#f1c40f!important; border:1px solid #c8a84b; font-size:1rem; box-shadow: 0 4px 6px rgba(0,0,0,0.5); margin-bottom:15px;">🎁 Amazon 総合タイムセール会場</a>`;
+    // 🎁 総合タイムセール（中央配置＆下線なしに修正）
+    h += `<a href="https://www.amazon.co.jp/gp/goldbox?tag=itsophie-22" target="_blank" class="act-btn" style="background: linear-gradient(135deg, #3a2a00, #1a1500); color:#f1c40f!important; border:1px solid #c8a84b; font-size:1rem; box-shadow: 0 4px 6px rgba(0,0,0,0.5); margin-bottom:15px; display:flex!important; align-items:center; justify-content:center; text-decoration:none;">🎁 Amazon 総合タイムセール会場</a>`;
     
     h += `<div style="font-size:0.8rem; color:#aaa; margin:0 0 8px; text-align:center;">▼ 本日の飲料タイムセール（Amazon） ▼</div>`;
 
-    // タイムセール専用URL生成関数（元締めの隠しコマンド入り）
-    const getSaleUrl = (kw) => `https://www.amazon.co.jp/s?k=${encodeURIComponent(kw)}&rh=p_n_specials_match%3A21213692051&tag=itsophie-22`;
+    // ★修正：検索カテゴリを「タイムセール (todays-deals)」に限定する最強の呪文
+    const getSaleUrl = (kw) => `https://www.amazon.co.jp/s?k=${encodeURIComponent(kw)}&i=todays-deals&tag=itsophie-22`;
 
     // 🍺 お酒4ジャンル分割ボタン
     h += `<div style="display:flex; flex-wrap:wrap; gap:8px;">`;
@@ -62,7 +62,7 @@ export function openShop() {
     });
     h += `</div>`;
 
-    // 💧 水・清涼飲料の小ボタン（破線で控えめに）
+    // 💧 水・清涼飲料の小ボタン
     h += `<div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:8px;">`;
     const softCats = [
         { name: "💧 ミネラルウォーター", kw: "水 ミネラルウォーター" },
