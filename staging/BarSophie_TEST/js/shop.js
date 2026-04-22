@@ -31,45 +31,48 @@ export async function initShop() {
 export function openShop() {
     nav.updateNav("shop");
 
-    let h = `<div class="label" id="lbl-back-shop" style="cursor:pointer;">◀ メインカウンターへ戻る</div>`;
+    // 戻るボタン（一番上に固定）
+    let h = `<div class="label" id="lbl-back-shop" style="cursor:pointer; position:sticky; top:0; z-index:100;">◀ メインカウンターへ戻る</div>`;
     
-    // 【看板エリア】Sophie's Selection
-    h += `<div style="text-align:center; padding:20px 0 10px;">
+    // 【看板エリア】Sophie's Selection (スクロールに追従して固定)
+    h += `<div style="position:sticky; top:28px; z-index:99; background:#08080a; text-align:center; padding:15px 0 10px; border-bottom:1px solid #222;">
             <div style="color:var(--accent); font-size:1.2rem; font-weight:bold; letter-spacing:1px; font-family:serif;">Sophie's Selection</div>
-            <div style="color:#888; font-size:0.75rem; margin-top:4px;">- ソフィーの特選・お買い得情報 -</div>
+            <div style="color:#00d2ff; font-size:0.75rem; margin-top:4px;">- ソフィーの特選・お買い得情報 -</div>
           </div>`;
 
-    h += `<div style="padding: 0 12px 12px;">`;
+    h += `<div style="padding: 15px 12px 12px;">`;
 
-    // 🎁 総合タイムセール（中央配置＆下線なしに修正）
+    // 🎁 総合タイムセール
     h += `<a href="https://www.amazon.co.jp/gp/goldbox?tag=itsophie-22" target="_blank" class="act-btn" style="background: linear-gradient(135deg, #3a2a00, #1a1500); color:#f1c40f!important; border:1px solid #c8a84b; font-size:1rem; box-shadow: 0 4px 6px rgba(0,0,0,0.5); margin-bottom:15px; display:flex!important; align-items:center; justify-content:center; text-decoration:none;">🎁 Amazon 総合タイムセール会場</a>`;
     
     h += `<div style="font-size:0.8rem; color:#aaa; margin:0 0 8px; text-align:center;">▼ 本日の飲料タイムセール（Amazon） ▼</div>`;
 
-    // ★修正：検索カテゴリを「タイムセール (todays-deals)」に限定する最強の呪文
+    // タイムセール専用URL生成関数
     const getSaleUrl = (kw) => `https://www.amazon.co.jp/s?k=${encodeURIComponent(kw)}&i=todays-deals&tag=itsophie-22`;
 
-    // 🍺 お酒4ジャンル分割ボタン
+    // 🍺 お酒5ジャンル分割ボタン（横幅を調整して美しく並べる）
     h += `<div style="display:flex; flex-wrap:wrap; gap:8px;">`;
     const cats = [
         { name: "🍺 ビール", kw: "ビール" },
-        { name: "🥃 洋酒", kw: "ウイスキー スピリッツ" },
+        { name: "🥃 ウイスキー", kw: "ウイスキー" },
         { name: "🍷 ワイン", kw: "ワイン" },
-        { name: "🍶 日本酒・焼酎", kw: "日本酒 焼酎" }
+        { name: "🍶 日本酒", kw: "日本酒" },
+        { name: "🍶 焼酎", kw: "焼酎" }
     ];
     cats.forEach(c => {
-        h += `<a href="${getSaleUrl(c.kw)}" target="_blank" class="act-btn" style="flex:1; min-width:40%; background:#1a1a2e; border:1px solid #444; font-size:0.9rem; margin-bottom:0; height:44px; display:flex!important; align-items:center; justify-content:center; text-decoration:none; box-shadow: 0 2px 4px rgba(0,0,0,0.3);">${c.name}</a>`;
+        h += `<a href="${getSaleUrl(c.kw)}" target="_blank" class="act-btn" style="flex:1; min-width:30%; background:#1a1a2e; border:1px solid #444; font-size:0.85rem; margin-bottom:0; height:44px; display:flex!important; align-items:center; justify-content:center; text-decoration:none; box-shadow: 0 2px 4px rgba(0,0,0,0.3); padding:0 4px;">${c.name}</a>`;
     });
     h += `</div>`;
 
-    // 💧 水・清涼飲料の小ボタン
+    // 💧 水・清涼飲料の小ボタン（3ジャンル分割）
     h += `<div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:8px;">`;
     const softCats = [
-        { name: "💧 ミネラルウォーター", kw: "水 ミネラルウォーター" },
-        { name: "🥤 炭酸水・清涼飲料", kw: "炭酸水 清涼飲料" }
+        { name: "💧 水", kw: "水 ミネラルウォーター" },
+        { name: "💧 炭酸水", kw: "炭酸水" },
+        { name: "🥤 ジュース", kw: "ジュース" }
     ];
     softCats.forEach(c => {
-        h += `<a href="${getSaleUrl(c.kw)}" target="_blank" class="act-btn" style="flex:1; min-width:40%; background:#111; border:1px dashed #555; color:#aaa!important; font-size:0.8rem; margin-bottom:0; height:36px; display:flex!important; align-items:center; justify-content:center; text-decoration:none;">${c.name}</a>`;
+        h += `<a href="${getSaleUrl(c.kw)}" target="_blank" class="act-btn" style="flex:1; min-width:28%; background:#111; border:1px dashed #555; color:#aaa!important; font-size:0.8rem; margin-bottom:0; height:36px; display:flex!important; align-items:center; justify-content:center; text-decoration:none; padding:0 4px;">${c.name}</a>`;
     });
     h += `</div></div>`;
 
@@ -82,7 +85,8 @@ export function openShop() {
         });
 
         for (const cat in grouped) {
-            h += `<div class="label" style="top:28px;">🛍️ ${clean(cat)}</div>`;
+            // 上部の固定看板(約62px)＋戻るボタン(28px)の下にピタッと止まるように調整
+            h += `<div class="label" style="top:90px;">🛍️ ${clean(cat)}</div>`;
             grouped[cat].forEach(item => {
                 const amzUrl = `https://www.amazon.co.jp/s?k=${encodeURIComponent(clean(item.keyword))}&tag=itsophie-22`;
                 
