@@ -1,6 +1,5 @@
 /**
  * Bar Sophie v22.0 — app_m.js
- * ★ 手帳画面コンソール適正化・トグル完全対応
  */
 
 import * as media    from './media.js';
@@ -251,9 +250,8 @@ function renderConsole(mode) {
                 <button class="c-btn" id="ctrl-play" style="flex:1.0; font-size:1.2rem;">▶</button>
                 <button class="c-btn" id="btn-next" style="flex:1;">⏭</button>`;
         } else if (nav.state === "techo") {
-            // ★ ノート画面の時も、下矢印ではなく「SHOP」をキープし、手帳ボタンは「カウンターへ戻る」にする
             grid.innerHTML = `
-                <button class="c-btn" id="btn-shop" style="${shopBaseStyle} line-height:1.1; font-size:0.75rem; font-weight:bold;"><span>ソフィー</span><span>おすすめ</span><span style="font-size:0.75rem; letter-spacing:1px;">SHOP</span></button>
+                <button class="c-btn" id="btn-expand" style="flex:1.0; font-size:1.2rem;">▼</button>
                 <button class="c-btn" id="btn-techo" style="background:#111; color:#fff; border:1px solid #777; font-size:0.8rem; font-weight:bold; padding:0; flex:1.0; display:flex; justify-content:center; align-items:center; box-shadow:inset 0 0 10px #000;">カウンターへ</button>
                 <button class="c-btn" id="ctrl-pause" style="flex:1;">⏹️</button>
                 <button class="c-btn" id="ctrl-play" style="flex:1.0; font-size:1.2rem;">▶</button>

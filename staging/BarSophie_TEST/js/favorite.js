@@ -1,11 +1,10 @@
 /**
- * favorite.js — ソフィーのノート ＆ じゃんけんゲーム
- * ★ 絶対イベント委譲・音楽専用エリア・3-0キス/0-3ドンペリ実装
+ * favorite.js — ソフィーのノート ＆ じゃんけんゲーム ＆ お知らせ
+ * ★ 循環参照回避・音楽エリア右端独立・じゃんけん演出強化版
  */
 
 import { setListView, clean } from './utils.js';
 import * as nav from './navigation.js';
-import { priceBadge, showCardById } from './liquor.js';
 
 const STORAGE_KEY = 'bar_sophie_techo';
 
@@ -55,7 +54,7 @@ export function getGameStatus() {
     }
     return { 
         count: data.gameCount, 
-        limit: 1, 
+        limit: 1, // 1日1マッチ
         myWins: data.janken.myWins,
         sophieWins: data.janken.sophieWins
     };
@@ -94,7 +93,6 @@ function resetJankenTest() {
 export async function openNotice() {
     nav.updateNav("notice");
     let content = "";
-    
     try {
         const res = await fetch('お知らせ.txt');
         if (res.ok) {
@@ -126,8 +124,14 @@ export async function openNotice() {
     document.getElementById('btn-reset-janken').onclick = resetJankenTest;
 }
 
-export function openTecho() {
+// ★ 循環参照を回避するため、async/await と動的インポートを使用！
+export async function openTecho() {
+    nav.updateNav("techo");
     const data = getTechoData();
+    
+    // liquor.js の機能をここで安全に呼び出す
+    const lq = await import('./liquor.js').catch(e => { console.error(e); return null; });
+    
     let h = `<div class="label" style="background:#333; display:flex; justify-content:space-between; align-items:center;">
                 <span>📖 ソフィーのノート</span>
              </div>`;
@@ -153,23 +157,23 @@ export function openTecho() {
             if (cat.list.length > 0) {
                 h += `<div class="scr-title" style="margin-top:15px; color:var(--blue); padding-left:10px;">${cat.title}</div>`;
                 cat.list.forEach(id => {
-                    if (key === 'L') {
+                    if (key === 'L' && lq) {
                         const numStr = id.replace(/[^0-9]/g, '');
                         if (!numStr) {
                             h += `<div class="item fav-item" data-id="${id}" style="color:#888; border-bottom:1px solid #222; font-size:0.8rem; cursor:pointer;">⚠️ 古いデータです。タップして削除してください。</div>`;
                             return;
                         }
                         
-                        const lq = nav.liquorData.find(d => {
+                        const lqData = nav.liquorData.find(d => {
                             const rawNo = String(d["No."] || d["No"] || d["番号"] || d["NO"] || d["NO."] || "");
                             const rNum = rawNo.replace(/[^0-9]/g, '');
                             return rNum !== "" && parseInt(rNum, 10) === parseInt(numStr, 10);
                         });
                         
-                        if (lq) {
-                            const badge = priceBadge(lq["市販価格"], lq["大分類"]);
+                        if (lqData) {
+                            const badge = lq.priceBadge(lqData["市販価格"], lqData["大分類"]);
                             h += `<div class="item fav-item lq-fav" data-id="${id}" style="color:#eee; border-bottom:1px solid #222; display:flex; align-items:center; gap:4px; cursor:pointer;">
-                                    ${badge}<span style="overflow:hidden; text-overflow:ellipsis;">${clean(lq['銘柄名'])}</span>
+                                    ${badge}<span style="overflow:hidden; text-overflow:ellipsis;">${clean(lqData['銘柄名'])}</span>
                                   </div>`;
                         } else {
                             h += `<div class="item fav-item lq-fav" data-id="${id}" style="color:#888; border-bottom:1px solid #222; font-size:0.8rem; cursor:pointer;">⚠️ 見つかりません。タップして削除してください。</div>`;
@@ -188,61 +192,85 @@ export function openTecho() {
             });
         }
     }
+
     setListView(h, false);
+
+    // イベント登録（ここで確実にジャンプを実行）
+    document.querySelectorAll('.fav-item').forEach(el => {
+        el.onclick = () => {
+            if (el.innerText.includes('⚠️')) {
+                toggleFavorite(el.dataset.id);
+                openTecho(); 
+            } else if (el.classList.contains('lq-fav') && lq) {
+                lq.showCardById(el.dataset.id);
+            }
+        };
+    });
 }
 
-// ★ 絶対イベント委譲（音楽のハートとノートからのジャンプを確実に拾う魔法の結界）
-let isEventDelegated = false;
-function setupDelegation() {
-    if (isEventDelegated) return;
-    const lv = document.getElementById('list-view');
-    if (lv) {
-        lv.addEventListener('click', (e) => {
-            // 1. 音楽の「♡」が押された時（曲の再生を強制ブロック）
-            const musicBtn = e.target.closest('.music-fav-btn');
-            if (musicBtn) {
-                e.preventDefault();
-                e.stopPropagation();
-                e.stopImmediatePropagation();
-                const id = musicBtn.getAttribute('data-id');
-                const added = toggleFavorite(id);
-                musicBtn.innerText = added ? '❤️' : '♡';
-                return;
-            }
-
-            // 2. ノートのリストが押された時（お酒のカードへジャンプ）
-            if (nav.state === 'techo') {
-                const favItem = e.target.closest('.fav-item');
-                if (favItem) {
-                    if (favItem.innerText.includes('⚠️')) {
-                        toggleFavorite(favItem.dataset.id);
-                        openTecho(); // 削除して再描画
-                    } else if (favItem.classList.contains('lq-fav')) {
-                        showCardById(favItem.dataset.id);
-                        // app_m.js 側に「カード画面」のボタンを描画させる
-                        const appConsole = document.querySelector('.btn-grid');
-                        if (appConsole) appConsole.innerHTML = ''; // 一旦クリアして強制再描画を促す
-                        // ※ showCardById の中で renderConsole が呼ばれます
-                    }
-                }
-            }
-        }, true); // true: キャプチャフェーズ（他の誰よりも早くクリックを横取りする）
-        isEventDelegated = true;
-    }
-}
-
-// --- 🎵 音楽ページパッチ ---
+// --- 🎵 音楽ページパッチ（無条件監視・右端独立エリア） ---
 export function initMusicPatch() {
-    setupDelegation(); // イベントの結界を展開
-
     const observer = new MutationObserver(() => {
-        if (!nav.state || !nav.state.startsWith('music')) return;
         const lv = document.getElementById('list-view');
         if (!lv) return;
 
+        // ページの状態名に関わらず、リスト内に「♪♪」があれば音楽リストとみなして強引に書き換える
+        const items = lv.querySelectorAll('.item');
+        items.forEach(item => {
+            if (item.innerHTML.includes('♪♪') && !item.dataset.favPatched) {
+                item.dataset.favPatched = "true";
+                
+                let songId = item.innerText.replace(/♪♪/g, '').trim();
+                const match = songId.match(/S-\d{4}/);
+                if (match) songId = match[0];
+
+                const isFav = isFavorite(songId);
+                const heart = isFav ? '❤️' : '♡';
+
+                // ★ 元の「♪♪」を消去する
+                item.innerHTML = item.innerHTML.replace(/♪♪/g, '');
+
+                // ★ アイテムを横並びにして、右端にボタンエリアを分離する
+                item.style.display = 'flex';
+                item.style.justifyContent = 'space-between';
+                item.style.alignItems = 'center';
+                item.style.paddingRight = '0'; // 右の余白を詰める
+
+                const btnContainer = document.createElement('div');
+                btnContainer.className = 'music-fav-btn';
+                btnContainer.dataset.id = songId;
+                
+                // 再生エリアとは切り離された、右端の大きなクリックエリア
+                btnContainer.style.cssText = 'padding: 15px; margin: -15px 0 -15px auto; color: var(--pink); font-size: 1.4rem; z-index: 100; cursor: pointer;';
+                btnContainer.innerText = heart;
+                
+                // 再生イベントを完全に遮断するための結界
+                const blockEvent = (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    e.stopImmediatePropagation();
+                };
+                
+                ['pointerdown', 'mousedown', 'touchstart', 'touchend', 'click'].forEach(evt => {
+                    btnContainer.addEventListener(evt, (e) => {
+                        blockEvent(e);
+                        // クリック・タップが離れた瞬間に登録処理を実行
+                        if (evt === 'click' || evt === 'touchend') {
+                            const id = btnContainer.getAttribute('data-id');
+                            const added = toggleFavorite(id);
+                            btnContainer.innerText = added ? '❤️' : '♡';
+                        }
+                    });
+                });
+
+                item.appendChild(btnContainer);
+            }
+        });
+        
+        // 歌手名ラベルの右端に手帳ボタンを追加
         const labels = lv.querySelectorAll('.label');
         labels.forEach(label => {
-            if (!label.dataset.patched && label.innerText.length > 0 && label.id !== 'lbl-back-res') {
+            if (!label.dataset.patched && label.innerText.includes('◀') && label.id !== 'lbl-back-res' && label.id !== 'lbl-back-scr') {
                 label.dataset.patched = "true";
                 label.style.display = 'flex';
                 label.style.justifyContent = 'space-between';
@@ -254,7 +282,6 @@ export function initMusicPatch() {
                 btn.style.fontSize = '1.2rem';
                 btn.onclick = (e) => { 
                     e.stopPropagation(); 
-                    nav.updateNav("techo"); 
                     openTecho(); 
                     const app = document.getElementById('btn-techo');
                     if(app) app.click(); 
@@ -262,46 +289,11 @@ export function initMusicPatch() {
                 label.appendChild(btn);
             }
         });
-
-        const items = lv.querySelectorAll('.item');
-        items.forEach(item => {
-            if (item.innerText.includes('♪♪') && !item.dataset.favPatched) {
-                item.dataset.favPatched = "true";
-                
-                let songId = item.innerText.replace('♪♪', '').trim();
-                const match = songId.match(/S-\d{4}/);
-                if (match) songId = match[0];
-
-                const isFav = isFavorite(songId);
-                const heart = isFav ? '❤️' : '♡';
-
-                // 元の「♪♪」のテキストだけを綺麗に消去
-                Array.from(item.childNodes).forEach(node => {
-                    if (node.nodeType === Node.TEXT_NODE && node.nodeValue.includes('♪♪')) {
-                        node.nodeValue = node.nodeValue.replace(/♪♪/g, '');
-                    }
-                });
-
-                // アイテムをフレックスボックス化し、右端にハート専用の安全地帯を作る
-                item.style.display = 'flex';
-                item.style.justifyContent = 'space-between';
-                item.style.alignItems = 'center';
-
-                const btn = document.createElement('div');
-                btn.className = 'music-fav-btn';
-                btn.dataset.id = songId;
-                btn.style.cssText = 'padding:10px 15px; margin:-10px -15px -10px auto; color:var(--pink); font-size:1.3rem; z-index:999; position:relative; cursor:pointer;';
-                btn.innerText = heart;
-                
-                // ※ ここには click イベントは書かない。上記の setupDelegation が処理する。
-                item.appendChild(btn);
-            }
-        });
     });
     observer.observe(document.body, { childList: true, subtree: true });
 }
 
-// --- 🎮 ソフィーとのじゃんけん勝負（画像・演出付き） ---
+// --- 🎮 ソフィーとのじゃんけん勝負（3本先取ルール・ですます調） ---
 export function playJanken() {
     const status = getGameStatus();
     
@@ -314,7 +306,7 @@ export function playJanken() {
     const h = `
         <div id="janken-overlay" style="position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index:10000; display:flex; flex-direction:column; align-items:center; justify-content:center; color:#fff; font-family:sans-serif;">
             <div style="font-size:1.2rem; color:var(--accent); font-weight:bold; margin-bottom:10px; text-align:center;" id="j-title">ソフィーと勝負しますか？<br>（3本先取マッチ）</div>
-            <div style="font-size:1.5rem; font-weight:bold; margin-bottom:10px; color:#1e90ff;" id="j-score">
+            <div style="font-size:1.5rem; font-weight:bold; margin-bottom:20px; color:#1e90ff;" id="j-score">
                 あなた ${status.myWins} <span style="color:#fff;">-</span> ${status.sophieWins} ソフィー
             </div>
             
@@ -348,15 +340,13 @@ export function playJanken() {
 
             const newScore = updateGameScore(winner);
             let msg = "";
-            let imgSrc = "./front_sophie.jpeg"; // デフォルト画像
+            let imgSrc = "./front_sophie.jpeg";
 
-            // ★ 演出としぐさの変化（3-0ならキス、0-3ならドンペリ）
+            // ★ ソフィーのセリフ（です・ます調、上品な小悪魔感）
             if (newScore.myWins >= 3) {
                 if (newScore.sophieWins === 0) {
                     msg = "ふふっ……ストレート負けなんて久しぶりです。お約束通り、特別なご褒美……チュッ💋";
-                    addGameLog(`【完全勝利】3-0でソフィーから💋をもらった`);
-                    // 💋用の画像があればここにパスを入れます
-                    // imgSrc = "./sophie_kiss.jpeg"; 
+                    addGameLog(`【完全勝利】3連勝でソフィーから💋をもらった`);
                 } else {
                     msg = "お見事です。今日のところは私の負けですね。";
                     addGameLog(`【マッチ勝利】3-${newScore.sophieWins}で勝利`);
@@ -364,9 +354,7 @@ export function playJanken() {
             } else if (newScore.sophieWins >= 3) {
                 if (newScore.myWins === 0) {
                     msg = "私のストレート勝ちですね！さぁ、約束のドンペリ、開けていただきますよ？ふふっ。（※仮想請求書 10万円）";
-                    addGameLog(`【完全敗北】0-3でドンペリを入れさせられた💸`);
-                    // ドンペリ用の画像があればここにパスを入れます
-                    // imgSrc = "./domperi.jpeg";
+                    addGameLog(`【完全敗北】3連敗でドンペリを入れさせられた💸`);
                 } else {
                     msg = "私の勝ちですね。ふふっ、また明日挑戦してくださいな。";
                     addGameLog(`【マッチ敗北】${newScore.myWins}-3で敗北`);
@@ -377,7 +365,6 @@ export function playJanken() {
                 else msg = "あら、気が合いますね。引き分けです。";
             }
 
-            // 画面の書き換え（その場で演出が変わる）
             document.getElementById('j-title').innerHTML = msg;
             document.getElementById('j-score').innerHTML = `あなた ${newScore.myWins} <span style="color:#fff;">-</span> ${newScore.sophieWins} ソフィー`;
             document.getElementById('j-img').src = imgSrc;
@@ -394,13 +381,12 @@ export function playJanken() {
                 cancelBtn.innerText = "次へ";
                 cancelBtn.onclick = () => {
                     document.getElementById('janken-overlay').remove();
-                    playJanken(); // 次のラウンドへ
+                    playJanken(); 
                 };
             }
 
             import('./media.js').then(media => media.speak(clean(msg)));
             
-            // CSSアニメーションの注入
             if (!document.getElementById('janken-style')) {
                 const style = document.createElement('style');
                 style.id = 'janken-style';
