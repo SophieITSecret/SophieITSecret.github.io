@@ -65,33 +65,26 @@ const AXIS4_DEFAULT = { label: "第4軸(品目選択後)", left: "←", right: "
 // 価格帯バッジ
 // =============================================
 const PRICE_LEVELS = [
-    { max: 2000,   num: "2",  color: "#27ae60" },  // 緑
-    { max: 5000,   num: "5",  color: "#27ae60" },  // 緑
-    { max: 10000,  num: "1",  color: "#8e1a2e" },  // ボルドーワインレッド
-    { max: 20000,  num: "2",  color: "#8e1a2e" },  // ボルドーワインレッド
-    { max: 50000,  num: "5",  color: "#8e1a2e" },  // ボルドーワインレッド
+    { max: 2000,   num: "2",  color: "#27ae60" },
+    { max: 5000,   num: "5",  color: "#27ae60" },
+    { max: 10000,  num: "1",  color: "#8e1a2e" },
+    { max: 20000,  num: "2",  color: "#8e1a2e" },
+    { max: 50000,  num: "5",  color: "#8e1a2e" },
 ];
 
-// 価格文字列から数値を抽出（万円対応・範囲表記は最小値採用）
 function parsePrice(priceStr) {
     if (!priceStr) return null;
-    const s = priceStr.replace(/,|，|、/g, '');  // カンマ等を除去
-
-    // 「万」が含まれる場合：最初の数字×10000
+    const s = priceStr.replace(/,|，|、/g, '');
     if (s.includes('万')) {
         const m = s.match(/([0-9]+(?:\.[0-9]+)?)\s*万/);
         if (m) return Math.round(parseFloat(m[1]) * 10000);
     }
-
-    // 通常：最初に現れる数字を使う（範囲表記は最小値を採用）
     const m = s.match(/[0-9]+/);
     return m ? parseInt(m[0]) : null;
 }
 
 function priceBadge(priceStr, major) {
-    // カクテルはグラスアイコン
     if (major === 'カクテル') return `<span style="font-size:1rem; margin-right:3px;">🍸</span>`;
-
     const n = parsePrice(priceStr);
     if (n === null) return "　";
     if (n > 50000) return `<span style="font-size:1rem; margin-right:3px;">💎</span>`;
@@ -121,13 +114,11 @@ const initScrState = () => ({
 });
 let scrState = initScrState();
 
-// コールバック
 let _renderConsole = null;
 export function setRenderConsole(fn) { _renderConsole = fn; }
 
-// 現在のリスト（コンソールから参照）
 let _currentList = [];
-let _currentState = ""; // "scr" or "list"
+let _currentState = "";
 
 // =============================================
 // お酒データベース — 入口
@@ -135,7 +126,6 @@ let _currentState = ""; // "scr" or "list"
 export function openLiquorPortal() {
     nav.updateNav("lq_root");
     
-    // ★MrP2 改修：検索ボックスのUIに「L-」を固定表示し、UXを向上
     const h = `
         <div class="label" style="justify-content:center; cursor:default;">お酒を選ぶ</div>
         <button class="act-btn" id="btn-portal-cat" style="background:#27ae60; margin:15px; width:calc(100% - 30px);">📁 リストから探す</button>
@@ -154,19 +144,19 @@ export function openLiquorPortal() {
     document.getElementById('btn-portal-cat').addEventListener('click', openMajor);
     document.getElementById('btn-portal-scr').addEventListener('click', openScreening);
     
-    // ★MrP2 改修：スマート検索ロジック（エラー回避の完全対応）
+    // ★MrP2 改修：No. でも No でも 番号 でもOKな安全検索ロジック
     document.getElementById('dir-go').addEventListener('click', () => {
         const v = document.getElementById('dir-num').value.trim();
         if (!v) return;
 
-        // 数字部分だけを抽出して4桁ゼロ埋め
         const numStr = String(v).replace(/[^0-9]/g, '');
         if (!numStr) return;
         const targetId = 'L-' + numStr.padStart(4, '0');
 
-        // TSV側のデータが「L-0015」でも「15」でもヒットするように安全装置をかける
         const t = nav.liquorData.find(d => {
-            const no = String(d["No"]).trim();
+            // "No." も "No" もチェックする無敵仕様
+            const rawNo = d["No."] || d["No"] || d["番号"] || "";
+            const no = String(rawNo).trim();
             return no === targetId || no === v || no === numStr;
         });
 
@@ -196,7 +186,6 @@ function openScreening() {
     const sel = (id, cur, arr) =>
         `<select id="${id}"><option value="">問わない</option>${arr.map(v => opt(v, cur)).join('')}</select>`;
 
-    // 価格帯選択肢
     const priceVals = ["", 1000, 2000, 3000, 4000, 5000, 10000, 20000, 30000, 50000, 100000];
     const priceOpts = priceVals.map(v =>
         `<option value="${v}" ${scrState.pMin == v && v !== "" ? 'selected' : ''}>${v === "" ? "決めない" : v.toLocaleString() + "円"}</option>`
@@ -208,7 +197,6 @@ function openScreening() {
     const a4    = (scrState.sub && AXIS4_MAP[scrState.sub]) ? AXIS4_MAP[scrState.sub] : AXIS4_DEFAULT;
     const a4dis = !scrState.sub;
 
-    // スライダー（目盛り付き）
     const mkSlider = (id, lbl, left, right, min, max, disabled) => `
         <div class="scr-slider-row" style="opacity:${disabled ? 0.35 : 1}; pointer-events:${disabled ? 'none' : 'auto'};">
             <div class="scr-slider-label-name">${lbl}</div>
@@ -365,7 +353,6 @@ function executeScr() {
             const stars = (d["Gemini_コスパ"] || "").split('☆').length - 1;
             if (stars < parseInt(scrState.cospa)) return false;
         }
-        // 市場価格フィルター（万円対応）
         if (scrState.pMin || scrState.pMax) {
             const price = parsePrice(d["市販価格"]);
             if (price === null) return false;
@@ -451,26 +438,27 @@ function showCard(gIdx, list, fromState) {
     const a4   = AXIS4_MAP[sub] || AXIS4_DEFAULT;
     const tags = ((d["味わいタグ"] || "") + "," + (d["検索タグ"] || "")).split(',').map(t => t.trim()).filter(Boolean);
 
-    // ★MrP2 改修：IDの美しき表示（データが「15」でも「L-0015」に自動整形）
-    let displayId = String(d["No"] || "").trim();
+    // ★MrP2 改修：No. でも No でもOKなID取得
+    const rawNo = d["No."] || d["No"] || d["番号"] || "";
+    let displayId = String(rawNo).trim();
+    
     if (/^[0-9]+$/.test(displayId)) {
         displayId = 'L-' + displayId.padStart(4, '0');
-    } else if (!displayId.startsWith('L-')) {
+    } else if (displayId && !displayId.startsWith('L-')) {
         displayId = 'L-' + displayId; 
+    } else if (!displayId) {
+        displayId = 'L-????'; // 万が一データが取れなかった時のエラー回避
     }
 
-    let h = `<div class="label">${displayId}</div><div class="lq-card">`; // ← ここで表示！
+    let h = `<div class="label">${displayId}</div><div class="lq-card">`;
     
     h += `<div class="lq-name">${clean(d["銘柄名"])}</div>`;
     if (d["ソフィーのセリフ"]) h += `<div class="lq-quote">${clean(d["ソフィーのセリフ"])}</div>`;
     
-    // 製造元名を抽出（括弧・スラッシュ以降をカット）
     const makerRaw  = d["製造元と創業年"] || "";
     const makerName = makerRaw.replace(/[（(\/].*/g, '').trim();
     const region    = d["産地"] || "";
     const gKw       = encodeURIComponent(makerName && region ? `${makerName} ${region}` : makerName || region);
-
-    // Amazon検索URL（銘柄名＋大分類）
     const amzKw  = encodeURIComponent(clean(d["銘柄名"]) + " " + d["大分類"]);
     const amzUrl = `https://www.amazon.co.jp/s?k=${amzKw}&tag=itsophie-22`;
 
@@ -478,11 +466,8 @@ function showCard(gIdx, list, fromState) {
         <div><span style="color:#1a73e8">▶</span> ${d["大分類"]}&nbsp;&nbsp;<span style="color:#e74c3c">▶</span> ${d["中分類"]}</div>
         <div><span style="color:#888">産地:</span> ${d["国"] || ""}${region ? ' / ' + region : ''}</div>`;
 
-    // 製造元行：名前を表示
     if (makerRaw && makerRaw !== "-") {
         h += `<div style="margin-top:2px;"><span style="color:#888; font-size:0.85rem;">製造:</span> <span style="font-size:0.85rem; color:#ccc;">${makerRaw}</span></div>`;
-
-        // メーカーサイト・G・Amazon を1行に（メーカーサイトは製造元の真下）
         h += `<div class="card-link-row">`;
         if (d["公式URL"] && d["公式URL"] !== "-") {
             const directUrl = d["公式URL"];
@@ -496,12 +481,10 @@ function showCard(gIdx, list, fromState) {
             const gUrl = `https://www.google.com/search?q=${gKw}`;
             h += `<a href="${gUrl}" target="_blank" class="lq-btn-g">G</a>`;
         }
-        // 固定スペーサーでAmazonを右へ・免責を添える
         h += `<span style="flex:1;"></span>`;
         h += `<a href="${amzUrl}" target="_blank" class="lq-btn-amz-small">Amazon↗</a>`;
         h += `</div>`;
     } else {
-        // 製造元なし：AmazonだけでもOK
         h += `<div class="card-link-row">`;
         h += `<span style="flex:1;"></span>`;
         h += `<a href="${amzUrl}" target="_blank" class="lq-btn-amz-small">Amazon↗</a>`;
@@ -524,7 +507,6 @@ function showCard(gIdx, list, fromState) {
     h += `</div></div>`;
     if (d["ソフィーの裏話"])   h += `<div class="lq-sophie-talk"><span class="sophie-prefix">[ソフィー]</span> ${d["ソフィーの裏話"]}</div>`;
     if (tags.length)           h += `<div class="lq-tags">${tags.map(t => `<span class="lq-tag">${t}</span>`).join('')}</div>`;
-    // ★解説：ヘッダーをインラインで文章に続ける
     if (d["鑑定評価(200字)"]) h += `<div class="lq-desc"><span class="lq-desc-header">[解説]</span> ${d["鑑定評価(200字)"]}</div>`;
     h += `</div>`;
 
