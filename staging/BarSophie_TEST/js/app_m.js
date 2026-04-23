@@ -1,6 +1,6 @@
 /**
  * Bar Sophie v22.0 — app_m.js
- * ★ このファイルは「司令塔」です。
+ * ★ MrP2 防御結界版（ファイル欠損でも絶対に落ちない司令塔）
  */
 
 import * as media    from './media.js';
@@ -9,15 +9,21 @@ import * as utils    from './utils.js';
 import * as music    from './music.js';
 import * as liquor   from './liquor.js';
 import * as shop     from './shop.js';
-import * as favorite from './favorite.js';
 
+// =============================================
+// グローバル変数
+// =============================================
 let talkAudio;
 let ytPlayer = null;
 let ytPlayerReady = false;
 let pressTimer = null;
 
+// =============================================
+// 初期化
+// =============================================
 document.addEventListener('DOMContentLoaded', async () => {
     utils.initDom();
+
     talkAudio = document.getElementById('talk-audio') || document.createElement('audio');
     if (!talkAudio.id) { talkAudio.id = 'talk-audio'; document.body.appendChild(talkAudio); }
 
@@ -30,10 +36,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     liquor.setRenderConsole(renderConsole);
-    
-    // ★ 音楽ページ用の自動ハッキング・パッチを起動
-    favorite.initMusicPatch();
-    
+
+    // ★ 新機能（ノート機能等）を安全に読み込む（エラーで落ちない仕組み）
+    import('./favorite.js').then(fav => {
+        fav.initMusicPatch();
+    }).catch(e => {
+        console.warn("※ favorite.js が見つからないか、エラーがあります。", e);
+    });
+
     setup();
 
     const tag = document.createElement('script');
@@ -59,6 +69,9 @@ window.onYouTubeIframeAPIReady = function () {
     });
 };
 
+// =============================================
+// セットアップ
+// =============================================
 function setup() {
     music.initMusic(talkAudio, null, false, document.getElementById('telop'));
     talkAudio.onended = music.defaultOnEnded;
@@ -147,6 +160,9 @@ function setup() {
     showRootMenu();
 }
 
+// =============================================
+// ユーティリティ
+// =============================================
 function playVoice(src, txt) {
     talkAudio.src = src;
     talkAudio.onerror = () => { try { media.speak(txt); } catch(e){} };
@@ -179,7 +195,7 @@ function showRootMenu() {
     const db = document.getElementById('disclaimer-bar');
     if (db) db.style.display = 'block';
 
-    // ★ カウンター中央に「ソフィーのお知らせ」ボタンを動的追加
+    // ★ カウンター中央に「お知らせ」ボタンを追加
     let noticeBtn = document.getElementById('btn-notice');
     if (!noticeBtn) {
         if (nm) {
@@ -188,20 +204,29 @@ function showRootMenu() {
             noticeBtn.className = 'act-btn';
             noticeBtn.style.cssText = 'background: linear-gradient(135deg, #1a5276, #2980b9); color:#fff; margin:20px auto 10px; width:calc(100% - 30px); display:block; border:1px solid #5DADE2; font-weight:bold; box-shadow:0 0 10px rgba(41,128,185,0.3);';
             noticeBtn.innerHTML = '📢 ソフィーのお知らせ・使い方';
-            noticeBtn.onclick = () => favorite.openNotice();
+            noticeBtn.onclick = () => {
+                import('./favorite.js')
+                    .then(f => f.openNotice())
+                    .catch(e => alert("準備中です。（favorite.js が読み込めません）"));
+            };
             nm.appendChild(noticeBtn);
         }
     }
 }
 
+// =============================================
+// 戻るハンドラ
+// =============================================
 function handleBack() {
-    // ★ 手帳・お店・お知らせ画面からの戻り
     if (nav.state === "shop" || nav.state === "techo" || nav.state === "notice") { showRootMenu(); return; }
     if (liquor.handleLiquorBack()) return;
     if (music.handleBack()) return;
     showRootMenu();
 }
 
+// =============================================
+// コンソール（下部ボタンエリア）
+// =============================================
 function renderConsole(mode) {
     if (mode === 'screening') {
         const grid = document.querySelector('.btn-grid');
@@ -229,7 +254,11 @@ function renderConsole(mode) {
             <button class="c-btn card-btn" id="c-prev"   style="background:#1a3a1a; color:#7fd97f; font-size:1.1rem;">&#9664;</button>
             <button class="c-btn card-btn" id="c-next2"  style="background:#1a3a1a; color:#7fd97f; font-size:1.1rem;">&#9654;</button>`;
 
-        document.getElementById('c-sophie').addEventListener('click', () => { favorite.playJanken(); });
+        document.getElementById('c-sophie').addEventListener('click', () => {
+            import('./favorite.js')
+                .then(f => f.playJanken())
+                .catch(e => alert("じゃんけん機能の読み込みに失敗しました。"));
+        });
         document.getElementById('c-scr').addEventListener('click',   liquor.cardNavToScr);
         document.getElementById('c-list').addEventListener('click',  liquor.cardNavToList);
         document.getElementById('c-prev').addEventListener('click',  liquor.cardNavPrev);
@@ -241,9 +270,8 @@ function renderConsole(mode) {
 
         const isHome = (nav.state === "none");
         
-        // ★ カウンターも音楽ページも「5ボタン」で幅を完全統一
+        // ★ カウンターと他ページでボタンの幅を完全一致
         if (isHome) {
-            // [SHOP(1.2)] [📖(0.8)] [⏹️(1.0)] [▶(1.2)] [⏭(1.0)] = 合計 5.2
             grid.innerHTML = `
                 <button class="c-btn" id="btn-shop" style="background:rgba(255, 228, 225, 0.6); color:#cc294a; border:3px solid #1e90ff; flex-direction:column; justify-content:center; align-items:center; line-height:1.1; font-size:0.7rem; font-weight:bold; backdrop-filter:blur(2px); padding:0; flex:1.2;"><span>ソフィー</span><span>おすすめ</span><span style="font-size:0.75rem; letter-spacing:1px;">SHOP</span></button>
                 <button class="c-btn" id="btn-techo" style="background:rgba(34,34,34,0.8); color:#fff; border:1px solid #777; font-size:1.5rem; padding:0; flex:0.8; display:flex; justify-content:center; align-items:center;">📖</button>
@@ -251,7 +279,6 @@ function renderConsole(mode) {
                 <button class="c-btn" id="ctrl-play" style="flex:1.2; font-size:1.2rem;">▶</button>
                 <button class="c-btn" id="btn-next" style="flex:1;">⏭</button>`;
         } else {
-            // [▼(1.2)] [▲(0.8)] [⏹️(1.0)] [▶(1.2)] [⏭(1.0)] = 合計 5.2 (完全に幅が一致します)
             grid.innerHTML = `
                 <button class="c-btn" id="btn-expand" style="flex:1.2; font-size:1.2rem;">▼</button>
                 <button class="c-btn" id="ctrl-back" style="flex:0.8;">▲</button>
@@ -264,7 +291,11 @@ function renderConsole(mode) {
         document.getElementById('ctrl-pause').onclick = music.togglePause;
 
         if (isHome) {
-            document.getElementById('btn-techo').onclick = favorite.openTecho;
+            document.getElementById('btn-techo').onclick = () => {
+                import('./favorite.js')
+                    .then(f => f.openTecho())
+                    .catch(e => alert("ノート機能の読み込みに失敗しました。"));
+            };
             document.getElementById('btn-shop').onclick  = shop.openShop;
         } else {
             document.getElementById('ctrl-back').onclick  = handleBack;
