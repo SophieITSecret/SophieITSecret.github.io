@@ -1,6 +1,6 @@
 /**
  * Bar Sophie v22.0 — app_m.js
- * ★ ボタンの幅調整＆トグル（戻る）機能追加版
+ * ★ トグル機能・画面描画の確実化・お知らせ機能連携
  */
 
 import * as media    from './media.js';
@@ -88,7 +88,6 @@ function setup() {
     document.getElementById('ctrl-play').onclick  = music.playHead;
     document.getElementById('ctrl-pause').onclick = music.togglePause;
     document.getElementById('ctrl-back').onclick  = handleBack;
-
     document.getElementById('btn-expand').onclick = toggleMonitor;
 
     document.getElementById('sophie-warp').onclick = () => {
@@ -232,7 +231,7 @@ function renderConsole(mode) {
         const grid = document.querySelector('.btn-grid');
         if (!grid) return;
 
-        // ★ 配置・幅・トグル処理の完全対応
+        // ★ トグル（同じボタンを押すと戻る）と表記変更を完全に実装
         if (nav.state === "none") {
             grid.innerHTML = `
                 <button class="c-btn" id="btn-shop" style="background:rgba(255, 228, 225, 0.6); color:#cc294a; border:3px solid #1e90ff; flex-direction:column; justify-content:center; align-items:center; line-height:1.1; font-size:0.75rem; font-weight:bold; backdrop-filter:blur(2px); padding:0; flex:1.0;"><span>ソフィー</span><span>おすすめ</span><span style="font-size:0.75rem; letter-spacing:1px;">SHOP</span></button>
@@ -242,7 +241,7 @@ function renderConsole(mode) {
                 <button class="c-btn" id="btn-next" style="flex:1;">⏭</button>`;
         } else if (nav.state === "shop") {
             grid.innerHTML = `
-                <button class="c-btn" id="btn-shop-back" style="background:#555; color:#fff; border:1px solid #777; flex-direction:column; justify-content:center; align-items:center; font-size:0.75rem; font-weight:bold; padding:0; flex:1.0;">カウンターへ</button>
+                <button class="c-btn" id="btn-shop" style="background:#cc294a; color:#fff; border:1px solid #777; flex-direction:column; justify-content:center; align-items:center; font-size:0.75rem; font-weight:bold; padding:0; flex:1.0;">カウンターへ</button>
                 <button class="c-btn" id="btn-expand" style="flex:1.0; font-size:1.2rem;">▼</button>
                 <button class="c-btn" id="ctrl-pause" style="flex:1;">⏹️</button>
                 <button class="c-btn" id="ctrl-play" style="flex:1.0; font-size:1.2rem;">▶</button>
@@ -250,12 +249,11 @@ function renderConsole(mode) {
         } else if (nav.state === "techo") {
             grid.innerHTML = `
                 <button class="c-btn" id="btn-expand" style="flex:1.0; font-size:1.2rem;">▼</button>
-                <button class="c-btn" id="btn-techo-back" style="background:#111; color:#fff; border:1px solid #777; font-size:1.5rem; padding:0; flex:1.0; display:flex; justify-content:center; align-items:center; box-shadow:inset 0 0 10px #000;">📖</button>
+                <button class="c-btn" id="btn-techo" style="background:#111; color:#fff; border:1px solid #777; font-size:1.5rem; padding:0; flex:1.0; display:flex; justify-content:center; align-items:center; box-shadow:inset 0 0 10px #000;">📖</button>
                 <button class="c-btn" id="ctrl-pause" style="flex:1;">⏹️</button>
                 <button class="c-btn" id="ctrl-play" style="flex:1.0; font-size:1.2rem;">▶</button>
                 <button class="c-btn" id="btn-next" style="flex:1;">⏭</button>`;
         } else {
-            // 他のページ（音楽など）
             grid.innerHTML = `
                 <button class="c-btn" id="btn-expand" style="flex:1.0; font-size:1.2rem;">▼</button>
                 <button class="c-btn" id="ctrl-back" style="flex:1.0;">▲</button>
@@ -267,19 +265,42 @@ function renderConsole(mode) {
         document.getElementById('ctrl-play').onclick  = music.playHead;
         document.getElementById('ctrl-pause').onclick = music.togglePause;
 
-        if (nav.state === "none") {
-            document.getElementById('btn-techo').onclick = () => { import('./favorite.js').then(f => f.openTecho()); };
-            document.getElementById('btn-shop').onclick  = shop.openShop;
-        } else if (nav.state === "shop") {
-            document.getElementById('btn-shop-back').onclick = showRootMenu;
-            document.getElementById('btn-expand').onclick = toggleMonitor;
-        } else if (nav.state === "techo") {
-            document.getElementById('btn-techo-back').onclick = showRootMenu;
-            document.getElementById('btn-expand').onclick = toggleMonitor;
-        } else {
-            document.getElementById('ctrl-back').onclick  = handleBack;
+        // ★ トグル制御
+        const btnShop = document.getElementById('btn-shop');
+        if (btnShop) {
+            btnShop.onclick = () => {
+                if (nav.state === "shop") {
+                    showRootMenu();
+                } else {
+                    nav.updateNav("shop");
+                    shop.openShop();
+                    renderConsole('standard'); // ボタン表記を「カウンターへ」に書き換える
+                }
+            };
+        }
+
+        const btnTecho = document.getElementById('btn-techo');
+        if (btnTecho) {
+            btnTecho.onclick = () => {
+                if (nav.state === "techo") {
+                    showRootMenu();
+                } else {
+                    import('./favorite.js').then(f => {
+                        nav.updateNav("techo");
+                        f.openTecho();
+                        renderConsole('standard'); // ボタンの凹み状態などを反映
+                    });
+                }
+            };
+        }
+
+        if (document.getElementById('ctrl-back')) {
+            document.getElementById('ctrl-back').onclick = handleBack;
+        }
+        if (document.getElementById('btn-expand')) {
             document.getElementById('btn-expand').onclick = toggleMonitor;
         }
+
         setupNextButton();
     }
 }

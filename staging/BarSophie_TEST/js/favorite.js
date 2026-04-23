@@ -1,6 +1,6 @@
 /**
  * favorite.js — ソフィーのノート ＆ じゃんけんゲーム ＆ お知らせ
- * ★ 銘柄名表示 ＆ リストからのジャンプ対応 ＆ 音楽ボタン修正版
+ * ★ お知らせ外部ファイル化・ID照合完全版・音楽イベント修復
  */
 
 import { setListView, clean } from './utils.js';
@@ -62,23 +62,44 @@ function addGameLog(text) {
     saveTechoData(data);
 }
 
-export function openNotice() {
+// ★外部ファイル「お知らせ.txt」を読み込むように進化
+export async function openNotice() {
     nav.updateNav("notice");
+    let content = "";
+    
+    try {
+        const res = await fetch('お知らせ.txt');
+        if (res.ok) {
+            const text = await res.text();
+            content = `<div style="white-space: pre-wrap; margin-top:10px;">${clean(text)}</div>`;
+        } else {
+            throw new Error("File not found");
+        }
+    } catch (e) {
+        // もし「お知らせ.txt」が無い場合のデフォルトの案内文
+        content = `
+            <h3 style="color:var(--accent); border-bottom:1px solid #555; padding-bottom:5px; margin-top:0;">🍸 BARソフィーへようこそ</h3>
+            <p style="margin-top:10px;">ここでは1970〜80年代の名曲と、マスター厳選のお酒をお楽しみいただけます。</p>
+            <h3 style="color:#1e90ff; border-bottom:1px solid #555; padding-bottom:5px; margin-top:25px;">📖 ソフィーのノート</h3>
+            <p style="margin-top:10px;">お酒のカードや曲名の横にある「♡」を押すと「❤️」に変わり、ノートに記録されます。</p>
+            <h3 style="color:var(--pink); border-bottom:1px solid #555; padding-bottom:5px; margin-top:25px;">🎲 秘密のSボタン</h3>
+            <p style="margin-top:10px;">お酒のカードにある「S」ボタンを押すと、1日3回限定で私（ソフィー）と勝負ができます。勝てばご褒美があるかも…💋</p>
+            <div style="font-size:0.8rem; color:#888; margin-top:20px;">※プロデューサー様へ：アプリと同じフォルダに「お知らせ.txt」というファイルを作って文章を書くと、ここに表示されるようになります！</div>
+        `;
+    }
+
     let h = `<div class="label" style="background:#1a5276;">📢 お知らせ・使い方</div>
     <div style="padding:20px; color:#ddd; line-height:1.7; font-size:0.95rem;">
-        <h3 style="color:var(--accent); border-bottom:1px solid #555; padding-bottom:5px; margin-top:0;">🍸 BARソフィーへようこそ</h3>
-        <p style="margin-top:10px;">ここでは1970〜80年代の名曲と、マスター厳選のお酒をお楽しみいただけます。</p>
-        <h3 style="color:#1e90ff; border-bottom:1px solid #555; padding-bottom:5px; margin-top:25px;">📖 ソフィーのノート</h3>
-        <p style="margin-top:10px;">お酒のカードや曲名の横にある「♡」を押すと「❤️」に変わり、ノートに記録されます。カウンター画面下の「📖」ボタンからいつでも見返せます。</p>
-        <h3 style="color:var(--pink); border-bottom:1px solid #555; padding-bottom:5px; margin-top:25px;">🎲 秘密のSボタン</h3>
-        <p style="margin-top:10px;">お酒のカードにある「S」ボタンを押すと、1日3回限定で私（ソフィー）と勝負ができます。勝てばご褒美があるかも…💋</p>
+        ${content}
+        <button class="act-btn" id="btn-notice-close" style="background:#444; width:100%; margin-top:30px; font-weight:bold;">◀ カウンターへ戻る</button>
     </div>`;
+    
     setListView(h, false);
+    document.getElementById('btn-notice-close').onclick = () => document.getElementById('ctrl-back').click();
 }
 
 // --- 手帳（ノート）画面の描画 ---
 export function openTecho() {
-    nav.updateNav("techo");
     const data = getTechoData();
     
     let h = `<div class="label" style="background:#333; display:flex; justify-content:space-between; align-items:center;">
@@ -106,12 +127,12 @@ export function openTecho() {
             if (cat.list.length > 0) {
                 h += `<div class="scr-title" style="margin-top:15px; color:var(--blue); padding-left:10px;">${cat.title}</div>`;
                 cat.list.forEach(id => {
-                    // ★ お酒の場合は銘柄名とグラス・価格バッジを表示
+                    // ★ お酒の数値を完全に照合する（15と0015を同一視）
                     if (key === 'L') {
                         const numStr = id.replace(/[^0-9]/g, '');
                         const lq = nav.liquorData.find(d => {
                             const rawNo = d["No."] || d["No"] || d["番号"] || "";
-                            return String(rawNo).trim() === numStr;
+                            return parseInt(rawNo, 10) === parseInt(numStr, 10);
                         });
                         if (lq) {
                             const badge = priceBadge(lq["市販価格"], lq["大分類"]);
@@ -138,7 +159,6 @@ export function openTecho() {
 
     setListView(h, false);
 
-    // ★ リストをクリックしたら鑑定カードへ飛ぶ
     document.querySelectorAll('.lq-fav').forEach(el => {
         el.onclick = () => showCardById(el.dataset.id);
     });
@@ -151,7 +171,6 @@ export function initMusicPatch() {
         const lv = document.getElementById('list-view');
         if (!lv) return;
 
-        // 1. 歌手名バー（.label）の右端に📖ボタンを追加
         const labels = lv.querySelectorAll('.label');
         labels.forEach(label => {
             if (!label.dataset.patched && label.innerText.length > 0 && label.id !== 'lbl-back-res') {
@@ -164,12 +183,18 @@ export function initMusicPatch() {
                 btn.style.cursor = 'pointer';
                 btn.style.padding = '0 10px';
                 btn.style.fontSize = '1.2rem';
-                btn.onclick = (e) => { e.stopPropagation(); openTecho(); };
+                btn.onclick = (e) => { 
+                    e.stopPropagation(); 
+                    nav.updateNav("techo"); 
+                    openTecho(); 
+                    // app_m側のコンソールを強制再描画
+                    const app = document.getElementById('btn-techo');
+                    if(app) app.click(); 
+                };
                 label.appendChild(btn);
             }
         });
 
-        // 2. リストの「♪♪」を安全にハートボタンに置換（既存イベントを壊さない）
         const items = lv.querySelectorAll('.item');
         items.forEach(item => {
             if (item.innerText.includes('♪♪') && !item.dataset.favPatched) {
@@ -182,7 +207,6 @@ export function initMusicPatch() {
                 const isFav = isFavorite(songId);
                 const heart = isFav ? '❤️' : '♡';
 
-                // DOMのテキストから「♪♪」だけを消去
                 Array.from(item.childNodes).forEach(node => {
                     if (node.nodeType === Node.TEXT_NODE && node.nodeValue.includes('♪♪')) {
                         node.nodeValue = node.nodeValue.replace('♪♪', '');
@@ -195,15 +219,24 @@ export function initMusicPatch() {
                 btn.style.cssText = 'cursor:pointer; display:inline-block; width:28px; text-align:center; color:var(--pink); font-size:1.1rem; margin-right:5px;';
                 btn.innerText = heart;
                 
-                btn.onclick = (e) => {
+                // ★ pointerdown 等すべての接触イベントをブロックし、音楽再生を防ぐ
+                const blockEvent = (e) => {
                     e.preventDefault();
-                    e.stopPropagation(); // ★曲の再生を止める
+                    e.stopPropagation();
+                    e.stopImmediatePropagation();
+                };
+                btn.addEventListener('pointerdown', blockEvent);
+                btn.addEventListener('mousedown', blockEvent);
+                btn.addEventListener('touchstart', blockEvent);
+
+                // ハートの切り替え処理
+                btn.addEventListener('click', (e) => {
+                    blockEvent(e);
                     const id = btn.getAttribute('data-id');
                     const added = toggleFavorite(id);
                     btn.innerText = added ? '❤️' : '♡';
-                };
+                });
 
-                // 曲名の前にボタンを挿入
                 item.insertBefore(btn, item.firstChild);
             }
         });
