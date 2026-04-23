@@ -1,6 +1,6 @@
 /**
- * favorite.js — ソフィーのノート ＆ じゃんけんゲーム ＆ お知らせ
- * ★ 音楽エリア独立・ソフィー口調（ですます調）洗練・テスト用リセット機能追加
+ * favorite.js — ソフィーのノート ＆ じゃんけんゲーム
+ * ★ 絶対イベント委譲・音楽専用エリア・3-0キス/0-3ドンペリ実装
  */
 
 import { setListView, clean } from './utils.js';
@@ -55,7 +55,7 @@ export function getGameStatus() {
     }
     return { 
         count: data.gameCount, 
-        limit: 1, // 1日1マッチ（どちらかが3本先取で終了）
+        limit: 1, 
         myWins: data.janken.myWins,
         sophieWins: data.janken.sophieWins
     };
@@ -82,7 +82,6 @@ function addGameLog(text) {
     saveTechoData(data);
 }
 
-// ★ テスト用：じゃんけんの記録をリセットする機能
 function resetJankenTest() {
     const data = getTechoData();
     data.lastGameDate = '';
@@ -124,13 +123,11 @@ export async function openNotice() {
     </div>`;
     
     setListView(h, false);
-    
     document.getElementById('btn-reset-janken').onclick = resetJankenTest;
 }
 
 export function openTecho() {
     const data = getTechoData();
-    
     let h = `<div class="label" style="background:#333; display:flex; justify-content:space-between; align-items:center;">
                 <span>📖 ソフィーのノート</span>
              </div>`;
@@ -163,7 +160,6 @@ export function openTecho() {
                             return;
                         }
                         
-                        // ★データ照合をより強固に修正（どの列名でも見つけ出す）
                         const lq = nav.liquorData.find(d => {
                             const rawNo = String(d["No."] || d["No"] || d["番号"] || d["NO"] || d["NO."] || "");
                             const rNum = rawNo.replace(/[^0-9]/g, '');
@@ -192,23 +188,53 @@ export function openTecho() {
             });
         }
     }
-
     setListView(h, false);
-
-    document.querySelectorAll('.fav-item').forEach(el => {
-        el.onclick = () => {
-            if (el.innerText.includes('⚠️')) {
-                toggleFavorite(el.dataset.id);
-                openTecho(); // リロードして削除を反映
-            } else if (el.classList.contains('lq-fav')) {
-                showCardById(el.dataset.id);
-            }
-        };
-    });
 }
 
-// --- 🎵 音楽ページパッチ（「♪♪」を消し、右端にハートを配置して独立させる） ---
+// ★ 絶対イベント委譲（音楽のハートとノートからのジャンプを確実に拾う魔法の結界）
+let isEventDelegated = false;
+function setupDelegation() {
+    if (isEventDelegated) return;
+    const lv = document.getElementById('list-view');
+    if (lv) {
+        lv.addEventListener('click', (e) => {
+            // 1. 音楽の「♡」が押された時（曲の再生を強制ブロック）
+            const musicBtn = e.target.closest('.music-fav-btn');
+            if (musicBtn) {
+                e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+                const id = musicBtn.getAttribute('data-id');
+                const added = toggleFavorite(id);
+                musicBtn.innerText = added ? '❤️' : '♡';
+                return;
+            }
+
+            // 2. ノートのリストが押された時（お酒のカードへジャンプ）
+            if (nav.state === 'techo') {
+                const favItem = e.target.closest('.fav-item');
+                if (favItem) {
+                    if (favItem.innerText.includes('⚠️')) {
+                        toggleFavorite(favItem.dataset.id);
+                        openTecho(); // 削除して再描画
+                    } else if (favItem.classList.contains('lq-fav')) {
+                        showCardById(favItem.dataset.id);
+                        // app_m.js 側に「カード画面」のボタンを描画させる
+                        const appConsole = document.querySelector('.btn-grid');
+                        if (appConsole) appConsole.innerHTML = ''; // 一旦クリアして強制再描画を促す
+                        // ※ showCardById の中で renderConsole が呼ばれます
+                    }
+                }
+            }
+        }, true); // true: キャプチャフェーズ（他の誰よりも早くクリックを横取りする）
+        isEventDelegated = true;
+    }
+}
+
+// --- 🎵 音楽ページパッチ ---
 export function initMusicPatch() {
+    setupDelegation(); // イベントの結界を展開
+
     const observer = new MutationObserver(() => {
         if (!nav.state || !nav.state.startsWith('music')) return;
         const lv = document.getElementById('list-view');
@@ -249,14 +275,14 @@ export function initMusicPatch() {
                 const isFav = isFavorite(songId);
                 const heart = isFav ? '❤️' : '♡';
 
-                // ★ 元の「♪♪」を綺麗に消し去る
+                // 元の「♪♪」のテキストだけを綺麗に消去
                 Array.from(item.childNodes).forEach(node => {
                     if (node.nodeType === Node.TEXT_NODE && node.nodeValue.includes('♪♪')) {
                         node.nodeValue = node.nodeValue.replace(/♪♪/g, '');
                     }
                 });
 
-                // アイテムをフレックスボックス化し、右端にスペースを作る
+                // アイテムをフレックスボックス化し、右端にハート専用の安全地帯を作る
                 item.style.display = 'flex';
                 item.style.justifyContent = 'space-between';
                 item.style.alignItems = 'center';
@@ -264,28 +290,10 @@ export function initMusicPatch() {
                 const btn = document.createElement('div');
                 btn.className = 'music-fav-btn';
                 btn.dataset.id = songId;
-                
-                // ★ 再生エリアとは切り離された、右端の大きなクリックエリアを構築
                 btn.style.cssText = 'padding:10px 15px; margin:-10px -15px -10px auto; color:var(--pink); font-size:1.3rem; z-index:999; position:relative; cursor:pointer;';
                 btn.innerText = heart;
                 
-                // 親要素（曲の再生）にクリックを一切伝えない魔法のシールド
-                const blockEvent = (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    e.stopImmediatePropagation();
-                };
-                btn.addEventListener('pointerdown', blockEvent);
-                btn.addEventListener('mousedown', blockEvent);
-                btn.addEventListener('touchstart', blockEvent, {passive: false});
-
-                btn.addEventListener('click', (e) => {
-                    blockEvent(e);
-                    const id = btn.getAttribute('data-id');
-                    const added = toggleFavorite(id);
-                    btn.innerText = added ? '❤️' : '♡';
-                });
-
+                // ※ ここには click イベントは書かない。上記の setupDelegation が処理する。
                 item.appendChild(btn);
             }
         });
@@ -293,7 +301,7 @@ export function initMusicPatch() {
     observer.observe(document.body, { childList: true, subtree: true });
 }
 
-// --- 🎮 ソフィーとのじゃんけん勝負（3本先取ルール・ですます調） ---
+// --- 🎮 ソフィーとのじゃんけん勝負（画像・演出付き） ---
 export function playJanken() {
     const status = getGameStatus();
     
@@ -304,17 +312,20 @@ export function playJanken() {
     }
 
     const h = `
-        <div id="janken-overlay" style="position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:10000; display:flex; flex-direction:column; align-items:center; justify-content:center; color:#fff; font-family:sans-serif;">
-            <div style="font-size:1.2rem; color:var(--accent); font-weight:bold; margin-bottom:10px; text-align:center;">ソフィーと勝負しますか？<br>（3本先取マッチ）</div>
-            <div style="font-size:1.5rem; font-weight:bold; margin-bottom:20px; color:#1e90ff;">
+        <div id="janken-overlay" style="position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index:10000; display:flex; flex-direction:column; align-items:center; justify-content:center; color:#fff; font-family:sans-serif;">
+            <div style="font-size:1.2rem; color:var(--accent); font-weight:bold; margin-bottom:10px; text-align:center;" id="j-title">ソフィーと勝負しますか？<br>（3本先取マッチ）</div>
+            <div style="font-size:1.5rem; font-weight:bold; margin-bottom:10px; color:#1e90ff;" id="j-score">
                 あなた ${status.myWins} <span style="color:#fff;">-</span> ${status.sophieWins} ソフィー
             </div>
-            <div style="display:flex; gap:15px; margin-bottom:30px;">
+            
+            <img id="j-img" src="./front_sophie.jpeg" style="width:200px; height:200px; object-fit:cover; border-radius:50%; margin-bottom:20px; box-shadow:0 0 15px rgba(255,255,255,0.2);">
+            
+            <div id="j-btns" style="display:flex; gap:15px; margin-bottom:30px;">
                 <button class="j-btn" data-hand="✊" style="font-size:3.5rem; background:transparent; border:none; cursor:pointer; filter:drop-shadow(0 0 5px #fff);">✊</button>
                 <button class="j-btn" data-hand="✌️" style="font-size:3.5rem; background:transparent; border:none; cursor:pointer; filter:drop-shadow(0 0 5px #fff);">✌️</button>
                 <button class="j-btn" data-hand="🖐️" style="font-size:3.5rem; background:transparent; border:none; cursor:pointer; filter:drop-shadow(0 0 5px #fff);">🖐️</button>
             </div>
-            <button id="j-cancel" style="padding:10px 25px; border-radius:20px; background:#333; color:#fff; border:1px solid #555; font-size:1rem;">やめる</button>
+            <button id="j-cancel" style="padding:10px 35px; border-radius:25px; background:#444; color:#fff; border:1px solid #777; font-size:1.1rem; font-weight:bold;">やめる</button>
         </div>
     `;
     document.body.insertAdjacentHTML('beforeend', h);
@@ -337,31 +348,65 @@ export function playJanken() {
 
             const newScore = updateGameScore(winner);
             let msg = "";
+            let imgSrc = "./front_sophie.jpeg"; // デフォルト画像
 
-            // ★ ソフィーのセリフ（です・ます調、上品な小悪魔感）
+            // ★ 演出としぐさの変化（3-0ならキス、0-3ならドンペリ）
             if (newScore.myWins >= 3) {
-                msg = "ふふっ……私の完全な負けですね。お約束通り、ご褒美です……チュッ💋";
-                addGameLog(`【マッチ勝利】3勝${newScore.sophieWins}敗でソフィーから💋をもらった`);
+                if (newScore.sophieWins === 0) {
+                    msg = "ふふっ……ストレート負けなんて久しぶりです。お約束通り、特別なご褒美……チュッ💋";
+                    addGameLog(`【完全勝利】3-0でソフィーから💋をもらった`);
+                    // 💋用の画像があればここにパスを入れます
+                    // imgSrc = "./sophie_kiss.jpeg"; 
+                } else {
+                    msg = "お見事です。今日のところは私の負けですね。";
+                    addGameLog(`【マッチ勝利】3-${newScore.sophieWins}で勝利`);
+                }
             } else if (newScore.sophieWins >= 3) {
-                msg = "私の勝ちですね！それじゃあ、一番高いドンペリ、開けてもらってもいいですか？ふふっ。（※仮想請求書 10万円）";
-                addGameLog(`【マッチ敗北】${newScore.myWins}勝3敗でドンペリを入れさせられた💸`);
+                if (newScore.myWins === 0) {
+                    msg = "私のストレート勝ちですね！さぁ、約束のドンペリ、開けていただきますよ？ふふっ。（※仮想請求書 10万円）";
+                    addGameLog(`【完全敗北】0-3でドンペリを入れさせられた💸`);
+                    // ドンペリ用の画像があればここにパスを入れます
+                    // imgSrc = "./domperi.jpeg";
+                } else {
+                    msg = "私の勝ちですね。ふふっ、また明日挑戦してくださいな。";
+                    addGameLog(`【マッチ敗北】${newScore.myWins}-3で敗北`);
+                }
             } else {
-                if (winner === "my") msg = "お見事、あなたの勝ちです。次いきますよ！";
+                if (winner === "my") msg = "やりますね、あなたの勝ちです。次いきますよ！";
                 else if (winner === "sophie") msg = "ふふっ、私の勝ちですね。まだまだこれからですよ！";
                 else msg = "あら、気が合いますね。引き分けです。";
             }
 
-            document.getElementById('janken-overlay').innerHTML = `
-                <div style="font-size:1.2rem; color:var(--accent); font-weight:bold; margin-bottom:10px; text-align:center; padding:0 20px; line-height:1.5;">${msg}</div>
-                <div style="font-size:5rem; margin-bottom:20px; animation: pop 0.5s ease-out;">${sHand}</div>
-                <div style="font-size:1.5rem; font-weight:bold; margin-bottom:30px; color:#1e90ff;">
-                    あなた ${newScore.myWins} <span style="color:#fff;">-</span> ${newScore.sophieWins} ソフィー
-                </div>
-                <button id="j-close" style="padding:12px 35px; border-radius:25px; background:var(--blue); color:#000; border:none; font-weight:bold; font-size:1.1rem; box-shadow:0 0 10px var(--blue);">戻る</button>
-                <style>@keyframes pop { 0% {transform:scale(0.5); opacity:0;} 100% {transform:scale(1); opacity:1;} }</style>
-            `;
+            // 画面の書き換え（その場で演出が変わる）
+            document.getElementById('j-title').innerHTML = msg;
+            document.getElementById('j-score').innerHTML = `あなた ${newScore.myWins} <span style="color:#fff;">-</span> ${newScore.sophieWins} ソフィー`;
+            document.getElementById('j-img').src = imgSrc;
+            document.getElementById('j-btns').innerHTML = `<div style="font-size:6rem; animation: pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);">${sHand}</div>`;
+            
+            const cancelBtn = document.getElementById('j-cancel');
+            cancelBtn.style.background = "var(--blue)";
+            cancelBtn.style.color = "#000";
+            
+            if (newScore.myWins >= 3 || newScore.sophieWins >= 3) {
+                cancelBtn.innerText = "戻る";
+                cancelBtn.onclick = () => document.getElementById('janken-overlay').remove();
+            } else {
+                cancelBtn.innerText = "次へ";
+                cancelBtn.onclick = () => {
+                    document.getElementById('janken-overlay').remove();
+                    playJanken(); // 次のラウンドへ
+                };
+            }
+
             import('./media.js').then(media => media.speak(clean(msg)));
-            document.getElementById('j-close').onclick = () => document.getElementById('janken-overlay').remove();
+            
+            // CSSアニメーションの注入
+            if (!document.getElementById('janken-style')) {
+                const style = document.createElement('style');
+                style.id = 'janken-style';
+                style.innerHTML = `@keyframes pop { 0% {transform:scale(0.2) rotate(-20deg); opacity:0;} 100% {transform:scale(1) rotate(0deg); opacity:1;} }`;
+                document.head.appendChild(style);
+            }
         };
     });
 }
