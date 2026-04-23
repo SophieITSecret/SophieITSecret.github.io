@@ -134,13 +134,18 @@ let _currentState = ""; // "scr" or "list"
 // =============================================
 export function openLiquorPortal() {
     nav.updateNav("lq_root");
+    
+    // ★MrP2 改修：検索ボックスのUIに「L-」を固定表示し、UXを向上
     const h = `
         <div class="label" style="justify-content:center; cursor:default;">お酒を選ぶ</div>
         <button class="act-btn" id="btn-portal-cat" style="background:#27ae60; margin:15px; width:calc(100% - 30px);">📁 リストから探す</button>
         <button class="act-btn" id="btn-portal-scr" style="background:#8e44ad; margin:0 15px 15px; width:calc(100% - 30px);">🔍 お好みでスクリーニング</button>
         <div class="direct-box-new">
-            <div class="direct-lbl">No.検索</div>
-            <input type="number" id="dir-num" placeholder="番号">
+            <div class="direct-lbl">ID検索</div>
+            <div style="display:flex; flex:1; align-items:center; background:#000; border:1px solid #555; border-radius:4px; padding:0 6px;">
+                <span style="color:var(--blue); font-weight:bold; font-size:1.1rem; padding-bottom:2px;">L-</span>
+                <input type="number" id="dir-num" placeholder="番号" style="flex:1; background:transparent !important; border:none !important; color:#fff; font-size:1rem; padding:6px 4px; outline:none; text-align:left !important; min-width:0;">
+            </div>
             <button id="dir-go">開く</button>
         </div>`;
     setListView(h, false);
@@ -148,11 +153,25 @@ export function openLiquorPortal() {
 
     document.getElementById('btn-portal-cat').addEventListener('click', openMajor);
     document.getElementById('btn-portal-scr').addEventListener('click', openScreening);
+    
+    // ★MrP2 改修：スマート検索ロジック（エラー回避の完全対応）
     document.getElementById('dir-go').addEventListener('click', () => {
-        const v = document.getElementById('dir-num').value;
-        const t = nav.liquorData.find(d => d["No"] == v);
+        const v = document.getElementById('dir-num').value.trim();
+        if (!v) return;
+
+        // 数字部分だけを抽出して4桁ゼロ埋め
+        const numStr = String(v).replace(/[^0-9]/g, '');
+        if (!numStr) return;
+        const targetId = 'L-' + numStr.padStart(4, '0');
+
+        // TSV側のデータが「L-0015」でも「15」でもヒットするように安全装置をかける
+        const t = nav.liquorData.find(d => {
+            const no = String(d["No"]).trim();
+            return no === targetId || no === v || no === numStr;
+        });
+
         if (t) showCard(nav.liquorData.indexOf(t), nav.liquorData, 'list');
-        else alert("No." + v + " は見つかりませんでした。");
+        else alert("ID: " + targetId + " は見つかりませんでした。");
     });
 }
 
@@ -432,9 +451,19 @@ function showCard(gIdx, list, fromState) {
     const a4   = AXIS4_MAP[sub] || AXIS4_DEFAULT;
     const tags = ((d["味わいタグ"] || "") + "," + (d["検索タグ"] || "")).split(',').map(t => t.trim()).filter(Boolean);
 
-    let h = `<div class="label">No.${d["No"]}</div><div class="lq-card">`;
+    // ★MrP2 改修：IDの美しき表示（データが「15」でも「L-0015」に自動整形）
+    let displayId = String(d["No"] || "").trim();
+    if (/^[0-9]+$/.test(displayId)) {
+        displayId = 'L-' + displayId.padStart(4, '0');
+    } else if (!displayId.startsWith('L-')) {
+        displayId = 'L-' + displayId; 
+    }
+
+    let h = `<div class="label">${displayId}</div><div class="lq-card">`; // ← ここで表示！
+    
     h += `<div class="lq-name">${clean(d["銘柄名"])}</div>`;
     if (d["ソフィーのセリフ"]) h += `<div class="lq-quote">${clean(d["ソフィーのセリフ"])}</div>`;
+    
     // 製造元名を抽出（括弧・スラッシュ以降をカット）
     const makerRaw  = d["製造元と創業年"] || "";
     const makerName = makerRaw.replace(/[（(\/].*/g, '').trim();
