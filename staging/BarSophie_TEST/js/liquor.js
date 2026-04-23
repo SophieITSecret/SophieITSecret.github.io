@@ -87,7 +87,8 @@ function parsePrice(priceStr) {
     return m ? parseInt(m[0]) : null;
 }
 
-function priceBadge(priceStr, major) {
+// ★ favorite.js で使えるように export を追加
+export function priceBadge(priceStr, major) {
     if (major === 'カクテル') return `<span style="font-size:1rem; margin-right:3px;">🍸</span>`;
     const n = parsePrice(priceStr);
     if (n === null) return "　";
@@ -427,7 +428,7 @@ function showCard(gIdx, list, fromState) {
         displayId = 'L-????';
     }
 
-    // ★MrP2：美しく背景に溶け込む空洞ハート「♡」に変更
+    // ★白ハート（未登録）は縁取りだけにし、目障りさを解消
     let h = `<div class="label" style="display:flex; justify-content:space-between; align-items:center;">
                 <span>${displayId}</span>
                 <span id="btn-fav" data-id="${displayId}" style="cursor:pointer; font-size:1.2rem; padding:0 10px; color:var(--pink);"></span>
@@ -508,6 +509,18 @@ function showCard(gIdx, list, fromState) {
             };
         }
     });
+}
+
+// ★ ノート（手帳）から呼び出すための関数をエクスポート
+export function showCardById(idStr) {
+    const numStr = String(idStr).replace(/[^0-9]/g, '');
+    const t = nav.liquorData.find(d => {
+        const rawNo = d["No."] || d["No"] || d["番号"] || "";
+        return String(rawNo).trim() === numStr || String(rawNo).trim() === idStr;
+    });
+    if (t) {
+        showCard(nav.liquorData.indexOf(t), nav.liquorData, 'techo');
+    }
 }
 
 export function cardNavPrev() {

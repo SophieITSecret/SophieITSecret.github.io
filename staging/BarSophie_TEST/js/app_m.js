@@ -1,6 +1,6 @@
 /**
  * Bar Sophie v22.0 — app_m.js
- * ★ MrP2 防御結界版（ファイル欠損でも絶対に落ちない司令塔）
+ * ★ ボタンの幅調整＆トグル（戻る）機能追加版
  */
 
 import * as media    from './media.js';
@@ -10,20 +10,13 @@ import * as music    from './music.js';
 import * as liquor   from './liquor.js';
 import * as shop     from './shop.js';
 
-// =============================================
-// グローバル変数
-// =============================================
 let talkAudio;
 let ytPlayer = null;
 let ytPlayerReady = false;
 let pressTimer = null;
 
-// =============================================
-// 初期化
-// =============================================
 document.addEventListener('DOMContentLoaded', async () => {
     utils.initDom();
-
     talkAudio = document.getElementById('talk-audio') || document.createElement('audio');
     if (!talkAudio.id) { talkAudio.id = 'talk-audio'; document.body.appendChild(talkAudio); }
 
@@ -36,14 +29,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     liquor.setRenderConsole(renderConsole);
-
-    // ★ 新機能（ノート機能等）を安全に読み込む（エラーで落ちない仕組み）
+    
     import('./favorite.js').then(fav => {
         fav.initMusicPatch();
-    }).catch(e => {
-        console.warn("※ favorite.js が見つからないか、エラーがあります。", e);
-    });
-
+    }).catch(e => console.warn("favorite.js load error", e));
+    
     setup();
 
     const tag = document.createElement('script');
@@ -69,9 +59,6 @@ window.onYouTubeIframeAPIReady = function () {
     });
 };
 
-// =============================================
-// セットアップ
-// =============================================
 function setup() {
     music.initMusic(talkAudio, null, false, document.getElementById('telop'));
     talkAudio.onended = music.defaultOnEnded;
@@ -79,7 +66,6 @@ function setup() {
     document.getElementById('btn-enter').onclick = () => {
         document.getElementById('entry-screen').style.display = 'none';
         document.getElementById('chat-mode').style.display = 'flex';
-
         if (ytPlayerReady && ytPlayer) {
             try { ytPlayer.mute(); ytPlayer.loadVideoById('2vfCbdmKhMw'); setTimeout(() => { ytPlayer.pauseVideo(); ytPlayer.unMute(); }, 1000); } catch(e) {}
         }
@@ -103,13 +89,7 @@ function setup() {
     document.getElementById('ctrl-pause').onclick = music.togglePause;
     document.getElementById('ctrl-back').onclick  = handleBack;
 
-    document.getElementById('btn-expand').onclick = () => {
-        if (music.isMusicMode || nav.state === "none") return;
-        const monitor = document.querySelector('.monitor');
-        const btn = document.getElementById('btn-expand');
-        monitor.classList.toggle('expanded');
-        btn.innerText = monitor.classList.contains('expanded') ? '▲' : '▼';
-    };
+    document.getElementById('btn-expand').onclick = toggleMonitor;
 
     document.getElementById('sophie-warp').onclick = () => {
         if (nav.state !== "none") {
@@ -138,31 +118,11 @@ function setup() {
         }
     };
 
-    const btnN = document.getElementById('btn-next');
-    if (btnN) {
-        btnN.onpointerdown = (e) => {
-            e.preventDefault();
-            pressTimer = setTimeout(() => {
-                music.next();
-                btnN.classList.toggle('auto-active');
-                pressTimer = null;
-            }, 600);
-        };
-        btnN.onpointerup = () => {
-            if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; music.next(); }
-        };
-        btnN.onpointerleave = () => {
-            if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
-        };
-    }
-
+    setupNextButton();
     renderConsole('standard');
     showRootMenu();
 }
 
-// =============================================
-// ユーティリティ
-// =============================================
 function playVoice(src, txt) {
     talkAudio.src = src;
     talkAudio.onerror = () => { try { media.speak(txt); } catch(e){} };
@@ -195,7 +155,6 @@ function showRootMenu() {
     const db = document.getElementById('disclaimer-bar');
     if (db) db.style.display = 'block';
 
-    // ★ カウンター中央に「お知らせ」ボタンを追加
     let noticeBtn = document.getElementById('btn-notice');
     if (!noticeBtn) {
         if (nm) {
@@ -205,18 +164,13 @@ function showRootMenu() {
             noticeBtn.style.cssText = 'background: linear-gradient(135deg, #1a5276, #2980b9); color:#fff; margin:20px auto 10px; width:calc(100% - 30px); display:block; border:1px solid #5DADE2; font-weight:bold; box-shadow:0 0 10px rgba(41,128,185,0.3);';
             noticeBtn.innerHTML = '📢 ソフィーのお知らせ・使い方';
             noticeBtn.onclick = () => {
-                import('./favorite.js')
-                    .then(f => f.openNotice())
-                    .catch(e => alert("準備中です。（favorite.js が読み込めません）"));
+                import('./favorite.js').then(f => f.openNotice()).catch(e => alert("準備中です"));
             };
             nm.appendChild(noticeBtn);
         }
     }
 }
 
-// =============================================
-// 戻るハンドラ
-// =============================================
 function handleBack() {
     if (nav.state === "shop" || nav.state === "techo" || nav.state === "notice") { showRootMenu(); return; }
     if (liquor.handleLiquorBack()) return;
@@ -224,24 +178,39 @@ function handleBack() {
     showRootMenu();
 }
 
-// =============================================
-// コンソール（下部ボタンエリア）
-// =============================================
+function toggleMonitor() {
+    if (music.isMusicMode || nav.state === "none") return;
+    const monitor = document.querySelector('.monitor');
+    const btn = document.getElementById('btn-expand');
+    if (!btn) return;
+    monitor.classList.toggle('expanded');
+    btn.innerText = monitor.classList.contains('expanded') ? '▲' : '▼';
+}
+
+function setupNextButton() {
+    const btnN = document.getElementById('btn-next');
+    if (btnN) {
+        btnN.onpointerdown = (e) => {
+            e.preventDefault();
+            pressTimer = setTimeout(() => { music.next(); btnN.classList.toggle('auto-active'); pressTimer = null; }, 600);
+        };
+        btnN.onpointerup = () => { if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; music.next(); } };
+        btnN.onpointerleave = () => { if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; } };
+    }
+}
+
 function renderConsole(mode) {
     if (mode === 'screening') {
         const grid = document.querySelector('.btn-grid');
         if (!grid) return;
-        grid.innerHTML = `
-            <button class="c-btn" id="c-clr" style="background:#444;">クリア</button>
-            <button class="c-btn" id="c-ex"  style="background:#8e44ad; color:#fff; flex:2;">検索実行</button>`;
+        grid.innerHTML = `<button class="c-btn" id="c-clr" style="background:#444;">クリア</button><button class="c-btn" id="c-ex" style="background:#8e44ad; color:#fff; flex:2;">検索実行</button>`;
         document.getElementById('c-clr').onclick = liquor.clearScr;
         document.getElementById('c-ex').onclick  = liquor.execScr;
 
     } else if (mode === 'result') {
         const grid = document.querySelector('.btn-grid');
         if (!grid) return;
-        grid.innerHTML = `
-            <button class="c-btn" id="c-mod" style="background:#8e44ad; color:#fff; font-size:0.85rem;">🔍 検索条件を変更する</button>`;
+        grid.innerHTML = `<button class="c-btn" id="c-mod" style="background:#8e44ad; color:#fff; font-size:0.85rem;">🔍 検索条件を変更する</button>`;
         document.getElementById('c-mod').onclick = liquor.openScreeningFromConsole;
 
     } else if (mode === 'card') {
@@ -253,77 +222,64 @@ function renderConsole(mode) {
             <button class="c-btn card-btn" id="c-list"   style="background:#7a3a00; color:#f0b56e; font-size:0.75rem;">リスト</button>
             <button class="c-btn card-btn" id="c-prev"   style="background:#1a3a1a; color:#7fd97f; font-size:1.1rem;">&#9664;</button>
             <button class="c-btn card-btn" id="c-next2"  style="background:#1a3a1a; color:#7fd97f; font-size:1.1rem;">&#9654;</button>`;
-
-        document.getElementById('c-sophie').addEventListener('click', () => {
-            import('./favorite.js')
-                .then(f => f.playJanken())
-                .catch(e => alert("じゃんけん機能の読み込みに失敗しました。"));
-        });
-        document.getElementById('c-scr').addEventListener('click',   liquor.cardNavToScr);
-        document.getElementById('c-list').addEventListener('click',  liquor.cardNavToList);
-        document.getElementById('c-prev').addEventListener('click',  liquor.cardNavPrev);
+        document.getElementById('c-sophie').addEventListener('click', () => { import('./favorite.js').then(f => f.playJanken()); });
+        document.getElementById('c-scr').addEventListener('click', liquor.cardNavToScr);
+        document.getElementById('c-list').addEventListener('click', liquor.cardNavToList);
+        document.getElementById('c-prev').addEventListener('click', liquor.cardNavPrev);
         document.getElementById('c-next2').addEventListener('click', liquor.cardNavNext);
 
     } else {
         const grid = document.querySelector('.btn-grid');
         if (!grid) return;
 
-        const isHome = (nav.state === "none");
-        
-        // ★ カウンターと他ページでボタンの幅を完全一致
-        if (isHome) {
+        // ★ 配置・幅・トグル処理の完全対応
+        if (nav.state === "none") {
             grid.innerHTML = `
-                <button class="c-btn" id="btn-shop" style="background:rgba(255, 228, 225, 0.6); color:#cc294a; border:3px solid #1e90ff; flex-direction:column; justify-content:center; align-items:center; line-height:1.1; font-size:0.7rem; font-weight:bold; backdrop-filter:blur(2px); padding:0; flex:1.2;"><span>ソフィー</span><span>おすすめ</span><span style="font-size:0.75rem; letter-spacing:1px;">SHOP</span></button>
-                <button class="c-btn" id="btn-techo" style="background:rgba(34,34,34,0.8); color:#fff; border:1px solid #777; font-size:1.5rem; padding:0; flex:0.8; display:flex; justify-content:center; align-items:center;">📖</button>
+                <button class="c-btn" id="btn-shop" style="background:rgba(255, 228, 225, 0.6); color:#cc294a; border:3px solid #1e90ff; flex-direction:column; justify-content:center; align-items:center; line-height:1.1; font-size:0.75rem; font-weight:bold; backdrop-filter:blur(2px); padding:0; flex:1.0;"><span>ソフィー</span><span>おすすめ</span><span style="font-size:0.75rem; letter-spacing:1px;">SHOP</span></button>
+                <button class="c-btn" id="btn-techo" style="background:rgba(34,34,34,0.8); color:#fff; border:1px solid #777; font-size:1.5rem; padding:0; flex:1.0; display:flex; justify-content:center; align-items:center;">📖</button>
                 <button class="c-btn" id="ctrl-pause" style="flex:1;">⏹️</button>
-                <button class="c-btn" id="ctrl-play" style="flex:1.2; font-size:1.2rem;">▶</button>
+                <button class="c-btn" id="ctrl-play" style="flex:1.0; font-size:1.2rem;">▶</button>
+                <button class="c-btn" id="btn-next" style="flex:1;">⏭</button>`;
+        } else if (nav.state === "shop") {
+            grid.innerHTML = `
+                <button class="c-btn" id="btn-shop-back" style="background:#555; color:#fff; border:1px solid #777; flex-direction:column; justify-content:center; align-items:center; font-size:0.75rem; font-weight:bold; padding:0; flex:1.0;">カウンターへ</button>
+                <button class="c-btn" id="btn-expand" style="flex:1.0; font-size:1.2rem;">▼</button>
+                <button class="c-btn" id="ctrl-pause" style="flex:1;">⏹️</button>
+                <button class="c-btn" id="ctrl-play" style="flex:1.0; font-size:1.2rem;">▶</button>
+                <button class="c-btn" id="btn-next" style="flex:1;">⏭</button>`;
+        } else if (nav.state === "techo") {
+            grid.innerHTML = `
+                <button class="c-btn" id="btn-expand" style="flex:1.0; font-size:1.2rem;">▼</button>
+                <button class="c-btn" id="btn-techo-back" style="background:#111; color:#fff; border:1px solid #777; font-size:1.5rem; padding:0; flex:1.0; display:flex; justify-content:center; align-items:center; box-shadow:inset 0 0 10px #000;">📖</button>
+                <button class="c-btn" id="ctrl-pause" style="flex:1;">⏹️</button>
+                <button class="c-btn" id="ctrl-play" style="flex:1.0; font-size:1.2rem;">▶</button>
                 <button class="c-btn" id="btn-next" style="flex:1;">⏭</button>`;
         } else {
+            // 他のページ（音楽など）
             grid.innerHTML = `
-                <button class="c-btn" id="btn-expand" style="flex:1.2; font-size:1.2rem;">▼</button>
-                <button class="c-btn" id="ctrl-back" style="flex:0.8;">▲</button>
+                <button class="c-btn" id="btn-expand" style="flex:1.0; font-size:1.2rem;">▼</button>
+                <button class="c-btn" id="ctrl-back" style="flex:1.0;">▲</button>
                 <button class="c-btn" id="ctrl-pause" style="flex:1;">⏹️</button>
-                <button class="c-btn" id="ctrl-play" style="flex:1.2; font-size:1.2rem;">▶</button>
+                <button class="c-btn" id="ctrl-play" style="flex:1.0; font-size:1.2rem;">▶</button>
                 <button class="c-btn" id="btn-next" style="flex:1;">⏭</button>`;
         }
 
         document.getElementById('ctrl-play').onclick  = music.playHead;
         document.getElementById('ctrl-pause').onclick = music.togglePause;
 
-        if (isHome) {
-            document.getElementById('btn-techo').onclick = () => {
-                import('./favorite.js')
-                    .then(f => f.openTecho())
-                    .catch(e => alert("ノート機能の読み込みに失敗しました。"));
-            };
+        if (nav.state === "none") {
+            document.getElementById('btn-techo').onclick = () => { import('./favorite.js').then(f => f.openTecho()); };
             document.getElementById('btn-shop').onclick  = shop.openShop;
+        } else if (nav.state === "shop") {
+            document.getElementById('btn-shop-back').onclick = showRootMenu;
+            document.getElementById('btn-expand').onclick = toggleMonitor;
+        } else if (nav.state === "techo") {
+            document.getElementById('btn-techo-back').onclick = showRootMenu;
+            document.getElementById('btn-expand').onclick = toggleMonitor;
         } else {
             document.getElementById('ctrl-back').onclick  = handleBack;
-            document.getElementById('btn-expand').onclick = () => {
-                if (music.isMusicMode || nav.state === "none") return;
-                const monitor = document.querySelector('.monitor');
-                const btn = document.getElementById('btn-expand');
-                monitor.classList.toggle('expanded');
-                btn.innerText = monitor.classList.contains('expanded') ? '▲' : '▼';
-            };
+            document.getElementById('btn-expand').onclick = toggleMonitor;
         }
-
-        const btnN = document.getElementById('btn-next');
-        if (btnN) {
-            btnN.onpointerdown = (e) => {
-                e.preventDefault();
-                pressTimer = setTimeout(() => {
-                    music.next();
-                    btnN.classList.toggle('auto-active');
-                    pressTimer = null;
-                }, 600);
-            };
-            btnN.onpointerup = () => {
-                if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; music.next(); }
-            };
-            btnN.onpointerleave = () => {
-                if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
-            };
-        }
+        setupNextButton();
     }
 }
