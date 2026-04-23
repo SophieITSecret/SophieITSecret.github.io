@@ -1,37 +1,22 @@
 /**
  * liquor.js — お酒データベース・スクリーニング・鑑定カード
- * ★ MrP2 最新版 (L-番号対応 ＋ スライダーバグ修正 ＋ お気に入りボタン)
  */
 
 import * as nav from './navigation.js';
 import { clean, formatAbv, avg3, setListView } from './utils.js';
 
-// =============================================
-// ★MrP2 緊急防壁パッチ：見えないシールド無効化
-// =============================================
 (function applySliderPatch() {
     if (document.getElementById('mrp2-slider-patch')) return;
     const style = document.createElement('style');
     style.id = 'mrp2-slider-patch';
     style.innerHTML = `
-        /* スライダーの透明なレール部分のタッチ判定を無効化 */
-        .multi-range-wrap input[type="range"] {
-            pointer-events: none !important;
-        }
-        /* つまみ（丸い部分）だけはタッチ判定を有効化 */
-        .multi-range-wrap input[type="range"]::-webkit-slider-thumb {
-            pointer-events: auto !important;
-        }
-        .multi-range-wrap input[type="range"]::-moz-range-thumb {
-            pointer-events: auto !important;
-        }
+        .multi-range-wrap input[type="range"] { pointer-events: none !important; }
+        .multi-range-wrap input[type="range"]::-webkit-slider-thumb { pointer-events: auto !important; }
+        .multi-range-wrap input[type="range"]::-moz-range-thumb { pointer-events: auto !important; }
     `;
     document.head.appendChild(style);
 })();
 
-// =============================================
-// 第4軸マッピング
-// =============================================
 const AXIS4_MAP = {
     "スコッチ・シングルモルト":     { label: "スモーキー度",  left: "無煙",     right: "煙強"     },
     "スコッチ・ブレンデッド":       { label: "スモーキー度",  left: "無煙",     right: "煙強"     },
@@ -83,9 +68,6 @@ const AXIS4_MAP = {
 };
 const AXIS4_DEFAULT = { label: "第4軸(品目選択後)", left: "←", right: "→", disabled: true };
 
-// =============================================
-// 価格帯バッジ
-// =============================================
 const PRICE_LEVELS = [
     { max: 2000,   num: "2",  color: "#27ae60" },
     { max: 5000,   num: "5",  color: "#27ae60" },
@@ -121,9 +103,6 @@ function priceBadge(priceStr, major) {
     return "　";
 }
 
-// =============================================
-// スクリーニング状態
-// =============================================
 const initScrState = () => ({
     major: "", sub: "", country: "", region: "", keyword: "",
     cospa: "", isStandard: "", isSophieRecom: "",
@@ -142,9 +121,6 @@ export function setRenderConsole(fn) { _renderConsole = fn; }
 let _currentList = [];
 let _currentState = "";
 
-// =============================================
-// お酒データベース — 入口
-// =============================================
 export function openLiquorPortal() {
     nav.updateNav("lq_root");
     
@@ -185,9 +161,6 @@ export function openLiquorPortal() {
     });
 }
 
-// =============================================
-// スクリーニング — UI描画
-// =============================================
 function openScreening() {
     nav.updateNav("lq_scr");
 
@@ -305,9 +278,6 @@ function openScreening() {
     });
 }
 
-// =============================================
-// ダブルスライダー
-// =============================================
 function attachSlider(id) {
     const minEl  = document.getElementById(id + '-min');
     const maxEl  = document.getElementById(id + '-max');
@@ -336,9 +306,6 @@ function attachSlider(id) {
     update();
 }
 
-// =============================================
-// フォーム値の保存
-// =============================================
 function saveForm() {
     const g = id => document.getElementById(id)?.value ?? "";
     scrState.major         = g('s-mj');
@@ -354,9 +321,6 @@ function saveForm() {
     scrState.tags = Array.from(document.querySelectorAll('.scr-tag-btn.selected')).map(el => el.dataset.tag);
 }
 
-// =============================================
-// スクリーニング実行
-// =============================================
 function executeScr() {
     saveForm();
     const pMinN = scrState.pMin ? parseInt(scrState.pMin) : 0;
@@ -404,9 +368,6 @@ function executeScr() {
     renderResults(results);
 }
 
-// =============================================
-// 検索結果リスト
-// =============================================
 function renderResults(results, scrollToGlobalIdx = null) {
     nav.updateNav('lq_res', null, results);
     _currentList = results;
@@ -433,9 +394,6 @@ function renderResults(results, scrollToGlobalIdx = null) {
     }
 }
 
-// =============================================
-// 個別銘柄カード
-// =============================================
 function showCard(gIdx, list, fromState) {
     nav.updateNav("lq_card", null, list, gIdx);
     _currentList  = list;
@@ -469,10 +427,10 @@ function showCard(gIdx, list, fromState) {
         displayId = 'L-????';
     }
 
-    // ★MrP2 改修：カード上部にお気に入り「ハート」ボタンを追加
+    // ★MrP2：美しく背景に溶け込む空洞ハート「♡」に変更
     let h = `<div class="label" style="display:flex; justify-content:space-between; align-items:center;">
                 <span>${displayId}</span>
-                <span id="btn-fav" data-id="${displayId}" style="cursor:pointer; font-size:1.2rem; padding:0 10px;"></span>
+                <span id="btn-fav" data-id="${displayId}" style="cursor:pointer; font-size:1.2rem; padding:0 10px; color:var(--pink);"></span>
              </div>
              <div class="lq-card">`;
     
@@ -537,14 +495,13 @@ function showCard(gIdx, list, fromState) {
     setListView(h, true);
     if (_renderConsole) _renderConsole('card');
 
-    // ★ ハートボタンの機能連携（動的インポート）
     import('./favorite.js').then(fav => {
         const btnFav = document.getElementById('btn-fav');
         if (btnFav) {
             const updateIcon = () => {
-                btnFav.innerText = fav.isFavorite(displayId) ? '❤️' : '🤍';
+                btnFav.innerText = fav.isFavorite(displayId) ? '❤️' : '♡';
             };
-            updateIcon(); // 初期表示
+            updateIcon();
             btnFav.onclick = () => {
                 fav.toggleFavorite(displayId);
                 updateIcon();
@@ -553,9 +510,6 @@ function showCard(gIdx, list, fromState) {
     });
 }
 
-// =============================================
-// カード画面のコンソール用ナビ関数（app_m.jsから呼ぶ）
-// =============================================
 export function cardNavPrev() {
     const cur  = nav.liquorData[nav.curI];
     const idx  = _currentList.indexOf(cur);
@@ -579,9 +533,6 @@ export function cardNavToList() {
 export function cardNavToScr() { openScreening(); }
 export function getCurrentState() { return _currentState; }
 
-// =============================================
-// ジャンル階層ナビ
-// =============================================
 function openMajor() {
     nav.updateNav("lq_major");
     let h = `<div class="label" id="lbl-back-major">◀ ジャンルを選択</div>`;
@@ -626,9 +577,6 @@ function openItems(sb) {
         el.addEventListener('click', () => showCard(parseInt(el.dataset.gidx), list, 'list')));
 }
 
-// =============================================
-// 戻るハンドラ
-// =============================================
 export function handleLiquorBack() {
     switch (nav.state) {
         case "lq_card":    cardNavToList();     return true;
@@ -641,9 +589,6 @@ export function handleLiquorBack() {
     }
 }
 
-// =============================================
-// コンソール用export
-// =============================================
 export function execScr()                  { executeScr(); }
 export function clearScr()                 { scrState = initScrState(); openScreening(); }
 export function openScreeningFromConsole() { openScreening(); }
