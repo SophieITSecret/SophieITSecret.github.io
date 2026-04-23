@@ -1,6 +1,6 @@
 /**
  * Bar Sophie v22.0 — app_m.js
- * ★ トグル機能・画面描画の確実化・お知らせ機能連携
+ * ★ ボタン同色トグル＆お知らせ画面連携版
  */
 
 import * as media    from './media.js';
@@ -164,6 +164,7 @@ function showRootMenu() {
             noticeBtn.innerHTML = '📢 ソフィーのお知らせ・使い方';
             noticeBtn.onclick = () => {
                 import('./favorite.js').then(f => f.openNotice()).catch(e => alert("準備中です"));
+                renderConsole('standard'); // ボタン表記更新用
             };
             nm.appendChild(noticeBtn);
         }
@@ -231,17 +232,20 @@ function renderConsole(mode) {
         const grid = document.querySelector('.btn-grid');
         if (!grid) return;
 
-        // ★ トグル（同じボタンを押すと戻る）と表記変更を完全に実装
+        // 共通のベースデザイン（裏表同じにするための変数）
+        const shopBaseStyle = "background:rgba(255, 228, 225, 0.6); color:#cc294a; border:3px solid #1e90ff; flex-direction:column; justify-content:center; align-items:center; backdrop-filter:blur(2px); padding:0; flex:1.0;";
+
         if (nav.state === "none") {
             grid.innerHTML = `
-                <button class="c-btn" id="btn-shop" style="background:rgba(255, 228, 225, 0.6); color:#cc294a; border:3px solid #1e90ff; flex-direction:column; justify-content:center; align-items:center; line-height:1.1; font-size:0.75rem; font-weight:bold; backdrop-filter:blur(2px); padding:0; flex:1.0;"><span>ソフィー</span><span>おすすめ</span><span style="font-size:0.75rem; letter-spacing:1px;">SHOP</span></button>
+                <button class="c-btn" id="btn-shop" style="${shopBaseStyle} line-height:1.1; font-size:0.75rem; font-weight:bold;"><span>ソフィー</span><span>おすすめ</span><span style="font-size:0.75rem; letter-spacing:1px;">SHOP</span></button>
                 <button class="c-btn" id="btn-techo" style="background:rgba(34,34,34,0.8); color:#fff; border:1px solid #777; font-size:1.5rem; padding:0; flex:1.0; display:flex; justify-content:center; align-items:center;">📖</button>
                 <button class="c-btn" id="ctrl-pause" style="flex:1;">⏹️</button>
                 <button class="c-btn" id="ctrl-play" style="flex:1.0; font-size:1.2rem;">▶</button>
                 <button class="c-btn" id="btn-next" style="flex:1;">⏭</button>`;
-        } else if (nav.state === "shop") {
+        } else if (nav.state === "shop" || nav.state === "notice") {
+            // ★ SHOP画面とお知らせ画面では「カウンターへ」を同じデザインで表示
             grid.innerHTML = `
-                <button class="c-btn" id="btn-shop" style="background:#cc294a; color:#fff; border:1px solid #777; flex-direction:column; justify-content:center; align-items:center; font-size:0.75rem; font-weight:bold; padding:0; flex:1.0;">カウンターへ</button>
+                <button class="c-btn" id="btn-shop" style="${shopBaseStyle} font-size:0.8rem; font-weight:bold;">カウンターへ</button>
                 <button class="c-btn" id="btn-expand" style="flex:1.0; font-size:1.2rem;">▼</button>
                 <button class="c-btn" id="ctrl-pause" style="flex:1;">⏹️</button>
                 <button class="c-btn" id="ctrl-play" style="flex:1.0; font-size:1.2rem;">▶</button>
@@ -265,16 +269,16 @@ function renderConsole(mode) {
         document.getElementById('ctrl-play').onclick  = music.playHead;
         document.getElementById('ctrl-pause').onclick = music.togglePause;
 
-        // ★ トグル制御
+        // トグル制御
         const btnShop = document.getElementById('btn-shop');
         if (btnShop) {
             btnShop.onclick = () => {
-                if (nav.state === "shop") {
+                if (nav.state === "shop" || nav.state === "notice") {
                     showRootMenu();
                 } else {
                     nav.updateNav("shop");
                     shop.openShop();
-                    renderConsole('standard'); // ボタン表記を「カウンターへ」に書き換える
+                    renderConsole('standard');
                 }
             };
         }
@@ -288,7 +292,7 @@ function renderConsole(mode) {
                     import('./favorite.js').then(f => {
                         nav.updateNav("techo");
                         f.openTecho();
-                        renderConsole('standard'); // ボタンの凹み状態などを反映
+                        renderConsole('standard');
                     });
                 }
             };
