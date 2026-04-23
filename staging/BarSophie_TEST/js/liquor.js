@@ -1,6 +1,6 @@
 /**
  * liquor.js — お酒データベース・スクリーニング・鑑定カード
- * ★ MrP2 最新版 (L-番号対応 ＋ スライダーバグ修正パッチ適用)
+ * ★ MrP2 最新版 (L-番号対応 ＋ スライダーバグ修正 ＋ お気に入りボタン)
  */
 
 import * as nav from './navigation.js';
@@ -469,7 +469,12 @@ function showCard(gIdx, list, fromState) {
         displayId = 'L-????';
     }
 
-    let h = `<div class="label">${displayId}</div><div class="lq-card">`;
+    // ★MrP2 改修：カード上部にお気に入り「ハート」ボタンを追加
+    let h = `<div class="label" style="display:flex; justify-content:space-between; align-items:center;">
+                <span>${displayId}</span>
+                <span id="btn-fav" data-id="${displayId}" style="cursor:pointer; font-size:1.2rem; padding:0 10px;"></span>
+             </div>
+             <div class="lq-card">`;
     
     h += `<div class="lq-name">${clean(d["銘柄名"])}</div>`;
     if (d["ソフィーのセリフ"]) h += `<div class="lq-quote">${clean(d["ソフィーのセリフ"])}</div>`;
@@ -531,6 +536,21 @@ function showCard(gIdx, list, fromState) {
 
     setListView(h, true);
     if (_renderConsole) _renderConsole('card');
+
+    // ★ ハートボタンの機能連携（動的インポート）
+    import('./favorite.js').then(fav => {
+        const btnFav = document.getElementById('btn-fav');
+        if (btnFav) {
+            const updateIcon = () => {
+                btnFav.innerText = fav.isFavorite(displayId) ? '❤️' : '🤍';
+            };
+            updateIcon(); // 初期表示
+            btnFav.onclick = () => {
+                fav.toggleFavorite(displayId);
+                updateIcon();
+            };
+        }
+    });
 }
 
 // =============================================

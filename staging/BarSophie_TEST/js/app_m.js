@@ -12,6 +12,7 @@ import * as utils    from './utils.js';
 import * as music    from './music.js';
 import * as liquor   from './liquor.js';
 import * as shop     from './shop.js';
+import * as favorite from './favorite.js'; // ★お気に入り・ゲーム追加
 
 // =============================================
 // グローバル変数
@@ -195,7 +196,8 @@ function showRootMenu() {
 // 戻るハンドラ
 // =============================================
 function handleBack() {
-    if (nav.state === "shop") { showRootMenu(); return; }
+    // ★ 手帳（ノート）とお店から戻る処理
+    if (nav.state === "shop" || nav.state === "techo") { showRootMenu(); return; }
     if (liquor.handleLiquorBack()) return;
     if (music.handleBack()) return;
     showRootMenu();
@@ -232,13 +234,8 @@ function renderConsole(mode) {
             <button class="c-btn card-btn" id="c-next2"  style="background:#1a3a1a; color:#7fd97f; font-size:1.1rem;">&#9654;</button>`;
 
         document.getElementById('c-sophie').addEventListener('click', () => {
-            const ls = document.querySelector('.l-side');
-            if (ls) {
-                ls.style.display = 'block';
-                setTimeout(() => { if (nav.state === 'lq_card') ls.style.display = 'none'; }, 4000);
-            }
-            talkAudio.src = "./voices_mp3/what_order.mp3";
-            talkAudio.play().catch(() => { try { media.speak("何になさいますか？"); } catch(e){} });
+            // ★ Sボタンを押した時にじゃんけんゲーム発動！
+            favorite.playJanken();
         });
         document.getElementById('c-scr').addEventListener('click',   liquor.cardNavToScr);
         document.getElementById('c-list').addEventListener('click',  liquor.cardNavToList);
@@ -249,10 +246,12 @@ function renderConsole(mode) {
         const grid = document.querySelector('.btn-grid');
         if (!grid) return;
 
-        // ★修正：color:#cc294a (明るいワインレッド) に変更
         const isHome = (nav.state === "none");
+        
+        // ★ プロデューサーこだわりのデザインボタン（HOME画面限定）
         const expandBtnHtml = isHome
-            ? `<button class="c-btn" id="btn-expand" style="background:#ffe4e1; border:2px solid #00bfff; color:#cc294a; font-size:0.75rem; line-height:1.2; font-weight:bold; letter-spacing:0.5px;">ソフィー<br>お薦め</button>`
+            ? `<button class="c-btn" id="btn-techo" style="background:rgba(34,34,34,0.8); color:#fff; border:1px solid #777; flex-direction:column; line-height:1.2; font-size:0.75rem; padding:0; flex:0.8;"><span style="font-size:1rem; margin-bottom:2px;">📖</span>ノート</button>
+               <button class="c-btn" id="btn-shop" style="background:rgba(255, 228, 225, 0.6); color:#cc294a; border:3px solid #1e90ff; flex-direction:column; line-height:1.1; font-size:0.7rem; font-weight:bold; backdrop-filter:blur(2px); padding:0; flex:0.8;"><span>ソフィー</span><span>おすすめ</span><span style="font-size:0.75rem; letter-spacing:1px;">SHOP</span></button>`
             : `<button class="c-btn" id="btn-expand">▼</button>`;
 
         grid.innerHTML = `
@@ -266,17 +265,20 @@ function renderConsole(mode) {
         document.getElementById('ctrl-pause').onclick = music.togglePause;
         document.getElementById('ctrl-back').onclick  = handleBack;
 
-        document.getElementById('btn-expand').onclick = () => {
-            if (nav.state === "none") {
-                shop.openShop();
-                return;
-            }
-            if (music.isMusicMode || nav.state === "none") return;
-            const monitor = document.querySelector('.monitor');
-            const btn = document.getElementById('btn-expand');
-            monitor.classList.toggle('expanded');
-            btn.innerText = monitor.classList.contains('expanded') ? '▲' : '▼';
-        };
+        if (isHome) {
+            // HOME画面時の左側ボタンの挙動
+            document.getElementById('btn-techo').onclick = favorite.openTecho;
+            document.getElementById('btn-shop').onclick  = shop.openShop;
+        } else {
+            // 他画面時のモニター拡大（▼）ボタンの挙動
+            document.getElementById('btn-expand').onclick = () => {
+                if (music.isMusicMode || nav.state === "none") return;
+                const monitor = document.querySelector('.monitor');
+                const btn = document.getElementById('btn-expand');
+                monitor.classList.toggle('expanded');
+                btn.innerText = monitor.classList.contains('expanded') ? '▲' : '▼';
+            };
+        }
 
         const btnN = document.getElementById('btn-next');
         if (btnN) {
