@@ -1,11 +1,33 @@
 /**
  * liquor.js — お酒データベース・スクリーニング・鑑定カード
- * ★ このファイルが現在の作業対象です。
- * ★ music.js / utils.js / navigation.js は触らないでください。
+ * ★ MrP2 最新版 (L-番号対応 ＋ スライダーバグ修正パッチ適用)
  */
 
 import * as nav from './navigation.js';
 import { clean, formatAbv, avg3, setListView } from './utils.js';
+
+// =============================================
+// ★MrP2 緊急防壁パッチ：見えないシールド無効化
+// =============================================
+(function applySliderPatch() {
+    if (document.getElementById('mrp2-slider-patch')) return;
+    const style = document.createElement('style');
+    style.id = 'mrp2-slider-patch';
+    style.innerHTML = `
+        /* スライダーの透明なレール部分のタッチ判定を無効化 */
+        .multi-range-wrap input[type="range"] {
+            pointer-events: none !important;
+        }
+        /* つまみ（丸い部分）だけはタッチ判定を有効化 */
+        .multi-range-wrap input[type="range"]::-webkit-slider-thumb {
+            pointer-events: auto !important;
+        }
+        .multi-range-wrap input[type="range"]::-moz-range-thumb {
+            pointer-events: auto !important;
+        }
+    `;
+    document.head.appendChild(style);
+})();
 
 // =============================================
 // 第4軸マッピング
@@ -144,7 +166,6 @@ export function openLiquorPortal() {
     document.getElementById('btn-portal-cat').addEventListener('click', openMajor);
     document.getElementById('btn-portal-scr').addEventListener('click', openScreening);
     
-    // ★MrP2 改修：No. でも No でも 番号 でもOKな安全検索ロジック
     document.getElementById('dir-go').addEventListener('click', () => {
         const v = document.getElementById('dir-num').value.trim();
         if (!v) return;
@@ -154,7 +175,6 @@ export function openLiquorPortal() {
         const targetId = 'L-' + numStr.padStart(4, '0');
 
         const t = nav.liquorData.find(d => {
-            // "No." も "No" もチェックする無敵仕様
             const rawNo = d["No."] || d["No"] || d["番号"] || "";
             const no = String(rawNo).trim();
             return no === targetId || no === v || no === numStr;
@@ -438,7 +458,6 @@ function showCard(gIdx, list, fromState) {
     const a4   = AXIS4_MAP[sub] || AXIS4_DEFAULT;
     const tags = ((d["味わいタグ"] || "") + "," + (d["検索タグ"] || "")).split(',').map(t => t.trim()).filter(Boolean);
 
-    // ★MrP2 改修：No. でも No でもOKなID取得
     const rawNo = d["No."] || d["No"] || d["番号"] || "";
     let displayId = String(rawNo).trim();
     
@@ -447,7 +466,7 @@ function showCard(gIdx, list, fromState) {
     } else if (displayId && !displayId.startsWith('L-')) {
         displayId = 'L-' + displayId; 
     } else if (!displayId) {
-        displayId = 'L-????'; // 万が一データが取れなかった時のエラー回避
+        displayId = 'L-????';
     }
 
     let h = `<div class="label">${displayId}</div><div class="lq-card">`;
