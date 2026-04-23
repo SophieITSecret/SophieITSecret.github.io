@@ -1,6 +1,6 @@
 /**
  * favorite.js — ソフィーのノート ＆ じゃんけんゲーム ＆ お知らせ
- * ★ 音楽ボタン右端独立・じゃんけん3勝ルール対応版
+ * ★ 音楽エリア独立・ソフィー口調（ですます調）洗練・テスト用リセット機能追加
  */
 
 import { setListView, clean } from './utils.js';
@@ -11,7 +11,6 @@ const STORAGE_KEY = 'bar_sophie_techo';
 
 function getTechoData() {
     const data = localStorage.getItem(STORAGE_KEY);
-    // gameCountを「本日のマッチ回数」とし、新しく janken オブジェクトで現在の戦績を管理
     if (!data) return { 
         favorites: [], 
         gameLog: [], 
@@ -56,7 +55,7 @@ export function getGameStatus() {
     }
     return { 
         count: data.gameCount, 
-        limit: 1, // ★1日1マッチ（3本先取で1マッチ終了）
+        limit: 1, // 1日1マッチ（どちらかが3本先取で終了）
         myWins: data.janken.myWins,
         sophieWins: data.janken.sophieWins
     };
@@ -67,7 +66,6 @@ export function updateGameScore(winner) {
     if (winner === "my") data.janken.myWins++;
     if (winner === "sophie") data.janken.sophieWins++;
     
-    // どちらかが3勝したら1マッチ終了扱いにする
     if (data.janken.myWins >= 3 || data.janken.sophieWins >= 3) {
         data.gameCount++;
     }
@@ -82,6 +80,16 @@ function addGameLog(text) {
     data.gameLog.unshift(`[${timeStr}] ${text}`);
     if (data.gameLog.length > 30) data.gameLog.pop();
     saveTechoData(data);
+}
+
+// ★ テスト用：じゃんけんの記録をリセットする機能
+function resetJankenTest() {
+    const data = getTechoData();
+    data.lastGameDate = '';
+    data.gameCount = 0;
+    data.janken = { myWins: 0, sophieWins: 0 };
+    saveTechoData(data);
+    alert("【テスト機能】\nじゃんけんの回数と戦績をリセットしました。\nお酒の画面から「S」ボタンを押すと再挑戦できます！");
 }
 
 export async function openNotice() {
@@ -110,9 +118,14 @@ export async function openNotice() {
     let h = `<div class="label" style="background:#1a5276;">📢 お知らせ・使い方</div>
     <div style="padding:20px; color:#ddd; line-height:1.7; font-size:0.95rem;">
         ${content}
+        <div style="text-align:right; margin-top:50px;">
+            <button id="btn-reset-janken" style="background:transparent; border:none; color:#777; font-size:0.8rem; text-decoration:underline; padding:10px;">[テスト用] じゃんけんリセット</button>
+        </div>
     </div>`;
     
     setListView(h, false);
+    
+    document.getElementById('btn-reset-janken').onclick = resetJankenTest;
 }
 
 export function openTecho() {
@@ -145,17 +158,16 @@ export function openTecho() {
                 cat.list.forEach(id => {
                     if (key === 'L') {
                         const numStr = id.replace(/[^0-9]/g, '');
-                        // ★データなし（過去のバグによる空ID等）への救済処置
                         if (!numStr) {
-                            h += `<div class="item fav-item" data-id="${id}" style="color:#888; border-bottom:1px solid #222; font-size:0.8rem; cursor:pointer;">
-                                    ⚠️ 古いデータです。タップして削除してください。
-                                  </div>`;
+                            h += `<div class="item fav-item" data-id="${id}" style="color:#888; border-bottom:1px solid #222; font-size:0.8rem; cursor:pointer;">⚠️ 古いデータです。タップして削除してください。</div>`;
                             return;
                         }
                         
+                        // ★データ照合をより強固に修正（どの列名でも見つけ出す）
                         const lq = nav.liquorData.find(d => {
-                            const rawNo = d["No."] || d["No"] || d["番号"] || "";
-                            return parseInt(rawNo, 10) === parseInt(numStr, 10);
+                            const rawNo = String(d["No."] || d["No"] || d["番号"] || d["NO"] || d["NO."] || "");
+                            const rNum = rawNo.replace(/[^0-9]/g, '');
+                            return rNum !== "" && parseInt(rNum, 10) === parseInt(numStr, 10);
                         });
                         
                         if (lq) {
@@ -183,12 +195,11 @@ export function openTecho() {
 
     setListView(h, false);
 
-    // 古い壊れたデータや見つからないデータをタップで消せるようにする
     document.querySelectorAll('.fav-item').forEach(el => {
         el.onclick = () => {
             if (el.innerText.includes('⚠️')) {
                 toggleFavorite(el.dataset.id);
-                openTecho(); // リロード
+                openTecho(); // リロードして削除を反映
             } else if (el.classList.contains('lq-fav')) {
                 showCardById(el.dataset.id);
             }
@@ -196,7 +207,7 @@ export function openTecho() {
     });
 }
 
-// --- 🎵 音楽ページパッチ（一番右端にエリアを確保） ---
+// --- 🎵 音楽ページパッチ（「♪♪」を消し、右端にハートを配置して独立させる） ---
 export function initMusicPatch() {
     const observer = new MutationObserver(() => {
         if (!nav.state || !nav.state.startsWith('music')) return;
@@ -238,26 +249,27 @@ export function initMusicPatch() {
                 const isFav = isFavorite(songId);
                 const heart = isFav ? '❤️' : '♡';
 
-                // 元の「♪♪」のテキストだけを綺麗に消去
+                // ★ 元の「♪♪」を綺麗に消し去る
                 Array.from(item.childNodes).forEach(node => {
                     if (node.nodeType === Node.TEXT_NODE && node.nodeValue.includes('♪♪')) {
                         node.nodeValue = node.nodeValue.replace(/♪♪/g, '');
                     }
                 });
 
-                // ★ アイテムをFlexboxにして、右端にハートを配置する
+                // アイテムをフレックスボックス化し、右端にスペースを作る
                 item.style.display = 'flex';
                 item.style.justifyContent = 'space-between';
                 item.style.alignItems = 'center';
 
-                const btn = document.createElement('span');
+                const btn = document.createElement('div');
                 btn.className = 'music-fav-btn';
                 btn.dataset.id = songId;
-                // 右端に余白を持って配置
-                btn.style.cssText = 'cursor:pointer; display:inline-block; padding:5px 15px; color:var(--pink); font-size:1.3rem; margin-left:auto;';
+                
+                // ★ 再生エリアとは切り離された、右端の大きなクリックエリアを構築
+                btn.style.cssText = 'padding:10px 15px; margin:-10px -15px -10px auto; color:var(--pink); font-size:1.3rem; z-index:999; position:relative; cursor:pointer;';
                 btn.innerText = heart;
                 
-                // 再生イベントを完全に遮断
+                // 親要素（曲の再生）にクリックを一切伝えない魔法のシールド
                 const blockEvent = (e) => {
                     e.preventDefault();
                     e.stopPropagation();
@@ -265,7 +277,7 @@ export function initMusicPatch() {
                 };
                 btn.addEventListener('pointerdown', blockEvent);
                 btn.addEventListener('mousedown', blockEvent);
-                btn.addEventListener('touchstart', blockEvent);
+                btn.addEventListener('touchstart', blockEvent, {passive: false});
 
                 btn.addEventListener('click', (e) => {
                     blockEvent(e);
@@ -281,20 +293,19 @@ export function initMusicPatch() {
     observer.observe(document.body, { childList: true, subtree: true });
 }
 
-// --- 🎮 ソフィーとのじゃんけん勝負（3本先取ルール） ---
+// --- 🎮 ソフィーとのじゃんけん勝負（3本先取ルール・ですます調） ---
 export function playJanken() {
     const status = getGameStatus();
     
-    // 3本先取のマッチが終了している場合
     if (status.count >= status.limit) {
-        import('./media.js').then(media => media.speak("あら、今日の勝負はもうおしまい。また明日おいで？"));
-        alert(`ソフィー「今日の勝負はもうおしまい。また明日おいで？」\n\n（※本日のマッチは終了しました。現在の戦績：あなた ${status.myWins} - ${status.sophieWins} ソフィー）`);
+        import('./media.js').then(media => media.speak("あら、そんなに私と勝負したいんですか？ ふふっ、でも本日の勝負はもうおしまいです。また明日いらしてくださいね？"));
+        alert(`ソフィー「あら、そんなに私と勝負したいんですか？ ふふっ、でも本日の勝負はもうおしまいです。また明日いらしてくださいね？」\n\n（※本日のマッチは終了しました。現在の戦績：あなた ${status.myWins} - ${status.sophieWins} ソフィー）`);
         return;
     }
 
     const h = `
         <div id="janken-overlay" style="position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:10000; display:flex; flex-direction:column; align-items:center; justify-content:center; color:#fff; font-family:sans-serif;">
-            <div style="font-size:1.2rem; color:var(--accent); font-weight:bold; margin-bottom:10px; text-align:center;">ソフィーと勝負する？<br>（3本先取マッチ）</div>
+            <div style="font-size:1.2rem; color:var(--accent); font-weight:bold; margin-bottom:10px; text-align:center;">ソフィーと勝負しますか？<br>（3本先取マッチ）</div>
             <div style="font-size:1.5rem; font-weight:bold; margin-bottom:20px; color:#1e90ff;">
                 あなた ${status.myWins} <span style="color:#fff;">-</span> ${status.sophieWins} ソフィー
             </div>
@@ -327,18 +338,17 @@ export function playJanken() {
             const newScore = updateGameScore(winner);
             let msg = "";
 
-            // マッチ決着判定
+            // ★ ソフィーのセリフ（です・ます調、上品な小悪魔感）
             if (newScore.myWins >= 3) {
-                msg = "うふふ……私の完全な負けね。約束通り、ご褒美……チュッ💋";
+                msg = "ふふっ……私の完全な負けですね。お約束通り、ご褒美です……チュッ💋";
                 addGameLog(`【マッチ勝利】3勝${newScore.sophieWins}敗でソフィーから💋をもらった`);
             } else if (newScore.sophieWins >= 3) {
-                msg = "あら、私の3勝！それじゃあ一番高いドンペリ、開けてもらおうかしら？（※仮想請求書 10万円）";
+                msg = "私の勝ちですね！それじゃあ、一番高いドンペリ、開けてもらってもいいですか？ふふっ。（※仮想請求書 10万円）";
                 addGameLog(`【マッチ敗北】${newScore.myWins}勝3敗でドンペリを入れさせられた💸`);
             } else {
-                // ラウンド継続中
-                if (winner === "my") msg = "やるわね、あなたの勝ちよ。次いくわよ！";
-                else if (winner === "sophie") msg = "ふふっ、私の勝ち。まだまだこれからよ！";
-                else msg = "あーら、気が合うわね。引き分けよ。";
+                if (winner === "my") msg = "お見事、あなたの勝ちです。次いきますよ！";
+                else if (winner === "sophie") msg = "ふふっ、私の勝ちですね。まだまだこれからですよ！";
+                else msg = "あら、気が合いますね。引き分けです。";
             }
 
             document.getElementById('janken-overlay').innerHTML = `

@@ -1,6 +1,5 @@
 /**
  * Bar Sophie v22.0 — app_m.js
- * ★ ボタン同色トグル＆お知らせ画面連携版
  */
 
 import * as media    from './media.js';
@@ -163,8 +162,10 @@ function showRootMenu() {
             noticeBtn.style.cssText = 'background: linear-gradient(135deg, #1a5276, #2980b9); color:#fff; margin:20px auto 10px; width:calc(100% - 30px); display:block; border:1px solid #5DADE2; font-weight:bold; box-shadow:0 0 10px rgba(41,128,185,0.3);';
             noticeBtn.innerHTML = '📢 ソフィーのお知らせ・使い方';
             noticeBtn.onclick = () => {
-                import('./favorite.js').then(f => f.openNotice()).catch(e => alert("準備中です"));
-                renderConsole('standard'); // ボタン表記更新用
+                import('./favorite.js').then(f => {
+                    f.openNotice();
+                    renderConsole('standard'); // ★お知らせ画面表示直後にボタンを切り替え！
+                }).catch(e => alert("準備中です"));
             };
             nm.appendChild(noticeBtn);
         }
@@ -232,7 +233,6 @@ function renderConsole(mode) {
         const grid = document.querySelector('.btn-grid');
         if (!grid) return;
 
-        // 共通のベースデザイン（裏表同じにするための変数）
         const shopBaseStyle = "background:rgba(255, 228, 225, 0.6); color:#cc294a; border:3px solid #1e90ff; flex-direction:column; justify-content:center; align-items:center; backdrop-filter:blur(2px); padding:0; flex:1.0;";
 
         if (nav.state === "none") {
@@ -243,7 +243,6 @@ function renderConsole(mode) {
                 <button class="c-btn" id="ctrl-play" style="flex:1.0; font-size:1.2rem;">▶</button>
                 <button class="c-btn" id="btn-next" style="flex:1;">⏭</button>`;
         } else if (nav.state === "shop" || nav.state === "notice") {
-            // ★ SHOP画面とお知らせ画面では「カウンターへ」を同じデザインで表示
             grid.innerHTML = `
                 <button class="c-btn" id="btn-shop" style="${shopBaseStyle} font-size:0.8rem; font-weight:bold;">カウンターへ</button>
                 <button class="c-btn" id="btn-expand" style="flex:1.0; font-size:1.2rem;">▼</button>
@@ -269,7 +268,6 @@ function renderConsole(mode) {
         document.getElementById('ctrl-play').onclick  = music.playHead;
         document.getElementById('ctrl-pause').onclick = music.togglePause;
 
-        // トグル制御
         const btnShop = document.getElementById('btn-shop');
         if (btnShop) {
             btnShop.onclick = () => {
