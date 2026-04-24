@@ -1,6 +1,6 @@
 /**
  * favorite.js — ソフィーのノート ＆ じゃんけんゲーム ＆ お知らせ
- * ★ 曲名・ID完全リンク修復 ＆ タップ再生/削除 分離版
+ * ★ 音楽タップバグ（誤爆削除）修正・曲名表示完全版
  */
 
 import { setListView, clean } from './utils.js';
@@ -193,20 +193,27 @@ export async function openTecho(folder = null) {
         if (categories['S'].length === 0) {
             h += `<div style="padding:40px 20px; color:#888; text-align:center;">まだ曲が記録されていません</div>`;
         } else {
-            // ★ 修正1：ti (タイトル) と code (コード) でデータベースから検索
-            let mData = [];
-            for (let key in nav) {
-                if (Array.isArray(nav[key]) && nav[key].length > 0 && ('ti' in nav[key][0] && 'code' in nav[key][0])) {
-                    mData = mData.concat(nav[key]); // 複数配列がある場合に対応
+            // ★ Claude氏直伝：jDataを最優先で取得し、無ければ探す最強パイプ
+            let finalData = [];
+            if (nav.jData && Array.isArray(nav.jData)) {
+                finalData = nav.jData;
+            } else {
+                for (let key in nav) {
+                    if (Array.isArray(nav[key]) && nav[key].length > 0) {
+                        const firstItem = nav[key][0];
+                        if (firstItem.hasOwnProperty('ti') || firstItem.hasOwnProperty('code') || firstItem.hasOwnProperty('u')) {
+                            finalData = finalData.concat(nav[key]);
+                        }
+                    }
                 }
             }
 
             categories['S'].forEach(id => {
                 const numStr = id.replace(/[^0-9]/g, '');
-                let displayTitle = `曲ID: ${numStr}`; // デフォルト
+                let displayTitle = `曲ID: ${numStr}`;
                 
-                if (mData.length > 0) {
-                    const songRecord = mData.find(d => {
+                if (finalData.length > 0) {
+                    const songRecord = finalData.find(d => {
                         const rawCode = String(d.code || "").replace(/[^0-9]/g, '');
                         return rawCode === numStr;
                     });
@@ -217,10 +224,10 @@ export async function openTecho(folder = null) {
                     }
                 }
 
-                // ★ 修正2：タップ領域を分割（左: 再生, 右: 削除の❤️）
+                // ★ 音楽リスト専用の「music-row」クラスを付け、一括削除処理から逃がす
                 h += `
-                <div class="item fav-music-row" data-id="${id}" style="border-bottom:1px solid #222; display:flex; justify-content:space-between; align-items:center; padding:0.4em 15px;">
-                    <div class="fav-music-play" style="flex:1; color:#eee; cursor:pointer; line-height:1.2; padding-right:10px;">
+                <div class="item fav-item music-row" data-id="${id}" style="border-bottom:1px solid #222; display:flex; justify-content:space-between; align-items:center; padding:0.4em 15px;">
+                    <div class="fav-music-play" style="flex:1; color:#eee; cursor:pointer; line-height:1.2; padding-right:10px; font-size:0.95rem;">
                         🎵 ${clean(displayTitle)}
                     </div>
                     <div class="fav-music-del" style="color:#ff69b4; font-size:1.4rem; cursor:pointer; padding:5px 0 5px 15px;">
@@ -244,8 +251,10 @@ export async function openTecho(folder = null) {
 
     document.getElementById('f-back').onclick = () => openTecho(null);
 
-    // お酒・じゃんけん用
+    // 🍷 お酒・その他用のクリックイベント（音楽は除外！）
     document.querySelectorAll('.fav-item').forEach(el => {
+        if (el.classList.contains('music-row')) return; // 音楽行は無視する
+
         el.onclick = () => {
             if (el.innerText.includes('⚠️')) {
                 toggleFavorite(el.dataset.id);
@@ -256,8 +265,8 @@ export async function openTecho(folder = null) {
         };
     });
 
-    // ★ 修正2続き：音楽専用のクリック処理（再生と削除）
-    document.querySelectorAll('.fav-music-row').forEach(row => {
+    // 🎵 音楽専用のクリックイベント（再生と削除の分離）
+    document.querySelectorAll('.music-row').forEach(row => {
         const id = row.dataset.id;
         const playBtn = row.querySelector('.fav-music-play');
         const delBtn = row.querySelector('.fav-music-del');
@@ -269,7 +278,7 @@ export async function openTecho(folder = null) {
             openTecho(folder); 
         };
         
-        // 曲名を押したら再生（今回は準備中アラート。後でmusic.jsと連携します）
+        // 曲名を押したら再生（準備中アラート。後でmusic.jsと連携します！）
         playBtn.onclick = (e) => {
             e.stopPropagation();
             const songName = playBtn.innerText.replace('🎵', '').trim();
@@ -308,11 +317,18 @@ export function initMusicPatch() {
         const lv = document.getElementById('list-view');
         if (!lv) return;
 
-        // ★ 修正1：tiとcodeを持つ配列を探す
-        let mData = [];
-        for (let key in nav) {
-            if (Array.isArray(nav[key]) && nav[key].length > 0 && ('ti' in nav[key][0] && 'code' in nav[key][0])) {
-                mData = mData.concat(nav[key]);
+        // ★ nav.jData を最優先で取得
+        let finalData = [];
+        if (nav.jData && Array.isArray(nav.jData)) {
+            finalData = nav.jData;
+        } else {
+            for (let key in nav) {
+                if (Array.isArray(nav[key]) && nav[key].length > 0) {
+                    const firstItem = nav[key][0];
+                    if (firstItem.hasOwnProperty('ti') || firstItem.hasOwnProperty('code') || firstItem.hasOwnProperty('u')) {
+                        finalData = finalData.concat(nav[key]);
+                    }
+                }
             }
         }
 
@@ -340,10 +356,9 @@ export function initMusicPatch() {
             if (item.innerHTML.includes('🎵') && !item.dataset.favPatched) {
                 item.dataset.favPatched = "true";
                 
-                // ★ 修正1：ti (タイトル) と code (コード) での最強抽出
                 let songId = null;
-                if (mData.length > 0) {
-                    const sortedData = [...mData].sort((a, b) => (b.ti || "").length - (a.ti || "").length);
+                if (finalData.length > 0) {
+                    const sortedData = [...finalData].sort((a, b) => (b.ti || "").length - (a.ti || "").length);
                     const t = sortedData.find(d => {
                         const title = d.ti || "";
                         return title && item.innerText.includes(title);
