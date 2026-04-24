@@ -1,6 +1,5 @@
 /**
  * favorite.js — ソフィーのノート ＆ じゃんけんゲーム ＆ お知らせ
- * ★ ノート階層化・デザインルールv22.0（音楽余白・グレーハート）完全準拠版
  */
 
 import { setListView, clean } from './utils.js';
@@ -124,7 +123,6 @@ export async function openNotice() {
     document.getElementById('btn-reset-janken').onclick = resetJankenTest;
 }
 
-// ★ 階層化（フォルダ分け）実装
 export async function openTecho(folder = null) {
     nav.updateNav("techo");
     const data = getTechoData();
@@ -134,7 +132,6 @@ export async function openTecho(folder = null) {
                 <span>📖 ソフィーのノート</span>
              </div>`;
 
-    // トップ階層（フォルダ一覧）
     if (folder === null) {
         h += `<div style="padding:20px;">
                 <button class="act-btn" id="f-lq" style="width:100%; background:var(--talk); margin-bottom:15px;">🍷 好きなお酒</button>
@@ -149,7 +146,6 @@ export async function openTecho(folder = null) {
         return;
     }
 
-    // フォルダ内の戻るバー
     h += `<div class="label" style="background:#444; color:#fff; display:flex; align-items:center; cursor:pointer;" id="f-back">
             <span style="padding:0 10px; font-size:0.85rem;">◀ フォルダ一覧へ戻る</span>
           </div>`;
@@ -196,7 +192,9 @@ export async function openTecho(folder = null) {
             h += `<div style="padding:40px 20px; color:#888; text-align:center;">まだ曲が記録されていません</div>`;
         } else {
             categories['S'].forEach(id => {
-                h += `<div class="item fav-item" data-id="${id}" style="color:#eee; border-bottom:1px solid #222; cursor:pointer;">🔖 ${id} <span style="font-size:0.75rem; color:#888; float:right;">(タップで削除)</span></div>`;
+                // S-0001 のようなプレフィックスを外して表示
+                const displayId = id.startsWith('S-') ? id.replace('S-', '') : id;
+                h += `<div class="item fav-item" data-id="${id}" style="color:#eee; border-bottom:1px solid #222; cursor:pointer;">🎵 ${displayId} <span style="font-size:0.75rem; color:#888; float:right;">(タップで削除)</span></div>`;
             });
         }
     } else if (folder === 'G') {
@@ -239,8 +237,7 @@ function setupDelegation() {
                 e.stopImmediatePropagation();
                 const id = musicBtn.getAttribute('data-id');
                 const added = toggleFavorite(id);
-                // ★ 未登録はグレー、登録済はピンク（#ff69b4）
-                musicBtn.style.color = added ? '#ff69b4' : '#777';
+                musicBtn.style.color = added ? '#ff69b4' : '#555';
                 musicBtn.innerText = added ? '❤️' : '♡';
                 return;
             }
@@ -249,7 +246,7 @@ function setupDelegation() {
     }
 }
 
-// --- 🎵 音楽ページパッチ（デザインルール第7項 厳密適用） ---
+// --- 🎵 音楽ページパッチ ---
 export function initMusicPatch() {
     setupDelegation();
 
@@ -262,13 +259,20 @@ export function initMusicPatch() {
             if (item.innerHTML.includes('🎵') && !item.dataset.favPatched) {
                 item.dataset.favPatched = "true";
                 
-                let songId = item.innerText.replace(/🎵/g, '').trim();
-                const match = songId.match(/S-\d{4}/);
-                if (match) songId = match[0];
+                let rawText = item.innerText.replace(/🎵/g, '').trim();
+                
+                // ★ 自動アシスト：ただの数字なら S-0001 形式に強制変換して扱う！
+                let songId = rawText;
+                if (/^\d+$/.test(rawText)) {
+                    songId = 'S-' + rawText.padStart(4, '0');
+                } else {
+                    const match = rawText.match(/S-\d{4}/);
+                    if (match) songId = match[0];
+                }
 
                 const isFav = isFavorite(songId);
                 const heart = isFav ? '❤️' : '♡';
-                const heartColor = isFav ? '#ff69b4' : '#777'; // 登録はピンク、未登録はグレー
+                const heartColor = isFav ? '#ff69b4' : '#555'; // 未登録は仕切り線と同じ #555
 
                 Array.from(item.childNodes).forEach(node => {
                     if (node.nodeType === Node.TEXT_NODE && node.nodeValue.includes('🎵')) {
@@ -276,17 +280,18 @@ export function initMusicPatch() {
                     }
                 });
 
+                // ★ 行間ルール（0.3em）を最優先で適用し、高さを膨らませない
+                item.style.padding = '0.3em 15px';
                 item.style.display = 'flex';
                 item.style.justifyContent = 'space-between';
                 item.style.alignItems = 'center';
-                item.style.paddingRight = '0';
 
                 const btnContainer = document.createElement('div');
                 btnContainer.className = 'music-fav-btn';
                 btnContainer.dataset.id = songId;
                 
-                // ★ デザインルール第7項の厳格適用（行を膨らませない余白指定）
-                btnContainer.style.cssText = `padding: 8px 12px; margin: -8px 0 -8px auto; color: ${heartColor}; font-size: 1.4rem; z-index: 100; cursor: pointer;`;
+                // 絶対に行を膨らませないためのネガティブマージンとline-height:1
+                btnContainer.style.cssText = `padding: 8px 12px; margin: -8px -5px -8px auto; color: ${heartColor}; font-size: 1.2rem; z-index: 100; cursor: pointer; line-height: 1;`;
                 btnContainer.innerText = heart;
                 
                 const blockEvent = (e) => {
@@ -301,7 +306,7 @@ export function initMusicPatch() {
                         if (evt === 'click' || evt === 'touchend') {
                             const id = btnContainer.getAttribute('data-id');
                             const added = toggleFavorite(id);
-                            btnContainer.style.color = added ? '#ff69b4' : '#777';
+                            btnContainer.style.color = added ? '#ff69b4' : '#555';
                             btnContainer.innerText = added ? '❤️' : '♡';
                         }
                     });

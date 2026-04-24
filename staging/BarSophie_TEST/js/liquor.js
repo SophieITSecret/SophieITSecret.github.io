@@ -1,6 +1,6 @@
 /**
  * liquor.js — お酒データベース・スクリーニング・鑑定カード
- * ★ デザインルール順拠・検索キーワード最適化・警告排除版
+ * ★ 検索キーワード最適化・ダブルタップ翻訳・警告完全排除
  */
 
 import * as nav from './navigation.js';
@@ -442,11 +442,11 @@ function showCard(gIdx, list, fromState) {
     const makerName = makerRaw.replace(/[（(\/].*/g, '').trim();
     const region    = d["産地"] || "";
     
-    // ★ Amazon検索キーワード：中分類 + 銘柄名
+    // ★ Amazon検索（中分類 + 銘柄名）
     const amzKw  = encodeURIComponent((d["中分類"] || "") + " " + clean(d["銘柄名"]));
     const amzUrl = `https://www.amazon.co.jp/s?k=${amzKw}&tag=itsophie-22`;
     
-    // ★ Google検索キーワード：産地 + メーカー名
+    // ★ Google検索（産地 + メーカー名）
     const gKw = encodeURIComponent((region ? region + " " : "") + makerName);
 
     h += `<div class="lq-basic-info">
@@ -457,22 +457,24 @@ function showCard(gIdx, list, fromState) {
         h += `<div style="margin-top:2px;"><span style="color:#888; font-size:0.85rem;">製造:</span> <span style="font-size:0.85rem; color:#ccc;">${makerRaw}</span></div>`;
         h += `<div class="card-link-row">`;
         
-        // ★ 警告アクションを排除し、シンプルな別タブリンク(target="_blank")に統一
+        // ★ 警告排除・ダブルタップ翻訳・シンプル別タブリンク
         if (d["公式URL"] && d["公式URL"] !== "-") {
             const directUrl = d["公式URL"];
-            h += `<a href="${directUrl}" target="_blank" class="lq-btn-small">🔗 メーカーサイト</a>`;
+            const transUrl  = `https://translate.google.com/translate?sl=auto&tl=ja&u=${encodeURIComponent(d["公式URL"])}`;
+            h += `<a href="${directUrl}" target="_blank" rel="noopener noreferrer" class="lq-btn-small"
+                     onclick="if(this.dataset.t==='1'){ this.dataset.t='0'; window.open('${transUrl}','_blank'); return false; } else { this.dataset.t='1'; setTimeout(()=>{this.dataset.t='0'}, 400); return true; }">🔗 メーカーサイト</a>`;
         }
         if (gKw) {
             const gUrl = `https://www.google.com/search?q=${gKw}`;
-            h += `<a href="${gUrl}" target="_blank" class="lq-btn-g">G</a>`;
+            h += `<a href="${gUrl}" target="_blank" rel="noopener noreferrer" class="lq-btn-g">G</a>`;
         }
         h += `<span style="flex:1;"></span>`;
-        h += `<a href="${amzUrl}" target="_blank" class="lq-btn-amz-small">Amazon↗</a>`;
+        h += `<a href="${amzUrl}" target="_blank" rel="noopener noreferrer" class="lq-btn-amz-small">Amazon↗</a>`;
         h += `</div>`;
     } else {
         h += `<div class="card-link-row">`;
         h += `<span style="flex:1;"></span>`;
-        h += `<a href="${amzUrl}" target="_blank" class="lq-btn-amz-small">Amazon↗</a>`;
+        h += `<a href="${amzUrl}" target="_blank" rel="noopener noreferrer" class="lq-btn-amz-small">Amazon↗</a>`;
         h += `</div>`;
     }
     h += `</div><div class="lq-split-view"><div class="lq-graph-half">`;
