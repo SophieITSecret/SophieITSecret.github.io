@@ -1,6 +1,6 @@
 /**
  * favorite.js — ソフィーのノート ＆ じゃんけんゲーム ＆ お知らせ
- * ★ 音楽タップバグ（誤爆削除）修正・曲名表示完全版
+ * ★ Claude氏指示対応版（曲名完全マッチ・ハート二重防止）
  */
 
 import { setListView, clean } from './utils.js';
@@ -193,7 +193,6 @@ export async function openTecho(folder = null) {
         if (categories['S'].length === 0) {
             h += `<div style="padding:40px 20px; color:#888; text-align:center;">まだ曲が記録されていません</div>`;
         } else {
-            // ★ Claude氏直伝：jDataを最優先で取得し、無ければ探す最強パイプ
             let finalData = [];
             if (nav.jData && Array.isArray(nav.jData)) {
                 finalData = nav.jData;
@@ -213,9 +212,10 @@ export async function openTecho(folder = null) {
                 let displayTitle = `曲ID: ${numStr}`;
                 
                 if (finalData.length > 0) {
+                    // ★ 修正1：parseInt を使った完全な比較
                     const songRecord = finalData.find(d => {
-                        const rawCode = String(d.code || "").replace(/[^0-9]/g, '');
-                        return rawCode === numStr;
+                        const rawCode = parseInt(String(d.code || "").replace(/[^0-9]/g, ''), 10);
+                        return rawCode === parseInt(numStr, 10);
                     });
                     if (songRecord) {
                         const title  = songRecord.ti || "";
@@ -224,7 +224,6 @@ export async function openTecho(folder = null) {
                     }
                 }
 
-                // ★ 音楽リスト専用の「music-row」クラスを付け、一括削除処理から逃がす
                 h += `
                 <div class="item fav-item music-row" data-id="${id}" style="border-bottom:1px solid #222; display:flex; justify-content:space-between; align-items:center; padding:0.4em 15px;">
                     <div class="fav-music-play" style="flex:1; color:#eee; cursor:pointer; line-height:1.2; padding-right:10px; font-size:0.95rem;">
@@ -249,11 +248,10 @@ export async function openTecho(folder = null) {
 
     setListView(h, false);
 
-    document.getElementById('f-back').onclick = () => openTecho(null);
+    // ★ 修正3：f-back の onclick を削除しました
 
-    // 🍷 お酒・その他用のクリックイベント（音楽は除外！）
     document.querySelectorAll('.fav-item').forEach(el => {
-        if (el.classList.contains('music-row')) return; // 音楽行は無視する
+        if (el.classList.contains('music-row')) return;
 
         el.onclick = () => {
             if (el.innerText.includes('⚠️')) {
@@ -265,20 +263,17 @@ export async function openTecho(folder = null) {
         };
     });
 
-    // 🎵 音楽専用のクリックイベント（再生と削除の分離）
     document.querySelectorAll('.music-row').forEach(row => {
         const id = row.dataset.id;
         const playBtn = row.querySelector('.fav-music-play');
         const delBtn = row.querySelector('.fav-music-del');
         
-        // ゴミ箱（❤️）を押したら削除
         delBtn.onclick = (e) => {
             e.stopPropagation();
             toggleFavorite(id);
             openTecho(folder); 
         };
         
-        // 曲名を押したら再生（準備中アラート。後でmusic.jsと連携します！）
         playBtn.onclick = (e) => {
             e.stopPropagation();
             const songName = playBtn.innerText.replace('🎵', '').trim();
@@ -317,7 +312,6 @@ export function initMusicPatch() {
         const lv = document.getElementById('list-view');
         if (!lv) return;
 
-        // ★ nav.jData を最優先で取得
         let finalData = [];
         if (nav.jData && Array.isArray(nav.jData)) {
             finalData = nav.jData;
@@ -352,6 +346,9 @@ export function initMusicPatch() {
                 item.style.display = 'flex';
                 item.style.alignItems = 'center';
             }
+
+            // ★ 修正2：二重追加防止
+            if (item.querySelector('.music-fav-btn')) return;
 
             if (item.innerHTML.includes('🎵') && !item.dataset.favPatched) {
                 item.dataset.favPatched = "true";
