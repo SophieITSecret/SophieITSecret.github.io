@@ -1,6 +1,6 @@
 /**
  * favorite.js — ソフィーのノート ＆ じゃんけんゲーム ＆ お知らせ
- * ★ ハート二重化（お節介監視）防止・準備中アラート撤去版
+ * ★ 全機能統合・DJ配線・デザインルール厳守完全版
  */
 
 import { setListView, clean } from './utils.js';
@@ -9,44 +9,28 @@ import * as nav from './navigation.js';
 const STORAGE_KEY = 'bar_sophie_techo';
 let currentFolder = null; 
 
-export function getCurrentFolder() {
-    return currentFolder;
-}
+export function getCurrentFolder() { return currentFolder; }
 
 function getTechoData() {
     const data = localStorage.getItem(STORAGE_KEY);
-    if (!data) return { 
-        favorites: [], 
-        gameLog: [], 
-        lastGameDate: '', 
-        gameCount: 0, 
-        janken: { myWins: 0, sophieWins: 0 } 
-    };
+    if (!data) return { favorites: [], gameLog: [], lastGameDate: '', gameCount: 0, janken: { myWins: 0, sophieWins: 0 } };
     const parsed = JSON.parse(data);
     if (!parsed.janken) parsed.janken = { myWins: 0, sophieWins: 0 };
     return parsed;
 }
 
-function saveTechoData(data) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-}
+function saveTechoData(data) { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
 
 export function toggleFavorite(id) {
     const data = getTechoData();
     const index = data.favorites.indexOf(id);
-    if (index === -1) {
-        data.favorites.push(id);
-    } else {
-        data.favorites.splice(index, 1);
-    }
-    saveTechoData(data);
-    return index === -1;
+    if (index === -1) data.favorites.push(id); else data.favorites.splice(index, 1);
+    saveTechoData(data); return index === -1;
 }
 
-export function isFavorite(id) {
-    return getTechoData().favorites.includes(id);
-}
+export function isFavorite(id) { return getTechoData().favorites.includes(id); }
 
+// --- じゃんけん戦績ロジック ---
 export function getGameStatus() {
     const data = getTechoData();
     const d = new Date();
@@ -57,24 +41,16 @@ export function getGameStatus() {
         data.lastGameDate = today;
         saveTechoData(data);
     }
-    return { 
-        count: data.gameCount, 
-        limit: 1, 
-        myWins: data.janken.myWins,
-        sophieWins: data.janken.sophieWins
-    };
+    return { count: data.gameCount, limit: 1, myWins: data.janken.myWins, sophieWins: data.janken.sophieWins };
 }
 
 export function updateGameScore(winner) {
     const data = getTechoData();
     if (winner === "my") data.janken.myWins++;
-    if (winner === "sophie") data.janken.sophieWins++;
-    
-    if (data.janken.myWins >= 3 || data.janken.sophieWins >= 3) {
-        data.gameCount++;
-    }
+    else if (winner === "sophie") data.janken.sophieWins++;
+    if (data.janken.myWins >= 3 || data.janken.sophieWins >= 3) data.gameCount++;
     saveTechoData(data);
-    return { myWins: data.janken.myWins, sophieWins: data.janken.sophieWins };
+    return data.janken;
 }
 
 function addGameLog(text) {
@@ -86,15 +62,7 @@ function addGameLog(text) {
     saveTechoData(data);
 }
 
-function resetJankenTest() {
-    const data = getTechoData();
-    data.lastGameDate = '';
-    data.gameCount = 0;
-    data.janken = { myWins: 0, sophieWins: 0 };
-    saveTechoData(data);
-    alert("【テスト機能】\nじゃんけんの回数と戦績をリセットしました。\nお酒の画面から「S」ボタンを押すと再挑戦できます！");
-}
-
+// --- お知らせ表示 ---
 export async function openNotice() {
     nav.updateNav("notice");
     let content = "";
@@ -103,42 +71,27 @@ export async function openNotice() {
         if (res.ok) {
             const text = await res.text();
             content = `<div style="white-space: pre-wrap; margin-top:10px;">${clean(text)}</div>`;
-        } else {
-            throw new Error("File not found");
         }
-    } catch (e) {
-        content = `
-            <h3 style="color:var(--accent); border-bottom:1px solid #555; padding-bottom:5px; margin-top:0;">🍸 BARソフィーへようこそ</h3>
-            <p style="margin-top:10px;">ここでは1970〜80年代の名曲と、マスター厳選のお酒をお楽しみいただけます。</p>
-            <h3 style="color:#1e90ff; border-bottom:1px solid #555; padding-bottom:5px; margin-top:25px;">📖 ソフィーのノート</h3>
-            <p style="margin-top:10px;">お酒のカードや曲名の横にある「♡」を押すと「❤️」に変わり、ノートに記録されます。</p>
-            <h3 style="color:var(--pink); border-bottom:1px solid #555; padding-bottom:5px; margin-top:25px;">🎲 秘密のSボタン</h3>
-            <p style="margin-top:10px;">お酒のカードにある「S」ボタンを押すと、1日1回限定（3本先取）で私（ソフィー）と勝負ができます。</p>
-        `;
+    } catch (e) {}
+    if (!content) {
+        content = `<h3 style="color:var(--accent);">🍸 BARソフィーへようこそ</h3><p>お酒と音楽の記録をお楽しみください。</p>`;
     }
-
-    let h = `<div class="label" style="background:#1a5276;">📢 お知らせ・使い方</div>
-    <div style="padding:20px; color:#ddd; line-height:1.7; font-size:0.95rem;">
-        ${content}
-        <div style="text-align:right; margin-top:50px;">
-            <button id="btn-reset-janken" style="background:transparent; border:none; color:#777; font-size:0.8rem; text-decoration:underline; padding:10px;">[テスト用] じゃんけんリセット</button>
-        </div>
-    </div>`;
     
+    let h = `<div class="label" style="background:#1a5276;">📢 お知らせ・使い方</div>
+    <div style="padding:20px; color:#ddd; line-height:1.7; font-size:0.95rem;">${content}</div>`;
     setListView(h, false);
-    document.getElementById('btn-reset-janken').onclick = resetJankenTest;
 }
 
+// --- ノート（手帳）フォルダ・アイテム表示 ---
 export async function openTecho(folder = null) {
     nav.updateNav("techo");
-    currentFolder = folder; 
+    currentFolder = folder;
     const data = getTechoData();
-    const lq = await import('./liquor.js').catch(e => { return null; });
+    const lq = await import('./liquor.js').catch(() => null);
     
-    let h = `<div class="label" style="background:#333; display:flex; justify-content:space-between; align-items:center;">
-                <span>📖 ソフィーのノート</span>
-             </div>`;
+    let h = `<div class="label" style="background:#333;">📖 ソフィーのノート</div>`;
 
+    // 1階層目：フォルダ一覧
     if (folder === null) {
         h += `<div style="padding:20px;">
                 <button class="act-btn" id="f-lq" style="width:100%; background:var(--talk); margin-bottom:15px;">🍷 好きなお酒</button>
@@ -152,94 +105,50 @@ export async function openTecho(folder = null) {
         return;
     }
 
+    // 2階層目：各フォルダの内容
     const categories = { 'L': [], 'S': [], 'O': [] };
     data.favorites.forEach(id => {
         const type = id.charAt(0);
-        if (categories[type]) categories[type].push(id);
-        else categories['O'].push(id); 
+        if (categories[type]) categories[type].push(id); else categories['O'].push(id); 
     });
 
     if (folder === 'L') {
         h += `<div class="scr-title" style="margin-top:15px; color:var(--talk); padding-left:10px;">🍷 好きなお酒</div>`;
-        if (categories['L'].length === 0) {
-            h += `<div style="padding:40px 20px; color:#888; text-align:center;">まだお酒が記録されていません</div>`;
-        } else {
+        if (categories['L'].length === 0) h += `<div style="padding:40px; color:#888; text-align:center;">記録がありません</div>`;
+        else {
             categories['L'].forEach(id => {
-                if (lq) {
-                    const numStr = id.replace(/[^0-9]/g, '');
-                    if (!numStr) {
-                        h += `<div class="item fav-item" data-id="${id}" style="color:#888; border-bottom:1px solid #222; font-size:0.8rem; cursor:pointer;">⚠️ 古いデータです。タップして削除してください。</div>`;
-                        return;
-                    }
-                    const lqData = nav.liquorData.find(d => {
-                        const noKey = Object.keys(d).find(k => k.replace(/\s/g,'').toUpperCase().startsWith('NO') || k === '番号');
-                        const rawNo = noKey ? String(d[noKey]) : "";
-                        const rNum = rawNo.replace(/[^0-9]/g, '');
-                        return rNum !== "" && parseInt(rNum, 10) === parseInt(numStr, 10);
-                    });
-                    if (lqData) {
-                        const badge = lq.priceBadge(lqData["市販価格"], lqData["大分類"]);
-                        h += `<div class="item fav-item lq-fav" data-id="${id}" style="color:#eee; border-bottom:1px solid #222; display:flex; align-items:center; gap:4px; cursor:pointer;">
-                                ${badge}<span style="overflow:hidden; text-overflow:ellipsis;">${clean(lqData['銘柄名'])}</span>
-                              </div>`;
-                    } else {
-                        h += `<div class="item fav-item lq-fav" data-id="${id}" style="color:#888; border-bottom:1px solid #222; font-size:0.8rem; cursor:pointer;">⚠️ 見つかりません。タップして削除してください。</div>`;
-                    }
+                const num = id.replace(/[^0-9]/g, '');
+                const item = nav.liquorData.find(d => parseInt(String(Object.values(d)[0]).replace(/[^0-9]/g,''),10) === parseInt(num,10));
+                if (item) {
+                    const badge = lq ? lq.priceBadge(item["市販価格"], item["大分類"]) : "";
+                    h += `<div class="item fav-item lq-fav" data-id="${id}" style="display:flex; align-items:center; gap:4px; padding:0.4em 15px;">
+                            ${badge}<span>${clean(item['銘柄名'])}</span>
+                          </div>`;
                 }
             });
         }
     } else if (folder === 'S') {
         h += `<div class="scr-title" style="margin-top:15px; color:var(--green); padding-left:10px;">🎵 好きな歌</div>`;
-        if (categories['S'].length === 0) {
-            h += `<div style="padding:40px 20px; color:#888; text-align:center;">まだ曲が記録されていません</div>`;
-        } else {
-            let finalData = [];
-            if (nav.jData && Array.isArray(nav.jData)) {
-                finalData = nav.jData;
-            } else {
-                for (let key in nav) {
-                    if (Array.isArray(nav[key]) && nav[key].length > 0) {
-                        const firstItem = nav[key][0];
-                        if (firstItem.hasOwnProperty('ti') || firstItem.hasOwnProperty('code') || firstItem.hasOwnProperty('u')) {
-                            finalData = finalData.concat(nav[key]);
-                        }
-                    }
-                }
-            }
-
+        if (categories['S'].length === 0) h += `<div style="padding:40px; color:#888; text-align:center;">記録がありません</div>`;
+        else {
             categories['S'].forEach(id => {
                 const numStr = id.replace(/[^0-9]/g, '');
                 let displayTitle = `曲ID: ${numStr}`;
-                
-                if (finalData.length > 0) {
-                    const songRecord = finalData.find(d => {
-                        const rawCode = parseInt(String(d.code || "").replace(/[^0-9]/g, ''), 10);
-                        return rawCode === parseInt(numStr, 10);
-                    });
-                    if (songRecord) {
-                        const title  = songRecord.ti || "";
-                        const artist = songRecord.a  || "";
-                        if (title) displayTitle = artist ? `${artist} ／ ${title}` : title;
-                    }
-                }
+                // Claude指示：parseIntによる確実なマッチング
+                const song = nav.jData.find(d => parseInt(String(d.code || ""), 10) === parseInt(numStr, 10));
+                if (song) displayTitle = `${song.a} ／ ${song.ti}`;
 
-                // ★ 修正ポイント：data-fav-patched="true" を追加して監視プログラムのお節介をブロック！
-                h += `
-                <div class="item fav-item music-row" data-id="${id}" data-fav-patched="true" style="border-bottom:1px solid #222; display:flex; justify-content:space-between; align-items:center; padding:0.4em 15px;">
-                    <div class="fav-music-play" style="flex:1; color:#eee; cursor:pointer; line-height:1.2; padding-right:10px; font-size:0.95rem;">
-                        🎵 ${clean(displayTitle)}
-                    </div>
-                    <div class="fav-music-del" style="color:#ff69b4; font-size:1.4rem; cursor:pointer; padding:5px 0 5px 15px;">
-                        ❤️
-                    </div>
-                </div>`;
+                // data-fav-patched="true" で二重ハートを防止
+                h += `<div class="item fav-item music-row" data-id="${id}" data-fav-patched="true" style="display:flex; justify-content:space-between; align-items:center; padding:0.4em 15px;">
+                        <div class="fav-music-play" style="flex:1; cursor:pointer;">🎵 ${clean(displayTitle)}</div>
+                        <div class="fav-music-del" style="color:#ff69b4; font-size:1.4rem; cursor:pointer; padding-left:15px;">❤️</div>
+                      </div>`;
             });
         }
     } else if (folder === 'G') {
         h += `<div class="scr-title" style="margin-top:15px; color:#e67e22; padding-left:10px;">🎲 ソフィーとの思い出</div>`;
-        if (data.gameLog.length === 0) {
-            h += `<div style="padding:40px 20px; color:#888; text-align:center;">まだ勝負の記録がありません</div>`;
-        } else {
+        if (data.gameLog.length === 0) h += `<div style="padding:40px; color:#888; text-align:center;">記録がありません</div>`;
+        else {
             data.gameLog.slice(0, 30).forEach(log => {
                 h += `<div style="font-size:0.75rem; color:#888; padding:6px 15px; border-bottom:1px dashed #222;">${log}</div>`;
             });
@@ -248,171 +157,84 @@ export async function openTecho(folder = null) {
 
     setListView(h, false);
 
+    // クリックイベントの設定
     document.querySelectorAll('.fav-item').forEach(el => {
         if (el.classList.contains('music-row')) return;
-
-        el.onclick = () => {
-            if (el.innerText.includes('⚠️')) {
-                toggleFavorite(el.dataset.id);
-                openTecho(folder); 
-            } else if (el.classList.contains('lq-fav') && lq) {
-                lq.showCardById(el.dataset.id);
-            }
-        };
+        el.onclick = () => { if (lq && el.classList.contains('lq-fav')) lq.showCardById(el.dataset.id); };
     });
 
     document.querySelectorAll('.music-row').forEach(row => {
         const id = row.dataset.id;
-        const playBtn = row.querySelector('.fav-music-play');
-        const delBtn = row.querySelector('.fav-music-del');
-        
-        // ゴミ箱（❤️）を押したら削除して再描画
-        delBtn.onclick = (e) => {
+        // ❤️を押したら削除
+        row.querySelector('.fav-music-del').onclick = (e) => {
             e.stopPropagation();
             toggleFavorite(id);
             openTecho(folder); 
         };
-        
-        // 曲名を押したら（将来的に）再生
-        playBtn.onclick = (e) => {
+        // 曲名を押したらDJ経由で再生
+        row.querySelector('.fav-music-play').onclick = (e) => {
             e.stopPropagation();
-            // アラートは撤去しました。
-            // 将来 music.js に playSongById(id) 等の機能ができた時に、ここで呼び出します。
-            // import('./music.js').then(m => { if(m.playSongById) m.playSongById(id); });
+            const code = id.replace(/[^0-9]/g, '');
+            import('./dj.js').then(dj => dj.requestSong(code));
         };
     });
 }
 
-let isEventDelegated = false;
-function setupDelegation() {
-    if (isEventDelegated) return;
-    const lv = document.getElementById('list-view');
-    if (lv) {
-        lv.addEventListener('click', (e) => {
-            const musicBtn = e.target.closest('.music-fav-btn');
-            if (musicBtn) {
-                e.preventDefault();
-                e.stopPropagation();
-                e.stopImmediatePropagation();
-                const id = musicBtn.getAttribute('data-id');
-                const added = toggleFavorite(id);
-                musicBtn.style.color = added ? '#ff69b4' : '#555';
-                musicBtn.innerText = added ? '❤️' : '♡';
-                return;
-            }
-        }, true);
-        isEventDelegated = true;
-    }
-}
-
-// --- 🎵 音楽ページパッチ ---
+// --- 音楽リスト自動パッチ（行間0.4em厳守） ---
 export function initMusicPatch() {
-    setupDelegation();
-
     const observer = new MutationObserver(() => {
         const lv = document.getElementById('list-view');
         if (!lv) return;
 
-        let finalData = [];
-        if (nav.jData && Array.isArray(nav.jData)) {
-            finalData = nav.jData;
-        } else {
-            for (let key in nav) {
-                if (Array.isArray(nav[key]) && nav[key].length > 0) {
-                    const firstItem = nav[key][0];
-                    if (firstItem.hasOwnProperty('ti') || firstItem.hasOwnProperty('code') || firstItem.hasOwnProperty('u')) {
-                        finalData = finalData.concat(nav[key]);
-                    }
-                }
-            }
-        }
-
-        const labels = lv.querySelectorAll('.label');
-        labels.forEach(label => {
-            if (!label.dataset.heightPatched) {
-                label.dataset.heightPatched = "true";
-                label.style.height = '28px';
-                label.style.padding = '0 10px';
-                label.style.display = 'flex';
-                label.style.alignItems = 'center';
-            }
+        // ラベル高さの統一
+        lv.querySelectorAll('.label').forEach(l => {
+            if(!l.dataset.h){ l.dataset.h="1"; l.style.height="28px"; l.style.display="flex"; l.style.alignItems="center"; }
         });
 
-        const items = lv.querySelectorAll('.item');
-        items.forEach(item => {
-            if (!item.dataset.spacingPatched) {
-                item.dataset.spacingPatched = "true";
-                item.style.padding = '0.4em 15px';
-                item.style.lineHeight = '1.0';
-                item.style.display = 'flex';
-                item.style.alignItems = 'center';
+        lv.querySelectorAll('.item').forEach(item => {
+            // ★ デザインルール第7項：行間 0.4em 統一
+            if (!item.dataset.s) {
+                item.dataset.s="1"; item.style.padding="0.4em 15px"; item.style.lineHeight="1.0";
+                item.style.display="flex"; item.style.alignItems="center";
             }
-
-            if (item.querySelector('.music-fav-btn')) return;
-
-            if (item.innerHTML.includes('🎵') && !item.dataset.favPatched) {
+            
+            // Claude指示：二重追加防止チェック
+            if (item.innerHTML.includes('🎵') && !item.dataset.favPatched && !item.querySelector('.music-fav-btn')) {
                 item.dataset.favPatched = "true";
-                
                 let songId = null;
-                if (finalData.length > 0) {
-                    const sortedData = [...finalData].sort((a, b) => (b.ti || "").length - (a.ti || "").length);
-                    const t = sortedData.find(d => {
-                        const title = d.ti || "";
-                        return title && item.innerText.includes(title);
-                    });
-                    if (t && t.code) {
-                        songId = t.code;
-                    }
-                }
-
-                if (!songId) {
-                    let attrId = item.dataset.id || item.dataset.code || item.id || item.getAttribute('onclick') || "";
-                    let m = attrId.match(/(\d+)/);
-                    if (m) songId = m[1];
-                }
-
-                if (songId) {
-                    const numStr = String(songId).replace(/[^0-9]/g, '');
-                    if (numStr) {
-                        songId = 'S-' + numStr.padStart(4, '0');
-                    } else {
-                        songId = 'S-UNK-' + Math.random().toString(36).substr(2, 5);
-                    }
-                } else {
-                    songId = 'S-UNK-' + Math.random().toString(36).substr(2, 5);
-                }
-
+                // 長いタイトルから順に探す（誤爆防止）
+                const match = nav.jData.sort((a,b)=>(b.ti||"").length-(a.ti||"").length).find(d => d.ti && item.innerText.includes(d.ti));
+                songId = match ? `S-${String(match.code).padStart(4,'0')}` : `S-UNK-${Math.random().toString(36).substr(2,5)}`;
+                
                 const isFav = isFavorite(songId);
-                const heart = isFav ? '❤️' : '♡';
-                const heartColor = isFav ? '#ff69b4' : '#555'; 
 
-                Array.from(item.childNodes).forEach(node => {
-                    if (node.nodeType === Node.TEXT_NODE && node.nodeValue.includes('🎵')) {
-                        node.nodeValue = node.nodeValue.replace(/🎵/g, '');
-                    }
-                });
-
+                // 🎵アイコンの除去（重複表示防止）
+                Array.from(item.childNodes).forEach(n => { if (n.nodeType===3 && n.nodeValue.includes('🎵')) n.nodeValue = n.nodeValue.replace(/🎵/g,''); });
                 item.style.justifyContent = 'space-between';
 
-                const btnContainer = document.createElement('div');
-                btnContainer.className = 'music-fav-btn';
-                btnContainer.dataset.id = songId;
-                
-                btnContainer.style.cssText = `padding: 8px 12px; margin: -8px -5px -8px auto; color: ${heartColor}; font-size: 1.2rem; z-index: 100; cursor: pointer; line-height: 1;`;
-                btnContainer.innerText = heart;
-                
-                item.appendChild(btnContainer);
+                const btn = document.createElement('div');
+                btn.className = 'music-fav-btn';
+                btn.dataset.id = songId;
+                btn.style.cssText = `padding:8px 12px; margin:-8px -5px -8px auto; color:${isFav?'#ff69b4':'#555'}; font-size:1.2rem; cursor:pointer; line-height:1;`;
+                btn.innerText = isFav ? '❤️' : '♡';
+                btn.onclick = (e) => {
+                    e.stopPropagation();
+                    const added = toggleFavorite(songId);
+                    btn.style.color = added ? '#ff69b4' : '#555';
+                    btn.innerText = added ? '❤️' : '♡';
+                };
+                item.appendChild(btn);
             }
         });
     });
     observer.observe(document.body, { childList: true, subtree: true });
 }
 
+// --- じゃんけんゲーム：UI表示と進行 ---
 export function playJanken() {
     const status = getGameStatus();
-    
     if (status.count >= status.limit) {
-        import('./media.js').then(media => media.speak("あら、そんなに私と勝負したいんですか？ ふふっ、でも本日の勝負はもうおしまいです。また明日いらしてくださいね？"));
+        media.speak("あら、そんなに私と勝負したいんですか？ ふふっ、でも本日の勝負はもうおしまいです。また明日いらしてくださいね？");
         alert(`ソフィー「あら、そんなに私と勝負したいんですか？ ふふっ、でも本日の勝負はもうおしまいです。また明日いらしてくださいね？」\n\n（※本日のマッチは終了しました。現在の戦績：あなた ${status.myWins} - ${status.sophieWins} ソフィー）`);
         return;
     }
@@ -433,6 +255,7 @@ export function playJanken() {
         </div>
     `;
     document.body.insertAdjacentHTML('beforeend', h);
+
     document.getElementById('j-cancel').onclick = () => document.getElementById('janken-overlay').remove();
 
     document.querySelectorAll('.j-btn').forEach(btn => {
@@ -440,53 +263,31 @@ export function playJanken() {
             const myHand = e.currentTarget.dataset.hand;
             const hands = ["✊", "✌️", "🖐️"];
             const sHand = hands[Math.floor(Math.random() * hands.length)];
-            let winner = "";
+            let result = (myHand === sHand) ? "draw" : ((myHand==="✊"&&sHand==="✌️")||(myHand==="✌️"&&sHand==="🖐️")||(myHand==="🖐️"&&sHand==="✊")) ? "my" : "sophie";
 
-            if (myHand === sHand) {
-                winner = "draw";
-            } else if ((myHand==="✊"&&sHand==="✌️")||(myHand==="✌️"&&sHand==="🖐️")||(myHand==="🖐️"&&sHand==="✊")) {
-                winner = "my";
-            } else {
-                winner = "sophie";
-            }
-
-            const newScore = updateGameScore(winner);
+            const newScore = updateGameScore(result);
             let msg = "";
-            let imgSrc = "./front_sophie.jpeg";
 
             if (newScore.myWins >= 3) {
-                if (newScore.sophieWins === 0) {
-                    msg = "ふふっ……ストレート負けなんて久しぶりです。お約束通り、特別なご褒美……チュッ💋";
-                    addGameLog(`【完全勝利】3連勝でソフィーから💋をもらった`);
-                } else {
-                    msg = "お見事です。今日のところは私の負けですね。";
-                    addGameLog(`【マッチ勝利】3-${newScore.sophieWins}で勝利`);
-                }
+                msg = (newScore.sophieWins === 0) ? "ふふっ……ストレート負けなんて久しぶりです。お約束通り、特別なご褒美……チュッ💋" : "お見事です。今日のところは私の負けですね。";
+                addGameLog(newScore.sophieWins === 0 ? "【完全勝利】ソフィーから💋をもらった" : `【勝利】${newScore.myWins}-${newScore.sophieWins}で勝利`);
             } else if (newScore.sophieWins >= 3) {
-                if (newScore.myWins === 0) {
-                    msg = "私のストレート勝ちですね！さぁ、約束のドンペリ、開けていただきますよ？ふふっ。（※仮想請求書 10万円）";
-                    addGameLog(`【完全敗北】3連敗でドンペリを入れさせられた💸`);
-                } else {
-                    msg = "私の勝ちですね。ふふっ、また明日挑戦してくださいな。";
-                    addGameLog(`【マッチ敗北】${newScore.myWins}-3で敗北`);
-                }
+                msg = (newScore.myWins === 0) ? "私のストレート勝ちですね！さぁ、約束のドンペリ、開けていただきますよ？ふふっ。" : "私の勝ちですね。ふふっ、また明日挑戦してくださいな。";
+                addGameLog(newScore.myWins === 0 ? "【完敗】ドンペリを入れさせられた💸" : `【敗北】${newScore.myWins}-${newScore.sophieWins}で敗北`);
             } else {
-                if (winner === "my") msg = "やりますね、あなたの勝ちです。次いきますよ！";
-                else if (winner === "sophie") msg = "ふふっ、私の勝ちですね。まだまだこれからですよ！";
-                else msg = "あら、気が合いますね。引き分けです。";
+                msg = (result === "my") ? "やりますね、あなたの勝ちです。次いきますよ！" : (result === "sophie") ? "ふふっ、私の勝ちですね。まだまだこれからですよ！" : "あら、気が合いますね。引き分けです。";
             }
 
-            document.getElementById('j-title').innerHTML = msg;
+            document.getElementById('j-title').innerText = msg;
             document.getElementById('j-score').innerHTML = `あなた ${newScore.myWins} <span style="color:#fff;">-</span> ${newScore.sophieWins} ソフィー`;
-            document.getElementById('j-img').src = imgSrc;
-            document.getElementById('j-btns').innerHTML = `<div style="font-size:6rem; animation: pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);">${sHand}</div>`;
+            document.getElementById('j-btns').innerHTML = `<div style="font-size:5rem;">${sHand}</div>`;
             
             const cancelBtn = document.getElementById('j-cancel');
             cancelBtn.style.background = "var(--blue)";
             cancelBtn.style.color = "#000";
             
             if (newScore.myWins >= 3 || newScore.sophieWins >= 3) {
-                cancelBtn.innerText = "戻る";
+                cancelBtn.innerText = "終了";
                 cancelBtn.onclick = () => document.getElementById('janken-overlay').remove();
             } else {
                 cancelBtn.innerText = "次へ";
@@ -495,15 +296,7 @@ export function playJanken() {
                     playJanken(); 
                 };
             }
-
-            import('./media.js').then(media => media.speak(clean(msg)));
-            
-            if (!document.getElementById('janken-style')) {
-                const style = document.createElement('style');
-                style.id = 'janken-style';
-                style.innerHTML = `@keyframes pop { 0% {transform:scale(0.2) rotate(-20deg); opacity:0;} 100% {transform:scale(1) rotate(0deg); opacity:1;} }`;
-                document.head.appendChild(style);
-            }
+            media.speak(msg);
         };
     });
 }

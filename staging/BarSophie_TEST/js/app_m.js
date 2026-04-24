@@ -1,6 +1,7 @@
+
 /**
  * Bar Sophie v22.0 — app_m.js
- * ★ コンソールUI共通化・再生ボタン完全フラット・クレジット排除版
+ * ★ DJソフィー連携・全機能統合版
  */
 
 import * as media    from './media.js';
@@ -9,6 +10,7 @@ import * as utils    from './utils.js';
 import * as music    from './music.js';
 import * as liquor   from './liquor.js';
 import * as shop     from './shop.js';
+import * as dj       from './dj.js';
 
 let talkAudio;
 let ytPlayer = null;
@@ -30,6 +32,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     liquor.setRenderConsole(renderConsole);
     
+    // 音楽リスト・歌手リストの自動パッチ（行間0.4em）開始
     import('./favorite.js').then(fav => {
         fav.initMusicPatch();
     }).catch(e => console.warn("favorite.js load error", e));
@@ -51,6 +54,9 @@ window.onYouTubeIframeAPIReady = function () {
                 music.initMusic(talkAudio, ytPlayer, true, document.getElementById('telop'));
             },
             onStateChange: (e) => {
+                // DJモジュールにYouTubeの状態（終了など）を伝える
+                if (dj.handleYtStateChange) dj.handleYtStateChange(e.data);
+                
                 if (e.data === YT.PlayerState.ENDED && music.isAutoPlay && music.isMusicMode) {
                     music.next();
                 }
@@ -81,14 +87,8 @@ function setup() {
         playVoice("./voices_mp3/menu_greeting.mp3", "いつもありがとうございます。今日はいかがされますか？");
     };
 
-    document.getElementById('btn-music').onclick = () => {
-        if (music.openMusic) music.openMusic();
-        renderConsole('standard');
-    };
-    document.getElementById('btn-talk').onclick = () => {
-        if (music.openTalk) music.openTalk();
-        renderConsole('standard');
-    };
+    document.getElementById('btn-music').onclick = () => { music.openMusic(); renderConsole('standard'); };
+    document.getElementById('btn-talk').onclick  = () => { music.openTalk();  renderConsole('standard'); };
     document.getElementById('btn-liquor').onclick = liquor.openLiquorPortal;
 
     document.getElementById('sophie-warp').onclick = () => {
@@ -109,7 +109,6 @@ function setup() {
                     document.getElementById('entry-screen').style.display = 'flex';
                     loungeText.innerText = "いらっしゃいませ。";
                     talkAudio.onended = music.defaultOnEnded;
-                    document.getElementById('monitor-img').src = "";
                 }, 1000);
             };
             talkAudio.onended = finalize;
@@ -137,7 +136,6 @@ function showRootMenu() {
     const nm  = document.getElementById('nav-main');
     const img = document.getElementById('monitor-img');
     const yt  = document.getElementById('yt-wrapper');
-    const tel = document.getElementById('telop');
     const mon = document.querySelector('.monitor');
 
     lv.style.display  = 'none';
@@ -146,28 +144,25 @@ function showRootMenu() {
     yt.style.display  = 'none';
     img.src = './front_sophie.jpeg';
     img.style.display = 'block';
-    if (tel) tel.style.display = 'none';
     if (mon) { mon.classList.remove('expanded'); }
     utils.showLSide();
 
     renderConsole('standard');
 
     let noticeBtn = document.getElementById('btn-notice');
-    if (!noticeBtn) {
-        if (nm) {
-            noticeBtn = document.createElement('button');
-            noticeBtn.id = 'btn-notice';
-            noticeBtn.className = 'act-btn';
-            noticeBtn.style.cssText = 'background: linear-gradient(135deg, #1a5276, #2980b9); color:#fff; margin:20px auto 10px; width:calc(100% - 30px); display:block; border:1px solid #5DADE2; font-weight:bold; box-shadow:0 0 10px rgba(41,128,185,0.3);';
-            noticeBtn.innerHTML = '📢 ソフィーのお知らせ・使い方';
-            noticeBtn.onclick = () => {
-                import('./favorite.js').then(f => {
-                    f.openNotice();
-                    renderConsole('standard');
-                }).catch(e => alert("準備中です"));
-            };
-            nm.appendChild(noticeBtn);
-        }
+    if (!noticeBtn && nm) {
+        noticeBtn = document.createElement('button');
+        noticeBtn.id = 'btn-notice';
+        noticeBtn.className = 'act-btn';
+        noticeBtn.style.cssText = 'background: linear-gradient(135deg, #1a5276, #2980b9); color:#fff; margin:20px auto 10px; width:calc(100% - 30px); display:block; border:1px solid #5DADE2; font-weight:bold;';
+        noticeBtn.innerHTML = '📢 ソフィーのお知らせ・使い方';
+        noticeBtn.onclick = () => {
+            import('./favorite.js').then(f => {
+                f.openNotice();
+                renderConsole('standard');
+            });
+        };
+        nm.appendChild(noticeBtn);
     }
 }
 
@@ -191,67 +186,57 @@ function setupNextButton() {
 }
 
 function renderConsole(mode) {
+    // ★ 免責事項（クレジット）のカウンター限定表示
     const db = document.getElementById('disclaimer-bar');
     if (db) db.style.display = (nav.state === "none") ? 'block' : 'none';
 
     const grid = document.querySelector('.btn-grid');
     if (!grid) return;
 
+    const noApp = "-webkit-appearance:none; appearance:none; outline:none;";
+    const playCtrlStyle = `flex:1; background:#1a2b1a; color:#5c9e5c; border:none; box-shadow:none; border-radius:0; ${noApp}`;
+    const playBtnStyle  = `flex:1.0; font-size:1.2rem; background:#1a3a1a; color:#7fd97f; border:none; box-shadow:none; border-radius:0; ${noApp}`;
+
     if (mode === 'screening') {
         grid.innerHTML = `
-            <button class="c-btn" id="c-back" style="background:#34495e; color:#fff; flex:1; font-size:0.95rem; font-weight:bold; border:none;">戻る</button>
-            <button class="c-btn" id="c-clr"  style="background:#5DADE2; color:#fff; flex:1; font-size:0.95rem; text-shadow:0 0 2px rgba(0,0,0,0.5); border:none;">リセット</button>
-            <button class="c-btn" id="c-ex"   style="background:#8e44ad; color:#fff; flex:2; font-size:0.95rem; border:none;">検索実行</button>`;
+            <button class="c-btn" id="c-back" style="background:#34495e; color:#fff; flex:1; font-weight:bold; border:none;">戻る</button>
+            <button class="c-btn" id="c-clr"  style="background:#5DADE2; color:#fff; flex:1; border:none;">リセット</button>
+            <button class="c-btn" id="c-ex"   style="background:#8e44ad; color:#fff; flex:2; border:none;">検索実行</button>`;
         document.getElementById('c-back').onclick = liquor.openLiquorPortal;
         document.getElementById('c-clr').onclick  = liquor.clearScr;
         document.getElementById('c-ex').onclick   = liquor.execScr;
         return;
     }
 
-    if (mode === 'result') {
-        grid.innerHTML = `<button class="c-btn" id="c-mod" style="background:#8e44ad; color:#fff; font-size:0.85rem; border:none;">🔍 検索条件を変更する</button>`;
-        document.getElementById('c-mod').onclick = liquor.openScreeningFromConsole;
-        return;
-    }
-
     if (mode === 'card') {
         grid.innerHTML = `
-            <button class="c-btn card-btn" id="c-sophie" style="background:#1a3a4a; color:#00d2ff; font-size:1.1rem; font-weight:bold;">S</button>
-            <button class="c-btn card-btn" id="c-scr"    style="background:#5b2d8e; color:#fff; font-size:0.62rem; line-height:1.2;">選択<br>画面</button>
+            <button class="c-btn card-btn" id="c-sophie" style="background:#1a3a4a; color:#00d2ff; font-weight:bold;">S</button>
+            <button class="c-btn card-btn" id="c-scr"    style="background:#5b2d8e; color:#fff; font-size:0.62rem;">選択画面</button>
             <button class="c-btn card-btn" id="c-list"   style="background:#7a3a00; color:#f0b56e; font-size:0.75rem;">リスト</button>
-            <button class="c-btn card-btn" id="c-prev"   style="background:#1a3a1a; color:#7fd97f; font-size:1.1rem;">&#9664;</button>
-            <button class="c-btn card-btn" id="c-next2"  style="background:#1a3a1a; color:#7fd97f; font-size:1.1rem;">&#9654;</button>`;
-        document.getElementById('c-sophie').addEventListener('click', () => { import('./favorite.js').then(f => f.playJanken()); });
-        document.getElementById('c-scr').addEventListener('click', liquor.cardNavToScr);
-        document.getElementById('c-list').addEventListener('click', liquor.cardNavToList);
-        document.getElementById('c-prev').addEventListener('click', liquor.cardNavPrev);
-        document.getElementById('c-next2').addEventListener('click', liquor.cardNavNext);
+            <button class="c-btn card-btn" id="c-prev"   style="background:#1a3a1a; color:#7fd97f;">&#9664;</button>
+            <button class="c-btn card-btn" id="c-next2"  style="background:#1a3a1a; color:#7fd97f;">&#9654;</button>`;
+        document.getElementById('c-sophie').onclick = () => import('./favorite.js').then(f => f.playJanken());
+        document.getElementById('c-scr').onclick    = liquor.cardNavToScr;
+        document.getElementById('c-list').onclick   = liquor.cardNavToList;
+        document.getElementById('c-prev').onclick   = liquor.cardNavPrev;
+        document.getElementById('c-next2').onclick  = liquor.cardNavNext;
         return;
     }
 
-    // ★ 完全フラット化＆色調整（■と⏭は暗め、▶は明るめ）
-    const noApp = "-webkit-appearance:none; appearance:none; outline:none;";
-    const playCtrlStyle = `flex:1; background:#1a2b1a; color:#5c9e5c; border:none; box-shadow:none; background-image:none; border-radius:0; ${noApp}`;
-    const playBtnStyle  = `flex:1.0; font-size:1.2rem; background:#1a3a1a; color:#7fd97f; border:none; box-shadow:none; background-image:none; border-radius:0; ${noApp}`;
-
     if (nav.state === "none") {
-        const shopBaseStyle = "background:rgba(255, 228, 225, 0.6); color:#cc294a; border:3px solid #1e90ff; flex-direction:column; justify-content:center; align-items:center; backdrop-filter:blur(2px); padding:0; flex:1.0;";
+        const shopBaseStyle = "background:rgba(255,228,225,0.6); color:#cc294a; border:3px solid #1e90ff; flex:1; font-size:0.75rem; font-weight:bold;";
         grid.innerHTML = `
-            <button class="c-btn" id="btn-shop" style="${shopBaseStyle} line-height:1.1; font-size:0.75rem; font-weight:bold;"><span>ソフィー</span><span>おすすめ</span><span style="font-size:0.75rem; letter-spacing:1px;">SHOP</span></button>
-            <button class="c-btn" id="btn-techo" style="background:rgba(34,34,34,0.8); color:#fff; border:1px solid #777; font-size:1.5rem; padding:0; flex:1.0; display:flex; justify-content:center; align-items:center;">📖</button>
+            <button class="c-btn" id="btn-shop" style="${shopBaseStyle}"><span>ソフィー</span><br><span>SHOP</span></button>
+            <button class="c-btn" id="btn-techo" style="background:rgba(34,34,34,0.8); color:#fff; border:1px solid #777; font-size:1.5rem; flex:1;">📖</button>
             <button class="c-btn" id="ctrl-pause" style="${playCtrlStyle}">⏹️</button>
             <button class="c-btn" id="ctrl-play" style="${playBtnStyle}">▶</button>
             <button class="c-btn" id="btn-next" style="${playCtrlStyle}">⏭</button>`;
-            
-        document.getElementById('btn-shop').onclick = () => {
-            nav.updateNav("shop");
-            shop.openShop();
-            renderConsole('standard');
-        };
+        document.getElementById('btn-shop').onclick = () => { nav.updateNav("shop"); shop.openShop(); renderConsole('standard'); };
     } else {
+        // [📖][戻る][⏹️][▶][⏭] の共通レイアウト
         grid.innerHTML = `
-            <button class="c-btn" id="btn-techo" style="background:rgba(34,34,34,0.8); color:#fff; border:1px solid #777; font-size:1.5rem; padding:0; flex:1.0; display:flex; justify-content:center; align-items:center;">📖</button>
-            <button class="c-btn" id="ctrl-back" style="background:#34495e; color:#fff; flex:1; font-size:0.95rem; font-weight:bold; border:none; box-shadow:none;">戻る</button>
+            <button class="c-btn" id="btn-techo" style="background:rgba(34,34,34,0.8); color:#fff; border:1px solid #777; font-size:1.5rem; flex:1;">📖</button>
+            <button class="c-btn" id="ctrl-back" style="background:#34495e; color:#fff; flex:1; font-weight:bold; border:none; box-shadow:none;">戻る</button>
             <button class="c-btn" id="ctrl-pause" style="${playCtrlStyle}">⏹️</button>
             <button class="c-btn" id="ctrl-play" style="${playBtnStyle}">▶</button>
             <button class="c-btn" id="btn-next" style="${playCtrlStyle}">⏭</button>`;
@@ -259,14 +244,9 @@ function renderConsole(mode) {
         document.getElementById('ctrl-back').onclick = () => {
             if (nav.state === "techo") {
                 import('./favorite.js').then(f => {
-                    if (f.getCurrentFolder() !== null) {
-                        f.openTecho(null); 
-                    } else {
-                        showRootMenu(); 
-                    }
+                    if (f.getCurrentFolder()) f.openTecho(null);
+                    else showRootMenu();
                 });
-            } else if (nav.state === "shop" || nav.state === "notice") {
-                showRootMenu();
             } else {
                 handleBack();
             }
@@ -275,21 +255,14 @@ function renderConsole(mode) {
 
     document.getElementById('ctrl-play').onclick  = music.playHead;
     document.getElementById('ctrl-pause').onclick = music.togglePause;
-    
-    const btnTecho = document.getElementById('btn-techo');
-    if (btnTecho) {
-        btnTecho.onclick = () => {
-            if (nav.state === "techo") {
-                showRootMenu();
-            } else {
-                import('./favorite.js').then(f => {
-                    nav.updateNav("techo");
-                    f.openTecho(null);
-                    renderConsole('standard');
-                });
-            }
-        };
-    }
+    document.getElementById('btn-techo').onclick = () => {
+        if (nav.state === "techo") showRootMenu();
+        else import('./favorite.js').then(f => {
+            nav.updateNav("techo");
+            f.openTecho(null);
+            renderConsole('standard');
+        });
+    };
 
     setupNextButton();
 }
