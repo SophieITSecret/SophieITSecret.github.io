@@ -1,6 +1,6 @@
 /**
  * Bar Sophie v22.0 — app_m.js
- * ★ デザインルール完全準拠・コンソールUI/ボタン共通化版
+ * ★ コンソールUI共通化・再生ボタン完全フラット・クレジット排除版
  */
 
 import * as media    from './media.js';
@@ -81,7 +81,6 @@ function setup() {
         playVoice("./voices_mp3/menu_greeting.mp3", "いつもありがとうございます。今日はいかがされますか？");
     };
 
-    // ★ 音楽・お話に入った瞬間に必ずコンソールを更新してクレジットを消すパッチ
     document.getElementById('btn-music').onclick = () => {
         if (music.openMusic) music.openMusic();
         renderConsole('standard');
@@ -192,7 +191,6 @@ function setupNextButton() {
 }
 
 function renderConsole(mode) {
-    // ★免責事項バー（クレジット）はカウンター（HOME）以外では徹底的に非表示にする
     const db = document.getElementById('disclaimer-bar');
     if (db) db.style.display = (nav.state === "none") ? 'block' : 'none';
 
@@ -231,12 +229,12 @@ function renderConsole(mode) {
         return;
     }
 
-    // ★ 再生コントロール群の共通スタイル（フラット＆ダークグリーン化）
-    const playCtrlStyle = "flex:1; background:#1a3a1a; color:#7fd97f; border:none; box-shadow:none;";
-    const playBtnStyle  = "flex:1.0; font-size:1.2rem; background:#1a3a1a; color:#7fd97f; border:none; box-shadow:none;";
+    // ★ 完全フラット化＆色調整（■と⏭は暗め、▶は明るめ）
+    const noApp = "-webkit-appearance:none; appearance:none; outline:none;";
+    const playCtrlStyle = `flex:1; background:#1a2b1a; color:#5c9e5c; border:none; box-shadow:none; background-image:none; border-radius:0; ${noApp}`;
+    const playBtnStyle  = `flex:1.0; font-size:1.2rem; background:#1a3a1a; color:#7fd97f; border:none; box-shadow:none; background-image:none; border-radius:0; ${noApp}`;
 
     if (nav.state === "none") {
-        // --- カウンター（HOME）画面 ---
         const shopBaseStyle = "background:rgba(255, 228, 225, 0.6); color:#cc294a; border:3px solid #1e90ff; flex-direction:column; justify-content:center; align-items:center; backdrop-filter:blur(2px); padding:0; flex:1.0;";
         grid.innerHTML = `
             <button class="c-btn" id="btn-shop" style="${shopBaseStyle} line-height:1.1; font-size:0.75rem; font-weight:bold;"><span>ソフィー</span><span>おすすめ</span><span style="font-size:0.75rem; letter-spacing:1px;">SHOP</span></button>
@@ -251,8 +249,6 @@ function renderConsole(mode) {
             renderConsole('standard');
         };
     } else {
-        // --- カウンター「以外」の全画面（お酒、音楽、ノート、お知らせ等すべて共通） ---
-        // ★ ノート左端・戻るボタンのスクリーニング色統一レイアウト
         grid.innerHTML = `
             <button class="c-btn" id="btn-techo" style="background:rgba(34,34,34,0.8); color:#fff; border:1px solid #777; font-size:1.5rem; padding:0; flex:1.0; display:flex; justify-content:center; align-items:center;">📖</button>
             <button class="c-btn" id="ctrl-back" style="background:#34495e; color:#fff; flex:1; font-size:0.95rem; font-weight:bold; border:none; box-shadow:none;">戻る</button>
@@ -262,12 +258,11 @@ function renderConsole(mode) {
 
         document.getElementById('ctrl-back').onclick = () => {
             if (nav.state === "techo") {
-                // ノートの階層コントロール
                 import('./favorite.js').then(f => {
                     if (f.getCurrentFolder() !== null) {
-                        f.openTecho(null); // 2階層目からは1階層目（フォルダ一覧）へ
+                        f.openTecho(null); 
                     } else {
-                        showRootMenu(); // 1階層目からはカウンターへ
+                        showRootMenu(); 
                     }
                 });
             } else if (nav.state === "shop" || nav.state === "notice") {
