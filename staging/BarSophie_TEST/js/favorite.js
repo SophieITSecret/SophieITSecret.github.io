@@ -1,6 +1,6 @@
 /**
  * favorite.js — ソフィーのノート ＆ じゃんけんゲーム ＆ お知らせ
- * ★ 循環参照回避・音楽エリア右端独立・じゃんけん演出強化版
+ * ★ Claude氏監修：完全無敵のID照合・音楽記号(🎵)対応版
  */
 
 import { setListView, clean } from './utils.js';
@@ -54,7 +54,7 @@ export function getGameStatus() {
     }
     return { 
         count: data.gameCount, 
-        limit: 1, // 1日1マッチ
+        limit: 1, 
         myWins: data.janken.myWins,
         sophieWins: data.janken.sophieWins
     };
@@ -124,12 +124,9 @@ export async function openNotice() {
     document.getElementById('btn-reset-janken').onclick = resetJankenTest;
 }
 
-// ★ 循環参照を回避するため、async/await と動的インポートを使用！
 export async function openTecho() {
     nav.updateNav("techo");
     const data = getTechoData();
-    
-    // liquor.js の機能をここで安全に呼び出す
     const lq = await import('./liquor.js').catch(e => { console.error(e); return null; });
     
     let h = `<div class="label" style="background:#333; display:flex; justify-content:space-between; align-items:center;">
@@ -164,8 +161,10 @@ export async function openTecho() {
                             return;
                         }
                         
+                        // ★Claude氏の無敵照合ロジック（BOM・空白無視）
                         const lqData = nav.liquorData.find(d => {
-                            const rawNo = String(d["No."] || d["No"] || d["番号"] || d["NO"] || d["NO."] || "");
+                            const noKey = Object.keys(d).find(k => k.replace(/\s/g,'').toUpperCase().startsWith('NO') || k === '番号');
+                            const rawNo = noKey ? String(d[noKey]) : "";
                             const rNum = rawNo.replace(/[^0-9]/g, '');
                             return rNum !== "" && parseInt(rNum, 10) === parseInt(numStr, 10);
                         });
@@ -195,7 +194,6 @@ export async function openTecho() {
 
     setListView(h, false);
 
-    // イベント登録（ここで確実にジャンプを実行）
     document.querySelectorAll('.fav-item').forEach(el => {
         el.onclick = () => {
             if (el.innerText.includes('⚠️')) {
@@ -208,43 +206,81 @@ export async function openTecho() {
     });
 }
 
-// --- 🎵 音楽ページパッチ（無条件監視・右端独立エリア） ---
+// 絶対イベント委譲
+let isEventDelegated = false;
+function setupDelegation() {
+    if (isEventDelegated) return;
+    const lv = document.getElementById('list-view');
+    if (lv) {
+        lv.addEventListener('click', (e) => {
+            const musicBtn = e.target.closest('.music-fav-btn');
+            if (musicBtn) {
+                e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+                const id = musicBtn.getAttribute('data-id');
+                const added = toggleFavorite(id);
+                musicBtn.innerText = added ? '❤️' : '♡';
+                return;
+            }
+
+            if (nav.state === 'techo') {
+                const favItem = e.target.closest('.fav-item');
+                if (favItem) {
+                    if (favItem.innerText.includes('⚠️')) {
+                        toggleFavorite(favItem.dataset.id);
+                        openTecho();
+                    } else if (favItem.classList.contains('lq-fav')) {
+                        import('./liquor.js').then(lq => lq.showCardById(favItem.dataset.id));
+                        const appConsole = document.querySelector('.btn-grid');
+                        if (appConsole) appConsole.innerHTML = ''; 
+                    }
+                }
+            }
+        }, true);
+        isEventDelegated = true;
+    }
+}
+
+// --- 🎵 音楽ページパッチ（Claude氏指摘の「🎵」対応版） ---
 export function initMusicPatch() {
+    setupDelegation();
+
     const observer = new MutationObserver(() => {
         const lv = document.getElementById('list-view');
         if (!lv) return;
 
-        // ページの状態名に関わらず、リスト内に「♪♪」があれば音楽リストとみなして強引に書き換える
         const items = lv.querySelectorAll('.item');
         items.forEach(item => {
-            if (item.innerHTML.includes('♪♪') && !item.dataset.favPatched) {
+            // ★ Claude氏の指摘通り、「🎵」を探す！
+            if (item.innerHTML.includes('🎵') && !item.dataset.favPatched) {
                 item.dataset.favPatched = "true";
                 
-                let songId = item.innerText.replace(/♪♪/g, '').trim();
+                let songId = item.innerText.replace(/🎵/g, '').trim();
                 const match = songId.match(/S-\d{4}/);
                 if (match) songId = match[0];
 
                 const isFav = isFavorite(songId);
                 const heart = isFav ? '❤️' : '♡';
 
-                // ★ 元の「♪♪」を消去する
-                item.innerHTML = item.innerHTML.replace(/♪♪/g, '');
+                // 元の「🎵」を消去
+                Array.from(item.childNodes).forEach(node => {
+                    if (node.nodeType === Node.TEXT_NODE && node.nodeValue.includes('🎵')) {
+                        node.nodeValue = node.nodeValue.replace(/🎵/g, '');
+                    }
+                });
 
-                // ★ アイテムを横並びにして、右端にボタンエリアを分離する
                 item.style.display = 'flex';
                 item.style.justifyContent = 'space-between';
                 item.style.alignItems = 'center';
-                item.style.paddingRight = '0'; // 右の余白を詰める
+                item.style.paddingRight = '0';
 
                 const btnContainer = document.createElement('div');
                 btnContainer.className = 'music-fav-btn';
                 btnContainer.dataset.id = songId;
-                
-                // 再生エリアとは切り離された、右端の大きなクリックエリア
                 btnContainer.style.cssText = 'padding: 15px; margin: -15px 0 -15px auto; color: var(--pink); font-size: 1.4rem; z-index: 100; cursor: pointer;';
                 btnContainer.innerText = heart;
                 
-                // 再生イベントを完全に遮断するための結界
                 const blockEvent = (e) => {
                     e.preventDefault();
                     e.stopPropagation();
@@ -254,7 +290,6 @@ export function initMusicPatch() {
                 ['pointerdown', 'mousedown', 'touchstart', 'touchend', 'click'].forEach(evt => {
                     btnContainer.addEventListener(evt, (e) => {
                         blockEvent(e);
-                        // クリック・タップが離れた瞬間に登録処理を実行
                         if (evt === 'click' || evt === 'touchend') {
                             const id = btnContainer.getAttribute('data-id');
                             const added = toggleFavorite(id);
@@ -267,7 +302,6 @@ export function initMusicPatch() {
             }
         });
         
-        // 歌手名ラベルの右端に手帳ボタンを追加
         const labels = lv.querySelectorAll('.label');
         labels.forEach(label => {
             if (!label.dataset.patched && label.innerText.includes('◀') && label.id !== 'lbl-back-res' && label.id !== 'lbl-back-scr') {
@@ -293,7 +327,6 @@ export function initMusicPatch() {
     observer.observe(document.body, { childList: true, subtree: true });
 }
 
-// --- 🎮 ソフィーとのじゃんけん勝負（3本先取ルール・ですます調） ---
 export function playJanken() {
     const status = getGameStatus();
     
@@ -309,9 +342,7 @@ export function playJanken() {
             <div style="font-size:1.5rem; font-weight:bold; margin-bottom:20px; color:#1e90ff;" id="j-score">
                 あなた ${status.myWins} <span style="color:#fff;">-</span> ${status.sophieWins} ソフィー
             </div>
-            
             <img id="j-img" src="./front_sophie.jpeg" style="width:200px; height:200px; object-fit:cover; border-radius:50%; margin-bottom:20px; box-shadow:0 0 15px rgba(255,255,255,0.2);">
-            
             <div id="j-btns" style="display:flex; gap:15px; margin-bottom:30px;">
                 <button class="j-btn" data-hand="✊" style="font-size:3.5rem; background:transparent; border:none; cursor:pointer; filter:drop-shadow(0 0 5px #fff);">✊</button>
                 <button class="j-btn" data-hand="✌️" style="font-size:3.5rem; background:transparent; border:none; cursor:pointer; filter:drop-shadow(0 0 5px #fff);">✌️</button>
@@ -342,7 +373,6 @@ export function playJanken() {
             let msg = "";
             let imgSrc = "./front_sophie.jpeg";
 
-            // ★ ソフィーのセリフ（です・ます調、上品な小悪魔感）
             if (newScore.myWins >= 3) {
                 if (newScore.sophieWins === 0) {
                     msg = "ふふっ……ストレート負けなんて久しぶりです。お約束通り、特別なご褒美……チュッ💋";

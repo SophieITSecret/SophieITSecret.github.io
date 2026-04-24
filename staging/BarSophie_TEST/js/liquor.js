@@ -150,9 +150,12 @@ export function openLiquorPortal() {
         if (!numStr) return;
         const targetId = 'L-' + numStr.padStart(4, '0');
 
+        // ★Claude氏の無敵照合ロジック（ダイレクト検索用）
         const t = nav.liquorData.find(d => {
-            const rawNo = d["No."] || d["No"] || d["番号"] || "";
-            return parseInt(rawNo, 10) === parseInt(numStr, 10);
+            const noKey = Object.keys(d).find(k => k.replace(/\s/g,'').toUpperCase().startsWith('NO') || k === '番号');
+            const rawNo = noKey ? String(d[noKey]) : "";
+            const rNum = rawNo.replace(/[^0-9]/g, '');
+            return rNum !== "" && (parseInt(rNum, 10) === parseInt(numStr, 10) || rawNo.trim() === v);
         });
 
         if (t) showCard(nav.liquorData.indexOf(t), nav.liquorData, 'list');
@@ -508,12 +511,14 @@ function showCard(gIdx, list, fromState) {
     });
 }
 
-// ★ 手帳から呼ばれる検索用（完全一致対応）
+// ★ Claude氏の完全照合ロジックを搭載（ノートからカードへ飛ぶための関数）
 export function showCardById(idStr) {
     const numStr = String(idStr).replace(/[^0-9]/g, '');
     const t = nav.liquorData.find(d => {
-        const rawNo = d["No."] || d["No"] || d["番号"] || "";
-        return parseInt(rawNo, 10) === parseInt(numStr, 10);
+        const noKey = Object.keys(d).find(k => k.replace(/\s/g,'').toUpperCase().startsWith('NO') || k === '番号');
+        const rawNo = noKey ? String(d[noKey]) : "";
+        const rNum = rawNo.replace(/[^0-9]/g, '');
+        return rNum !== "" && parseInt(rNum, 10) === parseInt(numStr, 10);
     });
     if (t) {
         showCard(nav.liquorData.indexOf(t), nav.liquorData, 'techo');

@@ -1,5 +1,6 @@
 /**
  * Bar Sophie v22.0 — app_m.js
+ * ★ トグル機能・画面描画・お知らせ機能 完全復元版
  */
 
 import * as media    from './media.js';
@@ -164,7 +165,7 @@ function showRootMenu() {
             noticeBtn.onclick = () => {
                 import('./favorite.js').then(f => {
                     f.openNotice();
-                    renderConsole('standard');
+                    renderConsole('standard'); 
                 }).catch(e => alert("準備中です"));
             };
             nm.appendChild(noticeBtn);
