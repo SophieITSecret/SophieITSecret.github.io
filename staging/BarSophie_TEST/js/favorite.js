@@ -1,13 +1,13 @@
 /**
  * favorite.js — ソフィーのノート ＆ じゃんけんゲーム ＆ お知らせ
- * ★ データ保存パイプ修復・ノート階層コントロール・デザインルール準拠
+ * ★ 音楽コードDB完全連携・行間黄金比・階層戻る対応版
  */
 
 import { setListView, clean } from './utils.js';
 import * as nav from './navigation.js';
 
 const STORAGE_KEY = 'bar_sophie_techo';
-let currentFolder = null; // 現在のノート階層を記録する変数
+let currentFolder = null; 
 
 export function getCurrentFolder() {
     return currentFolder;
@@ -131,7 +131,7 @@ export async function openNotice() {
 
 export async function openTecho(folder = null) {
     nav.updateNav("techo");
-    currentFolder = folder; // 現在の階層を記録
+    currentFolder = folder; 
     const data = getTechoData();
     const lq = await import('./liquor.js').catch(e => { return null; });
     
@@ -193,9 +193,28 @@ export async function openTecho(folder = null) {
         if (categories['S'].length === 0) {
             h += `<div style="padding:40px 20px; color:#888; text-align:center;">まだ曲が記録されていません</div>`;
         } else {
+            // ★ 音楽データベースから「コード」を元に「タイトル」を引っ張ってくる
+            let mData = [];
+            for (let key in nav) {
+                if (Array.isArray(nav[key]) && nav[key].length > 0 && ("コード" in nav[key][0] || "タイトル" in nav[key][0])) {
+                    mData = nav[key]; break;
+                }
+            }
+
             categories['S'].forEach(id => {
-                const displayId = id.startsWith('S-') ? id.replace('S-', '') : id;
-                h += `<div class="item fav-item" data-id="${id}" style="color:#eee; border-bottom:1px solid #222; cursor:pointer; padding:0.4em 15px;">🎵 ${displayId} <span style="font-size:0.75rem; color:#888; float:right;">(タップで削除)</span></div>`;
+                const numStr = id.replace(/[^0-9]/g, '');
+                let displayTitle = `曲ID: ${numStr}`;
+                
+                if (mData.length > 0) {
+                    const songRecord = mData.find(d => {
+                        const rawCode = String(d["コード"] || "").replace(/[^0-9]/g, '');
+                        return rawCode === numStr;
+                    });
+                    if (songRecord && songRecord["タイトル"]) {
+                        displayTitle = songRecord["タイトル"];
+                    }
+                }
+                h += `<div class="item fav-item" data-id="${id}" style="color:#eee; border-bottom:1px solid #222; cursor:pointer; padding:0.3em 15px; line-height:1.0;">🎵 ${clean(displayTitle)} <span style="font-size:0.75rem; color:#888; float:right;">(タップで削除)</span></div>`;
             });
         }
     } else if (folder === 'G') {
@@ -245,7 +264,7 @@ function setupDelegation() {
     }
 }
 
-// --- 🎵 音楽ページパッチ（ID変換機能・行間ルール・ステルス化） ---
+// --- 🎵 音楽ページパッチ ---
 export function initMusicPatch() {
     setupDelegation();
 
@@ -253,40 +272,59 @@ export function initMusicPatch() {
         const lv = document.getElementById('list-view');
         if (!lv) return;
 
-        // ★ 歌手ラベルの高さを28pxに厳密指定
-        const labels = lv.querySelectorAll('.label');
-        labels.forEach(label => {
-            if (!label.dataset.heightPatched) {
-                label.dataset.heightPatched = "true";
-                label.style.height = '28px';
-                label.style.padding = '0 10px';
-                label.style.display = 'flex';
-                label.style.alignItems = 'center';
+        // 音楽DBを裏で自動捕捉する
+        let mData = [];
+        for (let key in nav) {
+            if (Array.isArray(nav[key]) && nav[key].length > 0 && ("コード" in nav[key][0] || "タイトル" in nav[key][0])) {
+                mData = nav[key]; break;
             }
-        });
+        }
 
         const items = lv.querySelectorAll('.item');
         items.forEach(item => {
+            
+            // ★ 行間の黄金比（0.3 + 1.0 + 0.3）をすべてのリストに適用
+            if (!item.dataset.spacingPatched) {
+                item.dataset.spacingPatched = "true";
+                item.style.padding = '0.3em 15px';
+                item.style.lineHeight = '1.0';
+                item.style.display = 'flex';
+                item.style.alignItems = 'center';
+            }
+
             if (item.innerHTML.includes('🎵') && !item.dataset.favPatched) {
                 item.dataset.favPatched = "true";
                 
-                let rawText = item.innerText.replace(/🎵/g, '').trim();
+                // タイトルテキストを綺麗に抽出
+                let rawText = item.innerText.replace(/🎵/g, '').replace(/[♡❤️]/g, '').trim();
                 
-                // ★ 音楽IDの自動抽出・保管（必ず S-XXXX の形にする）
-                let songId = rawText;
-                const sMatch = rawText.match(/S-\d{4}/);
-                if (sMatch) {
-                    songId = sMatch[0];
-                } else {
-                    const numMatch = rawText.match(/\d+/);
-                    if (numMatch) {
-                        songId = 'S-' + numMatch[0].padStart(4, '0');
+                // ★ 曲の「タイトル」からデータベースを逆引きして「コード」を見つける最強パイプ
+                let songId = null;
+                if (mData.length > 0) {
+                    const t = mData.find(d => clean(d["タイトル"] || "") === clean(rawText));
+                    if (t && t["コード"]) {
+                        songId = t["コード"];
                     }
+                }
+                
+                // もしDBから見つからなければ、HTMLに埋め込まれているかもしれないIDを探す
+                if (!songId) {
+                    let attrId = item.dataset.id || item.dataset.code || item.id || item.getAttribute('onclick') || "";
+                    let m = attrId.match(/(\d+)/);
+                    if (m) songId = m[1];
+                }
+
+                // S-0001形式にフォーマットして保存
+                if (songId) {
+                    const numStr = String(songId).replace(/[^0-9]/g, '');
+                    if (numStr) songId = 'S-' + numStr.padStart(4, '0');
+                } else {
+                    songId = 'S-UNKNOWN';
                 }
 
                 const isFav = isFavorite(songId);
                 const heart = isFav ? '❤️' : '♡';
-                const heartColor = isFav ? '#ff69b4' : '#555'; // 未登録は完全に背景に溶け込ませるグレー
+                const heartColor = isFav ? '#ff69b4' : '#555';
 
                 Array.from(item.childNodes).forEach(node => {
                     if (node.nodeType === Node.TEXT_NODE && node.nodeValue.includes('🎵')) {
@@ -294,17 +332,13 @@ export function initMusicPatch() {
                     }
                 });
 
-                // ★ 行間ルール（0.4em 15px）を最優先で適用
-                item.style.padding = '0.4em 15px';
-                item.style.display = 'flex';
                 item.style.justifyContent = 'space-between';
-                item.style.alignItems = 'center';
 
                 const btnContainer = document.createElement('div');
                 btnContainer.className = 'music-fav-btn';
                 btnContainer.dataset.id = songId;
                 
-                // 絶対に行を膨らませないためのネガティブマージンとline-height:1
+                // 行を膨らませないためのネガティブマージン
                 btnContainer.style.cssText = `padding: 8px 12px; margin: -8px -5px -8px auto; color: ${heartColor}; font-size: 1.2rem; z-index: 100; cursor: pointer; line-height: 1;`;
                 btnContainer.innerText = heart;
                 
