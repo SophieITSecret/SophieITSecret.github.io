@@ -1,6 +1,6 @@
 /**
  * favorite.js — ソフィーのノート ＆ じゃんけんゲーム ＆ お知らせ
- * ★ 音楽ID(コード)抽出バグ完全修正・行間0.4em適用版
+ * ★ 音楽コード消失バグ完全修正・Claude氏連携版
  */
 
 import { setListView, clean } from './utils.js';
@@ -193,13 +193,6 @@ export async function openTecho(folder = null) {
         if (categories['S'].length === 0) {
             h += `<div style="padding:40px 20px; color:#888; text-align:center;">まだ曲が記録されていません</div>`;
         } else {
-            let mData = [];
-            for (let key in nav) {
-                if (Array.isArray(nav[key]) && nav[key].length > 0 && ("コード" in nav[key][0] || "タイトル" in nav[key][0])) {
-                    mData = nav[key]; break;
-                }
-            }
-
             categories['S'].forEach(id => {
                 let displayTitle = id;
                 if (id.startsWith('S-UNK-')) {
@@ -207,13 +200,17 @@ export async function openTecho(folder = null) {
                 } else {
                     const numStr = id.replace(/[^0-9]/g, '');
                     displayTitle = `曲ID: ${numStr}`;
-                    if (mData.length > 0) {
-                        const songRecord = mData.find(d => {
-                            const rawCode = String(d["コード"] || "").replace(/[^0-9]/g, '');
+                    
+                    // ★ Claude氏直伝：jDataから直接抽出
+                    if (nav.jData && nav.jData.length > 0) {
+                        const songRecord = nav.jData.find(d => {
+                            const rawCode = String(d.code || "").replace(/[^0-9]/g, '');
                             return rawCode === numStr;
                         });
-                        if (songRecord && songRecord["タイトル"]) {
-                            displayTitle = songRecord["タイトル"];
+                        if (songRecord) {
+                            const title  = songRecord.ti || "";
+                            const artist = songRecord.a  || "";
+                            if (title) displayTitle = artist ? `${artist}／${title}` : title;
                         }
                     }
                 }
@@ -267,7 +264,7 @@ function setupDelegation() {
     }
 }
 
-// --- 🎵 音楽ページパッチ（ID完全抽出・行間ルール） ---
+// --- 🎵 音楽ページパッチ ---
 export function initMusicPatch() {
     setupDelegation();
 
@@ -275,12 +272,8 @@ export function initMusicPatch() {
         const lv = document.getElementById('list-view');
         if (!lv) return;
 
-        let mData = [];
-        for (let key in nav) {
-            if (Array.isArray(nav[key]) && nav[key].length > 0 && ("コード" in nav[key][0] || "タイトル" in nav[key][0])) {
-                mData = nav[key]; break;
-            }
-        }
+        // ★ Claude氏直伝：jDataを直接使う
+        const mData = nav.jData || [];
 
         const labels = lv.querySelectorAll('.label');
         labels.forEach(label => {
@@ -295,7 +288,6 @@ export function initMusicPatch() {
 
         const items = lv.querySelectorAll('.item');
         items.forEach(item => {
-            // ★ 行間の黄金比（0.4em 15px）をすべてのリストアイテムに適用
             if (!item.dataset.spacingPatched) {
                 item.dataset.spacingPatched = "true";
                 item.style.padding = '0.4em 15px';
@@ -307,21 +299,25 @@ export function initMusicPatch() {
             if (item.innerHTML.includes('🎵') && !item.dataset.favPatched) {
                 item.dataset.favPatched = "true";
                 
-                // ★ 曲の「タイトル」が画面のテキストに含まれているか（部分一致）で検索する無敵パイプ
+                // ★ Claude氏直伝：ti (タイトル) と code (コード) での最強抽出
                 let songId = null;
                 if (mData.length > 0) {
-                    // 長いタイトルから順に探す（誤爆を防ぐため）
-                    const sortedData = [...mData].sort((a, b) => (b["タイトル"] || "").length - (a["タイトル"] || "").length);
+                    const sortedData = [...mData].sort((a, b) => (b.ti || "").length - (a.ti || "").length);
                     const t = sortedData.find(d => {
-                        const title = d["タイトル"] || "";
+                        const title = d.ti || "";
                         return title && item.innerText.includes(title);
                     });
-                    if (t && t["コード"]) {
-                        songId = t["コード"];
+                    if (t && t.code) {
+                        songId = t.code;
                     }
                 }
 
-                // 見つかったら S-XXXX 形式へ。見つからなければ重複しないように乱数をつける
+                if (!songId) {
+                    let attrId = item.dataset.id || item.dataset.code || item.id || item.getAttribute('onclick') || "";
+                    let m = attrId.match(/(\d+)/);
+                    if (m) songId = m[1];
+                }
+
                 if (songId) {
                     const numStr = String(songId).replace(/[^0-9]/g, '');
                     if (numStr) {
