@@ -1,6 +1,6 @@
 /**
  * Bar Sophie v22.0 — app_m.js
- * ★ トグル機能・画面描画・お知らせ機能 完全復元版
+ * ★ デザインルールv22.0 準拠・トグル・検索コンソール改修版
  */
 
 import * as media    from './media.js';
@@ -165,7 +165,7 @@ function showRootMenu() {
             noticeBtn.onclick = () => {
                 import('./favorite.js').then(f => {
                     f.openNotice();
-                    renderConsole('standard'); 
+                    renderConsole('standard');
                 }).catch(e => alert("準備中です"));
             };
             nm.appendChild(noticeBtn);
@@ -205,9 +205,15 @@ function renderConsole(mode) {
     if (mode === 'screening') {
         const grid = document.querySelector('.btn-grid');
         if (!grid) return;
-        grid.innerHTML = `<button class="c-btn" id="c-clr" style="background:#444;">クリア</button><button class="c-btn" id="c-ex" style="background:#8e44ad; color:#fff; flex:2;">検索実行</button>`;
-        document.getElementById('c-clr').onclick = liquor.clearScr;
-        document.getElementById('c-ex').onclick  = liquor.execScr;
+        // ★ スクリーニングコンソール改修：戻る・リセット(薄い青)・検索実行
+        grid.innerHTML = `
+            <button class="c-btn" id="c-back" style="background:#444; color:#fff; flex:1; font-size:0.95rem;">戻る</button>
+            <button class="c-btn" id="c-clr"  style="background:#2980b9; color:#fff; flex:1; font-size:0.95rem;">リセット</button>
+            <button class="c-btn" id="c-ex"   style="background:#8e44ad; color:#fff; flex:2; font-size:0.95rem;">検索実行</button>`;
+        
+        document.getElementById('c-back').onclick = liquor.openLiquorPortal;
+        document.getElementById('c-clr').onclick  = liquor.clearScr;
+        document.getElementById('c-ex').onclick   = liquor.execScr;
 
     } else if (mode === 'result') {
         const grid = document.querySelector('.btn-grid');
@@ -244,16 +250,18 @@ function renderConsole(mode) {
                 <button class="c-btn" id="ctrl-play" style="flex:1.0; font-size:1.2rem;">▶</button>
                 <button class="c-btn" id="btn-next" style="flex:1;">⏭</button>`;
         } else if (nav.state === "shop" || nav.state === "notice") {
+            // ★ ショップ画面：戻るボタン、隣はノートボタンを維持
             grid.innerHTML = `
-                <button class="c-btn" id="btn-shop" style="${shopBaseStyle} font-size:0.8rem; font-weight:bold;">カウンターへ</button>
-                <button class="c-btn" id="btn-expand" style="flex:1.0; font-size:1.2rem;">▼</button>
+                <button class="c-btn" id="btn-shop" style="${shopBaseStyle} font-size:0.95rem; font-weight:bold;">戻る</button>
+                <button class="c-btn" id="btn-techo" style="background:rgba(34,34,34,0.8); color:#fff; border:1px solid #777; font-size:1.5rem; padding:0; flex:1.0; display:flex; justify-content:center; align-items:center;">📖</button>
                 <button class="c-btn" id="ctrl-pause" style="flex:1;">⏹️</button>
                 <button class="c-btn" id="ctrl-play" style="flex:1.0; font-size:1.2rem;">▶</button>
                 <button class="c-btn" id="btn-next" style="flex:1;">⏭</button>`;
         } else if (nav.state === "techo") {
+            // ★ 手帳画面：SHOPボタンを維持、戻るボタンはノートの背景色(#111)に
             grid.innerHTML = `
-                <button class="c-btn" id="btn-expand" style="flex:1.0; font-size:1.2rem;">▼</button>
-                <button class="c-btn" id="btn-techo" style="background:#111; color:#fff; border:1px solid #777; font-size:0.8rem; font-weight:bold; padding:0; flex:1.0; display:flex; justify-content:center; align-items:center; box-shadow:inset 0 0 10px #000;">カウンターへ</button>
+                <button class="c-btn" id="btn-shop" style="${shopBaseStyle} line-height:1.1; font-size:0.75rem; font-weight:bold;"><span>ソフィー</span><span>おすすめ</span><span style="font-size:0.75rem; letter-spacing:1px;">SHOP</span></button>
+                <button class="c-btn" id="btn-techo" style="background:#111; color:#fff; border:1px solid #777; font-size:0.95rem; font-weight:bold; padding:0; flex:1.0; display:flex; justify-content:center; align-items:center; box-shadow:inset 0 0 10px #000;">戻る</button>
                 <button class="c-btn" id="ctrl-pause" style="flex:1;">⏹️</button>
                 <button class="c-btn" id="ctrl-play" style="flex:1.0; font-size:1.2rem;">▶</button>
                 <button class="c-btn" id="btn-next" style="flex:1;">⏭</button>`;
@@ -290,7 +298,7 @@ function renderConsole(mode) {
                 } else {
                     import('./favorite.js').then(f => {
                         nav.updateNav("techo");
-                        f.openTecho();
+                        f.openTecho(null); // トップフォルダ階層から開く
                         renderConsole('standard');
                     });
                 }

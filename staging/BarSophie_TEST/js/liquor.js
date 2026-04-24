@@ -1,5 +1,6 @@
 /**
  * liquor.js — お酒データベース・スクリーニング・鑑定カード
+ * ★ デザインルール順拠・検索キーワード最適化・警告排除版
  */
 
 import * as nav from './navigation.js';
@@ -150,7 +151,6 @@ export function openLiquorPortal() {
         if (!numStr) return;
         const targetId = 'L-' + numStr.padStart(4, '0');
 
-        // ★Claude氏の無敵照合ロジック（ダイレクト検索用）
         const t = nav.liquorData.find(d => {
             const noKey = Object.keys(d).find(k => k.replace(/\s/g,'').toUpperCase().startsWith('NO') || k === '番号');
             const rawNo = noKey ? String(d[noKey]) : "";
@@ -323,7 +323,7 @@ function saveForm() {
     scrState.tags = Array.from(document.querySelectorAll('.scr-tag-btn.selected')).map(el => el.dataset.tag);
 }
 
-function executeScr() {
+export function executeScr() {
     saveForm();
     const pMinN = scrState.pMin ? parseInt(scrState.pMin) : 0;
     const pMaxN = scrState.pMax ? parseInt(scrState.pMax) : Infinity;
@@ -441,9 +441,13 @@ function showCard(gIdx, list, fromState) {
     const makerRaw  = d["製造元と創業年"] || "";
     const makerName = makerRaw.replace(/[（(\/].*/g, '').trim();
     const region    = d["産地"] || "";
-    const gKw       = encodeURIComponent(makerName && region ? `${makerName} ${region}` : makerName || region);
-    const amzKw  = encodeURIComponent(clean(d["銘柄名"]) + " " + d["大分類"]);
+    
+    // ★ Amazon検索キーワード：中分類 + 銘柄名
+    const amzKw  = encodeURIComponent((d["中分類"] || "") + " " + clean(d["銘柄名"]));
     const amzUrl = `https://www.amazon.co.jp/s?k=${amzKw}&tag=itsophie-22`;
+    
+    // ★ Google検索キーワード：産地 + メーカー名
+    const gKw = encodeURIComponent((region ? region + " " : "") + makerName);
 
     h += `<div class="lq-basic-info">
         <div><span style="color:#1a73e8">▶</span> ${d["大分類"]}&nbsp;&nbsp;<span style="color:#e74c3c">▶</span> ${d["中分類"]}</div>
@@ -452,13 +456,11 @@ function showCard(gIdx, list, fromState) {
     if (makerRaw && makerRaw !== "-") {
         h += `<div style="margin-top:2px;"><span style="color:#888; font-size:0.85rem;">製造:</span> <span style="font-size:0.85rem; color:#ccc;">${makerRaw}</span></div>`;
         h += `<div class="card-link-row">`;
+        
+        // ★ 警告アクションを排除し、シンプルな別タブリンク(target="_blank")に統一
         if (d["公式URL"] && d["公式URL"] !== "-") {
             const directUrl = d["公式URL"];
-            const transUrl  = `https://translate.google.com/translate?sl=auto&tl=ja&u=${encodeURIComponent(d["公式URL"])}`;
-            h += `<a href="${directUrl}" target="_blank" class="lq-btn-small"
-                     ontouchstart="this._t=setTimeout(()=>{window.open('${transUrl}','_blank');this._t=null;},600)"
-                     ontouchend="if(this._t){clearTimeout(this._t);this._t=null;}"
-                     ontouchmove="if(this._t){clearTimeout(this._t);this._t=null;}">🔗 メーカーサイト</a>`;
+            h += `<a href="${directUrl}" target="_blank" class="lq-btn-small">🔗 メーカーサイト</a>`;
         }
         if (gKw) {
             const gUrl = `https://www.google.com/search?q=${gKw}`;
@@ -511,7 +513,6 @@ function showCard(gIdx, list, fromState) {
     });
 }
 
-// ★ Claude氏の完全照合ロジックを搭載（ノートからカードへ飛ぶための関数）
 export function showCardById(idStr) {
     const numStr = String(idStr).replace(/[^0-9]/g, '');
     const t = nav.liquorData.find(d => {

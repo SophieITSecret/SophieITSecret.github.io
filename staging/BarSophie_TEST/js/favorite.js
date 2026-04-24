@@ -1,6 +1,6 @@
 /**
  * favorite.js — ソフィーのノート ＆ じゃんけんゲーム ＆ お知らせ
- * ★ Claude氏監修：完全無敵のID照合・音楽記号(🎵)対応版
+ * ★ ノート階層化・デザインルールv22.0（音楽余白・グレーハート）完全準拠版
  */
 
 import { setListView, clean } from './utils.js';
@@ -124,69 +124,87 @@ export async function openNotice() {
     document.getElementById('btn-reset-janken').onclick = resetJankenTest;
 }
 
-export async function openTecho() {
+// ★ 階層化（フォルダ分け）実装
+export async function openTecho(folder = null) {
     nav.updateNav("techo");
     const data = getTechoData();
-    const lq = await import('./liquor.js').catch(e => { console.error(e); return null; });
+    const lq = await import('./liquor.js').catch(e => { return null; });
     
     let h = `<div class="label" style="background:#333; display:flex; justify-content:space-between; align-items:center;">
                 <span>📖 ソフィーのノート</span>
              </div>`;
-    
-    if (data.favorites.length === 0 && data.gameLog.length === 0) {
-        h += `<div style="padding:40px 20px; color:#888; text-align:center; line-height:1.6;">まだ白紙のページですね...<br><br>お酒や音楽の画面で「♡」を押して<br>あなただけの記録を。</div>`;
-    } else {
-        const categories = {
-            'L': { title: '🍷 キープしたお酒', list: [] },
-            'S': { title: '🎵 お気に入りの曲', list: [] },
-            'N': { title: '📝 備忘録ノート', list: [] },
-            'O': { title: '🔖 その他', list: [] }
-        };
 
-        data.favorites.forEach(id => {
-            const type = id.charAt(0);
-            if (categories[type]) categories[type].list.push(id);
-            else categories['O'].list.push(id); 
-        });
+    // トップ階層（フォルダ一覧）
+    if (folder === null) {
+        h += `<div style="padding:20px;">
+                <button class="act-btn" id="f-lq" style="width:100%; background:var(--talk); margin-bottom:15px;">🍷 好きなお酒</button>
+                <button class="act-btn" id="f-mu" style="width:100%; background:var(--green); margin-bottom:15px;">🎵 好きな歌</button>
+                <button class="act-btn" id="f-gm" style="width:100%; background:#e67e22; margin-bottom:15px;">🎲 ソフィーとの記録</button>
+              </div>`;
+        setListView(h, false);
+        
+        document.getElementById('f-lq').onclick = () => openTecho('L');
+        document.getElementById('f-mu').onclick = () => openTecho('S');
+        document.getElementById('f-gm').onclick = () => openTecho('G');
+        return;
+    }
 
-        for (const key in categories) {
-            const cat = categories[key];
-            if (cat.list.length > 0) {
-                h += `<div class="scr-title" style="margin-top:15px; color:var(--blue); padding-left:10px;">${cat.title}</div>`;
-                cat.list.forEach(id => {
-                    if (key === 'L' && lq) {
-                        const numStr = id.replace(/[^0-9]/g, '');
-                        if (!numStr) {
-                            h += `<div class="item fav-item" data-id="${id}" style="color:#888; border-bottom:1px solid #222; font-size:0.8rem; cursor:pointer;">⚠️ 古いデータです。タップして削除してください。</div>`;
-                            return;
-                        }
-                        
-                        // ★Claude氏の無敵照合ロジック（BOM・空白無視）
-                        const lqData = nav.liquorData.find(d => {
-                            const noKey = Object.keys(d).find(k => k.replace(/\s/g,'').toUpperCase().startsWith('NO') || k === '番号');
-                            const rawNo = noKey ? String(d[noKey]) : "";
-                            const rNum = rawNo.replace(/[^0-9]/g, '');
-                            return rNum !== "" && parseInt(rNum, 10) === parseInt(numStr, 10);
-                        });
-                        
-                        if (lqData) {
-                            const badge = lq.priceBadge(lqData["市販価格"], lqData["大分類"]);
-                            h += `<div class="item fav-item lq-fav" data-id="${id}" style="color:#eee; border-bottom:1px solid #222; display:flex; align-items:center; gap:4px; cursor:pointer;">
-                                    ${badge}<span style="overflow:hidden; text-overflow:ellipsis;">${clean(lqData['銘柄名'])}</span>
-                                  </div>`;
-                        } else {
-                            h += `<div class="item fav-item lq-fav" data-id="${id}" style="color:#888; border-bottom:1px solid #222; font-size:0.8rem; cursor:pointer;">⚠️ 見つかりません。タップして削除してください。</div>`;
-                        }
-                    } else {
-                        h += `<div class="item fav-item" style="color:#eee; border-bottom:1px solid #222;">🔖 ${id}</div>`;
+    // フォルダ内の戻るバー
+    h += `<div class="label" style="background:#444; color:#fff; display:flex; align-items:center; cursor:pointer;" id="f-back">
+            <span style="padding:0 10px; font-size:0.85rem;">◀ フォルダ一覧へ戻る</span>
+          </div>`;
+
+    const categories = { 'L': [], 'S': [], 'O': [] };
+    data.favorites.forEach(id => {
+        const type = id.charAt(0);
+        if (categories[type]) categories[type].push(id);
+        else categories['O'].push(id); 
+    });
+
+    if (folder === 'L') {
+        h += `<div class="scr-title" style="margin-top:15px; color:var(--talk); padding-left:10px;">🍷 好きなお酒</div>`;
+        if (categories['L'].length === 0) {
+            h += `<div style="padding:40px 20px; color:#888; text-align:center;">まだお酒が記録されていません</div>`;
+        } else {
+            categories['L'].forEach(id => {
+                if (lq) {
+                    const numStr = id.replace(/[^0-9]/g, '');
+                    if (!numStr) {
+                        h += `<div class="item fav-item" data-id="${id}" style="color:#888; border-bottom:1px solid #222; font-size:0.8rem; cursor:pointer;">⚠️ 古いデータです。タップして削除してください。</div>`;
+                        return;
                     }
-                });
-            }
+                    const lqData = nav.liquorData.find(d => {
+                        const noKey = Object.keys(d).find(k => k.replace(/\s/g,'').toUpperCase().startsWith('NO') || k === '番号');
+                        const rawNo = noKey ? String(d[noKey]) : "";
+                        const rNum = rawNo.replace(/[^0-9]/g, '');
+                        return rNum !== "" && parseInt(rNum, 10) === parseInt(numStr, 10);
+                    });
+                    if (lqData) {
+                        const badge = lq.priceBadge(lqData["市販価格"], lqData["大分類"]);
+                        h += `<div class="item fav-item lq-fav" data-id="${id}" style="color:#eee; border-bottom:1px solid #222; display:flex; align-items:center; gap:4px; cursor:pointer;">
+                                ${badge}<span style="overflow:hidden; text-overflow:ellipsis;">${clean(lqData['銘柄名'])}</span>
+                              </div>`;
+                    } else {
+                        h += `<div class="item fav-item lq-fav" data-id="${id}" style="color:#888; border-bottom:1px solid #222; font-size:0.8rem; cursor:pointer;">⚠️ 見つかりません。タップして削除してください。</div>`;
+                    }
+                }
+            });
         }
-
-        if (data.gameLog.length > 0) {
-            h += `<div class="scr-title" style="margin-top:25px; color:var(--accent); padding-left:10px;">🎲 ソフィーとの思い出</div>`;
-            data.gameLog.slice(0, 10).forEach(log => {
+    } else if (folder === 'S') {
+        h += `<div class="scr-title" style="margin-top:15px; color:var(--green); padding-left:10px;">🎵 好きな歌</div>`;
+        if (categories['S'].length === 0) {
+            h += `<div style="padding:40px 20px; color:#888; text-align:center;">まだ曲が記録されていません</div>`;
+        } else {
+            categories['S'].forEach(id => {
+                h += `<div class="item fav-item" data-id="${id}" style="color:#eee; border-bottom:1px solid #222; cursor:pointer;">🔖 ${id} <span style="font-size:0.75rem; color:#888; float:right;">(タップで削除)</span></div>`;
+            });
+        }
+    } else if (folder === 'G') {
+        h += `<div class="scr-title" style="margin-top:15px; color:#e67e22; padding-left:10px;">🎲 ソフィーとの思い出</div>`;
+        if (data.gameLog.length === 0) {
+            h += `<div style="padding:40px 20px; color:#888; text-align:center;">まだ勝負の記録がありません</div>`;
+        } else {
+            data.gameLog.slice(0, 30).forEach(log => {
                 h += `<div style="font-size:0.75rem; color:#888; padding:6px 15px; border-bottom:1px dashed #222;">${log}</div>`;
             });
         }
@@ -194,11 +212,13 @@ export async function openTecho() {
 
     setListView(h, false);
 
+    document.getElementById('f-back').onclick = () => openTecho(null);
+
     document.querySelectorAll('.fav-item').forEach(el => {
         el.onclick = () => {
-            if (el.innerText.includes('⚠️')) {
+            if (el.innerText.includes('⚠️') || folder === 'S') {
                 toggleFavorite(el.dataset.id);
-                openTecho(); 
+                openTecho(folder); 
             } else if (el.classList.contains('lq-fav') && lq) {
                 lq.showCardById(el.dataset.id);
             }
@@ -206,7 +226,6 @@ export async function openTecho() {
     });
 }
 
-// 絶対イベント委譲
 let isEventDelegated = false;
 function setupDelegation() {
     if (isEventDelegated) return;
@@ -220,29 +239,17 @@ function setupDelegation() {
                 e.stopImmediatePropagation();
                 const id = musicBtn.getAttribute('data-id');
                 const added = toggleFavorite(id);
+                // ★ 未登録はグレー、登録済はピンク（#ff69b4）
+                musicBtn.style.color = added ? '#ff69b4' : '#777';
                 musicBtn.innerText = added ? '❤️' : '♡';
                 return;
-            }
-
-            if (nav.state === 'techo') {
-                const favItem = e.target.closest('.fav-item');
-                if (favItem) {
-                    if (favItem.innerText.includes('⚠️')) {
-                        toggleFavorite(favItem.dataset.id);
-                        openTecho();
-                    } else if (favItem.classList.contains('lq-fav')) {
-                        import('./liquor.js').then(lq => lq.showCardById(favItem.dataset.id));
-                        const appConsole = document.querySelector('.btn-grid');
-                        if (appConsole) appConsole.innerHTML = ''; 
-                    }
-                }
             }
         }, true);
         isEventDelegated = true;
     }
 }
 
-// --- 🎵 音楽ページパッチ（Claude氏指摘の「🎵」対応版） ---
+// --- 🎵 音楽ページパッチ（デザインルール第7項 厳密適用） ---
 export function initMusicPatch() {
     setupDelegation();
 
@@ -252,7 +259,6 @@ export function initMusicPatch() {
 
         const items = lv.querySelectorAll('.item');
         items.forEach(item => {
-            // ★ Claude氏の指摘通り、「🎵」を探す！
             if (item.innerHTML.includes('🎵') && !item.dataset.favPatched) {
                 item.dataset.favPatched = "true";
                 
@@ -262,8 +268,8 @@ export function initMusicPatch() {
 
                 const isFav = isFavorite(songId);
                 const heart = isFav ? '❤️' : '♡';
+                const heartColor = isFav ? '#ff69b4' : '#777'; // 登録はピンク、未登録はグレー
 
-                // 元の「🎵」を消去
                 Array.from(item.childNodes).forEach(node => {
                     if (node.nodeType === Node.TEXT_NODE && node.nodeValue.includes('🎵')) {
                         node.nodeValue = node.nodeValue.replace(/🎵/g, '');
@@ -278,7 +284,9 @@ export function initMusicPatch() {
                 const btnContainer = document.createElement('div');
                 btnContainer.className = 'music-fav-btn';
                 btnContainer.dataset.id = songId;
-                btnContainer.style.cssText = 'padding: 15px; margin: -15px 0 -15px auto; color: var(--pink); font-size: 1.4rem; z-index: 100; cursor: pointer;';
+                
+                // ★ デザインルール第7項の厳格適用（行を膨らませない余白指定）
+                btnContainer.style.cssText = `padding: 8px 12px; margin: -8px 0 -8px auto; color: ${heartColor}; font-size: 1.4rem; z-index: 100; cursor: pointer;`;
                 btnContainer.innerText = heart;
                 
                 const blockEvent = (e) => {
@@ -293,6 +301,7 @@ export function initMusicPatch() {
                         if (evt === 'click' || evt === 'touchend') {
                             const id = btnContainer.getAttribute('data-id');
                             const added = toggleFavorite(id);
+                            btnContainer.style.color = added ? '#ff69b4' : '#777';
                             btnContainer.innerText = added ? '❤️' : '♡';
                         }
                     });
@@ -316,7 +325,7 @@ export function initMusicPatch() {
                 btn.style.fontSize = '1.2rem';
                 btn.onclick = (e) => { 
                     e.stopPropagation(); 
-                    openTecho(); 
+                    openTecho(null); 
                     const app = document.getElementById('btn-techo');
                     if(app) app.click(); 
                 };
