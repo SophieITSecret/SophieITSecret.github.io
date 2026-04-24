@@ -1,6 +1,6 @@
 /**
  * favorite.js — ソフィーのノート ＆ じゃんけんゲーム ＆ お知らせ
- * ★ Claude氏指示対応版（曲名完全マッチ・ハート二重防止）
+ * ★ ハート二重化（お節介監視）防止・準備中アラート撤去版
  */
 
 import { setListView, clean } from './utils.js';
@@ -212,7 +212,6 @@ export async function openTecho(folder = null) {
                 let displayTitle = `曲ID: ${numStr}`;
                 
                 if (finalData.length > 0) {
-                    // ★ 修正1：parseInt を使った完全な比較
                     const songRecord = finalData.find(d => {
                         const rawCode = parseInt(String(d.code || "").replace(/[^0-9]/g, ''), 10);
                         return rawCode === parseInt(numStr, 10);
@@ -224,8 +223,9 @@ export async function openTecho(folder = null) {
                     }
                 }
 
+                // ★ 修正ポイント：data-fav-patched="true" を追加して監視プログラムのお節介をブロック！
                 h += `
-                <div class="item fav-item music-row" data-id="${id}" style="border-bottom:1px solid #222; display:flex; justify-content:space-between; align-items:center; padding:0.4em 15px;">
+                <div class="item fav-item music-row" data-id="${id}" data-fav-patched="true" style="border-bottom:1px solid #222; display:flex; justify-content:space-between; align-items:center; padding:0.4em 15px;">
                     <div class="fav-music-play" style="flex:1; color:#eee; cursor:pointer; line-height:1.2; padding-right:10px; font-size:0.95rem;">
                         🎵 ${clean(displayTitle)}
                     </div>
@@ -248,8 +248,6 @@ export async function openTecho(folder = null) {
 
     setListView(h, false);
 
-    // ★ 修正3：f-back の onclick を削除しました
-
     document.querySelectorAll('.fav-item').forEach(el => {
         if (el.classList.contains('music-row')) return;
 
@@ -268,16 +266,19 @@ export async function openTecho(folder = null) {
         const playBtn = row.querySelector('.fav-music-play');
         const delBtn = row.querySelector('.fav-music-del');
         
+        // ゴミ箱（❤️）を押したら削除して再描画
         delBtn.onclick = (e) => {
             e.stopPropagation();
             toggleFavorite(id);
             openTecho(folder); 
         };
         
+        // 曲名を押したら（将来的に）再生
         playBtn.onclick = (e) => {
             e.stopPropagation();
-            const songName = playBtn.innerText.replace('🎵', '').trim();
-            alert(`【準備中】\n「${songName}」を再生します。\n※再生機能は music.js との連携コードが必要です。`);
+            // アラートは撤去しました。
+            // 将来 music.js に playSongById(id) 等の機能ができた時に、ここで呼び出します。
+            // import('./music.js').then(m => { if(m.playSongById) m.playSongById(id); });
         };
     });
 }
@@ -347,7 +348,6 @@ export function initMusicPatch() {
                 item.style.alignItems = 'center';
             }
 
-            // ★ 修正2：二重追加防止
             if (item.querySelector('.music-fav-btn')) return;
 
             if (item.innerHTML.includes('🎵') && !item.dataset.favPatched) {
