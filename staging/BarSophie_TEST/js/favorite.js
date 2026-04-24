@@ -1,11 +1,17 @@
 /**
  * favorite.js — ソフィーのノート ＆ じゃんけんゲーム ＆ お知らせ
+ * ★ データ保存パイプ修復・ノート階層コントロール・デザインルール準拠
  */
 
 import { setListView, clean } from './utils.js';
 import * as nav from './navigation.js';
 
 const STORAGE_KEY = 'bar_sophie_techo';
+let currentFolder = null; // 現在のノート階層を記録する変数
+
+export function getCurrentFolder() {
+    return currentFolder;
+}
 
 function getTechoData() {
     const data = localStorage.getItem(STORAGE_KEY);
@@ -125,6 +131,7 @@ export async function openNotice() {
 
 export async function openTecho(folder = null) {
     nav.updateNav("techo");
+    currentFolder = folder; // 現在の階層を記録
     const data = getTechoData();
     const lq = await import('./liquor.js').catch(e => { return null; });
     
@@ -139,16 +146,11 @@ export async function openTecho(folder = null) {
                 <button class="act-btn" id="f-gm" style="width:100%; background:#e67e22; margin-bottom:15px;">🎲 ソフィーとの記録</button>
               </div>`;
         setListView(h, false);
-        
         document.getElementById('f-lq').onclick = () => openTecho('L');
         document.getElementById('f-mu').onclick = () => openTecho('S');
         document.getElementById('f-gm').onclick = () => openTecho('G');
         return;
     }
-
-    h += `<div class="label" style="background:#444; color:#fff; display:flex; align-items:center; cursor:pointer;" id="f-back">
-            <span style="padding:0 10px; font-size:0.85rem;">◀ フォルダ一覧へ戻る</span>
-          </div>`;
 
     const categories = { 'L': [], 'S': [], 'O': [] };
     data.favorites.forEach(id => {
@@ -192,9 +194,8 @@ export async function openTecho(folder = null) {
             h += `<div style="padding:40px 20px; color:#888; text-align:center;">まだ曲が記録されていません</div>`;
         } else {
             categories['S'].forEach(id => {
-                // S-0001 のようなプレフィックスを外して表示
                 const displayId = id.startsWith('S-') ? id.replace('S-', '') : id;
-                h += `<div class="item fav-item" data-id="${id}" style="color:#eee; border-bottom:1px solid #222; cursor:pointer;">🎵 ${displayId} <span style="font-size:0.75rem; color:#888; float:right;">(タップで削除)</span></div>`;
+                h += `<div class="item fav-item" data-id="${id}" style="color:#eee; border-bottom:1px solid #222; cursor:pointer; padding:0.4em 15px;">🎵 ${displayId} <span style="font-size:0.75rem; color:#888; float:right;">(タップで削除)</span></div>`;
             });
         }
     } else if (folder === 'G') {
@@ -209,8 +210,6 @@ export async function openTecho(folder = null) {
     }
 
     setListView(h, false);
-
-    document.getElementById('f-back').onclick = () => openTecho(null);
 
     document.querySelectorAll('.fav-item').forEach(el => {
         el.onclick = () => {
@@ -246,13 +245,25 @@ function setupDelegation() {
     }
 }
 
-// --- 🎵 音楽ページパッチ ---
+// --- 🎵 音楽ページパッチ（ID変換機能・行間ルール・ステルス化） ---
 export function initMusicPatch() {
     setupDelegation();
 
     const observer = new MutationObserver(() => {
         const lv = document.getElementById('list-view');
         if (!lv) return;
+
+        // ★ 歌手ラベルの高さを28pxに厳密指定
+        const labels = lv.querySelectorAll('.label');
+        labels.forEach(label => {
+            if (!label.dataset.heightPatched) {
+                label.dataset.heightPatched = "true";
+                label.style.height = '28px';
+                label.style.padding = '0 10px';
+                label.style.display = 'flex';
+                label.style.alignItems = 'center';
+            }
+        });
 
         const items = lv.querySelectorAll('.item');
         items.forEach(item => {
@@ -261,18 +272,21 @@ export function initMusicPatch() {
                 
                 let rawText = item.innerText.replace(/🎵/g, '').trim();
                 
-                // ★ 自動アシスト：ただの数字なら S-0001 形式に強制変換して扱う！
+                // ★ 音楽IDの自動抽出・保管（必ず S-XXXX の形にする）
                 let songId = rawText;
-                if (/^\d+$/.test(rawText)) {
-                    songId = 'S-' + rawText.padStart(4, '0');
+                const sMatch = rawText.match(/S-\d{4}/);
+                if (sMatch) {
+                    songId = sMatch[0];
                 } else {
-                    const match = rawText.match(/S-\d{4}/);
-                    if (match) songId = match[0];
+                    const numMatch = rawText.match(/\d+/);
+                    if (numMatch) {
+                        songId = 'S-' + numMatch[0].padStart(4, '0');
+                    }
                 }
 
                 const isFav = isFavorite(songId);
                 const heart = isFav ? '❤️' : '♡';
-                const heartColor = isFav ? '#ff69b4' : '#555'; // 未登録は仕切り線と同じ #555
+                const heartColor = isFav ? '#ff69b4' : '#555'; // 未登録は完全に背景に溶け込ませるグレー
 
                 Array.from(item.childNodes).forEach(node => {
                     if (node.nodeType === Node.TEXT_NODE && node.nodeValue.includes('🎵')) {
@@ -280,8 +294,8 @@ export function initMusicPatch() {
                     }
                 });
 
-                // ★ 行間ルール（0.3em）を最優先で適用し、高さを膨らませない
-                item.style.padding = '0.3em 15px';
+                // ★ 行間ルール（0.4em 15px）を最優先で適用
+                item.style.padding = '0.4em 15px';
                 item.style.display = 'flex';
                 item.style.justifyContent = 'space-between';
                 item.style.alignItems = 'center';
@@ -294,47 +308,7 @@ export function initMusicPatch() {
                 btnContainer.style.cssText = `padding: 8px 12px; margin: -8px -5px -8px auto; color: ${heartColor}; font-size: 1.2rem; z-index: 100; cursor: pointer; line-height: 1;`;
                 btnContainer.innerText = heart;
                 
-                const blockEvent = (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    e.stopImmediatePropagation();
-                };
-                
-                ['pointerdown', 'mousedown', 'touchstart', 'touchend', 'click'].forEach(evt => {
-                    btnContainer.addEventListener(evt, (e) => {
-                        blockEvent(e);
-                        if (evt === 'click' || evt === 'touchend') {
-                            const id = btnContainer.getAttribute('data-id');
-                            const added = toggleFavorite(id);
-                            btnContainer.style.color = added ? '#ff69b4' : '#555';
-                            btnContainer.innerText = added ? '❤️' : '♡';
-                        }
-                    });
-                });
-
                 item.appendChild(btnContainer);
-            }
-        });
-        
-        const labels = lv.querySelectorAll('.label');
-        labels.forEach(label => {
-            if (!label.dataset.patched && label.innerText.includes('◀') && label.id !== 'lbl-back-res' && label.id !== 'lbl-back-scr') {
-                label.dataset.patched = "true";
-                label.style.display = 'flex';
-                label.style.justifyContent = 'space-between';
-                label.style.alignItems = 'center';
-                const btn = document.createElement('span');
-                btn.innerText = '📖';
-                btn.style.cursor = 'pointer';
-                btn.style.padding = '0 10px';
-                btn.style.fontSize = '1.2rem';
-                btn.onclick = (e) => { 
-                    e.stopPropagation(); 
-                    openTecho(null); 
-                    const app = document.getElementById('btn-techo');
-                    if(app) app.click(); 
-                };
-                label.appendChild(btn);
             }
         });
     });

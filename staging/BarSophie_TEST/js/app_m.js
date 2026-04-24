@@ -1,5 +1,6 @@
 /**
  * Bar Sophie v22.0 — app_m.js
+ * ★ デザインルール完全準拠・コンソールUI/ボタン共通化版
  */
 
 import * as media    from './media.js';
@@ -84,11 +85,6 @@ function setup() {
     document.getElementById('btn-talk').onclick   = music.openTalk;
     document.getElementById('btn-liquor').onclick = liquor.openLiquorPortal;
 
-    document.getElementById('ctrl-play').onclick  = music.playHead;
-    document.getElementById('ctrl-pause').onclick = music.togglePause;
-    document.getElementById('ctrl-back').onclick  = handleBack;
-    document.getElementById('btn-expand').onclick = toggleMonitor;
-
     document.getElementById('sophie-warp').onclick = () => {
         if (nav.state !== "none") {
             showRootMenu();
@@ -150,9 +146,6 @@ function showRootMenu() {
 
     renderConsole('standard');
 
-    const db = document.getElementById('disclaimer-bar');
-    if (db) db.style.display = 'block';
-
     let noticeBtn = document.getElementById('btn-notice');
     if (!noticeBtn) {
         if (nm) {
@@ -179,15 +172,6 @@ function handleBack() {
     showRootMenu();
 }
 
-function toggleMonitor() {
-    if (music.isMusicMode || nav.state === "none") return;
-    const monitor = document.querySelector('.monitor');
-    const btn = document.getElementById('btn-expand');
-    if (!btn) return;
-    monitor.classList.toggle('expanded');
-    btn.innerText = monitor.classList.contains('expanded') ? '▲' : '▼';
-}
-
 function setupNextButton() {
     const btnN = document.getElementById('btn-next');
     if (btnN) {
@@ -201,28 +185,31 @@ function setupNextButton() {
 }
 
 function renderConsole(mode) {
+    // ★免責事項バー（クレジット）はカウンター（HOME）以外では完全非表示にする
+    const db = document.getElementById('disclaimer-bar');
+    if (db) db.style.display = (nav.state === "none") ? 'block' : 'none';
+
+    const grid = document.querySelector('.btn-grid');
+    if (!grid) return;
+
     if (mode === 'screening') {
-        const grid = document.querySelector('.btn-grid');
-        if (!grid) return;
-        // ★ スクリーニング画面：戻る・リセット・検索実行の3ボタン化
         grid.innerHTML = `
-            <button class="c-btn" id="c-back" style="background:#34495e; color:#fff; flex:1; font-size:0.95rem;">戻る</button>
-            <button class="c-btn" id="c-clr"  style="background:#5DADE2; color:#fff; flex:1; font-size:0.95rem; text-shadow:0 0 2px rgba(0,0,0,0.5);">リセット</button>
-            <button class="c-btn" id="c-ex"   style="background:#8e44ad; color:#fff; flex:2; font-size:0.95rem;">検索実行</button>`;
-        
+            <button class="c-btn" id="c-back" style="background:#34495e; color:#fff; flex:1; font-size:0.95rem; font-weight:bold; border:none;">戻る</button>
+            <button class="c-btn" id="c-clr"  style="background:#5DADE2; color:#fff; flex:1; font-size:0.95rem; text-shadow:0 0 2px rgba(0,0,0,0.5); border:none;">リセット</button>
+            <button class="c-btn" id="c-ex"   style="background:#8e44ad; color:#fff; flex:2; font-size:0.95rem; border:none;">検索実行</button>`;
         document.getElementById('c-back').onclick = liquor.openLiquorPortal;
         document.getElementById('c-clr').onclick  = liquor.clearScr;
         document.getElementById('c-ex').onclick   = liquor.execScr;
+        return;
+    }
 
-    } else if (mode === 'result') {
-        const grid = document.querySelector('.btn-grid');
-        if (!grid) return;
-        grid.innerHTML = `<button class="c-btn" id="c-mod" style="background:#8e44ad; color:#fff; font-size:0.85rem;">🔍 検索条件を変更する</button>`;
+    if (mode === 'result') {
+        grid.innerHTML = `<button class="c-btn" id="c-mod" style="background:#8e44ad; color:#fff; font-size:0.85rem; border:none;">🔍 検索条件を変更する</button>`;
         document.getElementById('c-mod').onclick = liquor.openScreeningFromConsole;
+        return;
+    }
 
-    } else if (mode === 'card') {
-        const grid = document.querySelector('.btn-grid');
-        if (!grid) return;
+    if (mode === 'card') {
         grid.innerHTML = `
             <button class="c-btn card-btn" id="c-sophie" style="background:#1a3a4a; color:#00d2ff; font-size:1.1rem; font-weight:bold;">S</button>
             <button class="c-btn card-btn" id="c-scr"    style="background:#5b2d8e; color:#fff; font-size:0.62rem; line-height:1.2;">選択<br>画面</button>
@@ -234,81 +221,74 @@ function renderConsole(mode) {
         document.getElementById('c-list').addEventListener('click', liquor.cardNavToList);
         document.getElementById('c-prev').addEventListener('click', liquor.cardNavPrev);
         document.getElementById('c-next2').addEventListener('click', liquor.cardNavNext);
-
-    } else {
-        const grid = document.querySelector('.btn-grid');
-        if (!grid) return;
-
-        const shopBaseStyle = "background:rgba(255, 228, 225, 0.6); color:#cc294a; border:3px solid #1e90ff; flex-direction:column; justify-content:center; align-items:center; backdrop-filter:blur(2px); padding:0; flex:1.0;";
-
-        if (nav.state === "none") {
-            grid.innerHTML = `
-                <button class="c-btn" id="btn-shop" style="${shopBaseStyle} line-height:1.1; font-size:0.75rem; font-weight:bold;"><span>ソフィー</span><span>おすすめ</span><span style="font-size:0.75rem; letter-spacing:1px;">SHOP</span></button>
-                <button class="c-btn" id="btn-techo" style="background:rgba(34,34,34,0.8); color:#fff; border:1px solid #777; font-size:1.5rem; padding:0; flex:1.0; display:flex; justify-content:center; align-items:center;">📖</button>
-                <button class="c-btn" id="ctrl-pause" style="flex:1;">⏹️</button>
-                <button class="c-btn" id="ctrl-play" style="flex:1.0; font-size:1.2rem;">▶</button>
-                <button class="c-btn" id="btn-next" style="flex:1;">⏭</button>`;
-        } else if (nav.state === "shop" || nav.state === "notice") {
-            grid.innerHTML = `
-                <button class="c-btn" id="btn-shop" style="${shopBaseStyle} font-size:0.95rem; font-weight:bold;">戻る</button>
-                <button class="c-btn" id="btn-techo" style="background:rgba(34,34,34,0.8); color:#fff; border:1px solid #777; font-size:1.5rem; padding:0; flex:1.0; display:flex; justify-content:center; align-items:center;">📖</button>
-                <button class="c-btn" id="ctrl-pause" style="flex:1;">⏹️</button>
-                <button class="c-btn" id="ctrl-play" style="flex:1.0; font-size:1.2rem;">▶</button>
-                <button class="c-btn" id="btn-next" style="flex:1;">⏭</button>`;
-        } else if (nav.state === "techo") {
-            grid.innerHTML = `
-                <button class="c-btn" id="btn-shop" style="${shopBaseStyle} line-height:1.1; font-size:0.75rem; font-weight:bold;"><span>ソフィー</span><span>おすすめ</span><span style="font-size:0.75rem; letter-spacing:1px;">SHOP</span></button>
-                <button class="c-btn" id="btn-techo" style="background:#111; color:#fff; border:1px solid #777; font-size:0.95rem; font-weight:bold; padding:0; flex:1.0; display:flex; justify-content:center; align-items:center; box-shadow:inset 0 0 10px #000;">戻る</button>
-                <button class="c-btn" id="ctrl-pause" style="flex:1;">⏹️</button>
-                <button class="c-btn" id="ctrl-play" style="flex:1.0; font-size:1.2rem;">▶</button>
-                <button class="c-btn" id="btn-next" style="flex:1;">⏭</button>`;
-        } else {
-            grid.innerHTML = `
-                <button class="c-btn" id="btn-expand" style="flex:1.0; font-size:1.2rem;">▼</button>
-                <button class="c-btn" id="ctrl-back" style="flex:1.0;">▲</button>
-                <button class="c-btn" id="ctrl-pause" style="flex:1;">⏹️</button>
-                <button class="c-btn" id="ctrl-play" style="flex:1.0; font-size:1.2rem;">▶</button>
-                <button class="c-btn" id="btn-next" style="flex:1;">⏭</button>`;
-        }
-
-        document.getElementById('ctrl-play').onclick  = music.playHead;
-        document.getElementById('ctrl-pause').onclick = music.togglePause;
-
-        const btnShop = document.getElementById('btn-shop');
-        if (btnShop) {
-            btnShop.onclick = () => {
-                if (nav.state === "shop" || nav.state === "notice") {
-                    showRootMenu();
-                } else {
-                    nav.updateNav("shop");
-                    shop.openShop();
-                    renderConsole('standard');
-                }
-            };
-        }
-
-        const btnTecho = document.getElementById('btn-techo');
-        if (btnTecho) {
-            btnTecho.onclick = () => {
-                if (nav.state === "techo") {
-                    showRootMenu();
-                } else {
-                    import('./favorite.js').then(f => {
-                        nav.updateNav("techo");
-                        f.openTecho(null);
-                        renderConsole('standard');
-                    });
-                }
-            };
-        }
-
-        if (document.getElementById('ctrl-back')) {
-            document.getElementById('ctrl-back').onclick = handleBack;
-        }
-        if (document.getElementById('btn-expand')) {
-            document.getElementById('btn-expand').onclick = toggleMonitor;
-        }
-
-        setupNextButton();
+        return;
     }
+
+    // ★ 再生コントロール群の共通スタイル（フラット・ダークグリーン）
+    const playCtrlStyle = "flex:1; background:#1a3a1a; color:#7fd97f; border:none; box-shadow:none;";
+    const playBtnStyle  = "flex:1.0; font-size:1.2rem; background:#1a3a1a; color:#7fd97f; border:none; box-shadow:none;";
+
+    if (nav.state === "none") {
+        // --- カウンター（HOME）画面のコンソール ---
+        const shopBaseStyle = "background:rgba(255, 228, 225, 0.6); color:#cc294a; border:3px solid #1e90ff; flex-direction:column; justify-content:center; align-items:center; backdrop-filter:blur(2px); padding:0; flex:1.0;";
+        grid.innerHTML = `
+            <button class="c-btn" id="btn-shop" style="${shopBaseStyle} line-height:1.1; font-size:0.75rem; font-weight:bold;"><span>ソフィー</span><span>おすすめ</span><span style="font-size:0.75rem; letter-spacing:1px;">SHOP</span></button>
+            <button class="c-btn" id="btn-techo" style="background:rgba(34,34,34,0.8); color:#fff; border:1px solid #777; font-size:1.5rem; padding:0; flex:1.0; display:flex; justify-content:center; align-items:center;">📖</button>
+            <button class="c-btn" id="ctrl-pause" style="${playCtrlStyle}">⏹️</button>
+            <button class="c-btn" id="ctrl-play" style="${playBtnStyle}">▶</button>
+            <button class="c-btn" id="btn-next" style="${playCtrlStyle}">⏭</button>`;
+            
+        document.getElementById('btn-shop').onclick = () => {
+            nav.updateNav("shop");
+            shop.openShop();
+            renderConsole('standard');
+        };
+    } else {
+        // --- カウンター「以外」の全画面（ノート、お酒リスト、音楽リストなど） ---
+        // ★ ノート・戻る・再生の完全統一レイアウト
+        grid.innerHTML = `
+            <button class="c-btn" id="btn-techo" style="background:rgba(34,34,34,0.8); color:#fff; border:1px solid #777; font-size:1.5rem; padding:0; flex:1.0; display:flex; justify-content:center; align-items:center;">📖</button>
+            <button class="c-btn" id="ctrl-back" style="background:#34495e; color:#fff; flex:1; font-size:0.95rem; font-weight:bold; border:none; box-shadow:none;">戻る</button>
+            <button class="c-btn" id="ctrl-pause" style="${playCtrlStyle}">⏹️</button>
+            <button class="c-btn" id="ctrl-play" style="${playBtnStyle}">▶</button>
+            <button class="c-btn" id="btn-next" style="${playCtrlStyle}">⏭</button>`;
+
+        document.getElementById('ctrl-back').onclick = () => {
+            if (nav.state === "techo") {
+                // ノートの階層コントロール
+                import('./favorite.js').then(f => {
+                    if (f.getCurrentFolder() !== null) {
+                        f.openTecho(null); // 2階層目からは1階層目へ
+                    } else {
+                        showRootMenu(); // 1階層目からはカウンターへ
+                    }
+                });
+            } else if (nav.state === "shop" || nav.state === "notice") {
+                showRootMenu();
+            } else {
+                handleBack();
+            }
+        };
+    }
+
+    // 共通のイベントバインド
+    document.getElementById('ctrl-play').onclick  = music.playHead;
+    document.getElementById('ctrl-pause').onclick = music.togglePause;
+    
+    const btnTecho = document.getElementById('btn-techo');
+    if (btnTecho) {
+        btnTecho.onclick = () => {
+            if (nav.state === "techo") {
+                showRootMenu(); // 既にノートを開いているなら閉じる
+            } else {
+                import('./favorite.js').then(f => {
+                    nav.updateNav("techo");
+                    f.openTecho(null); // トップフォルダを開く
+                    renderConsole('standard');
+                });
+            }
+        };
+    }
+
+    setupNextButton();
 }
