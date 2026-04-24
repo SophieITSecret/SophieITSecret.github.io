@@ -1,6 +1,6 @@
 /**
  * favorite.js — ソフィーのノート ＆ じゃんけんゲーム ＆ お知らせ
- * ★ 音楽コード消失バグ完全修正・Claude氏連携版
+ * ★ 曲名・ID完全リンク修復 ＆ タップ再生/削除 分離版
  */
 
 import { setListView, clean } from './utils.js';
@@ -193,28 +193,40 @@ export async function openTecho(folder = null) {
         if (categories['S'].length === 0) {
             h += `<div style="padding:40px 20px; color:#888; text-align:center;">まだ曲が記録されていません</div>`;
         } else {
+            // ★ 修正1：ti (タイトル) と code (コード) でデータベースから検索
+            let mData = [];
+            for (let key in nav) {
+                if (Array.isArray(nav[key]) && nav[key].length > 0 && ('ti' in nav[key][0] && 'code' in nav[key][0])) {
+                    mData = mData.concat(nav[key]); // 複数配列がある場合に対応
+                }
+            }
+
             categories['S'].forEach(id => {
-                let displayTitle = id;
-                if (id.startsWith('S-UNK-')) {
-                    displayTitle = "不明な曲 (" + id.replace('S-UNK-', '') + ")";
-                } else {
-                    const numStr = id.replace(/[^0-9]/g, '');
-                    displayTitle = `曲ID: ${numStr}`;
-                    
-                    // ★ Claude氏直伝：jDataから直接抽出
-                    if (nav.jData && nav.jData.length > 0) {
-                        const songRecord = nav.jData.find(d => {
-                            const rawCode = String(d.code || "").replace(/[^0-9]/g, '');
-                            return rawCode === numStr;
-                        });
-                        if (songRecord) {
-                            const title  = songRecord.ti || "";
-                            const artist = songRecord.a  || "";
-                            if (title) displayTitle = artist ? `${artist}／${title}` : title;
-                        }
+                const numStr = id.replace(/[^0-9]/g, '');
+                let displayTitle = `曲ID: ${numStr}`; // デフォルト
+                
+                if (mData.length > 0) {
+                    const songRecord = mData.find(d => {
+                        const rawCode = String(d.code || "").replace(/[^0-9]/g, '');
+                        return rawCode === numStr;
+                    });
+                    if (songRecord) {
+                        const title  = songRecord.ti || "";
+                        const artist = songRecord.a  || "";
+                        if (title) displayTitle = artist ? `${artist} ／ ${title}` : title;
                     }
                 }
-                h += `<div class="item fav-item" data-id="${id}" style="color:#eee; border-bottom:1px solid #222; cursor:pointer; padding:0.4em 15px; line-height:1.0;">🎵 ${clean(displayTitle)} <span style="font-size:0.75rem; color:#888; float:right;">(削除)</span></div>`;
+
+                // ★ 修正2：タップ領域を分割（左: 再生, 右: 削除の❤️）
+                h += `
+                <div class="item fav-music-row" data-id="${id}" style="border-bottom:1px solid #222; display:flex; justify-content:space-between; align-items:center; padding:0.4em 15px;">
+                    <div class="fav-music-play" style="flex:1; color:#eee; cursor:pointer; line-height:1.2; padding-right:10px;">
+                        🎵 ${clean(displayTitle)}
+                    </div>
+                    <div class="fav-music-del" style="color:#ff69b4; font-size:1.4rem; cursor:pointer; padding:5px 0 5px 15px;">
+                        ❤️
+                    </div>
+                </div>`;
             });
         }
     } else if (folder === 'G') {
@@ -230,14 +242,38 @@ export async function openTecho(folder = null) {
 
     setListView(h, false);
 
+    document.getElementById('f-back').onclick = () => openTecho(null);
+
+    // お酒・じゃんけん用
     document.querySelectorAll('.fav-item').forEach(el => {
         el.onclick = () => {
-            if (el.innerText.includes('⚠️') || el.innerText.includes('不明な曲') || folder === 'S') {
+            if (el.innerText.includes('⚠️')) {
                 toggleFavorite(el.dataset.id);
                 openTecho(folder); 
             } else if (el.classList.contains('lq-fav') && lq) {
                 lq.showCardById(el.dataset.id);
             }
+        };
+    });
+
+    // ★ 修正2続き：音楽専用のクリック処理（再生と削除）
+    document.querySelectorAll('.fav-music-row').forEach(row => {
+        const id = row.dataset.id;
+        const playBtn = row.querySelector('.fav-music-play');
+        const delBtn = row.querySelector('.fav-music-del');
+        
+        // ゴミ箱（❤️）を押したら削除
+        delBtn.onclick = (e) => {
+            e.stopPropagation();
+            toggleFavorite(id);
+            openTecho(folder); 
+        };
+        
+        // 曲名を押したら再生（今回は準備中アラート。後でmusic.jsと連携します）
+        playBtn.onclick = (e) => {
+            e.stopPropagation();
+            const songName = playBtn.innerText.replace('🎵', '').trim();
+            alert(`【準備中】\n「${songName}」を再生します。\n※再生機能は music.js との連携コードが必要です。`);
         };
     });
 }
@@ -272,8 +308,13 @@ export function initMusicPatch() {
         const lv = document.getElementById('list-view');
         if (!lv) return;
 
-        // ★ Claude氏直伝：jDataを直接使う
-        const mData = nav.jData || [];
+        // ★ 修正1：tiとcodeを持つ配列を探す
+        let mData = [];
+        for (let key in nav) {
+            if (Array.isArray(nav[key]) && nav[key].length > 0 && ('ti' in nav[key][0] && 'code' in nav[key][0])) {
+                mData = mData.concat(nav[key]);
+            }
+        }
 
         const labels = lv.querySelectorAll('.label');
         labels.forEach(label => {
@@ -299,7 +340,7 @@ export function initMusicPatch() {
             if (item.innerHTML.includes('🎵') && !item.dataset.favPatched) {
                 item.dataset.favPatched = "true";
                 
-                // ★ Claude氏直伝：ti (タイトル) と code (コード) での最強抽出
+                // ★ 修正1：ti (タイトル) と code (コード) での最強抽出
                 let songId = null;
                 if (mData.length > 0) {
                     const sortedData = [...mData].sort((a, b) => (b.ti || "").length - (a.ti || "").length);
