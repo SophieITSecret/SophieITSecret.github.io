@@ -1,6 +1,5 @@
 /**
- * music.js — 改修版（全コード）
- * ★ 歌リスト行間0.2em ＆ 歌手ジャンル順修正版
+ * music.js — 完璧版
  */
 
 import * as nav from './navigation.js';
@@ -16,24 +15,19 @@ export function setYtReady(player) { ytPlayer = player; ytPlayerReady = true; }
 export function openMusic() {
     nav.updateNav("art");
     let h = `<div class="label">マスターお薦め</div><div class="artist-grid">
-             <div class="item" data-special="ソフィー" style="color:var(--blue);">🎤 ソフィー</div>
-             <div class="item" data-special="BGM">🎤 BGM</div>
-             <div class="item" data-special="昭和ソング">🎤 昭和ソング</div></div>`;
+             <div class="item" data-special="ソフィー" style="color:var(--blue);">ソフィー</div>
+             <div class="item" data-special="BGM">BGM</div>
+             <div class="item" data-special="昭和ソング">昭和ソング</div></div>`;
     
     const preferredOrder = ['E', 'F', 'J', 'L', 'W', 'I', 'S'];
-    const rawFs = [...new Set(nav.jData.map(d => d.f))];
-    const sortedFs = rawFs.sort((a, b) => {
-        let ia = preferredOrder.indexOf(a); if(ia === -1) ia = 999;
-        let ib = preferredOrder.indexOf(b); if(ib === -1) ib = 999;
-        return ia - ib;
-    });
+    const sortedFs = [...new Set(nav.jData.map(d => d.f))].sort((a,b) => (preferredOrder.indexOf(a)||99) - (preferredOrder.indexOf(b)||99));
 
     sortedFs.forEach(f => {
         const arts = [...new Set(nav.jData.filter(d => d.f === f).map(d => d.a))];
         if (arts.length) {
             let labelName = (f==='L') ? "特集コーナー" : (nav.jData.find(d=>d.f===f)?.gName || f);
             h += `<div class="label">${labelName}</div><div class="artist-grid">`;
-            arts.forEach(a => h += `<div class="item" data-artist="${a}" style="font-size:1.05rem; padding:0.4em 15px;">🎤 ${a}</div>`);
+            arts.forEach(a => h += `<div class="item" data-artist="${a}" style="font-size:1.05rem; padding:0.2em 15px;">${a}</div>`);
             h += `</div>`;
         }
     });
@@ -45,8 +39,8 @@ export function openMusic() {
 }
 
 function openSpecialSongs(type) {
-    let filtered = (type==='ソフィー') ? nav.jData.filter(m=>m.a.includes("ソフィー")) : (type==='BGM') ? nav.jData.filter(m=>m.a==="BGM") : nav.jData.filter(m=>["70s","昭和","演歌","歌姫"].includes(m.a));
-    nav.updateNav("tit", undefined, filtered); isMusicMode = true; renderSongList(type);
+    let f = (type==='ソフィー') ? nav.jData.filter(m=>m.a.includes("ソフィー")) : (type==='BGM') ? nav.jData.filter(m=>m.a==="BGM") : nav.jData.filter(m=>["70s","昭和","演歌","歌姫"].includes(m.a));
+    nav.updateNav("tit", undefined, f); isMusicMode = true; renderSongList(type);
 }
 
 function openSongs(a) { nav.updateNav("tit", undefined, nav.jData.filter(m => m.a === a)); isMusicMode = true; renderSongList(a); }
@@ -55,7 +49,6 @@ export function renderSongList(title) {
     let h = `<div class="label">${title}</div>`;
     nav.curP.forEach((m, i) => {
         const isSophie = m.ti && (m.ti.includes("みずいろのシグナル") || m.ti.includes("水色のシグナル"));
-        // 歌のリストは行間 0.2em
         h += `<div class="item" data-idx="${i}" style="font-size:1.05rem; padding:0.2em 15px; ${isSophie?'color:var(--blue);':''}">🎵 ${m.ti}</div>`;
     });
     setListView(h, false);
@@ -147,7 +140,7 @@ function prep(t, isM, id = null, originalTxt = null) {
 function render(h, cb) { nm.style.display = 'none'; lv.style.display = 'block'; lv.innerHTML = h; document.getElementById('main-scroll').scrollTop = 0; document.querySelectorAll('#list-view .item').forEach(el => el.onclick = cb); }
 export const defaultOnEnded = () => { if (isAutoPlay && !isMusicMode) setTimeout(next, 1200); };
 
-// --- DJ API ---
+// --- 外部API（DJソフィー等から使用） ---
 const _st = { currentCode: null, currentTitle: null, currentArtist: null };
 export function playSongByCode(code, options = {}) {
     const s = nav.jData.find(d => parseInt(String(d.code), 10) === parseInt(String(code), 10));

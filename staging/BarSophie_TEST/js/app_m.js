@@ -1,6 +1,5 @@
 /**
- * app_m.js — 修正版（全コード）
- * ★ Sボタン出現修正・「戻る」ボタン文字化版
+ * app_m.js — 完璧版（全機能・全ロジック保持）
  */
 
 import * as media    from './media.js';
@@ -151,10 +150,13 @@ function showRootMenu() {
         noticeBtn = document.createElement('button');
         noticeBtn.id = 'btn-notice';
         noticeBtn.className = 'act-btn';
-        noticeBtn.style.cssText = 'background: linear-gradient(135deg, #1a5276, #2980b9); color:#fff; margin:20px auto 10px; width:calc(100% - 30px); display:block; border:1px solid #5DADE2; font-weight:bold;';
+        noticeBtn.style.cssText = 'background: linear-gradient(135deg, #1a5276, #2980b9); color:#fff; margin:20px auto 10px; width:calc(100% - 30px); display:block; border:1px solid #5DADE2; font-weight:bold; box-shadow:0 0 10px rgba(41,128,185,0.3);';
         noticeBtn.innerHTML = '📢 ソフィーのお知らせ・使い方';
         noticeBtn.onclick = () => {
-            import('./favorite.js').then(f => { f.openNotice(); renderConsole('standard'); }).catch(() => alert("準備中です"));
+            import('./favorite.js').then(f => {
+                f.openNotice();
+                renderConsole('standard');
+            }).catch(e => alert("準備中です"));
         };
         nm.appendChild(noticeBtn);
     }
@@ -189,7 +191,7 @@ function renderConsole(mode) {
     if (mode === 'screening') {
         grid.innerHTML = `
             <button class="c-btn" id="c-back" style="background:#34495e; color:#fff; flex:1; font-size:0.95rem; font-weight:bold; border:none;">戻る</button>
-            <button class="c-btn" id="c-clr"  style="background:#5DADE2; color:#fff; flex:1; font-size:0.95rem; border:none;">リセット</button>
+            <button class="c-btn" id="c-clr"  style="background:#5DADE2; color:#fff; flex:1; font-size:0.95rem; text-shadow:0 0 2px rgba(0,0,0,0.5); border:none;">リセット</button>
             <button class="c-btn" id="c-ex"   style="background:#8e44ad; color:#fff; flex:2; font-size:0.95rem; border:none;">検索実行</button>`;
         document.getElementById('c-back').onclick = liquor.openLiquorPortal;
         document.getElementById('c-clr').onclick  = liquor.clearScr;
@@ -203,45 +205,59 @@ function renderConsole(mode) {
         return;
     }
 
-    // 標準スタイルの定義
-    const noApp = "-webkit-appearance:none; appearance:none; outline:none;";
-    const playCtrlStyle = `flex:1; background:#1a2b1a; color:#5c9e5c; border:none; border-radius:0; ${noApp}`;
-    const playBtnStyle  = `flex:1.0; font-size:1.2rem; background:#1a3a1a; color:#7fd97f; border:none; border-radius:0; ${noApp}`;
+    if (mode === 'card') {
+        grid.innerHTML = `
+            <button class="c-btn card-btn" id="c-sophie" style="background:#1a3a4a; color:#00d2ff; font-size:1.1rem; font-weight:bold;">S</button>
+            <button class="c-btn card-btn" id="c-scr"    style="background:#5b2d8e; color:#fff; font-size:0.62rem; line-height:1.2;">選択<br>画面</button>
+            <button class="c-btn card-btn" id="c-list"   style="background:#7a3a00; color:#f0b56e; font-size:0.75rem;">リスト</button>
+            <button class="c-btn card-btn" id="c-prev"   style="background:#1a3a1a; color:#7fd97f; font-size:1.1rem;">&#9664;</button>
+            <button class="c-btn card-btn" id="c-next2"  style="background:#1a3a1a; color:#7fd97f; font-size:1.1rem;">&#9654;</button>`;
+        document.getElementById('c-sophie').addEventListener('click', () => { import('./favorite.js').then(f => f.playJanken()); });
+        document.getElementById('c-scr').addEventListener('click', liquor.cardNavToScr);
+        document.getElementById('c-list').addEventListener('click', liquor.cardNavToList);
+        document.getElementById('c-prev').addEventListener('click', liquor.cardNavPrev);
+        document.getElementById('c-next2').addEventListener('click', liquor.cardNavNext);
+        return;
+    }
 
-    // --- コンソール配置ロジック修正 ---
+    const noApp = "-webkit-appearance:none; appearance:none; outline:none;";
+    const pCtrl = `flex:1; background:#1a2b1a; color:#5c9e5c; border:none; border-radius:0; ${noApp}`;
+    const pBtn  = `flex:1.0; font-size:1.2rem; background:#1a3a1a; color:#7fd97f; border:none; border-radius:0; ${noApp}`;
+
+    // --- 動的コンソール：Sボタン出現修正 ---
     if (nav.state === "none") {
         const shopBaseStyle = "background:rgba(255, 228, 225, 0.6); color:#cc294a; border:3px solid #1e90ff; flex-direction:column; justify-content:center; align-items:center; backdrop-filter:blur(2px); padding:0; flex:1.0; display:flex;";
         grid.innerHTML = `
             <button class="c-btn" id="btn-shop" style="${shopBaseStyle}">
-                <span style="font-size:0.75rem; font-weight:bold; line-height:1.2;">ソフィー</span>
-                <span style="font-size:0.75rem; font-weight:bold; line-height:1.2;">おすすめ</span>
-                <span style="font-size:0.75rem; letter-spacing:1px; line-height:1.2;">SHOP</span>
+                <span style="font-size:0.75rem; font-weight:bold; line-height:1.1;">ソフィー</span>
+                <span style="font-size:0.75rem; font-weight:bold; line-height:1.1;">おすすめ</span>
+                <span style="font-size:0.75rem; letter-spacing:1px; line-height:1.1;">SHOP</span>
             </button>
             <button class="c-btn" id="btn-techo" style="background:rgba(34,34,34,0.8); color:#fff; border:1px solid #777; font-size:1.5rem; flex:1.0; display:flex; justify-content:center; align-items:center;">📖</button>
-            <button class="c-btn" id="ctrl-pause" style="${playCtrlStyle}">⏹️</button>
-            <button class="c-btn" id="ctrl-play" style="${playBtnStyle}">▶</button>
-            <button class="c-btn" id="btn-next" style="${playCtrlStyle}">⏭</button>`;
+            <button class="c-btn" id="ctrl-pause" style="${pCtrl}">⏹️</button>
+            <button class="c-btn" id="ctrl-play" style="${pBtn}">▶</button>
+            <button class="c-btn" id="btn-next" style="${pCtrl}">⏭</button>`;
         document.getElementById('btn-shop').onclick = () => { nav.updateNav("shop"); shop.openShop(); renderConsole('standard'); };
     } 
     else if (["tit", "st", "lq_card", "lq_list", "lq_res", "shop"].includes(nav.state)) {
-        // Deep (最深部およびリスト): S ＋ 戻る
+        // 最深部: Sボタンを出す
         grid.innerHTML = `
             <button class="c-btn" id="c-sophie-std" style="background:#1a3a4a; color:#00d2ff; font-size:1.1rem; font-weight:bold; flex:1.0;">S</button>
             <button class="c-btn" id="ctrl-back-txt" style="background:#34495e; color:#fff; flex:1; font-size:0.95rem; font-weight:bold; border:none;">戻る</button>
-            <button class="c-btn" id="ctrl-pause" style="${playCtrlStyle}">⏹️</button>
-            <button class="c-btn" id="ctrl-play" style="${playBtnStyle}">▶</button>
-            <button class="c-btn" id="btn-next" style="${playCtrlStyle}">⏭</button>`;
+            <button class="c-btn" id="ctrl-pause" style="${pCtrl}">⏹️</button>
+            <button class="c-btn" id="ctrl-play" style="${pBtn}">▶</button>
+            <button class="c-btn" id="btn-next" style="${pCtrl}">⏭</button>`;
         document.getElementById('c-sophie-std').onclick = () => { import('./favorite.js').then(f => f.playJanken()); };
         document.getElementById('ctrl-back-txt').onclick = handleBack;
     }
     else {
-        // Intermediate (中間): 📖 ＋ 戻る
+        // 中間: 📖ボタンを出す
         grid.innerHTML = `
             <button class="c-btn" id="btn-techo" style="background:rgba(34,34,34,0.8); color:#fff; border:1px solid #777; font-size:1.5rem; flex:1.0; display:flex; justify-content:center; align-items:center;">📖</button>
             <button class="c-btn" id="ctrl-back-txt" style="background:#34495e; color:#fff; flex:1; font-size:0.95rem; font-weight:bold; border:none;">戻る</button>
-            <button class="c-btn" id="ctrl-pause" style="${playCtrlStyle}">⏹️</button>
-            <button class="c-btn" id="ctrl-play" style="${playBtnStyle}">▶</button>
-            <button class="c-btn" id="btn-next" style="${playCtrlStyle}">⏭</button>`;
+            <button class="c-btn" id="ctrl-pause" style="${pCtrl}">⏹️</button>
+            <button class="c-btn" id="ctrl-play" style="${pBtn}">▶</button>
+            <button class="c-btn" id="btn-next" style="${pCtrl}">⏭</button>`;
         document.getElementById('ctrl-back-txt').onclick = handleBack;
     }
 
