@@ -1,6 +1,6 @@
 /**
- * music.js — 完全改修版（全コード）
- * ★ 1.05rem・ジャンル順・曲順正常化版
+ * music.js — 改修版（全コード）
+ * ★ 歌リスト行間0.2em ＆ 歌手ジャンル順修正版
  */
 
 import * as nav from './navigation.js';
@@ -55,7 +55,8 @@ export function renderSongList(title) {
     let h = `<div class="label">${title}</div>`;
     nav.curP.forEach((m, i) => {
         const isSophie = m.ti && (m.ti.includes("みずいろのシグナル") || m.ti.includes("水色のシグナル"));
-        h += `<div class="item" data-idx="${i}" style="font-size:1.05rem; padding:0.3em 15px; ${isSophie?'color:var(--blue);':''}">🎵 ${m.ti}</div>`;
+        // 歌のリストは行間 0.2em
+        h += `<div class="item" data-idx="${i}" style="font-size:1.05rem; padding:0.2em 15px; ${isSophie?'color:var(--blue);':''}">🎵 ${m.ti}</div>`;
     });
     setListView(h, false);
     document.querySelectorAll('.item').forEach(el => el.onclick = (e) => {
@@ -146,7 +147,7 @@ function prep(t, isM, id = null, originalTxt = null) {
 function render(h, cb) { nm.style.display = 'none'; lv.style.display = 'block'; lv.innerHTML = h; document.getElementById('main-scroll').scrollTop = 0; document.querySelectorAll('#list-view .item').forEach(el => el.onclick = cb); }
 export const defaultOnEnded = () => { if (isAutoPlay && !isMusicMode) setTimeout(next, 1200); };
 
-// --- DJ API維持 ---
+// --- DJ API ---
 const _st = { currentCode: null, currentTitle: null, currentArtist: null };
 export function playSongByCode(code, options = {}) {
     const s = nav.jData.find(d => parseInt(String(d.code), 10) === parseInt(String(code), 10));

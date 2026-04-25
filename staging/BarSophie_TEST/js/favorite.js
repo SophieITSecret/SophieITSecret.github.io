@@ -1,6 +1,6 @@
 /**
- * favorite.js — 完全改修版（全コード）
- * ★ フォント1.05rem・歌リスト行間0.3em対応版
+ * favorite.js — 改修版（全コード）
+ * ★ 歌リスト行間0.2em ＆ お気に入りお酒表示修正版
  */
 
 import { setListView, clean } from './utils.js';
@@ -121,7 +121,7 @@ export async function openTecho(folder = null) {
             let cleanTitle = title.replace(/🎵|♫/g, '').trim();
             if (cleanTitle.length > 18) cleanTitle = cleanTitle.substring(0, 17) + "…";
 
-            h += `<div class="item fav-item music-row" data-id="${id}" data-fav-patched="true" style="display:flex; justify-content:space-between; align-items:center; padding:0.3em 15px;">
+            h += `<div class="item fav-item music-row" data-id="${id}" data-fav-patched="true" style="display:flex; justify-content:space-between; align-items:center; padding:0.2em 15px;">
                     <div class="fav-music-play" data-code="${num}" style="flex:1; color:#eee; font-size:1.05rem; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; line-height:1.2; cursor:pointer;">${cleanTitle}</div>
                     <div class="fav-music-del" style="color:#ff69b4; font-size:1.4rem; padding-left:15px; cursor:pointer;">❤️</div>
                   </div>`;
@@ -151,7 +151,7 @@ export function initMusicPatch() {
         const lv = document.getElementById('list-view'); if (!lv) return;
         lv.querySelectorAll('.item').forEach(item => {
             const isSong = item.innerText.includes('🎵');
-            item.style.padding = isSong ? '0.3em 15px' : '0.4em 15px';
+            item.style.padding = isSong ? '0.2em 15px' : '0.4em 15px';
             item.style.fontSize = '1.05rem';
             item.style.display = 'flex';
             item.style.alignItems = 'center';
