@@ -70,13 +70,17 @@ export function openShop() {
             grouped[cat].forEach(item => {
                 const amzUrl = `https://www.amazon.co.jp/s?k=${encodeURIComponent(clean(item.keyword))}&tag=itsophie-22`;
                 
-                h += `<div class="item" style="padding:12px 15px; cursor:default; height:auto; overflow:visible;">
-                        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:6px;">
-                            <div style="font-weight:bold; color:#eee; font-size:1.05rem; line-height:1.4;">${clean(item.name)}</div>
-                            <a href="${amzUrl}" target="_blank" class="lq-btn-amz-small" style="flex-shrink:0; margin-left:10px;">Amazon↗</a>
-                        </div>
-                        <div style="font-size:0.85rem; color:#aaa; line-height:1.6;">${clean(item.desc)}</div>
-                      </div>`;
+                h += `<div class="item" style="padding:12px 15px; cursor:default; height:auto;">
+        <table style="width:100%; border-collapse:collapse;">
+          <tr>
+            <td style="font-weight:bold; color:#eee; font-size:1.05rem; line-height:1.4; padding:0; vertical-align:top;">${clean(item.name)}</td>
+            <td style="width:80px; text-align:right; vertical-align:top; padding:0 0 0 8px;"><a href="${amzUrl}" target="_blank" class="lq-btn-amz-small">Amazon↗</a></td>
+          </tr>
+          <tr>
+            <td colspan="2" style="font-size:0.85rem; color:#aaa; line-height:1.6; padding-top:6px;">${clean(item.desc)}</td>
+          </tr>
+        </table>
+      </div>`;
             });
         }
     }
