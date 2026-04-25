@@ -72,7 +72,7 @@ export function openShop() {
                 // ★修正箇所：display:block と white-space:normal を強制して段組みを正常化
                 h += `<div class="item" style="padding:12px 15px; cursor:default; height:auto; overflow:visible; display:block!important; white-space:normal!important;">
                         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                            <div style="font-weight:bold; color:#eee; font-size:1.05rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1; margin-right:10px;">${clean(item.name)}</div>
+                            <div style="font-weight:bold; color:#eee; font-size:1.05rem; flex:1; margin-right:10px;">${clean(item.name)}</div>
                             <a href="${amzUrl}" target="_blank" class="lq-btn-amz-small" style="flex-shrink:0;">Amazon↗</a>
                         </div>
                         <div style="font-size:0.85rem; color:#aaa; line-height:1.6; display:block;">${clean(item.desc)}</div>
