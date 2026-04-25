@@ -89,8 +89,7 @@ export async function openTecho(folder = null) {
     if (folder === 'L') {
         h += `<div class="scr-title" style="margin-top:15px; color:var(--talk); padding-left:10px; font-size:0.78rem;">🍷 お気に入りのお酒</div>`;
         categories['L'].forEach(id => {
-            const num = parseInt(id.replace(/[^0-9]/g, ''), 10);
-            const d = nav.liquorData.find(item => parseInt(item["No"] || item["番号"], 10) === num);
+            const d = nav.liquorData.find(item => (item["No."] || item["No"] || item["番号"]) === id);
             if (d) {
                 const badge = lq ? lq.priceBadge(d["市販価格"], d["大分類"]) : "";
                 h += `<div class="item fav-item lq-fav" data-id="${id}" style="display:flex; align-items:center; gap:4px; font-size:1.05rem; padding:0.4em 15px;">${badge}<span>${clean(d['銘柄名'])}</span></div>`;

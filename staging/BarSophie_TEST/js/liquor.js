@@ -396,7 +396,7 @@ function renderResults(results, scrollToGlobalIdx = null) {
     }
 }
 
-function showCard(gIdx, list, fromState) {
+export function showCard(gIdx, list, fromState) {
     nav.updateNav("lq_card", null, list, gIdx);
     _currentList  = list;
     _currentState = fromState || "list";
@@ -418,7 +418,9 @@ function showCard(gIdx, list, fromState) {
     const a4   = AXIS4_MAP[sub] || AXIS4_DEFAULT;
     const tags = ((d["味わいタグ"] || "") + "," + (d["検索タグ"] || "")).split(',').map(t => t.trim()).filter(Boolean);
 
-    const rawNo = d["No."] || d["No"] || d["番号"] || "";
+    // ★ID取得の修正（BOM付きヘッダーでも確実に見つける保険）
+    const noKey = Object.keys(d).find(k => k.includes("No")) || "No.";
+    const rawNo = d[noKey] || d["番号"] || "";
     let displayId = String(rawNo).trim();
     
     if (/^[0-9]+$/.test(displayId)) {
@@ -429,82 +431,87 @@ function showCard(gIdx, list, fromState) {
         displayId = 'L-????';
     }
 
-    let h = `<div class="label" style="display:flex; justify-content:space-between; align-items:center;">
-                <span>${displayId}</span>
-                <span id="btn-fav" data-id="${displayId}" style="cursor:pointer; font-size:1.2rem; padding:0 10px; color:var(--pink);"></span>
-             </div>
-             <div class="lq-card">`;
-    
-    h += `<div class="lq-name">${clean(d["銘柄名"])}</div>`;
-    if (d["ソフィーのセリフ"]) h += `<div class="lq-quote">${clean(d["ソフィーのセリフ"])}</div>`;
-    
-    const makerRaw  = d["製造元と創業年"] || "";
-    const makerName = makerRaw.replace(/[（(\/].*/g, '').trim();
-    const region    = d["産地"] || "";
-    
-    const amzKw  = encodeURIComponent((d["中分類"] || "") + " " + clean(d["銘柄名"]));
-    const amzUrl = `https://www.amazon.co.jp/s?k=${amzKw}&tag=itsophie-22`;
-    const gKw = encodeURIComponent((region ? region + " " : "") + makerName);
-
-    h += `<div class="lq-basic-info">
-        <div><span style="color:#1a73e8">▶</span> ${d["大分類"]}&nbsp;&nbsp;<span style="color:#e74c3c">▶</span> ${d["中分類"]}</div>
-        <div><span style="color:#888">産地:</span> ${d["国"] || ""}${region ? ' / ' + region : ''}</div>`;
-
-    if (makerRaw && makerRaw !== "-") {
-        h += `<div style="margin-top:2px;"><span style="color:#888; font-size:0.85rem;">製造:</span> <span style="font-size:0.85rem; color:#ccc;">${makerRaw}</span></div>`;
-        h += `<div class="card-link-row">`;
-        
-        // ★ シンプルな<a>タグに統一。長押しでブラウザ機能に任せる。
-        if (d["公式URL"] && d["公式URL"] !== "-") {
-            const directUrl = d["公式URL"];
-            h += `<a href="${directUrl}" target="_blank" rel="noopener noreferrer" class="lq-btn-small">🔗 メーカーサイト</a>`;
-        }
-        if (gKw) {
-            const gUrl = `https://www.google.com/search?q=${gKw}`;
-            h += `<a href="${gUrl}" target="_blank" rel="noopener noreferrer" class="lq-btn-g">G</a>`;
-        }
-        h += `<span style="flex:1;"></span>`;
-        h += `<a href="${amzUrl}" target="_blank" rel="noopener noreferrer" class="lq-btn-amz-small">Amazon↗</a>`;
-        h += `</div>`;
-    } else {
-        h += `<div class="card-link-row">`;
-        h += `<span style="flex:1;"></span>`;
-        h += `<a href="${amzUrl}" target="_blank" rel="noopener noreferrer" class="lq-btn-amz-small">Amazon↗</a>`;
-        h += `</div>`;
-    }
-    h += `</div><div class="lq-split-view"><div class="lq-graph-half">`;
-    if (d["Gemini_コスパ"]) h += `<div class="lq-cospa">コスパ ${d["Gemini_コスパ"]}</div>`;
-    h += mkBar("辛口", "甘口", d["GPT_甘辛"],  d["Gemini_甘辛"],  d["Claude_甘辛"]);
-    h += mkBar("軽快", "濃厚", d["GPT_ボディ"], d["Gemini_ボディ"], d["Claude_ボディ"]);
-    h += mkBar("常道", "独特", "", "", d["Claude_個性"], true);
-    h += `<div class="axis4-label">${a4.label}</div>`;
-    h += mkBar(a4.left, a4.right, "", "", d["Claude_第4軸"], true);
-    h += `<div class="graph-legend"><span class="leg-gpt">●GPT</span> <span class="leg-gem">●Gem</span> <span class="leg-cla">●Claude</span></div>`;
-    h += `</div><div class="lq-specs-half">`;
-    h += `<div class="spec-row-compact"><span>知名度</span><span>${d["知名度"] || "-"}</span></div>`;
-    h += `<div class="spec-row-compact"><span>度数</span><span>${formatAbv(d["度数"])}</span></div>`;
-    h += `<div class="spec-row-compact"><span>発売</span><span>${d["銘柄誕生年"] || "-"}</span></div>`;
-    h += `<div class="spec-row-compact"><span>市販</span><span class="price-retail">${d["市販価格"] || "-"}</span></div>`;
-    h += `<div class="spec-row-compact"><span>Bar</span><span class="price-bar">${d["バー価格"] || "-"}</span></div>`;
-    h += `</div></div>`;
-    if (d["ソフィーの裏話"])   h += `<div class="lq-sophie-talk"><span class="sophie-prefix">[ソフィー]</span> ${d["ソフィーの裏話"]}</div>`;
-    if (tags.length)           h += `<div class="lq-tags">${tags.map(t => `<span class="lq-tag">${t}</span>`).join('')}</div>`;
-    if (d["鑑定評価(200字)"]) h += `<div class="lq-desc"><span class="lq-desc-header">[解説]</span> ${d["鑑定評価(200字)"]}</div>`;
-    h += `</div>`;
-
-    setListView(h, true);
-    if (_renderConsole) _renderConsole('card');
-
+    // ★お気に入りモジュールとの連携
     import('./favorite.js').then(fav => {
-        const btnFav = document.getElementById('btn-fav');
-        if (btnFav) {
-            const updateIcon = () => {
-                btnFav.innerText = fav.isFavorite(displayId) ? '❤️' : '♡';
-            };
-            updateIcon();
-            btnFav.onclick = () => {
-                fav.toggleFavorite(displayId);
-                updateIcon();
+        const isFav = fav.isFavorite(displayId);
+        const heart = isFav ? "❤️" : "♡";
+        const hColor = isFav ? "#ff69b4" : "#ccc";
+
+        // ★ラベルバーの左端にIDを、右端にハートボタンを配置
+        let h = `<div class="label" style="display:flex; justify-content:space-between; align-items:center;">
+                    <span>${displayId}</span>
+                    <div id="lq-heart" style="color:${hColor}; font-size:1.5rem; cursor:pointer; padding-right:10px;">${heart}</div>
+                 </div>
+                 <div class="lq-card">`;
+        
+        h += `<div class="lq-name">${clean(d["銘柄名"])}</div>`;
+        if (d["ソフィーのセリフ"]) h += `<div class="lq-quote">${clean(d["ソフィーのセリフ"])}</div>`;
+        
+        const makerRaw  = d["製造元と創業年"] || "";
+        const makerName = makerRaw.replace(/[（(\/].*/g, '').trim();
+        const region    = d["産地"] || "";
+        const gKw       = encodeURIComponent(makerName && region ? `${makerName} ${region}` : makerName || region);
+        const amzKw  = encodeURIComponent(clean(d["銘柄名"]) + " " + d["大分類"]);
+        const amzUrl = `https://www.amazon.co.jp/s?k=${amzKw}&tag=itsophie-22`;
+
+        h += `<div class="lq-basic-info">
+            <div><span style="color:#1a73e8">▶</span> ${d["大分類"]}&nbsp;&nbsp;<span style="color:#e74c3c">▶</span> ${d["中分類"]}</div>
+            <div><span style="color:#888">産地:</span> ${d["国"] || ""}${region ? ' / ' + region : ''}</div>`;
+
+        if (makerRaw && makerRaw !== "-") {
+            h += `<div style="margin-top:2px;"><span style="color:#888; font-size:0.85rem;">製造:</span> <span style="font-size:0.85rem; color:#ccc;">${makerRaw}</span></div>`;
+            h += `<div class="card-link-row">`;
+            if (d["公式URL"] && d["公式URL"] !== "-") {
+                const directUrl = d["公式URL"];
+                const transUrl  = `https://translate.google.com/translate?sl=auto&tl=ja&u=${encodeURIComponent(d["公式URL"])}`;
+                h += `<a href="${directUrl}" target="_blank" class="lq-btn-small"
+                         ontouchstart="this._t=setTimeout(()=>{window.open('${transUrl}','_blank');this._t=null;},600)"
+                         ontouchend="if(this._t){clearTimeout(this._t);this._t=null;}"
+                         ontouchmove="if(this._t){clearTimeout(this._t);this._t=null;}">🔗 メーカーサイト</a>`;
+            }
+            if (gKw) {
+                const gUrl = `https://www.google.com/search?q=${gKw}`;
+                h += `<a href="${gUrl}" target="_blank" class="lq-btn-g">G</a>`;
+            }
+            h += `<span style="flex:1;"></span>`;
+            h += `<a href="${amzUrl}" target="_blank" class="lq-btn-amz-small">Amazon↗</a>`;
+            h += `</div>`;
+        } else {
+            h += `<div class="card-link-row">`;
+            h += `<span style="flex:1;"></span>`;
+            h += `<a href="${amzUrl}" target="_blank" class="lq-btn-amz-small">Amazon↗</a>`;
+            h += `</div>`;
+        }
+        h += `</div><div class="lq-split-view"><div class="lq-graph-half">`;
+        if (d["Gemini_コスパ"]) h += `<div class="lq-cospa">コスパ ${d["Gemini_コスパ"]}</div>`;
+        h += mkBar("辛口", "甘口", d["GPT_甘辛"],  d["Gemini_甘辛"],  d["Claude_甘辛"]);
+        h += mkBar("軽快", "濃厚", d["GPT_ボディ"], d["Gemini_ボディ"], d["Claude_ボディ"]);
+        h += mkBar("常道", "独特", "", "", d["Claude_個性"], true);
+        h += `<div class="axis4-label">${a4.label}</div>`;
+        h += mkBar(a4.left, a4.right, "", "", d["Claude_第4軸"], true);
+        h += `<div class="graph-legend"><span class="leg-gpt">●GPT</span> <span class="leg-gem">●Gem</span> <span class="leg-cla">●Claude</span></div>`;
+        h += `</div><div class="lq-specs-half">`;
+        h += `<div class="spec-row-compact"><span>知名度</span><span>${d["知名度"] || "-"}</span></div>`;
+        h += `<div class="spec-row-compact"><span>度数</span><span>${formatAbv(d["度数"])}</span></div>`;
+        h += `<div class="spec-row-compact"><span>発売</span><span>${d["銘柄誕生年"] || "-"}</span></div>`;
+        h += `<div class="spec-row-compact"><span>市販</span><span class="price-retail">${d["市販価格"] || "-"}</span></div>`;
+        h += `<div class="spec-row-compact"><span>Bar</span><span class="price-bar">${d["バー価格"] || "-"}</span></div>`;
+        h += `</div></div>`;
+        if (d["ソフィーの裏話"])   h += `<div class="lq-sophie-talk"><span class="sophie-prefix">[ソフィー]</span> ${d["ソフィーの裏話"]}</div>`;
+        if (tags.length)           h += `<div class="lq-tags">${tags.map(t => `<span class="lq-tag">${t}</span>`).join('')}</div>`;
+        if (d["鑑定評価(200字)"]) h += `<div class="lq-desc"><span class="lq-desc-header">[解説]</span> ${d["鑑定評価(200字)"]}</div>`;
+        h += `</div>`;
+
+        setListView(h, true);
+        if (_renderConsole) _renderConsole('card');
+
+        // ★ハートボタンのクリック処理を設定
+        const heartBtn = document.getElementById('lq-heart');
+        if (heartBtn) {
+            heartBtn.onclick = () => {
+                const added = fav.toggleFavorite(displayId);
+                heartBtn.innerText = added ? "❤️" : "♡";
+                heartBtn.style.color = added ? "#ff69b4" : "#ccc";
             };
         }
     });
