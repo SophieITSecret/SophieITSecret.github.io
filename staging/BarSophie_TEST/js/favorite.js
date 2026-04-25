@@ -1,5 +1,5 @@
 /**
- * favorite.js — 完全改修版
+ * favorite.js — 真・完全版
  */
 
 import { setListView, clean } from './utils.js';
@@ -49,14 +49,6 @@ export function updateGameScore(winner) {
     if (data.janken.myWins >= 3 || data.janken.sophieWins >= 3) data.gameCount++;
     saveTechoData(data);
     return { myWins: data.janken.myWins, sophieWins: data.janken.sophieWins };
-}
-
-function addGameLog(text) {
-    const data = getTechoData();
-    const d = new Date();
-    const timeStr = `${d.getFullYear()}/${(d.getMonth()+1).toString().padStart(2,'0')}/${d.getDate().toString().padStart(2,'0')} ${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`;
-    data.gameLog.unshift(`[${timeStr}] ${text}`);
-    saveTechoData(data);
 }
 
 export async function openNotice() {
@@ -142,7 +134,7 @@ export function initMusicPatch() {
         lv.querySelectorAll('.item').forEach(item => {
             const hasIcon = item.innerText.includes('🎵') || item.innerText.includes('🎤');
             if (hasIcon) {
-                item.style.padding = '0.2em 15px'; // 歌・歌手は0.2em
+                item.style.padding = '0.2em 15px'; // 歌・歌手は0.2emに極限まで詰める
             } else {
                 item.style.padding = '0.4em 15px';
             }
@@ -152,7 +144,7 @@ export function initMusicPatch() {
 
             if (item.querySelector('.music-fav-btn')) return;
             if (hasIcon) {
-                // マイク🎤を削除してテキストをクリーンアップ
+                // 🎤アイコンを削除
                 item.innerHTML = item.innerHTML.replace(/🎤/g, '');
                 const titleText = item.innerText.replace(/🎵|🎤/g, '').trim();
                 const song = nav.jData.find(d => d.ti === titleText);

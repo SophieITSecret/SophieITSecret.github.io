@@ -1,5 +1,5 @@
 /**
- * app_m.js — 完璧版（全機能・全ロジック保持）
+ * app_m.js — 真・完全版
  */
 
 import * as media    from './media.js';
@@ -191,7 +191,7 @@ function renderConsole(mode) {
     if (mode === 'screening') {
         grid.innerHTML = `
             <button class="c-btn" id="c-back" style="background:#34495e; color:#fff; flex:1; font-size:0.95rem; font-weight:bold; border:none;">戻る</button>
-            <button class="c-btn" id="c-clr"  style="background:#5DADE2; color:#fff; flex:1; font-size:0.95rem; text-shadow:0 0 2px rgba(0,0,0,0.5); border:none;">リセット</button>
+            <button class="c-btn" id="c-clr"  style="background:#5DADE2; color:#fff; flex:1; font-size:0.95rem; border:none;">リセット</button>
             <button class="c-btn" id="c-ex"   style="background:#8e44ad; color:#fff; flex:2; font-size:0.95rem; border:none;">検索実行</button>`;
         document.getElementById('c-back').onclick = liquor.openLiquorPortal;
         document.getElementById('c-clr').onclick  = liquor.clearScr;
@@ -240,7 +240,7 @@ function renderConsole(mode) {
         document.getElementById('btn-shop').onclick = () => { nav.updateNav("shop"); shop.openShop(); renderConsole('standard'); };
     } 
     else if (["tit", "st", "lq_card", "lq_list", "lq_res", "shop"].includes(nav.state)) {
-        // 最深部: Sボタンを出す
+        // 最深部およびリスト・ショップでSボタンを出す
         grid.innerHTML = `
             <button class="c-btn" id="c-sophie-std" style="background:#1a3a4a; color:#00d2ff; font-size:1.1rem; font-weight:bold; flex:1.0;">S</button>
             <button class="c-btn" id="ctrl-back-txt" style="background:#34495e; color:#fff; flex:1; font-size:0.95rem; font-weight:bold; border:none;">戻る</button>
@@ -251,7 +251,7 @@ function renderConsole(mode) {
         document.getElementById('ctrl-back-txt').onclick = handleBack;
     }
     else {
-        // 中間: 📖ボタンを出す
+        // 中間メニュー（art, g, lq_root等）は📖ボタン
         grid.innerHTML = `
             <button class="c-btn" id="btn-techo" style="background:rgba(34,34,34,0.8); color:#fff; border:1px solid #777; font-size:1.5rem; flex:1.0; display:flex; justify-content:center; align-items:center;">📖</button>
             <button class="c-btn" id="ctrl-back-txt" style="background:#34495e; color:#fff; flex:1; font-size:0.95rem; font-weight:bold; border:none;">戻る</button>

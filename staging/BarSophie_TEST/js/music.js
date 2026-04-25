@@ -1,5 +1,5 @@
 /**
- * music.js — 完璧版
+ * music.js — 真・完全版
  */
 
 import * as nav from './navigation.js';
@@ -15,9 +15,9 @@ export function setYtReady(player) { ytPlayer = player; ytPlayerReady = true; }
 export function openMusic() {
     nav.updateNav("art");
     let h = `<div class="label">マスターお薦め</div><div class="artist-grid">
-             <div class="item" data-special="ソフィー" style="color:var(--blue);">ソフィー</div>
-             <div class="item" data-special="BGM">BGM</div>
-             <div class="item" data-special="昭和ソング">昭和ソング</div></div>`;
+             <div class="item" data-special="ソフィー" style="color:var(--blue); font-size:1.05rem; padding:0.2em 15px;">ソフィー</div>
+             <div class="item" data-special="BGM" style="font-size:1.05rem; padding:0.2em 15px;">BGM</div>
+             <div class="item" data-special="昭和ソング" style="font-size:1.05rem; padding:0.2em 15px;">昭和ソング</div></div>`;
     
     const preferredOrder = ['E', 'F', 'J', 'L', 'W', 'I', 'S'];
     const sortedFs = [...new Set(nav.jData.map(d => d.f))].sort((a,b) => (preferredOrder.indexOf(a)||99) - (preferredOrder.indexOf(b)||99));
