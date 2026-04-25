@@ -1,3 +1,4 @@
+// js/shop.js
 /**
  * shop.js — 最終確定版
  * ★ 商品説明をタイトルの下に配置し、全8ボタンを保持
@@ -69,13 +70,12 @@ export function openShop() {
             grouped[cat].forEach(item => {
                 const amzUrl = `https://www.amazon.co.jp/s?k=${encodeURIComponent(clean(item.keyword))}&tag=itsophie-22`;
                 
-                // ★修正箇所：display:block と white-space:normal を強制して段組みを正常化
-                h += `<div class="item" style="padding:12px 15px; cursor:default; height:auto; overflow:visible; display:block!important; white-space:normal!important;">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                            <div style="font-weight:bold; color:#eee; font-size:1.05rem; flex:1; min-width:0; margin-right:10px;">${clean(item.name)}</div>
-                            <a href="${amzUrl}" target="_blank" class="lq-btn-amz-small" style="flex-shrink:0;">Amazon↗</a>
+                h += `<div class="item" style="padding:12px 15px; cursor:default; height:auto; overflow:visible;">
+                        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:6px;">
+                            <div style="font-weight:bold; color:#eee; font-size:1.05rem; line-height:1.4;">${clean(item.name)}</div>
+                            <a href="${amzUrl}" target="_blank" class="lq-btn-amz-small" style="flex-shrink:0; margin-left:10px;">Amazon↗</a>
                         </div>
-                        <div style="font-size:0.85rem; color:#aaa; line-height:1.6; display:block;">${clean(item.desc)}</div>
+                        <div style="font-size:0.85rem; color:#aaa; line-height:1.6;">${clean(item.desc)}</div>
                       </div>`;
             });
         }
