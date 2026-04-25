@@ -1,7 +1,7 @@
 // js/shop.js
 /**
- * shop.js — 最終確定版
- * ★ 商品説明をタイトルの下に配置し、全8ボタンを保持
+ * shop.js — ソフィーの特選・売店モジュール
+ * ★ 他の機能から完全に独立しています
  */
 
 import * as nav from './navigation.js';
@@ -9,12 +9,14 @@ import { setListView, clean } from './utils.js';
 
 let shopData = [];
 
+// 初期化：CSVデータの読み込み
 export async function initShop() {
     try {
         const res = await fetch('売店メニュー.csv');
         if (!res.ok) throw new Error("CSV not found");
         const csv = await res.text();
         
+        // 簡易CSVパース (カテゴリー,商品名,検索キーワード,説明)
         shopData = csv.split('\n').slice(1).filter(l => l.trim().length > 0).map(l => {
             const c = l.split(',').map(s => s.trim());
             return { cat: c[0], name: c[1], keyword: c[2], desc: c[3] };
@@ -26,11 +28,14 @@ export async function initShop() {
     }
 }
 
+// 売店画面を開く
 export function openShop() {
     nav.updateNav("shop");
 
+    // 戻るボタン（一番上に固定）
     let h = `<div class="label" id="lbl-back-shop" style="cursor:pointer; position:sticky; top:0; z-index:100;">◀ メインカウンターへ戻る</div>`;
     
+    // 【看板エリア】Sophie's Selection (スクロールに追従して固定)
     h += `<div style="position:sticky; top:28px; z-index:99; background:#08080a; text-align:center; padding:15px 0 10px; border-bottom:1px solid #222;">
             <div style="color:var(--accent); font-size:1.2rem; font-weight:bold; letter-spacing:1px; font-family:serif;">Sophie's Selection</div>
             <div style="color:#00d2ff; font-size:0.75rem; margin-top:4px;">- ソフィーの特選・お買い得情報 -</div>
@@ -38,26 +43,41 @@ export function openShop() {
 
     h += `<div style="padding: 15px 12px 12px;">`;
 
+    // 🎁 総合タイムセール
     h += `<a href="https://www.amazon.co.jp/gp/goldbox?tag=itsophie-22" target="_blank" class="act-btn" style="background: linear-gradient(135deg, #3a2a00, #1a1500); color:#f1c40f!important; border:1px solid #c8a84b; font-size:1rem; box-shadow: 0 4px 6px rgba(0,0,0,0.5); margin-bottom:15px; display:flex!important; align-items:center; justify-content:center; text-decoration:none;">🎁 Amazon 総合タイムセール会場</a>`;
     
     h += `<div style="font-size:0.8rem; color:#aaa; margin:0 0 8px; text-align:center;">▼ 本日の飲料タイムセール（Amazon） ▼</div>`;
 
+    // タイムセール専用URL生成関数
     const getSaleUrl = (kw) => `https://www.amazon.co.jp/s?k=${encodeURIComponent(kw)}&i=todays-deals&tag=itsophie-22`;
 
+    // 🍺 お酒5ジャンル分割ボタン
     h += `<div style="display:flex; flex-wrap:wrap; gap:8px;">`;
-    h += `<a href="${getSaleUrl('ビール')}" target="_blank" class="act-btn" style="flex:1; min-width:30%; background:#1a1a2e; border:1px solid #444; font-size:0.85rem; margin-bottom:0; height:44px; display:flex!important; align-items:center; justify-content:center; text-decoration:none; box-shadow: 0 2px 4px rgba(0,0,0,0.3); padding:0 4px;">🍺 ビール</a>`;
-    h += `<a href="${getSaleUrl('ウイスキー')}" target="_blank" class="act-btn" style="flex:1; min-width:30%; background:#1a1a2e; border:1px solid #444; font-size:0.85rem; margin-bottom:0; height:44px; display:flex!important; align-items:center; justify-content:center; text-decoration:none; box-shadow: 0 2px 4px rgba(0,0,0,0.3); padding:0 4px;">🥃 ウイスキー</a>`;
-    h += `<a href="${getSaleUrl('ワイン')}" target="_blank" class="act-btn" style="flex:1; min-width:30%; background:#1a1a2e; border:1px solid #444; font-size:0.85rem; margin-bottom:0; height:44px; display:flex!important; align-items:center; justify-content:center; text-decoration:none; box-shadow: 0 2px 4px rgba(0,0,0,0.3); padding:0 4px;">🍷 ワイン</a>`;
-    h += `<a href="${getSaleUrl('日本酒')}" target="_blank" class="act-btn" style="flex:1; min-width:48%; background:#1a1a2e; border:1px solid #444; font-size:0.85rem; margin-bottom:0; height:44px; display:flex!important; align-items:center; justify-content:center; text-decoration:none; box-shadow: 0 2px 4px rgba(0,0,0,0.3); padding:0 4px;">🍶 日本酒</a>`;
-    h += `<a href="${getSaleUrl('焼酎')}" target="_blank" class="act-btn" style="flex:1; min-width:48%; background:#1a1a2e; border:1px solid #444; font-size:0.85rem; margin-bottom:0; height:44px; display:flex!important; align-items:center; justify-content:center; text-decoration:none; box-shadow: 0 2px 4px rgba(0,0,0,0.3); padding:0 4px;">🍶 焼酎</a>`;
+    const cats = [
+        { name: "🍺 ビール", kw: "ビール" },
+        { name: "🥃 ウイスキー", kw: "ウイスキー" },
+        { name: "🍷 ワイン", kw: "ワイン" },
+        { name: "🍶 日本酒", kw: "日本酒" },
+        { name: "🍶 焼酎", kw: "焼酎" }
+    ];
+    cats.forEach(c => {
+        h += `<a href="${getSaleUrl(c.kw)}" target="_blank" class="act-btn" style="flex:1; min-width:30%; background:#1a1a2e; border:1px solid #444; font-size:0.85rem; margin-bottom:0; height:44px; display:flex!important; align-items:center; justify-content:center; text-decoration:none; box-shadow: 0 2px 4px rgba(0,0,0,0.3); padding:0 4px;">${c.name}</a>`;
+    });
     h += `</div>`;
 
+    // 💧 水・清涼飲料の小ボタン
     h += `<div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:8px;">`;
-    h += `<a href="${getSaleUrl('水')}" target="_blank" class="act-btn" style="flex:1; min-width:28%; background:#111; border:1px dashed #555; color:#aaa!important; font-size:0.8rem; margin-bottom:0; height:36px; display:flex!important; align-items:center; justify-content:center; text-decoration:none; padding:0 4px;">💧 水</a>`;
-    h += `<a href="${getSaleUrl('炭酸水')}" target="_blank" class="act-btn" style="flex:1; min-width:28%; background:#111; border:1px dashed #555; color:#aaa!important; font-size:0.8rem; margin-bottom:0; height:36px; display:flex!important; align-items:center; justify-content:center; text-decoration:none; padding:0 4px;">💧 炭酸水</a>`;
-    h += `<a href="${getSaleUrl('ジュース')}" target="_blank" class="act-btn" style="flex:1; min-width:28%; background:#111; border:1px dashed #555; color:#aaa!important; font-size:0.8rem; margin-bottom:0; height:36px; display:flex!important; align-items:center; justify-content:center; text-decoration:none; padding:0 4px;">🥤 ジュース</a>`;
+    const softCats = [
+        { name: "💧 水", kw: "水 ミネラルウォーター" },
+        { name: "💧 炭酸水", kw: "炭酸水" },
+        { name: "🥤 ジュース", kw: "ジュース" }
+    ];
+    softCats.forEach(c => {
+        h += `<a href="${getSaleUrl(c.kw)}" target="_blank" class="act-btn" style="flex:1; min-width:28%; background:#111; border:1px dashed #555; color:#aaa!important; font-size:0.8rem; margin-bottom:0; height:36px; display:flex!important; align-items:center; justify-content:center; text-decoration:none; padding:0 4px;">${c.name}</a>`;
+    });
     h += `</div></div>`;
 
+    // 【下部】CSV特選リストエリア
     if (shopData.length > 0) {
         const grouped = {};
         shopData.forEach(d => {
@@ -66,28 +86,31 @@ export function openShop() {
         });
 
         for (const cat in grouped) {
-            h += `<div class="label" style="position:sticky; top:90px; z-index:98;">🛍️ ${clean(cat)}</div>`;
+            h += `<div class="label" style="top:90px;">🛍️ ${clean(cat)}</div>`;
             grouped[cat].forEach(item => {
                 const amzUrl = `https://www.amazon.co.jp/s?k=${encodeURIComponent(clean(item.keyword))}&tag=itsophie-22`;
                 
-                h += `<div class="item" style="padding:12px 15px; cursor:default; height:auto;">
-        <table style="width:100%; border-collapse:collapse;">
-          <tr>
-            <td style="font-weight:bold; color:#eee; font-size:1.05rem; line-height:1.4; padding:0; vertical-align:top;">${clean(item.name)}</td>
-            <td style="width:80px; text-align:right; vertical-align:top; padding:0 0 0 8px;"><a href="${amzUrl}" target="_blank" class="lq-btn-amz-small">Amazon↗</a></td>
-          </tr>
-          <tr>
-            <td colspan="2" style="font-size:0.85rem; color:#aaa; line-height:1.6; padding-top:6px;">${clean(item.desc)}</td>
-          </tr>
-        </table>
-      </div>`;
+                h += `<div style="padding:12px 15px; border-bottom:1px solid #1a1a1a; box-sizing:border-box; width:100%; white-space:normal!important; overflow:visible!important;">
+                        <table style="width:100%; border-collapse:collapse; table-layout:fixed;">
+                          <tr>
+                            <td style="font-weight:bold; color:#eee; font-size:1rem; line-height:1.4; padding:0; vertical-align:top; white-space:normal; word-break:break-all;">${clean(item.name)}</td>
+                            <td style="width:75px; text-align:right; vertical-align:top; padding:0 0 0 6px; white-space:nowrap;"><a href="${amzUrl}" target="_blank" class="lq-btn-amz-small">Amazon↗</a></td>
+                          </tr>
+                          <tr>
+                            <td colspan="2" style="font-size:0.85rem; color:#aaa; line-height:1.6; padding-top:6px; white-space:normal; word-break:break-all;">${clean(item.desc)}</td>
+                          </tr>
+                        </table>
+                      </div>`;
             });
         }
+    } else {
+        h += `<div style="padding:20px; text-align:center; color:#888;">特選リストの準備中です...</div>`;
     }
 
     setListView(h, true);
+
     document.getElementById('lbl-back-shop').addEventListener('click', () => {
-        const backBtn = document.getElementById('ctrl-back-txt');
+        const backBtn = document.getElementById('ctrl-back');
         if (backBtn) backBtn.click();
     });
 }
