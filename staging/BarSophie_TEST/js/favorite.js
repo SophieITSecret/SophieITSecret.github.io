@@ -1,7 +1,3 @@
-/**
- * favorite.js — 真・完全版
- */
-
 import { setListView, clean } from './utils.js';
 import * as nav from './navigation.js';
 
@@ -113,6 +109,9 @@ export async function openTecho(folder = null) {
                     <div class="fav-music-del" style="color:#ff69b4; font-size:1.4rem; padding-left:15px; cursor:pointer;">❤️</div>
                   </div>`;
         });
+    } else if (folder === 'G') {
+        h += `<div class="scr-title" style="margin-top:15px; color:#e67e22; padding-left:10px; font-size:0.78rem;">🎲 ソフィーとの思い出</div>`;
+        data.gameLog.forEach(log => { h += `<div style="font-size:0.75rem; color:#888; padding:6px 15px; border-bottom:1px dashed #222;">${log}</div>`; });
     }
     setListView(h, false);
     document.querySelectorAll('.fav-item').forEach(el => {
@@ -134,7 +133,7 @@ export function initMusicPatch() {
         lv.querySelectorAll('.item').forEach(item => {
             const hasIcon = item.innerText.includes('🎵') || item.innerText.includes('🎤');
             if (hasIcon) {
-                item.style.padding = '0.2em 15px'; // 歌・歌手は0.2emに極限まで詰める
+                item.style.padding = '0.2em 15px'; 
             } else {
                 item.style.padding = '0.4em 15px';
             }
@@ -144,7 +143,7 @@ export function initMusicPatch() {
 
             if (item.querySelector('.music-fav-btn')) return;
             if (hasIcon) {
-                // 🎤アイコンを削除
+                // ★🎤を削除
                 item.innerHTML = item.innerHTML.replace(/🎤/g, '');
                 const titleText = item.innerText.replace(/🎵|🎤/g, '').trim();
                 const song = nav.jData.find(d => d.ti === titleText);

@@ -1,5 +1,6 @@
 /**
- * app_m.js — 真・完全版
+ * Bar Sophie v22.0 — app_m.js
+ * ★ Sボタン動的配置・SHOPボタン復元・全機能完全版
  */
 
 import * as media    from './media.js';
@@ -28,6 +29,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     liquor.setRenderConsole(renderConsole);
+    music.setRenderConsole(renderConsole); // music.jsとの連動追加
     
     import('./favorite.js').then(fav => {
         fav.initMusicPatch();
@@ -80,8 +82,8 @@ function setup() {
         playVoice("./voices_mp3/menu_greeting.mp3", "いつもありがとうございます。今日はいかがされますか？");
     };
 
-    document.getElementById('btn-music').onclick = () => { music.openMusic(); renderConsole('standard'); };
-    document.getElementById('btn-talk').onclick = () => { music.openTalk(); renderConsole('standard'); };
+    document.getElementById('btn-music').onclick = () => { if (music.openMusic) music.openMusic(); renderConsole('standard'); };
+    document.getElementById('btn-talk').onclick = () => { if (music.openTalk) music.openTalk(); renderConsole('standard'); };
     document.getElementById('btn-liquor').onclick = liquor.openLiquorPortal;
 
     document.getElementById('sophie-warp').onclick = () => {
@@ -191,7 +193,7 @@ function renderConsole(mode) {
     if (mode === 'screening') {
         grid.innerHTML = `
             <button class="c-btn" id="c-back" style="background:#34495e; color:#fff; flex:1; font-size:0.95rem; font-weight:bold; border:none;">戻る</button>
-            <button class="c-btn" id="c-clr"  style="background:#5DADE2; color:#fff; flex:1; font-size:0.95rem; border:none;">リセット</button>
+            <button class="c-btn" id="c-clr"  style="background:#5DADE2; color:#fff; flex:1; font-size:0.95rem; text-shadow:0 0 2px rgba(0,0,0,0.5); border:none;">リセット</button>
             <button class="c-btn" id="c-ex"   style="background:#8e44ad; color:#fff; flex:2; font-size:0.95rem; border:none;">検索実行</button>`;
         document.getElementById('c-back').onclick = liquor.openLiquorPortal;
         document.getElementById('c-clr').onclick  = liquor.clearScr;
@@ -224,7 +226,6 @@ function renderConsole(mode) {
     const pCtrl = `flex:1; background:#1a2b1a; color:#5c9e5c; border:none; border-radius:0; ${noApp}`;
     const pBtn  = `flex:1.0; font-size:1.2rem; background:#1a3a1a; color:#7fd97f; border:none; border-radius:0; ${noApp}`;
 
-    // --- 動的コンソール：Sボタン出現修正 ---
     if (nav.state === "none") {
         const shopBaseStyle = "background:rgba(255, 228, 225, 0.6); color:#cc294a; border:3px solid #1e90ff; flex-direction:column; justify-content:center; align-items:center; backdrop-filter:blur(2px); padding:0; flex:1.0; display:flex;";
         grid.innerHTML = `
@@ -240,7 +241,7 @@ function renderConsole(mode) {
         document.getElementById('btn-shop').onclick = () => { nav.updateNav("shop"); shop.openShop(); renderConsole('standard'); };
     } 
     else if (["tit", "st", "lq_card", "lq_list", "lq_res", "shop"].includes(nav.state)) {
-        // 最深部およびリスト・ショップでSボタンを出す
+        // ★最深部でSボタンを出す
         grid.innerHTML = `
             <button class="c-btn" id="c-sophie-std" style="background:#1a3a4a; color:#00d2ff; font-size:1.1rem; font-weight:bold; flex:1.0;">S</button>
             <button class="c-btn" id="ctrl-back-txt" style="background:#34495e; color:#fff; flex:1; font-size:0.95rem; font-weight:bold; border:none;">戻る</button>
@@ -251,7 +252,7 @@ function renderConsole(mode) {
         document.getElementById('ctrl-back-txt').onclick = handleBack;
     }
     else {
-        // 中間メニュー（art, g, lq_root等）は📖ボタン
+        // 中間メニュー
         grid.innerHTML = `
             <button class="c-btn" id="btn-techo" style="background:rgba(34,34,34,0.8); color:#fff; border:1px solid #777; font-size:1.5rem; flex:1.0; display:flex; justify-content:center; align-items:center;">📖</button>
             <button class="c-btn" id="ctrl-back-txt" style="background:#34495e; color:#fff; flex:1; font-size:0.95rem; font-weight:bold; border:none;">戻る</button>

@@ -19,14 +19,14 @@ export async function loadAllData() {
             const c = l.split(',').map(s => s.trim());
             if (c.length < 6) return null;
             return { id: c[0], g: c[1], th: c[2], ti: c[3], txt: c[5] };
-        }).filter(d => d && d.g); // ジャンル（g）があるものだけ残す
+        }).filter(d => d && d.g);
 
-        // ▼▼▼ 今回追加する「お酒データベース(TSV)」の読み込み処理 ▼▼▼
+        // お酒データベース(TSV) — ★BOM除去を追加
         try {
             const resL = await fetch('liquor_db.tsv');
             const tsvL = await resL.text();
             const lines = tsvL.trim().split('\n');
-            const headers = lines[0].split('\t'); // タブで分割
+            const headers = lines[0].replace(/^\uFEFF/, '').split('\t'); 
             liquorData = lines.slice(1).map(line => {
                 const vals = line.split('\t');
                 let obj = {};
@@ -36,7 +36,6 @@ export async function loadAllData() {
         } catch (e) {
             console.log("お酒データの読み込みをスキップしました", e);
         }
-        // ▲▲▲ 追加ここまで ▲▲▲
 
         console.log("Navigation Ready:", { music: jData.length, talk: tData.length, liquor: liquorData.length });
     } catch (e) {
