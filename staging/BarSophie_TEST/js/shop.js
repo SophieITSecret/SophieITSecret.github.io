@@ -1,6 +1,6 @@
 /**
- * shop.js — 真・完全復元版
- * ★ 初代MrP2の全8ボタンを手書きで保持、商品名の改行のみ修正
+ * shop.js — 最終確定版
+ * ★ 商品説明をタイトルの下に配置し、全8ボタンを保持
  */
 
 import * as nav from './navigation.js';
@@ -43,7 +43,6 @@ export function openShop() {
 
     const getSaleUrl = (kw) => `https://www.amazon.co.jp/s?k=${encodeURIComponent(kw)}&i=todays-deals&tag=itsophie-22`;
 
-    // 🍺 お酒5ジャンルボタンをそのまま再現
     h += `<div style="display:flex; flex-wrap:wrap; gap:8px;">`;
     h += `<a href="${getSaleUrl('ビール')}" target="_blank" class="act-btn" style="flex:1; min-width:30%; background:#1a1a2e; border:1px solid #444; font-size:0.85rem; margin-bottom:0; height:44px; display:flex!important; align-items:center; justify-content:center; text-decoration:none; box-shadow: 0 2px 4px rgba(0,0,0,0.3); padding:0 4px;">🍺 ビール</a>`;
     h += `<a href="${getSaleUrl('ウイスキー')}" target="_blank" class="act-btn" style="flex:1; min-width:30%; background:#1a1a2e; border:1px solid #444; font-size:0.85rem; margin-bottom:0; height:44px; display:flex!important; align-items:center; justify-content:center; text-decoration:none; box-shadow: 0 2px 4px rgba(0,0,0,0.3); padding:0 4px;">🥃 ウイスキー</a>`;
@@ -52,7 +51,6 @@ export function openShop() {
     h += `<a href="${getSaleUrl('焼酎')}" target="_blank" class="act-btn" style="flex:1; min-width:48%; background:#1a1a2e; border:1px solid #444; font-size:0.85rem; margin-bottom:0; height:44px; display:flex!important; align-items:center; justify-content:center; text-decoration:none; box-shadow: 0 2px 4px rgba(0,0,0,0.3); padding:0 4px;">🍶 焼酎</a>`;
     h += `</div>`;
 
-    // 💧 水・清涼飲料ボタンを再現
     h += `<div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:8px;">`;
     h += `<a href="${getSaleUrl('水')}" target="_blank" class="act-btn" style="flex:1; min-width:28%; background:#111; border:1px dashed #555; color:#aaa!important; font-size:0.8rem; margin-bottom:0; height:36px; display:flex!important; align-items:center; justify-content:center; text-decoration:none; padding:0 4px;">💧 水</a>`;
     h += `<a href="${getSaleUrl('炭酸水')}" target="_blank" class="act-btn" style="flex:1; min-width:28%; background:#111; border:1px dashed #555; color:#aaa!important; font-size:0.8rem; margin-bottom:0; height:36px; display:flex!important; align-items:center; justify-content:center; text-decoration:none; padding:0 4px;">💧 炭酸水</a>`;
@@ -70,21 +68,22 @@ export function openShop() {
             h += `<div class="label" style="position:sticky; top:90px; z-index:98;">🛍️ ${clean(cat)}</div>`;
             grouped[cat].forEach(item => {
                 const amzUrl = `https://www.amazon.co.jp/s?k=${encodeURIComponent(clean(item.keyword))}&tag=itsophie-22`;
-                // ★Claude指摘：white-space:normalを削除
-                h += `<div class="item" style="padding:12px 15px; cursor:default; height:auto; overflow:visible;">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-                            <div style="font-weight:bold; color:#eee; font-size:1.05rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex:1; margin-right:10px;">${clean(item.name)}</div>
+                
+                // ★修正箇所：display:block と white-space:normal を強制して段組みを正常化
+                h += `<div class="item" style="padding:12px 15px; cursor:default; height:auto; overflow:visible; display:block!important; white-space:normal!important;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                            <div style="font-weight:bold; color:#eee; font-size:1.05rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1; margin-right:10px;">${clean(item.name)}</div>
                             <a href="${amzUrl}" target="_blank" class="lq-btn-amz-small" style="flex-shrink:0;">Amazon↗</a>
                         </div>
-                        <div style="font-size:0.85rem; color:#aaa; line-height:1.6;">${clean(item.desc)}</div>
+                        <div style="font-size:0.85rem; color:#aaa; line-height:1.6; display:block;">${clean(item.desc)}</div>
                       </div>`;
             });
         }
     }
 
     setListView(h, true);
-    document.getElementById('lbl-back-shop').onclick = () => {
+    document.getElementById('lbl-back-shop').addEventListener('click', () => {
         const backBtn = document.getElementById('ctrl-back-txt');
         if (backBtn) backBtn.click();
-    };
+    });
 }

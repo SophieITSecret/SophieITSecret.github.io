@@ -1,3 +1,8 @@
+/**
+ * favorite.js — 最終確定版
+ * ★ お気に入りの歌リストの行間を0.3emに設定
+ */
+
 import { setListView, clean } from './utils.js';
 import * as nav from './navigation.js';
 
@@ -89,7 +94,7 @@ export async function openTecho(folder = null) {
     if (folder === 'L') {
         h += `<div class="scr-title" style="margin-top:15px; color:var(--talk); padding-left:10px; font-size:0.78rem;">🍷 お気に入りのお酒</div>`;
         categories['L'].forEach(id => {
-            const d = nav.liquorData.find(item => (item["No."] || item["No"] || item["番号"]) === id);
+            const d = nav.liquorData.find(item => (item["No."] || item["No"]) === id);
             if (d) {
                 const badge = lq ? lq.priceBadge(d["市販価格"], d["大分類"]) : "";
                 h += `<div class="item fav-item lq-fav" data-id="${id}" style="display:flex; align-items:center; gap:4px; font-size:1.05rem; padding:0.4em 15px;">${badge}<span>${clean(d['銘柄名'])}</span></div>`;
@@ -103,14 +108,13 @@ export async function openTecho(folder = null) {
             let title = song ? (song.a ? `${song.a}／${song.ti}` : song.ti) : `曲ID:${num}`;
             let cleanTitle = title.replace(/🎵|♫|🎤/g, '').trim();
             if (cleanTitle.length > 18) cleanTitle = cleanTitle.substring(0, 17) + "…";
+            
+            // ★修正：行間を 0.3em に設定
             h += `<div class="item fav-item music-row" data-id="${id}" data-fav-patched="true" style="display:flex; justify-content:space-between; align-items:center; padding:0.2em 15px;">
-                    <div class="fav-music-play" data-code="${num}" style="flex:1; color:#eee; font-size:1.05rem; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; cursor:pointer;">${cleanTitle}</div>
+                    <div class="fav-music-play" data-code="${num}" style="flex:1; color:#eee; font-size:1.05rem; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; line-height:1.2; cursor:pointer;">${cleanTitle}</div>
                     <div class="fav-music-del" style="color:#ff69b4; font-size:1.4rem; padding-left:15px; cursor:pointer;">❤️</div>
                   </div>`;
         });
-    } else if (folder === 'G') {
-        h += `<div class="scr-title" style="margin-top:15px; color:#e67e22; padding-left:10px; font-size:0.78rem;">🎲 ソフィーとの思い出</div>`;
-        data.gameLog.forEach(log => { h += `<div style="font-size:0.75rem; color:#888; padding:6px 15px; border-bottom:1px dashed #222;">${log}</div>`; });
     }
     setListView(h, false);
     document.querySelectorAll('.fav-item').forEach(el => {
@@ -118,7 +122,7 @@ export async function openTecho(folder = null) {
             el.querySelector('.fav-music-del').onclick = (e) => { e.stopPropagation(); toggleFavorite(el.dataset.id); openTecho(folder); };
             el.querySelector('.fav-music-play').onclick = (e) => {
                 const code = e.currentTarget.dataset.code;
-                import('./music.js').then(m => m.playSongByCode(code, { source: "notebook" }));
+                import('./music.js').then(m => m.playSongByCode(code));
             };
             return;
         }
@@ -132,7 +136,8 @@ export function initMusicPatch() {
         lv.querySelectorAll('.item').forEach(item => {
             const hasIcon = item.innerText.includes('🎵') || item.innerText.includes('🎤');
             if (hasIcon) {
-                item.style.padding = '0.2em 15px'; 
+                // ★修正：行間を 0.3em に設定
+                item.style.padding = '0.3em 15px'; 
             } else {
                 item.style.padding = '0.4em 15px';
             }
@@ -140,14 +145,14 @@ export function initMusicPatch() {
             item.style.display = 'flex';
             item.style.alignItems = 'center';
 
-            if (item.querySelector('.music-fav-btn')) return;
+            if (item.querySelector('.music-fav-btn') || item.dataset.favPatched) return;
             if (hasIcon) {
-                // ★🎤を削除
                 item.innerHTML = item.innerHTML.replace(/🎤/g, '');
                 const titleText = item.innerText.replace(/🎵|🎤/g, '').trim();
                 const song = nav.jData.find(d => d.ti === titleText);
                 const songId = song ? `S-${String(song.code).padStart(4,'0')}` : 'S-UNK';
                 const isFav = isFavorite(songId);
+                item.dataset.favPatched = "true";
                 item.style.justifyContent = 'space-between';
                 item.innerHTML = `<span style="flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">🎵 ${titleText}</span>
                                   <div class="music-fav-btn" data-id="${songId}" style="padding:8px 12px; margin:-8px -5px -8px auto; color:${isFav?'#ff69b4':'#555'}; font-size:1.2rem; cursor:pointer;">${isFav?'❤️':'♡'}</div>`;
