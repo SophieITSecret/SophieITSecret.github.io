@@ -1,6 +1,6 @@
 /**
  * music.js — 完全改修版（全コード）
- * ★ 曲順正常化・リストフォント1.1rem拡大・DJ API維持
+ * ★ 1.05rem・ジャンル順・曲順正常化版
  */
 
 import * as nav from './navigation.js';
@@ -19,17 +19,25 @@ export function openMusic() {
              <div class="item" data-special="ソフィー" style="color:var(--blue);">🎤 ソフィー</div>
              <div class="item" data-special="BGM">🎤 BGM</div>
              <div class="item" data-special="昭和ソング">🎤 昭和ソング</div></div>`;
+    
     const preferredOrder = ['E', 'F', 'J', 'L', 'W', 'I', 'S'];
-    const sortedFs = [...new Set(nav.jData.map(d => d.f))].sort((a,b) => (preferredOrder.indexOf(a)||99) - (preferredOrder.indexOf(b)||99));
+    const rawFs = [...new Set(nav.jData.map(d => d.f))];
+    const sortedFs = rawFs.sort((a, b) => {
+        let ia = preferredOrder.indexOf(a); if(ia === -1) ia = 999;
+        let ib = preferredOrder.indexOf(b); if(ib === -1) ib = 999;
+        return ia - ib;
+    });
+
     sortedFs.forEach(f => {
         const arts = [...new Set(nav.jData.filter(d => d.f === f).map(d => d.a))];
         if (arts.length) {
-            h += `<div class="label">${(f==='L')?"特集コーナー":nav.jData.find(d=>d.f===f).gName}</div><div class="artist-grid">`;
-            arts.forEach(a => h += `<div class="item" data-artist="${a}" style="font-size:1.1rem; padding:0.4em 15px;">🎤 ${a}</div>`);
+            let labelName = (f==='L') ? "特集コーナー" : (nav.jData.find(d=>d.f===f)?.gName || f);
+            h += `<div class="label">${labelName}</div><div class="artist-grid">`;
+            arts.forEach(a => h += `<div class="item" data-artist="${a}" style="font-size:1.05rem; padding:0.4em 15px;">🎤 ${a}</div>`);
             h += `</div>`;
         }
     });
-    setListView(h, false); // utils経由で描画
+    setListView(h, false);
     document.querySelectorAll('.item').forEach(el => el.onclick = (e) => { 
         if(e.currentTarget.dataset.special) openSpecialSongs(e.currentTarget.dataset.special); 
         else openSongs(e.currentTarget.dataset.artist); 
@@ -45,10 +53,9 @@ function openSongs(a) { nav.updateNav("tit", undefined, nav.jData.filter(m => m.
 
 export function renderSongList(title) {
     let h = `<div class="label">${title}</div>`;
-    // 【重要】データの並び順を維持（ソートしない） [cite: 19]
     nav.curP.forEach((m, i) => {
         const isSophie = m.ti && (m.ti.includes("みずいろのシグナル") || m.ti.includes("水色のシグナル"));
-        h += `<div class="item" data-idx="${i}" style="font-size:1.1rem; padding:0.4em 15px; ${isSophie?'color:var(--blue);':''}">🎵 ${m.ti}</div>`;
+        h += `<div class="item" data-idx="${i}" style="font-size:1.05rem; padding:0.3em 15px; ${isSophie?'color:var(--blue);':''}">🎵 ${m.ti}</div>`;
     });
     setListView(h, false);
     document.querySelectorAll('.item').forEach(el => el.onclick = (e) => {
@@ -59,7 +66,7 @@ export function renderSongList(title) {
 export function openTalk() {
     nav.updateNav("g");
     let h = '<div class="label">お酒のジャンル</div>';
-    [...new Set(nav.tData.map(d => d.g))].forEach(g => h += `<div class="item" data-g="${g}" style="font-size:1.1rem; padding:0.4em 15px;">📁 ${g}</div>`);
+    [...new Set(nav.tData.map(d => d.g))].forEach(g => h += `<div class="item" data-g="${g}" style="font-size:1.05rem; padding:0.4em 15px;">📁 ${g}</div>`);
     setListView(h, false);
     document.querySelectorAll('.item').forEach(el => el.onclick = (e) => { if(e.currentTarget.dataset.g){ nav.updateNav("th", e.currentTarget.dataset.g); openThemes(nav.curG); } });
 }
@@ -67,14 +74,14 @@ export function openTalk() {
 function openThemes(g) {
     nav.updateNav("th");
     let h = `<div class="label">${g}</div>`;
-    [...new Set(nav.tData.filter(d => d.g === g).map(d => d.th))].forEach(t => h += `<div class="item" data-th="${t}" style="font-size:1.1rem; padding:0.4em 15px;">🏷️ ${t}</div>`);
+    [...new Set(nav.tData.filter(d => d.g === g).map(d => d.th))].forEach(t => h += `<div class="item" data-th="${t}" style="font-size:1.05rem; padding:0.4em 15px;">🏷️ ${t}</div>`);
     setListView(h, false);
     document.querySelectorAll('.item').forEach(el => el.onclick = (e) => { if(e.currentTarget.dataset.th) openStories(e.currentTarget.dataset.th); });
 }
 
 export function renderStoryList(t) {
     let h = `<div class="label">${t}</div>`;
-    nav.curP.forEach((d, i) => { h += `<div class="item" data-idx="${i}" style="font-size:1.1rem; padding:0.4em 15px;">${d.fix==="1"?"📌 ":""}${d.ti}</div>`; });
+    nav.curP.forEach((d, i) => { h += `<div class="item" data-idx="${i}" style="font-size:1.05rem; padding:0.4em 15px;">${d.fix==="1"?"📌 ":""}${d.ti}</div>`; });
     setListView(h, false);
     document.querySelectorAll('.item').forEach(el => el.onclick = (e) => {
         const i = parseInt(e.currentTarget.dataset.idx); if(!isNaN(i)) { nav.updateNav(undefined,undefined,undefined,i); setMon('i', `./talk_images/${nav.curP[i].id}.jpg`); prep(nav.curP[i].txt, false, nav.curP[i].id); }
@@ -139,7 +146,7 @@ function prep(t, isM, id = null, originalTxt = null) {
 function render(h, cb) { nm.style.display = 'none'; lv.style.display = 'block'; lv.innerHTML = h; document.getElementById('main-scroll').scrollTop = 0; document.querySelectorAll('#list-view .item').forEach(el => el.onclick = cb); }
 export const defaultOnEnded = () => { if (isAutoPlay && !isMusicMode) setTimeout(next, 1200); };
 
-// --- 外部API（DJソフィー等から使用） [cite: 9] ---
+// --- DJ API維持 ---
 const _st = { currentCode: null, currentTitle: null, currentArtist: null };
 export function playSongByCode(code, options = {}) {
     const s = nav.jData.find(d => parseInt(String(d.code), 10) === parseInt(String(code), 10));

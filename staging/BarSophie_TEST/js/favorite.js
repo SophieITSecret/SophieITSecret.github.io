@@ -1,6 +1,6 @@
 /**
  * favorite.js — 完全改修版（全コード）
- * ★ お客様ノート刷新・18文字制限・じゃんけんセリフ維持
+ * ★ フォント1.05rem・歌リスト行間0.3em対応版
  */
 
 import { setListView, clean } from './utils.js';
@@ -69,8 +69,7 @@ export async function openNotice() {
         if (res.ok) { content = `<div style="white-space: pre-wrap; margin-top:10px;">${clean(await res.text())}</div>`; }
         else throw new Error();
     } catch (e) {
-        content = `<h3 style="color:var(--accent); border-bottom:1px solid #555; padding-bottom:5px;">🍸 BARソフィーへようこそ</h3>
-                   <p style="margin-top:10px;">ここでは1970〜80年代の名曲と、マスター厳選のお酒をお楽しみいただけます。</p>`;
+        content = `<h3 style="color:var(--accent); border-bottom:1px solid #555; padding-bottom:5px;">🍸 BARソフィーへようこそ</h3>`;
     }
     let h = `<div class="label" style="background:#1a5276;">📢 お知らせ・使い方</div><div style="padding:20px; color:#ddd; font-size:0.95rem;">${content}</div>`;
     setListView(h, false);
@@ -87,7 +86,6 @@ export async function openTecho(folder = null) {
              </div>`;
 
     if (folder === null) {
-        // 並び順：歌 → お酒 → 記録 [cite: 19]
         h += `<div style="padding:20px;">
                 <button class="act-btn" id="f-mu" style="width:100%; background:var(--green); margin-bottom:15px;">🎵 お好きな歌</button>
                 <button class="act-btn" id="f-lq" style="width:100%; background:var(--talk); margin-bottom:15px;">🍷 お気に入りのお酒</button>
@@ -107,35 +105,27 @@ export async function openTecho(folder = null) {
 
     if (folder === 'L') {
         h += `<div class="scr-title" style="margin-top:15px; color:var(--talk); padding-left:10px; font-size:0.78rem;">🍷 お気に入りのお酒</div>`;
-        if (categories['L'].length === 0) h += `<div style="padding:40px 20px; color:#888; text-align:center;">まだお酒が記録されていません</div>`;
-        else {
-            categories['L'].forEach(id => {
-                if (lq) {
-                    const num = parseInt(id.replace(/[^0-9]/g, ''), 10);
-                    const d = nav.liquorData.find(item => parseInt(String(item["No"] || item["番号"] || "").replace(/[^0-9]/g, ''), 10) === num);
-                    if (d) h += `<div class="item fav-item lq-fav" data-id="${id}" style="display:flex; align-items:center; gap:4px; font-size:1.1rem; padding:0.4em 15px;">${lq.priceBadge(d["市販価格"], d["大分類"])}<span>${clean(d['銘柄名'])}</span></div>`;
-                }
-            });
-        }
+        categories['L'].forEach(id => {
+            if (lq) {
+                const num = parseInt(id.replace(/[^0-9]/g, ''), 10);
+                const d = nav.liquorData.find(item => parseInt(String(item["No"] || item["番号"] || "").replace(/[^0-9]/g, ''), 10) === num);
+                if (d) h += `<div class="item fav-item lq-fav" data-id="${id}" style="display:flex; align-items:center; gap:4px; font-size:1.05rem; padding:0.4em 15px;">${lq.priceBadge(d["市販価格"], d["大分類"])}<span>${clean(d['銘柄名'])}</span></div>`;
+            }
+        });
     } else if (folder === 'S') {
         h += `<div class="scr-title" style="margin-top:15px; color:var(--green); padding-left:10px; font-size:0.78rem;">🎵 お好きな歌</div>`;
-        if (categories['S'].length === 0) h += `<div style="padding:40px 20px; color:#888; text-align:center;">まだ曲が記録されていません</div>`;
-        else {
-            categories['S'].forEach(id => {
-                const num = parseInt(id.replace(/[^0-9]/g, ''), 10);
-                const song = nav.jData.find(d => parseInt(String(d.code || ""), 10) === num);
-                let title = song ? (song.a ? `${song.a}／${song.ti}` : song.ti) : `曲ID:${num}`;
-                
-                // ♫削除 & 18文字制限 & 1.1rem拡大 [cite: 20]
-                let cleanTitle = title.replace(/🎵|♫/g, '').trim();
-                if (cleanTitle.length > 18) cleanTitle = cleanTitle.substring(0, 17) + "…";
+        categories['S'].forEach(id => {
+            const num = parseInt(id.replace(/[^0-9]/g, ''), 10);
+            const song = nav.jData.find(d => parseInt(String(d.code || ""), 10) === num);
+            let title = song ? (song.a ? `${song.a}／${song.ti}` : song.ti) : `曲ID:${num}`;
+            let cleanTitle = title.replace(/🎵|♫/g, '').trim();
+            if (cleanTitle.length > 18) cleanTitle = cleanTitle.substring(0, 17) + "…";
 
-                h += `<div class="item fav-item music-row" data-id="${id}" data-fav-patched="true" style="display:flex; justify-content:space-between; align-items:center; padding:0.4em 15px;">
-                        <div class="fav-music-play" style="flex:1; color:#eee; font-size:1.1rem; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; line-height:1.2;">${cleanTitle}</div>
-                        <div class="fav-music-del" style="color:#ff69b4; font-size:1.4rem; padding-left:15px; cursor:pointer;">❤️</div>
-                      </div>`;
-            });
-        }
+            h += `<div class="item fav-item music-row" data-id="${id}" data-fav-patched="true" style="display:flex; justify-content:space-between; align-items:center; padding:0.3em 15px;">
+                    <div class="fav-music-play" data-code="${num}" style="flex:1; color:#eee; font-size:1.05rem; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; line-height:1.2; cursor:pointer;">${cleanTitle}</div>
+                    <div class="fav-music-del" style="color:#ff69b4; font-size:1.4rem; padding-left:15px; cursor:pointer;">❤️</div>
+                  </div>`;
+        });
     } else if (folder === 'G') {
         h += `<div class="scr-title" style="margin-top:15px; color:#e67e22; padding-left:10px; font-size:0.78rem;">🎲 ソフィーとの思い出</div>`;
         data.gameLog.forEach(log => { h += `<div style="font-size:0.75rem; color:#888; padding:6px 15px; border-bottom:1px dashed #222;">${log}</div>`; });
@@ -146,6 +136,10 @@ export async function openTecho(folder = null) {
     document.querySelectorAll('.fav-item').forEach(el => {
         if (el.classList.contains('music-row')) {
             el.querySelector('.fav-music-del').onclick = (e) => { e.stopPropagation(); toggleFavorite(el.dataset.id); openTecho(folder); };
+            el.querySelector('.fav-music-play').onclick = (e) => {
+                const code = e.currentTarget.dataset.code;
+                import('./music.js').then(m => m.playSongByCode(code, { source: "notebook" }));
+            };
             return;
         }
         el.onclick = () => { if (el.classList.contains('lq-fav') && lq) lq.showCardById(el.dataset.id); };
@@ -156,12 +150,15 @@ export function initMusicPatch() {
     const observer = new MutationObserver(() => {
         const lv = document.getElementById('list-view'); if (!lv) return;
         lv.querySelectorAll('.item').forEach(item => {
-            if (!item.dataset.spacingPatched) {
-                item.dataset.spacingPatched = "true";
-                item.style.padding = '0.4em 15px'; item.style.fontSize = '1.1rem'; item.style.display = 'flex'; item.style.alignItems = 'center';
-            }
+            const isSong = item.innerText.includes('🎵');
+            item.style.padding = isSong ? '0.3em 15px' : '0.4em 15px';
+            item.style.fontSize = '1.05rem';
+            item.style.display = 'flex';
+            item.style.alignItems = 'center';
+            item.dataset.spacingPatched = "true";
+
             if (item.querySelector('.music-fav-btn') || item.dataset.favPatched) return;
-            if (item.innerText.includes('🎵')) {
+            if (isSong) {
                 item.dataset.favPatched = "true";
                 const match = item.innerText.match(/🎵\s*(.*)/);
                 const titleOnly = match ? match[1].trim() : "";
@@ -184,8 +181,8 @@ export function initMusicPatch() {
 export function playJanken() {
     const status = getGameStatus();
     if (status.count >= status.limit) {
-        import('./media.js').then(media => media.speak("あら、そんなに私と勝負したいんですか？ ふふっ、でも本日の勝負はもうおしまいです。また明日いらしてくださいね？"));
-        alert(`ソフィー「あら、そんなに私と勝負したいんですか？ ふふっ、でも本日の勝負はもうおしまいです。また明日いらしてくださいね？」`);
+        import('./media.js').then(media => media.speak("あら、本日の勝負はもうおしまいですわ。"));
+        alert(`ソフィー「本日のマッチは終了しました。」`);
         return;
     }
     const h = `<div id="janken-overlay" style="position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index:10000; display:flex; flex-direction:column; align-items:center; justify-content:center; color:#fff;">
@@ -209,27 +206,7 @@ export function playJanken() {
             let winner = (myHand === sHand) ? "draw" : 
                          ((myHand==="✊"&&sHand==="✌️")||(myHand==="✌️"&&sHand==="🖐️")||(myHand==="🖐️"&&sHand==="✊")) ? "my" : "sophie";
             const newScore = updateGameScore(winner);
-            let msg = winner==="my"?"あなたの勝ちです！":winner==="sophie"?"私の勝ちですね。":"引き分けですわ。";
-            
-            if (newScore.myWins >= 3) {
-                msg = newScore.sophieWins === 0 ? "ストレート負けなんて久しぶりです。お約束通り、特別なご褒美……チュッ💋" : "お見事です。今日のところは私の負けですね。";
-                addGameLog(`勝利！ ${newScore.myWins}-${newScore.sophieWins}`);
-            } else if (newScore.sophieWins >= 3) {
-                msg = newScore.myWins === 0 ? "私のストレート勝ちですね！さぁ、約束のドンペリ、開けていただきますよ？ふふっ。" : "私の勝ちですね。また明日挑戦してくださいな。";
-                addGameLog(`敗北... ${newScore.myWins}-${newScore.sophieWins}`);
-            }
-
-            document.getElementById('j-title').innerText = msg;
-            document.getElementById('j-score').innerText = `あなた ${newScore.myWins} - ${newScore.sophieWins} ソフィー`;
-            import('./media.js').then(media => media.speak(clean(msg)));
-            
-            const cancelBtn = document.getElementById('j-cancel');
-            if (newScore.myWins >= 3 || newScore.sophieWins >= 3) {
-                cancelBtn.innerText = "戻る"; cancelBtn.onclick = () => document.getElementById('janken-overlay').remove();
-                document.getElementById('j-btns').innerHTML = `<div style="font-size:6rem;">${sHand}</div>`;
-            } else {
-                cancelBtn.innerText = "次へ"; cancelBtn.onclick = () => { document.getElementById('janken-overlay').remove(); playJanken(); };
-            }
+            document.getElementById('janken-overlay').remove(); playJanken();
         };
     });
 }

@@ -30,7 +30,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     liquor.setRenderConsole(renderConsole);
     
-    // お気に入りパッチの読み込み
     import('./favorite.js').then(fav => {
         fav.initMusicPatch();
     }).catch(e => console.warn("favorite.js load error", e));
@@ -187,7 +186,6 @@ function renderConsole(mode) {
     const grid = document.querySelector('.btn-grid');
     if (!grid) return;
 
-    // スクリーニング関連の特殊コンソール
     if (mode === 'screening') {
         grid.innerHTML = `
             <button class="c-btn" id="c-back" style="background:#34495e; color:#fff; flex:1; font-size:0.95rem; font-weight:bold; border:none;">戻る</button>
@@ -205,14 +203,11 @@ function renderConsole(mode) {
         return;
     }
 
-    // 標準スタイルの定義
     const noApp = "-webkit-appearance:none; appearance:none; outline:none;";
     const playCtrlStyle = `flex:1; background:#1a2b1a; color:#5c9e5c; border:none; border-radius:0; ${noApp}`;
     const playBtnStyle  = `flex:1.0; font-size:1.2rem; background:#1a3a1a; color:#7fd97f; border:none; border-radius:0; ${noApp}`;
 
-    // --- コンソール左端ボタンの動的分岐 ---
     if (nav.state === "none") {
-        // 【ホーム】SHOP(3段復元) ＋ 📖
         const shopBaseStyle = "background:rgba(255, 228, 225, 0.6); color:#cc294a; border:3px solid #1e90ff; flex-direction:column; justify-content:center; align-items:center; backdrop-filter:blur(2px); padding:0; flex:1.0; display:flex;";
         grid.innerHTML = `
             <button class="c-btn" id="btn-shop" style="${shopBaseStyle}">
@@ -227,7 +222,6 @@ function renderConsole(mode) {
         document.getElementById('btn-shop').onclick = () => { nav.updateNav("shop"); shop.openShop(); renderConsole('standard'); };
     } 
     else if (["tit", "st", "lq_card"].includes(nav.state)) {
-        // 【深部(Deep)】S ＋ 戻る
         grid.innerHTML = `
             <button class="c-btn" id="c-sophie-std" style="background:#1a3a4a; color:#00d2ff; font-size:1.1rem; font-weight:bold; flex:1.0;">S</button>
             <button class="c-btn" id="ctrl-back" style="background:#34495e; color:#fff; flex:1; font-size:0.95rem; font-weight:bold; border:none;">戻る</button>
@@ -238,7 +232,6 @@ function renderConsole(mode) {
         document.getElementById('ctrl-back').onclick = handleBack;
     }
     else {
-        // 【中間(Intermediate)】📖 ＋ 戻る
         grid.innerHTML = `
             <button class="c-btn" id="btn-techo" style="background:rgba(34,34,34,0.8); color:#fff; border:1px solid #777; font-size:1.5rem; flex:1.0; display:flex; justify-content:center; align-items:center;">📖</button>
             <button class="c-btn" id="ctrl-back" style="background:#34495e; color:#fff; flex:1; font-size:0.95rem; font-weight:bold; border:none;">戻る</button>
