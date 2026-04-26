@@ -53,7 +53,7 @@ body {
 
 .artist-grid { display: grid; grid-template-columns: repeat(2, 1fr); }
 .artist-grid .item:nth-child(odd) { border-right: 1px solid #222; }
-.artist-grid .item { padding: 0.15em 15px !important; }
+.artist-grid .item { padding: 0.2em 15px !important; }
 
 /* --- ギュッと詰めたお酒データベース専用CSS --- */
 

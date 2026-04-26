@@ -100,7 +100,7 @@ export async function openTecho(folder = null) {
             const d = nav.liquorData.find(item => (item["No."] || item["No"]) === id);
             if (d) {
                 const badge = lq ? lq.priceBadge(d["市販価格"], d["大分類"]) : "";
-                h += `<div class="item fav-item lq-fav" data-id="${id}" style="display:flex; align-items:center; gap:4px; font-size:1.05rem; padding:0.2em 15px;">${badge}<span>${clean(d['銘柄名'])}</span></div>`;
+                h += `<div class="item fav-item lq-fav" data-id="${id}" style="display:flex; align-items:center; gap:4px; font-size:1.05rem; padding:0.15em 15px;">${badge}<span>${clean(d['銘柄名'])}</span></div>`;
             }
         });
     } else if (folder === 'S') {
@@ -138,7 +138,7 @@ export function initMusicPatch() {
         lv.querySelectorAll('.item').forEach(item => {
             const hasIcon = item.innerText.includes('🎵') || item.innerText.includes('🎤');
             if (hasIcon) {
-                item.style.padding = '0.1em 15px'; 
+                item.style.padding = '0.15em 15px'; 
             } else {
                 item.style.padding = '0.4em 15px';
             }
