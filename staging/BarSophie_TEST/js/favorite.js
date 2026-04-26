@@ -1,6 +1,7 @@
+// js/favorite.js
 /**
  * favorite.js — 最終確定版
- * ★ お気に入りの歌リストの行間を0.3emに設定
+ * ★ M2階層の戻るをM1に修正
  */
 
 import { setListView, clean } from './utils.js';
@@ -74,6 +75,7 @@ export async function openTecho(folder = null) {
              </div>`;
 
     if (folder === null) {
+        // M1：フォルダ選択画面
         h += `<div style="padding:20px;">
                 <button class="act-btn" id="f-mu" style="width:100%; background:var(--green); margin-bottom:15px;">🎵 お好きな歌</button>
                 <button class="act-btn" id="f-lq" style="width:100%; background:var(--talk); margin-bottom:15px;">🍷 お気に入りのお酒</button>
@@ -86,6 +88,7 @@ export async function openTecho(folder = null) {
         return;
     }
 
+    // M2a/b/c：フォルダ内容画面
     const categories = { 'L': [], 'S': [], 'O': [] };
     data.favorites.forEach(id => {
         const type = id.charAt(0); if (categories[type]) categories[type].push(id); else categories['O'].push(id); 
@@ -109,7 +112,6 @@ export async function openTecho(folder = null) {
             let cleanTitle = title.replace(/🎵|♫|🎤/g, '').trim();
             if (cleanTitle.length > 18) cleanTitle = cleanTitle.substring(0, 17) + "…";
             
-            // ★修正：行間を 0.3em に設定
             h += `<div class="item fav-item music-row" data-id="${id}" data-fav-patched="true" style="display:flex; justify-content:space-between; align-items:center; padding:0.2em 15px;">
                     <div class="fav-music-play" data-code="${num}" style="flex:1; color:#eee; font-size:1.05rem; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; line-height:1.2; cursor:pointer;">${cleanTitle}</div>
                     <div class="fav-music-del" style="color:#ff69b4; font-size:1.4rem; padding-left:15px; cursor:pointer;">❤️</div>
@@ -136,7 +138,6 @@ export function initMusicPatch() {
         lv.querySelectorAll('.item').forEach(item => {
             const hasIcon = item.innerText.includes('🎵') || item.innerText.includes('🎤');
             if (hasIcon) {
-                // ★修正：行間を 0.3em に設定
                 item.style.padding = '0.3em 15px'; 
             } else {
                 item.style.padding = '0.4em 15px';

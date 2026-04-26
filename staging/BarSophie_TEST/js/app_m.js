@@ -1,7 +1,7 @@
 // js/app_m.js
 /**
- * Bar Sophie v22.1 — app_m.js
- * ★ Sボタン画面別動作・SHOPに戻る+Sボタン追加
+ * Bar Sophie v22.2 — app_m.js
+ * ★ 戻るを常に左端・cardモード刷新・SHOP戻る左端
  */
 
 import * as media    from './media.js';
@@ -166,7 +166,21 @@ function showRootMenu() {
 }
 
 function handleBack() {
-    if (["shop", "techo", "notice"].includes(nav.state)) { showRootMenu(); return; }
+    if (nav.state === "techo") {
+        import('./favorite.js').then(f => {
+            const folder = f.getCurrentFolder();
+            if (folder !== null) {
+                // M2a/b/c → M1へ
+                f.openTecho(null);
+                renderConsole('standard');
+            } else {
+                // M1 → Cへ
+                showRootMenu();
+            }
+        });
+        return;
+    }
+    if (["shop", "notice"].includes(nav.state)) { showRootMenu(); return; }
     if (liquor.handleLiquorBack && liquor.handleLiquorBack()) return;
     if (music.handleBack && music.handleBack()) return;
     showRootMenu();
@@ -184,14 +198,13 @@ function setupNextButton() {
     }
 }
 
-// ★ 画面ごとのSボタン動作を定義
+// ★ 画面ごとのSボタン動作（将来拡張用）
 function handleSButton() {
     const state = nav.state;
     if (state === "shop") {
         // SHOPではソフィーの案内（将来実装。現在はじゃんけん）
         import('./favorite.js').then(f => f.playJanken());
     } else {
-        // その他の画面はじゃんけん
         import('./favorite.js').then(f => f.playJanken());
     }
 }
@@ -203,9 +216,15 @@ function renderConsole(mode) {
     const grid = document.querySelector('.btn-grid');
     if (!grid) return;
 
+    const noApp = "-webkit-appearance:none; appearance:none; outline:none;";
+    const pCtrl = `flex:1; background:#1a2b1a; color:#5c9e5c; border:none; border-radius:0; ${noApp}`;
+    const pBtn  = `flex:1.0; font-size:1.2rem; background:#1a3a1a; color:#7fd97f; border:none; border-radius:0; ${noApp}`;
+    const backBtn = `background:#34495e; color:#fff; flex:1; font-size:0.95rem; font-weight:bold; border:none;`;
+    const sBtn    = `background:#1a3a4a; color:#00d2ff; font-size:1.1rem; font-weight:bold; flex:1.0;`;
+
     if (mode === 'screening') {
         grid.innerHTML = `
-            <button class="c-btn" id="c-back" style="background:#34495e; color:#fff; flex:1; font-size:0.95rem; font-weight:bold; border:none;">戻る</button>
+            <button class="c-btn" id="c-back" style="${backBtn}">戻る</button>
             <button class="c-btn" id="c-clr"  style="background:#5DADE2; color:#fff; flex:1; font-size:0.95rem; text-shadow:0 0 2px rgba(0,0,0,0.5); border:none;">リセット</button>
             <button class="c-btn" id="c-ex"   style="background:#8e44ad; color:#fff; flex:2; font-size:0.95rem; border:none;">検索実行</button>`;
         document.getElementById('c-back').onclick = liquor.openLiquorPortal;
@@ -221,23 +240,20 @@ function renderConsole(mode) {
     }
 
     if (mode === 'card') {
+        // ★ LT：戻る（左端）・S・⏹️・▶・⏭
         grid.innerHTML = `
-            <button class="c-btn card-btn" id="c-sophie" style="background:#1a3a4a; color:#00d2ff; font-size:1.1rem; font-weight:bold;">S</button>
-            <button class="c-btn card-btn" id="c-scr"    style="background:#5b2d8e; color:#fff; font-size:0.62rem; line-height:1.2;">選択<br>画面</button>
-            <button class="c-btn card-btn" id="c-list"   style="background:#7a3a00; color:#f0b56e; font-size:0.75rem;">リスト</button>
-            <button class="c-btn card-btn" id="c-prev"   style="background:#1a3a1a; color:#7fd97f; font-size:1.1rem;">&#9664;</button>
-            <button class="c-btn card-btn" id="c-next2"  style="background:#1a3a1a; color:#7fd97f; font-size:1.1rem;">&#9654;</button>`;
+            <button class="c-btn card-btn" id="c-back"   style="${backBtn}">戻る</button>
+            <button class="c-btn card-btn" id="c-sophie" style="${sBtn}">S</button>
+            <button class="c-btn card-btn" id="ctrl-pause" style="${pCtrl}">⏹️</button>
+            <button class="c-btn card-btn" id="ctrl-play"  style="${pBtn}">▶</button>
+            <button class="c-btn card-btn" id="btn-next"   style="${pCtrl}">⏭</button>`;
+        document.getElementById('c-back').addEventListener('click', liquor.cardNavToList);
         document.getElementById('c-sophie').addEventListener('click', handleSButton);
-        document.getElementById('c-scr').addEventListener('click', liquor.cardNavToScr);
-        document.getElementById('c-list').addEventListener('click', liquor.cardNavToList);
-        document.getElementById('c-prev').addEventListener('click', liquor.cardNavPrev);
-        document.getElementById('c-next2').addEventListener('click', liquor.cardNavNext);
+        document.getElementById('ctrl-play').onclick  = music.playHead;
+        document.getElementById('ctrl-pause').onclick = music.togglePause;
+        setupNextButton();
         return;
     }
-
-    const noApp = "-webkit-appearance:none; appearance:none; outline:none;";
-    const pCtrl = `flex:1; background:#1a2b1a; color:#5c9e5c; border:none; border-radius:0; ${noApp}`;
-    const pBtn  = `flex:1.0; font-size:1.2rem; background:#1a3a1a; color:#7fd97f; border:none; border-radius:0; ${noApp}`;
 
     if (nav.state === "none") {
         const shopBaseStyle = "background:rgba(255, 228, 225, 0.6); color:#cc294a; border:3px solid #1e90ff; flex-direction:column; justify-content:center; align-items:center; backdrop-filter:blur(2px); padding:0; flex:1.0; display:flex;";
@@ -249,40 +265,29 @@ function renderConsole(mode) {
             </button>
             <button class="c-btn" id="btn-techo" style="background:rgba(34,34,34,0.8); color:#fff; border:1px solid #777; font-size:1.5rem; flex:1.0; display:flex; justify-content:center; align-items:center;">📖</button>
             <button class="c-btn" id="ctrl-pause" style="${pCtrl}">⏹️</button>
-            <button class="c-btn" id="ctrl-play" style="${pBtn}">▶</button>
-            <button class="c-btn" id="btn-next" style="${pCtrl}">⏭</button>`;
+            <button class="c-btn" id="ctrl-play"  style="${pBtn}">▶</button>
+            <button class="c-btn" id="btn-next"   style="${pCtrl}">⏭</button>`;
         document.getElementById('btn-shop').onclick = () => { nav.updateNav("shop"); shop.openShop(); renderConsole('standard'); };
     }
-    else if (nav.state === "shop") {
-        // ★ SHOPは「戻る」「S」＋再生コントロール
+    else if (["tit", "st", "lq_list", "lq_res", "shop"].includes(nav.state)) {
+        // ★ 最深部＋SHOP：戻る（左端）・S・⏹️・▶・⏭
         grid.innerHTML = `
-            <button class="c-btn" id="c-sophie-std" style="background:#1a3a4a; color:#00d2ff; font-size:1.1rem; font-weight:bold; flex:1.0;">S</button>
-            <button class="c-btn" id="ctrl-back-txt" style="background:#34495e; color:#fff; flex:1; font-size:0.95rem; font-weight:bold; border:none;">戻る</button>
-            <button class="c-btn" id="ctrl-pause" style="${pCtrl}">⏹️</button>
-            <button class="c-btn" id="ctrl-play" style="${pBtn}">▶</button>
-            <button class="c-btn" id="btn-next" style="${pCtrl}">⏭</button>`;
-        document.getElementById('c-sophie-std').onclick = handleSButton;
+            <button class="c-btn" id="ctrl-back-txt" style="${backBtn}">戻る</button>
+            <button class="c-btn" id="c-sophie-std"  style="${sBtn}">S</button>
+            <button class="c-btn" id="ctrl-pause"    style="${pCtrl}">⏹️</button>
+            <button class="c-btn" id="ctrl-play"     style="${pBtn}">▶</button>
+            <button class="c-btn" id="btn-next"      style="${pCtrl}">⏭</button>`;
         document.getElementById('ctrl-back-txt').onclick = handleBack;
-    }
-    else if (["tit", "st", "lq_card", "lq_list", "lq_res"].includes(nav.state)) {
-        // ★ 最深部（S2, N3, L4a, LT相当）は「S」「戻る」
-        grid.innerHTML = `
-            <button class="c-btn" id="c-sophie-std" style="background:#1a3a4a; color:#00d2ff; font-size:1.1rem; font-weight:bold; flex:1.0;">S</button>
-            <button class="c-btn" id="ctrl-back-txt" style="background:#34495e; color:#fff; flex:1; font-size:0.95rem; font-weight:bold; border:none;">戻る</button>
-            <button class="c-btn" id="ctrl-pause" style="${pCtrl}">⏹️</button>
-            <button class="c-btn" id="ctrl-play" style="${pBtn}">▶</button>
-            <button class="c-btn" id="btn-next" style="${pCtrl}">⏭</button>`;
-        document.getElementById('c-sophie-std').onclick = handleSButton;
-        document.getElementById('ctrl-back-txt').onclick = handleBack;
+        document.getElementById('c-sophie-std').onclick  = handleSButton;
     }
     else {
-        // 中間メニュー（L1, L2a, L3a, N1, N2, M1など）は「メモ」「戻る」
+        // 中間メニュー：戻る（左端）・メモ・⏹️・▶・⏭
         grid.innerHTML = `
-            <button class="c-btn" id="btn-techo" style="background:rgba(34,34,34,0.8); color:#fff; border:1px solid #777; font-size:1.5rem; flex:1.0; display:flex; justify-content:center; align-items:center;">📖</button>
-            <button class="c-btn" id="ctrl-back-txt" style="background:#34495e; color:#fff; flex:1; font-size:0.95rem; font-weight:bold; border:none;">戻る</button>
-            <button class="c-btn" id="ctrl-pause" style="${pCtrl}">⏹️</button>
-            <button class="c-btn" id="ctrl-play" style="${pBtn}">▶</button>
-            <button class="c-btn" id="btn-next" style="${pCtrl}">⏭</button>`;
+            <button class="c-btn" id="ctrl-back-txt" style="${backBtn}">戻る</button>
+            <button class="c-btn" id="btn-techo"     style="background:rgba(34,34,34,0.8); color:#fff; border:1px solid #777; font-size:1.5rem; flex:1.0; display:flex; justify-content:center; align-items:center;">📖</button>
+            <button class="c-btn" id="ctrl-pause"    style="${pCtrl}">⏹️</button>
+            <button class="c-btn" id="ctrl-play"     style="${pBtn}">▶</button>
+            <button class="c-btn" id="btn-next"      style="${pCtrl}">⏭</button>`;
         document.getElementById('ctrl-back-txt').onclick = handleBack;
     }
 
