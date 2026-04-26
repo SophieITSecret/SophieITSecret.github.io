@@ -1,6 +1,7 @@
+// js/liquor.js
 /**
  * liquor.js — お酒データベース・スクリーニング・鑑定カード
- * ★ ダブルクリック撤去・シンプルリンク版
+ * ★ nullバグ修正・LTコンソール刷新（戻る・S・⏹️・◀・▶）
  */
 
 import * as nav from './navigation.js';
@@ -119,8 +120,10 @@ let scrState = initScrState();
 let _renderConsole = null;
 export function setRenderConsole(fn) { _renderConsole = fn; }
 
-let _currentList = [];
+let _currentList  = [];
 let _currentState = "";
+let _currentSb    = "";  // ★ openItemsで表示中の中分類を保持
+let _currentMj    = "";  // ★ openItemsで表示中の大分類を保持
 
 export function openLiquorPortal() {
     nav.updateNav("lq_root");
@@ -146,18 +149,15 @@ export function openLiquorPortal() {
     document.getElementById('dir-go').addEventListener('click', () => {
         const v = document.getElementById('dir-num').value.trim();
         if (!v) return;
-
         const numStr = String(v).replace(/[^0-9]/g, '');
         if (!numStr) return;
         const targetId = 'L-' + numStr.padStart(4, '0');
-
         const t = nav.liquorData.find(d => {
             const noKey = Object.keys(d).find(k => k.replace(/\s/g,'').toUpperCase().startsWith('NO') || k === '番号');
             const rawNo = noKey ? String(d[noKey]) : "";
             const rNum = rawNo.replace(/[^0-9]/g, '');
             return rNum !== "" && (parseInt(rNum, 10) === parseInt(numStr, 10) || rawNo.trim() === v);
         });
-
         if (t) showCard(nav.liquorData.indexOf(t), nav.liquorData, 'direct');
         else alert("ID: " + targetId + " は見つかりませんでした。");
     });
@@ -372,7 +372,7 @@ export function executeScr() {
 
 function renderResults(results, scrollToGlobalIdx = null) {
     nav.updateNav('lq_res', null, results);
-    _currentList = results;
+    _currentList  = results;
     _currentState = "scr";
 
     let h = `<div class="label" id="lbl-back-res">◀ 検索結果: ${results.length}件</div>`;
@@ -418,26 +418,22 @@ export function showCard(gIdx, list, fromState) {
     const a4   = AXIS4_MAP[sub] || AXIS4_DEFAULT;
     const tags = ((d["味わいタグ"] || "") + "," + (d["検索タグ"] || "")).split(',').map(t => t.trim()).filter(Boolean);
 
-    // ★ID取得の修正（BOM付きヘッダーでも確実に見つける保険）
     const noKey = Object.keys(d).find(k => k.includes("No")) || "No.";
     const rawNo = d[noKey] || d["番号"] || "";
     let displayId = String(rawNo).trim();
-    
     if (/^[0-9]+$/.test(displayId)) {
         displayId = 'L-' + displayId.padStart(4, '0');
     } else if (displayId && !displayId.startsWith('L-')) {
-        displayId = 'L-' + displayId; 
+        displayId = 'L-' + displayId;
     } else if (!displayId) {
         displayId = 'L-????';
     }
 
-    // ★お気に入りモジュールとの連携
     import('./favorite.js').then(fav => {
         const isFav = fav.isFavorite(displayId);
         const heart = isFav ? "❤️" : "♡";
         const hColor = isFav ? "#ff69b4" : "#ccc";
 
-        // ★ラベルバーの左端にIDを、右端にハートボタンを配置
         let h = `<div class="label" style="display:flex; justify-content:space-between; align-items:center;">
                     <span>${displayId}</span>
                     <div id="lq-heart" style="color:${hColor}; font-size:1.5rem; cursor:pointer; padding-right:10px;">${heart}</div>
@@ -451,8 +447,8 @@ export function showCard(gIdx, list, fromState) {
         const makerName = makerRaw.replace(/[（(\/].*/g, '').trim();
         const region    = d["産地"] || "";
         const gKw       = encodeURIComponent(makerName && region ? `${makerName} ${region}` : makerName || region);
-        const amzKw  = encodeURIComponent(clean(d["銘柄名"]) + " " + d["大分類"]);
-        const amzUrl = `https://www.amazon.co.jp/s?k=${amzKw}&tag=itsophie-22`;
+        const amzKw     = encodeURIComponent(clean(d["銘柄名"]) + " " + d["大分類"]);
+        const amzUrl    = `https://www.amazon.co.jp/s?k=${amzKw}&tag=itsophie-22`;
 
         h += `<div class="lq-basic-info">
             <div><span style="color:#1a73e8">▶</span> ${d["大分類"]}&nbsp;&nbsp;<span style="color:#e74c3c">▶</span> ${d["中分類"]}</div>
@@ -477,8 +473,7 @@ export function showCard(gIdx, list, fromState) {
             h += `<a href="${amzUrl}" target="_blank" class="lq-btn-amz-small">Amazon↗</a>`;
             h += `</div>`;
         } else {
-            h += `<div class="card-link-row">`;
-            h += `<span style="flex:1;"></span>`;
+            h += `<div class="card-link-row"><span style="flex:1;"></span>`;
             h += `<a href="${amzUrl}" target="_blank" class="lq-btn-amz-small">Amazon↗</a>`;
             h += `</div>`;
         }
@@ -505,7 +500,6 @@ export function showCard(gIdx, list, fromState) {
         setListView(h, true);
         if (_renderConsole) _renderConsole('card');
 
-        // ★ハートボタンのクリック処理を設定
         const heartBtn = document.getElementById('lq-heart');
         if (heartBtn) {
             heartBtn.onclick = () => {
@@ -525,9 +519,7 @@ export function showCardById(idStr) {
         const rNum = rawNo.replace(/[^0-9]/g, '');
         return rNum !== "" && parseInt(rNum, 10) === parseInt(numStr, 10);
     });
-    if (t) {
-        showCard(nav.liquorData.indexOf(t), nav.liquorData, 'techo');
-    }
+    if (t) showCard(nav.liquorData.indexOf(t), nav.liquorData, 'techo');
 }
 
 export function cardNavPrev() {
@@ -542,16 +534,19 @@ export function cardNavNext() {
     const next = _currentList[(idx + 1) % _currentList.length];
     showCard(nav.liquorData.indexOf(next), _currentList, _currentState);
 }
+
 export function cardNavToList() {
     if (_currentState === 'scr') {
         renderResults(_currentList, nav.curI);
     } else if (_currentState === 'direct' || _currentState === 'techo') {
         openLiquorPortal();
     } else {
-        const sb = _currentList[0] ? _currentList[0]["中分類"] : null;
-        if (sb) openItems(sb); else openLiquorPortal();
+        // ★ _currentSbを使って正しくL4aに戻る
+        if (_currentSb) openItems(_currentSb);
+        else openLiquorPortal();
     }
 }
+
 export function cardNavToScr() { openScreening(); }
 export function getCurrentState() { return _currentState; }
 
@@ -586,7 +581,8 @@ function openItems(sb) {
     nav.updateNav("lq_list", null, list);
     _currentList  = list;
     _currentState = "list";
-    const mj = list[0] ? list[0]["大分類"] : "";
+    _currentSb    = sb;   // ★ 中分類を保存
+    _currentMj    = list[0] ? list[0]["大分類"] : "";  // ★ 大分類を保存
     let h = `<div class="label" id="lbl-back-items">◀ ${sb}</div>`;
     list.forEach(d => {
         const badge = priceBadge(d["市販価格"], d["大分類"]);
@@ -594,23 +590,24 @@ function openItems(sb) {
     });
     setListView(h, false);
     if (_renderConsole) _renderConsole('standard');
-    document.getElementById('lbl-back-items').addEventListener('click', () => openSub(mj));
+    document.getElementById('lbl-back-items').addEventListener('click', () => openSub(_currentMj));
     document.querySelectorAll('.list-item').forEach(el =>
         el.addEventListener('click', () => showCard(parseInt(el.dataset.gidx), list, 'list')));
 }
 
 export function handleLiquorBack() {
     switch (nav.state) {
-        case "lq_card":    cardNavToList();     return true;
-        case "lq_res":     openScreening();     return true;
-        case "lq_list":    openSub(nav.curG);   return true;
-        case "lq_sub":     openMajor();         return true;
-        case "lq_major":   openLiquorPortal();  return true;
-        case "lq_scr":     openLiquorPortal();  return true;
-        default:           return false;
+        case "lq_card":  cardNavToList();        return true;
+        case "lq_res":   openScreening();        return true;
+        case "lq_list":  openSub(_currentMj);    return true;  // ★ _currentMjを使用
+        case "lq_sub":   openMajor();            return true;
+        case "lq_major": openLiquorPortal();     return true;
+        case "lq_scr":   openLiquorPortal();     return true;
+        default:         return false;
     }
 }
 
 export function execScr()                  { executeScr(); }
+
 export function clearScr()                 { scrState = initScrState(); openScreening(); }
 export function openScreeningFromConsole() { openScreening(); }
