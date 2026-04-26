@@ -92,22 +92,14 @@ function openSongs(a) {
 }
 
 export function renderSongList(title) {
-    // ★リクエストモードかどうかでスタイルを変える
-    const bgStyle = _requestMode
-        ? 'background:#1a0a0a;'  // ワインレッド系
-        : '';
-    const labelStyle = _requestMode
-        ? 'background:#6b1a2a; color:#ffb3c1;'  // ピンク系ラベル
-        : '';
-    const labelText = _requestMode
-        ? `🎤 リクエストどうぞ　─　${title}`
-        : title;
+    const labelStyle = _requestMode ? 'background:#6b1a2a; color:#ffb3c1;' : '';
+    const labelText  = _requestMode ? `🎤 リクエストどうぞ　─　${title}` : title;
+    const itemBg     = _requestMode ? 'background:#1a0a0a;' : '';
 
     let h = `<div class="label" style="${labelStyle}">${labelText}</div>`;
     nav.curP.forEach((m, i) => {
         const isSophie = m.ti && (m.ti.includes("みずいろのシグナル") || m.ti.includes("水色のシグナル"));
         const color = isSophie ? `color: var(--blue);` : `color: #eee;`;
-        const itemBg = _requestMode ? 'background:#1a0a0a;' : '';
         h += `<div class="item" data-idx="${i}" style="font-size:1.05rem; padding:0.2em 15px; ${color} ${itemBg}">🎵 ${m.ti}</div>`;
     });
     setListView(h, false);
@@ -117,10 +109,8 @@ export function renderSongList(title) {
         const i = parseInt(e.currentTarget.dataset.idx);
         if (!isNaN(i)) {
             if (_requestMode) {
-                // ★リクエストモード：前口上→自動再生
                 handleRequest(i);
             } else {
-                // 通常モード：そのまま再生
                 nav.updateNav(undefined, undefined, undefined, i);
                 setMon('v', nav.curP[i].u);
                 prep(`${nav.curP[i].a}さんの${nav.curP[i].ti}です`, true);
@@ -144,36 +134,33 @@ function handleRequest(idx) {
     const title = m.a || "リクエスト";
     renderSongList(title);
 
-    // テロップ表示
+    // ★テロップ表示
     const telEl = document.getElementById('telop');
     if (telEl) {
         telEl.innerText = m.desc;
+        telEl.style.top = '0';
+        telEl.style.bottom = 'auto';
+        telEl.style.height = '100%';
+        telEl.style.background = 'rgba(0,0,0,0.75)';
         telEl.style.display = 'block';
     }
 
-    // 前口上をしゃべり終わってから曲をロード・再生
+    // ★前口上をしゃべり終わってからYouTubeをロード・再生
     window.speechSynthesis.cancel();
     const utter = new SpeechSynthesisUtterance(m.desc);
     utter.lang = 'ja-JP';
     utter.onend = () => {
         if (telEl) telEl.style.display = 'none';
-        setMon('v', m.u);
+        setMon('v', m.u);  // ここで初めてYouTubeをロード
     };
     window.speechSynthesis.speak(utter);
-}
-window.speechSynthesis.speak(utter);
 }
 
 // ★Sボタンからリクエストモードを起動
 export function startRequestMode() {
     if (nav.state !== "tit") return;
     _requestMode = true;
-
-    // ソフィーの呼びかけ
-    const callText = "ご紹介しましょう。お好みの曲を選んでください。";
-    speakText(callText);
-
-    // リストをリクエストモードで再描画
+    speakText("ご紹介しましょう。お好みの曲を選んでください。");
     const title = nav.curP[0]?.a || "リクエスト";
     renderSongList(title);
 }
@@ -285,7 +272,7 @@ export function next() {
 }
 
 export function handleBack() {
-    _requestMode = false;  // ★戻る時はリクエストモード解除
+    _requestMode = false;
     if (nav.state === "st") { openThemes(nav.curG); return true; }
     if (nav.state === "th") { openTalk(); return true; }
     if (nav.state === "tit") { openMusic(); return true; }
@@ -313,7 +300,7 @@ function setMon(m, s) {
     }
 }
 
-function prep(t, isM, id = null, originalTxt = null, onEndCallback = null) {
+function prep(t, isM, id = null, originalTxt = null) {
     window.speechSynthesis.cancel();
     try { talkAudio.pause(); if (talkAudio.readyState > 0) talkAudio.currentTime = 0; } catch(e) {}
     lastTxt = t; isMusicMode = isM; isPaused = false;
@@ -325,30 +312,10 @@ function prep(t, isM, id = null, originalTxt = null, onEndCallback = null) {
     if (isM) setTimeout(() => { if (lastTxt === t && tel) tel.style.display = 'none'; }, 5000);
     else if (id) {
         talkAudio.src = `./voices_mp3/${id}.mp3`;
-        const speak = () => {
-            media.speak(originalTxt || t);
-            // ★音声合成終了後のコールバック
-            if (onEndCallback) {
-                const checkEnd = setInterval(() => {
-                    if (!window.speechSynthesis.speaking) {
-                        clearInterval(checkEnd);
-                        onEndCallback();
-                    }
-                }, 300);
-            }
-        };
+        const speak = () => { media.speak(originalTxt || t); };
         talkAudio.onerror = speak;
-        talkAudio.onended = onEndCallback || null;
+        talkAudio.onended = null;
         try { const p = talkAudio.play(); if (p) p.catch(speak); } catch(e) { speak(); }
-    } else if (onEndCallback) {
-        // ★mp3なし・テキストのみの場合も音声合成でコールバック
-        try { media.speak(originalTxt || t); } catch(e) {}
-        const checkEnd = setInterval(() => {
-            if (!window.speechSynthesis.speaking) {
-                clearInterval(checkEnd);
-                onEndCallback();
-            }
-        }, 300);
     }
     document.querySelectorAll('#list-view .item').forEach((el) => {
         if (el.dataset.idx && parseInt(el.dataset.idx) === nav.curI) {
