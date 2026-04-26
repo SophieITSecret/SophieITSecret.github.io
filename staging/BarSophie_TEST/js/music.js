@@ -1,3 +1,4 @@
+// js/music.js
 import * as nav from './navigation.js';
 import * as media from './media.js';
 import { lv, nm, setListView, highlightItem, extractYtId } from './utils.js';
@@ -5,6 +6,9 @@ import { lv, nm, setListView, highlightItem, extractYtId } from './utils.js';
 export let isMusicMode = false;
 export let isPaused = false;
 export let isAutoPlay = false;
+
+// ★リクエストモードフラグ
+let _requestMode = false;
 
 let lastTxt = "";
 let pressTimer = null;
@@ -31,6 +35,7 @@ export function setRenderConsole(fn) {
 }
 
 export function openMusic() {
+    _requestMode = false;
     nav.updateNav("art");
     let h = "";
     h += `<div class="label">マスターお薦め</div><div class="artist-grid">`;
@@ -53,7 +58,6 @@ export function openMusic() {
         if (arts.length) {
             let labelName = (f === 'L') ? "特集コーナー" : (nav.jData.find(d => d.f === f && d.gName)?.gName || f);
             h += `<div class="label">${labelName}</div><div class="artist-grid">`;
-            // ★マイクを削除し、行間を0.2emに
             arts.forEach(a => { h += `<div class="item" data-artist="${a}" style="font-size:1.05rem; padding:0.2em 15px;">${a}</div>`; });
             h += `</div>`;
         }
@@ -76,21 +80,35 @@ function openSpecialSongs(type) {
     else if (type === '昭和ソング') filtered = nav.jData.filter(m => ["70s", "昭和", "演歌", "歌姫"].includes(m.a));
     nav.updateNav("tit", undefined, filtered);
     isMusicMode = true;
+    _requestMode = false;
     renderSongList(type);
 }
 
 function openSongs(a) {
     nav.updateNav("tit", undefined, nav.jData.filter(m => m.a === a));
     isMusicMode = true;
+    _requestMode = false;
     renderSongList(a);
 }
 
 export function renderSongList(title) {
-    let h = `<div class="label">${title}</div>`;
+    // ★リクエストモードかどうかでスタイルを変える
+    const bgStyle = _requestMode
+        ? 'background:#1a0a0a;'  // ワインレッド系
+        : '';
+    const labelStyle = _requestMode
+        ? 'background:#6b1a2a; color:#ffb3c1;'  // ピンク系ラベル
+        : '';
+    const labelText = _requestMode
+        ? `🎤 リクエストどうぞ　─　${title}`
+        : title;
+
+    let h = `<div class="label" style="${labelStyle}">${labelText}</div>`;
     nav.curP.forEach((m, i) => {
         const isSophie = m.ti && (m.ti.includes("みずいろのシグナル") || m.ti.includes("水色のシグナル"));
-        const color = isSophie ? `style="color: var(--blue);"` : "";
-        h += `<div class="item" data-idx="${i}" ${color} style="font-size:1.05rem; padding:0.2em 15px;">🎵 ${m.ti}</div>`;
+        const color = isSophie ? `color: var(--blue);` : `color: #eee;`;
+        const itemBg = _requestMode ? 'background:#1a0a0a;' : '';
+        h += `<div class="item" data-idx="${i}" style="font-size:1.05rem; padding:0.2em 15px; ${color} ${itemBg}">🎵 ${m.ti}</div>`;
     });
     setListView(h, false);
     if (_renderConsole) _renderConsole('standard');
@@ -98,11 +116,73 @@ export function renderSongList(title) {
     document.querySelectorAll('.item').forEach(el => el.onclick = (e) => {
         const i = parseInt(e.currentTarget.dataset.idx);
         if (!isNaN(i)) {
-            nav.updateNav(undefined, undefined, undefined, i);
-            setMon('v', nav.curP[i].u);
-            prep(`${nav.curP[i].a}さんの${nav.curP[i].ti}です`, true);
+            if (_requestMode) {
+                // ★リクエストモード：前口上→自動再生
+                handleRequest(i);
+            } else {
+                // 通常モード：そのまま再生
+                nav.updateNav(undefined, undefined, undefined, i);
+                setMon('v', nav.curP[i].u);
+                prep(`${nav.curP[i].a}さんの${nav.curP[i].ti}です`, true);
+            }
         }
     });
+}
+
+// ★リクエスト処理：前口上→自動再生
+function handleRequest(idx) {
+    const m = nav.curP[idx];
+    if (!m) return;
+
+    if (!m.desc) {
+        // 解説なし
+        const noDescText = "あ、この曲はまだ私、勉強中です。ほかの曲でおねがいします。";
+        speakText(noDescText);
+        return;  // リストはそのまま（選択モード継続）
+    }
+
+    // 解説あり：前口上→曲を自動再生
+    _requestMode = false;
+    nav.updateNav(undefined, undefined, undefined, idx);
+
+    // 通常の黒背景に戻してリストを再描画
+    const title = m.a || "リクエスト";
+    renderSongList(title);
+
+    // 前口上をしゃべる
+    setMon('v', m.u);
+    prep(m.desc, true, null, m.desc, () => {
+        // ★しゃべり終わったら自動再生
+        if (ytPlayerReady && ytPlayer) {
+            try { ytPlayer.playVideo(); } catch(e) {}
+        }
+    });
+}
+
+// ★Sボタンからリクエストモードを起動
+export function startRequestMode() {
+    if (nav.state !== "tit") return;
+    _requestMode = true;
+
+    // ソフィーの呼びかけ
+    const callText = "ご紹介しましょう。お好みの曲を選んでください。";
+    speakText(callText);
+
+    // リストをリクエストモードで再描画
+    const title = nav.curP[0]?.a || "リクエスト";
+    renderSongList(title);
+}
+
+// ★テキストをしゃべるだけのヘルパー
+function speakText(txt) {
+    window.speechSynthesis.cancel();
+    try { talkAudio.pause(); } catch(e) {}
+    if (tel) {
+        tel.innerText = txt;
+        tel.style.display = 'block';
+        setTimeout(() => { if (tel) tel.style.display = 'none'; }, 6000);
+    }
+    try { media.speak(txt); } catch(e) {}
 }
 
 export function openTalk() {
@@ -200,6 +280,7 @@ export function next() {
 }
 
 export function handleBack() {
+    _requestMode = false;  // ★戻る時はリクエストモード解除
     if (nav.state === "st") { openThemes(nav.curG); return true; }
     if (nav.state === "th") { openTalk(); return true; }
     if (nav.state === "tit") { openMusic(); return true; }
@@ -227,7 +308,7 @@ function setMon(m, s) {
     }
 }
 
-function prep(t, isM, id = null, originalTxt = null) {
+function prep(t, isM, id = null, originalTxt = null, onEndCallback = null) {
     window.speechSynthesis.cancel();
     try { talkAudio.pause(); if (talkAudio.readyState > 0) talkAudio.currentTime = 0; } catch(e) {}
     lastTxt = t; isMusicMode = isM; isPaused = false;
@@ -239,9 +320,30 @@ function prep(t, isM, id = null, originalTxt = null) {
     if (isM) setTimeout(() => { if (lastTxt === t && tel) tel.style.display = 'none'; }, 5000);
     else if (id) {
         talkAudio.src = `./voices_mp3/${id}.mp3`;
-        const speak = () => media.speak(originalTxt || t);
+        const speak = () => {
+            media.speak(originalTxt || t);
+            // ★音声合成終了後のコールバック
+            if (onEndCallback) {
+                const checkEnd = setInterval(() => {
+                    if (!window.speechSynthesis.speaking) {
+                        clearInterval(checkEnd);
+                        onEndCallback();
+                    }
+                }, 300);
+            }
+        };
         talkAudio.onerror = speak;
+        talkAudio.onended = onEndCallback || null;
         try { const p = talkAudio.play(); if (p) p.catch(speak); } catch(e) { speak(); }
+    } else if (onEndCallback) {
+        // ★mp3なし・テキストのみの場合も音声合成でコールバック
+        try { media.speak(originalTxt || t); } catch(e) {}
+        const checkEnd = setInterval(() => {
+            if (!window.speechSynthesis.speaking) {
+                clearInterval(checkEnd);
+                onEndCallback();
+            }
+        }, 300);
     }
     document.querySelectorAll('#list-view .item').forEach((el) => {
         if (el.dataset.idx && parseInt(el.dataset.idx) === nav.curI) {

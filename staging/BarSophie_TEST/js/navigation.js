@@ -9,7 +9,7 @@ export async function loadAllData() {
         const gMap = { 'E':'演歌', 'F':'フォーク', 'J':'歌謡曲', 'W':'洋楽', 'I':'インスト', 'S':'旅情・映像' };
         jData = csvM.split('\n').slice(1).filter(l => l.trim().includes(',')).map(l => {
             const c = l.split(',').map(s => s.trim());
-            return { f: c[0], gName: gMap[c[0]] || "他", code: c[1], a: c[2], ti: (c[3]||"").replace(/"/g,''), u: c[4] };
+            return { f: c[0], gName: gMap[c[0]] || "他", code: c[1], a: c[2], ti: (c[3]||"").replace(/"/g,''), u: c[4], desc: (c[5]||"").replace(/"/g,'') };
         }).filter(d => d.a);
 
         // お酒の話データ
