@@ -149,7 +149,7 @@ function handleRequest(idx) {
     window.speechSynthesis.cancel();
     const utter = new SpeechSynthesisUtterance(m.desc);
     utter.lang = 'ja-JP';
- utter.onend = () => {
+utter.onend = () => {
     if (telEl) telEl.style.display = 'none';
     setMon('v', m.u);
     // ★ロード後に明示的に再生
@@ -298,7 +298,10 @@ function setMon(m, s) {
     monImg.style.display = (m === 'v') ? 'none' : 'block';
     if (m === 'v') {
         if (btnExpand) btnExpand.style.opacity = '0.3';
-        if (ytPlayerReady) ytPlayer.loadVideoById(extractYtId(s));
+        if (ytPlayerReady) {
+    ytPlayer.cueVideoById(extractYtId(s));
+    setTimeout(() => { try { ytPlayer.playVideo(); } catch(e) {} }, 300);
+}
     } else {
         monImg.src = s;
         if (btnExpand) btnExpand.style.opacity = '1';
