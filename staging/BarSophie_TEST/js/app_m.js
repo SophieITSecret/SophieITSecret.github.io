@@ -219,7 +219,7 @@ function renderConsole(mode) {
     const backBtn = `background:#34495e; color:#fff; flex:1; font-size:0.95rem; font-weight:bold; border:none;`;
     const sBtn    = `background:#1a3a4a; color:#00d2ff; font-size:1.1rem; font-weight:bold; flex:1.0;`;
     // ★ 銘柄前後ボタン：青寄りの色
-    const navBtn  = `flex:1; background:#1a2a3a; color:#5ba3d9; font-size:1.1rem; border:none; border-radius:0; ${noApp}`;
+   const navBtn  = `flex:1; background:#1a2a3a; color:#5ba3d9; font-size:1.1rem; border:none; border-radius:0; touch-action:manipulation; ${noApp}`;
 
     if (mode === 'screening') {
         grid.innerHTML = `
