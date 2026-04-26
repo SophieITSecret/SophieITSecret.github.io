@@ -100,7 +100,7 @@ export async function openTecho(folder = null) {
             const d = nav.liquorData.find(item => (item["No."] || item["No"]) === id);
             if (d) {
                 const badge = lq ? lq.priceBadge(d["市販価格"], d["大分類"]) : "";
-                h += `<div class="item fav-item lq-fav" data-id="${id}" style="display:flex; align-items:center; gap:4px; font-size:1.05rem; padding:0.4em 15px;">${badge}<span>${clean(d['銘柄名'])}</span></div>`;
+                h += `<div class="item fav-item lq-fav" data-id="${id}" style="display:flex; align-items:center; gap:4px; font-size:1.05rem; padding:0.2em 15px;">${badge}<span>${clean(d['銘柄名'])}</span></div>`;
             }
         });
     } else if (folder === 'S') {
@@ -112,7 +112,7 @@ export async function openTecho(folder = null) {
             let cleanTitle = title.replace(/🎵|♫|🎤/g, '').trim();
             if (cleanTitle.length > 18) cleanTitle = cleanTitle.substring(0, 17) + "…";
             
-            h += `<div class="item fav-item music-row" data-id="${id}" data-fav-patched="true" style="display:flex; justify-content:space-between; align-items:center; padding:0.2em 15px;">
+            h += `<div class="item fav-item music-row" data-id="${id}" data-fav-patched="true" style="display:flex; justify-content:space-between; align-items:center; padding:0.1em 15px;">
                     <div class="fav-music-play" data-code="${num}" style="flex:1; color:#eee; font-size:1.05rem; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; line-height:1.2; cursor:pointer;">${cleanTitle}</div>
                     <div class="fav-music-del" style="color:#ff69b4; font-size:1.4rem; padding-left:15px; cursor:pointer;">❤️</div>
                   </div>`;
