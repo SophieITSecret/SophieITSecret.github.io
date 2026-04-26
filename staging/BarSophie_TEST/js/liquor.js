@@ -158,7 +158,7 @@ export function openLiquorPortal() {
             return rNum !== "" && (parseInt(rNum, 10) === parseInt(numStr, 10) || rawNo.trim() === v);
         });
 
-        if (t) showCard(nav.liquorData.indexOf(t), nav.liquorData, 'list');
+        if (t) showCard(nav.liquorData.indexOf(t), nav.liquorData, 'direct');
         else alert("ID: " + targetId + " は見つかりませんでした。");
     });
 }
@@ -545,6 +545,8 @@ export function cardNavNext() {
 export function cardNavToList() {
     if (_currentState === 'scr') {
         renderResults(_currentList, nav.curI);
+    } else if (_currentState === 'direct' || _currentState === 'techo') {
+        openLiquorPortal();
     } else {
         const sb = _currentList[0] ? _currentList[0]["中分類"] : null;
         if (sb) openItems(sb); else openLiquorPortal();

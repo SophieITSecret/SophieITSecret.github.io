@@ -1,6 +1,7 @@
+// js/app_m.js
 /**
- * Bar Sophie v22.0 — app_m.js
- * ★ Sボタン動的配置・SHOPボタン復元・全機能完全版
+ * Bar Sophie v22.1 — app_m.js
+ * ★ Sボタン画面別動作・SHOPに戻る+Sボタン追加
  */
 
 import * as media    from './media.js';
@@ -29,7 +30,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     liquor.setRenderConsole(renderConsole);
-    music.setRenderConsole(renderConsole); // music.jsとの連動追加
+    music.setRenderConsole(renderConsole);
     
     import('./favorite.js').then(fav => {
         fav.initMusicPatch();
@@ -183,6 +184,18 @@ function setupNextButton() {
     }
 }
 
+// ★ 画面ごとのSボタン動作を定義
+function handleSButton() {
+    const state = nav.state;
+    if (state === "shop") {
+        // SHOPではソフィーの案内（将来実装。現在はじゃんけん）
+        import('./favorite.js').then(f => f.playJanken());
+    } else {
+        // その他の画面はじゃんけん
+        import('./favorite.js').then(f => f.playJanken());
+    }
+}
+
 function renderConsole(mode) {
     const db = document.getElementById('disclaimer-bar');
     if (db) db.style.display = (nav.state === "none") ? 'block' : 'none';
@@ -214,7 +227,7 @@ function renderConsole(mode) {
             <button class="c-btn card-btn" id="c-list"   style="background:#7a3a00; color:#f0b56e; font-size:0.75rem;">リスト</button>
             <button class="c-btn card-btn" id="c-prev"   style="background:#1a3a1a; color:#7fd97f; font-size:1.1rem;">&#9664;</button>
             <button class="c-btn card-btn" id="c-next2"  style="background:#1a3a1a; color:#7fd97f; font-size:1.1rem;">&#9654;</button>`;
-        document.getElementById('c-sophie').addEventListener('click', () => { import('./favorite.js').then(f => f.playJanken()); });
+        document.getElementById('c-sophie').addEventListener('click', handleSButton);
         document.getElementById('c-scr').addEventListener('click', liquor.cardNavToScr);
         document.getElementById('c-list').addEventListener('click', liquor.cardNavToList);
         document.getElementById('c-prev').addEventListener('click', liquor.cardNavPrev);
@@ -239,20 +252,31 @@ function renderConsole(mode) {
             <button class="c-btn" id="ctrl-play" style="${pBtn}">▶</button>
             <button class="c-btn" id="btn-next" style="${pCtrl}">⏭</button>`;
         document.getElementById('btn-shop').onclick = () => { nav.updateNav("shop"); shop.openShop(); renderConsole('standard'); };
-    } 
-    else if (["tit", "st", "lq_card", "lq_list", "lq_res", "shop"].includes(nav.state)) {
-        // ★最深部でSボタンを出す
+    }
+    else if (nav.state === "shop") {
+        // ★ SHOPは「戻る」「S」＋再生コントロール
         grid.innerHTML = `
             <button class="c-btn" id="c-sophie-std" style="background:#1a3a4a; color:#00d2ff; font-size:1.1rem; font-weight:bold; flex:1.0;">S</button>
             <button class="c-btn" id="ctrl-back-txt" style="background:#34495e; color:#fff; flex:1; font-size:0.95rem; font-weight:bold; border:none;">戻る</button>
             <button class="c-btn" id="ctrl-pause" style="${pCtrl}">⏹️</button>
             <button class="c-btn" id="ctrl-play" style="${pBtn}">▶</button>
             <button class="c-btn" id="btn-next" style="${pCtrl}">⏭</button>`;
-        document.getElementById('c-sophie-std').onclick = () => { import('./favorite.js').then(f => f.playJanken()); };
+        document.getElementById('c-sophie-std').onclick = handleSButton;
+        document.getElementById('ctrl-back-txt').onclick = handleBack;
+    }
+    else if (["tit", "st", "lq_card", "lq_list", "lq_res"].includes(nav.state)) {
+        // ★ 最深部（S2, N3, L4a, LT相当）は「S」「戻る」
+        grid.innerHTML = `
+            <button class="c-btn" id="c-sophie-std" style="background:#1a3a4a; color:#00d2ff; font-size:1.1rem; font-weight:bold; flex:1.0;">S</button>
+            <button class="c-btn" id="ctrl-back-txt" style="background:#34495e; color:#fff; flex:1; font-size:0.95rem; font-weight:bold; border:none;">戻る</button>
+            <button class="c-btn" id="ctrl-pause" style="${pCtrl}">⏹️</button>
+            <button class="c-btn" id="ctrl-play" style="${pBtn}">▶</button>
+            <button class="c-btn" id="btn-next" style="${pCtrl}">⏭</button>`;
+        document.getElementById('c-sophie-std').onclick = handleSButton;
         document.getElementById('ctrl-back-txt').onclick = handleBack;
     }
     else {
-        // 中間メニュー
+        // 中間メニュー（L1, L2a, L3a, N1, N2, M1など）は「メモ」「戻る」
         grid.innerHTML = `
             <button class="c-btn" id="btn-techo" style="background:rgba(34,34,34,0.8); color:#fff; border:1px solid #777; font-size:1.5rem; flex:1.0; display:flex; justify-content:center; align-items:center;">📖</button>
             <button class="c-btn" id="ctrl-back-txt" style="background:#34495e; color:#fff; flex:1; font-size:0.95rem; font-weight:bold; border:none;">戻る</button>
