@@ -151,12 +151,23 @@ function handleRequest(idx) {
 
     // 前口上をしゃべる
     setMon('v', m.u);
-    prep(m.desc, true, null, m.desc, () => {
-        // ★しゃべり終わったら自動再生
-        if (ytPlayerReady && ytPlayer) {
-            try { ytPlayer.playVideo(); } catch(e) {}
-        }
-    });
+// 前口上をテロップ表示
+const tel = document.getElementById('telop');
+if (tel) {
+    tel.innerText = m.desc;
+    tel.style.display = 'block';
+}
+// 音声合成で読み上げ
+window.speechSynthesis.cancel();
+const utter = new SpeechSynthesisUtterance(m.desc);
+utter.lang = 'ja-JP';
+utter.onend = () => {
+    if (tel) tel.style.display = 'none';
+    if (ytPlayerReady && ytPlayer) {
+        try { ytPlayer.playVideo(); } catch(e) {}
+    }
+};
+window.speechSynthesis.speak(utter);
 }
 
 // ★Sボタンからリクエストモードを起動
