@@ -135,38 +135,32 @@ function handleRequest(idx) {
     if (!m) return;
 
     if (!m.desc) {
-        // 解説なし
-        const noDescText = "あ、この曲はまだ私、勉強中です。ほかの曲でおねがいします。";
-        speakText(noDescText);
-        return;  // リストはそのまま（選択モード継続）
+        speakText("あ、この曲はまだ私、勉強中です。ほかの曲でおねがいします。");
+        return;
     }
 
-    // 解説あり：前口上→曲を自動再生
     _requestMode = false;
     nav.updateNav(undefined, undefined, undefined, idx);
-
-    // 通常の黒背景に戻してリストを再描画
     const title = m.a || "リクエスト";
     renderSongList(title);
 
-    // 前口上をしゃべる
-    setMon('v', m.u);
-// 前口上をテロップ表示
-const tel = document.getElementById('telop');
-if (tel) {
-    tel.innerText = m.desc;
-    tel.style.display = 'block';
-}
-// 音声合成で読み上げ
-window.speechSynthesis.cancel();
-const utter = new SpeechSynthesisUtterance(m.desc);
-utter.lang = 'ja-JP';
-utter.onend = () => {
-    if (tel) tel.style.display = 'none';
-    if (ytPlayerReady && ytPlayer) {
-        try { ytPlayer.playVideo(); } catch(e) {}
+    // テロップ表示
+    const telEl = document.getElementById('telop');
+    if (telEl) {
+        telEl.innerText = m.desc;
+        telEl.style.display = 'block';
     }
-};
+
+    // 前口上をしゃべり終わってから曲をロード・再生
+    window.speechSynthesis.cancel();
+    const utter = new SpeechSynthesisUtterance(m.desc);
+    utter.lang = 'ja-JP';
+    utter.onend = () => {
+        if (telEl) telEl.style.display = 'none';
+        setMon('v', m.u);
+    };
+    window.speechSynthesis.speak(utter);
+}
 window.speechSynthesis.speak(utter);
 }
 
