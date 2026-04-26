@@ -138,7 +138,7 @@ export function initMusicPatch() {
         lv.querySelectorAll('.item').forEach(item => {
             const hasIcon = item.innerText.includes('🎵') || item.innerText.includes('🎤');
             if (hasIcon) {
-                item.style.padding = '0.3em 15px'; 
+                item.style.padding = '0.1em 15px'; 
             } else {
                 item.style.padding = '0.4em 15px';
             }
