@@ -149,10 +149,16 @@ function handleRequest(idx) {
     window.speechSynthesis.cancel();
     const utter = new SpeechSynthesisUtterance(m.desc);
     utter.lang = 'ja-JP';
-    utter.onend = () => {
-        if (telEl) telEl.style.display = 'none';
-        setMon('v', m.u);  // ここで初めてYouTubeをロード
-    };
+ utter.onend = () => {
+    if (telEl) telEl.style.display = 'none';
+    setMon('v', m.u);
+    // ★ロード後に明示的に再生
+    setTimeout(() => {
+        if (ytPlayerReady && ytPlayer) {
+            try { ytPlayer.playVideo(); } catch(e) {}
+        }
+    }, 500);
+};
     window.speechSynthesis.speak(utter);
 }
 
