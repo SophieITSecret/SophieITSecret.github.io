@@ -166,7 +166,9 @@ utter.onend = () => {
 export function startRequestMode() {
     if (nav.state !== "tit") return;
     _requestMode = true;
-    speakText("ご紹介しましょう。お好みの曲を選んでください。");
+    setTimeout(() => {
+        speakText("ご紹介しましょう。お好みの曲を選んでください。");
+    }, 800);
     const title = nav.curP[0]?.a || "リクエスト";
     renderSongList(title);
 }
