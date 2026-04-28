@@ -198,7 +198,7 @@ setListContent(`
             <span id="j-sophie-hand" style="font-size:1.5rem; min-width:1.8em;"> </span>
             <span style="color:#aaa; font-size:0.85rem;">ソフィー</span>
         </div>
-        <div id="j-msg" style="color:#f0b56e; font-size:0.95rem; min-height:1.5em; margin-top:10px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"></div>
+        <div id="j-msg" style="color:#f0b56e; font-size:0.95rem; height:2.5em; margin-top:10px; overflow:hidden; display:flex; align-items:center; justify-content:center;"></div>
         <div id="j-hands" style="display:flex; gap:15px; justify-content:center; margin-top:20px;">
             <button class="j-hand" data-hand="G" style="font-size:2.5rem; background:#1a3a1a; border:2px solid #555; border-radius:15px; padding:10px 18px; color:#fff; opacity:0.4;" disabled>✊</button>
             <button class="j-hand" data-hand="C" style="font-size:2.5rem; background:#1a3a1a; border:2px solid #555; border-radius:15px; padding:10px 18px; color:#fff; opacity:0.4;" disabled>✌️</button>
