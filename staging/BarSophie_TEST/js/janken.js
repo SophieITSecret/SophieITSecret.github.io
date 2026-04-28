@@ -77,7 +77,12 @@ function playAudio(file, onended) {
 // ─── UI ヘルパー ─────────────────────────────────
 function setMonitor(filename) {
     const el = document.getElementById('monitor-img');
-    if (el) el.src = filename.startsWith('./') ? filename : I + filename;
+    if (!el) return;
+    el.src = filename.startsWith('./') ? filename : I + filename;
+    el.style.display = 'block';
+    // yt-wrapperを非表示にしてモニターを確保
+    const yt = document.getElementById('yt-wrapper');
+    if (yt) yt.style.display = 'none';
 }
 
 function setListContent(html) {
@@ -305,7 +310,10 @@ function resolveRound(myHand, myWins, sophieWins) {
         setMsg(msg);
 
         // コンソールを一時的に無効化
-        setConsole(`<button class="c-btn" style="background:#333; color:#555; flex:1; border:none;" disabled>しばらくお待ちください</button>`, null);
+        setConsole(
+    `<button class="c-btn" id="j-quit" style="background:#34495e; color:#888; flex:1; border:none; font-size:0.85rem;">やめる</button>`,
+    () => { document.getElementById('j-quit').onclick = exit; }
+);
 
         playAudio(voiceFile, () => {
             if (addMada) {
