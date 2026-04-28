@@ -166,6 +166,8 @@ function showReady() {
         </div>
     `);
 
+    playAudio('janken_start_voice.mp3');
+
     const backStyle  = 'background:#34495e; color:#fff; flex:1; border:none; font-weight:bold;';
     const startStyle = 'background:#8e1a2e; color:#fff; flex:2; border:none; font-size:1rem; font-weight:bold;';
 
@@ -174,10 +176,7 @@ function showReady() {
          <button class="c-btn" id="j-start" style="${startStyle}">勝負！</button>`,
         () => {
             document.getElementById('j-quit').onclick  = exit;
-            document.getElementById('j-start').onclick = () => {
-                playAudio('janken_start_voice.mp3');
-                showBattle(0, 0);
-            };
+            document.getElementById('j-start').onclick = () => showBattle(0, 0); // ★音声再生を削除
         }
     );
 }
@@ -311,7 +310,7 @@ function resolveRound(myHand, myWins, sophieWins) {
                 setTimeout(() => showBattle(newMy, newSophie), 800);
             }
         });
-    }, 300);
+    }, 1200);
 }
 
 // ─── 最終結果 ────────────────────────────────────
@@ -322,10 +321,11 @@ function showFinal(myWins, sophieWins) {
     const isMy3     = myWins === 3 && sophieWins === 0;
 
     let scoreFile;
-    if      (sophieWins === 3 && myWins === 0) scoreFile = 'score_3_0.mp3';
-    else if (sophieWins === 2 && myWins === 1) scoreFile = 'score_2_1.mp3';
-    else if (myWins === 2 && sophieWins === 1) scoreFile = 'score_1_2.mp3';
-    else                                        scoreFile = 'score_0_3.mp3';
+    if      (isSophie3)                            scoreFile = 'score_3_0.mp3';
+    else if (sophieWins === 2 && myWins === 1)      scoreFile = 'score_2_1.mp3';
+    else if (myWins === 2 && sophieWins === 1)      scoreFile = 'score_1_2.mp3';
+    else if (isMy3)                                 scoreFile = 'score_0_3.mp3';
+    else                                            scoreFile = 'score_2_1.mp3'; // フォールバック
 
     if      (isSophie3) showSophie3Win(scoreFile);
     else if (isMy3)     showMy3Win(scoreFile);
