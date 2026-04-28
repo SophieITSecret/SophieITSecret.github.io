@@ -38,10 +38,14 @@ function resetDailyIfNeeded(data) {
 }
 
 function isDoneToday() {
-    const data = getData();
-    resetDailyIfNeeded(data);
-    return getData().gameCount >= 1;
+    return false; // ★テスト用・常にプレイ可能
 }
+
+//function isDoneToday() {       ////////////////////戻すの忘れないように。上の3行は消すfunction isDoneToday() {    return false; // ★テスト用・常にプレイ可能}
+//    const data = getData();
+//    resetDailyIfNeeded(data);
+//    return getData().gameCount >= 1;
+//}
 
 function recordResult(myWins, sophieWins) {
     const data   = getData();
