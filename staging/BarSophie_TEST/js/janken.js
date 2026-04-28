@@ -195,18 +195,17 @@ function showBattle(myWins, sophieWins) {
                 <span style="color:#ff6b6b;">${sophieWins}</span> ソフィー
             </div>
             <div id="j-msg" style="color:#f0b56e; font-size:0.95rem; min-height:2em; margin-top:10px;"></div>
+            <div id="j-hands" style="display:flex; gap:15px; justify-content:center; margin-top:20px;">
+                <button class="j-hand" data-hand="G" style="font-size:2.5rem; background:#1a3a1a; border:2px solid #555; border-radius:15px; padding:10px 18px; color:#fff; opacity:0.4;" disabled>✊</button>
+                <button class="j-hand" data-hand="C" style="font-size:2.5rem; background:#1a3a1a; border:2px solid #555; border-radius:15px; padding:10px 18px; color:#fff; opacity:0.4;" disabled>✌️</button>
+                <button class="j-hand" data-hand="P" style="font-size:2.5rem; background:#1a3a1a; border:2px solid #555; border-radius:15px; padding:10px 18px; color:#fff; opacity:0.4;" disabled>🖐️</button>
+            </div>
         </div>
     `);
 
-    // じゃんけんボタンは最初無効
-    const handStyle = 'flex:1; font-size:1.8rem; background:#1a3a1a; border:none; color:#fff; opacity:0.4;';
-    const quitStyle = 'background:#34495e; color:#888; flex:0.6; border:none; font-size:0.85rem;';
-
+    // コンソールはやめるボタンだけ
     setConsole(
-        `<button class="j-hand c-btn" data-hand="G" style="${handStyle}" disabled>✊</button>
-         <button class="j-hand c-btn" data-hand="C" style="${handStyle}" disabled>✌️</button>
-         <button class="j-hand c-btn" data-hand="P" style="${handStyle}" disabled>🖐️</button>
-         <button class="c-btn" id="j-quit" style="${quitStyle}">やめる</button>`,
+        `<button class="c-btn" id="j-quit" style="background:#34495e; color:#888; flex:1; border:none; font-size:0.85rem;">やめる</button>`,
         () => { document.getElementById('j-quit').onclick = exit; }
     );
 
@@ -321,11 +320,12 @@ function showFinal(myWins, sophieWins) {
     const isMy3     = myWins === 3 && sophieWins === 0;
 
     let scoreFile;
-    if      (isSophie3)                            scoreFile = 'score_3_0.mp3';
-    else if (sophieWins === 2 && myWins === 1)      scoreFile = 'score_2_1.mp3';
-    else if (myWins === 2 && sophieWins === 1)      scoreFile = 'score_1_2.mp3';
-    else if (isMy3)                                 scoreFile = 'score_0_3.mp3';
-    else                                            scoreFile = 'score_2_1.mp3'; // フォールバック
+    if      (sophieWins === 3 && myWins === 0) scoreFile = 'score_3_0.mp3';
+    else if (sophieWins === 3 && myWins === 1) scoreFile = 'score_3_1.mp3';
+    else if (sophieWins === 3 && myWins === 2) scoreFile = 'score_3_2.mp3';
+    else if (myWins === 3 && sophieWins === 2) scoreFile = 'score_2_3.mp3';
+    else if (myWins === 3 && sophieWins === 1) scoreFile = 'score_1_3.mp3';
+    else if (myWins === 3 && sophieWins === 0) scoreFile = 'score_0_3.mp3';
 
     if      (isSophie3) showSophie3Win(scoreFile);
     else if (isMy3)     showMy3Win(scoreFile);
