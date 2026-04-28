@@ -37,6 +37,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }).catch(e => console.warn("favorite.js load error", e));
     
     setup();
+    window._renderConsole = renderConsole;
 
     const tag = document.createElement('script');
     tag.src = "https://www.youtube.com/iframe_api";
