@@ -211,13 +211,12 @@ function handleSButton() {
     }
 
     if (state === "shop") {
-        // SHOPではソフィーの案内（将来実装。現在はじゃんけん）
-        import('./favorite.js').then(f => f.playJanken());
+        import('./janken.js').then(j => j.startJanken());
         return;
     }
 
     // その他の画面はじゃんけん
-    import('./favorite.js').then(f => f.playJanken());
+    import('./janken.js').then(j => j.startJanken());
 }
 
 function renderConsole(mode) {
