@@ -166,7 +166,7 @@ function showReady() {
         </div>
     `);
 
-    playAudio('janken_start_voice.mp3');
+    setTimeout(() => playAudio('janken_start_voice.mp3'), 1200);
 
     const backStyle  = 'background:#34495e; color:#fff; flex:1; border:none; font-weight:bold;';
     const startStyle = 'background:#8e1a2e; color:#fff; flex:2; border:none; font-size:1rem; font-weight:bold;';
@@ -185,23 +185,27 @@ function showReady() {
 function showBattle(myWins, sophieWins) {
     setMonitor('Janken_Ready.png');
 
-    setListContent(`
-        <div class="label" style="background:#333;">🎲 ソフィーとじゃんけん勝負</div>
-        <div style="padding:15px; text-align:center;">
-            <div style="color:#aaa; font-size:0.85rem; margin-bottom:8px;">3本先取</div>
-            <div style="font-size:1.4rem; color:#fff; margin-bottom:8px;">
-                あなた <span style="color:#7fd97f;">${myWins}</span> 
-                ー 
-                <span style="color:#ff6b6b;">${sophieWins}</span> ソフィー
-            </div>
-            <div id="j-msg" style="color:#f0b56e; font-size:0.95rem; min-height:2em; margin-top:10px;"></div>
-            <div id="j-hands" style="display:flex; gap:15px; justify-content:center; margin-top:20px;">
-                <button class="j-hand" data-hand="G" style="font-size:2.5rem; background:#1a3a1a; border:2px solid #555; border-radius:15px; padding:10px 18px; color:#fff; opacity:0.4;" disabled>✊</button>
-                <button class="j-hand" data-hand="C" style="font-size:2.5rem; background:#1a3a1a; border:2px solid #555; border-radius:15px; padding:10px 18px; color:#fff; opacity:0.4;" disabled>✌️</button>
-                <button class="j-hand" data-hand="P" style="font-size:2.5rem; background:#1a3a1a; border:2px solid #555; border-radius:15px; padding:10px 18px; color:#fff; opacity:0.4;" disabled>🖐️</button>
-            </div>
+setListContent(`
+    <div class="label" style="background:#333;">🎲 ソフィーとじゃんけん勝負</div>
+    <div style="padding:15px; text-align:center;">
+        <div style="color:#aaa; font-size:0.85rem; margin-bottom:8px;">3本先取</div>
+        <div style="font-size:1.3rem; color:#fff; margin-bottom:8px; display:flex; justify-content:center; align-items:center; gap:8px;">
+            <span style="color:#aaa; font-size:0.85rem;">あなた</span>
+            <span id="j-my-hand" style="font-size:1.5rem; min-width:1.8em;"> </span>
+            <span style="color:#7fd97f;">${myWins}</span>
+            <span style="color:#aaa;">ー</span>
+            <span style="color:#ff6b6b;">${sophieWins}</span>
+            <span id="j-sophie-hand" style="font-size:1.5rem; min-width:1.8em;"> </span>
+            <span style="color:#aaa; font-size:0.85rem;">ソフィー</span>
         </div>
-    `);
+        <div id="j-msg" style="color:#f0b56e; font-size:0.95rem; min-height:1.5em; margin-top:10px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"></div>
+        <div id="j-hands" style="display:flex; gap:15px; justify-content:center; margin-top:20px;">
+            <button class="j-hand" data-hand="G" style="font-size:2.5rem; background:#1a3a1a; border:2px solid #555; border-radius:15px; padding:10px 18px; color:#fff; opacity:0.4;" disabled>✊</button>
+            <button class="j-hand" data-hand="C" style="font-size:2.5rem; background:#1a3a1a; border:2px solid #555; border-radius:15px; padding:10px 18px; color:#fff; opacity:0.4;" disabled>✌️</button>
+            <button class="j-hand" data-hand="P" style="font-size:2.5rem; background:#1a3a1a; border:2px solid #555; border-radius:15px; padding:10px 18px; color:#fff; opacity:0.4;" disabled>🖐️</button>
+        </div>
+    </div>
+`);
 
     // コンソールはやめるボタンだけ
     setConsole(
@@ -231,7 +235,7 @@ function showBattle(myWins, sophieWins) {
                 chosen = true;
                 clearTimeout(timeout);
                 enableHands(false);
-                ponAudio.pause();
+              //  ponAudio.pause();  ここがあると「ポン」が切られる。
                 resolveRound(e.currentTarget.dataset.hand, myWins, sophieWins);
             };
         });
@@ -291,9 +295,14 @@ function resolveRound(myHand, myWins, sophieWins) {
 
     const addMada = result !== 'draw' && newMy < 3 && newSophie < 3;
 
-    setTimeout(() => {
+  setTimeout(() => {
         setMonitor(resultImg);
-        setMsg(`あなた ${emoji[myHand]} vs ソフィー ${emoji[sHand]}　${msg}`);
+        // 手をスコア横に表示
+        const myHandEl = document.getElementById('j-my-hand');
+        const sophieHandEl = document.getElementById('j-sophie-hand');
+        if (myHandEl) myHandEl.innerText = emoji[myHand];
+        if (sophieHandEl) sophieHandEl.innerText = emoji[sHand];
+        setMsg(msg);
 
         // コンソールを一時的に無効化
         setConsole(`<button class="c-btn" style="background:#333; color:#555; flex:1; border:none;" disabled>しばらくお待ちください</button>`, null);
@@ -427,7 +436,7 @@ function showSophie3Win(scoreFile) {
 
 // ─── 客の3連勝：投げキッス演出 ──────────────────
 function showMy3Win(scoreFile) {
-    setMonitor('Janken_Lose3.png');
+    setMonitor('./front_sophie.jpeg'); // ★まず通常顔
 
     setListContent(`
         <div class="label" style="background:#333;">🎲 本日の結果</div>
@@ -448,6 +457,8 @@ function showMy3Win(scoreFile) {
     );
 
     playAudio(scoreFile, () => {
+        // ★score_0_3.mp3が終わったらキッス画像に切り替えてkiss_se再生
+        setMonitor('Janken_Lose3.png');
         playAudio('kiss_se.mp3');
         startHearts();
         playAudio('closing_voice.mp3', () => {
