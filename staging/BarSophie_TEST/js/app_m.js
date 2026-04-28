@@ -198,6 +198,10 @@ function setupNextButton() {
 
 // ★ 画面ごとのSボタン動作
 function handleSButton() {
+    // ★ 氷の音
+    const ice = new Audio('./voices_mp3/ice.mp3');
+    ice.play().catch(() => {});
+
     const state = nav.state;
 
     if (state === "tit") {
