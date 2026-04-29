@@ -132,6 +132,7 @@ function forceShowMonitor() {
 
 // ─── メイン起動 ──────────────────────────────────
 export function startJanken() {
+    forceShowMonitor(); // ★追加
     if (isDoneToday()) {
         showDone();
         return;
