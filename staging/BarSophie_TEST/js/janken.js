@@ -110,6 +110,9 @@ function forceShowMonitor() {
 
 function exit() {
     stopHearts();
+    // ★l-sideの状態を完全にリセット
+    const lside = document.querySelector('.l-side');
+    if (lside) lside.style.display = '';  // スタイルをクリアして元に戻す
     setMonitor('./front_sophie.jpeg');
     const lv = document.getElementById('list-view');
     if (lv) lv.style.display = 'none';
