@@ -1,12 +1,11 @@
 // js/janken.js
 /**
- * BARソフィー — janken.js v2
+ * BARソフィー — janken.js v3
  * モニター画面・コンソールを使ったじゃんけん
  */
 
 const V = './voices_mp3/';
 const I = './img/';
-
 const STORAGE_KEY = 'bar_sophie_techo';
 
 // ─── LocalStorage ───────────────────────────────
@@ -30,8 +29,8 @@ function getToday() {
 function resetDailyIfNeeded(data) {
     const today = getToday();
     if (data.lastGameDate !== today) {
-        data.janken    = { myWins: 0, sophieWins: 0 };
-        data.gameCount = 0;
+        data.janken       = { myWins: 0, sophieWins: 0 };
+        data.gameCount    = 0;
         data.lastGameDate = today;
         saveData(data);
     }
@@ -39,13 +38,11 @@ function resetDailyIfNeeded(data) {
 
 function isDoneToday() {
     return false; // ★テスト用・常にプレイ可能
+    // ★本番に戻す時は上の行を消して下のコメントを外す
+    // const data = getData();
+    // resetDailyIfNeeded(data);
+    // return getData().gameCount >= 1;
 }
-
-//function isDoneToday() {       ////////////////////戻すの忘れないように。上の3行は消すfunction isDoneToday() {    return false; // ★テスト用・常にプレイ可能}
-//    const data = getData();
-//    resetDailyIfNeeded(data);
-//    return getData().gameCount >= 1;
-//}
 
 function recordResult(myWins, sophieWins) {
     const data   = getData();
@@ -79,20 +76,11 @@ function setMonitor(filename) {
     const el = document.getElementById('monitor-img');
     if (!el) return;
     el.src = filename.startsWith('./') ? filename : I + filename;
-    el.style.display = 'block';
+    el.style.display    = 'block';
     el.style.visibility = 'visible';
-    el.style.opacity = '1';
-    el.style.width = '100%';
-    el.style.height = '100%';
-    el.style.objectFit = 'cover';
+    el.style.opacity    = '1';
     const yt = document.getElementById('yt-wrapper');
     if (yt) yt.style.display = 'none';
-    // monitorコンテナも強制表示
-    const mon = el.closest('.monitor') || el.parentElement;
-    if (mon) {
-        mon.style.display = 'block';
-        mon.style.visibility = 'visible';
-    }
 }
 
 function setListContent(html) {
@@ -109,39 +97,68 @@ function setConsole(html, bindings) {
     if (bindings) bindings();
 }
 
+function forceShowMonitor() {
+    const lside = document.querySelector('.l-side');
+    const mon   = document.querySelector('.monitor');
+    const img   = document.getElementById('monitor-img');
+    const yt    = document.getElementById('yt-wrapper');
+    const nm    = document.getElementById('nav-main');
+    if (lside) lside.style.display = 'flex';
+    if (mon)   mon.style.display   = 'block';
+    if (img)   { img.style.display = 'block'; img.style.opacity = '1'; }
+    if (yt)    yt.style.display    = 'none';
+    if (nm)    nm.style.display    = 'none';
+}
+
 function exit() {
-    // 元の画面に戻す
+    stopHearts();
     setMonitor('./front_sophie.jpeg');
     const lv = document.getElementById('list-view');
     if (lv) lv.style.display = 'none';
     if (window._renderConsole) window._renderConsole('standard');
 }
 
-function forceShowMonitor() {
-    const lside = document.querySelector('.l-side');
-    const mon   = document.querySelector('.monitor');
-    const img   = document.getElementById('monitor-img');
-    const yt    = document.getElementById('yt-wrapper');
-    const lv    = document.getElementById('list-view');
-    if (lside) lside.style.display = 'flex'; // ★これが原因だった
-    if (mon)   mon.style.display = 'block';
-    if (img)   { img.style.display = 'block'; img.style.opacity = '1'; }
-    if (yt)    yt.style.display = 'none';
-    if (lv)    lv.style.display = 'block';
+function setMsg(txt) {
+    const el = document.getElementById('j-msg');
+    if (el) el.innerText = txt;
+}
+
+function enableHands(enabled) {
+    document.querySelectorAll('.j-hand').forEach(b => {
+        b.disabled        = !enabled;
+        b.style.opacity   = enabled ? '1' : '0.4';
+        b.style.background = enabled ? '#1a5a1a' : '#1a3a1a';
+    });
+}
+
+const quitStyle  = 'background:#34495e; color:#888; flex:1; border:none; font-size:0.85rem;';
+const closeStyle = 'background:#8e1a2e; color:#fff; flex:1; border:none;';
+const waitStyle  = 'background:#333; color:#555; flex:1; border:none;';
+
+function setQuitBtn() {
+    setConsole(
+        `<button class="c-btn" id="j-quit" style="${quitStyle}">やめる</button>`,
+        () => { document.getElementById('j-quit').onclick = exit; }
+    );
+}
+
+function setWaitBtn() {
+    setConsole(
+        `<button class="c-btn" id="j-quit" style="${quitStyle}">やめる</button>`,
+        () => { document.getElementById('j-quit').onclick = exit; }
+    );
+}
+
+function setCloseBtn() {
+    setConsole(
+        `<button class="c-btn" id="j-close" style="${closeStyle}">閉じる</button>`,
+        () => { document.getElementById('j-close').onclick = exit; }
+    );
 }
 
 // ─── メイン起動 ──────────────────────────────────
 export function startJanken() {
-    // ★画面を強制リセット
-    const lside = document.querySelector('.l-side');
-    const nm    = document.getElementById('nav-main');
-    const yt    = document.getElementById('yt-wrapper');
-    const img   = document.getElementById('monitor-img');
-    if (lside) lside.style.display = 'flex';
-    if (nm)    nm.style.display = 'none';
-    if (yt)    yt.style.display = 'none';
-    if (img)   { img.style.display = 'block'; img.style.opacity = '1'; }
-
+    forceShowMonitor();
     if (isDoneToday()) {
         showDone();
         return;
@@ -151,31 +168,9 @@ export function startJanken() {
 
 // ─── 本日終了済み ────────────────────────────────
 function showDone() {
-    forceShowMonitor(); // ★追加
+    setMonitor('./front_sophie.jpeg');
     const data = getData();
     const log  = data.gameLog || [];
-
-    setMonitor('./front_sophie.jpeg');
-
-    let logHtml = '';
-    if (log.length > 0) {
-        logHtml = `
-        <table style="width:100%; border-collapse:collapse; font-size:0.85rem; margin-top:10px;">
-            <tr style="color:#f0b56e; border-bottom:1px solid #444;">
-                <th style="padding:5px; text-align:left;">日付</th>
-                <th style="padding:5px;">結果</th>
-                <th style="padding:5px;">スコア</th>
-                <th style="padding:5px;">通算</th>
-            </tr>
-            ${log.map(r => `
-            <tr style="border-bottom:1px solid #333; color:#ccc;">
-                <td style="padding:5px;">${r.date}</td>
-                <td style="padding:5px; text-align:center; color:${r.result==='○'?'#7fd97f':'#ff6b6b'}">${r.result}</td>
-                <td style="padding:5px; text-align:center;">${r.score}</td>
-                <td style="padding:5px; text-align:center;">${r.total}</td>
-            </tr>`).join('')}
-        </table>`;
-    }
 
     setListContent(`
         <div class="label" style="background:#333;">🎲 ソフィーとじゃんけん勝負</div>
@@ -183,18 +178,13 @@ function showDone() {
             本日の勝負は終了しました<br>
             <span style="color:#aaa; font-size:0.85rem;">また明日お越しくださいませ</span>
         </div>
-        ${logHtml}
+        ${buildLogHtml(log)}
     `);
-
-    setConsole(
-        `<button class="c-btn" id="j-close" style="background:#34495e; color:#fff; flex:1; border:none;">閉じる</button>`,
-        () => { document.getElementById('j-close').onclick = exit; }
-    );
+    setCloseBtn();
 }
 
 // ─── 勝負前 ──────────────────────────────────────
 function showReady() {
-    forceShowMonitor();
     setMonitor('./front_sophie.jpeg');
 
     setListContent(`
@@ -206,10 +196,8 @@ function showReady() {
         </div>
     `);
 
-    let startAudio = null; // ★追加
-    setTimeout(() => {
-        startAudio = playAudio('janken_start_voice.mp3'); // ★変更
-    }, 1200);
+    let startAudio = null;
+    setTimeout(() => { startAudio = playAudio('janken_start_voice.mp3'); }, 1200);
 
     const backStyle  = 'background:#34495e; color:#fff; flex:1; border:none; font-weight:bold;';
     const startStyle = 'background:#8e1a2e; color:#fff; flex:2; border:none; font-size:1rem; font-weight:bold;';
@@ -220,7 +208,7 @@ function showReady() {
         () => {
             document.getElementById('j-quit').onclick  = exit;
             document.getElementById('j-start').onclick = () => {
-                if (startAudio) { startAudio.pause(); startAudio = null; } // ★追加
+                if (startAudio) { startAudio.pause(); startAudio = null; }
                 showBattle(0, 0);
             };
         }
@@ -229,7 +217,6 @@ function showReady() {
 
 // ─── 勝負中 ──────────────────────────────────────
 function showBattle(myWins, sophieWins) {
-    forceShowMonitor();
     setMonitor('Janken_Ready.png');
 
     setListContent(`
@@ -254,20 +241,19 @@ function showBattle(myWins, sophieWins) {
         </div>
     `);
 
-    let cancelled = false; // ★キャンセルフラグ追加
-
+    let cancelled = false;
     setConsole(
-        `<button class="c-btn" id="j-quit" style="background:#34495e; color:#888; flex:1; border:none; font-size:0.85rem;">やめる</button>`,
+        `<button class="c-btn" id="j-quit" style="${quitStyle}">やめる</button>`,
         () => {
             document.getElementById('j-quit').onclick = () => {
-                cancelled = true; // ★フラグを立ててからexit
+                cancelled = true;
                 exit();
             };
         }
     );
 
     playAudio('janken_voice.mp3', () => {
-        if (cancelled) return; // ★キャンセル済みなら何もしない
+        if (cancelled) return;
         let chosen = false;
         enableHands(true);
         setMsg('ぽん！');
@@ -275,7 +261,7 @@ function showBattle(myWins, sophieWins) {
         const ponAudio = playAudio('pon_voice.mp3');
 
         const timeout = setTimeout(() => {
-            if (chosen || cancelled) return; // ★どちらかならスキップ
+            if (chosen || cancelled) return;
             enableHands(false);
             setMsg('どうしました？');
             playAudio('why.mp3', () => {
@@ -285,45 +271,10 @@ function showBattle(myWins, sophieWins) {
 
         document.querySelectorAll('.j-hand').forEach(btn => {
             btn.onclick = (e) => {
-                if (chosen || cancelled) return; // ★どちらかならスキップ
+                if (chosen || cancelled) return;
                 chosen = true;
                 clearTimeout(timeout);
                 enableHands(false);
-                resolveRound(e.currentTarget.dataset.hand, myWins, sophieWins);
-            };
-        });
-    });
-}
-
-    // コンソールはやめるボタンだけ
-    setConsole(
-        `<button class="c-btn" id="j-quit" style="background:#34495e; color:#888; flex:1; border:none; font-size:0.85rem;">やめる</button>`,
-        () => { document.getElementById('j-quit').onclick = exit; }
-    );
-
-    // じゃんけん音声→ぽん→ボタン有効化
-    playAudio('janken_voice.mp3', () => {
-        let chosen = false;
-        enableHands(true);
-        setMsg('ぽん！');
-
-        const ponAudio = playAudio('pon_voice.mp3');
-
-        const timeout = setTimeout(() => {
-            if (!chosen) {
-                enableHands(false);
-                setMsg('どうしました？');
-                playAudio('why.mp3', () => showBattle(myWins, sophieWins));
-            }
-        }, 3000);
-
-        document.querySelectorAll('.j-hand').forEach(btn => {
-            btn.onclick = (e) => {
-                if (chosen) return;
-                chosen = true;
-                clearTimeout(timeout);
-                enableHands(false);
-              //  ponAudio.pause();  ここがあると「ポン」が切られる。
                 resolveRound(e.currentTarget.dataset.hand, myWins, sophieWins);
             };
         });
@@ -383,20 +334,14 @@ function resolveRound(myHand, myWins, sophieWins) {
 
     const addMada = result !== 'draw' && newMy < 3 && newSophie < 3;
 
-  setTimeout(() => {
+    setTimeout(() => {
         setMonitor(resultImg);
-        // 手をスコア横に表示
-        const myHandEl = document.getElementById('j-my-hand');
+        const myHandEl     = document.getElementById('j-my-hand');
         const sophieHandEl = document.getElementById('j-sophie-hand');
-        if (myHandEl) myHandEl.innerText = emoji[myHand];
+        if (myHandEl)     myHandEl.innerText     = emoji[myHand];
         if (sophieHandEl) sophieHandEl.innerText = emoji[sHand];
         setMsg(msg);
-
-        // コンソールを一時的に無効化
-        setConsole(
-    `<button class="c-btn" id="j-quit" style="background:#34495e; color:#888; flex:1; border:none; font-size:0.85rem;">やめる</button>`,
-    () => { document.getElementById('j-quit').onclick = exit; }
-);
+        setWaitBtn();
 
         playAudio(voiceFile, () => {
             if (addMada) {
@@ -414,7 +359,6 @@ function resolveRound(myHand, myWins, sophieWins) {
 
 // ─── 最終結果 ────────────────────────────────────
 function showFinal(myWins, sophieWins) {
-    // ★先にrecordResultを呼んでからすぐ表示に入る
     recordResult(myWins, sophieWins);
 
     const isSophie3 = sophieWins === 3 && myWins === 0;
@@ -428,36 +372,36 @@ function showFinal(myWins, sophieWins) {
     else if (myWins === 3 && sophieWins === 1) scoreFile = 'score_1_3.mp3';
     else                                        scoreFile = 'score_0_3.mp3';
 
-    if      (isSophie3) showSophie3Win(myWins, sophieWins, scoreFile);
-    else if (isMy3)     showMy3Win(myWins, sophieWins, scoreFile);
+    if      (isSophie3) showSophie3Win(scoreFile);
+    else if (isMy3)     showMy3Win(scoreFile);
     else                showNormalEnd(myWins, sophieWins, scoreFile);
+}
+
+// ─── 対戦日誌HTML生成 ────────────────────────────
+function buildLogHtml(log) {
+    if (!log || log.length === 0) return '';
+    return `
+    <table style="width:100%; border-collapse:collapse; font-size:0.85rem; margin-top:10px;">
+        <tr style="color:#f0b56e; border-bottom:1px solid #444;">
+            <th style="padding:5px; text-align:left;">日付</th>
+            <th style="padding:5px;">結果</th>
+            <th style="padding:5px;">スコア</th>
+            <th style="padding:5px;">通算</th>
+        </tr>
+        ${log.map(r => `
+        <tr style="border-bottom:1px solid #333; color:#ccc;">
+            <td style="padding:5px;">${r.date}</td>
+            <td style="padding:5px; text-align:center; color:${r.result==='○'?'#7fd97f':'#ff6b6b'}">${r.result}</td>
+            <td style="padding:5px; text-align:center;">${r.score}</td>
+            <td style="padding:5px; text-align:center;">${r.total}</td>
+        </tr>`).join('')}
+    </table>`;
 }
 
 // ─── 通常決着 ────────────────────────────────────
 function showNormalEnd(myWins, sophieWins, scoreFile) {
     const isMyWin = myWins > sophieWins;
-    const data = getData(); // ★recordResult済みのデータを取得
-    const log  = data.gameLog || [];
-
-    let logHtml = '';
-    if (log.length > 0) {
-        logHtml = `
-        <table style="width:100%; border-collapse:collapse; font-size:0.85rem; margin-top:10px;">
-            <tr style="color:#f0b56e; border-bottom:1px solid #444;">
-                <th style="padding:5px; text-align:left;">日付</th>
-                <th style="padding:5px;">結果</th>
-                <th style="padding:5px;">スコア</th>
-                <th style="padding:5px;">通算</th>
-            </tr>
-            ${log.map(r => `
-            <tr style="border-bottom:1px solid #333; color:#ccc;">
-                <td style="padding:5px;">${r.date}</td>
-                <td style="padding:5px; text-align:center; color:${r.result==='○'?'#7fd97f':'#ff6b6b'}">${r.result}</td>
-                <td style="padding:5px; text-align:center;">${r.score}</td>
-                <td style="padding:5px; text-align:center;">${r.total}</td>
-            </tr>`).join('')}
-        </table>`;
-    }
+    const data    = getData();
 
     setMonitor(isMyWin ? 'Janken_LoseD.png' : 'Janken_WinD.png');
     setListContent(`
@@ -472,74 +416,13 @@ function showNormalEnd(myWins, sophieWins, scoreFile) {
                 ${isMyWin ? '🎉 お客様の勝ちでございます' : 'わたくしの勝ちでございます'}
             </div>
         </div>
-        ${logHtml}
+        ${buildLogHtml(data.gameLog)}
     `);
-
-    setConsole(
-        `<button class="c-btn" id="j-quit" style="background:#34495e; color:#888; flex:1; border:none; font-size:0.85rem;" disabled>しばらくお待ちください</button>`,
-        null
-    );
+    setWaitBtn();
 
     playAudio(scoreFile, () => {
         playAudio('closing_voice.mp3', () => {
-            setConsole(
-                `<button class="c-btn" id="j-close" style="background:#8e1a2e; color:#fff; flex:1; border:none;">閉じる</button>`,
-                () => { document.getElementById('j-close').onclick = exit; }
-            );
-        });
-    });
-}function showNormalEnd(myWins, sophieWins, scoreFile) {
-    const isMyWin = myWins > sophieWins;
-    const data = getData(); // ★recordResult済みのデータを取得
-    const log  = data.gameLog || [];
-
-    let logHtml = '';
-    if (log.length > 0) {
-        logHtml = `
-        <table style="width:100%; border-collapse:collapse; font-size:0.85rem; margin-top:10px;">
-            <tr style="color:#f0b56e; border-bottom:1px solid #444;">
-                <th style="padding:5px; text-align:left;">日付</th>
-                <th style="padding:5px;">結果</th>
-                <th style="padding:5px;">スコア</th>
-                <th style="padding:5px;">通算</th>
-            </tr>
-            ${log.map(r => `
-            <tr style="border-bottom:1px solid #333; color:#ccc;">
-                <td style="padding:5px;">${r.date}</td>
-                <td style="padding:5px; text-align:center; color:${r.result==='○'?'#7fd97f':'#ff6b6b'}">${r.result}</td>
-                <td style="padding:5px; text-align:center;">${r.score}</td>
-                <td style="padding:5px; text-align:center;">${r.total}</td>
-            </tr>`).join('')}
-        </table>`;
-    }
-
-    setMonitor(isMyWin ? 'Janken_LoseD.png' : 'Janken_WinD.png');
-    setListContent(`
-        <div class="label" style="background:#333;">🎲 本日の結果</div>
-        <div style="padding:15px; text-align:center;">
-            <div style="font-size:1.4rem; color:#fff; margin-bottom:10px;">
-                あなた <span style="color:#7fd97f;">${myWins}</span> 
-                ー 
-                <span style="color:#ff6b6b;">${sophieWins}</span> ソフィー
-            </div>
-            <div style="color:#f0b56e; font-size:1rem;">
-                ${isMyWin ? '🎉 お客様の勝ちでございます' : 'わたくしの勝ちでございます'}
-            </div>
-        </div>
-        ${logHtml}
-    `);
-
-    setConsole(
-        `<button class="c-btn" id="j-quit" style="background:#34495e; color:#888; flex:1; border:none; font-size:0.85rem;" disabled>しばらくお待ちください</button>`,
-        null
-    );
-
-    playAudio(scoreFile, () => {
-        playAudio('closing_voice.mp3', () => {
-            setConsole(
-                `<button class="c-btn" id="j-close" style="background:#8e1a2e; color:#fff; flex:1; border:none;">閉じる</button>`,
-                () => { document.getElementById('j-close').onclick = exit; }
-            );
+            setCloseBtn();
         });
     });
 }
@@ -570,32 +453,21 @@ function showSophie3Win(scoreFile) {
     );
 
     playAudio(scoreFile, () => {
-        // ボタン有効化
         setConsole(
             `<button class="c-btn" id="j-champagne" style="${champStyle}">🍾 シャンパンを開ける</button>
              <button class="c-btn" id="j-refuse"    style="${refuseStyle}">遠慮します</button>`,
             () => {
                 document.getElementById('j-champagne').onclick = () => {
                     setMonitor('Janken_Win3.png');
-                    setConsole(`<button class="c-btn" style="background:#333; color:#555; flex:1; border:none;" disabled>しばらくお待ちください</button>`, null);
+                    setWaitBtn();
                     playAudio('thanks_voice.mp3', () => {
-                        playAudio('closing_voice.mp3', () => {
-                            setConsole(
-                                `<button class="c-btn" id="j-close" style="background:#8e1a2e; color:#fff; flex:1; border:none;">閉じる</button>`,
-                                () => { document.getElementById('j-close').onclick = exit; }
-                            );
-                        });
+                        playAudio('closing_voice.mp3', () => setCloseBtn());
                     });
                 };
                 document.getElementById('j-refuse').onclick = () => {
-                    setConsole(`<button class="c-btn" style="background:#333; color:#555; flex:1; border:none;" disabled>しばらくお待ちください</button>`, null);
+                    setWaitBtn();
                     playAudio('booboo_voice.mp3', () => {
-                        playAudio('closing_voice.mp3', () => {
-                            setConsole(
-                                `<button class="c-btn" id="j-close" style="background:#8e1a2e; color:#fff; flex:1; border:none;">閉じる</button>`,
-                                () => { document.getElementById('j-close').onclick = exit; }
-                            );
-                        });
+                        playAudio('closing_voice.mp3', () => setCloseBtn());
                     });
                 };
             }
@@ -605,7 +477,7 @@ function showSophie3Win(scoreFile) {
 
 // ─── 客の3連勝：投げキッス演出 ──────────────────
 function showMy3Win(scoreFile) {
-    setMonitor('./front_sophie.jpeg'); // ★まず通常顔
+    setMonitor('./front_sophie.jpeg');
 
     setListContent(`
         <div class="label" style="background:#333;">🎲 本日の結果</div>
@@ -619,29 +491,22 @@ function showMy3Win(scoreFile) {
             <canvas id="j-hearts" style="position:absolute; inset:0; pointer-events:none; width:100%; height:100%;"></canvas>
         </div>
     `);
-
-    setConsole(
-        `<button class="c-btn" id="j-close" style="background:#34495e; color:#fff; flex:1; border:none;" disabled>しばらくお待ちください</button>`,
-        null
-    );
+    setWaitBtn();
 
     playAudio(scoreFile, () => {
-        // ★score_0_3.mp3が終わったらキッス画像に切り替えてkiss_se再生
         setMonitor('Janken_Lose3.png');
         playAudio('kiss_se.mp3');
         startHearts();
         playAudio('closing_voice.mp3', () => {
             stopHearts();
-            setConsole(
-                `<button class="c-btn" id="j-close" style="background:#8e1a2e; color:#fff; flex:1; border:none;">閉じる</button>`,
-                () => { document.getElementById('j-close').onclick = exit; }
-            );
+            setCloseBtn();
         });
     });
 }
 
 // ─── ハート粒子演出 ──────────────────────────────
 let heartAnimId = null;
+
 function startHearts() {
     const canvas = document.getElementById('j-hearts');
     if (!canvas) return;
@@ -649,17 +514,17 @@ function startHearts() {
     canvas.width  = canvas.offsetWidth;
     canvas.height = canvas.offsetHeight;
     const particles = Array.from({ length: 25 }, () => ({
-        x: Math.random() * canvas.width,
-        y: canvas.height + 20,
-        size: 10 + Math.random() * 18,
-        speed: 1 + Math.random() * 2,
+        x:       Math.random() * canvas.width,
+        y:       canvas.height + 20,
+        size:    10 + Math.random() * 18,
+        speed:   1 + Math.random() * 2,
         opacity: 0.8 + Math.random() * 0.2,
-        drift: (Math.random() - 0.5) * 1.5
+        drift:   (Math.random() - 0.5) * 1.5
     }));
     function draw() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         particles.forEach(p => {
-            ctx.font = `${p.size}px serif`;
+            ctx.font        = `${p.size}px serif`;
             ctx.globalAlpha = p.opacity;
             ctx.fillText('💗', p.x, p.y);
             p.y -= p.speed;
@@ -671,20 +536,7 @@ function startHearts() {
     }
     draw();
 }
+
 function stopHearts() {
     if (heartAnimId) { cancelAnimationFrame(heartAnimId); heartAnimId = null; }
-}
-
-// ─── ヘルパー ────────────────────────────────────
-function setMsg(txt) {
-    const el = document.getElementById('j-msg');
-    if (el) el.innerText = txt;
-}
-
-function enableHands(enabled) {
-    document.querySelectorAll('.j-hand').forEach(b => {
-        b.disabled = !enabled;
-        b.style.opacity = enabled ? '1' : '0.4';
-        b.style.background = enabled ? '#1a5a1a' : '#1a3a1a';
-    });
 }
