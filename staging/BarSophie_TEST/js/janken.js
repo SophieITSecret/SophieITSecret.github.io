@@ -102,12 +102,10 @@ function forceShowMonitor() {
     const mon   = document.querySelector('.monitor');
     const img   = document.getElementById('monitor-img');
     const yt    = document.getElementById('yt-wrapper');
-    const nm    = document.getElementById('nav-main');
     if (lside) lside.style.display = 'flex';
     if (mon)   mon.style.display   = 'block';
     if (img)   { img.style.display = 'block'; img.style.opacity = '1'; }
     if (yt)    yt.style.display    = 'none';
-    if (nm)    nm.style.display    = 'none';
 }
 
 function exit() {
