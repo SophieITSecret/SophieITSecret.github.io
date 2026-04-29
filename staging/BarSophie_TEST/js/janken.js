@@ -224,9 +224,9 @@ function showBattle(myWins, sophieWins) {
             <div style="font-size:1.3rem; color:#fff; margin-bottom:8px; display:flex; justify-content:center; align-items:center; gap:8px;">
                 <span style="color:#aaa; font-size:0.85rem;">あなた</span>
                 <span id="j-my-hand" style="font-size:1.5rem; min-width:1.8em;"> </span>
-                <span style="color:#7fd97f;">${myWins}</span>
+                <span id="j-score-my" style="color:#7fd97f;">${myWins}</span>
                 <span style="color:#aaa;">ー</span>
-                <span style="color:#ff6b6b;">${sophieWins}</span>
+                <span id="j-score-sophie" style="color:#ff6b6b;">${sophieWins}</span>
                 <span id="j-sophie-hand" style="font-size:1.5rem; min-width:1.8em;"> </span>
                 <span style="color:#aaa; font-size:0.85rem;">ソフィー</span>
             </div>
@@ -338,6 +338,11 @@ function resolveRound(myHand, myWins, sophieWins) {
         const sophieHandEl = document.getElementById('j-sophie-hand');
         if (myHandEl)     myHandEl.innerText     = emoji[myHand];
         if (sophieHandEl) sophieHandEl.innerText = emoji[sHand];
+        // ★スコアを即時反映
+        const myScoreEl     = document.querySelector('#j-score-my');
+        const sophieScoreEl = document.querySelector('#j-score-sophie');
+        if (myScoreEl)     myScoreEl.innerText     = newMy;
+        if (sophieScoreEl) sophieScoreEl.innerText = newSophie;
         setMsg(msg);
         setWaitBtn();
 
