@@ -117,6 +117,17 @@ function exit() {
     if (window._renderConsole) window._renderConsole('standard');
 }
 
+function forceShowMonitor() {
+    const mon = document.querySelector('.monitor');
+    const img = document.getElementById('monitor-img');
+    const yt  = document.getElementById('yt-wrapper');
+    const lv  = document.getElementById('list-view');
+    if (mon) { mon.style.display = 'block'; mon.style.visibility = 'visible'; }
+    if (img) { img.style.display = 'block'; img.style.visibility = 'visible'; img.style.opacity = '1'; }
+    if (yt)  yt.style.display = 'none';
+    if (lv)  { lv.style.display = 'block'; lv.style.height = ''; }
+}
+
 // ─── メイン起動 ──────────────────────────────────
 export function startJanken() {
     if (isDoneToday()) {
@@ -128,6 +139,7 @@ export function startJanken() {
 
 // ─── 本日終了済み ────────────────────────────────
 function showDone() {
+    forceShowMonitor(); // ★追加
     const data = getData();
     const log  = data.gameLog || [];
 
@@ -170,6 +182,7 @@ function showDone() {
 
 // ─── 勝負前 ──────────────────────────────────────
 function showReady() {
+      forceShowMonitor(); // ★追加
     setMonitor('./front_sophie.jpeg');
 
     setListContent(`
@@ -198,6 +211,7 @@ function showReady() {
 
 // ─── 勝負中 ──────────────────────────────────────
 function showBattle(myWins, sophieWins) {
+    forceShowMonitor(); // ★追加
     setMonitor('Janken_Ready.png');
 
 setListContent(`
