@@ -80,9 +80,19 @@ function setMonitor(filename) {
     if (!el) return;
     el.src = filename.startsWith('./') ? filename : I + filename;
     el.style.display = 'block';
-    // yt-wrapperを非表示にしてモニターを確保
+    el.style.visibility = 'visible';
+    el.style.opacity = '1';
+    el.style.width = '100%';
+    el.style.height = '100%';
+    el.style.objectFit = 'cover';
     const yt = document.getElementById('yt-wrapper');
     if (yt) yt.style.display = 'none';
+    // monitorコンテナも強制表示
+    const mon = el.closest('.monitor') || el.parentElement;
+    if (mon) {
+        mon.style.display = 'block';
+        mon.style.visibility = 'visible';
+    }
 }
 
 function setListContent(html) {
