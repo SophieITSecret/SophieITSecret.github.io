@@ -132,7 +132,16 @@ function forceShowMonitor() {
 
 // ─── メイン起動 ──────────────────────────────────
 export function startJanken() {
-    forceShowMonitor(); // ★追加
+    // ★画面を強制リセット
+    const lside = document.querySelector('.l-side');
+    const nm    = document.getElementById('nav-main');
+    const yt    = document.getElementById('yt-wrapper');
+    const img   = document.getElementById('monitor-img');
+    if (lside) lside.style.display = 'flex';
+    if (nm)    nm.style.display = 'none';
+    if (yt)    yt.style.display = 'none';
+    if (img)   { img.style.display = 'block'; img.style.opacity = '1'; }
+
     if (isDoneToday()) {
         showDone();
         return;
