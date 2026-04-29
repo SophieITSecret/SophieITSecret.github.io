@@ -110,12 +110,14 @@ function forceShowMonitor() {
 
 function exit() {
     stopHearts();
-    // ★l-sideの状態を完全にリセット
     const lside = document.querySelector('.l-side');
-    if (lside) lside.style.display = '';  // スタイルをクリアして元に戻す
+    if (lside) lside.style.display = '';
     setMonitor('./front_sophie.jpeg');
     const lv = document.getElementById('list-view');
-    if (lv) lv.style.display = 'none';
+    if (lv) { lv.style.display = 'none'; lv.innerHTML = ''; }
+    // ★コンソールを一旦クリア
+    const grid = document.querySelector('.btn-grid');
+    if (grid) grid.innerHTML = '';
     if (window._renderConsole) window._renderConsole('standard');
 }
 
