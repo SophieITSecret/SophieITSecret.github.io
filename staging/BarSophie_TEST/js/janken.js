@@ -118,14 +118,16 @@ function exit() {
 }
 
 function forceShowMonitor() {
-    const mon = document.querySelector('.monitor');
-    const img = document.getElementById('monitor-img');
-    const yt  = document.getElementById('yt-wrapper');
-    const lv  = document.getElementById('list-view');
-    if (mon) { mon.style.display = 'block'; mon.style.visibility = 'visible'; }
-    if (img) { img.style.display = 'block'; img.style.visibility = 'visible'; img.style.opacity = '1'; }
-    if (yt)  yt.style.display = 'none';
-    if (lv)  { lv.style.display = 'block'; lv.style.height = ''; }
+    const lside = document.querySelector('.l-side');
+    const mon   = document.querySelector('.monitor');
+    const img   = document.getElementById('monitor-img');
+    const yt    = document.getElementById('yt-wrapper');
+    const lv    = document.getElementById('list-view');
+    if (lside) lside.style.display = 'flex'; // ★これが原因だった
+    if (mon)   mon.style.display = 'block';
+    if (img)   { img.style.display = 'block'; img.style.opacity = '1'; }
+    if (yt)    yt.style.display = 'none';
+    if (lv)    lv.style.display = 'block';
 }
 
 // ─── メイン起動 ──────────────────────────────────
