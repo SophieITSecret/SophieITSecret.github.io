@@ -292,7 +292,8 @@ function showBattle(myWins, sophieWins) {
 // ─── ラウンド決着 ────────────────────────────────
 function resolveRound(myHand, myWins, sophieWins) {
     const hands = ['G', 'C', 'P'];
-    const sHand = hands[Math.floor(Math.random() * 3)];
+    const sHand = 'G'; // ★テスト用・ソフィー常にグー
+   // const sHand = hands[Math.floor(Math.random() * 3)];
     const imgs  = { G: 'Janken_G.png', C: 'Janken_C.png', P: 'Janken_P.png' };
     const emoji = { G: '✊', C: '✌️', P: '🖐️' };
 
@@ -482,6 +483,7 @@ function showSophie3Win(scoreFile) {
                     playAudio('booboo_voice.mp3', () => {
                         playAudio('closing_voice.mp3', () => setCloseBtn());
                     });
+                    setWaitBtn();
                 };
             }
         );
