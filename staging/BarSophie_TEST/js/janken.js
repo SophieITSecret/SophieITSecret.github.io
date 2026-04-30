@@ -292,8 +292,8 @@ function showBattle(myWins, sophieWins) {
 // ─── ラウンド決着 ────────────────────────────────
 function resolveRound(myHand, myWins, sophieWins) {
     const hands = ['G', 'C', 'P'];
-    //const sHand = 'G'; // ★テスト用・ソフィー常にグー
-    const sHand = hands[Math.floor(Math.random() * 3)];
+    const sHand = 'G'; // ★テスト用・ソフィー常にグー
+   // const sHand = hands[Math.floor(Math.random() * 3)];
     const imgs  = { G: 'Janken_G.png', C: 'Janken_C.png', P: 'Janken_P.png' };
     const emoji = { G: '✊', C: '✌️', P: '🖐️' };
 
