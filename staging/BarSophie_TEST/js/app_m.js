@@ -289,7 +289,7 @@ function renderConsole(mode) {
     const pCtrl   = `flex:1; background:#1a2b1a; color:#5c9e5c; border:none; border-radius:0; ${noApp}`;
     const pBtn    = `flex:1.0; font-size:1.2rem; background:#1a3a1a; color:#7fd97f; border:none; border-radius:0; ${noApp}`;
     const backBtn = `background:#34495e; color:#fff; flex:1; font-size:0.95rem; font-weight:bold; border:none;`;
-    const sBtn = `background:#0090b8; color:#ff69b4; font-size:1.4rem; font-weight:bold; flex:1.0; border:2px solid #ff69b4;`;
+    const sBtn = `background:#0096BF; color:#ff69b4; font-size:1.4rem; font-weight:bold; flex:1.0; border:2px solid #ff51a8;`;
     const navBtn  = `flex:1; background:#1a2a3a; color:#5ba3d9; font-size:1.1rem; border:none; border-radius:0; touch-action:manipulation; ${noApp}`;
 
     if (mode === 'screening') {
