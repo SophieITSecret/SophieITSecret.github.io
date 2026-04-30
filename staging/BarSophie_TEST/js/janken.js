@@ -262,18 +262,27 @@ function showBattle(myWins, sophieWins) {
         }
     );
 
-    // ★「じゃんけん」言い終わる前に光らせる
+   // ★「じゃんけん」終わり近くで光らせる
     const lightTimer = setTimeout(() => {
         if (cancelled) return;
         enableHands(true);
-    }, 1200);
+        // ★早押し用にonclickも設定
+        document.querySelectorAll('.j-hand').forEach(btn => {
+            btn.onclick = (e) => {
+                if (chosen || cancelled) return;
+                chosen = true;
+                enableHands(false);
+                resolveRound(e.currentTarget.dataset.hand, myWins, sophieWins);
+            };
+        });
+    }, 2000);
 
     playAudio('janken_voice.mp3', () => {
         if (cancelled) return;
         clearTimeout(lightTimer);
-        if (!cancelled) enableHands(true); // まだ光っていない場合の保険
+        if (!chosen) enableHands(true);
         setTimeout(() => {
-            if (cancelled) return;
+            if (cancelled || chosen) return;
             setMsg('ぽん！');
             playAudio('pon_voice.mp3');
 
