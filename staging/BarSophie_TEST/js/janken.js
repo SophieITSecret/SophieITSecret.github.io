@@ -511,14 +511,16 @@ function showMy3Win(scoreFile) {
 playAudio(scoreFile, () => {
     setMonitor('Janken_Lose3.png');
     startHearts();
-    playAudio('kiss_se.mp3', () => {
-        setTimeout(() => {
-            playAudio('closing_voice.mp3', () => {
-                stopHearts();
-                setCloseBtn();
-            });
-        }, 500);
-    });
+     setTimeout(() => {                        // ★0.7秒ためてから
+        playAudio('kiss_se.mp3', () => {
+            setTimeout(() => {
+                playAudio('closing_voice.mp3', () => {
+                    stopHearts();
+                    setCloseBtn();
+                });
+            }, 500);
+        });
+    }, 700);
 });
 }
 
