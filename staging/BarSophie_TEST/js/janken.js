@@ -12,6 +12,7 @@ const STORAGE_KEY = 'bar_sophie_techo';
 function getData() {
     const raw = localStorage.getItem(STORAGE_KEY);
     const data = raw ? JSON.parse(raw) : {};
+    if (!data.favorites)    data.favorites = [];  // ★追加
     if (!data.janken)       data.janken = { myWins: 0, sophieWins: 0 };
     if (!data.gameLog)      data.gameLog = [];
     if (!data.lastGameDate) data.lastGameDate = '';

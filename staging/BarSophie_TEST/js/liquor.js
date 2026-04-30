@@ -401,9 +401,8 @@ export function showCard(gIdx, list, fromState) {
     _currentList  = list;
     _currentState = fromState || "list";
     const d = nav.liquorData[gIdx];
-   // if (!d) return;
-    if (!d) { alert("d is null. gIdx=" + gIdx + " liquorData.length=" + nav.liquorData.length); return; }
-
+    if (!d) return;
+  
     const toPos = v => { const n = parseFloat(v); if (isNaN(n)) return -1; return Math.min(100, Math.max(0, (n + 2) / 4 * 100)); };
     const mkBar = (ll, rl, gpt, gem, cla, claudeOnly = false) => {
         let h = `<div class="graph-row-inline"><div class="graph-label-inline">${ll}</div><div class="graph-bar-bg"><div class="graph-zero"></div>`;
