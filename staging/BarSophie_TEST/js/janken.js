@@ -275,7 +275,7 @@ function showBattle(myWins, sophieWins) {
                 resolveRound(e.currentTarget.dataset.hand, myWins, sophieWins);
             };
         });
-    }, 2000);
+    }, 2500);
 
     playAudio('janken_voice.mp3', () => {
         if (cancelled) return;
