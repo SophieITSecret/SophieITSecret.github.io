@@ -490,13 +490,14 @@ function showSophie3Win(scoreFile) {
             `<button class="c-btn" id="j-champagne" style="${champStyle}">🍾 シャンパンを開ける</button>
              <button class="c-btn" id="j-refuse"    style="${refuseStyle}">遠慮します</button>`,
             () => {
-                document.getElementById('j-champagne').onclick = () => {
+               document.getElementById('j-champagne').onclick = () => {
                     setMonitor('Janken_Win3.png');
                     setWaitBtn();
                     playAudio('thanks_voice.mp3', () => {
+                        setMonitor('./front_sophie.jpeg');  // ★
                         playAudio('closing_voice.mp3', () => setCloseBtn());
-                    });
-                };
+            });
+        };
                 document.getElementById('j-refuse').onclick = () => {
                     setWaitBtn();
                     playAudio('booboo_voice.mp3', () => {
@@ -533,10 +534,11 @@ playAudio(scoreFile, () => {
      setTimeout(() => {                        // ★0.7秒ためてから
         playAudio('kiss_se.mp3', () => {
             setTimeout(() => {
-                playAudio('closing_voice.mp3', () => {
-                    stopHearts();
-                    setCloseBtn();
-                });
+                setMonitor('./front_sophie.jpeg');  // ★
+                    playAudio('closing_voice.mp3', () => {
+                        stopHearts();
+                        setCloseBtn();
+                    });
             }, 500);
         });
     }, 700);
