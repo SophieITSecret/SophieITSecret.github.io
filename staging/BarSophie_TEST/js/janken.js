@@ -255,32 +255,22 @@ function showBattle(myWins, sophieWins) {
 
     let chosen = false;
     let cancelled = false;
-    let currentAudio = null;  // ★現在再生中の音声を管理
-
-    // ★exit時に音声を止めるためのラッパー
-    const playAndTrack = (file, onended) => {
-        if (currentAudio) { try { currentAudio.pause(); } catch(e){} }
-        currentAudio = playAudio(file, onended);
-        return currentAudio;
-    };
 
     setConsole(
         `<button class="c-btn" id="j-quit" style="${quitStyle}">やめる</button>`,
         () => {
             document.getElementById('j-quit').onclick = () => {
                 cancelled = true;
-                if (currentAudio) { try { currentAudio.pause(); currentAudio = null; } catch(e){} }
                 exit();
             };
         }
     );
 
     const resolveWithPon = (myHand) => {
-        // ★早押し・通常押し共通：必ずポンを鳴らしてからresolve
         chosen = true;
         enableHands(false);
         setMsg('ぽん！');
-        playAndTrack('pon_voice.mp3', () => {
+        playAudio('pon_voice.mp3', () => {
             if (cancelled) return;
             resolveRound(myHand, myWins, sophieWins);
         });
@@ -293,26 +283,25 @@ function showBattle(myWins, sophieWins) {
         document.querySelectorAll('.j-hand').forEach(btn => {
             btn.onclick = (e) => {
                 if (chosen || cancelled) return;
-                clearTimeout(lightTimer);
                 resolveWithPon(e.currentTarget.dataset.hand);
             };
         });
     }, 2500);
 
-    playAndTrack('janken_voice.mp3', () => {
+    playAudio('janken_voice.mp3', () => {
         if (cancelled) return;
         clearTimeout(lightTimer);
         if (!chosen) enableHands(true);
         setTimeout(() => {
             if (cancelled || chosen) return;
             setMsg('ぽん！');
-            playAndTrack('pon_voice.mp3');
+            playAudio('pon_voice.mp3');
 
             const timeout = setTimeout(() => {
                 if (chosen || cancelled) return;
                 enableHands(false);
                 setMsg('どうしました？');
-                playAndTrack('why.mp3', () => {
+                playAudio('why.mp3', () => {
                     if (!cancelled) showBattle(myWins, sophieWins);
                 });
             }, 3000);
