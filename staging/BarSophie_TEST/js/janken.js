@@ -261,6 +261,8 @@ function showBattle(myWins, sophieWins) {
     );
 
     playAudio('janken_voice.mp3', () => {
+    if (cancelled) return;
+    setTimeout(() => {
         if (cancelled) return;
         let chosen = false;
         enableHands(true);
@@ -286,7 +288,8 @@ function showBattle(myWins, sophieWins) {
                 resolveRound(e.currentTarget.dataset.hand, myWins, sophieWins);
             };
         });
-    });
+    }, 300);  // ★300ms待ってからぽん
+});
 }
 
 // ─── ラウンド決着 ────────────────────────────────
