@@ -55,12 +55,74 @@ export function updateGameScore(winner) {
 
 export async function openNotice() {
     nav.updateNav("notice");
-    let h = `<div class="label" style="background:#1a5276;">📢 お知らせ・使い方</div>
-             <div style="padding:20px; color:#ddd; font-size:0.95rem; line-height:1.7;">
-                🍸 BARソフィーへようこそ。<br><br>
-                ここでは1970〜80年代の名曲と、マスター厳選のお酒をお楽しみいただけます。<br><br>
-                📖 ソフィーのお客様ノート：<br>お酒や曲の横にある「♡」を押すと記録されます。
-             </div>`;
+
+    const menuHtml = `
+        <div style="margin:10px; border-radius:10px; border:2px solid transparent;
+                    background: linear-gradient(#111, #111) padding-box,
+                    linear-gradient(120deg, #ff69b4 50%, #00d2ff 100%) border-box;">
+            <div style="color:#f0b56e; padding:0 12px; font-size:0.8rem; font-weight:bold;
+                        border-bottom:1px solid #333; height:28px; line-height:28px;
+                        border-radius:8px 8px 0 0; display:flex; align-items:center; gap:6px;">
+                <img src="./sophie_face.png" style="width:20px; height:20px; border-radius:50%; object-fit:cover;">
+                お呼びですか？
+            </div>
+            <div style="padding:10px;">
+                <button class="act-btn" id="nt-news" style="background:#1a5276; margin-bottom:8px;">📢 お店からのお知らせ</button>
+                <button class="act-btn" id="nt-how" style="background:#1a5276; margin-bottom:8px;">📖 このお店の使い方</button>
+                <div style="border-top:1px solid #222; margin:8px 0;"></div>
+                <button class="act-btn" id="nt-janken" style="background:#8e1a2e; margin-bottom:8px;">🎲 じゃんけん勝負</button>
+                <button class="act-btn" style="background:#1a1a1a; color:#444; border:1px solid #222; margin-bottom:8px;" disabled>📅 この日はどんな日（近日公開）</button>
+            </div>
+        </div>`;
+
+    setListView(menuHtml, false);
+
+    document.getElementById('nt-news').onclick = () => showNews();
+    document.getElementById('nt-how').onclick  = () => showHowTo();
+    document.getElementById('nt-janken').onclick = () => {
+        import('./janken.js').then(j => j.startJanken());
+    };
+}
+
+function showNews() {
+    const h = `
+        <div class="label" style="background:#1a5276;">📢 お店からのお知らせ</div>
+        <div style="padding:20px; color:#ddd; font-size:0.95rem; line-height:1.8;">
+            現在準備中です。<br>
+            <span style="color:#888; font-size:0.85rem;">今後ソフィーからのお知らせをここに掲載します。</span>
+        </div>`;
+    setListView(h, false);
+}
+
+function showHowTo() {
+    const h = `
+        <div class="label" style="background:#1a5276;">📖 このお店の使い方</div>
+        <div style="padding:15px; color:#ddd; font-size:0.9rem; line-height:1.8;">
+            <div style="margin-bottom:12px;">
+                <span style="color:#f0b56e; font-weight:bold;">🎵 音楽リクエスト</span><br>
+                曲のジャンルやアーティストから選んでリクエストできます。Sボタンを押すとDJソフィーが解説しながら自動再生します。
+            </div>
+            <div style="margin-bottom:12px;">
+                <span style="color:#f0b56e; font-weight:bold;">🍸 お酒を探す</span><br>
+                800銘柄を収録。リスト・スクリーニング・ID直接入力の3通りで検索できます。
+            </div>
+            <div style="margin-bottom:12px;">
+                <span style="color:#f0b56e; font-weight:bold;">🥃 お酒の話</span><br>
+                360話のお酒にまつわる物語が読めます。
+            </div>
+            <div style="margin-bottom:12px;">
+                <span style="color:#f0b56e; font-weight:bold;">🎲 じゃんけん勝負</span><br>
+                1日1回、ソフィーと3本先取勝負ができます。Sボタンから挑戦してみてください。
+            </div>
+            <div style="margin-bottom:12px;">
+                <span style="color:#f0b56e; font-weight:bold;">⭐ ソフィーのおすすめ</span><br>
+                Amazonのお買い得コーナーへダイレクト。マスター厳選のグッズも紹介します。
+            </div>
+            <div>
+                <span style="color:#f0b56e; font-weight:bold;">📖 お客様ノート</span><br>
+                ♡を押したお酒や曲が記録されます。📖ボタンから確認できます。
+            </div>
+        </div>`;
     setListView(h, false);
 }
 
