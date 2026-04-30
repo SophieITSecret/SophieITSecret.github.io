@@ -348,7 +348,7 @@ function showNewsMarket() {
 
     document.getElementById('nm-ann').onclick  = () => showYoutube('coYw-eVU0Ks', 'テレ朝NEWS24');
     document.getElementById('nm-ntv').onclick  = () => showYoutube('t9kwjZBLI-A', '日テレNEWS');
-    document.getElementById('nm-nk').onclick   = () => showChart('INDEX:NI225', '日経平均');
+    document.getElementById('nm-nk').onclick = () => showChart('FOREXCOM:JP225', '日経平均');
     document.getElementById('nm-fx').onclick   = () => showChart('FX:USDJPY', 'ドル円');
     document.getElementById('nm-oil').onclick  = () => showChart('TVC:USOIL', '原油(WTI)');
 
@@ -363,11 +363,11 @@ function showNewsMarket() {
         const code = document.getElementById('nm-code').value.trim().toUpperCase();
         if (!code) return;
         let symbol;
-        if (/^\d+$/.test(code)) {
-            symbol = `TSE:${code}`;
-        } else {
-            symbol = `NASDAQ:${code}`;
-        }
+       if (/^\d+$/.test(code)) {
+    symbol = `TYO:${code}`;
+} else {
+    symbol = `NASDAQ:${code}`;
+}
         showChart(symbol, code);
     };
 
