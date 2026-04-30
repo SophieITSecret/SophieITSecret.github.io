@@ -249,7 +249,9 @@ function showBattle(myWins, sophieWins) {
         </div>
     `);
 
+    let chosen = false;
     let cancelled = false;
+
     setConsole(
         `<button class="c-btn" id="j-quit" style="${quitStyle}">やめる</button>`,
         () => {
@@ -260,36 +262,41 @@ function showBattle(myWins, sophieWins) {
         }
     );
 
-    playAudio('janken_voice.mp3', () => {
-    if (cancelled) return;
-    setTimeout(() => {
+    // ★「じゃんけん」言い終わる前に光らせる
+    const lightTimer = setTimeout(() => {
         if (cancelled) return;
-        let chosen = false;
         enableHands(true);
-        setMsg('ぽん！');
+    }, 1200);
 
-        const ponAudio = playAudio('pon_voice.mp3');
+    playAudio('janken_voice.mp3', () => {
+        if (cancelled) return;
+        clearTimeout(lightTimer);
+        if (!cancelled) enableHands(true); // まだ光っていない場合の保険
+        setTimeout(() => {
+            if (cancelled) return;
+            setMsg('ぽん！');
+            playAudio('pon_voice.mp3');
 
-        const timeout = setTimeout(() => {
-            if (chosen || cancelled) return;
-            enableHands(false);
-            setMsg('どうしました？');
-            playAudio('why.mp3', () => {
-                if (!cancelled) showBattle(myWins, sophieWins);
-            });
-        }, 3000);
-
-        document.querySelectorAll('.j-hand').forEach(btn => {
-            btn.onclick = (e) => {
+            const timeout = setTimeout(() => {
                 if (chosen || cancelled) return;
-                chosen = true;
-                clearTimeout(timeout);
                 enableHands(false);
-                resolveRound(e.currentTarget.dataset.hand, myWins, sophieWins);
-            };
-        });
-    }, 300);  // ★300ms待ってからぽん
-});
+                setMsg('どうしました？');
+                playAudio('why.mp3', () => {
+                    if (!cancelled) showBattle(myWins, sophieWins);
+                });
+            }, 3000);
+
+            document.querySelectorAll('.j-hand').forEach(btn => {
+                btn.onclick = (e) => {
+                    if (chosen || cancelled) return;
+                    chosen = true;
+                    clearTimeout(timeout);
+                    enableHands(false);
+                    resolveRound(e.currentTarget.dataset.hand, myWins, sophieWins);
+                };
+            });
+        }, 300);
+    });
 }
 
 // ─── ラウンド決着 ────────────────────────────────
