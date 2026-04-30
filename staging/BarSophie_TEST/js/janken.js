@@ -509,14 +509,15 @@ function showMy3Win(scoreFile) {
     setWaitBtn();
 
     playAudio(scoreFile, () => {
-        setMonitor('Janken_Lose3.png');
-        playAudio('kiss_se.mp3');
-        startHearts();
+    setMonitor('Janken_Lose3.png');
+    startHearts();
+    playAudio('kiss_se.mp3', () => {          // ★ちゅが終わってから
         playAudio('closing_voice.mp3', () => {
             stopHearts();
             setCloseBtn();
         });
     });
+});
 }
 
 // ─── ハート粒子演出 ──────────────────────────────
