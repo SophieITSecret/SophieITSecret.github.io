@@ -65,8 +65,12 @@ function recordResult(myWins, sophieWins) {
 }
 
 // ─── 音声 ────────────────────────────────────────
+let _currentAudio = null;
+
 function playAudio(file, onended) {
+    if (_currentAudio) { try { _currentAudio.pause(); _currentAudio.onended = null; } catch(e){} }
     const a = new Audio(V + file);
+    _currentAudio = a;
     if (onended) a.onended = onended;
     a.play().catch(() => { if (onended) onended(); });
     return a;
@@ -111,6 +115,7 @@ function forceShowMonitor() {
 
 function exit() {
     stopHearts();
+    if (_currentAudio) { try { _currentAudio.pause(); _currentAudio.onended = null; _currentAudio = null; } catch(e){} }
     const lside = document.querySelector('.l-side');
     if (lside) lside.style.display = '';
     setMonitor('./front_sophie.jpeg');
@@ -118,7 +123,6 @@ function exit() {
     if (lv) { lv.style.display = 'none'; lv.innerHTML = ''; }
     const grid = document.querySelector('.btn-grid');
     if (grid) grid.innerHTML = '';
-    // ★ app_m.js経由でルートメニューに戻る
     if (window._showRootMenu) {
         window._showRootMenu();
     } else if (window._renderConsole) {
