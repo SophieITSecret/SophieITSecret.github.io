@@ -115,10 +115,13 @@ function exit() {
     setMonitor('./front_sophie.jpeg');
     const lv = document.getElementById('list-view');
     if (lv) { lv.style.display = 'none'; lv.innerHTML = ''; }
-    // ★コンソールを一旦クリア
     const grid = document.querySelector('.btn-grid');
     if (grid) grid.innerHTML = '';
-    if (window._renderConsole) window._renderConsole('standard');
+    // ★ nav.stateをリセットしてからrenderConsole
+    import('./navigation.js').then(nav => {
+        nav.updateNav('none');
+        if (window._renderConsole) window._renderConsole('standard');
+    });
 }
 
 function setMsg(txt) {
