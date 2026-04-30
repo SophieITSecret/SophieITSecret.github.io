@@ -117,11 +117,12 @@ function exit() {
     if (lv) { lv.style.display = 'none'; lv.innerHTML = ''; }
     const grid = document.querySelector('.btn-grid');
     if (grid) grid.innerHTML = '';
-    // ★ nav.stateをリセットしてからrenderConsole
-    import('./navigation.js').then(nav => {
-        nav.updateNav('none');
-        if (window._renderConsole) window._renderConsole('standard');
-    });
+    // ★ app_m.js経由でルートメニューに戻る
+    if (window._showRootMenu) {
+        window._showRootMenu();
+    } else if (window._renderConsole) {
+        window._renderConsole('standard');
+    }
 }
 
 function setMsg(txt) {
