@@ -65,8 +65,9 @@ function recordResult(myWins, sophieWins) {
 }
 
 // ─── 音声 ────────────────────────────────────────
-function playAudio(file, onended) {
+function playAudio(file, onended, volume = 1.0) {
     const a = new Audio(V + file);
+    a.volume = volume;
     if (onended) a.onended = onended;
     a.play().catch(() => { if (onended) onended(); });
     return a;
@@ -511,13 +512,14 @@ function showMy3Win(scoreFile) {
     playAudio(scoreFile, () => {
     setMonitor('Janken_Lose3.png');
     startHearts();
-    playAudio('kiss_se.mp3', () => {          // ★ちゅが終わってから
+    playAudio('kiss_se.mp3', () => {
+    setTimeout(() => {
         playAudio('closing_voice.mp3', () => {
             stopHearts();
             setCloseBtn();
         });
-    });
-});
+    }, 500);
+}, 2.0);  // ★音量2倍
 }
 
 // ─── ハート粒子演出 ──────────────────────────────
