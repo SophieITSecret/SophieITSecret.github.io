@@ -508,20 +508,10 @@ function showMy3Win(scoreFile) {
     `);
     setWaitBtn();
 
-    playAudio(scoreFile, () => {
+playAudio(scoreFile, () => {
     setMonitor('Janken_Lose3.png');
     startHearts();
-    const kissAudio = new Audio(V + 'kiss_se.mp3');
-    kissAudio.volume = 2.0;
-    kissAudio.onended = () => {
-        setTimeout(() => {
-            playAudio('closing_voice.mp3', () => {
-                stopHearts();
-                setCloseBtn();
-            });
-        }, 500);
-    };
-    kissAudio.play().catch(() => {
+    playAudio('kiss_se.mp3', () => {
         setTimeout(() => {
             playAudio('closing_voice.mp3', () => {
                 stopHearts();
