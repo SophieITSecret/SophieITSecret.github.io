@@ -200,25 +200,73 @@ function setupNextButton() {
 
 // ★ 画面ごとのSボタン動作
 function handleSButton() {
-    // ★ 氷の音
     const ice = new Audio('./voices_mp3/ice.mp3');
     ice.play().catch(() => {});
 
     const state = nav.state;
 
-    if (state === "tit") {
-        // ★ S2（曲リスト）：リクエストモードを起動
-        music.startRequestMode();
-        return;
-    }
+    // 画面固有メニュー項目
+    const specificItems = {
+        "tit": [
+            { label: "🎵 DJソフィー（解説＋自動再生）", action: () => music.startRequestMode() },
+            { label: "🔁 連続再生", disabled: true },
+        ],
+        "lq_list": [
+            { label: "📖 カテゴリー解説", disabled: true },
+            { label: "⭐ ソフィーのイチ押し銘柄", disabled: true },
+        ],
+        "lq_scr": [
+            { label: "📖 スクリーニング使い方ガイド", disabled: true },
+        ],
+        "st": [
+            { label: "📋 記事の目次ナビゲーター", disabled: true },
+        ],
+    };
 
-    if (state === "shop") {
+    const specific = specificItems[state] || [];
+
+    const specificHtml = specific.length ? `
+        <div style="color:#888; font-size:0.75rem; margin:10px 0 6px;">この画面でできること</div>
+        ${specific.map((item, i) =>
+            item.disabled
+            ? `<button class="act-btn" style="background:#1a1a1a; color:#444; border:1px solid #222; margin-bottom:8px;" disabled>${item.label}（準備中）</button>`
+            : `<button class="act-btn s-menu-specific" data-idx="${i}" style="background:#1a5276; border-color:#1a5276; margin-bottom:8px;">${item.label}</button>`
+        ).join('')}` : '';
+
+    const menuHtml = `
+        <div style="margin:10px; border-radius:10px; border:2px solid transparent;
+                    background: linear-gradient(#111, #111) padding-box,
+                    linear-gradient(120deg, #ff69b4 60%, #00d2ff) border-box;">
+            <div style="color:#f0b56e; padding:0 12px; font-size:0.8rem; font-weight:bold;
+                        border-bottom:1px solid #333; height:28px; line-height:28px;
+                        border-radius:8px 8px 0 0;">✨ ソフィーにできること</div>
+            <div style="padding:10px;">
+                <div style="color:#888; font-size:0.75rem; margin-bottom:6px;">共通メニュー</div>
+                <button class="act-btn" id="sm-janken" style="background:#8e1a2e; margin-bottom:8px;">🎲 じゃんけん勝負</button>
+                <button class="act-btn" style="background:#1a1a1a; color:#444; border:1px solid #222; margin-bottom:8px;" disabled>📅 この日はどんな日（近日公開）</button>
+                ${specificHtml}
+                <button class="act-btn" id="sm-close" style="background:#34495e; margin-top:4px;">閉じる</button>
+            </div>
+        </div>`;
+
+    const lv = document.getElementById('list-view');
+    const nm = document.getElementById('nav-main');
+    if (lv) { lv.style.display = 'block'; lv.innerHTML = menuHtml; }
+    if (nm) nm.style.display = 'none';
+
+    document.getElementById('sm-janken').onclick = () => {
         import('./janken.js').then(j => j.startJanken());
-        return;
-    }
-
-    // その他の画面はじゃんけん
-    import('./janken.js').then(j => j.startJanken());
+    };
+    document.getElementById('sm-close').onclick = () => {
+        if (lv) { lv.style.display = 'none'; lv.innerHTML = ''; }
+        if (nm && nav.state === 'none') nm.style.display = 'block';
+    };
+    document.querySelectorAll('.s-menu-specific').forEach(btn => {
+        const idx = parseInt(btn.dataset.idx);
+        if (specific[idx] && !specific[idx].disabled) {
+            btn.onclick = () => specific[idx].action();
+        }
+    });
 }
 
 function renderConsole(mode) {
