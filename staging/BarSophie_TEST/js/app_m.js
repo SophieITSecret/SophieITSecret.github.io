@@ -85,9 +85,9 @@ function setup() {
         playVoice("./voices_mp3/menu_greeting.mp3", "いつもありがとうございます。今日はいかがされますか？");
     };
 
-    document.getElementById('btn-music').onclick = () => { if (music.openMusic) music.openMusic(); renderConsole('standard'); };
-    document.getElementById('btn-talk').onclick = () => { if (music.openTalk) music.openTalk(); renderConsole('standard'); };
-    document.getElementById('btn-liquor').onclick = liquor.openLiquorPortal;
+        document.getElementById('btn-music').onclick = () => { if (music.openMusic) music.openMusic(); renderConsole('standard'); };
+        document.getElementById('btn-liquor').onclick = liquor.openLiquorPortal;
+        document.getElementById('btn-talk').onclick = () => { if (music.openTalk) music.openTalk(); renderConsole('standard'); };
 
     document.getElementById('sophie-warp').onclick = () => {
         if (nav.state !== "none") {
@@ -201,9 +201,19 @@ function setupNextButton() {
 // ★ 画面ごとのSボタン動作
 function handleSButton() {
     const ice = new Audio('./voices_mp3/ice.mp3');
-    ice.play().catch(() => {});
+    ice.onended = () => showSophieMenu();
+    ice.play().catch(() => showSophieMenu());
+}
 
+function showSophieMenu() {
     const state = nav.state;
+
+    // 閉じる時に元の画面を復元するため現在のlist-viewを保存
+    const lv = document.getElementById('list-view');
+    const nm = document.getElementById('nav-main');
+    const prevHtml    = lv ? lv.innerHTML : '';
+    const prevDisplay = lv ? lv.style.display : 'none';
+    const prevNm      = nm ? nm.style.display : 'none';
 
     // 画面固有メニュー項目
     const specificItems = {
@@ -225,32 +235,31 @@ function handleSButton() {
 
     const specific = specificItems[state] || [];
 
-    const specificHtml = specific.length ? `
-        <div style="color:#888; font-size:0.75rem; margin:10px 0 6px;">この画面でできること</div>
-        ${specific.map((item, i) =>
-            item.disabled
-            ? `<button class="act-btn" style="background:#1a1a1a; color:#444; border:1px solid #222; margin-bottom:8px;" disabled>${item.label}（準備中）</button>`
-            : `<button class="act-btn s-menu-specific" data-idx="${i}" style="background:#1a5276; border-color:#1a5276; margin-bottom:8px;">${item.label}</button>`
-        ).join('')}` : '';
+    const specificHtml = specific.length ? specific.map((item, i) =>
+        item.disabled
+        ? `<button class="act-btn" style="background:#1a1a1a; color:#444; border:1px solid #222; margin-bottom:8px;" disabled>${item.label}（準備中）</button>`
+        : `<button class="act-btn s-menu-specific" data-idx="${i}" style="background:#1a5276; border-color:#1a5276; margin-bottom:8px;">${item.label}</button>`
+    ).join('') : '';
 
     const menuHtml = `
         <div style="margin:10px; border-radius:10px; border:2px solid transparent;
                     background: linear-gradient(#111, #111) padding-box,
-                    linear-gradient(120deg, #ff69b4 60%, #00d2ff) border-box;">
+                    linear-gradient(120deg, #ff69b4 50%, #00d2ff 100%) border-box;">
             <div style="color:#f0b56e; padding:0 12px; font-size:0.8rem; font-weight:bold;
                         border-bottom:1px solid #333; height:28px; line-height:28px;
-                        border-radius:8px 8px 0 0;">✨ ソフィーにできること</div>
+                        border-radius:8px 8px 0 0; display:flex; align-items:center; gap:6px;">
+                <img src="./sophie_face.png" style="width:20px; height:20px; border-radius:50%; object-fit:cover;">
+                お呼びですか？
+            </div>
             <div style="padding:10px;">
-                <div style="color:#888; font-size:0.75rem; margin-bottom:6px;">共通メニュー</div>
+                ${specificHtml}
+                ${specific.length ? '<div style="border-top:1px solid #222; margin:8px 0;"></div>' : ''}
                 <button class="act-btn" id="sm-janken" style="background:#8e1a2e; margin-bottom:8px;">🎲 じゃんけん勝負</button>
                 <button class="act-btn" style="background:#1a1a1a; color:#444; border:1px solid #222; margin-bottom:8px;" disabled>📅 この日はどんな日（近日公開）</button>
-                ${specificHtml}
                 <button class="act-btn" id="sm-close" style="background:#34495e; margin-top:4px;">閉じる</button>
             </div>
         </div>`;
 
-    const lv = document.getElementById('list-view');
-    const nm = document.getElementById('nav-main');
     if (lv) { lv.style.display = 'block'; lv.innerHTML = menuHtml; }
     if (nm) nm.style.display = 'none';
 
@@ -258,8 +267,8 @@ function handleSButton() {
         import('./janken.js').then(j => j.startJanken());
     };
     document.getElementById('sm-close').onclick = () => {
-        if (lv) { lv.style.display = 'none'; lv.innerHTML = ''; }
-        if (nm && nav.state === 'none') nm.style.display = 'block';
+        if (lv) { lv.style.display = prevDisplay; lv.innerHTML = prevHtml; }
+        if (nm) nm.style.display = prevNm;
     };
     document.querySelectorAll('.s-menu-specific').forEach(btn => {
         const idx = parseInt(btn.dataset.idx);
