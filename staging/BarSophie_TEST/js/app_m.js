@@ -359,16 +359,16 @@ function showNewsMarket() {
         window.open(`https://www.google.com/search?q=${query}`, '_blank');
     };
 
-    document.getElementById('nm-go').onclick = () => {
+  document.getElementById('nm-go').onclick = () => {
         const code = document.getElementById('nm-code').value.trim().toUpperCase();
         if (!code) return;
-        let symbol;
-       if (/^\d+$/.test(code)) {
-    symbol = `TYO:${code}`;
-} else {
-    symbol = `NASDAQ:${code}`;
-}
-        showChart(symbol, code);
+        if (/^\d+$/.test(code)) {
+            // 日本株はYahoo!ファイナンスへ
+            window.open(`https://finance.yahoo.co.jp/quote/${code}.T`, '_blank');
+        } else {
+            // 米国株はTradingViewで表示
+            showChart(`NASDAQ:${code}`, code);
+        }
     };
 
     document.getElementById('nm-back').onclick = () => showSophieMenu();
