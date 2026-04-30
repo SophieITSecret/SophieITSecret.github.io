@@ -304,7 +304,7 @@ function showBattle(myWins, sophieWins) {
                     resolveRound(e.currentTarget.dataset.hand, myWins, sophieWins);
                 };
             });
-        }, 300);
+        }, 150);
     });
 }
 
