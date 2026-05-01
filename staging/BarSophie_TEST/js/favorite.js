@@ -180,29 +180,7 @@ export async function openTecho(folder = null) {
                   </div>`;
         });
     }
-    } else if (folder === 'G') {
-        const log = data.gameLog || [];
-        h += `<div class="scr-title" style="margin-top:15px; color:#e67e22; padding-left:10px; font-size:0.78rem;">🎲 ソフィーとの記録</div>`;
-        if (log.length === 0) {
-            h += `<div style="padding:20px; color:#888; text-align:center;">まだ記録がありません</div>`;
-        } else {
-            h += `<table style="width:100%; border-collapse:collapse; font-size:0.85rem; margin-top:10px;">
-                <tr style="color:#f0b56e; border-bottom:1px solid #444;">
-                    <th style="padding:5px; text-align:left;">日付</th>
-                    <th style="padding:5px;">結果</th>
-                    <th style="padding:5px;">スコア</th>
-                    <th style="padding:5px;">通算</th>
-                </tr>
-                ${log.map(r => `
-                <tr style="border-bottom:1px solid #333; color:#ccc;">
-                    <td style="padding:5px;">${r.date}</td>
-                    <td style="padding:5px; text-align:center; color:${r.result==='○'?'#7fd97f':'#ff6b6b'}">${r.result}</td>
-                    <td style="padding:5px; text-align:center;">${r.score}</td>
-                    <td style="padding:5px; text-align:center;">${r.total}</td>
-                </tr>`).join('')}
-            </table>`;
-        }
-    }
+    
     setListView(h, false);
     document.querySelectorAll('.fav-item').forEach(el => {
         if (el.classList.contains('music-row')) {
