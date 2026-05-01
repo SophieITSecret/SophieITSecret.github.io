@@ -179,7 +179,7 @@ export async function openTecho(folder = null) {
                     <div class="fav-music-del" style="color:#ff69b4; font-size:1.4rem; padding-left:15px; cursor:pointer;">❤️</div>
                   </div>`;
         });
-    }
+    
      } else if (folder === 'G') {
         h += '<div style="padding:20px; color:#888;">テスト</div>';
     }
