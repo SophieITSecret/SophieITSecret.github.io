@@ -88,7 +88,14 @@ function setup() {
         document.getElementById('btn-music').onclick = () => { if (music.openMusic) music.openMusic(); renderConsole('standard'); };
         document.getElementById('btn-liquor').onclick = liquor.openLiquorPortal;
         document.getElementById('btn-talk').onclick = () => { if (music.openTalk) music.openTalk(); renderConsole('standard'); };
-
+// ★以下2行を追加
+document.getElementById('btn-news').onclick = () => showNewsMarket();
+document.getElementById('btn-notice').onclick = () => {
+    import('./favorite.js').then(f => {
+        f.openNotice();
+        renderConsole('standard');
+    }).catch(e => alert("準備中です"));
+};
     document.getElementById('sophie-warp').onclick = () => {
         if (nav.state !== "none") {
             showRootMenu();
@@ -150,21 +157,6 @@ function showRootMenu() {
 
     renderConsole('standard');
 
-    let noticeBtn = document.getElementById('btn-notice');
-    if (!noticeBtn && nm) {
-        noticeBtn = document.createElement('button');
-        noticeBtn.id = 'btn-notice';
-        noticeBtn.className = 'act-btn';
-        noticeBtn.style.cssText = 'background: linear-gradient(135deg, #1a5276, #2980b9); color:#fff; margin:20px auto 10px; width:calc(100% - 30px); display:block; border:1px solid #5DADE2; font-weight:bold; box-shadow:0 0 10px rgba(41,128,185,0.3);';
-        noticeBtn.innerHTML = '📢 ソフィーのお知らせ・使い方';
-        noticeBtn.onclick = () => {
-            import('./favorite.js').then(f => {
-                f.openNotice();
-                renderConsole('standard');
-            }).catch(e => alert("準備中です"));
-        };
-        nm.appendChild(noticeBtn);
-    }
 }
 
 function handleBack() {
