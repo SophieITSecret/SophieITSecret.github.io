@@ -277,18 +277,24 @@ function showNewsMarket() {
     nav.updateNav("lq_root");
 
     const showYoutube = (videoId, label) => {
-        const yt = document.getElementById('yt-wrapper');
-        const img = document.getElementById('monitor-img');
-        const lside = document.querySelector('.l-side');
-        if (lside) lside.style.display = 'flex';
-        if (img) img.style.display = 'none';
-        if (yt) {
-            yt.style.display = 'block';
-            yt.innerHTML = `<iframe width="100%" height="100%" 
-                src="https://www.youtube.com/embed/${videoId}?autoplay=1&playsinline=1" 
-                frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
-        }
-    };
+    // ★chart-frameをクリア
+    const chartFrame = document.getElementById('chart-frame');
+    if (chartFrame) chartFrame.remove();
+    const ytPlayerEl = document.getElementById('yt-player');
+    if (ytPlayerEl) ytPlayerEl.style.display = 'block';
+
+    const yt = document.getElementById('yt-wrapper');
+    const img = document.getElementById('monitor-img');
+    const lside = document.querySelector('.l-side');
+    if (lside) lside.style.display = 'flex';
+    if (img) img.style.display = 'none';
+    if (yt) {
+        yt.style.display = 'block';
+        yt.innerHTML = `<iframe width="100%" height="100%" 
+            src="https://www.youtube.com/embed/${videoId}?autoplay=1&playsinline=1" 
+            frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
+    }
+};
 
     const showChart = (symbol, label) => {
         const yt = document.getElementById('yt-wrapper');
