@@ -180,7 +180,22 @@ export async function openTecho(folder = null) {
                   </div>`;
         });
     }
-    
+    } else if (folder === 'G') {
+        const log = data.gameLog || [];
+        if (log.length === 0) {
+            h += '<div style="padding:20px; color:#888; text-align:center;">まだ記録がありません</div>';
+        } else {
+            log.forEach(r => {
+                const color = r.result === '○' ? '#7fd97f' : '#ff6b6b';
+                h += '<div style="padding:8px 15px; border-bottom:1px solid #333; display:flex; justify-content:space-between; color:#ccc; font-size:0.85rem;">';
+                h += '<span>' + r.date + '</span>';
+                h += '<span style="color:' + color + ';">' + r.result + '</span>';
+                h += '<span>' + r.score + '</span>';
+                h += '<span>' + r.total + '</span>';
+                h += '</div>';
+            });
+        }
+    }
     setListView(h, false);
     document.querySelectorAll('.fav-item').forEach(el => {
         if (el.classList.contains('music-row')) {
