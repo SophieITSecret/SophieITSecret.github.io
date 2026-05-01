@@ -271,7 +271,11 @@ function showSophieMenu() {
 }
 
 function showNewsMarket() {
+    function showNewsMarket() {
     const lv = document.getElementById('list-view');
+    const nm = document.getElementById('nav-main');
+    if (nm) nm.style.display = 'none';
+    nav.updateNav("shop"); // ★stateをnone以外にしてdisclaimer-barを隠す
 
     const showYoutube = (videoId, label) => {
         const yt = document.getElementById('yt-wrapper');
