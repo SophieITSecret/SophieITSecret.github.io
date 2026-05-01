@@ -301,16 +301,17 @@ function showNewsMarket() {
 };
 
     const showChart = (symbol, label) => {
-        const yt = document.getElementById('yt-wrapper');
-        const img = document.getElementById('monitor-img');
-        const lside = document.querySelector('.l-side');
-        if (lside) lside.style.display = 'flex';
-        if (img) img.style.display = 'none';
-        if (yt) {
-            yt.style.display = 'block';
-            yt.innerHTML = `<iframe 
-                src="https://s.tradingview.com/widgetembed/?symbol=${encodeURIComponent(symbol)}&interval=D&theme=dark&style=1&locale=ja" 
-                width="100%" height="100%" frameborder="0"></iframe>`;
+    const yt = document.getElementById('yt-wrapper');
+    const img = document.getElementById('monitor-img');
+    const lside = document.querySelector('.l-side');
+    if (lside) lside.style.display = 'flex';
+    if (img) img.style.display = 'none';
+    if (yt) {
+        yt.style.display = 'block';
+        // ★yt-playerごと中身を置き換える
+        yt.innerHTML = `<iframe id="chart-frame" 
+            src="https://s.tradingview.com/widgetembed/?symbol=${encodeURIComponent(symbol)}&interval=D&theme=dark&style=1&timezone=Etc%2FUTC&locale=ja" 
+            width="100%" height="100%" frameborder="0"></iframe>`;
         }
     };
 
