@@ -276,7 +276,7 @@ function showNewsMarket() {
     const lv = document.getElementById('list-view');
     const nm = document.getElementById('nav-main');
     if (nm) nm.style.display = 'none';
-    nav.updateNav("lq_root");
+    nav.updateNav("lq_main");
 
     const showYoutube = (videoId, label) => {
     // ★chart-frameをクリア
@@ -438,7 +438,7 @@ function renderConsole(mode) {
             <button class="c-btn" id="btn-next"   style="${pCtrl}">⏭</button>`;
         document.getElementById('btn-shop').onclick = () => { nav.updateNav("shop"); shop.openShop(); renderConsole('standard'); };
     }
-    else if (["tit", "st", "lq_list", "lq_res", "shop"].includes(nav.state)) {
+    else if (["tit", "st", "lq_list", "lq_res", "shop", "lq_main"].includes(nav.state)) {
         // 最深部＋SHOP：戻る（左端）・S・⏹️・▶・⏭
         grid.innerHTML = `
             <button class="c-btn" id="ctrl-back-txt" style="${backBtn}">戻る</button>
