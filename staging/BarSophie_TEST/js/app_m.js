@@ -152,10 +152,8 @@ function showRootMenu() {
     img.src = './front_sophie.jpeg';
     img.style.display = 'block';
     // ★chart-frameをクリア
-    const chartFrame = document.getElementById('chart-frame');
-    if (chartFrame) chartFrame.remove();
-    const ytPlayerEl = document.getElementById('yt-player');
-    if (ytPlayerEl) ytPlayerEl.style.display = 'block';
+    const cw = document.getElementById('chart-wrapper');
+    if (cw) { cw.style.display = 'none'; cw.innerHTML = ''; }
     if (tel) tel.style.display = 'none';
     if (mon) { mon.classList.remove('expanded'); }
     utils.showLSide();
@@ -301,19 +299,18 @@ function showNewsMarket() {
 };
 
     const showChart = (symbol, label) => {
+    const cw = document.getElementById('chart-wrapper');
     const yt = document.getElementById('yt-wrapper');
     const img = document.getElementById('monitor-img');
     const lside = document.querySelector('.l-side');
     if (lside) lside.style.display = 'flex';
     if (img) img.style.display = 'none';
-    if (yt) {
-        yt.style.display = 'block';
-        // ★yt-playerごと中身を置き換える
-        yt.innerHTML = `<iframe id="chart-frame" 
-            src="https://s.tradingview.com/widgetembed/?symbol=${encodeURIComponent(symbol)}&interval=D&theme=dark&style=1&timezone=Etc%2FUTC&locale=ja" 
-            width="100%" height="100%" frameborder="0"></iframe>`;
-        }
-    };
+    if (yt) yt.style.display = 'none';
+    if (cw) {
+        cw.style.display = 'block';
+        cw.innerHTML = `<iframe src="https://s.tradingview.com/widgetembed/?symbol=${encodeURIComponent(symbol)}&interval=D&theme=dark&style=1&timezone=Etc%2FUTC&locale=ja" width="100%" height="100%" frameborder="0"></iframe>`;
+    }
+};
 
     const nmHtml = `
         <div style="margin:10px; border-radius:10px; border:2px solid transparent;

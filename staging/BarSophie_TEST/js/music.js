@@ -288,11 +288,9 @@ export function handleBack() {
 }
 
 function setMon(m, s) {
-    // ★yt-wrapperの中身をyt-playerに戻す
-    const yt = document.getElementById('yt-wrapper');
-    if (yt && !document.getElementById('yt-player')) {
-        yt.innerHTML = '<div id="yt-player"></div>';
-    }
+    // ★chart-wrapperをクリア
+    const cw = document.getElementById('chart-wrapper');
+    if (cw) { cw.style.display = 'none'; cw.innerHTML = ''; }
     const monImg = document.getElementById('monitor-img'), ytWrapper = document.getElementById('yt-wrapper'), btnExpand = document.getElementById('btn-expand');
     if (nav.state === "none") {
         ytWrapper.style.display = 'none'; monImg.style.display = 'block'; monImg.src = './front_sophie.jpeg';
