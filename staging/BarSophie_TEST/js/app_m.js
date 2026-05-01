@@ -151,12 +151,16 @@ function showRootMenu() {
     yt.style.display  = 'none';
     img.src = './front_sophie.jpeg';
     img.style.display = 'block';
+    // ★chart-frameをクリア
+    const chartFrame = document.getElementById('chart-frame');
+    if (chartFrame) chartFrame.remove();
+    const ytPlayerEl = document.getElementById('yt-player');
+    if (ytPlayerEl) ytPlayerEl.style.display = 'block';
     if (tel) tel.style.display = 'none';
     if (mon) { mon.classList.remove('expanded'); }
     utils.showLSide();
 
     renderConsole('standard');
-
 }
 
 function handleBack() {
