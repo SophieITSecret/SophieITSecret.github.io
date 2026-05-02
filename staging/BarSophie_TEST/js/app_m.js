@@ -311,8 +311,10 @@ function showNewsMarket() {
         yt.innerHTML = `<iframe width="100%" height="100%" 
             src="https://www.youtube.com/embed/${videoId}?autoplay=1&playsinline=1" 
             frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
-    }
+}
 };
+
+}  // ★showNewsMarket()の閉じ括弧を追加
 
 function showAutoPlaySelect() {
     try {
