@@ -270,6 +270,7 @@ const prevNm      = nm ? nm.style.display : 'none';
         if (lv) { lv.style.display = prevDisplay; lv.innerHTML = prevHtml; }
         if (nm) nm.style.display = prevNm;
     };
+    alert('querySelectorAll count=' + document.querySelectorAll('.s-menu-specific').length); // ★追加
     document.querySelectorAll('.s-menu-specific').forEach(btn => {
         const idx = parseInt(btn.dataset.idx);
         if (specific[idx] && !specific[idx].disabled) {
