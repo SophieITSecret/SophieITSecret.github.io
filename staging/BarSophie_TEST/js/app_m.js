@@ -294,27 +294,97 @@ function showNewsMarket() {
     if (nm) nm.style.display = 'none';
     nav.updateNav("lq_main");
 
-    const showYoutube = (videoId, label) => {
-    // ★chart-frameをクリア
-    const chartFrame = document.getElementById('chart-frame');
-    if (chartFrame) chartFrame.remove();
-    const ytPlayerEl = document.getElementById('yt-player');
-    if (ytPlayerEl) ytPlayerEl.style.display = 'block';
+    const showYoutube = (videoId) => {
+        const cw = document.getElementById('chart-wrapper');
+        if (cw) { cw.style.display = 'none'; cw.innerHTML = ''; }
+        const yt = document.getElementById('yt-wrapper');
+        const img = document.getElementById('monitor-img');
+        const lside = document.querySelector('.l-side');
+        if (lside) lside.style.display = 'flex';
+        if (img) img.style.display = 'none';
+        if (yt) {
+            yt.style.display = 'block';
+            yt.innerHTML = `<iframe width="100%" height="100%" 
+                src="https://www.youtube.com/embed/${videoId}?autoplay=1&playsinline=1" 
+                frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
+        }
+    };
 
-    const yt = document.getElementById('yt-wrapper');
-    const img = document.getElementById('monitor-img');
-    const lside = document.querySelector('.l-side');
-    if (lside) lside.style.display = 'flex';
-    if (img) img.style.display = 'none';
-    if (yt) {
-        yt.style.display = 'block';
-        yt.innerHTML = `<iframe width="100%" height="100%" 
-            src="https://www.youtube.com/embed/${videoId}?autoplay=1&playsinline=1" 
-            frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
+    const showChart = (symbol) => {
+        const cw = document.getElementById('chart-wrapper');
+        const yt = document.getElementById('yt-wrapper');
+        const img = document.getElementById('monitor-img');
+        const lside = document.querySelector('.l-side');
+        if (lside) lside.style.display = 'flex';
+        if (img) img.style.display = 'none';
+        if (yt) yt.style.display = 'none';
+        if (cw) {
+            cw.style.display = 'block';
+            cw.innerHTML = `<iframe src="https://s.tradingview.com/widgetembed/?symbol=${encodeURIComponent(symbol)}&interval=D&theme=dark&style=1&timezone=Etc%2FUTC&locale=ja" width="100%" height="100%" frameborder="0"></iframe>`;
+        }
+    };
+
+    const nmHtml = `
+        <div style="margin:10px; border-radius:10px; border:2px solid transparent;
+                    background: linear-gradient(#111, #111) padding-box,
+                    linear-gradient(120deg, #ff69b4 50%, #00d2ff 100%) border-box;">
+            <div style="color:#f0b56e; padding:0 12px; font-size:0.8rem; font-weight:bold;
+                        border-bottom:1px solid #333; height:28px; line-height:28px;
+                        border-radius:8px 8px 0 0; display:flex; align-items:center; gap:6px;">
+                <img src="./sophie_face.png" style="width:20px; height:20px; border-radius:50%; object-fit:cover;">
+                ニュース・マーケット
+            </div>
+            <div style="padding:10px;">
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:8px;">
+                    <button class="act-btn nm-btn" id="nm-ann"  style="background:#1a3a4a; margin:0;">📺 テレ朝NEWS24</button>
+                    <button class="act-btn nm-btn" id="nm-ntv"  style="background:#1a3a4a; margin:0;">📺 日テレNEWS</button>
+                    <button class="act-btn nm-btn" id="nm-nk"   style="background:#1a3a1a; margin:0;">📈 日経平均</button>
+                    <button class="act-btn nm-btn" id="nm-fx"   style="background:#1a3a1a; margin:0;">📈 ドル円</button>
+                    <button class="act-btn nm-btn" id="nm-oil"  style="background:#1a3a1a; margin:0;">📈 原油(WTI)</button>
+                    <div></div>
+                </div>
+                <div style="display:flex; gap:6px; align-items:center; margin-bottom:8px;">
+                    <input type="text" id="nm-code" placeholder="コード or ティッカー" 
+                        style="flex:1; background:#000; border:1px solid #555; color:#fff; 
+                               height:36px; padding:0 8px; border-radius:4px; font-size:0.9rem;">
+                    <button id="nm-search" style="background:#34495e; color:#fff; border:none; 
+                        height:36px; padding:0 10px; border-radius:4px; font-size:1rem;">🔍</button>
+                    <button id="nm-go" style="background:#8e1a2e; color:#fff; border:none; 
+                        height:36px; padding:0 10px; border-radius:4px; font-size:1rem;">▶</button>
+                </div>
+                <div style="color:#666; font-size:0.7rem; margin-bottom:10px;">
+                    日本株：4桁コード（例：7203）　米国株：ティッカー（例：AAPL）
+                </div>
+                <button class="act-btn" id="nm-back" style="background:#34495e;">戻る</button>
+            </div>
+        </div>`;
+
+    if (lv) { lv.style.display = 'block'; lv.innerHTML = nmHtml; }
+
+    document.getElementById('nm-ann').onclick  = () => showYoutube('coYw-eVU0Ks');
+    document.getElementById('nm-ntv').onclick  = () => showYoutube('t9kwjZBLI-A');
+    document.getElementById('nm-nk').onclick   = () => showChart('FOREXCOM:JP225');
+    document.getElementById('nm-fx').onclick   = () => showChart('FX:USDJPY');
+    document.getElementById('nm-oil').onclick  = () => showChart('TVC:USOIL');
+
+    document.getElementById('nm-search').onclick = () => {
+        const code = document.getElementById('nm-code').value.trim();
+        if (!code) return;
+        window.open(`https://www.google.com/search?q=${encodeURIComponent(code + ' 株価 証券コード')}`, '_blank');
+    };
+
+    document.getElementById('nm-go').onclick = () => {
+        const code = document.getElementById('nm-code').value.trim().toUpperCase();
+        if (!code) return;
+        if (/^\d+$/.test(code)) {
+            window.open(`https://finance.yahoo.co.jp/quote/${code}.T`, '_blank');
+        } else {
+            showChart(`NASDAQ:${code}`);
+        }
+    };
+
+    document.getElementById('nm-back').onclick = () => showRootMenu();
 }
-};
-
-}  // ★showNewsMarket()の閉じ括弧を追加
 
 function showAutoPlaySelect() {
     try {
