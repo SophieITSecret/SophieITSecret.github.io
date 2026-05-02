@@ -12,7 +12,7 @@ let currentFolder = null;
 
 export function getCurrentFolder() { return currentFolder; }
 
-function getTechoData() {
+export function getTechoData() {
     const data = localStorage.getItem(STORAGE_KEY);
     if (!data) return { favorites: [], gameLog: [], lastGameDate: '', gameCount: 0, janken: { myWins: 0, sophieWins: 0 } };
     const parsed = JSON.parse(data);
