@@ -204,9 +204,11 @@ function showSophieMenu() {
 
     const lv = document.getElementById('list-view');
     const nm = document.getElementById('nav-main');
-    const prevHtml    = lv ? lv.innerHTML : '';
-    const prevDisplay = lv ? lv.style.display : 'none';
-    const prevNm      = nm ? nm.style.display : 'none';
+    // ★ニュース・マーケット画面の場合は保存しない
+const isNewsScreen = lv && lv.querySelector('#nm-ann');
+const prevHtml    = (lv && !isNewsScreen) ? lv.innerHTML : '';
+const prevDisplay = (lv && !isNewsScreen) ? lv.style.display : 'none';
+const prevNm      = nm ? nm.style.display : 'none';
 
     const specificItems = {
         "tit": [
