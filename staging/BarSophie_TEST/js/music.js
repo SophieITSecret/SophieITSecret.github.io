@@ -61,29 +61,11 @@ function renderAutoPlayList() {
     });
 }
 
-// ★連続再生モード
-let _autoPlayMode = false;
-let _autoPlayList = [];
-
-export function isAutoPlayMode() { return _autoPlayMode; }
-
 export function startAutoPlay(list, startIdx) {
     _autoPlayMode = true;
     _autoPlayList = list;
     isMusicMode = true;
     playAutoPlaySong(startIdx);
-}
-
-export function stopAutoPlay() {
-    _autoPlayMode = false;
-    _autoPlayList = [];
-}
-
-export function nextAutoPlay() {
-    if (!_autoPlayMode || _autoPlayList.length === 0) return;
-    const curIdx = _autoPlayList.findIndex(m => m === nav.curP[nav.curI]);
-    const nextIdx = (curIdx + 1) % _autoPlayList.length;
-    playAutoPlaySong(nextIdx);
 }
 
 function playAutoPlaySong(idx) {
