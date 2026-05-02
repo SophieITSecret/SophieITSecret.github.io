@@ -303,6 +303,7 @@ function showNewsMarket() {
 };
 
 function showAutoPlaySelect() {
+    alert('showAutoPlaySelect called'); // ★一時デバッグ
     const lv = document.getElementById('list-view');
 
     // ★お気に入りリストを取得
