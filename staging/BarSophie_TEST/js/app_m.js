@@ -272,6 +272,7 @@ const prevNm      = nm ? nm.style.display : 'none';
     };
     alert('querySelectorAll count=' + document.querySelectorAll('.s-menu-specific').length); // ★追加
     document.querySelectorAll('.s-menu-specific').forEach(btn => {
+        alert('btn idx=' + btn.dataset.idx + ' disabled=' + btn.disabled); // ★追加
         const idx = parseInt(btn.dataset.idx);
         if (specific[idx] && !specific[idx].disabled) {
             btn.onclick = () => specific[idx].action();
