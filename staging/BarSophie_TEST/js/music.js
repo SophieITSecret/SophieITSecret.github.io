@@ -319,6 +319,11 @@ export function togglePause() {
 }
 
 export function next() {
+        // ★連続再生中はnextAutoPlayを呼ぶ
+    if (_autoPlayMode) {
+        nextAutoPlay();
+        return;
+    }
     if (nav.curI < nav.curP.length - 1) {
         nav.updateNav(undefined, undefined, undefined, nav.curI + 1);
         const m = nav.curP[nav.curI];
