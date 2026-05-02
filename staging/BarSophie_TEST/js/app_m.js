@@ -311,44 +311,42 @@ function showNewsMarket() {
 };
 
 function showAutoPlaySelect() {
-    alert('showAutoPlaySelect called'); // ★一時デバッグ
     const lv = document.getElementById('list-view');
-
-    // ★お気に入りリストを取得
-    import('./favorite.js').then(fav => {
-        const favIds = fav.getTechoData ? fav.getTechoData().favorites : [];
-        const favSongs = nav.curP.filter(m => {
+    const favSongs = nav.curP.filter(m => {
+        try {
+            const raw = localStorage.getItem('bar_sophie_techo');
+            const data = raw ? JSON.parse(raw) : { favorites: [] };
+            const favIds = data.favorites || [];
             const songId = `S-${String(m.code).padStart(4,'0')}`;
             return favIds.includes(songId);
-        });
-
-        const menuHtml = `
-            <div style="margin:10px; border-radius:10px; border:2px solid transparent;
-                        background: linear-gradient(#111, #111) padding-box,
-                        linear-gradient(120deg, #ff69b4 50%, #00d2ff 100%) border-box;">
-                <div style="color:#f0b56e; padding:0 12px; font-size:0.8rem; font-weight:bold;
-                            border-bottom:1px solid #333; height:28px; line-height:28px;
-                            border-radius:8px 8px 0 0;">🔁 連続再生</div>
-                <div style="padding:10px;">
-                    ${favSongs.length === 0
-                        ? `<div style="color:#888; text-align:center; padding:15px; font-size:0.9rem;">お気に入りがありません</div>
-                           <button class="act-btn" id="ap-back" style="background:#34495e;">戻る</button>`
-                        : `<button class="act-btn" id="ap-fav" style="background:#8e1a2e; margin-bottom:8px;">❤️ お気に入りのみ（${favSongs.length}曲）</button>
-                           <button class="act-btn" id="ap-all" style="background:#1a5276; margin-bottom:8px;">🎵 全曲（${nav.curP.length}曲）</button>
-                           <button class="act-btn" id="ap-back" style="background:#34495e;">戻る</button>`
-                    }
-                </div>
-            </div>`;
-
-        if (lv) { lv.style.display = 'block'; lv.innerHTML = menuHtml; }
-
-        document.getElementById('ap-back').onclick = () => showSophieMenu();
-
-        if (favSongs.length > 0) {
-            document.getElementById('ap-fav').onclick = () => showAutoPlaySongSelect(favSongs);
-            document.getElementById('ap-all').onclick  = () => showAutoPlaySongSelect(nav.curP);
-        }
+        } catch(e) { return false; }
     });
+
+    const menuHtml = `
+        <div style="margin:10px; border-radius:10px; border:2px solid transparent;
+                    background: linear-gradient(#111, #111) padding-box,
+                    linear-gradient(120deg, #ff69b4 50%, #00d2ff 100%) border-box;">
+            <div style="color:#f0b56e; padding:0 12px; font-size:0.8rem; font-weight:bold;
+                        border-bottom:1px solid #333; height:28px; line-height:28px;
+                        border-radius:8px 8px 0 0;">🔁 連続再生</div>
+            <div style="padding:10px;">
+                ${favSongs.length === 0
+                    ? `<div style="color:#888; text-align:center; padding:15px; font-size:0.9rem;">お気に入りがありません</div>
+                       <button class="act-btn" id="ap-back" style="background:#34495e;">戻る</button>`
+                    : `<button class="act-btn" id="ap-fav" style="background:#8e1a2e; margin-bottom:8px;">❤️ お気に入りのみ（${favSongs.length}曲）</button>
+                       <button class="act-btn" id="ap-all" style="background:#1a5276; margin-bottom:8px;">🎵 全曲（${nav.curP.length}曲）</button>
+                       <button class="act-btn" id="ap-back" style="background:#34495e;">戻る</button>`
+                }
+            </div>
+        </div>`;
+
+    if (lv) { lv.style.display = 'block'; lv.innerHTML = menuHtml; }
+
+    document.getElementById('ap-back').onclick = () => showSophieMenu();
+    if (favSongs.length > 0) {
+        document.getElementById('ap-fav').onclick = () => showAutoPlaySongSelect(favSongs);
+        document.getElementById('ap-all').onclick  = () => showAutoPlaySongSelect([...nav.curP]);
+    }
 }
 
 function showAutoPlaySongSelect(list) {
