@@ -276,7 +276,7 @@ const prevNm      = nm ? nm.style.display : 'none';
         const idx = parseInt(btn.dataset.idx);
         if (specific[idx] && !specific[idx].disabled) {
     btn.onclick = () => {
-        alert('action called idx=' + idx);
+        alert('action called idx=' + idx + ' fn=' + specific[idx].action.toString().substring(0, 50));
         specific[idx].action();
     };
 }
