@@ -9,6 +9,117 @@ export let isAutoPlay = false;
 
 // ★リクエストモードフラグ
 let _requestMode = false;
+// ★連続再生モード
+let _autoPlayMode = false;
+let _autoPlayList = [];
+
+export function isAutoPlayMode() { return _autoPlayMode; }
+
+export function stopAutoPlay() {
+    _autoPlayMode = false;
+    _autoPlayList = [];
+}
+
+export function nextAutoPlay() {
+    if (!_autoPlayMode || _autoPlayList.length === 0) return;
+    const curIdx = _autoPlayList.findIndex(m => m === nav.curP[nav.curI]);
+    const nextIdx = (curIdx + 1) % _autoPlayList.length;
+    playAutoPlaySong(nextIdx);
+}
+
+function playAutoPlaySong(idx) {
+    const m = _autoPlayList[idx];
+    if (!m) return;
+    const globalIdx = nav.curP.indexOf(m);
+    if (globalIdx >= 0) nav.updateNav(undefined, undefined, undefined, globalIdx);
+    renderAutoPlayList();
+    setMon('v', m.u);
+    prep(`${m.a}さんの${m.ti}です`, true);
+}
+
+function renderAutoPlayList() {
+    const title = nav.curP[0]?.a || '連続再生';
+    let h = `<div class="label" style="background:#1a3a1a; color:#7fd97f;">🔁 連続再生中　─　${title}</div>`;
+    _autoPlayList.forEach((m, i) => {
+        const globalIdx = nav.curP.indexOf(m);
+        const isPlaying = globalIdx === nav.curI;
+        const color = isPlaying ? 'color:#7fd97f; font-weight:bold;' : 'color:#eee;';
+        const icon = isPlaying ? '▶ ' : '🎵 ';
+        h += `<div class="item auto-item" data-gidx="${globalIdx}" style="font-size:1.05rem; padding:0.2em 15px; ${color}">${icon}${m.ti}</div>`;
+    });
+    setListView(h, false);
+    if (_renderConsole) _renderConsole('standard');
+    document.querySelectorAll('.auto-item').forEach(el => {
+        el.onclick = () => {
+            const gIdx = parseInt(el.dataset.gidx);
+            if (!isNaN(gIdx)) {
+                const m = nav.curP[gIdx];
+                const listIdx = _autoPlayList.indexOf(m);
+                if (listIdx >= 0) playAutoPlaySong(listIdx);
+            }
+        };
+    });
+}
+
+// ★連続再生モード
+let _autoPlayMode = false;
+let _autoPlayList = [];
+
+export function isAutoPlayMode() { return _autoPlayMode; }
+
+export function startAutoPlay(list, startIdx) {
+    _autoPlayMode = true;
+    _autoPlayList = list;
+    isMusicMode = true;
+    playAutoPlaySong(startIdx);
+}
+
+export function stopAutoPlay() {
+    _autoPlayMode = false;
+    _autoPlayList = [];
+}
+
+export function nextAutoPlay() {
+    if (!_autoPlayMode || _autoPlayList.length === 0) return;
+    const curIdx = _autoPlayList.findIndex(m => m === nav.curP[nav.curI]);
+    const nextIdx = (curIdx + 1) % _autoPlayList.length;
+    playAutoPlaySong(nextIdx);
+}
+
+function playAutoPlaySong(idx) {
+    const m = _autoPlayList[idx];
+    if (!m) return;
+    const globalIdx = nav.curP.indexOf(m);
+    if (globalIdx >= 0) nav.updateNav(undefined, undefined, undefined, globalIdx);
+    // ★リストのハイライトを更新
+    renderAutoPlayList();
+    setMon('v', m.u);
+    prep(`${m.a}さんの${m.ti}です`, true);
+}
+
+function renderAutoPlayList() {
+    const title = nav.curP[0]?.a || '連続再生';
+    let h = `<div class="label" style="background:#1a3a1a; color:#7fd97f;">🔁 連続再生中　─　${title}</div>`;
+    _autoPlayList.forEach((m, i) => {
+        const globalIdx = nav.curP.indexOf(m);
+        const isPlaying = globalIdx === nav.curI;
+        const color = isPlaying ? 'color:#7fd97f; font-weight:bold;' : 'color:#eee;';
+        const icon = isPlaying ? '▶ ' : '🎵 ';
+        h += `<div class="item auto-item" data-gidx="${globalIdx}" style="font-size:1.05rem; padding:0.2em 15px; ${color}">${icon}${m.ti}</div>`;
+    });
+    setListView(h, false);
+    if (_renderConsole) _renderConsole('standard');
+    document.querySelectorAll('.auto-item').forEach(el => {
+        el.onclick = () => {
+            const gIdx = parseInt(el.dataset.gidx);
+            if (!isNaN(gIdx)) {
+                const m = nav.curP[gIdx];
+                const listIdx = _autoPlayList.indexOf(m);
+                if (listIdx >= 0) playAutoPlaySong(listIdx);
+            }
+        };
+    });
+}
 
 let lastTxt = "";
 let pressTimer = null;
