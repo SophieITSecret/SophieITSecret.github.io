@@ -247,7 +247,6 @@ function showSophieMenu() {
                 ${specificHtml}
                 ${specific.length ? '<div style="border-top:1px solid #222; margin:8px 0;"></div>' : ''}
                 <button class="act-btn" id="sm-janken" style="background:#8e1a2e; margin-bottom:8px;">🎲 じゃんけん勝負</button>
-                <button class="act-btn" id="sm-news" style="background:#1a3a4a; margin-bottom:8px;">📰 ニュース・マーケット</button>
                 <button class="act-btn" style="background:#1a1a1a; color:#444; border:1px solid #222; margin-bottom:8px;" disabled>📅 この日はどんな日（近日公開）</button>
                 <button class="act-btn" id="sm-close" style="background:#34495e; margin-top:4px;">閉じる</button>
             </div>
@@ -259,7 +258,6 @@ function showSophieMenu() {
     document.getElementById('sm-janken').onclick = () => {
         import('./janken.js').then(j => j.startJanken());
     };
-    document.getElementById('sm-news').onclick = () => showNewsMarket();
     document.getElementById('sm-close').onclick = () => {
         if (lv) { lv.style.display = prevDisplay; lv.innerHTML = prevHtml; }
         if (nm) nm.style.display = prevNm;
