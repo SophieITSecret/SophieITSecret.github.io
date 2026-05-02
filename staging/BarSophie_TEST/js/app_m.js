@@ -275,8 +275,11 @@ const prevNm      = nm ? nm.style.display : 'none';
         alert('btn idx=' + btn.dataset.idx + ' disabled=' + btn.disabled); // ★追加
         const idx = parseInt(btn.dataset.idx);
         if (specific[idx] && !specific[idx].disabled) {
-            btn.onclick = () => specific[idx].action();
-        }
+    btn.onclick = () => {
+        alert('action called idx=' + idx);
+        specific[idx].action();
+    };
+}
     });
 }
 
