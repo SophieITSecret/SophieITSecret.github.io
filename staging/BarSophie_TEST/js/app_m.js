@@ -276,10 +276,14 @@ const prevNm      = nm ? nm.style.display : 'none';
         const idx = parseInt(btn.dataset.idx);
         if (specific[idx] && !specific[idx].disabled) {
     btn.onclick = () => {
-            alert('before action');
+    alert('before action');
+    try {
         specific[idx].action();
         alert('after action');
-    };
+    } catch(e) {
+        alert('error: ' + e.message);
+    }
+};
 }
     });
 }
