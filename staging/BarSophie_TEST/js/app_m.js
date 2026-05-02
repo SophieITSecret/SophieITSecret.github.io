@@ -204,7 +204,6 @@ function handleSButton() {
 }
 
 function showSophieMenu() {
-    alert('state=' + nav.state); // ★一時デバッグ
     const state = nav.state;
 
     const lv = document.getElementById('list-view');
@@ -233,7 +232,6 @@ const prevNm      = nm ? nm.style.display : 'none';
     };
 
     const specific = specificItems[state] || [];
-    alert('specific.length=' + specific.length); // ★追加
 
     const specificHtml = specific.length ? specific.map((item, i) =>
         item.disabled
@@ -270,21 +268,11 @@ const prevNm      = nm ? nm.style.display : 'none';
         if (lv) { lv.style.display = prevDisplay; lv.innerHTML = prevHtml; }
         if (nm) nm.style.display = prevNm;
     };
-    alert('querySelectorAll count=' + document.querySelectorAll('.s-menu-specific').length); // ★追加
     document.querySelectorAll('.s-menu-specific').forEach(btn => {
-        alert('btn idx=' + btn.dataset.idx + ' disabled=' + btn.disabled); // ★追加
         const idx = parseInt(btn.dataset.idx);
         if (specific[idx] && !specific[idx].disabled) {
-    btn.onclick = () => {
-    alert('before action');
-    try {
-        specific[idx].action();
-        alert('after action');
-    } catch(e) {
-        alert('error: ' + e.message);
-    }
-};
-}
+            btn.onclick = () => specific[idx].action();
+        }
     });
 }
 
