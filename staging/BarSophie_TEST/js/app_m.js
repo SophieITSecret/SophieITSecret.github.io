@@ -236,7 +236,7 @@ const prevNm      = nm ? nm.style.display : 'none';
     const specificHtml = specific.length ? specific.map((item, i) =>
         item.disabled
         ? `<button class="act-btn" style="background:#1a1a1a; color:#444; border:1px solid #222; margin-bottom:8px;" disabled>${item.label}（準備中）</button>`
-        : `<button class="act-btn s-menu-specific" data-idx="${i}" style="background:#1a5276; border-color:#1a5276; margin-bottom:8px;">${item.label}</button>`
+        : `<button class="act-btn s-menu-specific" data-idx="${i}" style="background:#1a5276; border-color:#1a5276; margin-bottom:8px;" onclick="alert('idx=${i}')">${item.label}</button>`
     ).join('') : '';
 
     const menuHtml = `
