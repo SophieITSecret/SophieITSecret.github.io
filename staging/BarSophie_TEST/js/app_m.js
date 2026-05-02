@@ -233,6 +233,7 @@ const prevNm      = nm ? nm.style.display : 'none';
     };
 
     const specific = specificItems[state] || [];
+    alert('specific.length=' + specific.length); // ★追加
 
     const specificHtml = specific.length ? specific.map((item, i) =>
         item.disabled
