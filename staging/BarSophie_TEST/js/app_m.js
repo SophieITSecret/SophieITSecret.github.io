@@ -229,6 +229,9 @@ const prevNm      = nm ? nm.style.display : 'none';
         "st": [
             { label: "📋 記事の目次ナビゲーター", disabled: true },
         ],
+        "techo": [
+            { label: "🔁 連続再生（お気に入りの歌）", action: () => showTechoAutoPlay() },
+        ],
     };
 
     const specific = specificItems[state] || [];
@@ -417,6 +420,22 @@ function showAutoPlaySelect() {
     }
 }
 
+function showTechoAutoPlay() {
+    const raw = localStorage.getItem('bar_sophie_techo');
+    const data = raw ? JSON.parse(raw) : { favorites: [] };
+    const favIds = (data.favorites || []).filter(id => id.startsWith('S-'));
+    const favSongs = favIds.map(id => {
+        const num = parseInt(id.replace(/[^0-9]/g, ''), 10);
+        return nav.jData.find(d => parseInt(d.code, 10) === num);
+    }).filter(Boolean);
+
+    if (favSongs.length === 0) {
+        alert('お気に入りの歌がありません');
+        return;
+    }
+    showAutoPlaySongSelect(favSongs);
+}
+
 function showAutoPlaySongSelect(list) {
     const lv = document.getElementById('list-view');
     let h = `
@@ -505,7 +524,7 @@ function renderConsole(mode) {
             <button class="c-btn" id="btn-next"   style="${pCtrl}">⏭</button>`;
         document.getElementById('btn-shop').onclick = () => { nav.updateNav("shop"); shop.openShop(); renderConsole('standard'); };
     }
-    else if (["tit", "st", "lq_list", "lq_res", "shop", "lq_main"].includes(nav.state)) {
+    else if (["tit", "st", "lq_list", "lq_res", "shop", "lq_main", "techo"].includes(nav.state)) {
         // 最深部＋SHOP：戻る（左端）・S・⏹️・▶・⏭
         grid.innerHTML = `
             <button class="c-btn" id="ctrl-back-txt" style="${backBtn}">戻る</button>
