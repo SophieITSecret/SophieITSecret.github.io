@@ -348,7 +348,7 @@ function showNewsMarket() {
     if (lv) { lv.style.display = 'block'; lv.innerHTML = mainHtml; }
 
     document.getElementById('nm-ann').onclick = () => showYoutube('coYw-eVU0Ks');
-    document.getElementById('nm-weather').onclick = () => showYoutube('G1souS7inLE');
+    document.getElementById('nm-weather').onclick = () => window.open('https://www.youtube.com/c/weathernews/live', '_blank');
     document.getElementById('nm-back').onclick = () => showRootMenu();
 
     document.getElementById('nm-camera').onclick = () => {
@@ -404,10 +404,10 @@ function showNewsMarket() {
                             border-radius:8px 8px 0 0;">📊 マーケット</div>
                 <div style="padding:10px;">
                     <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:8px;">
-                        <button class="act-btn" style="background:#1a3a1a; margin:0;" onclick="(${() => showChart('FOREXCOM:JP225')})()">📈 日経平均</button>
-                        <button class="act-btn" style="background:#1a3a1a; margin:0;" onclick="(${() => showChart('FX:USDJPY')})()">📈 ドル円</button>
-                        <button class="act-btn" style="background:#1a3a1a; margin:0;" onclick="(${() => showChart('TVC:USOIL')})()">📈 原油(WTI)</button>
-                        <button class="act-btn" style="background:#1a3a1a; margin:0;" onclick="(${() => showChart('SP:SPX')})()">📈 S&P500</button>
+                        <button class="act-btn" style="background:#1a3a1a; margin:0;" id="mkt-nk">📈 日経平均</button>
+                        <button class="act-btn" style="background:#1a3a1a; margin:0;" id="mkt-fx">📈 ドル円</button>
+                        <button class="act-btn" style="background:#1a3a1a; margin:0;" id="mkt-oil">📈 原油(WTI)</button>
+                        <button class="act-btn" style="background:#1a3a1a; margin:0;" id="mkt-spx">📈 S&P500</button>
                     </div>
                     <div style="display:flex; gap:6px; align-items:center; margin-bottom:4px;">
                         <input type="text" id="nm-code" placeholder="7203 AAPL NYSE:IBM" 
@@ -425,22 +425,32 @@ function showNewsMarket() {
                 </div>
             </div>`;
         if (lv) { lv.style.display = 'block'; lv.innerHTML = html; }
+
+        document.getElementById('mkt-nk').onclick  = () => { const cw=document.getElementById('chart-wrapper'); if(cw) cw.innerHTML=''; showChart('FOREXCOM:JP225'); };
+        document.getElementById('mkt-fx').onclick  = () => { const cw=document.getElementById('chart-wrapper'); if(cw) cw.innerHTML=''; showChart('FX:USDJPY'); };
+        document.getElementById('mkt-oil').onclick = () => { const cw=document.getElementById('chart-wrapper'); if(cw) cw.innerHTML=''; showChart('TVC:USOIL'); };
+        document.getElementById('mkt-spx').onclick = () => { const cw=document.getElementById('chart-wrapper'); if(cw) cw.innerHTML=''; showChart('SP:SPX'); };
+
         document.getElementById('nm-search').onclick = () => {
             const code = document.getElementById('nm-code').value.trim();
             if (!code) return;
             window.open(`https://www.google.com/search?q=${encodeURIComponent(code + ' 株価 証券コード')}`, '_blank');
         };
-        document.getElementById('nm-go').onclick = () => {
-            const code = document.getElementById('nm-code').value.trim().toUpperCase();
-            if (!code) return;
-            if (/^\d+$/.test(code)) {
-                window.open(`https://finance.yahoo.co.jp/quote/${code}.T`, '_blank');
-            } else if (code.startsWith('NYSE:') || code.startsWith('NASDAQ:') || code.startsWith('TSE:')) {
-                showChart(code);
-            } else {
-                showChart(`NASDAQ:${code}`);
-            }
-        };
+       document.getElementById('nm-go').onclick = () => {
+    let code = document.getElementById('nm-code').value.trim().toUpperCase();
+    if (!code) return;
+    // N:IBM → NYSE:IBM に自動変換
+    if (code.startsWith('N:')) {
+        code = 'NYSE:' + code.slice(2);
+    }
+    if (/^\d+$/.test(code)) {
+        window.open(`https://finance.yahoo.co.jp/quote/${code}.T`, '_blank');
+    } else if (code.startsWith('NYSE:') || code.startsWith('NASDAQ:') || code.startsWith('TSE:')) {
+        showChart(code);
+    } else {
+        showChart(`NASDAQ:${code}`);
+    }
+};
         document.getElementById('mkt-back').onclick = () => showNewsMarket();
     };
 
@@ -479,13 +489,14 @@ function showNewsMarket() {
                 <div style="padding:10px;">
                     <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:8px;">
                         <button class="act-btn" style="background:#1a2a3a; margin:0; font-size:0.85rem;" onclick="window.open('https://www.flightradar24.com','_blank')">✈️ フライトレーダー</button>
-                        <button class="act-btn" style="background:#1a2a3a; margin:0; font-size:0.85rem;" onclick="window.open('https://www.timeout.com/tokyo/things-to-do','_blank')">🏛 イベント情報</button>
+                        <button class="act-btn" style="background:#1a2a3a; margin:0; font-size:0.85rem;" onclick="window.open('https://www.pia.jp/topics/','_blank')">🏛 イベント情報</button>
                         <button class="act-btn" style="background:#1a2a3a; margin:0; font-size:0.85rem;" onclick="window.open('https://tabelog.com','_blank')">🍽 食べログ</button>
                         <button class="act-btn" style="background:#1a2a3a; margin:0; font-size:0.85rem;" onclick="window.open('https://www.jma.go.jp/bosai/','_blank')">📡 気象庁防災情報</button>
                     </div>
                     <div style="color:#888; font-size:0.75rem; margin-bottom:6px;">🔍 Wikipedia検索</div>
                     <div style="display:flex; gap:6px; align-items:center; margin-bottom:10px;">
-                        <input type="text" id="wiki-input" placeholder="調べたいことを入力" 
+                        <input type="text" id="wiki-input" placeholder="調べたいことを入力"
+                            onfocus="this.select()"
                             style="flex:1; background:#000; border:1px solid #555; color:#fff; 
                                    height:44px; padding:0 8px; border-radius:4px; font-size:0.9rem;">
                         <button id="wiki-go" style="background:#1a3a4a; color:#fff; border:none; 
