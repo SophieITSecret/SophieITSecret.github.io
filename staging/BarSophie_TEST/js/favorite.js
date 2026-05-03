@@ -222,7 +222,6 @@ if (plEditBtn) plEditBtn.onclick = () => openPlaylistMenu();
 
 function openPlaylistView() {
     const data = getTechoData();
-    alert('playlists=' + JSON.stringify(data.playlists));
     const playlists = data.playlists.length > 0 ? data.playlists :
         Array.from({length: 5}, (_, i) => ({ name: `リスト${i+1}`, songs: [] }));
     while (playlists.length < 5) {
@@ -243,9 +242,12 @@ function openPlaylistView() {
     h += `<div class="item" id="plv-back" style="color:#888; padding:0.4em 15px;">◀ 戻る</div>`;
     setListView(h, false);
 
-    document.querySelectorAll('.plv-item').forEach(el => {
-        el.onclick = () => openPlaylistPlayView(parseInt(el.dataset.idx));
-    });
+document.querySelectorAll('.plv-item').forEach(el => {
+    el.onclick = () => {
+        alert('clicked idx=' + el.dataset.idx);
+        openPlaylistPlayView(parseInt(el.dataset.idx));
+    };
+});
     document.getElementById('plv-back').onclick = () => openTecho('S');
 }
 
