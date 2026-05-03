@@ -315,66 +315,177 @@ function showNewsMarket() {
         }
     };
 
-    const nmHtml = `
+    const openLink = (url) => window.open(url, '_blank');
+
+    const mainHtml = `
         <div style="margin:10px; border-radius:10px; border:2px solid transparent;
                     background: linear-gradient(#111, #111) padding-box,
                     linear-gradient(120deg, #ff69b4 50%, #00d2ff 100%) border-box;">
             <div style="color:#f0b56e; padding:0 12px; font-size:0.8rem; font-weight:bold;
                         border-bottom:1px solid #333; height:28px; line-height:28px;
-                        border-radius:8px 8px 0 0; display:flex; align-items:center; gap:6px;">
-                <img src="./sophie_face.png" style="width:20px; height:20px; border-radius:50%; object-fit:cover;">
-                ニュース・マーケット
-            </div>
+                        border-radius:8px 8px 0 0;">📰 NEWS・マーケット</div>
             <div style="padding:10px;">
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:8px;">
-                    <button class="act-btn nm-btn" id="nm-ann"  style="background:#1a3a4a; margin:0;">📺 テレ朝NEWS24</button>
-                    <button class="act-btn nm-btn" id="nm-ntv"  style="background:#1a3a4a; margin:0;">📺 日テレNEWS</button>
-                    <button class="act-btn nm-btn" id="nm-nk"   style="background:#1a3a1a; margin:0;">📈 日経平均</button>
-                    <button class="act-btn nm-btn" id="nm-fx"   style="background:#1a3a1a; margin:0;">📈 ドル円</button>
-                    <button class="act-btn nm-btn" id="nm-oil"  style="background:#1a3a1a; margin:0;">📈 原油(WTI)</button>
-                    <div></div>
-                </div>
-                <div style="display:flex; gap:6px; align-items:center; margin-bottom:8px;">
-                    <input type="text" id="nm-code" placeholder="コード or ティッカー" 
-                        style="flex:1; background:#000; border:1px solid #555; color:#fff; 
-                               height:36px; padding:0 8px; border-radius:4px; font-size:0.9rem;">
-                    <button id="nm-search" style="background:#34495e; color:#fff; border:none; 
-                        height:36px; padding:0 10px; border-radius:4px; font-size:1rem;">🔍</button>
-                    <button id="nm-go" style="background:#8e1a2e; color:#fff; border:none; 
-                        height:36px; padding:0 10px; border-radius:4px; font-size:1rem;">▶</button>
-                </div>
-                <div style="color:#666; font-size:0.7rem; margin-bottom:10px;">
-                    日本株：4桁コード（例：7203）　米国株：ティッカー（例：AAPL）
+                    <button class="act-btn nm-btn" id="nm-ann"     style="background:#1a3a4a; margin:0;">📺 テレ朝NEWS24</button>
+                    <button class="act-btn nm-btn" id="nm-weather" style="background:#1a3a4a; margin:0;">🌤 ウェザーニュース</button>
+                    <button class="act-btn nm-btn" id="nm-camera"  style="background:#1a2a1a; margin:0;">📷 ライブカメラ</button>
+                    <button class="act-btn nm-btn" id="nm-market"  style="background:#1a1a3a; margin:0;">📊 マーケット</button>
+                    <button class="act-btn nm-btn" id="nm-newsmenu" style="background:#2a1a1a; margin:0;">📰 ニュース・情報</button>
+                    <button class="act-btn nm-btn" id="nm-useful"  style="background:#1a2a2a; margin:0;">🔗 便利情報</button>
                 </div>
                 <button class="act-btn" id="nm-back" style="background:#34495e;">戻る</button>
             </div>
         </div>`;
 
-    if (lv) { lv.style.display = 'block'; lv.innerHTML = nmHtml; }
+    if (lv) { lv.style.display = 'block'; lv.innerHTML = mainHtml; }
 
-    document.getElementById('nm-ann').onclick  = () => showYoutube('coYw-eVU0Ks');
-    document.getElementById('nm-ntv').onclick  = () => showYoutube('t9kwjZBLI-A');
-    document.getElementById('nm-nk').onclick   = () => showChart('FOREXCOM:JP225');
-    document.getElementById('nm-fx').onclick   = () => showChart('FX:USDJPY');
-    document.getElementById('nm-oil').onclick  = () => showChart('TVC:USOIL');
+    document.getElementById('nm-ann').onclick     = () => showYoutube('coYw-eVU0Ks');
+    document.getElementById('nm-weather').onclick = () => showYoutube('G1souS7inLE');
+    document.getElementById('nm-back').onclick    = () => showRootMenu();
 
-    document.getElementById('nm-search').onclick = () => {
-        const code = document.getElementById('nm-code').value.trim();
-        if (!code) return;
-        window.open(`https://www.google.com/search?q=${encodeURIComponent(code + ' 株価 証券コード')}`, '_blank');
+    document.getElementById('nm-camera').onclick = () => {
+        const html = `
+            <div style="margin:10px; border-radius:10px; border:2px solid transparent;
+                        background: linear-gradient(#111, #111) padding-box,
+                        linear-gradient(120deg, #ff69b4 50%, #00d2ff 100%) border-box;">
+                <div style="color:#f0b56e; padding:0 12px; font-size:0.8rem; font-weight:bold;
+                            border-bottom:1px solid #333; height:28px; line-height:28px;
+                            border-radius:8px 8px 0 0;">📷 ライブカメラ</div>
+                <div style="padding:10px;">
+                    <div style="color:#888; font-size:0.75rem; margin-bottom:6px;">🇯🇵 日本</div>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:8px;">
+                        <button class="act-btn" style="background:#1a3a1a; margin:0; font-size:0.85rem;" onclick="(${() => showYoutube('tujkoXI8rWM')})()">🗼 渋谷スクランブル</button>
+                        <button class="act-btn" style="background:#1a3a1a; margin:0; font-size:0.85rem;" onclick="window.open('https://www.youtube.com/@weathernews/live','_blank')">🌊 富士山・各地</button>
+                    </div>
+                    <div style="color:#888; font-size:0.75rem; margin-bottom:6px;">🌍 世界の都市</div>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:8px;">
+                        <button class="act-btn" style="background:#1a2a3a; margin:0; font-size:0.85rem;" onclick="(${() => showYoutube('rnXIjl_Rzy4')})()">🗽 NYC タイムズSq</button>
+                        <button class="act-btn" style="background:#1a2a3a; margin:0; font-size:0.85rem;" onclick="window.open('https://www.skylinewebcams.com/en/webcam/france/ile-de-france/paris/eiffel-tower.html','_blank')">🗼 パリ エッフェル</button>
+                        <button class="act-btn" style="background:#1a2a3a; margin:0; font-size:0.85rem;" onclick="window.open('https://www.skylinewebcams.com/en/webcam/united-kingdom/england/london/london.html','_blank')">🎡 ロンドン</button>
+                        <button class="act-btn" style="background:#1a2a3a; margin:0; font-size:0.85rem;" onclick="window.open('https://www.skylinewebcams.com/en/webcam/australia/new-south-wales/sydney/sydney.html','_blank')">🌉 シドニー</button>
+                        <button class="act-btn" style="background:#1a2a3a; margin:0; font-size:0.85rem;" onclick="window.open('https://www.skylinewebcams.com/en/webcam/italy/lazio/rome/rome.html','_blank')">🏛 ローマ</button>
+                        <button class="act-btn" style="background:#1a2a3a; margin:0; font-size:0.85rem;" onclick="window.open('https://www.earthcam.com/world/','_blank')">🌐 その他世界中</button>
+                    </div>
+                    <div style="color:#888; font-size:0.75rem; margin-bottom:6px;">🚀 特別</div>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:8px;">
+                        <button class="act-btn" style="background:#0a0a2a; margin:0; font-size:0.85rem;" onclick="window.open('https://www.youtube.com/watch?v=86YLFOog4GM','_blank')">🌏 NASA 地球ライブ</button>
+                        <button class="act-btn" style="background:#1a2a1a; margin:0; font-size:0.85rem;" onclick="window.open('https://www.youtube.com/watch?v=ZMByI4s-D-Y','_blank')">🦁 アフリカサファリ</button>
+                    </div>
+                    <button class="act-btn" id="cam-back" style="background:#34495e;">戻る</button>
+                </div>
+            </div>`;
+        if (lv) { lv.style.display = 'block'; lv.innerHTML = html; }
+        document.getElementById('cam-back').onclick = () => showNewsMarket();
     };
 
-    document.getElementById('nm-go').onclick = () => {
-        const code = document.getElementById('nm-code').value.trim().toUpperCase();
-        if (!code) return;
-        if (/^\d+$/.test(code)) {
-            window.open(`https://finance.yahoo.co.jp/quote/${code}.T`, '_blank');
-        } else {
-            showChart(`NASDAQ:${code}`);
-        }
+    document.getElementById('nm-market').onclick = () => {
+        const html = `
+            <div style="margin:10px; border-radius:10px; border:2px solid transparent;
+                        background: linear-gradient(#111, #111) padding-box,
+                        linear-gradient(120deg, #ff69b4 50%, #00d2ff 100%) border-box;">
+                <div style="color:#f0b56e; padding:0 12px; font-size:0.8rem; font-weight:bold;
+                            border-bottom:1px solid #333; height:28px; line-height:28px;
+                            border-radius:8px 8px 0 0;">📊 マーケット</div>
+                <div style="padding:10px;">
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:8px;">
+                        <button class="act-btn" style="background:#1a3a1a; margin:0;" onclick="(${() => showChart('FOREXCOM:JP225')})()">📈 日経平均</button>
+                        <button class="act-btn" style="background:#1a3a1a; margin:0;" onclick="(${() => showChart('FX:USDJPY')})()">📈 ドル円</button>
+                        <button class="act-btn" style="background:#1a3a1a; margin:0;" onclick="(${() => showChart('TVC:USOIL')})()">📈 原油(WTI)</button>
+                        <button class="act-btn" style="background:#1a3a1a; margin:0;" onclick="(${() => showChart('SP:SPX')})()">📈 S&P500</button>
+                    </div>
+                    <div style="display:flex; gap:6px; align-items:center; margin-bottom:4px;">
+                        <input type="text" id="nm-code" placeholder="コード or ティッカー" 
+                            style="flex:1; background:#000; border:1px solid #555; color:#fff; 
+                                   height:36px; padding:0 8px; border-radius:4px; font-size:0.9rem;">
+                        <button id="nm-search" style="background:#34495e; color:#fff; border:none; 
+                            height:36px; padding:0 10px; border-radius:4px; font-size:1rem;">🔍</button>
+                        <button id="nm-go" style="background:#8e1a2e; color:#fff; border:none; 
+                            height:36px; padding:0 10px; border-radius:4px; font-size:1rem;">▶</button>
+                    </div>
+                    <div style="color:#666; font-size:0.7rem; margin-bottom:10px;">
+                        日本株：4桁（例：7203）　米国株：ティッカー（例：AAPL）　NYSE：NYSE:銘柄
+                    </div>
+                    <button class="act-btn" id="mkt-back" style="background:#34495e;">戻る</button>
+                </div>
+            </div>`;
+        if (lv) { lv.style.display = 'block'; lv.innerHTML = html; }
+        document.getElementById('nm-search').onclick = () => {
+            const code = document.getElementById('nm-code').value.trim();
+            if (!code) return;
+            window.open(`https://www.google.com/search?q=${encodeURIComponent(code + ' 株価 証券コード')}`, '_blank');
+        };
+        document.getElementById('nm-go').onclick = () => {
+            const code = document.getElementById('nm-code').value.trim().toUpperCase();
+            if (!code) return;
+            if (/^\d+$/.test(code)) {
+                window.open(`https://finance.yahoo.co.jp/quote/${code}.T`, '_blank');
+            } else if (code.startsWith('NYSE:')) {
+                showChart(code);
+            } else {
+                showChart(`NASDAQ:${code}`);
+            }
+        };
+        document.getElementById('mkt-back').onclick = () => showNewsMarket();
     };
 
-    document.getElementById('nm-back').onclick = () => showRootMenu();
+    document.getElementById('nm-newsmenu').onclick = () => {
+        const html = `
+            <div style="margin:10px; border-radius:10px; border:2px solid transparent;
+                        background: linear-gradient(#111, #111) padding-box,
+                        linear-gradient(120deg, #ff69b4 50%, #00d2ff 100%) border-box;">
+                <div style="color:#f0b56e; padding:0 12px; font-size:0.8rem; font-weight:bold;
+                            border-bottom:1px solid #333; height:28px; line-height:28px;
+                            border-radius:8px 8px 0 0;">📰 ニュース・情報</div>
+                <div style="padding:10px;">
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:8px;">
+                        <button class="act-btn" style="background:#1a2a3a; margin:0; font-size:0.85rem;" onclick="window.open('https://jp.reuters.com','_blank')">📰 ロイター</button>
+                        <button class="act-btn" style="background:#1a2a3a; margin:0; font-size:0.85rem;" onclick="window.open('https://www3.nhk.or.jp/news/','_blank')">📰 NHK NEWS</button>
+                        <button class="act-btn" style="background:#1a2a3a; margin:0; font-size:0.85rem;" onclick="window.open('https://www.bbc.com/japanese','_blank')">📰 BBC日本語</button>
+                        <button class="act-btn" style="background:#1a2a3a; margin:0; font-size:0.85rem;" onclick="window.open('https://toyokeizai.net','_blank')">📰 東洋経済</button>
+                        <button class="act-btn" style="background:#1a2a3a; margin:0; font-size:0.85rem;" onclick="window.open('https://www.nikkei.com','_blank')">📰 日本経済新聞</button>
+                        <button class="act-btn" style="background:#1a2a3a; margin:0; font-size:0.85rem;" onclick="window.open('https://news.yahoo.co.jp','_blank')">📰 Yahooニュース</button>
+                    </div>
+                    <button class="act-btn" id="news-back" style="background:#34495e;">戻る</button>
+                </div>
+            </div>`;
+        if (lv) { lv.style.display = 'block'; lv.innerHTML = html; }
+        document.getElementById('news-back').onclick = () => showNewsMarket();
+    };
+
+    document.getElementById('nm-useful').onclick = () => {
+        const html = `
+            <div style="margin:10px; border-radius:10px; border:2px solid transparent;
+                        background: linear-gradient(#111, #111) padding-box,
+                        linear-gradient(120deg, #ff69b4 50%, #00d2ff 100%) border-box;">
+                <div style="color:#f0b56e; padding:0 12px; font-size:0.8rem; font-weight:bold;
+                            border-bottom:1px solid #333; height:28px; line-height:28px;
+                            border-radius:8px 8px 0 0;">🔗 便利情報</div>
+                <div style="padding:10px;">
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:8px;">
+                        <button class="act-btn" style="background:#1a2a3a; margin:0; font-size:0.85rem;" onclick="window.open('https://www.flightradar24.com','_blank')">✈️ フライトレーダー</button>
+                        <button class="act-btn" style="background:#1a2a3a; margin:0; font-size:0.85rem;" onclick="window.open('https://www.walkerplus.com/event/','_blank')">🏛 イベント情報</button>
+                        <button class="act-btn" style="background:#1a2a3a; margin:0; font-size:0.85rem;" onclick="window.open('https://tabelog.com','_blank')">🍽 食べログ</button>
+                        <button class="act-btn" style="background:#1a2a3a; margin:0; font-size:0.85rem;" onclick="window.open('https://www.jma.go.jp/bosai/','_blank')">📡 気象庁防災情報</button>
+                    </div>
+                    <div style="color:#888; font-size:0.75rem; margin-bottom:6px;">🔍 Wikipedia検索</div>
+                    <div style="display:flex; gap:6px; align-items:center; margin-bottom:10px;">
+                        <input type="text" id="wiki-input" placeholder="調べたいことを入力" 
+                            style="flex:1; background:#000; border:1px solid #555; color:#fff; 
+                                   height:36px; padding:0 8px; border-radius:4px; font-size:0.9rem;">
+                        <button id="wiki-go" style="background:#1a3a4a; color:#fff; border:none; 
+                            height:36px; padding:0 12px; border-radius:4px;">検索</button>
+                    </div>
+                    <button class="act-btn" id="useful-back" style="background:#34495e;">戻る</button>
+                </div>
+            </div>`;
+        if (lv) { lv.style.display = 'block'; lv.innerHTML = html; }
+        document.getElementById('wiki-go').onclick = () => {
+            const q = document.getElementById('wiki-input').value.trim();
+            if (!q) return;
+            window.open(`https://ja.wikipedia.org/wiki/${encodeURIComponent(q)}`, '_blank');
+        };
+        document.getElementById('useful-back').onclick = () => showNewsMarket();
+    };
 }
 
 function showAutoPlaySelect() {
