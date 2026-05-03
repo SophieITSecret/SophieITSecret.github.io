@@ -22,8 +22,10 @@ export function stopAutoPlay() {
 
 export function nextAutoPlay() {
     if (!_autoPlayMode || _autoPlayList.length === 0) return;
-    const curIdx = _autoPlayList.findIndex(m => m === nav.curP[nav.curI]);
-    const nextIdx = (curIdx + 1) % _autoPlayList.length;
+    const curSong = _autoPlayList.find(m => m === nav.curP[nav.curI]) || 
+                    _autoPlayList.find(m => String(m.code) === String(nav.curP[nav.curI]?.code));
+    const curIdx = _autoPlayList.indexOf(curSong);
+    const nextIdx = curIdx >= 0 ? (curIdx + 1) % _autoPlayList.length : 1 % _autoPlayList.length;
     playAutoPlaySong(nextIdx);
 }
 
