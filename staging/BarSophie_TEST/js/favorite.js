@@ -229,30 +229,26 @@ function openPlaylistView() {
     }
 
     let h = `<div class="label" style="background:#1a3a4a;">📋 マイプレイリスト</div>`;
-    playlists.forEach((pl, i) => {
+   
+playlists.forEach((pl, i) => {
         if (pl.songs.length > 0) {
             h += `<div class="item plv-item" data-idx="${i}" style="padding:0.4em 15px;">
                     <div style="color:#eee;">${pl.name}</div>
                     <div style="color:#888; font-size:0.8rem;">${pl.songs.length}曲</div>
                   </div>`;
-        } else {
-            h += `<div class="item" style="padding:0.4em 15px; color:#555;">${pl.name}（空）</div>`;
         }
     });
+
     h += `<div class="item" id="plv-back" style="color:#888; padding:0.4em 15px;">◀ 戻る</div>`;
     setListView(h, false);
 
 document.querySelectorAll('.plv-item').forEach(el => {
-    el.onclick = () => {
-        alert('clicked idx=' + el.dataset.idx);
-        openPlaylistPlayView(parseInt(el.dataset.idx));
-    };
+    el.onclick = () => openPlaylistPlayView(parseInt(el.dataset.idx));
 });
     document.getElementById('plv-back').onclick = () => openTecho('S');
 }
 
 function openPlaylistPlayView(idx) {
-    alert('idx=' + idx);
     const data = getTechoData();
     const pl = data.playlists[idx];
     if (!pl) return;
