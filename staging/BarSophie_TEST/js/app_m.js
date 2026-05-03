@@ -285,21 +285,26 @@ function showNewsMarket() {
     if (nm) nm.style.display = 'none';
     nav.updateNav("lq_main");
 
-    const showYoutube = (videoId) => {
-        const cw = document.getElementById('chart-wrapper');
-        if (cw) { cw.style.display = 'none'; cw.innerHTML = ''; }
-        const yt = document.getElementById('yt-wrapper');
-        const img = document.getElementById('monitor-img');
-        const lside = document.querySelector('.l-side');
-        if (lside) lside.style.display = 'flex';
-        if (img) img.style.display = 'none';
-        if (yt) {
+const showYoutube = (videoId) => {
+    const cw = document.getElementById('chart-wrapper');
+    if (cw) { cw.style.display = 'none'; cw.innerHTML = ''; }
+    const yt = document.getElementById('yt-wrapper');
+    const img = document.getElementById('monitor-img');
+    const lside = document.querySelector('.l-side');
+    if (lside) lside.style.display = 'flex';
+    if (img) img.style.display = 'none';
+    if (yt) {
+        // ★一旦空にしてから新しいiframeを入れる
+        yt.style.display = 'none';
+        yt.innerHTML = '';
+        setTimeout(() => {
             yt.style.display = 'block';
             yt.innerHTML = `<iframe width="100%" height="100%" 
                 src="https://www.youtube.com/embed/${videoId}?autoplay=1&playsinline=1" 
                 frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
-        }
-    };
+        }, 100);
+    }
+};
 
     const showChart = (symbol) => {
         const cw = document.getElementById('chart-wrapper');
