@@ -14,9 +14,10 @@ export function getCurrentFolder() { return currentFolder; }
 
 export function getTechoData() {
     const data = localStorage.getItem(STORAGE_KEY);
-    if (!data) return { favorites: [], gameLog: [], lastGameDate: '', gameCount: 0, janken: { myWins: 0, sophieWins: 0 } };
+    if (!data) return { favorites: [], gameLog: [], lastGameDate: '', gameCount: 0, janken: { myWins: 0, sophieWins: 0 }, playlists: [] };
     const parsed = JSON.parse(data);
     if (!parsed.janken) parsed.janken = { myWins: 0, sophieWins: 0 };
+    if (!parsed.playlists) parsed.playlists = [];
     return parsed;
 }
 
@@ -166,7 +167,11 @@ export async function openTecho(folder = null) {
             }
         });
     } else if (folder === 'S') {
-        h += `<div class="scr-title" style="margin-top:15px; color:var(--green); padding-left:10px; font-size:0.78rem;">🎵 お好きな歌</div>`;
+        } else if (folder === 'S') {
+    h += `<div style="padding:8px 15px;">
+            <button class="act-btn" id="f-playlist" style="background:#1a3a4a; border:1px solid #00d2ff; width:100%; margin:0;">📋 マイプレイリスト</button>
+          </div>`;
+    h += `<div class="scr-title" style="margin-top:5px; color:var(--green); padding-left:10px; font-size:0.78rem;">🎵 お好きな歌</div>`;
         categories['S'].forEach(id => {
             const num = parseInt(id.replace(/[^0-9]/g, ''), 10);
             const song = nav.jData.find(d => parseInt(d.code, 10) === num);
@@ -196,7 +201,9 @@ export async function openTecho(folder = null) {
             });
         }
     }
-    setListView(h, false);
+setListView(h, false);
+    const plBtn = document.getElementById('f-playlist');
+    if (plBtn) plBtn.onclick = () => openPlaylistMenu();
     document.querySelectorAll('.fav-item').forEach(el => {
         if (el.classList.contains('music-row')) {
             el.querySelector('.fav-music-del').onclick = (e) => { e.stopPropagation(); toggleFavorite(el.dataset.id); openTecho(folder); };
