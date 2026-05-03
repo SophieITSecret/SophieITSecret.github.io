@@ -367,9 +367,9 @@ function showNewsMarket() {
                     <div style="color:#888; font-size:0.75rem; margin-bottom:6px;">🌍 世界の都市</div>
                     <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:8px;">
                         <button class="act-btn" id="cam-nyc"    style="background:#1a2a3a; margin:0; font-size:0.85rem;">🗽 NYC タイムズSq</button>
-                        <button class="act-btn" id="cam-paris"  style="background:#1a2a3a; margin:0; font-size:0.85rem;">🗼 パリ エッフェル</button>
+                        document.getElementById('cam-paris').onclick  = () => showYoutube('2ar2sDGrDzc');🗼 パリ エッフェル</button>
                         <button class="act-btn" id="cam-london" style="background:#1a2a3a; margin:0; font-size:0.85rem;">🎡 ロンドン・ビッグベン</button>
-                        <button class="act-btn" id="cam-sydney" style="background:#1a2a3a; margin:0; font-size:0.85rem;">🌉 シドニー・オペラハウス</button>
+                        document.getElementById('cam-sydney').onclick = () => showYoutube('7pcL-0Wo77U');🌉 シドニー・オペラハウス</button>
                         <button class="act-btn" id="cam-rome"   style="background:#1a2a3a; margin:0; font-size:0.85rem;">🏛 ローマ・トレビの泉</button>
                         <button class="act-btn" style="background:#1a2a3a; margin:0; font-size:0.85rem;" onclick="window.open('https://www.earthcam.com/world/','_blank')">🌐 その他世界中</button>
                     </div>
