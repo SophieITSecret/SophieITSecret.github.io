@@ -49,11 +49,11 @@ function playAutoPlaySong(idx) {
 }
 
 function renderAutoPlayList() {
-    const title = nav.curP[0]?.a || '連続再生';
+    const title = _autoPlayList[0]?.a || '連続再生';
     let h = `<div class="label" style="background:#1a3a1a; color:#7fd97f;">🔁 連続再生中　─　${title}</div>`;
     _autoPlayList.forEach((m, i) => {
         const globalIdx = nav.curP.indexOf(m);
-        const isPlaying = globalIdx === nav.curI;
+        const isPlaying = i === _autoPlayIdx;
         const color = isPlaying ? 'color:#7fd97f; font-weight:bold;' : 'color:#eee;';
         const icon = isPlaying ? '▶ ' : '🎵 ';
         h += `<div class="item auto-item" data-gidx="${globalIdx}" style="font-size:1.05rem; padding:0.2em 15px; ${color}">${icon}${m.ti}</div>`;
