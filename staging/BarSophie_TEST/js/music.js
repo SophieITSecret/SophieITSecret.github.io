@@ -368,8 +368,7 @@ function setMon(m, s) {
     if (m === 'v') {
         if (btnExpand) btnExpand.style.opacity = '0.3';
         if (ytPlayerReady) {
-    ytPlayer.cueVideoById(extractYtId(s));
-    setTimeout(() => { try { ytPlayer.playVideo(); } catch(e) {} }, 300);
+    ytPlayer.loadVideoById(extractYtId(s));
 }
     } else {
         monImg.src = s;
