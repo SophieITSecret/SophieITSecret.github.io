@@ -4,12 +4,12 @@
  * ★ S2でSボタン→リクエストモード（前口上→自動再生）
  */
 
-import * as media    from './media.js';
-import * as nav      from './navigation.js';
-import * as utils    from './utils.js';
-import * as music    from './music.js';
-import * as liquor   from './liquor.js';
-import * as shop     from './shop.js';
+import * as media from './media.js';
+import * as nav from './navigation.js';
+import * as utils from './utils.js';
+import * as music from './music.js';
+import * as liquor from './liquor.js';
+import * as shop from './shop.js';
 
 let talkAudio;
 let ytPlayer = null;
@@ -31,11 +31,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     liquor.setRenderConsole(renderConsole);
     music.setRenderConsole(renderConsole);
-    
+
     import('./favorite.js').then(fav => {
         fav.initMusicPatch();
     }).catch(e => console.warn("favorite.js load error", e));
-    
+
     setup();
     window._renderConsole = renderConsole;
     window._showRootMenu = showRootMenu;
@@ -55,14 +55,14 @@ window.onYouTubeIframeAPIReady = function () {
                 music.initMusic(talkAudio, ytPlayer, true, document.getElementById('telop'));
             },
             onStateChange: (e) => {
-    if (e.data === YT.PlayerState.ENDED) {
-        if (music.isAutoPlayMode && music.isAutoPlayMode()) {
-            music.nextAutoPlay();
-        } else if (music.isAutoPlay && music.isMusicMode) {
-            music.next();
-        }
-    }
-}
+                if (e.data === YT.PlayerState.ENDED) {
+                    if (music.isAutoPlayMode && music.isAutoPlayMode()) {
+                        music.nextAutoPlay();
+                    } else if (music.isAutoPlay && music.isMusicMode) {
+                        music.next();
+                    }
+                }
+            }
         }
     });
 };
@@ -75,7 +75,7 @@ function setup() {
         document.getElementById('entry-screen').style.display = 'none';
         document.getElementById('chat-mode').style.display = 'flex';
         if (ytPlayerReady && ytPlayer) {
-            try { ytPlayer.mute(); ytPlayer.loadVideoById('2vfCbdmKhMw'); setTimeout(() => { ytPlayer.pauseVideo(); ytPlayer.unMute(); }, 1000); } catch(e) {}
+            try { ytPlayer.mute(); ytPlayer.loadVideoById('2vfCbdmKhMw'); setTimeout(() => { ytPlayer.pauseVideo(); ytPlayer.unMute(); }, 1000); } catch (e) { }
         }
         playVoice("./voices_mp3/greeting.mp3", "いらっしゃいませ。");
     };
@@ -89,17 +89,17 @@ function setup() {
         playVoice("./voices_mp3/menu_greeting.mp3", "いつもありがとうございます。今日はいかがされますか？");
     };
 
-        document.getElementById('btn-music').onclick = () => { if (music.openMusic) music.openMusic(); renderConsole('standard'); };
-        document.getElementById('btn-liquor').onclick = liquor.openLiquorPortal;
-        document.getElementById('btn-talk').onclick = () => { if (music.openTalk) music.openTalk(); renderConsole('standard'); };
-// ★以下2行を追加
-document.getElementById('btn-news').onclick = () => showNewsMarket();
-document.getElementById('btn-notice').onclick = () => {
-    import('./favorite.js').then(f => {
-        f.openNotice();
-        renderConsole('standard');
-    }).catch(e => alert("準備中です"));
-};
+    document.getElementById('btn-music').onclick = () => { if (music.openMusic) music.openMusic(); renderConsole('standard'); };
+    document.getElementById('btn-liquor').onclick = liquor.openLiquorPortal;
+    document.getElementById('btn-talk').onclick = () => { if (music.openTalk) music.openTalk(); renderConsole('standard'); };
+    // ★以下2行を追加
+    document.getElementById('btn-news').onclick = () => showNewsMarket();
+    document.getElementById('btn-notice').onclick = () => {
+        import('./favorite.js').then(f => {
+            f.openNotice();
+            renderConsole('standard');
+        }).catch(e => alert("準備中です"));
+    };
     document.getElementById('sophie-warp').onclick = () => {
         if (nav.state !== "none") {
             showRootMenu();
@@ -109,8 +109,8 @@ document.getElementById('btn-notice').onclick = () => {
             const loungeText = document.getElementById('lounge-text');
             loungeText.innerText = "ありがとうございました。";
             window.speechSynthesis.cancel();
-            if (ytPlayerReady && ytPlayer) { try { ytPlayer.pauseVideo(); } catch(e){} }
-            try { talkAudio.pause(); } catch(e){}
+            if (ytPlayerReady && ytPlayer) { try { ytPlayer.pauseVideo(); } catch (e) { } }
+            try { talkAudio.pause(); } catch (e) { }
             talkAudio.src = "./voices_mp3/goodbye.mp3";
             const finalize = () => {
                 setTimeout(() => {
@@ -123,7 +123,7 @@ document.getElementById('btn-notice').onclick = () => {
             };
             talkAudio.onended = finalize;
             talkAudio.onerror = finalize;
-            try { const p = talkAudio.play(); if (p) p.catch(finalize); } catch(e) { finalize(); }
+            try { const p = talkAudio.play(); if (p) p.catch(finalize); } catch (e) { finalize(); }
         }
     };
 
@@ -134,25 +134,25 @@ document.getElementById('btn-notice').onclick = () => {
 
 function playVoice(src, txt) {
     talkAudio.src = src;
-    talkAudio.onerror = () => { try { media.speak(txt); } catch(e){} };
+    talkAudio.onerror = () => { try { media.speak(txt); } catch (e) { } };
     try {
         const p = talkAudio.play();
-        if (p !== undefined) p.catch(() => { try { media.speak(txt); } catch(e){} });
-    } catch(e) { try { media.speak(txt); } catch(err){} }
+        if (p !== undefined) p.catch(() => { try { media.speak(txt); } catch (e) { } });
+    } catch (e) { try { media.speak(txt); } catch (err) { } }
 }
 
 function showRootMenu() {
-    const lv  = document.getElementById('list-view');
-    const nm  = document.getElementById('nav-main');
+    const lv = document.getElementById('list-view');
+    const nm = document.getElementById('nav-main');
     const img = document.getElementById('monitor-img');
-    const yt  = document.getElementById('yt-wrapper');
+    const yt = document.getElementById('yt-wrapper');
     const tel = document.getElementById('telop');
     const mon = document.querySelector('.monitor');
 
-    lv.style.display  = 'none';
-    nm.style.display  = 'block';
+    lv.style.display = 'none';
+    nm.style.display = 'block';
     nav.updateNav("none");
-    yt.style.display  = 'none';
+    yt.style.display = 'none';
     img.src = './front_sophie.jpeg';
     img.style.display = 'block';
     // ★chart-frameをクリア
@@ -209,15 +209,15 @@ function showSophieMenu() {
     const lv = document.getElementById('list-view');
     const nm = document.getElementById('nav-main');
     // ★ニュース・マーケット画面の場合は保存しない
-const isNewsScreen = lv && lv.querySelector('#nm-ann');
-const prevHtml    = (lv && !isNewsScreen) ? lv.innerHTML : '';
-const prevDisplay = (lv && !isNewsScreen) ? lv.style.display : 'none';
-const prevNm      = nm ? nm.style.display : 'none';
+    const isNewsScreen = lv && lv.querySelector('#nm-ann');
+    const prevHtml = (lv && !isNewsScreen) ? lv.innerHTML : '';
+    const prevDisplay = (lv && !isNewsScreen) ? lv.style.display : 'none';
+    const prevNm = nm ? nm.style.display : 'none';
 
     const specificItems = {
         "tit": [
             { label: "🎵 DJソフィー（解説＋自動再生）", action: () => music.startRequestMode() },
-            { label: "🔁 連続再生", action: () => showAutoPlaySelect() }, 
+            { label: "🔁 連続再生", action: () => showAutoPlaySelect() },
         ],
         "lq_list": [
             { label: "📖 カテゴリー解説", disabled: true },
@@ -238,8 +238,8 @@ const prevNm      = nm ? nm.style.display : 'none';
 
     const specificHtml = specific.length ? specific.map((item, i) =>
         item.disabled
-        ? `<button class="act-btn" style="background:#1a1a1a; color:#444; border:1px solid #222; margin-bottom:8px;" disabled>${item.label}（準備中）</button>`
-        : `<button class="act-btn s-menu-specific" data-idx="${i}" style="background:#1a5276; border-color:#1a5276; margin-bottom:8px;">${item.label}</button>`
+            ? `<button class="act-btn" style="background:#1a1a1a; color:#444; border:1px solid #222; margin-bottom:8px;" disabled>${item.label}（準備中）</button>`
+            : `<button class="act-btn s-menu-specific" data-idx="${i}" style="background:#1a5276; border-color:#1a5276; margin-bottom:8px;">${item.label}</button>`
     ).join('') : '';
 
     const menuHtml = `
@@ -285,26 +285,26 @@ function showNewsMarket() {
     if (nm) nm.style.display = 'none';
     nav.updateNav("lq_main");
 
-const showYoutube = (videoId) => {
-    const cw = document.getElementById('chart-wrapper');
-    if (cw) { cw.style.display = 'none'; cw.innerHTML = ''; }
-    const yt = document.getElementById('yt-wrapper');
-    const img = document.getElementById('monitor-img');
-    const lside = document.querySelector('.l-side');
-    if (lside) lside.style.display = 'flex';
-    if (img) img.style.display = 'none';
-    if (yt) {
-        // ★一旦空にしてから新しいiframeを入れる
-        yt.style.display = 'none';
-        yt.innerHTML = '';
-        setTimeout(() => {
-            yt.style.display = 'block';
-            yt.innerHTML = `<iframe width="100%" height="100%" 
+    const showYoutube = (videoId) => {
+        const cw = document.getElementById('chart-wrapper');
+        if (cw) { cw.style.display = 'none'; cw.innerHTML = ''; }
+        const yt = document.getElementById('yt-wrapper');
+        const img = document.getElementById('monitor-img');
+        const lside = document.querySelector('.l-side');
+        if (lside) lside.style.display = 'flex';
+        if (img) img.style.display = 'none';
+        if (yt) {
+            // ★一旦空にしてから新しいiframeを入れる
+            yt.style.display = 'none';
+            yt.innerHTML = '';
+            setTimeout(() => {
+                yt.style.display = 'block';
+                yt.innerHTML = `<iframe width="100%" height="100%" 
                 src="https://www.youtube.com/embed/${videoId}?autoplay=1&playsinline=1" 
                 frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
-        }, 100);
-    }
-};
+            }, 100);
+        }
+    };
 
     const showChart = (symbol) => {
         const cw = document.getElementById('chart-wrapper');
@@ -344,9 +344,9 @@ const showYoutube = (videoId) => {
 
     if (lv) { lv.style.display = 'block'; lv.innerHTML = mainHtml; }
 
-    document.getElementById('nm-ann').onclick     = () => showYoutube('coYw-eVU0Ks');
+    document.getElementById('nm-ann').onclick = () => showYoutube('coYw-eVU0Ks');
     document.getElementById('nm-weather').onclick = () => showYoutube('G1souS7inLE');
-    document.getElementById('nm-back').onclick    = () => showRootMenu();
+    document.getElementById('nm-back').onclick = () => showRootMenu();
 
     document.getElementById('nm-camera').onclick = () => {
         const html = `
@@ -366,11 +366,11 @@ const showYoutube = (videoId) => {
                     </div>
                     <div style="color:#888; font-size:0.75rem; margin-bottom:6px;">🌍 世界の都市</div>
                     <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:8px;">
-                        <button class="act-btn" style="background:#1a2a3a; margin:0; font-size:0.85rem;" onclick="window.open('https://www.earthcam.com/usa/newyork/timessquare/','_blank')">🗽 NYC タイムズSq</button>
-                        <button class="act-btn" style="background:#1a2a3a; margin:0; font-size:0.85rem;" onclick="window.open('https://www.earthtv.com/en/webcam/paris-eiffel-tower','_blank')">🗼 パリ エッフェル</button>
-                        <button class="act-btn" style="background:#1a2a3a; margin:0; font-size:0.85rem;" onclick="window.open('https://london-webcam.co.uk/','_blank')">🎡 ロンドン</button>
-                        <button class="act-btn" style="background:#1a2a3a; margin:0; font-size:0.85rem;" onclick="window.open('https://www.skylinewebcams.com/en/webcam/australia/new-south-wales/sydney/sydney.html','_blank')">🌉 シドニー</button>
-                        <button class="act-btn" style="background:#1a2a3a; margin:0; font-size:0.85rem;" onclick="window.open('https://www.youtube.com/watch?v=jXYQoWAKgFE','_blank')">🏛 ローマ・トレビの泉</button>
+                        <button class="act-btn" style="background:#1a2a3a; margin:0; font-size:0.85rem;" onclick="(${() => showYoutube('PGrq-2mju2s')})()">🗽 NYC タイムズSq</button>
+                        <button class="act-btn" style="background:#1a2a3a; margin:0; font-size:0.85rem;" onclick="(${() => showYoutube('iZipA1LL_sU')})()">🗼 パリ エッフェル</button>
+                        <button class="act-btn" style="background:#1a2a3a; margin:0; font-size:0.85rem;" onclick="(${() => showYoutube('VgRo9SBQW3U')})()">🎡 ロンドン・ビッグベン</button>
+                        <button class="act-btn" style="background:#1a2a3a; margin:0; font-size:0.85rem;" onclick="(${() => showYoutube('KPrrWB1eo1I')})()">🌉 シドニー・オペラハウス</button>
+                        <button class="act-btn" style="background:#1a2a3a; margin:0; font-size:0.85rem;" onclick="(${() => showYoutube('jXYQoWAKgFE')})()">🏛 ローマ・トレビの泉</button>
                         <button class="act-btn" style="background:#1a2a3a; margin:0; font-size:0.85rem;" onclick="window.open('https://www.earthcam.com/world/','_blank')">🌐 その他世界中</button>
                     </div>
                     <div style="color:#888; font-size:0.75rem; margin-bottom:6px;">🚀 特別</div>
@@ -503,9 +503,9 @@ function showAutoPlaySelect() {
                 const raw = localStorage.getItem('bar_sophie_techo');
                 const data = raw ? JSON.parse(raw) : { favorites: [] };
                 const favIds = data.favorites || [];
-                const songId = `S-${String(m.code).padStart(4,'0')}`;
+                const songId = `S-${String(m.code).padStart(4, '0')}`;
                 return favIds.includes(songId);
-            } catch(e) { return false; }
+            } catch (e) { return false; }
         });
 
         const menuHtml = `
@@ -517,12 +517,12 @@ function showAutoPlaySelect() {
                             border-radius:8px 8px 0 0;">🔁 連続再生</div>
                 <div style="padding:10px;">
                     ${favSongs.length === 0
-                        ? `<div style="color:#888; text-align:center; padding:15px; font-size:0.9rem;">お気に入りがありません</div>
+                ? `<div style="color:#888; text-align:center; padding:15px; font-size:0.9rem;">お気に入りがありません</div>
                            <button class="act-btn" id="ap-back" style="background:#34495e;">戻る</button>`
-                        : `<button class="act-btn" id="ap-fav" style="background:#8e1a2e; margin-bottom:8px;">❤️ お気に入りのみ（${favSongs.length}曲）</button>
+                : `<button class="act-btn" id="ap-fav" style="background:#8e1a2e; margin-bottom:8px;">❤️ お気に入りのみ（${favSongs.length}曲）</button>
                            <button class="act-btn" id="ap-all" style="background:#1a5276; margin-bottom:8px;">🎵 全曲（${nav.curP.length}曲）</button>
                            <button class="act-btn" id="ap-back" style="background:#34495e;">戻る</button>`
-                    }
+            }
                 </div>
             </div>`;
 
@@ -531,9 +531,9 @@ function showAutoPlaySelect() {
         document.getElementById('ap-back').onclick = () => showSophieMenu();
         if (favSongs.length > 0) {
             document.getElementById('ap-fav').onclick = () => showAutoPlaySongSelect(favSongs);
-            document.getElementById('ap-all').onclick  = () => showAutoPlaySongSelect([...nav.curP]);
+            document.getElementById('ap-all').onclick = () => showAutoPlaySongSelect([...nav.curP]);
         }
-    } catch(e) {
+    } catch (e) {
         alert('error: ' + e.message);
     }
 }
@@ -588,12 +588,12 @@ function renderConsole(mode) {
     const grid = document.querySelector('.btn-grid');
     if (!grid) return;
 
-    const noApp   = "-webkit-appearance:none; appearance:none; outline:none;";
-    const pCtrl   = `flex:1; background:#1a2b1a; color:#5c9e5c; border:none; border-radius:0; ${noApp}`;
-    const pBtn    = `flex:1.0; font-size:1.2rem; background:#1a3a1a; color:#7fd97f; border:none; border-radius:0; ${noApp}`;
+    const noApp = "-webkit-appearance:none; appearance:none; outline:none;";
+    const pCtrl = `flex:1; background:#1a2b1a; color:#5c9e5c; border:none; border-radius:0; ${noApp}`;
+    const pBtn = `flex:1.0; font-size:1.2rem; background:#1a3a1a; color:#7fd97f; border:none; border-radius:0; ${noApp}`;
     const backBtn = `background:#34495e; color:#fff; flex:1; font-size:0.95rem; font-weight:bold; border:none;`;
     const sBtn = `background:#0096BF; color:#ff69b4; font-size:1.4rem; font-weight:bold; flex:1.0; border:2px solid #ff51a8;`;
-    const navBtn  = `flex:1; background:#1a2a3a; color:#5ba3d9; font-size:1.1rem; border:none; border-radius:0; touch-action:manipulation; ${noApp}`;
+    const navBtn = `flex:1; background:#1a2a3a; color:#5ba3d9; font-size:1.1rem; border:none; border-radius:0; touch-action:manipulation; ${noApp}`;
 
     if (mode === 'screening') {
         grid.innerHTML = `
@@ -601,8 +601,8 @@ function renderConsole(mode) {
             <button class="c-btn" id="c-clr"  style="background:#5DADE2; color:#fff; flex:1; font-size:0.95rem; text-shadow:0 0 2px rgba(0,0,0,0.5); border:none;">リセット</button>
             <button class="c-btn" id="c-ex"   style="background:#8e44ad; color:#fff; flex:2; font-size:0.95rem; border:none;">検索実行</button>`;
         document.getElementById('c-back').onclick = liquor.openLiquorPortal;
-        document.getElementById('c-clr').onclick  = liquor.clearScr;
-        document.getElementById('c-ex').onclick   = liquor.execScr;
+        document.getElementById('c-clr').onclick = liquor.clearScr;
+        document.getElementById('c-ex').onclick = liquor.execScr;
         return;
     }
 
@@ -651,7 +651,7 @@ function renderConsole(mode) {
             <button class="c-btn" id="ctrl-play"     style="${pBtn}">▶</button>
             <button class="c-btn" id="btn-next"      style="${pCtrl}">⏭</button>`;
         document.getElementById('ctrl-back-txt').onclick = handleBack;
-        document.getElementById('c-sophie-std').onclick  = handleSButton;
+        document.getElementById('c-sophie-std').onclick = handleSButton;
     }
     else {
         // 中間メニュー：戻る（左端）・メモ・⏹️・▶・⏭
@@ -670,9 +670,9 @@ function renderConsole(mode) {
             import('./favorite.js').then(f => { nav.updateNav("techo"); f.openTecho(null); renderConsole('standard'); });
         };
     }
-    const playEl  = document.getElementById('ctrl-play');
+    const playEl = document.getElementById('ctrl-play');
     const pauseEl = document.getElementById('ctrl-pause');
-    if (playEl)  playEl.onclick  = music.playHead;
+    if (playEl) playEl.onclick = music.playHead;
     if (pauseEl) pauseEl.onclick = music.togglePause;
     setupNextButton();
 }
