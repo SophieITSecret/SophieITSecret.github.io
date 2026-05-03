@@ -222,6 +222,7 @@ if (plEditBtn) plEditBtn.onclick = () => openPlaylistMenu();
 
 function openPlaylistView() {
     const data = getTechoData();
+    alert('playlists=' + JSON.stringify(data.playlists));
     const playlists = data.playlists.length > 0 ? data.playlists :
         Array.from({length: 5}, (_, i) => ({ name: `リスト${i+1}`, songs: [] }));
     while (playlists.length < 5) {
