@@ -166,9 +166,10 @@ export async function openTecho(folder = null) {
                 h += `<div class="item fav-item lq-fav" data-id="${id}" style="display:flex; align-items:center; gap:4px; font-size:1.05rem; padding:0.15em 15px;">${badge}<span>${clean(d['銘柄名'])}</span></div>`;
             }
         });
-    } else if (folder === 'S') {
-    h += `<div style="padding:8px 15px;">
-            <button class="act-btn" id="f-playlist" style="background:#1a3a4a; border:1px solid #00d2ff; width:100%; margin:0;">📋 マイプレイリスト</button>
+ } else if (folder === 'S') {
+    h += `<div style="padding:8px 15px; display:flex; gap:8px;">
+            <button class="act-btn" id="f-playlist" style="background:#1a3a4a; border:1px solid #00d2ff; flex:1; margin:0;">📋 マイプレイリスト</button>
+            <button class="act-btn" id="f-playlist-edit" style="background:#1a1a1a; border:1px solid #555; width:44px; margin:0; font-size:1.2rem;">✏️</button>
           </div>`;
     h += `<div class="scr-title" style="margin-top:5px; color:var(--green); padding-left:10px; font-size:0.78rem;">🎵 お好きな歌</div>`;
         categories['S'].forEach(id => {
