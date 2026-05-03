@@ -9,39 +9,40 @@ export let isAutoPlay = false;
 
 // ★リクエストモードフラグ
 let _requestMode = false;
+
 // ★連続再生モード
 let _autoPlayMode = false;
 let _autoPlayList = [];
+let _autoPlayIdx = 0;  // ★現在のインデックスを直接管理
 
 export function isAutoPlayMode() { return _autoPlayMode; }
 
 export function stopAutoPlay() {
     _autoPlayMode = false;
     _autoPlayList = [];
+    _autoPlayIdx = 0;
 }
 
 export function nextAutoPlay() {
     if (!_autoPlayMode || _autoPlayList.length === 0) return;
-    const curSong = _autoPlayList.find(m => m === nav.curP[nav.curI]) || 
-                    _autoPlayList.find(m => String(m.code) === String(nav.curP[nav.curI]?.code));
-    const curIdx = _autoPlayList.indexOf(curSong);
-    const nextIdx = curIdx >= 0 ? (curIdx + 1) % _autoPlayList.length : 1 % _autoPlayList.length;
-    playAutoPlaySong(nextIdx);
+    _autoPlayIdx = (_autoPlayIdx + 1) % _autoPlayList.length;
+    playAutoPlaySong(_autoPlayIdx);
 }
 
 export function startAutoPlay(list, startIdx) {
     _autoPlayMode = true;
     _autoPlayList = list;
+    _autoPlayIdx = startIdx;
     isMusicMode = true;
     playAutoPlaySong(startIdx);
 }
 
 function playAutoPlaySong(idx) {
+    _autoPlayIdx = idx;
     const m = _autoPlayList[idx];
     if (!m) return;
     const globalIdx = nav.curP.indexOf(m);
     if (globalIdx >= 0) nav.updateNav(undefined, undefined, undefined, globalIdx);
-    // ★リストのハイライトを更新
     renderAutoPlayList();
     setMon('v', m.u);
     prep(`${m.a}さんの${m.ti}です`, true);
