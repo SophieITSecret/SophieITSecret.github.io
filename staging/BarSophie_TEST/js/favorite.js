@@ -322,7 +322,6 @@ function openPlaylist(idx) {
             const songs = pl.songs.map(code => 
                 nav.jData.find(d => parseInt(d.code, 10) === parseInt(code, 10))
             ).filter(Boolean);
-            import('./app_m.js').catch(() => {});
             // showAutoPlaySongSelectを直接呼べないのでstartAutoPlayを使う
             import('./music.js').then(m => m.startAutoPlay(songs, 0));
         };
