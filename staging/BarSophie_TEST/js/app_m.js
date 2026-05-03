@@ -384,7 +384,7 @@ function showNewsMarket() {
         if (lv) { lv.style.display = 'block'; lv.innerHTML = html; }
 
         document.getElementById('cam-nyc').onclick    = () => showYoutube('PGrq-2mju2s');
-        document.getElementById('cam-paris').onclick  = () => showYoutube('2ar2sDGrDzc');
+        document.getElementById('cam-paris').onclick = () => window.open('https://www.earthtv.com/en/webcam/paris-eiffel-tower', '_blank');
         document.getElementById('cam-london').onclick = () => showYoutube('VgRo9SBQW3U');
         document.getElementById('cam-sydney').onclick = () => showYoutube('7pcL-0Wo77U');
         document.getElementById('cam-rome').onclick   = () => showYoutube('jXYQoWAKgFE');
