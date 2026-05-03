@@ -203,7 +203,7 @@ export async function openTecho(folder = null) {
     }
 setListView(h, false);
     const plBtn = document.getElementById('f-playlist');
-    if (plBtn) plBtn.onclick = () => openPlaylistMenu();
+    if (plBtn) plBtn.onclick = () => alert('playlist button clicked');
     document.querySelectorAll('.fav-item').forEach(el => {
         if (el.classList.contains('music-row')) {
             el.querySelector('.fav-music-del').onclick = (e) => { e.stopPropagation(); toggleFavorite(el.dataset.id); openTecho(folder); };
