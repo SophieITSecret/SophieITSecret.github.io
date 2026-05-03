@@ -249,6 +249,7 @@ function openPlaylistView() {
 }
 
 function openPlaylistPlayView(idx) {
+    alert('idx=' + idx);
     const data = getTechoData();
     const pl = data.playlists[idx];
     if (!pl) return;
