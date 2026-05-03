@@ -316,7 +316,10 @@ function showNewsMarket() {
         if (yt) yt.style.display = 'none';
         if (cw) {
             cw.style.display = 'block';
-            cw.innerHTML = `<iframe src="https://s.tradingview.com/widgetembed/?symbol=${encodeURIComponent(symbol)}&interval=D&theme=dark&style=1&timezone=Etc%2FUTC&locale=ja" width="100%" height="100%" frameborder="0"></iframe>`;
+            cw.innerHTML = `<iframe 
+                src="https://s.tradingview.com/widgetembed/?symbol=${encodeURIComponent(symbol)}&interval=D&theme=dark&style=1&timezone=Etc%2FUTC&locale=ja" 
+                width="100%" height="100%" frameborder="0"></iframe>
+                <div id="chart-error" style="display:none; color:#888; padding:20px; text-align:center;">シンボルが見つかりません</div>`;
         }
     };
 
@@ -332,13 +335,13 @@ function showNewsMarket() {
             <div style="padding:10px;">
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:8px;">
                     <button class="act-btn nm-btn" id="nm-ann"     style="background:#1a3a4a; margin:0;">📺 テレ朝NEWS24</button>
-                    <button class="act-btn nm-btn" id="nm-weather" style="background:#1a3a4a; margin:0;">🌤 ウェザーニュース</button>
+                    <button class="act-btn nm-btn" id="nm-weather" style="background:#1a3a4a; margin:0; font-size:0.8rem;">🌤 ウェザーニュース</button>
                     <button class="act-btn nm-btn" id="nm-camera"  style="background:#1a2a1a; margin:0;">📷 ライブカメラ</button>
                     <button class="act-btn nm-btn" id="nm-market"  style="background:#1a1a3a; margin:0;">📊 マーケット</button>
                     <button class="act-btn nm-btn" id="nm-newsmenu" style="background:#2a1a1a; margin:0;">📰 ニュース・情報</button>
                     <button class="act-btn nm-btn" id="nm-useful"  style="background:#1a2a2a; margin:0;">🔗 便利情報</button>
                 </div>
-                <button class="act-btn" id="nm-back" style="background:#34495e;">戻る</button>
+                <button class="act-btn" id="nm-back" style="background:#34495e; height:36px; font-size:0.85rem;">戻る</button>
             </div>
         </div>`;
 
@@ -407,16 +410,16 @@ function showNewsMarket() {
                         <button class="act-btn" style="background:#1a3a1a; margin:0;" onclick="(${() => showChart('SP:SPX')})()">📈 S&P500</button>
                     </div>
                     <div style="display:flex; gap:6px; align-items:center; margin-bottom:4px;">
-                        <input type="text" id="nm-code" placeholder="コード or ティッカー" 
-                            style="flex:1; background:#000; border:1px solid #555; color:#fff; 
-                                   height:36px; padding:0 8px; border-radius:4px; font-size:0.9rem;">
+                        <input type="text" id="nm-code" placeholder="7203 AAPL NYSE:IBM" 
+                            style="width:110px; background:#000; border:1px solid #555; color:#fff; 
+                                   height:44px; padding:0 8px; border-radius:4px; font-size:0.9rem;">
                         <button id="nm-search" style="background:#34495e; color:#fff; border:none; 
-                            height:36px; padding:0 10px; border-radius:4px; font-size:1rem;">🔍</button>
+                            height:44px; flex:1; border-radius:4px; font-size:0.9rem;">🔍 検索</button>
                         <button id="nm-go" style="background:#8e1a2e; color:#fff; border:none; 
-                            height:36px; padding:0 10px; border-radius:4px; font-size:1rem;">▶</button>
+                            height:44px; flex:1; border-radius:4px; font-size:0.9rem;">▶ 表示</button>
                     </div>
                     <div style="color:#666; font-size:0.7rem; margin-bottom:10px;">
-                        日本株：4桁（例：7203）　米国株：ティッカー（例：AAPL）　NYSE：NYSE:銘柄
+                        日本株：4桁　米国株：ティッカー　NYSE：NYSE:銘柄
                     </div>
                     <button class="act-btn" id="mkt-back" style="background:#34495e;">戻る</button>
                 </div>
@@ -432,7 +435,7 @@ function showNewsMarket() {
             if (!code) return;
             if (/^\d+$/.test(code)) {
                 window.open(`https://finance.yahoo.co.jp/quote/${code}.T`, '_blank');
-            } else if (code.startsWith('NYSE:')) {
+            } else if (code.startsWith('NYSE:') || code.startsWith('NASDAQ:') || code.startsWith('TSE:')) {
                 showChart(code);
             } else {
                 showChart(`NASDAQ:${code}`);
@@ -476,7 +479,7 @@ function showNewsMarket() {
                 <div style="padding:10px;">
                     <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:8px;">
                         <button class="act-btn" style="background:#1a2a3a; margin:0; font-size:0.85rem;" onclick="window.open('https://www.flightradar24.com','_blank')">✈️ フライトレーダー</button>
-                        <button class="act-btn" style="background:#1a2a3a; margin:0; font-size:0.85rem;" onclick="window.open('https://www.walkerplus.com/event/','_blank')">🏛 イベント情報</button>
+                        <button class="act-btn" style="background:#1a2a3a; margin:0; font-size:0.85rem;" onclick="window.open('https://www.timeout.com/tokyo/things-to-do','_blank')">🏛 イベント情報</button>
                         <button class="act-btn" style="background:#1a2a3a; margin:0; font-size:0.85rem;" onclick="window.open('https://tabelog.com','_blank')">🍽 食べログ</button>
                         <button class="act-btn" style="background:#1a2a3a; margin:0; font-size:0.85rem;" onclick="window.open('https://www.jma.go.jp/bosai/','_blank')">📡 気象庁防災情報</button>
                     </div>
@@ -484,9 +487,9 @@ function showNewsMarket() {
                     <div style="display:flex; gap:6px; align-items:center; margin-bottom:10px;">
                         <input type="text" id="wiki-input" placeholder="調べたいことを入力" 
                             style="flex:1; background:#000; border:1px solid #555; color:#fff; 
-                                   height:36px; padding:0 8px; border-radius:4px; font-size:0.9rem;">
+                                   height:44px; padding:0 8px; border-radius:4px; font-size:0.9rem;">
                         <button id="wiki-go" style="background:#1a3a4a; color:#fff; border:none; 
-                            height:36px; padding:0 12px; border-radius:4px;">検索</button>
+                            height:44px; padding:0 20px; border-radius:4px; font-size:1rem;">🔍 検索</button>
                     </div>
                     <button class="act-btn" id="useful-back" style="background:#34495e;">戻る</button>
                 </div>
