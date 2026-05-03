@@ -359,12 +359,12 @@ function showNewsMarket() {
                     </div>
                     <div style="color:#888; font-size:0.75rem; margin-bottom:6px;">🌍 世界の都市</div>
                     <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:8px;">
-                        <button class="act-btn" style="background:#1a2a3a; margin:0; font-size:0.85rem;" onclick="(${() => showYoutube('rnXIjl_Rzy4')})()">🗽 NYC タイムズSq</button>
-                        <button class="act-btn" style="background:#1a2a3a; margin:0; font-size:0.85rem;" onclick="window.open('https://www.skylinewebcams.com/en/webcam/france/ile-de-france/paris/eiffel-tower.html','_blank')">🗼 パリ エッフェル</button>
-                        <button class="act-btn" style="background:#1a2a3a; margin:0; font-size:0.85rem;" onclick="window.open('https://www.skylinewebcams.com/en/webcam/united-kingdom/england/london/london.html','_blank')">🎡 ロンドン</button>
-                        <button class="act-btn" style="background:#1a2a3a; margin:0; font-size:0.85rem;" onclick="window.open('https://www.skylinewebcams.com/en/webcam/australia/new-south-wales/sydney/sydney.html','_blank')">🌉 シドニー</button>
-                        <button class="act-btn" style="background:#1a2a3a; margin:0; font-size:0.85rem;" onclick="window.open('https://www.skylinewebcams.com/en/webcam/italy/lazio/rome/rome.html','_blank')">🏛 ローマ</button>
-                        <button class="act-btn" style="background:#1a2a3a; margin:0; font-size:0.85rem;" onclick="window.open('https://www.earthcam.com/world/','_blank')">🌐 その他世界中</button>
+                        <button class="act-btn" style="background:#1a2a3a; margin:0; font-size:0.85rem;" onclick="(${() => showYoutube('PGrq-2mju2s')})()">🗽 NYC タイムズSq</button>
+<button class="act-btn" style="background:#1a2a3a; margin:0; font-size:0.85rem;" onclick="(${() => showYoutube('iZipA1LL_sU')})()">🗼 パリ エッフェル</button>
+<button class="act-btn" style="background:#1a2a3a; margin:0; font-size:0.85rem;" onclick="window.open('https://london-webcam.co.uk/','_blank')">🎡 ロンドン</button>
+<button class="act-btn" style="background:#1a2a3a; margin:0; font-size:0.85rem;" onclick="window.open('https://www.skylinewebcams.com/en/webcam/australia/new-south-wales/sydney/sydney.html','_blank')">🌉 シドニー</button>
+<button class="act-btn" style="background:#1a2a3a; margin:0; font-size:0.85rem;" onclick="window.open('https://www.skylinewebcams.com/en/webcam/italy/lazio/rome/colosseum.html','_blank')">🏛 ローマ</button>
+<button class="act-btn" style="background:#1a2a3a; margin:0; font-size:0.85rem;" onclick="window.open('https://www.earthcam.com/world/','_blank')">🌐 その他世界中</button>
                     </div>
                     <div style="color:#888; font-size:0.75rem; margin-bottom:6px;">🚀 特別</div>
                     <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:8px;">
