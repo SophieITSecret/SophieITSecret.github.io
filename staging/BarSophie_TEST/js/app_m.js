@@ -352,12 +352,12 @@ function showNewsMarket() {
                             border-bottom:1px solid #333; height:28px; line-height:28px;
                             border-radius:8px 8px 0 0;">📷 ライブカメラ</div>
                 <div style="padding:10px;">
-                    <div style="color:#888; font-size:0.75rem; margin-bottom:6px;">🇯🇵 日本</div>
+                   <div style="color:#888; font-size:0.75rem; margin-bottom:6px;">🇯🇵 日本</div>
                     <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:8px;">
                         <button class="act-btn" style="background:#1a3a1a; margin:0; font-size:0.85rem;" onclick="window.open('https://www.youtube.com/watch?v=8H3nRCFVR6Y','_blank')">🗼 渋谷スクランブル</button>
-                        <button class="act-btn" style="background:#1a3a1a; margin:0; font-size:0.85rem;" onclick="window.open('https://www.youtube.com/watch?v=KyWkNw6nv_k','_blank')">🗼 渋谷スカイ(229m)</button>
+                        <button class="act-btn" style="background:#1a3a1a; margin:0; font-size:0.85rem;" onclick="window.open('https://www.youtube.com/watch?v=bzn2QWfOLFY','_blank')">🏮 大阪・道頓堀</button>
+                        <button class="act-btn" style="background:#1a3a1a; margin:0; font-size:0.85rem;" onclick="window.open('https://www.youtube.com/watch?v=X5rq4ioggLk','_blank')">🌸 京都・花見小路</button>
                         <button class="act-btn" style="background:#1a3a1a; margin:0; font-size:0.85rem;" onclick="window.open('https://www.youtube.com/watch?v=Sv9hcJ3k5h4','_blank')">🗻 富士山(河口湖4K)</button>
-                        <button class="act-btn" style="background:#1a3a1a; margin:0; font-size:0.85rem;" onclick="window.open('https://www.youtube.com/watch?v=GsD9QQEKSzQ','_blank')">🗻 富士山(さった峠)</button>
                     </div>
                     <div style="color:#888; font-size:0.75rem; margin-bottom:6px;">🌍 世界の都市</div>
                     <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:8px;">
@@ -365,13 +365,13 @@ function showNewsMarket() {
                         <button class="act-btn" style="background:#1a2a3a; margin:0; font-size:0.85rem;" onclick="window.open('https://www.earthtv.com/en/webcam/paris-eiffel-tower','_blank')">🗼 パリ エッフェル</button>
                         <button class="act-btn" style="background:#1a2a3a; margin:0; font-size:0.85rem;" onclick="window.open('https://london-webcam.co.uk/','_blank')">🎡 ロンドン</button>
                         <button class="act-btn" style="background:#1a2a3a; margin:0; font-size:0.85rem;" onclick="window.open('https://www.skylinewebcams.com/en/webcam/australia/new-south-wales/sydney/sydney.html','_blank')">🌉 シドニー</button>
-                        <button class="act-btn" style="background:#1a2a3a; margin:0; font-size:0.85rem;" onclick="window.open('https://www.skylinewebcams.com/en/webcam/italy/lazio/rome/colosseum.html','_blank')">🏛 ローマ</button>
+                        <button class="act-btn" style="background:#1a2a3a; margin:0; font-size:0.85rem;" onclick="window.open('https://www.youtube.com/watch?v=jXYQoWAKgFE','_blank')">🏛 ローマ・トレビの泉</button>
                         <button class="act-btn" style="background:#1a2a3a; margin:0; font-size:0.85rem;" onclick="window.open('https://www.earthcam.com/world/','_blank')">🌐 その他世界中</button>
                     </div>
                     <div style="color:#888; font-size:0.75rem; margin-bottom:6px;">🚀 特別</div>
                     <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:8px;">
-                        <button class="act-btn" style="background:#0a0a2a; margin:0; font-size:0.85rem;" onclick="window.open('https://www.youtube.com/watch?v=86YLFOog4GM','_blank')">🌏 NASA 地球ライブ</button>
-                        <button class="act-btn" style="background:#1a2a1a; margin:0; font-size:0.85rem;" onclick="window.open('https://www.youtube.com/watch?v=ZMByI4s-D-Y','_blank')">🦁 アフリカサファリ</button>
+                        <button class="act-btn" style="background:#0a0a2a; margin:0; font-size:0.85rem;" onclick="window.open('https://www.youtube.com/watch?v=vytmBNhc9ig','_blank')">🌏 NASA 地球ライブ</button>
+                        <button class="act-btn" style="background:#1a2a1a; margin:0; font-size:0.85rem;" onclick="window.open('https://www.youtube.com/watch?v=qpukdDslCjk','_blank')">🦁 アフリカサファリ</button>
                     </div>
                     <button class="act-btn" id="cam-back" style="background:#34495e;">戻る</button>
                 </div>
