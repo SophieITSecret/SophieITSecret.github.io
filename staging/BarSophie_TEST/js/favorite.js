@@ -139,15 +139,65 @@ export async function openTecho(folder = null) {
 
     if (folder === null) {
         // M1：フォルダ選択画面
-        h += `<div style="padding:20px;">
-                <button class="act-btn" id="f-mu" style="width:100%; background:var(--green); margin-bottom:15px;">🎵 お好きな歌</button>
-                <button class="act-btn" id="f-lq" style="width:100%; background:var(--talk); margin-bottom:15px;">🍷 お気に入りのお酒</button>
-                <button class="act-btn" id="f-gm" style="width:100%; background:#e67e22; margin-bottom:15px;">🎲 ソフィーとの記録</button>
-              </div>`;
-        setListView(h, false);
+
+h += `<div style="padding:20px;">
+        <button class="act-btn" id="f-mu" style="width:100%; background:var(--green); margin-bottom:15px;">🎵 お好きな歌</button>
+        <button class="act-btn" id="f-lq" style="width:100%; background:var(--talk); margin-bottom:15px;">🍷 お気に入りのお酒</button>
+        <button class="act-btn" id="f-gm" style="width:100%; background:#e67e22; margin-bottom:15px;">🎲 ソフィーとの記録</button>
+        <div style="display:flex; gap:8px; margin-top:10px;">
+            <button class="act-btn" id="f-backup" style="flex:1; background:#1a1a1a; color:#888; border:1px solid #333; font-size:0.85rem; margin:0;">📤 バックアップ</button>
+            <button class="act-btn" id="f-restore" style="flex:1; background:#1a1a1a; color:#888; border:1px solid #333; font-size:0.85rem; margin:0;">📥 復元</button>
+        </div>
+      </div>`;
+
+setListView(h, false);
         document.getElementById('f-mu').onclick = () => openTecho('S');
         document.getElementById('f-lq').onclick = () => openTecho('L');
         document.getElementById('f-gm').onclick = () => openTecho('G');
+        document.getElementById('f-backup').onclick = () => {
+            const data = getTechoData();
+            const text = JSON.stringify(data);
+            navigator.clipboard.writeText(text).then(() => {
+                alert('クリップボードにコピーしました。メモアプリに貼り付けて保存してください。');
+            }).catch(() => {
+                const ta = document.createElement('textarea');
+                ta.value = text;
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand('copy');
+                document.body.removeChild(ta);
+                alert('クリップボードにコピーしました。メモアプリに貼り付けて保存してください。');
+            });
+        };
+        document.getElementById('f-restore').onclick = () => {
+            const lv = document.getElementById('list-view');
+            const restoreHtml = `
+                <div class="label" style="background:#333;">📥 復元</div>
+                <div style="padding:15px;">
+                    <div style="color:#aaa; font-size:0.85rem; margin-bottom:10px;">
+                        バックアップしたテキストを貼り付けてください
+                    </div>
+                    <textarea id="restore-input" style="width:100%; height:120px; background:#000; color:#fff; border:1px solid #555; border-radius:4px; padding:8px; font-size:0.85rem;"></textarea>
+                    <div style="display:flex; gap:8px; margin-top:10px;">
+                        <button class="act-btn" id="restore-cancel" style="flex:1; background:#34495e; margin:0;">キャンセル</button>
+                        <button class="act-btn" id="restore-ok" style="flex:1; background:#8e1a2e; margin:0;">復元する</button>
+                    </div>
+                </div>`;
+            if (lv) { lv.style.display = 'block'; lv.innerHTML = restoreHtml; }
+            document.getElementById('restore-cancel').onclick = () => openTecho(null);
+            document.getElementById('restore-ok').onclick = () => {
+                try {
+                    const text = document.getElementById('restore-input').value.trim();
+                    const parsed = JSON.parse(text);
+                    if (!parsed.favorites) throw new Error('データが正しくありません');
+                    saveTechoData(parsed);
+                    alert('復元しました！');
+                    openTecho(null);
+                } catch(e) {
+                    alert('復元に失敗しました。テキストを確認してください。');
+                }
+            };
+        };
         return;
     }
 
