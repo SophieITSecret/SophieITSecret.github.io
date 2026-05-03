@@ -201,8 +201,11 @@ export async function openTecho(folder = null) {
         }
     }
 setListView(h, false);
-    const plBtn = document.getElementById('f-playlist');
-    if (plBtn) plBtn.onclick = () => openPlaylistMenu();
+const plBtn = document.getElementById('f-playlist');
+if (plBtn) plBtn.onclick = () => openPlaylistView();
+const plEditBtn = document.getElementById('f-playlist-edit');
+if (plEditBtn) plEditBtn.onclick = () => openPlaylistMenu();
+
     document.querySelectorAll('.fav-item').forEach(el => {
         if (el.classList.contains('music-row')) {
             el.querySelector('.fav-music-del').onclick = (e) => { e.stopPropagation(); toggleFavorite(el.dataset.id); openTecho(folder); };
@@ -214,6 +217,65 @@ setListView(h, false);
         }
         el.onclick = () => { if (el.classList.contains('lq-fav') && lq) lq.showCardById(el.dataset.id); };
     });
+}
+
+function openPlaylistView() {
+    const data = getTechoData();
+    const playlists = data.playlists.length > 0 ? data.playlists :
+        Array.from({length: 5}, (_, i) => ({ name: `リスト${i+1}`, songs: [] }));
+    while (playlists.length < 5) {
+        playlists.push({ name: `リスト${playlists.length + 1}`, songs: [] });
+    }
+
+    let h = `<div class="label" style="background:#1a3a4a;">📋 マイプレイリスト</div>`;
+    playlists.forEach((pl, i) => {
+        if (pl.songs.length > 0) {
+            h += `<div class="item plv-item" data-idx="${i}" style="padding:0.4em 15px;">
+                    <div style="color:#eee;">${pl.name}</div>
+                    <div style="color:#888; font-size:0.8rem;">${pl.songs.length}曲</div>
+                  </div>`;
+        } else {
+            h += `<div class="item" style="padding:0.4em 15px; color:#555;">${pl.name}（空）</div>`;
+        }
+    });
+    h += `<div class="item" id="plv-back" style="color:#888; padding:0.4em 15px;">◀ 戻る</div>`;
+    setListView(h, false);
+
+    document.querySelectorAll('.plv-item').forEach(el => {
+        el.onclick = () => openPlaylistPlayView(parseInt(el.dataset.idx));
+    });
+    document.getElementById('plv-back').onclick = () => openTecho('S');
+}
+
+function openPlaylistPlayView(idx) {
+    const data = getTechoData();
+    const pl = data.playlists[idx];
+    if (!pl) return;
+
+    const songs = pl.songs.map(code =>
+        nav.jData.find(d => parseInt(d.code, 10) === parseInt(code, 10))
+    ).filter(Boolean);
+
+    let h = `<div class="label" style="background:#1a3a4a;">📋 ${pl.name}</div>`;
+    h += `<div style="padding:8px 15px;">
+            <button class="act-btn" id="plv-play-all" style="background:#1a5276; width:100%; margin:0;">▶ 最初から再生（${songs.length}曲）</button>
+          </div>`;
+    songs.forEach((m, i) => {
+        h += `<div class="item plv-song" data-idx="${i}" style="padding:0.2em 15px; color:#eee;">🎵 ${m.ti}</div>`;
+    });
+    h += `<div class="item" id="plv-back2" style="color:#888; padding:0.4em 15px;">◀ 戻る</div>`;
+    setListView(h, false);
+
+    document.getElementById('plv-play-all').onclick = () => {
+        import('./music.js').then(m => m.startAutoPlay(songs, 0));
+    };
+    document.querySelectorAll('.plv-song').forEach(el => {
+        el.onclick = () => {
+            const startIdx = parseInt(el.dataset.idx);
+            import('./music.js').then(m => m.startAutoPlay(songs, startIdx));
+        };
+    });
+    document.getElementById('plv-back2').onclick = () => openPlaylistView();
 }
 
 function openPlaylistMenu() {
@@ -280,10 +342,11 @@ function openPlaylist(idx) {
     
     // 連続再生ボタン
     if (pl.songs.length > 0) {
-        h += `<div style="padding:8px 15px;">
-                <button class="act-btn" id="pl-play-all" style="background:#1a5276; width:100%; margin:0;">🔁 連続再生（${pl.songs.length}曲）</button>
-              </div>`;
-    }
+        h += `<div style="padding:8px 15px; display:flex; gap:8px;">
+        <button class="act-btn" id="f-playlist" style="background:#1a3a4a; border:1px solid #00d2ff; flex:1; margin:0;">📋 マイプレイリスト</button>
+        <button class="act-btn" id="f-playlist-edit" style="background:#1a1a1a; border:1px solid #555; width:44px; margin:0; font-size:1.2rem;">✏️</button>
+         </div>`;
+        }
 
     // リスト内の曲
     if (pl.songs.length > 0) {
