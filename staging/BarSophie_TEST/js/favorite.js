@@ -167,7 +167,6 @@ export async function openTecho(folder = null) {
             }
         });
     } else if (folder === 'S') {
-        } else if (folder === 'S') {
     h += `<div style="padding:8px 15px;">
             <button class="act-btn" id="f-playlist" style="background:#1a3a4a; border:1px solid #00d2ff; width:100%; margin:0;">📋 マイプレイリスト</button>
           </div>`;
