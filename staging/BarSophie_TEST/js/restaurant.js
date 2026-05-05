@@ -2,22 +2,33 @@
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbwA1C22UhKroCFC_EPC-ugR5efyXVHlbkWywfD21HfD3-J4vm-b4ZjvIshO-i3fKk9W/exec';
 
 function formatResult(text) {
-    // 候補タイトルから店名を抽出してボタンを付ける
-    text = text.replace(/##\s*【第[12]候補】(.+)/g, (match, name) => {
-        const storeName = name.trim();
-        const escaped = storeName.replace(/'/g, "\\'");
-        const btn = `<button onclick="navigator.clipboard.writeText('${escaped}').then(()=>{alert('「${escaped}」をコピーしました。食べログの検索窓に貼り付けてください。'); window.open('https://tabelog.com/tokyo/A1320/A132001/rstLst/?vs=1&sk=${encodeURIComponent(storeName)}','_blank');}).catch(()=>window.open('https://tabelog.com/','_blank'));" style="background:#1a3a2a;color:#7fd97f;border:1px solid #3a6a4a;padding:2px 10px;border-radius:4px;font-size:0.75rem;margin-left:6px;cursor:pointer;">📖 食べログで検索</button>`;
-        return `<strong>【第1候補】${storeName}</strong>${btn}`.replace('【第1候補】', match.includes('第1') ? '【第1候補】' : '【第2候補】');
-    });
+    // 検索中の独り言を除去（最初の「いらっしゃいませ」より前）
+    const startIdx = text.search(/いらっしゃいませ|こんばんは|ありがとうございます。吉祥/);
+    if (startIdx > 0) text = text.slice(startIdx);
 
+    // 食べログURLを除去
     text = text
-        .replace(/^-{2,}$/gm, '')
-        .replace(/^\*{1,2}$/gm, '')
-        .replace(/https?:\/\/tabelog\.com\/[^\s<\n]*/g, '')
-        .replace(/食べログURL[：:]\s*/g, '')
+        .replace(/食べログURL[：:]\s*\n?https?:\/\/[^\s\n]*/g, '')
+        .replace(/https?:\/\/tabelog\.com\/[^\s\n]*/g, '');
+
+    // 第1・第2候補タイトルにボタンを付ける
+    text = text.replace(/([\u{1F000}-\u{1FFFF}]|🍲|🍽|🥢|🍜|🍣|🍷|⭐|📍)\s*(第[12]候補[^\n]*)/gu,
+        (match, emoji, title) => {
+            const nameMatch = title.match(/候補\s*(.+)/);
+            const storeName = nameMatch ? nameMatch[1].trim() : title.trim();
+            const escaped = storeName.replace(/'/g, "\\'");
+            const encoded = encodeURIComponent(storeName);
+            const btn = `<button onclick="navigator.clipboard.writeText('${escaped}').then(()=>{window.open('https://tabelog.com/rstLst/RST/?vs=1&sk=${encoded}','_blank'); alert('「${escaped}」をコピーしました。食べログの検索窓に貼り付けてください。');}).catch(()=>window.open('https://tabelog.com/','_blank'));" style="background:#1a3a2a;color:#7fd97f;border:1px solid #3a6a4a;padding:2px 10px;border-radius:4px;font-size:0.75rem;margin-left:6px;cursor:pointer;">📖 食べログで検索</button>`;
+            return `<strong>${emoji} ${title}</strong>${btn}`;
+        });
+
+    // Markdown整形
+    text = text
+        .replace(/##\s*/g, '')
         .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
         .replace(/。\n/g, '。')
         .replace(/\n{2,}/g, '\n')
+        .replace(/^-{2,}$/gm, '')
         .trim();
 
     return text.replace(/\n/g, '<br>');
