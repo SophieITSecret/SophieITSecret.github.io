@@ -21,12 +21,12 @@ function formatResult(text) {
     text = text.replace(/([^\n。！？])\n([^\n#*\-])/g, '$1$2');
 
     // ## 第1候補：店名 にボタンを付ける
-    text = text.replace(/##\s*(第[12１２]候補[：:]\s*)(.+)/g, (match, prefix, name) => {
+    text = text.replace(/##\s*[【]?(第[12１２]候補)[】]?[：:\s]*(.+)/g, (match, p0, prefix, name) => {
     const storeName = name.trim();
     const escaped = storeName.replace(/'/g, "\\'");
     const encoded = encodeURIComponent(storeName);
     const btn = `<button onclick="navigator.clipboard.writeText('${escaped}').then(()=>{window.open('https://tabelog.com/rstLst/RST/?vs=1&sk=${encoded}','_blank');alert('「${escaped}」をコピーしました。食べログの検索窓に貼り付けてください。');}).catch(()=>window.open('https://tabelog.com/','_blank'));" style="background:#1a3a2a;color:#7fd97f;border:1px solid #3a6a4a;padding:2px 10px;border-radius:4px;font-size:0.75rem;margin-left:6px;cursor:pointer;">📖 食べログで検索</button>`;
-    return `<strong>◆${prefix}${storeName}</strong>${btn}`;
+    return `<strong>◆${prefix}：${storeName}</strong>${btn}`;
     });
 
     // **太字** を変換
