@@ -429,7 +429,7 @@ function showNewsMarket() {
         document.getElementById('mkt-nk').onclick  = () => { const cw=document.getElementById('chart-wrapper'); if(cw) cw.innerHTML=''; showChart('FOREXCOM:JP225'); };
         document.getElementById('mkt-fx').onclick  = () => { const cw=document.getElementById('chart-wrapper'); if(cw) cw.innerHTML=''; showChart('FX:USDJPY'); };
         document.getElementById('mkt-oil').onclick = () => { const cw=document.getElementById('chart-wrapper'); if(cw) cw.innerHTML=''; showChart('TVC:USOIL'); };
-        document.getElementById('mkt-spx').onclick = () => { const cw=document.getElementById('chart-wrapper'); if(cw) cw.innerHTML=''; showChart('SP:SPX'); };
+        document.getElementById('mkt-spx').onclick = () => { const cw=document.getElementById('chart-wrapper'); if(cw) cw.innerHTML=''; showChart('CAPITALCOM:US500'); };
 
         document.getElementById('nm-search').onclick = () => {
             const code = document.getElementById('nm-code').value.trim();
