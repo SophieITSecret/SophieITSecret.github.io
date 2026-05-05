@@ -2,37 +2,40 @@
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbwA1C22UhKroCFC_EPC-ugR5efyXVHlbkWywfD21HfD3-J4vm-b4ZjvIshO-i3fKk9W/exec';
 
 function formatResult(text) {
-    console.log('RAW2:', JSON.stringify(text));
-    // 検索中の独り言を除去（最初の「いらっしゃいませ」より前）
-    const startIdx = text.search(/いらっしゃいませ|こんばんは|ありがとうございます。吉祥/);
+    // 検索中の独り言を除去
+    const startIdx = text.search(/こんばんは|いらっしゃいませ|さわやかなソフィー|ソフィーです。/);
     if (startIdx > 0) text = text.slice(startIdx);
 
     // 食べログURLを除去
-    text = text
-        .replace(/食べログURL[：:]\s*\n?https?:\/\/[^\s\n]*/g, '')
-        .replace(/https?:\/\/tabelog\.com\/[^\s\n]*/g, '');
+    text = text.replace(/食べログURL\s*\n?\s*https?:\/\/[^\s\n]*/g, '');
+    text = text.replace(/https?:\/\/tabelog\.com\/[^\s\n]*/g, '');
 
-    // 第1・第2候補タイトルにボタンを付ける
-    text = text.replace(/([\u{1F000}-\u{1FFFF}]|🍲|🍽|🥢|🍜|🍣|🍷|⭐|📍)\s*(第[12]候補[^\n]*)/gu,
-        (match, emoji, title) => {
-            const nameMatch = title.match(/候補\s*(.+)/);
-            const storeName = nameMatch ? nameMatch[1].trim() : title.trim();
-            const escaped = storeName.replace(/'/g, "\\'");
-            const encoded = encodeURIComponent(storeName);
-            const btn = `<button onclick="navigator.clipboard.writeText('${escaped}').then(()=>{window.open('https://tabelog.com/rstLst/RST/?vs=1&sk=${encoded}','_blank'); alert('「${escaped}」をコピーしました。食べログの検索窓に貼り付けてください。');}).catch(()=>window.open('https://tabelog.com/','_blank'));" style="background:#1a3a2a;color:#7fd97f;border:1px solid #3a6a4a;padding:2px 10px;border-radius:4px;font-size:0.75rem;margin-left:6px;cursor:pointer;">📖 食べログで検索</button>`;
-            return `<strong>${emoji} ${title}</strong>${btn}`;
-        });
+    // --- を除去
+    text = text.replace(/^-{2,}$/gm, '');
 
-    // Markdown整形
-    text = text
-        .replace(/##\s*/g, '')
-        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-        .replace(/。\n/g, '。')
-        .replace(/\n{2,}/g, '\n')
-        .replace(/^-{2,}$/gm, '')
-        .trim();
+    // 項目名の後の余分な空白行を除去（**店舗名**\n\nBAR → **店舗名** BAR）
+    text = text.replace(/(\*\*[^*]+\*\*)\s*\n+\s*\n+/g, '$1\n');
+    text = text.replace(/(\*\*[^*]+\*\*)[ \t]+\n/g, '$1\n');
 
-    return text.replace(/\n/g, '<br>');
+    // 途中の不自然な改行を除去（文中の\nを空白に）
+    text = text.replace(/([^\n。！？])\n([^\n#*\-])/g, '$1$2');
+
+    // ## 第1候補：店名 にボタンを付ける
+    text = text.replace(/##\s*(第[12]候補[：:]\s*)(.+)/g, (match, prefix, name) => {
+        const storeName = name.trim();
+        const escaped = storeName.replace(/'/g, "\\'");
+        const encoded = encodeURIComponent(storeName);
+        const btn = `<button onclick="navigator.clipboard.writeText('${escaped}').then(()=>{window.open('https://tabelog.com/rstLst/RST/?vs=1&sk=${encoded}','_blank');alert('「${escaped}」をコピーしました。食べログの検索窓に貼り付けてください。');}).catch(()=>window.open('https://tabelog.com/','_blank'));" style="background:#1a3a2a;color:#7fd97f;border:1px solid #3a6a4a;padding:2px 10px;border-radius:4px;font-size:0.75rem;margin-left:6px;cursor:pointer;">📖 食べログで検索</button>`;
+        return `<strong>${prefix}${storeName}</strong>${btn}`;
+    });
+
+    // **太字** を変換
+    text = text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+
+    // 連続空行を1行に
+    text = text.replace(/\n{2,}/g, '\n');
+
+    return text.trim().replace(/\n/g, '<br>');
 }
 
 export function showRestaurantSearch() {
