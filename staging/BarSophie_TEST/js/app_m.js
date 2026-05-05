@@ -348,7 +348,7 @@ function showNewsMarket() {
     if (lv) { lv.style.display = 'block'; lv.innerHTML = mainHtml; }
 
     document.getElementById('nm-ann').onclick = () => showYoutube('coYw-eVU0Ks');
-    document.getElementById('nm-weather').onclick = () => window.open('https://www.youtube.com/c/weathernews/live', '_blank');
+    document.getElementById('nm-weather').onclick = () => window.open('https://www.youtube.com/channel/UCNsidkYpIAQ4QaufptQBPHQ/live', '_blank');
     document.getElementById('nm-back').onclick = () => showRootMenu();
 
     document.getElementById('nm-camera').onclick = () => {
