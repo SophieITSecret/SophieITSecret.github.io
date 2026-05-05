@@ -2,6 +2,7 @@
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbwA1C22UhKroCFC_EPC-ugR5efyXVHlbkWywfD21HfD3-J4vm-b4ZjvIshO-i3fKk9W/exec';
 
 function formatResult(text) {
+    console.log('RAW:', text);
     text = text
         .replace(/^-{2,}$/gm, '')
         .replace(/^\*{1,2}$/gm, '')
