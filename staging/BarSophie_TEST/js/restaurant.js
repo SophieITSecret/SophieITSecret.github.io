@@ -11,7 +11,11 @@ function formatResult(text) {
     text = text.replace(/https?:\/\/tabelog\.com\/[^\s\n]*/g, '');
 
     // --- を除去
+    // 余計な注釈を除去
+    text = text.replace(/（\d+字以内）/g, '');
+    text = text.replace(/\(\d+字以内\)/g, '');
     text = text.replace(/^-{2,}$/gm, '');
+    text = text.replace(/^#{2,}\s*/gm, '');
 
     // 項目名の後の余分な空白行を除去（**店舗名**\n\nBAR → **店舗名** BAR）
     text = text.replace(/(\*\*[^*]+\*\*)\s*\n+\s*\n+/g, '$1\n');
@@ -28,7 +32,8 @@ function formatResult(text) {
     const btn = `<button onclick="navigator.clipboard.writeText('${escaped}').then(()=>{window.open('https://tabelog.com/rstLst/RST/?vs=1&sk=${encoded}','_blank');alert('「${escaped}」をコピーしました。食べログの検索窓に貼り付けてください。');}).catch(()=>window.open('https://tabelog.com/','_blank'));" style="background:#1a3a2a;color:#7fd97f;border:1px solid #3a6a4a;padding:2px 10px;border-radius:4px;font-size:0.75rem;margin-left:6px;cursor:pointer;">📖 食べログで検索</button>`;
     return `<strong>◆${prefix}：${storeName}</strong>${btn}`;
     });
-
+    // 項目名の後にスペースを入れる
+    text = text.replace(/(\*\*[^*]+\*\*)([^\s<\n])/g, '$1 $2');
     // **太字** を変換
     text = text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
 
