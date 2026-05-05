@@ -2,11 +2,21 @@
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbwA1C22UhKroCFC_EPC-ugR5efyXVHlbkWywfD21HfD3-J4vm-b4ZjvIshO-i3fKk9W/exec';
 
 function formatResult(text) {
+    // 食べログURLを店名検索ボタンに置換
+    text = text.replace(/食べログURL[\s\S]*?https?:\/\/tabelog\.com\/[^\s\n]+/g, '');
+    
+    // 店舗名を抽出して食べログ検索ボタンを生成
+    text = text.replace(/・店舗名[：:]\s*(.+)/g, (match, name) => {
+        const q = encodeURIComponent(name.trim());
+        return `・店舗名：${name.trim()} <a href="https://tabelog.com/rst/search/keyword=${q}/" target="_blank" style="display:inline-block; background:#1a3a2a; color:#7fd97f; border:1px solid #3a6a4a; padding:2px 10px; border-radius:4px; font-size:0.75rem; margin-left:6px;">食べログで検索</a>`;
+    });
+
     return text
         .replace(/##\s*/g, '')
         .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
         .replace(/\n{3,}/g, '\n\n')
-        .replace(/https?:\/\/[^\s]+/g, url => `<a href="${url}" target="_blank" style="color:#00d2ff; word-break:break-all;">${url}</a>`)
+        .replace(/https?:\/\/[^\s<]+/g, url =>
+            `<a href="${url}" target="_blank" style="color:#00d2ff; word-break:break-all;">${url}</a>`)
         .replace(/\n/g, '<br>');
 }
 
