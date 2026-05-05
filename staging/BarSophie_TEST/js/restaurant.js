@@ -2,6 +2,7 @@
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbwA1C22UhKroCFC_EPC-ugR5efyXVHlbkWywfD21HfD3-J4vm-b4ZjvIshO-i3fKk9W/exec';
 
 function formatResult(text) {
+    console.log('RAW2:', JSON.stringify(text));
     // 検索中の独り言を除去（最初の「いらっしゃいませ」より前）
     const startIdx = text.search(/いらっしゃいませ|こんばんは|ありがとうございます。吉祥/);
     if (startIdx > 0) text = text.slice(startIdx);
