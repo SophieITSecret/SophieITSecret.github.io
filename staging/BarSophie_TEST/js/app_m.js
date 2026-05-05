@@ -262,7 +262,7 @@ function showSophieMenu() {
             </div>
         </div>`;
 
-    if (lv) { lv.style.display = 'block'; lv.innerHTML = menuHtml; }
+if (lv) { lv.style.display = 'block'; lv.innerHTML = menuHtml; }
     if (nm) nm.style.display = 'none';
 
     document.getElementById('sm-restaurant').onclick = () => {
