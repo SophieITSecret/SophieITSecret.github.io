@@ -149,8 +149,8 @@ export function showRestaurantSearch() {
 第1候補と第2候補を推薦。各店舗：
 ・店舗名
 ・住所・アクセス
-・概容（60字以内）
-・選定理由（120字以内）
+・概容（括弧や字数指定は書かずに60字程度で）
+・選定理由（括弧や字数指定は書かずに120字程度で）
 ・ディナー予算目安
 ・食べログURL（実在するもののみ）
 
@@ -186,7 +186,9 @@ export function showRestaurantSearch() {
 
             if (lv) { lv.innerHTML = resultHtml; }
 
-            document.getElementById('rs-retry').onclick = () => showRestaurantSearch();
+            document.getElementById('rs-retry').onclick = () => showRestaurantSearch(
+    document.getElementById('rs-area') ? document.getElementById('rs-area').value : ''
+);
             document.getElementById('rs-done').onclick = () => {
                 if (lv) { lv.style.display = prevDisplay; lv.innerHTML = prevHtml; }
                 if (nm) nm.style.display = prevNm;
