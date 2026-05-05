@@ -477,7 +477,7 @@ function showNewsMarket() {
         if (lv) { lv.style.display = 'block'; lv.innerHTML = html; }
         document.getElementById('news-back').onclick = () => showNewsMarket();
     };
-🏛 
+
     document.getElementById('nm-useful').onclick = () => {
         const html = `
             <div style="margin:10px; border-radius:10px; border:2px solid transparent;
@@ -489,7 +489,7 @@ function showNewsMarket() {
                 <div style="padding:10px;">
                     <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:8px;">
                         <button class="act-btn" style="background:#1a2a3a; margin:0; font-size:0.85rem;" onclick="window.open('https://www.flightradar24.com','_blank')">✈️ フライトレーダー</button>
-                        <button class="act-btn" style="background:#1a2a3a; margin:0; font-size:0.85rem;" onclick="window.open('https://artscape.jp/exhibition/','_blank')"イベント情報</button>
+                        <button class="act-btn" style="background:#1a2a3a; margin:0; font-size:0.85rem;" onclick="window.open('https://artscape.jp/exhibition/','_blank')">🏛 イベント情報</button>
                         <button class="act-btn" style="background:#1a2a3a; margin:0; font-size:0.85rem;" onclick="window.open('https://tabelog.com','_blank')">🍽 食べログ</button>
                         <button class="act-btn" style="background:#1a2a3a; margin:0; font-size:0.85rem;" onclick="window.open('https://www.jma.go.jp/bosai/','_blank')">📡 気象庁防災情報</button>
                     </div>
