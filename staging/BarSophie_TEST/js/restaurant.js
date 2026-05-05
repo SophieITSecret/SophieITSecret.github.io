@@ -1,12 +1,35 @@
 // js/restaurant.js
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbwA1C22UhKroCFC_EPC-ugR5efyXVHlbkWywfD21HfD3-J4vm-b4ZjvIshO-i3fKk9W/exec';
 
+function formatResult(text) {
+    return text
+        .replace(/##\s*/g, '')
+        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\n{3,}/g, '\n\n')
+        .replace(/https?:\/\/[^\s]+/g, url => `<a href="${url}" target="_blank" style="color:#00d2ff; word-break:break-all;">${url}</a>`)
+        .replace(/\n/g, '<br>');
+}
+
 export function showRestaurantSearch() {
     const lv = document.getElementById('list-view');
     const nm = document.getElementById('nav-main');
     const prevHtml = lv ? lv.innerHTML : '';
     const prevDisplay = lv ? lv.style.display : 'none';
     const prevNm = nm ? nm.style.display : 'none';
+
+    const row = (label, id, placeholder, type = 'input') => `
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+            <div style="color:#aaa; font-size:0.75rem; min-width:48px; text-align:right; flex-shrink:0;">${label}</div>
+            ${type === 'input'
+                ? `<input type="text" id="${id}" placeholder="${placeholder}"
+                    style="flex:1; background:#000; border:1px solid #555; color:#fff;
+                           height:38px; padding:0 10px; border-radius:4px; font-size:0.85rem;">`
+                : `<textarea id="${id}" rows="2" placeholder="${placeholder}"
+                    style="flex:1; background:#000; border:1px solid #555; color:#fff;
+                           padding:6px 10px; border-radius:4px; font-size:0.85rem;
+                           resize:none; font-family:inherit;"></textarea>`
+            }
+        </div>`;
 
     const formHtml = `
         <div style="margin:10px; border-radius:10px; border:2px solid transparent;
@@ -19,39 +42,23 @@ export function showRestaurantSearch() {
                 いいお店を探す
             </div>
             <div style="padding:10px;">
-                <div style="margin-bottom:8px;">
-                    <div style="color:#aaa; font-size:0.75rem; margin-bottom:4px;">エリア（市区町村・駅名）</div>
-                    <input type="text" id="rs-area" placeholder="例：吉祥寺、三鷹駅周辺"
-                        style="width:100%; background:#000; border:1px solid #555; color:#fff;
-                               height:40px; padding:0 10px; border-radius:4px; font-size:0.9rem;">
-                </div>
-                <div style="margin-bottom:8px;">
-                    <div style="color:#aaa; font-size:0.75rem; margin-bottom:4px;">ジャンル</div>
-                    <input type="text" id="rs-genre" placeholder="例：イタリアン、居酒屋、何でも"
-                        style="width:100%; background:#000; border:1px solid #555; color:#fff;
-                               height:40px; padding:0 10px; border-radius:4px; font-size:0.9rem;">
-                </div>
-                <div style="margin-bottom:8px;">
-                    <div style="color:#aaa; font-size:0.75rem; margin-bottom:4px;">予算感</div>
-                    <div style="display:flex; gap:6px;">
+                ${row('エリア', 'rs-area', '吉祥寺、三鷹駅周辺')}
+                ${row('ジャンル', 'rs-genre', 'イタリアン、居酒屋、何でも')}
+                <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+                    <div style="color:#aaa; font-size:0.75rem; min-width:48px; text-align:right; flex-shrink:0;">予算感</div>
+                    <div style="display:flex; gap:4px; flex:1;">
                         <button class="rs-budget" data-val="コスパ重視"
                             style="flex:1; background:#1a1a1a; color:#888; border:1px solid #444;
-                                   height:36px; border-radius:4px; font-size:0.8rem;">コスパ重視</button>
+                                   height:36px; border-radius:4px; font-size:0.75rem;">コスパ重視</button>
                         <button class="rs-budget" data-val="リーズナブル"
                             style="flex:1; background:#1a1a1a; color:#888; border:1px solid #444;
-                                   height:36px; border-radius:4px; font-size:0.8rem;">リーズナブル</button>
+                                   height:36px; border-radius:4px; font-size:0.75rem;">リーズナブル</button>
                         <button class="rs-budget" data-val="予算は気にしない"
                             style="flex:1; background:#1a1a1a; color:#888; border:1px solid #444;
-                                   height:36px; border-radius:4px; font-size:0.8rem; line-height:1.2;">予算は<br>気にしない</button>
+                                   height:36px; border-radius:4px; font-size:0.75rem; line-height:1.2;">予算は<br>気にしない</button>
                     </div>
                 </div>
-                <div style="margin-bottom:10px;">
-                    <div style="color:#aaa; font-size:0.75rem; margin-bottom:4px;">こだわり・希望・雰囲気など</div>
-                    <textarea id="rs-point" rows="2" placeholder="例：静かで落ち着ける、ワインが充実、一人でも入りやすい"
-                        style="width:100%; background:#000; border:1px solid #555; color:#fff;
-                               padding:8px 10px; border-radius:4px; font-size:0.85rem;
-                               resize:none; font-family:inherit;"></textarea>
-                </div>
+                ${row('こだわり', 'rs-point', '静かで落ち着ける、ワインが充実、デート向き', 'textarea')}
                 <button id="rs-search" style="width:100%; background:#0096BF; color:#ff69b4;
                     border:2px solid #ff51a8; height:44px; border-radius:4px;
                     font-size:0.95rem; font-weight:bold; margin-bottom:8px;">
@@ -134,7 +141,7 @@ export function showRestaurantSearch() {
                         <img src="./sophie_face.png" style="width:20px; height:20px; border-radius:50%; object-fit:cover;">
                         ソフィーのおすすめ
                     </div>
-                    <div style="padding:12px; color:#ddd; font-size:0.85rem; line-height:1.7; white-space:pre-wrap;">${data.ok ? data.text : 'エラーが発生しました。もう一度お試しください。'}</div>
+                    <div style="padding:12px; color:#ddd; font-size:0.85rem; line-height:1.8;">${data.ok ? formatResult(data.text) : 'エラーが発生しました。もう一度お試しください。'}</div>
                     <div style="padding:0 10px 10px;">
                         <button id="rs-retry" style="width:100%; background:#1a3a2a; color:#7fd97f;
                             border:1px solid #3a6a4a; height:40px; border-radius:4px;
