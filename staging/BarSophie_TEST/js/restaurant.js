@@ -2,26 +2,32 @@
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbwA1C22UhKroCFC_EPC-ugR5efyXVHlbkWywfD21HfD3-J4vm-b4ZjvIshO-i3fKk9W/exec';
 
 function formatResult(text) {
-    // 不要な記号を除去
     text = text
-        .replace(/^---+$/gm, '')
-        .replace(/^\*\*$/gm, '')
-        .replace(/##\s*/g, '')
-        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-        .replace(/https?:\/\/tabelog\.com\/[^\s<\n]+/g, '')
+        .replace(/^-{2,}$/gm, '')
+        .replace(/^\*{1,2}$/gm, '')
+        .replace(/^#{1,3}\s*/gm, '')
+        .replace(/https?:\/\/tabelog\.com\/[^\s<\n]*/g, '')
         .replace(/食べログURL[：:]\s*/g, '')
         .replace(/\n{3,}/g, '\n\n')
         .trim();
 
-    // 店舗名を抽出して食べログ検索ボタンを付加
-    text = text.replace(/(店舗名[：:]\s*)(.+)/g, (match, label, name) => {
-        const q = encodeURIComponent(name.trim());
-        const btn = `<a href="https://tabelog.com/rstLst/RST/?vs=1&sa=${q}&sk=${q}" target="_blank"
-            style="display:inline-block; background:#1a3a2a; color:#7fd97f;
-            border:1px solid #3a6a4a; padding:2px 10px; border-radius:4px;
-            font-size:0.75rem; margin-left:6px; text-decoration:none;">📖 食べログで検索</a>`;
-        return `${label}<strong>${name.trim()}</strong>${btn}`;
-    });
+    text = text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+
+    text = text.replace(/(店舗名[：:]\s*)(<strong>)?([^<\n]+?)(<\/strong>)?(\s*<br>|$)/g,
+        (match, label, s1, name, s2, end) => {
+            const storeName = name.trim();
+            const btn = `<button onclick="
+                navigator.clipboard.writeText('${storeName.replace(/'/g, "\\'")}')
+                .then(() => { 
+                    window.open('https://tabelog.com/rstLst/RST/?vs=1&sa=${encodeURIComponent('吉祥寺')}&sk=', '_blank');
+                    alert('「${storeName.replace(/'/g, "\\'")}」をコピーしました。食べログの検索窓に貼り付けてください。');
+                })
+                .catch(() => window.open('https://tabelog.com/', '_blank'));"
+                style="background:#1a3a2a; color:#7fd97f; border:1px solid #3a6a4a;
+                padding:2px 10px; border-radius:4px; font-size:0.75rem;
+                margin-left:6px; cursor:pointer;">📖 食べログで検索</button>`;
+            return `${label}<strong>${storeName}</strong>${btn}${end}`;
+        });
 
     return text.replace(/\n/g, '<br>');
 }
