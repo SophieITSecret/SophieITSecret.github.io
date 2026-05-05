@@ -2,33 +2,23 @@
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbwA1C22UhKroCFC_EPC-ugR5efyXVHlbkWywfD21HfD3-J4vm-b4ZjvIshO-i3fKk9W/exec';
 
 function formatResult(text) {
-    console.log('RAW:', text);
+    // 候補タイトルから店名を抽出してボタンを付ける
+    text = text.replace(/##\s*【第[12]候補】(.+)/g, (match, name) => {
+        const storeName = name.trim();
+        const escaped = storeName.replace(/'/g, "\\'");
+        const btn = `<button onclick="navigator.clipboard.writeText('${escaped}').then(()=>{alert('「${escaped}」をコピーしました。食べログの検索窓に貼り付けてください。'); window.open('https://tabelog.com/tokyo/A1320/A132001/rstLst/?vs=1&sk=${encodeURIComponent(storeName)}','_blank');}).catch(()=>window.open('https://tabelog.com/','_blank'));" style="background:#1a3a2a;color:#7fd97f;border:1px solid #3a6a4a;padding:2px 10px;border-radius:4px;font-size:0.75rem;margin-left:6px;cursor:pointer;">📖 食べログで検索</button>`;
+        return `<strong>【第1候補】${storeName}</strong>${btn}`.replace('【第1候補】', match.includes('第1') ? '【第1候補】' : '【第2候補】');
+    });
+
     text = text
         .replace(/^-{2,}$/gm, '')
         .replace(/^\*{1,2}$/gm, '')
-        .replace(/^#{1,3}\s*/gm, '')
         .replace(/https?:\/\/tabelog\.com\/[^\s<\n]*/g, '')
         .replace(/食べログURL[：:]\s*/g, '')
-        .replace(/\n{3,}/g, '\n\n')
+        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+        .replace(/。\n/g, '。')
+        .replace(/\n{2,}/g, '\n')
         .trim();
-
-    text = text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-
-    text = text.replace(/(店舗名[：:]\s*)(<strong>)?([^<\n]+?)(<\/strong>)?(\s*<br>|$)/g,
-        (match, label, s1, name, s2, end) => {
-            const storeName = name.trim();
-            const btn = `<button onclick="
-                navigator.clipboard.writeText('${storeName.replace(/'/g, "\\'")}')
-                .then(() => { 
-                    window.open('https://tabelog.com/rstLst/RST/?vs=1&sa=${encodeURIComponent('吉祥寺')}&sk=', '_blank');
-                    alert('「${storeName.replace(/'/g, "\\'")}」をコピーしました。食べログの検索窓に貼り付けてください。');
-                })
-                .catch(() => window.open('https://tabelog.com/', '_blank'));"
-                style="background:#1a3a2a; color:#7fd97f; border:1px solid #3a6a4a;
-                padding:2px 10px; border-radius:4px; font-size:0.75rem;
-                margin-left:6px; cursor:pointer;">📖 食べログで検索</button>`;
-            return `${label}<strong>${storeName}</strong>${btn}${end}`;
-        });
 
     return text.replace(/\n/g, '<br>');
 }
