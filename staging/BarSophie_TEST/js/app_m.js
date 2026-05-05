@@ -265,7 +265,9 @@ function showSophieMenu() {
     if (lv) { lv.style.display = 'block'; lv.innerHTML = menuHtml; }
     if (nm) nm.style.display = 'none';
 
-    document.getElementById('sm-restaurant').onclick = () => showRestaurantSearch();
+    document.getElementById('sm-restaurant').onclick = () => {
+    showRestaurantSearch(lv, nm, prevHtml, prevDisplay, prevNm);
+};
     document.getElementById('sm-janken').onclick = () => {
         import('./janken.js').then(j => j.startJanken());
     };
@@ -698,7 +700,7 @@ function renderConsole(mode) {
     if (pauseEl) pauseEl.onclick = music.togglePause;
     setupNextButton();
 
-function showRestaurantSearch() {
+function showRestaurantSearch(lv, nm, prevHtml, prevDisplay, prevNm) {
     const GAS_URL = 'https://script.google.com/macros/s/AKfycbwA1C22UhKroCFC_EPC-ugR5efyXVHlbkWywfD21HfD3-J4vm-b4ZjvIshO-i3fKk9W/exec';
 
     const lv = document.getElementById('list-view');
