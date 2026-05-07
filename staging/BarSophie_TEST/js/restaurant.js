@@ -18,12 +18,16 @@ function formatResult(text) {
     text = text.replace(/（約?\d+字(以内|程度)?）/g, '');
     text = text.replace(/\(約?\d+字(以内|程度)?\)/g, '');
 
-   // 候補タイトルを色付きで表示＋食べログ検索ボタン
+// 候補タイトルを色付きで表示＋食べログ検索ボタン
     text = text.replace(/[【\[]?(第[1-2１２]候補)[】\]]?[：:\s]*([^\n]+)/g, (match, num, name) => {
         const storeName = name.trim();
         const escaped = storeName.replace(/'/g, "\\'");
-        const encoded = encodeURIComponent(storeName + ' ' + (text.match(/エリア：(.+)/) || ['',''])[1].trim());
-        const btn = `<button onclick="alert('「${escaped}」をコピーしました。\\n食べログが開いたら検索窓に貼り付けてください。'); navigator.clipboard.writeText('${escaped}').then(()=>window.open('https://tabelog.com/rstLst/RST/?vs=1&sk=${encoded}','_blank')).catch(()=>window.open('https://tabelog.com/','_blank'));" style="background:#1a3a2a;color:#7fd97f;border:1px solid #3a6a4a;padding:2px 10px;border-radius:4px;font-size:0.75rem;margin-left:8px;cursor:pointer;">📖 食べログで検索</button>`;
+        const encoded = encodeURIComponent(storeName);
+        const btn = `<button onclick="navigator.clipboard.writeText('${escaped}').then(()=>{
+            const msg = document.getElementById('rs-copy-msg');
+            if(msg){ msg.textContent='「${escaped}」をコピーしました。食べログが開いたら検索窓に貼り付けて探してください。'; msg.style.display='block'; setTimeout(()=>msg.style.display='none', 4000); }
+            window.open('https://tabelog.com/rstLst/RST/?vs=1&sk=${encoded}','_blank');
+        }).catch(()=>window.open('https://tabelog.com/','_blank'));" style="background:#1a3a2a;color:#7fd97f;border:1px solid #3a6a4a;padding:2px 10px;border-radius:4px;font-size:0.75rem;margin-left:8px;cursor:pointer;">📖 食べログで検索</button>`;
         return `<span style="color:#f0b56e;font-weight:bold;">◆${num}：${storeName}</span>${btn}`;
     });
 
@@ -174,6 +178,11 @@ export function showRestaurantSearch(savedArea = '', savedGenre = '', savedBudge
                         <img src="./sophie_face.png" style="width:20px; height:20px; border-radius:50%; object-fit:cover;">
                         ソフィーのおすすめ
                     </div>
+
+<div id="rs-copy-msg" style="display:none; margin:8px 12px 0; padding:8px 10px;
+                        background:#1a2a1a; color:#7fd97f; border:1px solid #3a6a4a;
+                        border-radius:4px; font-size:0.8rem; line-height:1.5;"></div>
+
                     <div style="padding:12px; color:#ddd; font-size:0.85rem; line-height:1.8;">${data.ok ? formatResult(data.text) : 'エラーが発生しました。もう一度お試しください。'}</div>
                     <div style="padding:0 10px 10px;">
                         <button id="rs-retry" style="width:100%; background:#1a3a2a; color:#7fd97f;
