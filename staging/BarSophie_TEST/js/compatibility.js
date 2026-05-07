@@ -184,6 +184,10 @@ ${question || 'とくになし'}
                     </div>
                     <div style="padding:12px; color:#ddd; font-size:0.85rem; line-height:1.9;">${formatted}</div>
                     <div style="padding:0 10px 10px;">
+
+                        <button id="cp-copy" style="width:100%; background:#1a2a3a; color:#5ba3d9;
+                            border:1px solid #1a5276; height:40px; border-radius:4px;
+                            font-size:0.85rem; margin-bottom:6px;">📋 結果をコピー</button>
                         <button id="cp-retry" style="width:100%; background:#2a1a3a; color:#c39bd3;
                             border:1px solid #6a3a8a; height:40px; border-radius:4px;
                             font-size:0.85rem; margin-bottom:6px;">もう一度鑑定する</button>
@@ -194,6 +198,12 @@ ${question || 'とくになし'}
 
             if (lv) { lv.innerHTML = resultHtml; }
 
+            document.getElementById('cp-copy').onclick = () => {
+                navigator.clipboard.writeText(resultText)
+                    .then(() => alert('鑑定結果をコピーしました。メモアプリに貼り付けてください。'))
+                    .catch(() => alert('コピーに失敗しました。'));
+            };
+            
             document.getElementById('cp-retry').onclick = () => showCompatibility();
             document.getElementById('cp-done').onclick = () => {
                 if (lv) { lv.style.display = prevDisplay; lv.innerHTML = prevHtml; }
