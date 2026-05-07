@@ -21,11 +21,14 @@ function formatResult(text) {
 // 候補タイトルを色付きで表示＋食べログ検索ボタン
     text = text.replace(/[【\[]?(第[1-2１２]候補)[】\]]?[：:\s]*([^\n]+)/g, (match, num, name) => {
         const storeName = name.trim();
+        // 検索用に括弧内の読み仮名を除去
+        const searchName = storeName.replace(/[（(][^）)]*[）)]/g, '').trim();
         const escaped = storeName.replace(/'/g, "\\'");
-        const encoded = encodeURIComponent(storeName);
-        const btn = `<button onclick="navigator.clipboard.writeText('${escaped}').then(()=>{
+        const searchEscaped = searchName.replace(/'/g, "\\'");
+        const encoded = encodeURIComponent(searchName);
+        const btn = `<button onclick="navigator.clipboard.writeText('${searchEscaped}').then(()=>{
             const msg = document.getElementById('rs-copy-msg');
-            if(msg){ msg.textContent='「${escaped}」をコピーしました。食べログが開いたら検索窓に貼り付けて探してください。'; msg.style.display='block'; setTimeout(()=>msg.style.display='none', 4000); }
+            if(msg){ msg.textContent='「${searchEscaped}」をコピーしました。食べログが開いたら検索窓に貼り付けて探してください。'; msg.style.display='block'; setTimeout(()=>{ msg.style.display='none'; },4000); }
             window.open('https://tabelog.com/rstLst/RST/?vs=1&sk=${encoded}','_blank');
         }).catch(()=>window.open('https://tabelog.com/','_blank'));" style="background:#1a3a2a;color:#7fd97f;border:1px solid #3a6a4a;padding:2px 10px;border-radius:4px;font-size:0.75rem;margin-left:8px;cursor:pointer;">📖 食べログで検索</button>`;
         return `<span style="color:#f0b56e;font-weight:bold;">◆${num}：${storeName}</span>${btn}`;
@@ -154,8 +157,8 @@ export function showRestaurantSearch(savedArea = '', savedGenre = '', savedBudge
 第1候補と第2候補を推薦。各店舗について以下の順で記載：
 ・第1候補：店舗名（例：第1候補：トラットリア〇〇）
 ・住所・アクセス
-・概要（詳しく）
-・選定理由（詳しく）
+・概要　※お客様がわかりやすいよう詳しく
+・選定理由　※なぜこの店を選んだか具体的に
 ・ディナー予算目安
 
 最後にソフィーらしい短いひとことを添えてください。
