@@ -2,63 +2,39 @@
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbwA1C22UhKroCFC_EPC-ugR5efyXVHlbkWywfD21HfD3-J4vm-b4ZjvIshO-i3fKk9W/exec';
 
 function formatResult(text) {
-    // 検索中の独り言を除去
     const startIdx = text.search(/こんばんは|いらっしゃいませ|さわやかなソフィー|ソフィーです。/);
     if (startIdx > 0) text = text.slice(startIdx);
 
-    // 食べログURL行を丸ごと除去（URLあり・なし両方）
     text = text.replace(/食べログURL[：:][^\n]*/g, '');
     text = text.replace(/https?:\/\/tabelog\.com\/[^\s\n]*/g, '');
-
-    // --- と ## を除去
     text = text.replace(/^-{2,}$/gm, '');
     text = text.replace(/^#{1,3}\s*/gm, '');
-
-    // 余計な注釈を除去
     text = text.replace(/（約?\d+字(以内|程度)?）/g, '');
     text = text.replace(/\(約?\d+字(以内|程度)?\)/g, '');
 
-// 候補タイトルを色付きで表示＋食べログ検索ボタン
+    // **太字**を先に変換してからタイトル処理
+    text = text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+
+    // 候補タイトル処理
     let candidateIdx = 0;
     text = text.replace(/[【\[]?(第[1-2１２]候補)[】\]]?[：:\s]*([^\n]+)/g, (match, num, name) => {
         const idx = candidateIdx++;
         const msgId = `rs-msg-${idx}`;
-        const storeName = name.trim();
-        const searchName = storeName
+        // HTMLタグ・括弧読み仮名を除去して検索用テキストを作成
+        const searchName = name.trim()
             .replace(/<[^>]*>/g, '')
             .replace(/[（(][^）)]*[）)]/g, '')
             .trim();
-        const searchEscaped = searchName.replace(/'/g, "\\'");
-        const encoded = encodeURIComponent(searchName);
-        const btn = `<button onclick="(function(){
-            const msg = document.getElementById('${msgId}');
-            if(msg){ msg.style.display='block'; }
-            navigator.clipboard.writeText('${searchEscaped}').catch(function(){});
-            setTimeout(function(){ window.open('https://tabelog.com/rstLst/RST/?vs=1&sk=${encoded}','_blank'); }, 1500);
-            setTimeout(function(){ if(msg){ msg.style.display='none'; } }, 5000);
-        })()" style="background:#1a3a2a;color:#7fd97f;border:1px solid #3a6a4a;padding:2px 10px;border-radius:4px;font-size:0.75rem;margin-left:8px;cursor:pointer;">📖 食べログで検索</button>
-        <div id="${msgId}" style="display:none; margin-top:4px; padding:6px 10px;
-            background:#1a2a1a; color:#7fd97f; border:1px solid #3a6a4a;
-            border-radius:4px; font-size:0.75rem; line-height:1.5;">
-            「${searchEscaped}」をコピーしました。<br>食べログが開いたら検索窓に貼り付けて探してください。
-        </div>`;
-        return `<span style="color:#f0b56e;font-weight:bold;">◆${num}：${storeName}</span>${btn}`;
+        const enc = encodeURIComponent(searchName);
+        const esc = searchName.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+        const btn = `<button onclick="(function(){var m=document.getElementById('${msgId}');if(m)m.style.display='block';navigator.clipboard.writeText('${esc}').catch(function(){});setTimeout(function(){window.open('https://tabelog.com/rstLst/RST/?vs=1&sk=${enc}','_blank');},1500);setTimeout(function(){var m=document.getElementById('${msgId}');if(m)m.style.display='none';},5000);})()" style="background:#1a3a2a;color:#7fd97f;border:1px solid #3a6a4a;padding:2px 10px;border-radius:4px;font-size:0.75rem;margin-left:8px;cursor:pointer;">📖 食べログで検索</button><div id="${msgId}" style="display:none;margin-top:4px;padding:6px 10px;background:#1a2a1a;color:#7fd97f;border:1px solid #3a6a4a;border-radius:4px;font-size:0.75rem;line-height:1.5;">「${esc}」をコピーしました。<br>食べログが開いたら検索窓に貼り付けて探してください。</div>`;
+        return `<span style="color:#f0b56e;font-weight:bold;">◆${num}：${name.trim()}</span>${btn}`;
     });
 
-    // 項目名の後の余分な改行を除去
     text = text.replace(/(\*\*[^*]+\*\*)\s*\n+\s*\n+/g, '$1\n');
     text = text.replace(/(\*\*[^*]+\*\*)[ \t]+\n/g, '$1\n');
-
-    // 文中の不自然な改行を除去
     text = text.replace(/([^\n。！？])\n([^\n◆\-])/g, '$1$2');
-
-    // 項目名の後にスペース
-    text = text.replace(/(\*\*[^*]+\*\*)([^\s<\n])/g, '$1 $2');
-
-    // **太字**を変換
-    text = text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-
-    // 連続空行を1行に
+    text = text.replace(/(<\/strong>)([^\s<\n])/g, '$1 $2');
     text = text.replace(/\n{2,}/g, '\n');
 
     return text.trim().replace(/\n/g, '<br>');
