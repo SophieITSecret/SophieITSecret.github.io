@@ -1,4 +1,5 @@
 // js/fortune.js
+import { showCompatibility } from './compatibility.js';
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbwA1C22UhKroCFC_EPC-ugR5efyXVHlbkWywfD21HfD3-J4vm-b4ZjvIshO-i3fKk9W/exec';
 
 export function showFortune() {
@@ -218,7 +219,7 @@ export function showFortuneMenu() {
                 <button id="fm-fortune" class="act-btn" style="background:#2a1a3a; color:#c39bd3;
                     border:1px solid #6a3a8a; margin-bottom:8px;">🌟 運勢を鑑定してもらう</button>
                 <button id="fm-compat" class="act-btn" style="background:#1a2a3a; color:#5ba3d9;
-                    border:1px solid #1a5276; margin-bottom:8px;">💑 相性を見てもらう（準備中）</button>
+                    border:1px solid #1a5276; margin-bottom:8px;">💑 相性を見てもらう</button>
                 <button id="fm-close" class="act-btn" style="background:#34495e;">閉じる</button>
             </div>
         </div>`;
@@ -227,6 +228,7 @@ export function showFortuneMenu() {
     if (nm) nm.style.display = 'none';
 
     document.getElementById('fm-fortune').onclick = () => showFortune();
+    document.getElementById('fm-compat').onclick = () => showCompatibility();
     document.getElementById('fm-close').onclick = () => {
         if (lv) { lv.style.display = prevDisplay; lv.innerHTML = prevHtml; }
         if (nm) nm.style.display = prevNm;

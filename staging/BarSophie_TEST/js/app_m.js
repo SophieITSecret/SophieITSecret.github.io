@@ -12,6 +12,7 @@ import * as liquor from './liquor.js';
 import * as shop from './shop.js';
 import * as restaurant from './restaurant.js';
 import * as fortune from './fortune.js';
+import * as compatibility from './compatibility.js';
 
 let talkAudio;
 let ytPlayer = null;
