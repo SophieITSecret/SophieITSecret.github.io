@@ -21,19 +21,23 @@ function formatResult(text) {
 // 候補タイトルを色付きで表示＋食べログ検索ボタン
     text = text.replace(/[【\[]?(第[1-2１２]候補)[】\]]?[：:\s]*([^\n]+)/g, (match, num, name) => {
         const storeName = name.trim();
-        // 検索用に括弧内の読み仮名を除去
-        const searchName = storeName.replace(/[（(][^）)]*[）)]/g, '').trim();
+        // HTMLタグと括弧内の読み仮名を除去して検索用テキストを作成
+        const searchName = storeName
+            .replace(/<[^>]*>/g, '')
+            .replace(/[（(][^）)]*[）)]/g, '')
+            .trim();
         const escaped = storeName.replace(/'/g, "\\'");
         const searchEscaped = searchName.replace(/'/g, "\\'");
         const encoded = encodeURIComponent(searchName);
-        const btn = `<button onclick="navigator.clipboard.writeText('${searchEscaped}').then(()=>{
+        const btn = `<button onclick="
             const msg = document.getElementById('rs-copy-msg');
-            if(msg){ msg.textContent='「${searchEscaped}」をコピーしました。食べログが開いたら検索窓に貼り付けて探してください。'; msg.style.display='block'; setTimeout(()=>{ msg.style.display='none'; },4000); }
-            window.open('https://tabelog.com/rstLst/RST/?vs=1&sk=${encoded}','_blank');
-        }).catch(()=>window.open('https://tabelog.com/','_blank'));" style="background:#1a3a2a;color:#7fd97f;border:1px solid #3a6a4a;padding:2px 10px;border-radius:4px;font-size:0.75rem;margin-left:8px;cursor:pointer;">📖 食べログで検索</button>`;
+            if(msg){ msg.textContent='「${searchEscaped}」をコピーしました。食べログが開いたら検索窓に貼り付けて探してください。'; msg.style.display='block'; }
+            navigator.clipboard.writeText('${searchEscaped}').catch(()=>{});
+            setTimeout(()=>{ window.open('https://tabelog.com/rstLst/RST/?vs=1&sk=${encoded}','_blank'); setTimeout(()=>{ if(msg) msg.style.display='none'; },3000); }, 1500);
+        " style="background:#1a3a2a;color:#7fd97f;border:1px solid #3a6a4a;padding:2px 10px;border-radius:4px;font-size:0.75rem;margin-left:8px;cursor:pointer;">📖 食べログで検索</button>`;
         return `<span style="color:#f0b56e;font-weight:bold;">◆${num}：${storeName}</span>${btn}`;
     });
-
+    
     // 項目名の後の余分な改行を除去
     text = text.replace(/(\*\*[^*]+\*\*)\s*\n+\s*\n+/g, '$1\n');
     text = text.replace(/(\*\*[^*]+\*\*)[ \t]+\n/g, '$1\n');
