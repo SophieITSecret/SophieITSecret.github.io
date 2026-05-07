@@ -28,17 +28,26 @@
                 <div id="yt-wrapper" style="display:none; width:100%; height:100%;">
                     <div id="yt-player"></div>
                 </div>
+                <div id="chart-wrapper" style="display:none; width:100%; height:100%; position:absolute; top:0; left:0;"></div>
                 <img id="monitor-img" style="display:none;">
                 <div id="telop"></div>
             </div>
         </div>
         <div class="r-side">
             <div class="scroll-area" id="main-scroll">
-                <div id="nav-main">
-                    <button class="act-btn" style="background:var(--green)" id="btn-music">🎵 音楽選曲 (リクエスト)</button>
-                    <button class="act-btn" style="background:var(--talk)" id="btn-talk">🥃 お酒の話 (360本の物語)</button>
-                    <button class="act-btn" style="background:#8e44ad" id="btn-liquor">🍸 お酒データベース (800銘柄)</button>
-                </div>
+                
+            <div id="nav-main">
+    <div style="display:flex; flex-direction:column; align-items:center; gap:8px; padding:12px;">
+        <button class="act-btn" style="background:var(--green); width:75%;" id="btn-music">🎵 音楽リクエスト</button>
+        <button class="act-btn" style="background:#8e44ad; width:75%;" id="btn-liquor">🍸 お酒を探す</button>
+        <button class="act-btn" style="background:var(--talk); width:75%;" id="btn-talk">🥃 お酒の話</button>
+        <div style="display:flex; gap:8px; justify-content:center; width:92%;">
+            <button class="act-btn" id="btn-notice" style="background:#1a1a2e; color:#ffb3c1; border:1px solid #ff69b4; width:55%; margin:0;">ソフィーのお知らせ</button>
+            <button class="act-btn" id="btn-news" style="background:#1a3a4a; border:1px solid #00d2ff; width:35%; margin:0;">📰 NEWS</button>
+        </div>
+    </div>
+</div>
+
                 <div id="list-view" style="display:none;"></div>
             </div>
             <div id="disclaimer-bar" style="font-size:0.58rem; color:#444; text-align:center; padding:3px 10px; line-height:1.7; background:#050505; border-top:1px solid #1a1a1a;">
@@ -58,6 +67,6 @@
         </div>
     </div>
 
-    <script type="module" src="js/app_m.js?v=22"></script>
+    <script type="module" src="js/app_m.js?v=24"></script>
 </body>
 </html>

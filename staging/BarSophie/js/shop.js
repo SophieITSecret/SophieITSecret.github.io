@@ -1,3 +1,4 @@
+// js/shop.js
 /**
  * shop.js — ソフィーの特選・売店モジュール
  * ★ 他の機能から完全に独立しています
@@ -50,7 +51,7 @@ export function openShop() {
     // タイムセール専用URL生成関数
     const getSaleUrl = (kw) => `https://www.amazon.co.jp/s?k=${encodeURIComponent(kw)}&i=todays-deals&tag=itsophie-22`;
 
-    // 🍺 お酒5ジャンル分割ボタン（横幅を調整して美しく並べる）
+    // 🍺 お酒5ジャンル分割ボタン
     h += `<div style="display:flex; flex-wrap:wrap; gap:8px;">`;
     const cats = [
         { name: "🍺 ビール", kw: "ビール" },
@@ -64,7 +65,7 @@ export function openShop() {
     });
     h += `</div>`;
 
-    // 💧 水・清涼飲料の小ボタン（3ジャンル分割）
+    // 💧 水・清涼飲料の小ボタン
     h += `<div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:8px;">`;
     const softCats = [
         { name: "💧 水", kw: "水 ミネラルウォーター" },
@@ -85,17 +86,20 @@ export function openShop() {
         });
 
         for (const cat in grouped) {
-            // 上部の固定看板(約62px)＋戻るボタン(28px)の下にピタッと止まるように調整
             h += `<div class="label" style="top:90px;">🛍️ ${clean(cat)}</div>`;
             grouped[cat].forEach(item => {
                 const amzUrl = `https://www.amazon.co.jp/s?k=${encodeURIComponent(clean(item.keyword))}&tag=itsophie-22`;
                 
-                h += `<div class="item" style="padding:12px 15px; cursor:default; white-space:normal; overflow:visible; height:auto;">
-                        <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-                            <div style="font-weight:bold; color:#eee; font-size:1rem; margin-bottom:6px; line-height:1.4;">${clean(item.name)}</div>
-                            <a href="${amzUrl}" target="_blank" class="lq-btn-amz-small" style="margin-left:10px; flex-shrink:0;">Amazon↗</a>
-                        </div>
-                        <div style="font-size:0.85rem; color:#aaa; line-height:1.6;">${clean(item.desc)}</div>
+                h += `<div style="padding:12px 15px; border-bottom:1px solid #1a1a1a; box-sizing:border-box; width:100%; white-space:normal!important; overflow:visible!important;">
+                        <table style="width:100%; border-collapse:collapse; table-layout:fixed;">
+                          <tr>
+                            <td style="font-weight:bold; color:#eee; font-size:1rem; line-height:1.4; padding:0; vertical-align:top; white-space:normal; word-break:break-all;">${clean(item.name)}</td>
+                            <td style="width:75px; text-align:right; vertical-align:top; padding:0 0 0 6px; white-space:nowrap;"><a href="${amzUrl}" target="_blank" class="lq-btn-amz-small">Amazon↗</a></td>
+                          </tr>
+                          <tr>
+                            <td colspan="2" style="font-size:0.85rem; color:#aaa; line-height:1.6; padding-top:6px; white-space:normal; word-break:break-all;">${clean(item.desc)}</td>
+                          </tr>
+                        </table>
                       </div>`;
             });
         }

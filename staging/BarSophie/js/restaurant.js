@@ -6,39 +6,35 @@ function formatResult(text) {
     const startIdx = text.search(/こんばんは|いらっしゃいませ|さわやかなソフィー|ソフィーです。/);
     if (startIdx > 0) text = text.slice(startIdx);
 
-    // 食べログURL行を丸ごと除去（URLあり・なし両方）
-    text = text.replace(/食べログURL[：:][^\n]*/g, '');
+    // 食べログURLを除去
+    text = text.replace(/食べログURL\s*\n?\s*https?:\/\/[^\s\n]*/g, '');
     text = text.replace(/https?:\/\/tabelog\.com\/[^\s\n]*/g, '');
 
-    // --- と ## を除去
-    text = text.replace(/^-{2,}$/gm, '');
-    text = text.replace(/^#{1,3}\s*/gm, '');
-
+    // --- を除去
     // 余計な注釈を除去
-    text = text.replace(/（約?\d+字(以内|程度)?）/g, '');
-    text = text.replace(/\(約?\d+字(以内|程度)?\)/g, '');
+    text = text.replace(/（\d+字以内）/g, '');
+    text = text.replace(/\(\d+字以内\)/g, '');
+    text = text.replace(/^-{2,}$/gm, '');
+    text = text.replace(/^#{2,}\s*/gm, '');
 
-    // 候補タイトルを色付きで表示＋食べログ検索ボタン
-    text = text.replace(/[【\[]?(第[1-2１２]候補)[】\]]?[：:\s]*([^\n]+)/g, (match, num, name) => {
-        const storeName = name.trim();
-        const escaped = storeName.replace(/'/g, "\\'");
-        const encoded = encodeURIComponent(storeName);
-        const color = num.includes('1') ? '#f0b56e' : '#00d2ff';
-        const btn = `<button onclick="navigator.clipboard.writeText('${escaped}').then(()=>{window.open('https://tabelog.com/rstLst/RST/?vs=1&sk=${encoded}','_blank');alert('「${escaped}」をコピーしました。\\n食べログの検索窓に貼り付けてください。');}).catch(()=>window.open('https://tabelog.com/','_blank'));" style="background:#1a3a2a;color:#7fd97f;border:1px solid #3a6a4a;padding:2px 10px;border-radius:4px;font-size:0.75rem;margin-left:8px;cursor:pointer;">📖 食べログで検索</button>`;
-        return `<span style="color:${color};font-weight:bold;">◆${num}：${storeName}</span>${btn}`;
-    });
-
-    // 項目名の後の余分な改行を除去
+    // 項目名の後の余分な空白行を除去（**店舗名**\n\nBAR → **店舗名** BAR）
     text = text.replace(/(\*\*[^*]+\*\*)\s*\n+\s*\n+/g, '$1\n');
     text = text.replace(/(\*\*[^*]+\*\*)[ \t]+\n/g, '$1\n');
 
-    // 文中の不自然な改行を除去
-    text = text.replace(/([^\n。！？])\n([^\n◆\-])/g, '$1$2');
+    // 途中の不自然な改行を除去（文中の\nを空白に）
+    text = text.replace(/([^\n。！？])\n([^\n#*\-])/g, '$1$2');
 
-    // 項目名の後にスペース
+    // ## 第1候補：店名 にボタンを付ける
+    text = text.replace(/##\s*[【]?(第[12１２]候補)[】]?[：:\s]*(.+)/g, (match, p0, prefix, name) => {
+    const storeName = name.trim();
+    const escaped = storeName.replace(/'/g, "\\'");
+    const encoded = encodeURIComponent(storeName);
+    const btn = `<button onclick="navigator.clipboard.writeText('${escaped}').then(()=>{window.open('https://tabelog.com/rstLst/RST/?vs=1&sk=${encoded}','_blank');alert('「${escaped}」をコピーしました。食べログの検索窓に貼り付けてください。');}).catch(()=>window.open('https://tabelog.com/','_blank'));" style="background:#1a3a2a;color:#7fd97f;border:1px solid #3a6a4a;padding:2px 10px;border-radius:4px;font-size:0.75rem;margin-left:6px;cursor:pointer;">📖 食べログで検索</button>`;
+    return `<strong>◆${prefix}：${storeName}</strong>${btn}`;
+    });
+    // 項目名の後にスペースを入れる
     text = text.replace(/(\*\*[^*]+\*\*)([^\s<\n])/g, '$1 $2');
-
-    // **太字**を変換
+    // **太字** を変換
     text = text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
 
     // 連続空行を1行に
@@ -47,34 +43,26 @@ function formatResult(text) {
     return text.trim().replace(/\n/g, '<br>');
 }
 
-export function showRestaurantSearch(savedArea = '', savedGenre = '', savedBudget = '', savedPoint = '') {
+export function showRestaurantSearch() {
     const lv = document.getElementById('list-view');
     const nm = document.getElementById('nav-main');
     const prevHtml = lv ? lv.innerHTML : '';
     const prevDisplay = lv ? lv.style.display : 'none';
     const prevNm = nm ? nm.style.display : 'none';
 
-    const row = (label, id, placeholder, type = 'input', val = '') => `
+    const row = (label, id, placeholder, type = 'input') => `
         <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
             <div style="color:#aaa; font-size:0.75rem; min-width:48px; text-align:right; flex-shrink:0;">${label}</div>
             ${type === 'input'
-                ? `<input type="text" id="${id}" placeholder="${placeholder}" value="${val}"
+                ? `<input type="text" id="${id}" placeholder="${placeholder}"
                     style="flex:1; background:#000; border:1px solid #555; color:#fff;
                            height:38px; padding:0 10px; border-radius:4px; font-size:0.85rem;">`
                 : `<textarea id="${id}" rows="2" placeholder="${placeholder}"
                     style="flex:1; background:#000; border:1px solid #555; color:#fff;
                            padding:6px 10px; border-radius:4px; font-size:0.85rem;
-                           resize:none; font-family:inherit;">${val}</textarea>`
+                           resize:none; font-family:inherit;"></textarea>`
             }
         </div>`;
-
-    const budgetBtns = ['コスパ重視', 'リーズナブル', '予算は気にしない'].map(v => {
-        const selected = v === savedBudget;
-        return `<button class="rs-budget" data-val="${v}"
-            style="flex:1; background:${selected ? '#0096BF' : '#1a1a1a'}; color:${selected ? '#fff' : '#888'};
-                   border:1px solid ${selected ? '#00d2ff' : '#444'};
-                   height:36px; border-radius:4px; font-size:0.75rem; line-height:1.2;">${v.replace('予算は気にしない', '予算は<br>気にしない')}</button>`;
-    }).join('');
 
     const formHtml = `
         <div style="margin:10px; border-radius:10px; border:2px solid transparent;
@@ -87,13 +75,23 @@ export function showRestaurantSearch(savedArea = '', savedGenre = '', savedBudge
                 いいお店を探す
             </div>
             <div style="padding:10px;">
-                ${row('エリア', 'rs-area', '吉祥寺、三鷹駅周辺', 'input', savedArea)}
-                ${row('ジャンル', 'rs-genre', 'イタリアン、居酒屋、何でも', 'input', savedGenre)}
+                ${row('エリア', 'rs-area', '吉祥寺、三鷹駅周辺')}
+                ${row('ジャンル', 'rs-genre', 'イタリアン、居酒屋、何でも')}
                 <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
                     <div style="color:#aaa; font-size:0.75rem; min-width:48px; text-align:right; flex-shrink:0;">予算感</div>
-                    <div style="display:flex; gap:4px; flex:1;">${budgetBtns}</div>
+                    <div style="display:flex; gap:4px; flex:1;">
+                        <button class="rs-budget" data-val="コスパ重視"
+                            style="flex:1; background:#1a1a1a; color:#888; border:1px solid #444;
+                                   height:36px; border-radius:4px; font-size:0.75rem;">コスパ重視</button>
+                        <button class="rs-budget" data-val="リーズナブル"
+                            style="flex:1; background:#1a1a1a; color:#888; border:1px solid #444;
+                                   height:36px; border-radius:4px; font-size:0.75rem;">リーズナブル</button>
+                        <button class="rs-budget" data-val="予算は気にしない"
+                            style="flex:1; background:#1a1a1a; color:#888; border:1px solid #444;
+                                   height:36px; border-radius:4px; font-size:0.75rem; line-height:1.2;">予算は<br>気にしない</button>
+                    </div>
                 </div>
-                ${row('こだわり', 'rs-point', '静かで落ち着ける、ワインが充実、デート向き', 'textarea', savedPoint)}
+                ${row('こだわり', 'rs-point', '静かで落ち着ける、ワインが充実、デート向き', 'textarea')}
                 <button id="rs-search" style="width:100%; background:#0096BF; color:#ff69b4;
                     border:2px solid #ff51a8; height:44px; border-radius:4px;
                     font-size:0.95rem; font-weight:bold; margin-bottom:8px;">
@@ -107,7 +105,7 @@ export function showRestaurantSearch(savedArea = '', savedGenre = '', savedBudge
     if (lv) { lv.style.display = 'block'; lv.innerHTML = formHtml; }
     if (nm) nm.style.display = 'none';
 
-    let selectedBudget = savedBudget;
+    let selectedBudget = '';
     document.querySelectorAll('.rs-budget').forEach(btn => {
         btn.addEventListener('click', () => {
             document.querySelectorAll('.rs-budget').forEach(b => {
@@ -148,15 +146,16 @@ export function showRestaurantSearch(savedArea = '', savedGenre = '', savedBudge
 こだわり・希望：${point || '指定なし'}
 
 【回答形式】
-第1候補と第2候補を推薦。各店舗について以下の順で記載：
-・第1候補：店舗名（例：第1候補：トラットリア〇〇）
+第1候補と第2候補を推薦。各店舗：
+・店舗名
 ・住所・アクセス
-・概要
-・選定理由
+・概容（括弧や字数指定は書かずに60字程度で）
+・選定理由（括弧や字数指定は書かずに120字程度で）
 ・ディナー予算目安
+・食べログURL（実在するもののみ）
 
 最後にソフィーらしい短いひとことを添えてください。
-食べログURLは記載不要。存在しない店は絶対に挙げないこと。`;
+存在しない店は絶対に挙げないこと。`;
 
         const messages = [{ role: 'user', content: prompt }];
         const url = GAS_URL + '?messages=' + encodeURIComponent(JSON.stringify(messages));
@@ -187,7 +186,9 @@ export function showRestaurantSearch(savedArea = '', savedGenre = '', savedBudge
 
             if (lv) { lv.innerHTML = resultHtml; }
 
-            document.getElementById('rs-retry').onclick = () => showRestaurantSearch(area, genre, selectedBudget, point);
+            document.getElementById('rs-retry').onclick = () => showRestaurantSearch(
+    document.getElementById('rs-area') ? document.getElementById('rs-area').value : ''
+);
             document.getElementById('rs-done').onclick = () => {
                 if (lv) { lv.style.display = prevDisplay; lv.innerHTML = prevHtml; }
                 if (nm) nm.style.display = prevNm;

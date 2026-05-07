@@ -1,37 +1,24 @@
+// js/liquor.js
 /**
  * liquor.js — お酒データベース・スクリーニング・鑑定カード
- * ★ MrP2 最新版 (L-番号対応 ＋ スライダーバグ修正パッチ適用)
+ * ★ nullバグ修正・LTコンソール刷新（戻る・S・⏹️・◀・▶）
  */
 
 import * as nav from './navigation.js';
 import { clean, formatAbv, avg3, setListView } from './utils.js';
 
-// =============================================
-// ★MrP2 緊急防壁パッチ：見えないシールド無効化
-// =============================================
 (function applySliderPatch() {
     if (document.getElementById('mrp2-slider-patch')) return;
     const style = document.createElement('style');
     style.id = 'mrp2-slider-patch';
     style.innerHTML = `
-        /* スライダーの透明なレール部分のタッチ判定を無効化 */
-        .multi-range-wrap input[type="range"] {
-            pointer-events: none !important;
-        }
-        /* つまみ（丸い部分）だけはタッチ判定を有効化 */
-        .multi-range-wrap input[type="range"]::-webkit-slider-thumb {
-            pointer-events: auto !important;
-        }
-        .multi-range-wrap input[type="range"]::-moz-range-thumb {
-            pointer-events: auto !important;
-        }
+        .multi-range-wrap input[type="range"] { pointer-events: none !important; }
+        .multi-range-wrap input[type="range"]::-webkit-slider-thumb { pointer-events: auto !important; }
+        .multi-range-wrap input[type="range"]::-moz-range-thumb { pointer-events: auto !important; }
     `;
     document.head.appendChild(style);
 })();
 
-// =============================================
-// 第4軸マッピング
-// =============================================
 const AXIS4_MAP = {
     "スコッチ・シングルモルト":     { label: "スモーキー度",  left: "無煙",     right: "煙強"     },
     "スコッチ・ブレンデッド":       { label: "スモーキー度",  left: "無煙",     right: "煙強"     },
@@ -83,9 +70,6 @@ const AXIS4_MAP = {
 };
 const AXIS4_DEFAULT = { label: "第4軸(品目選択後)", left: "←", right: "→", disabled: true };
 
-// =============================================
-// 価格帯バッジ
-// =============================================
 const PRICE_LEVELS = [
     { max: 2000,   num: "2",  color: "#27ae60" },
     { max: 5000,   num: "5",  color: "#27ae60" },
@@ -105,7 +89,7 @@ function parsePrice(priceStr) {
     return m ? parseInt(m[0]) : null;
 }
 
-function priceBadge(priceStr, major) {
+export function priceBadge(priceStr, major) {
     if (major === 'カクテル') return `<span style="font-size:1rem; margin-right:3px;">🍸</span>`;
     const n = parsePrice(priceStr);
     if (n === null) return "　";
@@ -121,9 +105,6 @@ function priceBadge(priceStr, major) {
     return "　";
 }
 
-// =============================================
-// スクリーニング状態
-// =============================================
 const initScrState = () => ({
     major: "", sub: "", country: "", region: "", keyword: "",
     cospa: "", isStandard: "", isSophieRecom: "",
@@ -139,12 +120,11 @@ let scrState = initScrState();
 let _renderConsole = null;
 export function setRenderConsole(fn) { _renderConsole = fn; }
 
-let _currentList = [];
+let _currentList  = [];
 let _currentState = "";
+let _currentSb    = "";  // ★ openItemsで表示中の中分類を保持
+let _currentMj    = "";  // ★ openItemsで表示中の大分類を保持
 
-// =============================================
-// お酒データベース — 入口
-// =============================================
 export function openLiquorPortal() {
     nav.updateNav("lq_root");
     
@@ -169,25 +149,20 @@ export function openLiquorPortal() {
     document.getElementById('dir-go').addEventListener('click', () => {
         const v = document.getElementById('dir-num').value.trim();
         if (!v) return;
-
         const numStr = String(v).replace(/[^0-9]/g, '');
         if (!numStr) return;
         const targetId = 'L-' + numStr.padStart(4, '0');
-
         const t = nav.liquorData.find(d => {
-            const rawNo = d["No."] || d["No"] || d["番号"] || "";
-            const no = String(rawNo).trim();
-            return no === targetId || no === v || no === numStr;
+            const noKey = Object.keys(d).find(k => k.replace(/\s/g,'').toUpperCase().startsWith('NO') || k === '番号');
+            const rawNo = noKey ? String(d[noKey]) : "";
+            const rNum = rawNo.replace(/[^0-9]/g, '');
+            return rNum !== "" && (parseInt(rNum, 10) === parseInt(numStr, 10) || rawNo.trim() === v);
         });
-
-        if (t) showCard(nav.liquorData.indexOf(t), nav.liquorData, 'list');
+        if (t) showCard(nav.liquorData.indexOf(t), nav.liquorData, 'direct');
         else alert("ID: " + targetId + " は見つかりませんでした。");
     });
 }
 
-// =============================================
-// スクリーニング — UI描画
-// =============================================
 function openScreening() {
     nav.updateNav("lq_scr");
 
@@ -305,9 +280,6 @@ function openScreening() {
     });
 }
 
-// =============================================
-// ダブルスライダー
-// =============================================
 function attachSlider(id) {
     const minEl  = document.getElementById(id + '-min');
     const maxEl  = document.getElementById(id + '-max');
@@ -336,9 +308,6 @@ function attachSlider(id) {
     update();
 }
 
-// =============================================
-// フォーム値の保存
-// =============================================
 function saveForm() {
     const g = id => document.getElementById(id)?.value ?? "";
     scrState.major         = g('s-mj');
@@ -354,10 +323,7 @@ function saveForm() {
     scrState.tags = Array.from(document.querySelectorAll('.scr-tag-btn.selected')).map(el => el.dataset.tag);
 }
 
-// =============================================
-// スクリーニング実行
-// =============================================
-function executeScr() {
+export function executeScr() {
     saveForm();
     const pMinN = scrState.pMin ? parseInt(scrState.pMin) : 0;
     const pMaxN = scrState.pMax ? parseInt(scrState.pMax) : Infinity;
@@ -404,12 +370,9 @@ function executeScr() {
     renderResults(results);
 }
 
-// =============================================
-// 検索結果リスト
-// =============================================
 function renderResults(results, scrollToGlobalIdx = null) {
     nav.updateNav('lq_res', null, results);
-    _currentList = results;
+    _currentList  = results;
     _currentState = "scr";
 
     let h = `<div class="label" id="lbl-back-res">◀ 検索結果: ${results.length}件</div>`;
@@ -433,16 +396,13 @@ function renderResults(results, scrollToGlobalIdx = null) {
     }
 }
 
-// =============================================
-// 個別銘柄カード
-// =============================================
-function showCard(gIdx, list, fromState) {
+export function showCard(gIdx, list, fromState) {
     nav.updateNav("lq_card", null, list, gIdx);
     _currentList  = list;
     _currentState = fromState || "list";
     const d = nav.liquorData[gIdx];
     if (!d) return;
-
+  
     const toPos = v => { const n = parseFloat(v); if (isNaN(n)) return -1; return Math.min(100, Math.max(0, (n + 2) / 4 * 100)); };
     const mkBar = (ll, rl, gpt, gem, cla, claudeOnly = false) => {
         let h = `<div class="graph-row-inline"><div class="graph-label-inline">${ll}</div><div class="graph-bar-bg"><div class="graph-zero"></div>`;
@@ -458,84 +418,110 @@ function showCard(gIdx, list, fromState) {
     const a4   = AXIS4_MAP[sub] || AXIS4_DEFAULT;
     const tags = ((d["味わいタグ"] || "") + "," + (d["検索タグ"] || "")).split(',').map(t => t.trim()).filter(Boolean);
 
-    const rawNo = d["No."] || d["No"] || d["番号"] || "";
+    const noKey = Object.keys(d).find(k => k.includes("No")) || "No.";
+    const rawNo = d[noKey] || d["番号"] || "";
     let displayId = String(rawNo).trim();
-    
     if (/^[0-9]+$/.test(displayId)) {
         displayId = 'L-' + displayId.padStart(4, '0');
     } else if (displayId && !displayId.startsWith('L-')) {
-        displayId = 'L-' + displayId; 
+        displayId = 'L-' + displayId;
     } else if (!displayId) {
         displayId = 'L-????';
     }
 
-    let h = `<div class="label">${displayId}</div><div class="lq-card">`;
-    
-    h += `<div class="lq-name">${clean(d["銘柄名"])}</div>`;
-    if (d["ソフィーのセリフ"]) h += `<div class="lq-quote">${clean(d["ソフィーのセリフ"])}</div>`;
-    
-    const makerRaw  = d["製造元と創業年"] || "";
-    const makerName = makerRaw.replace(/[（(\/].*/g, '').trim();
-    const region    = d["産地"] || "";
-    const gKw       = encodeURIComponent(makerName && region ? `${makerName} ${region}` : makerName || region);
-    const amzKw  = encodeURIComponent(clean(d["銘柄名"]) + " " + d["大分類"]);
-    const amzUrl = `https://www.amazon.co.jp/s?k=${amzKw}&tag=itsophie-22`;
+    import('./favorite.js').then(fav => {
+        const isFav = fav.isFavorite(displayId);
+        const heart = isFav ? "❤️" : "♡";
+        const hColor = isFav ? "#ff69b4" : "#ccc";
 
-    h += `<div class="lq-basic-info">
-        <div><span style="color:#1a73e8">▶</span> ${d["大分類"]}&nbsp;&nbsp;<span style="color:#e74c3c">▶</span> ${d["中分類"]}</div>
-        <div><span style="color:#888">産地:</span> ${d["国"] || ""}${region ? ' / ' + region : ''}</div>`;
+        let h = `<div class="label" style="display:flex; justify-content:space-between; align-items:center;">
+                    <span>${displayId}</span>
+                    <div id="lq-heart" style="color:${hColor}; font-size:1.5rem; cursor:pointer; padding-right:10px;">${heart}</div>
+                 </div>
+                 <div class="lq-card">`;
+        
+        h += `<div class="lq-name">${clean(d["銘柄名"])}</div>`;
+        if (d["ソフィーのセリフ"]) h += `<div class="lq-quote">${clean(d["ソフィーのセリフ"])}</div>`;
+        
+        const makerRaw  = d["製造元と創業年"] || "";
+        const makerName = makerRaw.replace(/[（(\/].*/g, '').trim();
+        const region    = d["産地"] || "";
+        const gKw       = encodeURIComponent(makerName && region ? `${makerName} ${region}` : makerName || region);
+        const amzKw     = encodeURIComponent(clean(d["銘柄名"]) + " " + d["大分類"]);
+        const amzUrl    = `https://www.amazon.co.jp/s?k=${amzKw}&tag=itsophie-22`;
 
-    if (makerRaw && makerRaw !== "-") {
-        h += `<div style="margin-top:2px;"><span style="color:#888; font-size:0.85rem;">製造:</span> <span style="font-size:0.85rem; color:#ccc;">${makerRaw}</span></div>`;
-        h += `<div class="card-link-row">`;
-        if (d["公式URL"] && d["公式URL"] !== "-") {
-            const directUrl = d["公式URL"];
-            const transUrl  = `https://translate.google.com/translate?sl=auto&tl=ja&u=${encodeURIComponent(d["公式URL"])}`;
-            h += `<a href="${directUrl}" target="_blank" class="lq-btn-small"
-                     ontouchstart="this._t=setTimeout(()=>{window.open('${transUrl}','_blank');this._t=null;},600)"
-                     ontouchend="if(this._t){clearTimeout(this._t);this._t=null;}"
-                     ontouchmove="if(this._t){clearTimeout(this._t);this._t=null;}">🔗 メーカーサイト</a>`;
+        h += `<div class="lq-basic-info">
+            <div><span style="color:#1a73e8">▶</span> ${d["大分類"]}&nbsp;&nbsp;<span style="color:#e74c3c">▶</span> ${d["中分類"]}</div>
+            <div><span style="color:#888">産地:</span> ${d["国"] || ""}${region ? ' / ' + region : ''}</div>`;
+
+        if (makerRaw && makerRaw !== "-") {
+            h += `<div style="margin-top:2px;"><span style="color:#888; font-size:0.85rem;">製造:</span> <span style="font-size:0.85rem; color:#ccc;">${makerRaw}</span></div>`;
+            h += `<div class="card-link-row">`;
+            if (d["公式URL"] && d["公式URL"] !== "-") {
+                const directUrl = d["公式URL"];
+                const transUrl  = `https://translate.google.com/translate?sl=auto&tl=ja&u=${encodeURIComponent(d["公式URL"])}`;
+                h += `<a href="${directUrl}" target="_blank" class="lq-btn-small"
+                         ontouchstart="this._t=setTimeout(()=>{window.open('${transUrl}','_blank');this._t=null;},600)"
+                         ontouchend="if(this._t){clearTimeout(this._t);this._t=null;}"
+                         ontouchmove="if(this._t){clearTimeout(this._t);this._t=null;}">🔗 メーカーサイト</a>`;
+            }
+            if (gKw) {
+                const gUrl = `https://www.google.com/search?q=${gKw}`;
+                h += `<a href="${gUrl}" target="_blank" class="lq-btn-g">G</a>`;
+            }
+            h += `<span style="flex:1;"></span>`;
+            h += `<a href="${amzUrl}" target="_blank" class="lq-btn-amz-small">Amazon↗</a>`;
+            h += `</div>`;
+        } else {
+            h += `<div class="card-link-row"><span style="flex:1;"></span>`;
+            h += `<a href="${amzUrl}" target="_blank" class="lq-btn-amz-small">Amazon↗</a>`;
+            h += `</div>`;
         }
-        if (gKw) {
-            const gUrl = `https://www.google.com/search?q=${gKw}`;
-            h += `<a href="${gUrl}" target="_blank" class="lq-btn-g">G</a>`;
-        }
-        h += `<span style="flex:1;"></span>`;
-        h += `<a href="${amzUrl}" target="_blank" class="lq-btn-amz-small">Amazon↗</a>`;
+        h += `</div><div class="lq-split-view"><div class="lq-graph-half">`;
+        if (d["Gemini_コスパ"]) h += `<div class="lq-cospa">コスパ ${d["Gemini_コスパ"]}</div>`;
+        h += mkBar("辛口", "甘口", d["GPT_甘辛"],  d["Gemini_甘辛"],  d["Claude_甘辛"]);
+        h += mkBar("軽快", "濃厚", d["GPT_ボディ"], d["Gemini_ボディ"], d["Claude_ボディ"]);
+        h += mkBar("常道", "独特", "", "", d["Claude_個性"], true);
+        h += `<div class="axis4-label">${a4.label}</div>`;
+        h += mkBar(a4.left, a4.right, "", "", d["Claude_第4軸"], true);
+        h += `<div class="graph-legend"><span class="leg-gpt">●GPT</span> <span class="leg-gem">●Gem</span> <span class="leg-cla">●Claude</span></div>`;
+        h += `</div><div class="lq-specs-half">`;
+        h += `<div class="spec-row-compact"><span>知名度</span><span>${d["知名度"] || "-"}</span></div>`;
+        h += `<div class="spec-row-compact"><span>度数</span><span>${formatAbv(d["度数"])}</span></div>`;
+        h += `<div class="spec-row-compact"><span>発売</span><span>${d["銘柄誕生年"] || "-"}</span></div>`;
+        h += `<div class="spec-row-compact"><span>市販</span><span class="price-retail">${d["市販価格"] || "-"}</span></div>`;
+        h += `<div class="spec-row-compact"><span>Bar</span><span class="price-bar">${d["バー価格"] || "-"}</span></div>`;
+        h += `</div></div>`;
+        if (d["ソフィーの裏話"])   h += `<div class="lq-sophie-talk"><span class="sophie-prefix">[ソフィー]</span> ${d["ソフィーの裏話"]}</div>`;
+        if (tags.length)           h += `<div class="lq-tags">${tags.map(t => `<span class="lq-tag">${t}</span>`).join('')}</div>`;
+        if (d["鑑定評価(200字)"]) h += `<div class="lq-desc"><span class="lq-desc-header">[解説]</span> ${d["鑑定評価(200字)"]}</div>`;
         h += `</div>`;
-    } else {
-        h += `<div class="card-link-row">`;
-        h += `<span style="flex:1;"></span>`;
-        h += `<a href="${amzUrl}" target="_blank" class="lq-btn-amz-small">Amazon↗</a>`;
-        h += `</div>`;
-    }
-    h += `</div><div class="lq-split-view"><div class="lq-graph-half">`;
-    if (d["Gemini_コスパ"]) h += `<div class="lq-cospa">コスパ ${d["Gemini_コスパ"]}</div>`;
-    h += mkBar("辛口", "甘口", d["GPT_甘辛"],  d["Gemini_甘辛"],  d["Claude_甘辛"]);
-    h += mkBar("軽快", "濃厚", d["GPT_ボディ"], d["Gemini_ボディ"], d["Claude_ボディ"]);
-    h += mkBar("常道", "独特", "", "", d["Claude_個性"], true);
-    h += `<div class="axis4-label">${a4.label}</div>`;
-    h += mkBar(a4.left, a4.right, "", "", d["Claude_第4軸"], true);
-    h += `<div class="graph-legend"><span class="leg-gpt">●GPT</span> <span class="leg-gem">●Gem</span> <span class="leg-cla">●Claude</span></div>`;
-    h += `</div><div class="lq-specs-half">`;
-    h += `<div class="spec-row-compact"><span>知名度</span><span>${d["知名度"] || "-"}</span></div>`;
-    h += `<div class="spec-row-compact"><span>度数</span><span>${formatAbv(d["度数"])}</span></div>`;
-    h += `<div class="spec-row-compact"><span>発売</span><span>${d["銘柄誕生年"] || "-"}</span></div>`;
-    h += `<div class="spec-row-compact"><span>市販</span><span class="price-retail">${d["市販価格"] || "-"}</span></div>`;
-    h += `<div class="spec-row-compact"><span>Bar</span><span class="price-bar">${d["バー価格"] || "-"}</span></div>`;
-    h += `</div></div>`;
-    if (d["ソフィーの裏話"])   h += `<div class="lq-sophie-talk"><span class="sophie-prefix">[ソフィー]</span> ${d["ソフィーの裏話"]}</div>`;
-    if (tags.length)           h += `<div class="lq-tags">${tags.map(t => `<span class="lq-tag">${t}</span>`).join('')}</div>`;
-    if (d["鑑定評価(200字)"]) h += `<div class="lq-desc"><span class="lq-desc-header">[解説]</span> ${d["鑑定評価(200字)"]}</div>`;
-    h += `</div>`;
 
-    setListView(h, true);
-    if (_renderConsole) _renderConsole('card');
+        setListView(h, true);
+        if (_renderConsole) _renderConsole('card');
+
+        const heartBtn = document.getElementById('lq-heart');
+        if (heartBtn) {
+            heartBtn.onclick = () => {
+                const added = fav.toggleFavorite(displayId);
+                heartBtn.innerText = added ? "❤️" : "♡";
+                heartBtn.style.color = added ? "#ff69b4" : "#ccc";
+            };
+        }
+    });
 }
 
-// =============================================
-// カード画面のコンソール用ナビ関数（app_m.jsから呼ぶ）
-// =============================================
+export function showCardById(idStr) {
+    const numStr = String(idStr).replace(/[^0-9]/g, '');
+    const t = nav.liquorData.find(d => {
+        const noKey = Object.keys(d).find(k => k.replace(/\s/g,'').toUpperCase().startsWith('NO') || k === '番号');
+        const rawNo = noKey ? String(d[noKey]) : "";
+        const rNum = rawNo.replace(/[^0-9]/g, '');
+        return rNum !== "" && parseInt(rNum, 10) === parseInt(numStr, 10);
+    });
+    if (t) showCard(nav.liquorData.indexOf(t), nav.liquorData, 'techo');
+}
+
 export function cardNavPrev() {
     const cur  = nav.liquorData[nav.curI];
     const idx  = _currentList.indexOf(cur);
@@ -548,20 +534,22 @@ export function cardNavNext() {
     const next = _currentList[(idx + 1) % _currentList.length];
     showCard(nav.liquorData.indexOf(next), _currentList, _currentState);
 }
+
 export function cardNavToList() {
     if (_currentState === 'scr') {
         renderResults(_currentList, nav.curI);
+    } else if (_currentState === 'direct' || _currentState === 'techo') {
+        openLiquorPortal();
     } else {
-        const sb = _currentList[0] ? _currentList[0]["中分類"] : null;
-        if (sb) openItems(sb); else openLiquorPortal();
+        // ★ _currentSbを使って正しくL4aに戻る
+        if (_currentSb) openItems(_currentSb);
+        else openLiquorPortal();
     }
 }
+
 export function cardNavToScr() { openScreening(); }
 export function getCurrentState() { return _currentState; }
 
-// =============================================
-// ジャンル階層ナビ
-// =============================================
 function openMajor() {
     nav.updateNav("lq_major");
     let h = `<div class="label" id="lbl-back-major">◀ ジャンルを選択</div>`;
@@ -593,7 +581,8 @@ function openItems(sb) {
     nav.updateNav("lq_list", null, list);
     _currentList  = list;
     _currentState = "list";
-    const mj = list[0] ? list[0]["大分類"] : "";
+    _currentSb    = sb;   // ★ 中分類を保存
+    _currentMj    = list[0] ? list[0]["大分類"] : "";  // ★ 大分類を保存
     let h = `<div class="label" id="lbl-back-items">◀ ${sb}</div>`;
     list.forEach(d => {
         const badge = priceBadge(d["市販価格"], d["大分類"]);
@@ -601,29 +590,24 @@ function openItems(sb) {
     });
     setListView(h, false);
     if (_renderConsole) _renderConsole('standard');
-    document.getElementById('lbl-back-items').addEventListener('click', () => openSub(mj));
+    document.getElementById('lbl-back-items').addEventListener('click', () => openSub(_currentMj));
     document.querySelectorAll('.list-item').forEach(el =>
         el.addEventListener('click', () => showCard(parseInt(el.dataset.gidx), list, 'list')));
 }
 
-// =============================================
-// 戻るハンドラ
-// =============================================
 export function handleLiquorBack() {
     switch (nav.state) {
-        case "lq_card":    cardNavToList();     return true;
-        case "lq_res":     openScreening();     return true;
-        case "lq_list":    openSub(nav.curG);   return true;
-        case "lq_sub":     openMajor();         return true;
-        case "lq_major":   openLiquorPortal();  return true;
-        case "lq_scr":     openLiquorPortal();  return true;
-        default:           return false;
+        case "lq_card":  cardNavToList();        return true;
+        case "lq_res":   openScreening();        return true;
+        case "lq_list":  openSub(_currentMj);    return true;  // ★ _currentMjを使用
+        case "lq_sub":   openMajor();            return true;
+        case "lq_major": openLiquorPortal();     return true;
+        case "lq_scr":   openLiquorPortal();     return true;
+        default:         return false;
     }
 }
 
-// =============================================
-// コンソール用export
-// =============================================
 export function execScr()                  { executeScr(); }
+
 export function clearScr()                 { scrState = initScrState(); openScreening(); }
 export function openScreeningFromConsole() { openScreening(); }
