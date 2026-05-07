@@ -196,3 +196,39 @@ export function showFortune() {
         }
     };
 }
+
+export function showFortuneMenu() {
+    const lv = document.getElementById('list-view');
+    const nm = document.getElementById('nav-main');
+    const prevHtml = lv ? lv.innerHTML : '';
+    const prevDisplay = lv ? lv.style.display : 'none';
+    const prevNm = nm ? nm.style.display : 'none';
+
+    const menuHtml = `
+        <div style="margin:10px; border-radius:10px; border:2px solid transparent;
+                    background: linear-gradient(#111, #111) padding-box,
+                    linear-gradient(120deg, #ff69b4 50%, #00d2ff 100%) border-box;">
+            <div style="color:#f0b56e; padding:0 12px; font-size:0.8rem; font-weight:bold;
+                        border-bottom:1px solid #333; height:28px; line-height:28px;
+                        border-radius:8px 8px 0 0; display:flex; align-items:center; gap:6px;">
+                <img src="./sophie_face.png" style="width:20px; height:20px; border-radius:50%; object-fit:cover;">
+                🔮 ソフィーの推命占い
+            </div>
+            <div style="padding:10px;">
+                <button id="fm-fortune" class="act-btn" style="background:#2a1a3a; color:#c39bd3;
+                    border:1px solid #6a3a8a; margin-bottom:8px;">🌟 運勢を鑑定してもらう</button>
+                <button id="fm-compat" class="act-btn" style="background:#1a2a3a; color:#5ba3d9;
+                    border:1px solid #1a5276; margin-bottom:8px;">💑 相性を見てもらう（準備中）</button>
+                <button id="fm-close" class="act-btn" style="background:#34495e;">閉じる</button>
+            </div>
+        </div>`;
+
+    if (lv) { lv.style.display = 'block'; lv.innerHTML = menuHtml; }
+    if (nm) nm.style.display = 'none';
+
+    document.getElementById('fm-fortune').onclick = () => showFortune();
+    document.getElementById('fm-close').onclick = () => {
+        if (lv) { lv.style.display = prevDisplay; lv.innerHTML = prevHtml; }
+        if (nm) nm.style.display = prevNm;
+    };
+}
