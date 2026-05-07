@@ -156,11 +156,13 @@ export function showFortune() {
 
             const resultText = data.ok ? data.text : 'エラーが発生しました。もう一度お試しください。';
             const formatted = resultText
-                .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-                .replace(/^#{1,3}\s*/gm, '')
-                .replace(/^-{2,}$/gm, '')
-                .replace(/\n{3,}/g, '\n\n')
-                .replace(/\n/g, '<br>');
+            .replace(/\*([^*]+)\*/g, '')
+            .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+            .replace(/^#{1,3}\s*/gm, '')
+            .replace(/^-{2,}$/gm, '')
+            .replace(/\n{3,}/g, '\n\n')
+            .replace(/\n{2,}/g, '\n')
+            .replace(/\n/g, '<br>');
 
             const resultHtml = `
                 <div style="margin:10px; border-radius:10px; border:2px solid transparent;
