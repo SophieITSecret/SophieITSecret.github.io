@@ -167,6 +167,7 @@ ${question || 'とくになし'}
             const formatted = resultText
                 .replace(/\*([^*]+)\*/g, '')
                 .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\*\*/g, '')
                 .replace(/^#{1,3}\s*/gm, '')
                 .replace(/^-{2,}$/gm, '')
                 .replace(/\n{2,}/g, '\n')
