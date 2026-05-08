@@ -1,7 +1,7 @@
 // js/compatibility.js
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbwA1C22UhKroCFC_EPC-ugR5efyXVHlbkWywfD21HfD3-J4vm-b4ZjvIshO-i3fKk9W/exec';
 
-export function showCompatibility() {
+export function showCompatibility(onBack = null) {
     const lv = document.getElementById('list-view');
     const nm = document.getElementById('nav-main');
     const prevHtml = lv ? lv.innerHTML : '';
@@ -101,6 +101,7 @@ export function showCompatibility() {
     });
 
     document.getElementById('cp-close').onclick = () => {
+        if (onBack) { onBack(); return; }
         if (lv) { lv.style.display = prevDisplay; lv.innerHTML = prevHtml; }
         if (nm) nm.style.display = prevNm;
     };
@@ -205,8 +206,9 @@ ${question || 'とくになし'}
                     .catch(() => alert('コピーに失敗しました。'));
             };
             
-            document.getElementById('cp-retry').onclick = () => showCompatibility();
+            document.getElementById('cp-retry').onclick = () => showCompatibility(onBack);
             document.getElementById('cp-done').onclick = () => {
+                if (onBack) { onBack(); return; }
                 if (lv) { lv.style.display = prevDisplay; lv.innerHTML = prevHtml; }
                 if (nm) nm.style.display = prevNm;
             };

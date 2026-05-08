@@ -3,7 +3,7 @@ import { showPeopleBook } from './people.js';
 import { showCompatibility } from './compatibility.js';
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbwA1C22UhKroCFC_EPC-ugR5efyXVHlbkWywfD21HfD3-J4vm-b4ZjvIshO-i3fKk9W/exec';
 
-export function showFortune() {
+export function showFortune(onBack = null) {
     const lv = document.getElementById('list-view');
     const nm = document.getElementById('nav-main');
     const prevHtml = lv ? lv.innerHTML : '';
@@ -110,6 +110,7 @@ export function showFortune() {
     });
 
     document.getElementById('ft-close').onclick = () => {
+        if (onBack) { onBack(); return; }
         if (lv) { lv.style.display = prevDisplay; lv.innerHTML = prevHtml; }
         if (nm) nm.style.display = prevNm;
     };
@@ -197,8 +198,9 @@ export function showFortune() {
                     .then(() => alert('鑑定結果をコピーしました。メモアプリに貼り付けてください。'))
                     .catch(() => alert('コピーに失敗しました。'));
             };
-            document.getElementById('ft-retry').onclick = () => showFortune();
+            document.getElementById('ft-retry').onclick = () => showFortune(onBack);
             document.getElementById('ft-done').onclick = () => {
+                if (onBack) { onBack(); return; }
                 if (lv) { lv.style.display = prevDisplay; lv.innerHTML = prevHtml; }
                 if (nm) nm.style.display = prevNm;
             };
@@ -242,8 +244,8 @@ export function showFortuneMenu() {
     if (nm) nm.style.display = 'none';
 
     document.getElementById('fm-people').onclick = () => showPeopleBook(null, showFortuneMenu);
-    document.getElementById('fm-fortune').onclick = () => showFortune();
-    document.getElementById('fm-compat').onclick = () => showCompatibility();
+    document.getElementById('fm-fortune').onclick = () => showFortune(showFortuneMenu);
+    document.getElementById('fm-compat').onclick = () => showCompatibility(showFortuneMenu);
     document.getElementById('fm-close').onclick = () => {
         if (lv) { lv.style.display = prevDisplay; lv.innerHTML = prevHtml; }
         if (nm) nm.style.display = prevNm;
