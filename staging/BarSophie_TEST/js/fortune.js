@@ -1,4 +1,5 @@
 // js/fortune.js
+import { showPeopleBook } from './people.js';
 import { showCompatibility } from './compatibility.js';
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbwA1C22UhKroCFC_EPC-ugR5efyXVHlbkWywfD21HfD3-J4vm-b4ZjvIshO-i3fKk9W/exec';
 
@@ -228,6 +229,7 @@ export function showFortuneMenu() {
                 🔮 ソフィーの推命占い
             </div>
             <div style="padding:10px;">
+                <button id="fm-people" class="act-btn" style="background:#1a2a1a; color:#7fd97f; border:1px solid #3a6a4a; margin-bottom:8px;">👥 人物帳</button>
                 <button id="fm-fortune" class="act-btn" style="background:#2a1a3a; color:#c39bd3;
                     border:1px solid #6a3a8a; margin-bottom:8px;">🌟 運勢を鑑定してもらう</button>
                 <button id="fm-compat" class="act-btn" style="background:#1a2a3a; color:#5ba3d9;
@@ -239,6 +241,7 @@ export function showFortuneMenu() {
     if (lv) { lv.style.display = 'block'; lv.innerHTML = menuHtml; }
     if (nm) nm.style.display = 'none';
 
+    document.getElementById('fm-people').onclick = () => showPeopleBook();
     document.getElementById('fm-fortune').onclick = () => showFortune();
     document.getElementById('fm-compat').onclick = () => showCompatibility();
     document.getElementById('fm-close').onclick = () => {

@@ -13,6 +13,7 @@ import * as shop from './shop.js';
 import * as restaurant from './restaurant.js';
 import * as fortune from './fortune.js';
 import * as compatibility from './compatibility.js';
+import * as people from './people.js';
 
 let talkAudio;
 let ytPlayer = null;
