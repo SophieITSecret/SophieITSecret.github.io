@@ -1,39 +1,57 @@
 // js/compatibility.js
+import { showPeopleBook } from './people.js';
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbwA1C22UhKroCFC_EPC-ugR5efyXVHlbkWywfD21HfD3-J4vm-b4ZjvIshO-i3fKk9W/exec';
 
-export function showCompatibility(onBack = null) {
+export function showCompatibility(onBack = null, prefillMe = null, prefillYou = null, texts = null) {
     const lv = document.getElementById('list-view');
     const nm = document.getElementById('nav-main');
     const prevHtml = lv ? lv.innerHTML : '';
     const prevDisplay = lv ? lv.style.display : 'none';
     const prevNm = nm ? nm.style.display : 'none';
 
-    const dateInput = (prefix, label) => `
+    const dateInput = (prefix, label, pf) => {
+        const isYou = prefix === 'cp-you';
+        const selBg = isYou ? '#ff69b4' : '#0096BF';
+        const selBorder = isYou ? '#ff51a8' : '#00d2ff';
+        const mBg = pf && pf.gender === '男性' ? selBg : '#1a1a1a';
+        const mColor = pf && pf.gender === '男性' ? '#fff' : '#888';
+        const mBorder = pf && pf.gender === '男性' ? selBorder : '#444';
+        const fBg = pf && pf.gender === '女性' ? selBg : '#1a1a1a';
+        const fColor = pf && pf.gender === '女性' ? '#fff' : '#888';
+        const fBorder = pf && pf.gender === '女性' ? selBorder : '#444';
+        return `
         <div style="margin-bottom:8px;">
-            <div style="color:#aaa; font-size:0.75rem; margin-bottom:4px;">${label}の生年月日</div>
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;">
+                <div style="color:#aaa; font-size:0.75rem;">${label}の生年月日</div>
+                <button id="${prefix}-people" style="background:#1a2a1a; color:#7fd97f; border:1px solid #3a6a4a; padding:2px 8px; border-radius:3px; font-size:0.7rem;">📖 人物帳</button>
+            </div>
             <div style="display:flex; gap:4px; align-items:center;">
                 <input type="number" id="${prefix}-year" placeholder="1980" min="1900" max="2010"
+                    value="${pf ? pf.year : ''}"
                     style="width:72px; background:#000; border:1px solid #555; color:#fff;
                            height:38px; padding:0 8px; border-radius:4px; font-size:0.85rem;">
                 <span style="color:#aaa; font-size:0.8rem;">年</span>
                 <input type="number" id="${prefix}-month" placeholder="1" min="1" max="12"
+                    value="${pf ? pf.month : ''}"
                     style="width:48px; background:#000; border:1px solid #555; color:#fff;
                            height:38px; padding:0 8px; border-radius:4px; font-size:0.85rem;">
                 <span style="color:#aaa; font-size:0.8rem;">月</span>
                 <input type="number" id="${prefix}-day" placeholder="1" min="1" max="31"
+                    value="${pf ? pf.day : ''}"
                     style="width:48px; background:#000; border:1px solid #555; color:#fff;
                            height:38px; padding:0 8px; border-radius:4px; font-size:0.85rem;">
                 <span style="color:#aaa; font-size:0.8rem;">日</span>
                 <div style="display:flex; gap:4px; margin-left:4px;">
                     <button class="${prefix}-gender" data-val="男性"
-                        style="background:#1a1a1a; color:#888; border:1px solid #444;
+                        style="background:${mBg}; color:${mColor}; border:1px solid ${mBorder};
                                height:38px; padding:0 8px; border-radius:4px; font-size:0.75rem;">男</button>
                     <button class="${prefix}-gender" data-val="女性"
-                        style="background:#1a1a1a; color:#888; border:1px solid #444;
+                        style="background:${fBg}; color:${fColor}; border:1px solid ${fBorder};
                                height:38px; padding:0 8px; border-radius:4px; font-size:0.75rem;">女</button>
                 </div>
             </div>
         </div>`;
+    };
 
     const formHtml = `
         <div style="margin:10px; border-radius:10px; border:2px solid transparent;
@@ -46,23 +64,23 @@ export function showCompatibility(onBack = null) {
                 💑 相性鑑定
             </div>
             <div style="padding:10px;">
-                ${dateInput('cp-me', 'あなた')}
+                ${dateInput('cp-me', 'あなた', prefillMe)}
                 <div style="border-top:1px solid #333; margin:8px 0;"></div>
-                ${dateInput('cp-you', 'お相手')}
+                ${dateInput('cp-you', 'お相手', prefillYou)}
                 <div style="border-top:1px solid #333; margin:8px 0;"></div>
                 <div style="margin-bottom:8px;">
                     <div style="color:#aaa; font-size:0.75rem; margin-bottom:4px;">相手をどう思っていますか？</div>
                     <textarea id="cp-feeling" rows="2" placeholder="例：好きだけど自分の気持ちがよくわからない、一緒にいると落ち着くが刺激がない"
                         style="width:100%; background:#000; border:1px solid #555; color:#fff;
                                padding:8px 10px; border-radius:4px; font-size:0.85rem;
-                               resize:none; font-family:inherit;"></textarea>
+                               resize:none; font-family:inherit;">${texts ? texts.feeling : ''}</textarea>
                 </div>
                 <div style="margin-bottom:10px;">
                     <div style="color:#aaa; font-size:0.75rem; margin-bottom:4px;">何が知りたいですか？</div>
                     <textarea id="cp-question" rows="2" placeholder="例：この人と将来一緒になれるか、どう接すればうまくいくか、踏み出していいか"
                         style="width:100%; background:#000; border:1px solid #555; color:#fff;
                                padding:8px 10px; border-radius:4px; font-size:0.85rem;
-                               resize:none; font-family:inherit;"></textarea>
+                               resize:none; font-family:inherit;">${texts ? texts.question : ''}</textarea>
                 </div>
                 <button id="cp-submit" style="width:100%; background:#0096BF; color:#ff69b4;
                     border:2px solid #ff51a8; height:44px; border-radius:4px;
@@ -77,8 +95,8 @@ export function showCompatibility(onBack = null) {
     if (lv) { lv.style.display = 'block'; lv.innerHTML = formHtml; }
     if (nm) nm.style.display = 'none';
 
-    let myGender = '';
-    let yourGender = '';
+    let myGender = prefillMe ? prefillMe.gender : '';
+    let yourGender = prefillYou ? prefillYou.gender : '';
 
     document.querySelectorAll('.cp-me-gender').forEach(btn => {
         btn.addEventListener('click', () => {
@@ -99,6 +117,34 @@ export function showCompatibility(onBack = null) {
             yourGender = btn.dataset.val;
         });
     });
+
+    const getState = () => ({
+        me:  { year: document.getElementById('cp-me-year').value,  month: document.getElementById('cp-me-month').value,  day: document.getElementById('cp-me-day').value,  gender: myGender },
+        you: { year: document.getElementById('cp-you-year').value, month: document.getElementById('cp-you-month').value, day: document.getElementById('cp-you-day').value, gender: yourGender },
+        texts: { feeling: document.getElementById('cp-feeling').value, question: document.getElementById('cp-question').value }
+    });
+
+    document.getElementById('cp-me-people').onclick = () => {
+        const s = getState();
+        showPeopleBook(
+            (person) => {
+                const [y, m, d] = person.birth.split('-');
+                showCompatibility(onBack, { year: y, month: parseInt(m), day: parseInt(d), gender: person.gender }, s.you, s.texts);
+            },
+            () => showCompatibility(onBack, s.me, s.you, s.texts)
+        );
+    };
+
+    document.getElementById('cp-you-people').onclick = () => {
+        const s = getState();
+        showPeopleBook(
+            (person) => {
+                const [y, m, d] = person.birth.split('-');
+                showCompatibility(onBack, s.me, { year: y, month: parseInt(m), day: parseInt(d), gender: person.gender }, s.texts);
+            },
+            () => showCompatibility(onBack, s.me, s.you, s.texts)
+        );
+    };
 
     document.getElementById('cp-close').onclick = () => {
         if (onBack) { onBack(); return; }

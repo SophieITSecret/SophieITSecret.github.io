@@ -3,7 +3,7 @@ import { showPeopleBook } from './people.js';
 import { showCompatibility } from './compatibility.js';
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbwA1C22UhKroCFC_EPC-ugR5efyXVHlbkWywfD21HfD3-J4vm-b4ZjvIshO-i3fKk9W/exec';
 
-export function showFortune(onBack = null) {
+export function showFortune(onBack = null, prefill = null) {
     const lv = document.getElementById('list-view');
     const nm = document.getElementById('nav-main');
     const prevHtml = lv ? lv.innerHTML : '';
@@ -22,17 +22,23 @@ export function showFortune(onBack = null) {
             </div>
             <div style="padding:10px;">
                 <div style="margin-bottom:8px;">
-                    <div style="color:#aaa; font-size:0.75rem; margin-bottom:4px;">生年月日</div>
+                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;">
+                        <div style="color:#aaa; font-size:0.75rem;">生年月日</div>
+                        <button id="ft-people" style="background:#1a2a1a; color:#7fd97f; border:1px solid #3a6a4a; padding:2px 8px; border-radius:3px; font-size:0.7rem;">📖 人物帳から選ぶ</button>
+                    </div>
                     <div style="display:flex; gap:4px; align-items:center;">
                         <input type="number" id="ft-year" placeholder="1980" min="1900" max="2010"
+                            value="${prefill ? prefill.year : ''}"
                             style="width:72px; background:#000; border:1px solid #555; color:#fff;
                                    height:38px; padding:0 8px; border-radius:4px; font-size:0.85rem;">
                         <span style="color:#aaa; font-size:0.8rem;">年</span>
                         <input type="number" id="ft-month" placeholder="1" min="1" max="12"
+                            value="${prefill ? prefill.month : ''}"
                             style="width:48px; background:#000; border:1px solid #555; color:#fff;
                                    height:38px; padding:0 8px; border-radius:4px; font-size:0.85rem;">
                         <span style="color:#aaa; font-size:0.8rem;">月</span>
                         <input type="number" id="ft-day" placeholder="1" min="1" max="31"
+                            value="${prefill ? prefill.day : ''}"
                             style="width:48px; background:#000; border:1px solid #555; color:#fff;
                                    height:38px; padding:0 8px; border-radius:4px; font-size:0.85rem;">
                         <span style="color:#aaa; font-size:0.8rem;">日</span>
@@ -86,10 +92,13 @@ export function showFortune(onBack = null) {
     if (lv) { lv.style.display = 'block'; lv.innerHTML = formHtml; }
     if (nm) nm.style.display = 'none';
 
-    let selectedGender = '';
+    let selectedGender = prefill ? prefill.gender : '';
     let selectedTheme = '';
 
     document.querySelectorAll('.ft-gender').forEach(btn => {
+        if (selectedGender && btn.dataset.val === selectedGender) {
+            btn.style.background = '#0096BF'; btn.style.color = '#fff'; btn.style.borderColor = '#00d2ff';
+        }
         btn.addEventListener('click', () => {
             document.querySelectorAll('.ft-gender').forEach(b => {
                 b.style.background = '#1a1a1a'; b.style.color = '#888'; b.style.borderColor = '#444';
@@ -108,6 +117,22 @@ export function showFortune(onBack = null) {
             selectedTheme = btn.dataset.val;
         });
     });
+
+    document.getElementById('ft-people').onclick = () => {
+        const cur = {
+            year: document.getElementById('ft-year').value,
+            month: document.getElementById('ft-month').value,
+            day: document.getElementById('ft-day').value,
+            gender: selectedGender
+        };
+        showPeopleBook(
+            (person) => {
+                const [y, m, d] = person.birth.split('-');
+                showFortune(onBack, { year: y, month: parseInt(m), day: parseInt(d), gender: person.gender });
+            },
+            () => showFortune(onBack, cur)
+        );
+    };
 
     document.getElementById('ft-close').onclick = () => {
         if (onBack) { onBack(); return; }
