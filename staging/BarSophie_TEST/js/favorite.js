@@ -155,8 +155,11 @@ setListView(h, false);
         document.getElementById('f-lq').onclick = () => openTecho('L');
         document.getElementById('f-gm').onclick = () => openTecho('G');
         document.getElementById('f-backup').onclick = () => {
-            const data = getTechoData();
-            const text = JSON.stringify(data);
+            const backup = {
+                techo: getTechoData(),
+                people: JSON.parse(localStorage.getItem('bar_sophie_people') || '[]')
+            };
+            const text = JSON.stringify(backup);
             navigator.clipboard.writeText(text).then(() => {
                 alert('クリップボードにコピーしました。メモアプリに貼り付けて保存してください。');
             }).catch(() => {
@@ -189,8 +192,16 @@ setListView(h, false);
                 try {
                     const text = document.getElementById('restore-input').value.trim();
                     const parsed = JSON.parse(text);
-                    if (!parsed.favorites) throw new Error('データが正しくありません');
-                    saveTechoData(parsed);
+                    if (parsed.techo) {
+                        // 新フォーマット（手帳＋人物帳の統合バックアップ）
+                        saveTechoData(parsed.techo);
+                        localStorage.setItem('bar_sophie_people', JSON.stringify(parsed.people || []));
+                    } else if (parsed.favorites) {
+                        // 旧フォーマット（手帳のみ）との互換
+                        saveTechoData(parsed);
+                    } else {
+                        throw new Error('データが正しくありません');
+                    }
                     alert('復元しました！');
                     openTecho(null);
                 } catch(e) {
