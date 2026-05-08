@@ -70,11 +70,17 @@ export function showFortune(onBack = null, prefill = null) {
                         <button class="ft-theme" data-val="金運"
                             style="background:#1a1a1a; color:#888; border:1px solid #444;
                                    height:36px; border-radius:4px; font-size:0.8rem;">💰 金運</button>
+                        <button class="ft-theme" data-val="性格分析"
+                            style="background:#1a1a1a; color:#888; border:1px solid #444;
+                                   height:36px; border-radius:4px; font-size:0.8rem;">🔍 性格分析</button>
+                        <button class="ft-theme" data-val="攻略法"
+                            style="background:#1a1a1a; color:#888; border:1px solid #444;
+                                   height:36px; border-radius:4px; font-size:0.8rem;">🗝️ 攻略法</button>
                     </div>
                 </div>
                 <div style="margin-bottom:10px;">
-                    <div style="color:#aaa; font-size:0.75rem; margin-bottom:4px;">今の悩みや状況（任意）</div>
-                    <textarea id="ft-worry" rows="3" placeholder="例：仕事で大きな決断を迫られている、新しい出会いがほしい、など"
+                    <div style="color:#aaa; font-size:0.75rem; margin-bottom:4px;">特に相談したいテーマがあれば</div>
+                    <textarea id="ft-worry" rows="3" placeholder="例：転職のタイミングが気になっています"
                         style="width:100%; background:#000; border:1px solid #555; color:#fff;
                                padding:8px 10px; border-radius:4px; font-size:0.85rem;
                                resize:none; font-family:inherit;"></textarea>
@@ -108,6 +114,11 @@ export function showFortune(onBack = null, prefill = null) {
         });
     });
 
+    const themePlaceholders = {
+        '性格分析': '例：この方何を考えているかわかりにくい',
+        '攻略法':   '例：職場の上司ですが、もっと懐に入りたい'
+    };
+
     document.querySelectorAll('.ft-theme').forEach(btn => {
         btn.addEventListener('click', () => {
             document.querySelectorAll('.ft-theme').forEach(b => {
@@ -115,6 +126,8 @@ export function showFortune(onBack = null, prefill = null) {
             });
             btn.style.background = '#8e44ad'; btn.style.color = '#fff'; btn.style.borderColor = '#9b59b6';
             selectedTheme = btn.dataset.val;
+            document.getElementById('ft-worry').placeholder =
+                themePlaceholders[selectedTheme] || '例：転職のタイミングが気になっています';
         });
     });
 
@@ -154,25 +167,61 @@ export function showFortune(onBack = null, prefill = null) {
         btn.textContent = '鑑定中…';
         btn.disabled = true;
 
-        const prompt = `あなたは四柱推命を極めた占い師であり、BARソフィーのバーテンダー「ソフィー」です。
+        let prompt;
+        if (selectedTheme === '性格分析') {
+            prompt = `あなたは四柱推命を極めた占い師であり、BARソフィーのバーテンダー「ソフィー」です。
+
+【分析対象】
+生年月日：${year}年${month}月${day}日
+性別：${selectedGender}
+気になる点：${worry || 'なし'}
+
+この人物の命式を算出し、性格・性能カルテとして読み解いてください。
+
+・この人の本質的な気質と価値観
+・際立った強み、自然に発揮される才能
+・見落としがちな弱点、繰り返しやすいパターン
+・人生で大切にしていること、逆に苦手なこと
+
+見出しや箇条書きは使わず、ソフィーが静かにカルテを読み上げるような語り口で。`;
+        } else if (selectedTheme === '攻略法') {
+            prompt = `あなたは四柱推命を極めた占い師であり、BARソフィーのバーテンダー「ソフィー」です。
+
+【対象】
+生年月日：${year}年${month}月${day}日
+性別：${selectedGender}
+関係・目的：${worry || 'なし'}
+
+この人物の命式から、この人への効果的な働きかけ方を教えてください。
+
+・何をされると心を開くか
+・どんな言葉・態度が響くか
+・やってはいけないこと、地雷になりやすいこと
+・距離を縮めるための具体的なアプローチ
+
+自分自身について調べた場合は「あなたはこういうアプローチに動かされやすい」という自己理解としても読めるよう、自然な語り口で。見出し・箇条書きは使わないこと。`;
+        } else {
+            prompt = `あなたは四柱推命を極めた占い師であり、BARソフィーのバーテンダー「ソフィー」です。
 カウンターでお客様の悩みに寄り添いながら、深みのある鑑定をしてください。
 
 【鑑定対象】
 生年月日：${year}年${month}月${day}日
 性別：${selectedGender}
 鑑定テーマ：${selectedTheme}
-今の悩み・状況：${worry || 'なし'}
+特に相談したいテーマ：${worry || 'なし'}
 
 【鑑定の進め方】
-1. 四柱推命で命式を算出し、この方の本質的な性格・才能・宿命を読む
+1. 四柱推命で命式を算出し、この方の本質的な性格・才能・宿命を読む。その際、自然な語りの中で、この人ならではの強み、見落としがちな弱み、これから開ける可能性、気をつけるべき点にさりげなく触れること
 2. 現在の大運・年運（2026年）の流れを読む
-3. 悩みや状況と命式・運気を照らし合わせて具体的なアドバイスをする
+3. 相談テーマと命式・運気を照らし合わせて具体的なアドバイスをする
 4. 最後にソフィーらしい温かいひとことで締める
 
 【注意】
 ・占い師として深みと説得力のある鑑定をすること
 ・単なる一般論ではなく、命式に基づいた具体的な言葉で語ること
-・ソフィーとして品があり温かみのある語り口で`;
+・ソフィーとして品があり温かみのある語り口で
+・見出しや箇条書きは使わず、会話するように自然な文章で`;
+        }
 
         const messages = [{ role: 'user', content: prompt }];
         const url = GAS_URL + '?messages=' + encodeURIComponent(JSON.stringify(messages));
