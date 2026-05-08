@@ -183,8 +183,9 @@ export function showFortune(onBack = null, prefill = null) {
 
             const resultText = data.ok ? data.text : 'エラーが発生しました。もう一度お試しください。';
             const formatted = resultText
-            .replace(/\*([^*]+)\*/g, '')
             .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+            .replace(/\*([^*]+)\*/g, '')
+            .replace(/\*\*/g, '')
             .replace(/^#{1,3}\s*/gm, '')
             .replace(/^-{2,}$/gm, '')
             .replace(/\n{3,}/g, '\n\n')
