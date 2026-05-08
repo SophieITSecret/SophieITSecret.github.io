@@ -16,7 +16,7 @@ function getNextId(people) {
     return people.length === 0 ? 1 : Math.max(...people.map(p => p.id)) + 1;
 }
 
-export function showPeopleBook(onSelect = null) {
+export function showPeopleBook(onSelect = null, onClose = null) {
     const lv = document.getElementById('list-view');
     const nm = document.getElementById('nav-main');
     const prevHtml = lv ? lv.innerHTML : '';
@@ -30,21 +30,21 @@ export function showPeopleBook(onSelect = null) {
         const listHtml = people.length === 0
             ? `<div style="color:#666; text-align:center; padding:20px; font-size:0.85rem;">まだ登録されていません</div>`
             : people.map(p => `
-                <div style="display:flex; align-items:center; gap:8px; padding:8px 0; border-bottom:1px solid #222;">
-                    <div style="flex:1;">
-                        <div style="color:#fff; font-size:0.9rem;">${p.name}</div>
-                        <div style="color:#888; font-size:0.75rem;">${p.birth}・${p.gender}${p.memo ? '・' + p.memo : ''}</div>
+                <div style="display:flex; align-items:center; gap:6px; padding:4px 0; border-bottom:1px solid #1e1e1e;">
+                    <div style="flex:1; min-width:0;">
+                        <div style="color:#fff; font-size:0.82rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${p.name}</div>
+                        <div style="color:#777; font-size:0.68rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${p.birth}・${p.gender}${p.memo ? '・' + p.memo : ''}</div>
                     </div>
                     ${isSelectMode
                         ? `<button class="pb-select" data-id="${p.id}"
-                            style="background:#0096BF; color:#fff; border:none;
-                                   padding:4px 12px; border-radius:4px; font-size:0.8rem;">選択</button>`
+                            style="background:#0096BF; color:#fff; border:none; flex-shrink:0;
+                                   padding:2px 10px; border-radius:3px; font-size:0.75rem;">選択</button>`
                         : `<button class="pb-edit" data-id="${p.id}"
-                            style="background:#1a3a2a; color:#7fd97f; border:1px solid #3a6a4a;
-                                   padding:4px 10px; border-radius:4px; font-size:0.75rem; margin-right:4px;">編集</button>
+                            style="background:#1a3a2a; color:#7fd97f; border:1px solid #3a6a4a; flex-shrink:0;
+                                   padding:2px 8px; border-radius:3px; font-size:0.7rem; margin-right:3px;">編集</button>
                            <button class="pb-del" data-id="${p.id}"
-                            style="background:#2a1a1a; color:#e74c3c; border:1px solid #6a2a2a;
-                                   padding:4px 10px; border-radius:4px; font-size:0.75rem;">削除</button>`
+                            style="background:#2a1a1a; color:#e74c3c; border:1px solid #6a2a2a; flex-shrink:0;
+                                   padding:2px 8px; border-radius:3px; font-size:0.7rem;">削除</button>`
                     }
                 </div>`).join('');
 
@@ -73,8 +73,12 @@ export function showPeopleBook(onSelect = null) {
 
         document.getElementById('pb-add').onclick = () => showPersonForm(null, render);
         document.getElementById('pb-close').onclick = () => {
-            if (lv) { lv.style.display = prevDisplay; lv.innerHTML = prevHtml; }
-            if (nm) nm.style.display = prevNm;
+            if (onClose) {
+                onClose();
+            } else {
+                if (lv) { lv.style.display = prevDisplay; lv.innerHTML = prevHtml; }
+                if (nm) nm.style.display = prevNm;
+            }
         };
 
         document.querySelectorAll('.pb-select').forEach(btn => {

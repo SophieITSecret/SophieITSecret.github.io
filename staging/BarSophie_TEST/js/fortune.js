@@ -241,7 +241,7 @@ export function showFortuneMenu() {
     if (lv) { lv.style.display = 'block'; lv.innerHTML = menuHtml; }
     if (nm) nm.style.display = 'none';
 
-    document.getElementById('fm-people').onclick = () => showPeopleBook();
+    document.getElementById('fm-people').onclick = () => showPeopleBook(null, showFortuneMenu);
     document.getElementById('fm-fortune').onclick = () => showFortune();
     document.getElementById('fm-compat').onclick = () => showCompatibility();
     document.getElementById('fm-close').onclick = () => {
