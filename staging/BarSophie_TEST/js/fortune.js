@@ -1,6 +1,7 @@
 // js/fortune.js
 import { showPeopleBook } from './people.js';
 import { showCompatibility } from './compatibility.js';
+import { getThreePillars } from './meishiki.js';
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbwA1C22UhKroCFC_EPC-ugR5efyXVHlbkWywfD21HfD3-J4vm-b4ZjvIshO-i3fKk9W/exec';
 
 export function showFortune(onBack = null, prefill = null) {
@@ -163,6 +164,7 @@ export function showFortune(onBack = null, prefill = null) {
         if (!selectedTheme) { alert('鑑定テーマを選択してください'); return; }
 
         const worry = document.getElementById('ft-worry').value.trim();
+        const pillars = getThreePillars(parseInt(year), parseInt(month), parseInt(day));
         const btn = document.getElementById('ft-submit');
         btn.textContent = '鑑定中…';
         btn.disabled = true;
@@ -174,9 +176,10 @@ export function showFortune(onBack = null, prefill = null) {
 【分析対象】
 生年月日：${year}年${month}月${day}日
 性別：${selectedGender}
+命式：年柱 ${pillars.year}・月柱 ${pillars.month}・日柱 ${pillars.day}
 気になる点：${worry || 'なし'}
 
-この人物の命式を算出し、性格・性能カルテとして読み解いてください。
+この人物の命式をもとに、性格・性能カルテとして読み解いてください。
 
 ・この人の本質的な気質と価値観
 ・際立った強み、自然に発揮される才能
@@ -190,6 +193,7 @@ export function showFortune(onBack = null, prefill = null) {
 【対象】
 生年月日：${year}年${month}月${day}日
 性別：${selectedGender}
+命式：年柱 ${pillars.year}・月柱 ${pillars.month}・日柱 ${pillars.day}
 関係・目的：${worry || 'なし'}
 
 この人物の命式から、この人への効果的な働きかけ方を教えてください。
@@ -207,11 +211,12 @@ export function showFortune(onBack = null, prefill = null) {
 【鑑定対象】
 生年月日：${year}年${month}月${day}日
 性別：${selectedGender}
+命式：年柱 ${pillars.year}・月柱 ${pillars.month}・日柱 ${pillars.day}
 鑑定テーマ：${selectedTheme}
 特に相談したいテーマ：${worry || 'なし'}
 
 【鑑定の進め方】
-1. 四柱推命で命式を算出し、この方の本質的な性格・才能・宿命を読む。その際、自然な語りの中で、この人ならではの強み、見落としがちな弱み、これから開ける可能性、気をつけるべき点にさりげなく触れること
+1. この方の本質的な性格・才能・宿命を読む。その際、自然な語りの中で、この人ならではの強み、見落としがちな弱み、これから開ける可能性、気をつけるべき点にさりげなく触れること
 2. 現在の大運・年運（2026年）の流れを読む
 3. 相談テーマと命式・運気を照らし合わせて具体的なアドバイスをする
 4. 最後にソフィーらしい温かいひとことで締める

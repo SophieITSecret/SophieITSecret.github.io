@@ -1,5 +1,6 @@
 // js/compatibility.js
 import { showPeopleBook } from './people.js';
+import { getThreePillars } from './meishiki.js';
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbwA1C22UhKroCFC_EPC-ugR5efyXVHlbkWywfD21HfD3-J4vm-b4ZjvIshO-i3fKk9W/exec';
 
 export function showCompatibility(onBack = null, prefillMe = null, prefillYou = null, texts = null) {
@@ -168,6 +169,9 @@ export function showCompatibility(onBack = null, prefillMe = null, prefillYou = 
         const feeling = document.getElementById('cp-feeling').value.trim();
         const question = document.getElementById('cp-question').value.trim();
 
+        const myPillars = getThreePillars(parseInt(myYear), parseInt(myMonth), parseInt(myDay));
+        const yourPillars = getThreePillars(parseInt(yourYear), parseInt(yourMonth), parseInt(yourDay));
+
         const btn = document.getElementById('cp-submit');
         btn.textContent = '鑑定中…';
         btn.disabled = true;
@@ -178,10 +182,12 @@ export function showCompatibility(onBack = null, prefillMe = null, prefillYou = 
 【相談者】
 生年月日：${myYear}年${myMonth}月${myDay}日
 性別：${myGender}
+命式：年柱 ${myPillars.year}・月柱 ${myPillars.month}・日柱 ${myPillars.day}
 
 【お相手】
 生年月日：${yourYear}年${yourMonth}月${yourDay}日
 性別：${yourGender}
+命式：年柱 ${yourPillars.year}・月柱 ${yourPillars.month}・日柱 ${yourPillars.day}
 
 【相手への気持ち】
 ${feeling || 'とくになし'}
@@ -190,12 +196,11 @@ ${feeling || 'とくになし'}
 ${question || 'とくになし'}
 
 【鑑定の進め方】
-1. 二人それぞれの命式（日干を中心に）を算出する
-2. 二人の命式の関係性を読む（相生・相剋・比和など）
-3. 惹かれ合う理由と摩擦が起きやすいポイントを具体的に語る
-4. 相談者の気持ちと知りたいことを命式と照らし合わせてお告げをする
-5. この関係をうまくいかせるための具体的なアドバイスをする
-6. 最後にソフィーらしい温かくも少し色っぽいひとことで締める
+1. 二人の命式の関係性を読む（相生・相剋・比和など）
+2. 惹かれ合う理由と摩擦が起きやすいポイントを具体的に語る
+3. 相談者の気持ちと知りたいことを命式と照らし合わせてお告げをする
+4. この関係をうまくいかせるための具体的なアドバイスをする
+5. 最後にソフィーらしい温かくも少し色っぽいひとことで締める
 
 【注意】
 ・単なる一般論ではなく命式に基づいた具体的な言葉で語ること
