@@ -100,6 +100,7 @@ export function showFortune(onBack = null, prefill = null) {
     if (nm) nm.style.display = 'none';
 
     let selectedGender = prefill ? prefill.gender : '';
+    const personName = prefill?.name || '';
     let selectedTheme = '';
 
     document.querySelectorAll('.ft-gender').forEach(btn => {
@@ -142,7 +143,7 @@ export function showFortune(onBack = null, prefill = null) {
         showPeopleBook(
             (person) => {
                 const [y, m, d] = person.birth.split('-');
-                showFortune(onBack, { year: y, month: parseInt(m), day: parseInt(d), gender: person.gender });
+                showFortune(onBack, { year: y, month: parseInt(m), day: parseInt(d), gender: person.gender, name: person.name });
             },
             () => showFortune(onBack, cur)
         );
@@ -169,9 +170,11 @@ export function showFortune(onBack = null, prefill = null) {
         btn.textContent = '鑑定中…';
         btn.disabled = true;
 
+        const sophieChar = 'ソフィーは20代の若い女性バーテンダー。さわやかで知的、品がある。口調は丁寧な「です・ます」調。マダムのような馴れ馴れしさやタメ口は使わない。お客様は40〜50代の紳士が多い。四柱推命の専門用語はさりげなく使い、少し意味を補足するが説明的になりすぎない。';
         let prompt;
         if (selectedTheme === '性格分析') {
-            prompt = `あなたは四柱推命を極めた占い師であり、BARソフィーのバーテンダー「ソフィー」です。
+            prompt = `${sophieChar}
+あなたは四柱推命を極めた占い師であり、BARソフィーのバーテンダー「ソフィー」です。
 あなたにお客さんから相談がありました。
 「あの方のことが知りたい。ついては占いをしてアドバイスしてほしい」
 
@@ -190,7 +193,8 @@ export function showFortune(onBack = null, prefill = null) {
 
 見出しや箇条書きは使わず、ソフィーが静かにカルテを読み上げるような語り口で。全体800字を目安に。`;
         } else if (selectedTheme === '攻略法') {
-            prompt = `あなたは四柱推命を極めた占い師であり、BARソフィーのバーテンダー「ソフィー」です。
+            prompt = `${sophieChar}
+あなたは四柱推命を極めた占い師であり、BARソフィーのバーテンダー「ソフィー」です。
 あなたにお客さんから相談がありました。
 「あの方ともっと近づきたい。ついては占いをしてアドバイスしてほしい」
 
@@ -209,7 +213,8 @@ export function showFortune(onBack = null, prefill = null) {
 
 自然な語り口で。見出し・箇条書きは使わないこと。全体800字を目安に。`;
         } else {
-            prompt = `あなたは四柱推命を極めた占い師であり、BARソフィーのバーテンダー「ソフィー」です。
+            prompt = `${sophieChar}
+あなたは四柱推命を極めた占い師であり、BARソフィーのバーテンダー「ソフィー」です。
 貴方にお客様から相談がありました。自分の運勢を占いで見てほしいそうです。
 カウンターでお客様の相談ごとに寄り添いながら、お客様の自己発見に導き深みのあるアドバイスをしてください。
 
@@ -241,6 +246,10 @@ export function showFortune(onBack = null, prefill = null) {
             const data = await res.json();
 
             const resultText = data.ok ? data.text : 'エラーが発生しました。もう一度お試しください。';
+            const now = new Date();
+            const dateStr = `${now.getFullYear()}年${now.getMonth()+1}月${now.getDate()}日`;
+            const personLabel = personName ? `${personName}（${selectedGender}）` : `${year}年${month}月${day}日生（${selectedGender}）`;
+            const resultHeader = `【${selectedTheme}鑑定】${personLabel}　${dateStr}`;
             const formatted = resultText
             .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
             .replace(/\*([^*]+)\*/g, '')
@@ -261,6 +270,7 @@ export function showFortune(onBack = null, prefill = null) {
                         <img src="./sophie_face.png" style="width:20px; height:20px; border-radius:50%; object-fit:cover;">
                         ソフィーの鑑定結果
                     </div>
+                    <div style="padding:4px 12px 6px; color:#888; font-size:0.72rem; border-bottom:1px solid #222;">${resultHeader}</div>
                     <div style="padding:12px; color:#ddd; font-size:0.85rem; line-height:1.9;">${formatted}</div>
                     <div style="padding:0 10px 10px;">
 
@@ -279,7 +289,7 @@ export function showFortune(onBack = null, prefill = null) {
 
 
             document.getElementById('ft-copy').onclick = () => {
-                navigator.clipboard.writeText(resultText)
+                navigator.clipboard.writeText(resultHeader + '\n\n' + resultText)
                     .then(() => alert('鑑定結果をコピーしました。メモアプリに貼り付けてください。'))
                     .catch(() => alert('コピーに失敗しました。'));
             };

@@ -1,16 +1,18 @@
 // js/people.js
 const PEOPLE_KEY = 'bar_sophie_people';
+const SELF_KEY   = 'bar_sophie_self';
 
 function getPeople() {
-    try {
-        const raw = localStorage.getItem(PEOPLE_KEY);
-        return raw ? JSON.parse(raw) : [];
-    } catch(e) { return []; }
+    try { const r = localStorage.getItem(PEOPLE_KEY); return r ? JSON.parse(r) : []; }
+    catch(e) { return []; }
 }
+function savePeople(people) { localStorage.setItem(PEOPLE_KEY, JSON.stringify(people)); }
 
-function savePeople(people) {
-    localStorage.setItem(PEOPLE_KEY, JSON.stringify(people));
+function getSelf() {
+    try { const r = localStorage.getItem(SELF_KEY); return r ? JSON.parse(r) : null; }
+    catch(e) { return null; }
 }
+function saveSelf(data) { localStorage.setItem(SELF_KEY, JSON.stringify(data)); }
 
 function getNextId(people) {
     return people.length === 0 ? 1 : Math.max(...people.map(p => p.id)) + 1;
@@ -19,34 +21,76 @@ function getNextId(people) {
 export function showPeopleBook(onSelect = null, onClose = null) {
     const lv = document.getElementById('list-view');
     const nm = document.getElementById('nav-main');
-    const prevHtml = lv ? lv.innerHTML : '';
+    const prevHtml    = lv ? lv.innerHTML    : '';
     const prevDisplay = lv ? lv.style.display : 'none';
-    const prevNm = nm ? nm.style.display : 'none';
+    const prevNm      = nm ? nm.style.display : 'none';
 
     const render = () => {
-        const people = getPeople();
+        const people      = getPeople();
+        const self        = getSelf();
         const isSelectMode = onSelect !== null;
 
+        // ── 自分のデータ枠 ──────────────────────────────────
+        const selfHtml = `
+            <div style="border:1px solid #3a6a4a; border-radius:6px; background:#0a1a0a;
+                        padding:8px; margin-bottom:10px;">
+                <div style="color:#7fd97f; font-size:0.72rem; margin-bottom:6px;">👤 自分のデータ</div>
+                ${self
+                    ? `<div id="pb-self-row" style="display:flex; align-items:center; gap:6px;
+                                                    ${isSelectMode ? 'cursor:pointer;' : ''}">
+                           <div style="flex:1; min-width:0;">
+                               <div style="color:#7fd97f; font-size:0.82rem; white-space:nowrap;
+                                           overflow:hidden; text-overflow:ellipsis;">${self.name}</div>
+                               <div style="color:#5a8a5a; font-size:0.68rem; white-space:nowrap;
+                                           overflow:hidden; text-overflow:ellipsis;">${self.birth}・${self.gender}${self.memo ? '・' + self.memo : ''}</div>
+                           </div>
+                           ${isSelectMode
+                               ? `<span style="color:#0096BF; font-size:0.8rem; flex-shrink:0;">▶ 選択</span>`
+                               : `<button id="pb-self-edit" style="background:#1a3a2a; color:#7fd97f;
+                                      border:1px solid #3a6a4a; padding:2px 8px; border-radius:3px;
+                                      font-size:0.7rem;">編集</button>`
+                           }
+                       </div>`
+                    : `<div style="display:flex; align-items:center; justify-content:space-between;">
+                           <span style="color:#555; font-size:0.78rem;">未登録</span>
+                           <button id="pb-self-add" style="background:#1a3a2a; color:#7fd97f;
+                               border:1px solid #3a6a4a; padding:3px 10px; border-radius:3px;
+                               font-size:0.75rem;">登録する</button>
+                       </div>`
+                }
+            </div>`;
+
+        // ── 通常リスト ──────────────────────────────────────
         const listHtml = people.length === 0
             ? `<div style="color:#666; text-align:center; padding:20px; font-size:0.85rem;">まだ登録されていません</div>`
-            : people.map(p => `
-                <div style="display:flex; align-items:center; gap:6px; padding:4px 0; border-bottom:1px solid #1e1e1e;">
-                    <div style="flex:1; min-width:0;">
-                        <div style="color:#fff; font-size:0.82rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${p.name}</div>
-                        <div style="color:#777; font-size:0.68rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${p.birth}・${p.gender}${p.memo ? '・' + p.memo : ''}</div>
-                    </div>
-                    ${isSelectMode
-                        ? `<button class="pb-select" data-id="${p.id}"
-                            style="background:#0096BF; color:#fff; border:none; flex-shrink:0;
-                                   padding:2px 10px; border-radius:3px; font-size:0.75rem;">選択</button>`
-                        : `<button class="pb-edit" data-id="${p.id}"
-                            style="background:#1a3a2a; color:#7fd97f; border:1px solid #3a6a4a; flex-shrink:0;
-                                   padding:2px 8px; border-radius:3px; font-size:0.7rem; margin-right:3px;">編集</button>
-                           <button class="pb-del" data-id="${p.id}"
-                            style="background:#2a1a1a; color:#e74c3c; border:1px solid #6a2a2a; flex-shrink:0;
-                                   padding:2px 8px; border-radius:3px; font-size:0.7rem;">削除</button>`
-                    }
-                </div>`).join('');
+            : people.map(p => isSelectMode
+                ? `<div class="pb-select" data-id="${p.id}"
+                       style="display:flex; align-items:center; gap:6px; padding:8px 4px;
+                              border-bottom:1px solid #1e1e1e; cursor:pointer;">
+                       <div style="flex:1; min-width:0;">
+                           <div style="color:#fff; font-size:0.82rem; white-space:nowrap;
+                                       overflow:hidden; text-overflow:ellipsis;">${p.name}</div>
+                           <div style="color:#777; font-size:0.68rem; white-space:nowrap;
+                                       overflow:hidden; text-overflow:ellipsis;">${p.birth}・${p.gender}${p.memo ? '・' + p.memo : ''}</div>
+                       </div>
+                       <span style="color:#0096BF; font-size:0.8rem; flex-shrink:0;">▶ 選択</span>
+                   </div>`
+                : `<div style="display:flex; align-items:center; gap:6px; padding:4px 0;
+                              border-bottom:1px solid #1e1e1e;">
+                       <div style="flex:1; min-width:0;">
+                           <div style="color:#fff; font-size:0.82rem; white-space:nowrap;
+                                       overflow:hidden; text-overflow:ellipsis;">${p.name}</div>
+                           <div style="color:#777; font-size:0.68rem; white-space:nowrap;
+                                       overflow:hidden; text-overflow:ellipsis;">${p.birth}・${p.gender}${p.memo ? '・' + p.memo : ''}</div>
+                       </div>
+                       <button class="pb-edit" data-id="${p.id}"
+                           style="background:#1a3a2a; color:#7fd97f; border:1px solid #3a6a4a; flex-shrink:0;
+                                  padding:2px 8px; border-radius:3px; font-size:0.7rem; margin-right:3px;">編集</button>
+                       <button class="pb-del" data-id="${p.id}"
+                           style="background:#2a1a1a; color:#e74c3c; border:1px solid #6a2a2a; flex-shrink:0;
+                                  padding:2px 8px; border-radius:3px; font-size:0.7rem;">削除</button>
+                   </div>`
+            ).join('');
 
         const html = `
             <div style="margin:10px; border-radius:10px; border:2px solid transparent;
@@ -59,6 +103,7 @@ export function showPeopleBook(onSelect = null, onClose = null) {
                     👥 人物帳
                 </div>
                 <div style="padding:10px;">
+                    ${selfHtml}
                     <div id="pb-list">${listHtml}</div>
                     <button id="pb-add" style="width:100%; background:#2a1a3a; color:#c39bd3;
                         border:1px solid #6a3a8a; height:40px; border-radius:4px;
@@ -73,33 +118,39 @@ export function showPeopleBook(onSelect = null, onClose = null) {
 
         document.getElementById('pb-add').onclick = () => showPersonForm(null, render);
         document.getElementById('pb-close').onclick = () => {
-            if (onClose) {
-                onClose();
-            } else {
+            if (onClose) { onClose(); }
+            else {
                 if (lv) { lv.style.display = prevDisplay; lv.innerHTML = prevHtml; }
                 if (nm) nm.style.display = prevNm;
             }
         };
 
-        document.querySelectorAll('.pb-select').forEach(btn => {
-            btn.onclick = () => {
-                const person = getPeople().find(p => p.id === parseInt(btn.dataset.id));
+        // 自分のデータ handlers
+        if (self && isSelectMode) {
+            document.getElementById('pb-self-row').onclick = () => { if (onSelect) onSelect(self); };
+        }
+        const selfAddBtn  = document.getElementById('pb-self-add');
+        const selfEditBtn = document.getElementById('pb-self-edit');
+        if (selfAddBtn)  selfAddBtn.onclick  = () => showPersonForm(null, render, true);
+        if (selfEditBtn) selfEditBtn.onclick = () => showPersonForm(self, render, true);
+
+        // 通常リスト handlers
+        document.querySelectorAll('.pb-select').forEach(el => {
+            el.onclick = () => {
+                const person = getPeople().find(p => p.id === parseInt(el.dataset.id));
                 if (person && onSelect) onSelect(person);
             };
         });
-
         document.querySelectorAll('.pb-edit').forEach(btn => {
             btn.onclick = () => {
                 const person = getPeople().find(p => p.id === parseInt(btn.dataset.id));
                 if (person) showPersonForm(person, render);
             };
         });
-
         document.querySelectorAll('.pb-del').forEach(btn => {
             btn.onclick = () => {
                 if (!confirm('削除しますか？')) return;
-                const people = getPeople().filter(p => p.id !== parseInt(btn.dataset.id));
-                savePeople(people);
+                savePeople(getPeople().filter(p => p.id !== parseInt(btn.dataset.id)));
                 render();
             };
         });
@@ -108,9 +159,12 @@ export function showPeopleBook(onSelect = null, onClose = null) {
     render();
 }
 
-function showPersonForm(person, onSave) {
+function showPersonForm(person, onSave, isSelf = false) {
     const lv = document.getElementById('list-view');
     const isEdit = person !== null;
+    const headerLabel = isSelf
+        ? (isEdit ? '👤 自分のデータを編集' : '👤 自分のデータを登録')
+        : (isEdit ? '✏️ 編集' : '＋ 新規登録');
 
     const html = `
         <div style="margin:10px; border-radius:10px; border:2px solid transparent;
@@ -119,7 +173,7 @@ function showPersonForm(person, onSave) {
             <div style="color:#f0b56e; padding:0 12px; font-size:0.8rem; font-weight:bold;
                         border-bottom:1px solid #333; height:28px; line-height:28px;
                         border-radius:8px 8px 0 0;">
-                ${isEdit ? '✏️ 編集' : '＋ 新規登録'}
+                ${headerLabel}
             </div>
             <div style="padding:10px;">
                 <div style="margin-bottom:8px;">
@@ -190,27 +244,30 @@ function showPersonForm(person, onSave) {
     document.getElementById('pf-cancel').onclick = () => onSave();
 
     document.getElementById('pf-save').onclick = () => {
-        const name = document.getElementById('pf-name').value.trim();
-        const year = document.getElementById('pf-year').value;
+        const name  = document.getElementById('pf-name').value.trim();
+        const year  = document.getElementById('pf-year').value;
         const month = document.getElementById('pf-month').value;
-        const day = document.getElementById('pf-day').value;
-        const memo = document.getElementById('pf-memo').value.trim();
+        const day   = document.getElementById('pf-day').value;
+        const memo  = document.getElementById('pf-memo').value.trim();
 
-        if (!name) { alert('名前を入力してください'); return; }
-        if (!year || !month || !day) { alert('生年月日を入力してください'); return; }
-        if (!selectedGender) { alert('性別を選択してください'); return; }
+        if (!name)                    { alert('名前を入力してください'); return; }
+        if (!year || !month || !day)  { alert('生年月日を入力してください'); return; }
+        if (!selectedGender)          { alert('性別を選択してください'); return; }
 
         const birth = `${year}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
-        const people = getPeople();
 
-        if (isEdit) {
-            const idx = people.findIndex(p => p.id === person.id);
-            if (idx >= 0) people[idx] = { ...person, name, birth, gender: selectedGender, memo };
+        if (isSelf) {
+            saveSelf({ name, birth, gender: selectedGender, memo });
         } else {
-            people.push({ id: getNextId(people), name, birth, gender: selectedGender, memo });
+            const people = getPeople();
+            if (isEdit) {
+                const idx = people.findIndex(p => p.id === person.id);
+                if (idx >= 0) people[idx] = { ...person, name, birth, gender: selectedGender, memo };
+            } else {
+                people.push({ id: getNextId(people), name, birth, gender: selectedGender, memo });
+            }
+            savePeople(people);
         }
-
-        savePeople(people);
         onSave();
     };
 }

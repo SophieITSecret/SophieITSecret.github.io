@@ -157,7 +157,8 @@ setListView(h, false);
         document.getElementById('f-backup').onclick = () => {
             const backup = {
                 techo: getTechoData(),
-                people: JSON.parse(localStorage.getItem('bar_sophie_people') || '[]')
+                people: JSON.parse(localStorage.getItem('bar_sophie_people') || '[]'),
+                self: JSON.parse(localStorage.getItem('bar_sophie_self') || 'null')
             };
             const text = JSON.stringify(backup);
             navigator.clipboard.writeText(text).then(() => {
@@ -196,6 +197,7 @@ setListView(h, false);
                         // 新フォーマット（手帳＋人物帳の統合バックアップ）
                         saveTechoData(parsed.techo);
                         localStorage.setItem('bar_sophie_people', JSON.stringify(parsed.people || []));
+                        if (parsed.self !== undefined) localStorage.setItem('bar_sophie_self', JSON.stringify(parsed.self));
                     } else if (parsed.favorites) {
                         // 旧フォーマット（手帳のみ）との互換
                         saveTechoData(parsed);

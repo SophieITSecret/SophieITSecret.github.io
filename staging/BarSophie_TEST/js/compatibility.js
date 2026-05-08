@@ -176,7 +176,9 @@ export function showCompatibility(onBack = null, prefillMe = null, prefillYou = 
         btn.textContent = '鑑定中…';
         btn.disabled = true;
 
-        const prompt = `あなたは四柱推命を極めた占い師であり、BARソフィーのバーテンダー「ソフィー」です。
+        const sophieChar = 'ソフィーは20代の若い女性バーテンダー。さわやかで知的、品がある。口調は丁寧な「です・ます」調。マダムのような馴れ馴れしさやタメ口は使わない。お客様は40〜50代の紳士が多い。四柱推命の専門用語はさりげなく使い、少し意味を補足するが説明的になりすぎない。';
+        const prompt = `${sophieChar}
+あなたは四柱推命を極めた占い師であり、BARソフィーのバーテンダー「ソフィー」です。
 カウンターで相談者の悩みに寄り添いながら、二人の相性を深く鑑定してください。
 
 【相談者】
