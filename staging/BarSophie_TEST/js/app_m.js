@@ -623,6 +623,19 @@ function renderConsole(mode) {
     const sBtn = `background:#0096BF; color:#ff69b4; font-size:1.4rem; font-weight:bold; flex:1.0; border:2px solid #ff51a8;`;
     const navBtn = `flex:1; background:#1a2a3a; color:#5ba3d9; font-size:1.1rem; border:none; border-radius:0; touch-action:manipulation; ${noApp}`;
 
+    if (mode === 'fortune') {
+        grid.innerHTML = `
+        <button class="c-btn" id="c-back" style="${backBtn}">戻る</button>
+        <button class="c-btn" id="c-meishiki" style="background:#1a1a2a; color:#9b59b6; border:1px solid #6a3a8a; flex:2; font-size:0.85rem;">📊 命式表</button>`;
+        document.getElementById('c-back').onclick = () => {
+            import('./fortune.js').then(f => f.showFortuneMenu());
+        };
+        document.getElementById('c-meishiki').onclick = () => {
+            window._showMeishikiPanel && window._showMeishikiPanel();
+        };
+        return;
+    }
+
     if (mode === 'screening') {
         grid.innerHTML = `
             <button class="c-btn" id="c-back" style="${backBtn}">戻る</button>

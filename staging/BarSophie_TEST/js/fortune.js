@@ -11,6 +11,11 @@ export function showFortune(onBack = null, prefill = null) {
     const prevDisplay = lv ? lv.style.display : 'none';
     const prevNm = nm ? nm.style.display : 'none';
 
+    // 占い専用モードに切り替え
+    const monImg = document.getElementById('monitor-img');
+    if (monImg) { monImg.src = './fortune_sophie.jpeg'; }
+    if (window._renderConsole) window._renderConsole('fortune');
+
     const formHtml = `
         <div style="margin:10px; border-radius:10px; border:2px solid transparent;
                     background: linear-gradient(#111, #111) padding-box,
@@ -86,6 +91,10 @@ export function showFortune(onBack = null, prefill = null) {
                                padding:8px 10px; border-radius:4px; font-size:0.85rem;
                                resize:none; font-family:inherit;"></textarea>
                 </div>
+                <button id="ft-meishiki-btn" style="width:100%; background:#1a1a2a; color:#9b59b6;
+                    border:1px solid #6a3a8a; height:36px; border-radius:4px;
+                    font-size:0.8rem; margin-bottom:6px;">📊 命式を確認する</button>
+                <div id="ft-meishiki-area" style="display:none; margin-bottom:8px;"></div>
                 <button id="ft-submit" style="width:100%; background:#0096BF; color:#ff69b4;
                     border:2px solid #ff51a8; height:44px; border-radius:4px;
                     font-size:0.95rem; font-weight:bold; margin-bottom:8px;">
@@ -154,6 +163,37 @@ export function showFortune(onBack = null, prefill = null) {
         if (lv) { lv.style.display = prevDisplay; lv.innerHTML = prevHtml; }
         if (nm) nm.style.display = prevNm;
     };
+
+    window._showMeishikiPanel = () => {
+        const y = parseInt(document.getElementById('ft-year')?.value);
+        const mo = parseInt(document.getElementById('ft-month')?.value);
+        const d = parseInt(document.getElementById('ft-day')?.value);
+        if (!y || !mo || !d) { alert('先に生年月日を入力してください'); return; }
+        const area = document.getElementById('ft-meishiki-area');
+        if (!area) return;
+        if (area.style.display !== 'none') { area.style.display = 'none'; return; }
+        import('./meishiki.js').then(m => {
+            const raw = m.getFullMeishiki(y, mo, d, selectedGender || '不明');
+            const siMap = {
+                甲:{gogyo:'木',inyo:'陽'},乙:{gogyo:'木',inyo:'陰'},
+                丙:{gogyo:'火',inyo:'陽'},丁:{gogyo:'火',inyo:'陰'},
+                戊:{gogyo:'土',inyo:'陽'},己:{gogyo:'土',inyo:'陰'},
+                庚:{gogyo:'金',inyo:'陽'},辛:{gogyo:'金',inyo:'陰'},
+                壬:{gogyo:'水',inyo:'陽'},癸:{gogyo:'水',inyo:'陰'}
+            };
+            const adapt = col => col ? { ...col, stemInfo: siMap[col.stem] || {} } : null;
+            const data = {
+                ...raw,
+                yearPillar:  adapt(raw.columns.year),
+                monthPillar: adapt(raw.columns.month),
+                dayPillar:   adapt(raw.columns.day)
+            };
+            area.style.display = 'block';
+            area.innerHTML = buildMeishikiHtml(data, y, mo, d, selectedGender);
+        });
+    };
+
+    document.getElementById('ft-meishiki-btn').onclick = () => window._showMeishikiPanel();
 
     document.getElementById('ft-submit').onclick = async () => {
         const year = document.getElementById('ft-year').value;
@@ -315,6 +355,11 @@ export function showFortuneMenu() {
     const prevDisplay = lv ? lv.style.display : 'none';
     const prevNm = nm ? nm.style.display : 'none';
 
+    // 画像を元に戻す
+    const monImg = document.getElementById('monitor-img');
+    if (monImg) { monImg.src = './front_sophie.jpeg'; }
+    if (window._renderConsole) window._renderConsole('standard');
+
     const menuHtml = `
         <div style="margin:10px; border-radius:10px; border:2px solid transparent;
                     background: linear-gradient(#111, #111) padding-box,
@@ -345,4 +390,52 @@ export function showFortuneMenu() {
         if (lv) { lv.style.display = prevDisplay; lv.innerHTML = prevHtml; }
         if (nm) nm.style.display = prevNm;
     };
+}
+
+function buildMeishikiHtml(data, year, month, day, gender) {
+    const gogyoColor = { 木:'#4CAF50', 火:'#e74c3c', 土:'#f39c12', 金:'#bdc3c7', 水:'#3498db' };
+    const pillarHtml = (label, pillar) => {
+        if (!pillar) return '';
+        const si = pillar.stemInfo || {};
+        const color = gogyoColor[si.gogyo] || '#aaa';
+        return `
+            <div style="flex:1; text-align:center; border-right:1px solid #333; padding:4px;">
+                <div style="color:#888; font-size:0.65rem;">${label}</div>
+                <div style="font-size:1.2rem; font-weight:bold; color:${color};">${pillar.stem || ''}</div>
+                <div style="font-size:1.1rem; color:#ddd;">${pillar.branch || ''}</div>
+                <div style="color:${color}; font-size:0.65rem;">${si.gogyo || ''}・${si.inyo || ''}</div>
+                <div style="color:#888; font-size:0.65rem; border-top:1px solid #333; margin-top:2px; padding-top:2px;">
+                    蔵干 ${(pillar.kakuchu || []).join(' ')}
+                </div>
+                <div style="color:#f0b56e; font-size:0.65rem; border-top:1px solid #333; margin-top:2px; padding-top:2px;">
+                    ${pillar.tsuhensei || ''}
+                </div>
+                <div style="color:#9b59b6; font-size:0.65rem; border-top:1px solid #333; margin-top:2px; padding-top:2px;">
+                    ${pillar.juniUnsei || ''}
+                </div>
+            </div>`;
+    };
+    const balance = data.gogyoBalance || {};
+    const maxVal = Math.max(...Object.values(balance), 1);
+    const balanceHtml = Object.entries(balance).map(([gogyo, count]) => `
+        <div style="display:flex; align-items:center; gap:6px; margin-bottom:2px;">
+            <div style="color:${gogyoColor[gogyo]}; width:14px; font-size:0.75rem;">${gogyo}</div>
+            <div style="flex:1; background:#222; border-radius:2px; height:10px;">
+                <div style="background:${gogyoColor[gogyo]}; width:${(count/maxVal)*100}%; height:100%; border-radius:2px;"></div>
+            </div>
+            <div style="color:#aaa; font-size:0.7rem; width:14px;">${count}</div>
+        </div>`).join('');
+    return `
+        <div style="border:1px solid #6a3a8a; border-radius:6px; padding:8px; background:#0a0a1a;">
+            <div style="color:#9b59b6; font-size:0.75rem; margin-bottom:6px; text-align:center;">
+                📊 ${year}年${month}月${day}日・${gender || ''}の命式
+            </div>
+            <div style="display:flex; border:1px solid #333; border-radius:4px; overflow:hidden; margin-bottom:8px;">
+                ${pillarHtml('年柱', data.yearPillar)}
+                ${pillarHtml('月柱', data.monthPillar)}
+                ${pillarHtml('日柱', data.dayPillar)}
+            </div>
+            <div style="font-size:0.7rem; color:#aaa; margin-bottom:4px;">五行バランス</div>
+            ${balanceHtml}
+        </div>`;
 }
