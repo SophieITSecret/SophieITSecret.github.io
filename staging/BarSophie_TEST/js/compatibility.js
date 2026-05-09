@@ -219,7 +219,8 @@ ${question || 'とくになし'}
 ・単なる一般論ではなく命式に基づいた具体的な言葉で語ること
 ・腕のいい占い師として深みと説得力のある鑑定をすること
 ・ソフィーとして品があり温かみのある語り口で
-・斜体や演出の地の文は入れないこと`;
+・斜体や演出の地の文は入れないこと
+・回答は1500字程度にまとめること`;
 
         const messages = [{ role: 'user', content: prompt }];
         const url = GAS_URL + '?messages=' + encodeURIComponent(JSON.stringify(messages));
