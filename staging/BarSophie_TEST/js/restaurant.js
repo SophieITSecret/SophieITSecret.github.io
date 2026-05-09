@@ -152,7 +152,7 @@ export function showRestaurantSearch(savedArea = '', savedGenre = '', savedBudge
 食べログURLは記載不要。存在しない店は絶対に挙げないこと。`;
 
         const messages = [{ role: 'user', content: prompt }];
-        const url = GAS_URL + '?messages=' + encodeURIComponent(JSON.stringify(messages));
+        const url = GAS_URL + '?messages=' + encodeURIComponent(JSON.stringify(messages)) + '&search=true';
 
         try {
             const res = await fetch(url);
