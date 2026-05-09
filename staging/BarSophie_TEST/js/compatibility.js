@@ -71,17 +71,19 @@ export function showCompatibility(onBack = null, prefillMe = null, prefillYou = 
                 <div style="border-top:1px solid #333; margin:8px 0;"></div>
                 <div style="margin-bottom:8px;">
                     <div style="color:#aaa; font-size:0.75rem; margin-bottom:4px;">相手をどう思っていますか？</div>
-                    <textarea id="cp-feeling" rows="2" placeholder="例：好きだけど自分の気持ちがよくわからない、一緒にいると落ち着くが刺激がない"
+                    <textarea id="cp-feeling" rows="2" maxlength="50" placeholder="例：好きだけど自分の気持ちがよくわからない、一緒にいると落ち着くが刺激がない"
                         style="width:100%; background:#000; border:1px solid #555; color:#fff;
                                padding:8px 10px; border-radius:4px; font-size:0.85rem;
                                resize:none; font-family:inherit;">${texts ? texts.feeling : ''}</textarea>
+                    <div id="cp-feeling-count" style="color:#666; font-size:0.7rem; text-align:right;">残り${texts ? 50 - texts.feeling.length : 50}文字</div>
                 </div>
                 <div style="margin-bottom:10px;">
                     <div style="color:#aaa; font-size:0.75rem; margin-bottom:4px;">何が知りたいですか？</div>
-                    <textarea id="cp-question" rows="2" placeholder="例：この人と将来一緒になれるか、どう接すればうまくいくか、踏み出していいか"
+                    <textarea id="cp-question" rows="2" maxlength="50" placeholder="例：この人と将来一緒になれるか、どう接すればうまくいくか、踏み出していいか"
                         style="width:100%; background:#000; border:1px solid #555; color:#fff;
                                padding:8px 10px; border-radius:4px; font-size:0.85rem;
                                resize:none; font-family:inherit;">${texts ? texts.question : ''}</textarea>
+                    <div id="cp-question-count" style="color:#666; font-size:0.7rem; text-align:right;">残り${texts ? 50 - texts.question.length : 50}文字</div>
                 </div>
                 <button id="cp-submit" style="width:100%; background:#0096BF; color:#ff69b4;
                     border:2px solid #ff51a8; height:44px; border-radius:4px;
@@ -118,6 +120,15 @@ export function showCompatibility(onBack = null, prefillMe = null, prefillYou = 
             yourGender = btn.dataset.val;
         });
     });
+
+    document.getElementById('cp-feeling').oninput = function() {
+        const remaining = 50 - this.value.length;
+        document.getElementById('cp-feeling-count').textContent = '残り' + remaining + '文字';
+    };
+    document.getElementById('cp-question').oninput = function() {
+        const remaining = 50 - this.value.length;
+        document.getElementById('cp-question-count').textContent = '残り' + remaining + '文字';
+    };
 
     const getState = () => ({
         me:  { year: document.getElementById('cp-me-year').value,  month: document.getElementById('cp-me-month').value,  day: document.getElementById('cp-me-day').value,  gender: myGender },
@@ -176,7 +187,7 @@ export function showCompatibility(onBack = null, prefillMe = null, prefillYou = 
         btn.textContent = '鑑定中…';
         btn.disabled = true;
 
-        const sophieChar = 'ソフィーは20代の若い女性バーテンダー。さわやかで知的、品がある。口調は丁寧な「です・ます」調。マダムのような馴れ馴れしさやタメ口は使わない。お客様は40〜50代の紳士が多い。四柱推命の専門用語はさりげなく使い、少し意味を補足するが説明的になりすぎない。';
+        const sophieChar = 'あなたはBARソフィーのソフィー（20代・女性バーテンダー）。知的で品のある、です・ます調の丁寧な語り口で四柱推命の相性鑑定をしてください。お客は40・50代。';
         const prompt = `${sophieChar}
 あなたは四柱推命を極めた占い師であり、BARソフィーのバーテンダー「ソフィー」です。
 カウンターで相談者の悩みに寄り添いながら、二人の相性を深く鑑定してください。
