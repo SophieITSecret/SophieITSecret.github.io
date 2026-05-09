@@ -15,6 +15,7 @@ export function showFortune(onBack = null, prefill = null) {
     const monImg = document.getElementById('monitor-img');
     if (monImg) { monImg.src = './fortune_sophie.jpeg'; }
     if (window._renderConsole) window._renderConsole('fortune');
+    window._fortuneBack = () => showFortuneMenu();
 
     const formHtml = `
         <div style="margin:10px; border-radius:10px; border:2px solid transparent;
@@ -327,6 +328,9 @@ export function showFortune(onBack = null, prefill = null) {
 
             if (lv) { lv.innerHTML = resultHtml; }
 
+            window._fortuneBack = () => {
+                showFortune(showFortuneMenu, { year: String(year), month, day, gender: selectedGender });
+            };
 
             document.getElementById('ft-copy').onclick = () => {
                 navigator.clipboard.writeText(resultHeader + '\n\n' + resultText)
@@ -373,7 +377,7 @@ export function showFortuneMenu() {
             <div style="padding:10px;">
                 <button id="fm-people" class="act-btn" style="background:#1a2a1a; color:#7fd97f; border:1px solid #3a6a4a; margin-bottom:8px;">👥 人物帳</button>
                 <button id="fm-fortune" class="act-btn" style="background:#2a1a3a; color:#c39bd3;
-                    border:1px solid #6a3a8a; margin-bottom:8px;">🌟 運勢を鑑定してもらう</button>
+                    border:1px solid #6a3a8a; margin-bottom:8px;">🌟 運勢を見てもらう</button>
                 <button id="fm-compat" class="act-btn" style="background:#1a2a3a; color:#5ba3d9;
                     border:1px solid #1a5276; margin-bottom:8px;">💑 相性を見てもらう</button>
                 <button id="fm-close" class="act-btn" style="background:#34495e;">閉じる</button>

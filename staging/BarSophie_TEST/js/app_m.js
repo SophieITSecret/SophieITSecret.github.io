@@ -99,10 +99,9 @@ function setup() {
     // ★以下2行を追加
     document.getElementById('btn-news').onclick = () => showNewsMarket();
     document.getElementById('btn-notice').onclick = () => {
-        import('./favorite.js').then(f => {
-            f.openNotice();
-            renderConsole('standard');
-        }).catch(e => alert("準備中です"));
+        const ice = new Audio('./voices_mp3/ice.mp3');
+        ice.onended = () => { import('./favorite.js').then(f => { f.openNotice(); renderConsole('standard'); }); };
+        ice.play().catch(() => { import('./favorite.js').then(f => { f.openNotice(); renderConsole('standard'); }); });
     };
     document.getElementById('sophie-warp').onclick = () => {
         if (nav.state !== "none") {
@@ -628,7 +627,7 @@ function renderConsole(mode) {
         <button class="c-btn" id="c-back" style="${backBtn}">戻る</button>
         <button class="c-btn" id="c-meishiki" style="background:#1a1a2a; color:#9b59b6; border:1px solid #6a3a8a; flex:2; font-size:0.85rem;">📊 命式表</button>`;
         document.getElementById('c-back').onclick = () => {
-            import('./fortune.js').then(f => f.showFortuneMenu());
+            window._fortuneBack && window._fortuneBack();
         };
         document.getElementById('c-meishiki').onclick = () => {
             window._showMeishikiPanel && window._showMeishikiPanel();
