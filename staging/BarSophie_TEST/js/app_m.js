@@ -676,7 +676,7 @@ function renderConsole(mode) {
                 <span style="font-size:0.75rem; font-weight:bold; line-height:1.1;">おすすめ</span>
                 <span style="font-size:0.75rem; letter-spacing:1px; line-height:1.1;">SHOP</span>
             </button>
-            <button class="c-btn" id="btn-techo" style="background:rgba(34,34,34,0.8); color:#fff; border:1px solid #777; font-size:1.5rem; flex:1.0; display:flex; justify-content:center; align-items:center;">📖</button>
+            <button class="c-btn" id="btn-techo" style="background:rgba(34,34,34,0.8); color:#fff; border:1px solid #777; font-size:0.75rem; flex:1.0; display:flex; flex-direction:column; justify-content:center; align-items:center; line-height:1.3;"><span>ソフィー</span><span>ノート</span></button>
             <button class="c-btn" id="ctrl-pause" style="${pCtrl}">⏹️</button>
             <button class="c-btn" id="ctrl-play"  style="${pBtn}">▶</button>
             <button class="c-btn" id="btn-next"   style="${pCtrl}">⏭</button>`;
@@ -697,7 +697,7 @@ function renderConsole(mode) {
         // 中間メニュー：戻る（左端）・メモ・⏹️・▶・⏭
         grid.innerHTML = `
             <button class="c-btn" id="ctrl-back-txt" style="${backBtn}">戻る</button>
-            <button class="c-btn" id="btn-techo"     style="background:rgba(34,34,34,0.8); color:#fff; border:1px solid #777; font-size:1.5rem; flex:1.0; display:flex; justify-content:center; align-items:center;">📖</button>
+            <button class="c-btn" id="btn-techo"     style="background:rgba(34,34,34,0.8); color:#fff; border:1px solid #777; font-size:0.75rem; flex:1.0; display:flex; flex-direction:column; justify-content:center; align-items:center; line-height:1.3;"><span>ソフィー</span><span>ノート</span></button>
             <button class="c-btn" id="ctrl-pause"    style="${pCtrl}">⏹️</button>
             <button class="c-btn" id="ctrl-play"     style="${pBtn}">▶</button>
             <button class="c-btn" id="btn-next"      style="${pCtrl}">⏭</button>`;

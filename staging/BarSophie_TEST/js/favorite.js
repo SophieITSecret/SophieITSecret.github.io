@@ -8,7 +8,8 @@ import { setListView, clean } from './utils.js';
 import * as nav from './navigation.js';
 
 const STORAGE_KEY = 'bar_sophie_techo';
-let currentFolder = null; 
+const RESTAURANT_NOTE_KEY = 'bar_sophie_restaurant_notes';
+let currentFolder = null;
 
 export function getCurrentFolder() { return currentFolder; }
 
@@ -148,7 +149,8 @@ export async function openTecho(folder = null) {
 
 h += `<div style="padding:20px;">
         <button class="act-btn" id="f-mu" style="width:100%; background:var(--green); margin-bottom:15px;">🎵 お好きな歌</button>
-        <button class="act-btn" id="f-lq" style="width:100%; background:var(--talk); margin-bottom:15px;">🍷 お気に入りのお酒</button>
+        <button class="act-btn" id="f-lq" style="width:100%; background:var(--talk); margin-bottom:15px;">🍸 お好きなお酒</button>
+        <button class="act-btn" id="f-rs" style="width:100%; background:#1a2a3a; color:#5ba3d9; border:1px solid #1a5276; margin-bottom:15px;">🍽️ 気になるお店</button>
         <button class="act-btn" id="f-gm" style="width:100%; background:#e67e22; margin-bottom:15px;">🎲 ソフィーとの記録</button>
         <div style="display:flex; gap:8px; margin-top:10px;">
             <button class="act-btn" id="f-backup" style="flex:1; background:#1a1a1a; color:#888; border:1px solid #333; font-size:0.85rem; margin:0;">📤 バックアップ</button>
@@ -159,12 +161,14 @@ h += `<div style="padding:20px;">
 setListView(h, false);
         document.getElementById('f-mu').onclick = () => openTecho('S');
         document.getElementById('f-lq').onclick = () => openTecho('L');
+        document.getElementById('f-rs').onclick = () => openRestaurantNote();
         document.getElementById('f-gm').onclick = () => openTecho('G');
         document.getElementById('f-backup').onclick = () => {
             const backup = {
                 techo: getTechoData(),
                 people: JSON.parse(localStorage.getItem('bar_sophie_people') || '[]'),
-                self: JSON.parse(localStorage.getItem('bar_sophie_self') || 'null')
+                self: JSON.parse(localStorage.getItem('bar_sophie_self') || 'null'),
+                restaurant_notes: JSON.parse(localStorage.getItem(RESTAURANT_NOTE_KEY) || '[]')
             };
             const text = JSON.stringify(backup);
             navigator.clipboard.writeText(text).then(() => {
@@ -204,6 +208,7 @@ setListView(h, false);
                         saveTechoData(parsed.techo);
                         localStorage.setItem('bar_sophie_people', JSON.stringify(parsed.people || []));
                         if (parsed.self !== undefined) localStorage.setItem('bar_sophie_self', JSON.stringify(parsed.self));
+                        if (parsed.restaurant_notes) localStorage.setItem(RESTAURANT_NOTE_KEY, JSON.stringify(parsed.restaurant_notes));
                     } else if (parsed.favorites) {
                         // 旧フォーマット（手帳のみ）との互換
                         saveTechoData(parsed);
@@ -540,9 +545,190 @@ export function playJanken() {
     document.querySelectorAll('.j-btn').forEach(btn => {
         btn.onclick = (e) => {
             const hands = ["✊", "✌️", "🖐️"]; const sHand = hands[Math.floor(Math.random() * 3)];
-            let winner = (e.target.dataset.hand === sHand) ? "draw" : 
+            let winner = (e.target.dataset.hand === sHand) ? "draw" :
                          ((e.target.dataset.hand==="✊"&&sHand==="✌️")||(e.target.dataset.hand==="✌️"&&sHand==="🖐️")||(e.target.dataset.hand==="🖐️"&&sHand==="✊")) ? "my" : "sophie";
             updateGameScore(winner); document.getElementById('janken-overlay').remove(); playJanken();
         };
     });
+}
+
+// ─── 気になるお店 ─────────────────────────────────────────────
+
+function getRestaurantNotes() {
+    try {
+        const raw = localStorage.getItem(RESTAURANT_NOTE_KEY);
+        return raw ? JSON.parse(raw) : [];
+    } catch(e) { return []; }
+}
+
+function saveRestaurantNotes(notes) {
+    localStorage.setItem(RESTAURANT_NOTE_KEY, JSON.stringify(notes));
+}
+
+export function openRestaurantNote() {
+    const lv = document.getElementById('list-view');
+    const nm = document.getElementById('nav-main');
+
+    const render = () => {
+        const notes = getRestaurantNotes();
+        const listHtml = notes.length === 0
+            ? '<div style="color:#666; text-align:center; padding:20px; font-size:0.85rem;">まだ登録されていません</div>'
+            : notes.map((n, i) => `
+                <div style="padding:8px 0; border-bottom:1px solid #222;">
+                    <div style="display:flex; align-items:center; justify-content:space-between;">
+                        <div style="flex:1;">
+                            <div style="color:#fff; font-size:0.9rem;">🍽️ ${n.name}</div>
+                            <div style="color:#888; font-size:0.75rem;">${n.area || ''}${n.genre ? '・' + n.genre : ''}　${n.date || ''}</div>
+                            ${n.memo ? `<div style="color:#aaa; font-size:0.75rem; margin-top:2px;">${n.memo}</div>` : ''}
+                        </div>
+                        <div style="display:flex; gap:4px; flex-shrink:0;">
+                            ${n.link ? `<button class="rn-open" data-idx="${i}"
+                                style="background:#1a2a3a; color:#5ba3d9; border:1px solid #1a5276;
+                                padding:4px 8px; border-radius:4px; font-size:0.75rem;">🔗</button>` : ''}
+                            <button class="rn-edit" data-idx="${i}"
+                                style="background:#1a3a2a; color:#7fd97f; border:1px solid #3a6a4a;
+                                padding:4px 8px; border-radius:4px; font-size:0.75rem;">編集</button>
+                            <button class="rn-del" data-idx="${i}"
+                                style="background:#2a1a1a; color:#e74c3c; border:1px solid #6a2a2a;
+                                padding:4px 8px; border-radius:4px; font-size:0.75rem;">削除</button>
+                        </div>
+                    </div>
+                </div>`).join('');
+
+        const html = `
+            <div style="margin:10px; border-radius:10px; border:2px solid transparent;
+                        background: linear-gradient(#111, #111) padding-box,
+                        linear-gradient(120deg, #ff69b4 50%, #00d2ff 100%) border-box;">
+                <div style="color:#f0b56e; padding:0 12px; font-size:0.8rem; font-weight:bold;
+                            border-bottom:1px solid #333; height:28px; line-height:28px;
+                            border-radius:8px 8px 0 0; display:flex; align-items:center; gap:6px;">
+                    <img src="./sophie_face.png" style="width:20px; height:20px; border-radius:50%; object-fit:cover;">
+                    🍽️ 気になるお店
+                </div>
+                <div style="padding:10px;">
+                    <div id="rn-list">${listHtml}</div>
+                    <button id="rn-add" style="width:100%; background:#1a2a3a; color:#5ba3d9;
+                        border:1px solid #1a5276; height:40px; border-radius:4px;
+                        font-size:0.85rem; margin-top:10px; margin-bottom:8px;">＋ お店を追加する</button>
+                    <button id="rn-back" style="width:100%; background:#34495e; color:#fff;
+                        border:none; height:36px; border-radius:4px; font-size:0.85rem;">戻る</button>
+                </div>
+            </div>`;
+
+        if (lv) { lv.style.display = 'block'; lv.innerHTML = html; }
+        if (nm) nm.style.display = 'none';
+
+        document.getElementById('rn-add').onclick = () => showRestaurantNoteForm(null, render);
+        document.getElementById('rn-back').onclick = () => openTecho(null);
+
+        document.querySelectorAll('.rn-open').forEach(btn => {
+            btn.onclick = () => {
+                const note = getRestaurantNotes()[parseInt(btn.dataset.idx)];
+                if (note.link) window.open(note.link, '_blank');
+            };
+        });
+        document.querySelectorAll('.rn-edit').forEach(btn => {
+            btn.onclick = () => {
+                const note = getRestaurantNotes()[parseInt(btn.dataset.idx)];
+                showRestaurantNoteForm(note, render, parseInt(btn.dataset.idx));
+            };
+        });
+        document.querySelectorAll('.rn-del').forEach(btn => {
+            btn.onclick = () => {
+                if (!confirm('削除しますか？')) return;
+                const notes = getRestaurantNotes();
+                notes.splice(parseInt(btn.dataset.idx), 1);
+                saveRestaurantNotes(notes);
+                render();
+            };
+        });
+    };
+
+    render();
+}
+
+export function openRestaurantNoteForm(note, prefillArea = '', prefillGenre = '') {
+    showRestaurantNoteForm(note, () => openRestaurantNote(), -1, prefillArea, prefillGenre);
+}
+
+function showRestaurantNoteForm(note, onSave, editIdx = -1, prefillArea = '', prefillGenre = '') {
+    const lv = document.getElementById('list-view');
+    const isEdit = note !== null;
+    const areaVal  = isEdit ? (note.area  || '') : prefillArea;
+    const genreVal = isEdit ? (note.genre || '') : prefillGenre;
+
+    const html = `
+        <div style="margin:10px; border-radius:10px; border:2px solid transparent;
+                    background: linear-gradient(#111, #111) padding-box,
+                    linear-gradient(120deg, #ff69b4 50%, #00d2ff 100%) border-box;">
+            <div style="color:#f0b56e; padding:0 12px; font-size:0.8rem; font-weight:bold;
+                        border-bottom:1px solid #333; height:28px; line-height:28px;
+                        border-radius:8px 8px 0 0;">
+                ${isEdit ? '✏️ お店を編集' : '＋ お店を追加'}
+            </div>
+            <div style="padding:10px;">
+                <div style="margin-bottom:8px;">
+                    <div style="color:#aaa; font-size:0.75rem; margin-bottom:4px;">店名</div>
+                    <input type="text" id="rn-name" value="${isEdit ? note.name : ''}" placeholder="例：Osteria Furbo"
+                        style="width:100%; background:#000; border:1px solid #555; color:#fff;
+                               height:38px; padding:0 10px; border-radius:4px; font-size:0.85rem;">
+                </div>
+                <div style="display:flex; gap:8px; margin-bottom:8px;">
+                    <div style="flex:1;">
+                        <div style="color:#aaa; font-size:0.75rem; margin-bottom:4px;">エリア</div>
+                        <input type="text" id="rn-area" value="${areaVal}" placeholder="例：三鷹"
+                            style="width:100%; background:#000; border:1px solid #555; color:#fff;
+                                   height:38px; padding:0 10px; border-radius:4px; font-size:0.85rem;">
+                    </div>
+                    <div style="flex:1;">
+                        <div style="color:#aaa; font-size:0.75rem; margin-bottom:4px;">ジャンル</div>
+                        <input type="text" id="rn-genre" value="${genreVal}" placeholder="例：イタリアン"
+                            style="width:100%; background:#000; border:1px solid #555; color:#fff;
+                                   height:38px; padding:0 10px; border-radius:4px; font-size:0.85rem;">
+                    </div>
+                </div>
+                <div style="margin-bottom:8px;">
+                    <div style="color:#aaa; font-size:0.75rem; margin-bottom:4px;">リンク（食べログ・HP等）</div>
+                    <input type="text" id="rn-link" value="${isEdit ? (note.link || '') : ''}" placeholder="https://..."
+                        style="width:100%; background:#000; border:1px solid #555; color:#fff;
+                               height:38px; padding:0 10px; border-radius:4px; font-size:0.85rem;">
+                </div>
+                <div style="margin-bottom:10px;">
+                    <div style="color:#aaa; font-size:0.75rem; margin-bottom:4px;">メモ</div>
+                    <textarea id="rn-memo" rows="2" placeholder="例：ワインが充実、次回予約したい"
+                        style="width:100%; background:#000; border:1px solid #555; color:#fff;
+                               padding:8px 10px; border-radius:4px; font-size:0.85rem;
+                               resize:none; font-family:inherit;">${isEdit ? (note.memo || '') : ''}</textarea>
+                </div>
+                <button id="rn-save" style="width:100%; background:#0096BF; color:#ff69b4;
+                    border:2px solid #ff51a8; height:44px; border-radius:4px;
+                    font-size:0.95rem; font-weight:bold; margin-bottom:8px;">保存する</button>
+                <button id="rn-cancel" style="width:100%; background:#34495e; color:#fff;
+                    border:none; height:36px; border-radius:4px; font-size:0.85rem;">キャンセル</button>
+            </div>
+        </div>`;
+
+    if (lv) lv.innerHTML = html;
+
+    document.getElementById('rn-cancel').onclick = () => onSave();
+    document.getElementById('rn-save').onclick = () => {
+        const name = document.getElementById('rn-name').value.trim();
+        if (!name) { alert('店名を入力してください'); return; }
+        const notes = getRestaurantNotes();
+        const newNote = {
+            name,
+            area:  document.getElementById('rn-area').value.trim(),
+            genre: document.getElementById('rn-genre').value.trim(),
+            link:  document.getElementById('rn-link').value.trim(),
+            memo:  document.getElementById('rn-memo').value.trim(),
+            date:  new Date().toLocaleDateString('ja-JP')
+        };
+        if (isEdit && editIdx >= 0) {
+            notes[editIdx] = newNote;
+        } else {
+            notes.push(newNote);
+        }
+        saveRestaurantNotes(notes);
+        onSave();
+    };
 }

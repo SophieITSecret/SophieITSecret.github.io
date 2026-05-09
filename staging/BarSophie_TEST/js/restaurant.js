@@ -172,6 +172,9 @@ export function showRestaurantSearch(savedArea = '', savedGenre = '', savedBudge
 
                     <div style="padding:12px; color:#ddd; font-size:0.85rem; line-height:1.8;">${data.ok ? formatResult(data.text) : 'エラーが発生しました。もう一度お試しください。'}</div>
                     <div style="padding:0 10px 10px;">
+                        <button id="rs-memo" style="width:100%; background:#1a2a3a; color:#5ba3d9;
+                            border:1px solid #1a5276; height:40px; border-radius:4px;
+                            font-size:0.85rem; margin-bottom:6px;">⭐ 気になるお店にメモする</button>
                         <button id="rs-retry" style="width:100%; background:#1a3a2a; color:#7fd97f;
                             border:1px solid #3a6a4a; height:40px; border-radius:4px;
                             font-size:0.85rem; margin-bottom:6px;">条件を変えて再検索</button>
@@ -182,6 +185,9 @@ export function showRestaurantSearch(savedArea = '', savedGenre = '', savedBudge
 
             if (lv) { lv.innerHTML = resultHtml; }
 
+            document.getElementById('rs-memo').onclick = () => {
+                import('./favorite.js').then(f => f.openRestaurantNoteForm(null, area, genre));
+            };
             document.getElementById('rs-retry').onclick = () => showRestaurantSearch(area, genre, selectedBudget, point);
             document.getElementById('rs-done').onclick = () => {
                 if (lv) { lv.style.display = prevDisplay; lv.innerHTML = prevHtml; }
