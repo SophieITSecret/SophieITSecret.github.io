@@ -1,7 +1,7 @@
 // js/restaurant.js
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbwA1C22UhKroCFC_EPC-ugR5efyXVHlbkWywfD21HfD3-J4vm-b4ZjvIshO-i3fKk9W/exec';
 
-function formatResult(text) {
+function formatResult(text, area = '', genre = '') {
     const startIdx = text.search(/こんばんは|いらっしゃいませ|さわやかなソフィー|ソフィーです。/);
     if (startIdx > 0) text = text.slice(startIdx);
 
@@ -28,7 +28,8 @@ function formatResult(text) {
         const enc = encodeURIComponent(searchName);
         const esc = searchName.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
         const btn = `<button onclick="(function(){var m=document.getElementById('${msgId}');if(m)m.style.display='block';window.open('https://tabelog.com/rstLst/RST/?vs=1&sk=${enc}','_blank');navigator.clipboard.writeText('${esc}').catch(function(){});setTimeout(function(){var m=document.getElementById('${msgId}');if(m)m.style.display='none';},5000);})()" style="background:#1a3a2a;color:#7fd97f;border:1px solid #3a6a4a;padding:2px 10px;border-radius:4px;font-size:0.75rem;margin-left:8px;cursor:pointer;">📖 食べログで検索</button><div id="${msgId}" style="display:none;margin-top:4px;padding:6px 10px;background:#1a2a1a;color:#7fd97f;border:1px solid #3a6a4a;border-radius:4px;font-size:0.75rem;line-height:1.5;">「${esc}」をコピーしました。<br>食べログが開いたら検索窓に貼り付けて探してください。</div>`;
-        return `<span style="color:#f0b56e;font-weight:bold;">◆${num}：${name.trim()}</span>${btn}`;
+        const memoBtn = `<button class="rs-memo-btn" data-name="${esc}" data-area="${area}" data-genre="${genre}" style="background:#1a2a3a;color:#5ba3d9;border:1px solid #1a5276;padding:2px 10px;border-radius:4px;font-size:0.75rem;margin-left:4px;cursor:pointer;">⭐ メモ</button>`;
+        return `<span style="color:#f0b56e;font-weight:bold;">◆${num}：${name.trim()}</span>${btn}${memoBtn}`;
     });
 
     text = text.replace(/(\*\*[^*]+\*\*)\s*\n+\s*\n+/g, '$1\n');
@@ -170,11 +171,8 @@ export function showRestaurantSearch(savedArea = '', savedGenre = '', savedBudge
                     </div>
 
 
-                    <div style="padding:12px; color:#ddd; font-size:0.85rem; line-height:1.8;">${data.ok ? formatResult(data.text) : 'エラーが発生しました。もう一度お試しください。'}</div>
+                    <div style="padding:12px; color:#ddd; font-size:0.85rem; line-height:1.8;">${data.ok ? formatResult(data.text, area, genre) : 'エラーが発生しました。もう一度お試しください。'}</div>
                     <div style="padding:0 10px 10px;">
-                        <button id="rs-memo" style="width:100%; background:#1a2a3a; color:#5ba3d9;
-                            border:1px solid #1a5276; height:40px; border-radius:4px;
-                            font-size:0.85rem; margin-bottom:6px;">⭐ 気になるお店にメモする</button>
                         <button id="rs-retry" style="width:100%; background:#1a3a2a; color:#7fd97f;
                             border:1px solid #3a6a4a; height:40px; border-radius:4px;
                             font-size:0.85rem; margin-bottom:6px;">条件を変えて再検索</button>
@@ -185,9 +183,17 @@ export function showRestaurantSearch(savedArea = '', savedGenre = '', savedBudge
 
             if (lv) { lv.innerHTML = resultHtml; }
 
-            document.getElementById('rs-memo').onclick = () => {
-                import('./favorite.js').then(f => f.openRestaurantNoteForm(null, area, genre));
-            };
+            document.querySelectorAll('.rs-memo-btn').forEach(btn => {
+                btn.onclick = () => {
+                    import('./favorite.js').then(f => {
+                        f.showRestaurantNoteForm(
+                            { name: btn.dataset.name, area: btn.dataset.area, genre: btn.dataset.genre, link: '', memo: '' },
+                            () => { if (lv) lv.innerHTML = resultHtml; },
+                            -1
+                        );
+                    });
+                };
+            });
             document.getElementById('rs-retry').onclick = () => showRestaurantSearch(area, genre, selectedBudget, point);
             document.getElementById('rs-done').onclick = () => {
                 if (lv) { lv.style.display = prevDisplay; lv.innerHTML = prevHtml; }

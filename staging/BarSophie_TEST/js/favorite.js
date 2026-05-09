@@ -651,7 +651,7 @@ export function openRestaurantNoteForm(note, prefillArea = '', prefillGenre = ''
     showRestaurantNoteForm(note, () => openRestaurantNote(), -1, prefillArea, prefillGenre);
 }
 
-function showRestaurantNoteForm(note, onSave, editIdx = -1, prefillArea = '', prefillGenre = '') {
+export function showRestaurantNoteForm(note, onSave, editIdx = -1, prefillArea = '', prefillGenre = '') {
     const lv = document.getElementById('list-view');
     const isEdit = note !== null;
     const areaVal  = isEdit ? (note.area  || '') : prefillArea;
