@@ -10,6 +10,11 @@ export function showCompatibility(onBack = null, prefillMe = null, prefillYou = 
     const prevDisplay = lv ? lv.style.display : 'none';
     const prevNm = nm ? nm.style.display : 'none';
 
+    const monImg = document.getElementById('monitor-img');
+    if (monImg) monImg.src = './fortune_sophie.jpeg';
+    if (window._renderConsole) window._renderConsole('fortune');
+    window._fortuneBack = () => showCompatibility(onBack);
+
     const dateInput = (prefix, label, pf) => {
         const isYou = prefix === 'cp-you';
         const selBg = isYou ? '#ff69b4' : '#0096BF';
@@ -159,9 +164,8 @@ export function showCompatibility(onBack = null, prefillMe = null, prefillYou = 
     };
 
     document.getElementById('cp-close').onclick = () => {
-        if (onBack) { onBack(); return; }
-        if (lv) { lv.style.display = prevDisplay; lv.innerHTML = prevHtml; }
-        if (nm) nm.style.display = prevNm;
+        if (onBack) onBack();
+        else import('./fortune.js').then(f => f.showFortuneMenu());
     };
 
     document.getElementById('cp-submit').onclick = async () => {
@@ -251,7 +255,9 @@ ${question || 'とくになし'}
                     </div>
                     <div style="padding:12px; color:#ddd; font-size:0.85rem; line-height:1.9;">${formatted}</div>
                     <div style="padding:0 10px 10px;">
-
+                        <div style="color:#888; font-size:0.75rem; text-align:center; padding:4px 0; border-bottom:1px solid #333; margin-bottom:8px;">
+                            相性鑑定　${myYear}/${myMonth}/${myDay}（${myGender}）×${yourYear}/${yourMonth}/${yourDay}（${yourGender}）　${new Date().toLocaleDateString('ja-JP')}
+                        </div>
                         <button id="cp-copy" style="width:100%; background:#1a2a3a; color:#5ba3d9;
                             border:1px solid #1a5276; height:40px; border-radius:4px;
                             font-size:0.85rem; margin-bottom:6px;">📋 結果をコピー</button>
@@ -265,17 +271,19 @@ ${question || 'とくになし'}
 
             if (lv) { lv.innerHTML = resultHtml; }
 
+            window._fortuneBack = () => showCompatibility(onBack);
+
             document.getElementById('cp-copy').onclick = () => {
-                navigator.clipboard.writeText(resultText)
-                    .then(() => alert('鑑定結果をコピーしました。メモアプリに貼り付けてください。'))
+                const header = `【相性鑑定】${myYear}/${myMonth}/${myDay}（${myGender}）×${yourYear}/${yourMonth}/${yourDay}（${yourGender}）　${new Date().toLocaleDateString('ja-JP')}\n\n`;
+                navigator.clipboard.writeText(header + resultText)
+                    .then(() => alert('鑑定結果をコピーしました。'))
                     .catch(() => alert('コピーに失敗しました。'));
             };
             
             document.getElementById('cp-retry').onclick = () => showCompatibility(onBack);
             document.getElementById('cp-done').onclick = () => {
-                if (onBack) { onBack(); return; }
-                if (lv) { lv.style.display = prevDisplay; lv.innerHTML = prevHtml; }
-                if (nm) nm.style.display = prevNm;
+                if (onBack) onBack();
+                else import('./fortune.js').then(f => f.showFortuneMenu());
             };
 
         } catch (e) {
