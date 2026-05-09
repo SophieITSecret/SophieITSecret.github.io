@@ -576,21 +576,26 @@ export function openRestaurantNote() {
             : notes.map((n, i) => `
                 <div style="padding:8px 0; border-bottom:1px solid #222;">
                     <div style="display:flex; align-items:center; justify-content:space-between;">
-                        <div style="flex:1;">
-                            <div style="color:#fff; font-size:0.9rem;">🍽️ ${n.name}</div>
-                            <div style="color:#888; font-size:0.75rem;">${n.area || ''}${n.genre ? '・' + n.genre : ''}　${n.date || ''}</div>
-                            ${n.memo ? `<div style="color:#aaa; font-size:0.75rem; margin-top:2px;">${n.memo}</div>` : ''}
-                        </div>
-                        <div style="display:flex; gap:4px; flex-shrink:0;">
+                        <div style="flex:1; min-width:0;">
+                            <div style="display:flex; align-items:center; justify-content:space-between;">
+                                <div style="flex:1; min-width:0;">
+                                    <div style="color:#fff; font-size:0.9rem;">🍽️ ${n.name}</div>
+                                    <div style="color:#888; font-size:0.75rem;">${n.area || ''}${n.genre ? '・' + n.genre : ''}　${n.date || ''}</div>
+                                    ${n.memo ? `<div style="color:#aaa; font-size:0.75rem; margin-top:2px;">${n.memo}</div>` : ''}
+                                </div>
+                                <div style="display:flex; gap:4px; flex-shrink:0; margin-left:8px;">
+                                    <button class="rn-edit" data-idx="${i}"
+                                        style="background:#1a3a2a; color:#7fd97f; border:1px solid #3a6a4a;
+                                        padding:4px 8px; border-radius:4px; font-size:0.75rem;">編集</button>
+                                    <button class="rn-del" data-idx="${i}"
+                                        style="background:#2a1a1a; color:#e74c3c; border:1px solid #6a2a2a;
+                                        padding:4px 8px; border-radius:4px; font-size:0.75rem;">削除</button>
+                                </div>
+                            </div>
                             ${n.link ? `<button class="rn-open" data-idx="${i}"
                                 style="background:#1a2a3a; color:#5ba3d9; border:1px solid #1a5276;
-                                padding:4px 8px; border-radius:4px; font-size:0.75rem;">🔗</button>` : ''}
-                            <button class="rn-edit" data-idx="${i}"
-                                style="background:#1a3a2a; color:#7fd97f; border:1px solid #3a6a4a;
-                                padding:4px 8px; border-radius:4px; font-size:0.75rem;">編集</button>
-                            <button class="rn-del" data-idx="${i}"
-                                style="background:#2a1a1a; color:#e74c3c; border:1px solid #6a2a2a;
-                                padding:4px 8px; border-radius:4px; font-size:0.75rem;">削除</button>
+                                padding:6px 12px; border-radius:4px; font-size:0.8rem;
+                                width:100%; margin-top:6px;">🔗 リンクを開く</button>` : ''}
                         </div>
                     </div>
                 </div>`).join('');
@@ -709,6 +714,15 @@ export function showRestaurantNoteForm(note, onSave, editIdx = -1, prefillArea =
         </div>`;
 
     if (lv) lv.innerHTML = html;
+
+    document.getElementById('rn-link').addEventListener('paste', (e) => {
+        const text = e.clipboardData.getData('text');
+        const urlMatch = text.match(/https?:\/\/[^\s]+/);
+        if (urlMatch) {
+            e.preventDefault();
+            document.getElementById('rn-link').value = urlMatch[0];
+        }
+    });
 
     document.getElementById('rn-cancel').onclick = () => onSave();
     document.getElementById('rn-save').onclick = () => {
