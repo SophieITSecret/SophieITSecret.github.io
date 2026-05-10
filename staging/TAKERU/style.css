@@ -275,10 +275,10 @@ body {
 
 /* ==================== サブメニュー共通構造（看板＋子パネル） ==================== */
 .sub-menu-wrap {
-    padding: 12px 12px;
+    padding: 8px 12px;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 6px;
 }
 
 /* 看板：タップ無効 */
@@ -295,7 +295,7 @@ body {
 .sub-panel-wrap {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 4px;
     padding: 0 4px;
 }
 
@@ -345,9 +345,9 @@ body {
     font-size: 0.78rem;
     font-weight: bold;
     letter-spacing: 0.08em;
-    padding: 4px 8px;
+    padding: 2px 8px;
     border-radius: 4px;
-    margin-top: 8px;
+    margin-top: 5px;
     opacity: 0.6;
     text-align: center;
 }
@@ -357,16 +357,16 @@ body {
 
 .subject-row {
     display: flex;
-    gap: 6px;
-    margin-top: 4px;
+    gap: 5px;
+    margin-top: 3px;
 }
 
 .subject-btn {
     flex: 1;
-    height: 52px;
+    height: 44px;
     border-radius: 6px;
     font-family: 'Noto Sans JP', sans-serif;
-    font-size: 0.82rem;
+    font-size: 0.78rem;
     font-weight: bold;
     cursor: pointer;
     transition: all 0.15s;
