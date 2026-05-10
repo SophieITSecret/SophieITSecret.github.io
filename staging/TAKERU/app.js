@@ -210,17 +210,25 @@ function showGradeMenu() {
         <div class="sub-menu-wrap">
             <div class="top-btn btn-jukou banner-btn">📚 受　講</div>
             <div class="sub-panel-wrap">
-                <button class="grade-btn btn-coming" disabled>
-                    １級　将軍の心得
-                    <span class="grade-sub">ご期待ください</span>
-                </button>
-                <button class="grade-btn btn-coming" disabled>
-                    ２級　司令官の心得
-                    <span class="grade-sub">ご期待ください</span>
-                </button>
-                <button class="grade-btn btn-grade3" data-grade="3級">
-                    ３級　戦士の心得
+                <button class="grade-btn btn-grade3" data-grade="3級-軍事と戦略">
+                    ３級　軍事と戦略
                     <span class="grade-sub">開講中</span>
+                </button>
+                <button class="grade-btn btn-coming" disabled>
+                    ３級　国家と法律
+                    <span class="grade-sub">準備中</span>
+                </button>
+                <button class="grade-btn btn-coming" disabled>
+                    ３級　戦争の歴史
+                    <span class="grade-sub">準備中</span>
+                </button>
+                <button class="grade-btn btn-coming" disabled>
+                    ２級　司令官コース
+                    <span class="grade-sub">準備中</span>
+                </button>
+                <button class="grade-btn btn-coming" disabled>
+                    １級　将軍コース
+                    <span class="grade-sub">準備中</span>
                 </button>
             </div>
         </div>
@@ -245,7 +253,7 @@ function showGenreMenu() {
     let html = `
         <div class="double-banner-wrap">
             <div class="top-btn btn-jukou banner-btn banner-small">📚 受　講</div>
-            <div class="grade-btn btn-grade3 banner-btn banner-small">３級　戦士の心得</div>
+            <div class="grade-btn btn-grade3 banner-btn banner-small">３級　軍事と戦略</div>
         </div>
         <div class="menu-label">▶ 科目・ジャンルを選ぶ</div>
     `;
