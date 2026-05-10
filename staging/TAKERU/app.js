@@ -211,11 +211,11 @@ function showGradeMenu() {
             <div class="top-btn btn-jukou banner-btn">📚 受　講</div>
             <div class="sub-panel-wrap">
                 <button class="grade-btn btn-coming" disabled>
-                    １級　将官の心得
+                    １級　将軍の心得
                     <span class="grade-sub">ご期待ください</span>
                 </button>
                 <button class="grade-btn btn-coming" disabled>
-                    ２級　士官の心得
+                    ２級　司令官の心得
                     <span class="grade-sub">ご期待ください</span>
                 </button>
                 <button class="grade-btn btn-grade3" data-grade="3級">
