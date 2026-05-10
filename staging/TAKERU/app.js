@@ -210,31 +210,29 @@ function showGradeMenu() {
         <div class="sub-menu-wrap">
             <div class="top-btn btn-jukou banner-btn">📚 受　講</div>
             <div class="sub-panel-wrap">
-                <button class="grade-btn btn-grade3" data-grade="3級-軍事と戦略">
-                    ３級　軍事と戦略
-                    <span class="grade-sub">開講中</span>
-                </button>
-                <button class="grade-btn btn-coming" disabled>
-                    ３級　国家と法律
-                    <span class="grade-sub">準備中</span>
-                </button>
-                <button class="grade-btn btn-coming" disabled>
-                    ３級　戦争の歴史
-                    <span class="grade-sub">準備中</span>
-                </button>
-                <button class="grade-btn btn-coming" disabled>
-                    ２級　司令官コース
-                    <span class="grade-sub">準備中</span>
-                </button>
-                <button class="grade-btn btn-coming" disabled>
-                    １級　将軍コース
-                    <span class="grade-sub">準備中</span>
-                </button>
+                <div class="grade-label grade-label-1">１級　将軍の心得</div>
+                <div class="subject-row">
+                    <button class="subject-btn btn-coming" disabled>軍事と戦略</button>
+                    <button class="subject-btn btn-coming" disabled>国家と法律</button>
+                    <button class="subject-btn btn-coming" disabled>戦争の歴史</button>
+                </div>
+                <div class="grade-label grade-label-2">２級　司令官の心得</div>
+                <div class="subject-row">
+                    <button class="subject-btn btn-coming" disabled>軍事と戦略</button>
+                    <button class="subject-btn btn-coming" disabled>国家と法律</button>
+                    <button class="subject-btn btn-coming" disabled>戦争の歴史</button>
+                </div>
+                <div class="grade-label grade-label-3">３級　戦士の心得</div>
+                <div class="subject-row">
+                    <button class="subject-btn btn-grade3" data-grade="3級-軍事と戦略">軍事と戦略</button>
+                    <button class="subject-btn btn-coming" disabled>国家と法律</button>
+                    <button class="subject-btn btn-coming" disabled>戦争の歴史</button>
+                </div>
             </div>
         </div>
     `;
     menuContent.onclick = (e) => {
-        const btn = e.target.closest('.grade-btn[data-grade]');
+        const btn = e.target.closest('.subject-btn[data-grade]');
         if (!btn) return;
         curGrade = btn.dataset.grade;
         showGenreMenu();
