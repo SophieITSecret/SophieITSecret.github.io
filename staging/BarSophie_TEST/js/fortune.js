@@ -4,14 +4,27 @@ import { showCompatibility } from './compatibility.js';
 import { getThreePillars } from './meishiki.js';
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbwA1C22UhKroCFC_EPC-ugR5efyXVHlbkWywfD21HfD3-J4vm-b4ZjvIshO-i3fKk9W/exec';
 
-export function showFortune(onBack = null, prefill = null) {
+const sophieChar = 'ソフィーは20代の若い女性バーテンダー。さわやかで知的、品がある。口調は丁寧な「です・ます」調。マダムのような馴れ馴れしさやタメ口は使わない。お客様は40〜50代の紳士が多い。四柱推命の専門用語はさりげなく使い、少し意味を補足するが説明的になりすぎない。';
+
+function loadSelfPrefill() {
+    const selfRaw = localStorage.getItem('bar_sophie_self');
+    const selfData = selfRaw ? JSON.parse(selfRaw) : null;
+    if (selfData && selfData.birth) {
+        const [y, m, d] = selfData.birth.split('-');
+        return { year: y, month: parseInt(m), day: parseInt(d), gender: selfData.gender || '' };
+    }
+    return null;
+}
+
+export function showMyFortune(onBack = null, prefill = null) {
+    if (prefill === null) prefill = loadSelfPrefill();
+
     const lv = document.getElementById('list-view');
     const nm = document.getElementById('nav-main');
     const prevHtml = lv ? lv.innerHTML : '';
     const prevDisplay = lv ? lv.style.display : 'none';
     const prevNm = nm ? nm.style.display : 'none';
 
-    // 占い専用モードに切り替え
     const monImg = document.getElementById('monitor-img');
     if (monImg) { monImg.src = './fortune_sophie.jpeg'; }
     if (window._renderConsole) window._renderConsole('fortune');
@@ -77,16 +90,22 @@ export function showFortune(onBack = null, prefill = null) {
                         <button class="ft-theme" data-val="金運"
                             style="background:#1a1a1a; color:#888; border:1px solid #444;
                                    height:36px; border-radius:4px; font-size:0.8rem;">💰 金運</button>
-                        <button class="ft-theme" data-val="性格分析"
+                        <button class="ft-theme" data-val="向こう1ヶ月"
                             style="background:#1a1a1a; color:#888; border:1px solid #444;
-                                   height:36px; border-radius:4px; font-size:0.8rem;">🔍 性格分析</button>
-                        <button class="ft-theme" data-val="攻略法"
+                                   height:36px; border-radius:4px; font-size:0.8rem;">📅 向こう1ヶ月</button>
+                        <button class="ft-theme" data-val="向こう1年"
                             style="background:#1a1a1a; color:#888; border:1px solid #444;
-                                   height:36px; border-radius:4px; font-size:0.8rem;">🗝️ 攻略法</button>
+                                   height:36px; border-radius:4px; font-size:0.8rem;">📅 向こう1年</button>
+                        <button class="ft-theme" data-val="向こう10年"
+                            style="background:#1a1a1a; color:#888; border:1px solid #444;
+                                   height:36px; border-radius:4px; font-size:0.8rem;">🔭 向こう10年</button>
+                        <button class="ft-theme" data-val="これが聞きたい"
+                            style="background:#1a1a1a; color:#888; border:1px solid #444;
+                                   height:36px; border-radius:4px; font-size:0.8rem;">💬 これが聞きたい</button>
                     </div>
                 </div>
                 <div style="margin-bottom:10px;">
-                    <div style="color:#aaa; font-size:0.75rem; margin-bottom:4px;">特に相談したいテーマがあれば</div>
+                    <div id="ft-worry-label" style="color:#aaa; font-size:0.75rem; margin-bottom:4px;">特に気になることがあれば</div>
                     <textarea id="ft-worry" rows="3" placeholder="例：転職のタイミングが気になっています"
                         style="width:100%; background:#000; border:1px solid #555; color:#fff;
                                padding:8px 10px; border-radius:4px; font-size:0.85rem;
@@ -126,11 +145,6 @@ export function showFortune(onBack = null, prefill = null) {
         });
     });
 
-    const themePlaceholders = {
-        '性格分析': '例：この方何を考えているかわかりにくい',
-        '攻略法':   '例：職場の上司ですが、もっと懐に入りたい'
-    };
-
     document.querySelectorAll('.ft-theme').forEach(btn => {
         btn.addEventListener('click', () => {
             document.querySelectorAll('.ft-theme').forEach(b => {
@@ -138,8 +152,8 @@ export function showFortune(onBack = null, prefill = null) {
             });
             btn.style.background = '#8e44ad'; btn.style.color = '#fff'; btn.style.borderColor = '#9b59b6';
             selectedTheme = btn.dataset.val;
-            document.getElementById('ft-worry').placeholder =
-                themePlaceholders[selectedTheme] || '例：転職のタイミングが気になっています';
+            const label = document.getElementById('ft-worry-label');
+            if (label) label.textContent = selectedTheme === 'これが聞きたい' ? '具体的に教えてください' : '特に気になることがあれば';
         });
     });
 
@@ -153,9 +167,9 @@ export function showFortune(onBack = null, prefill = null) {
         showPeopleBook(
             (person) => {
                 const [y, m, d] = person.birth.split('-');
-                showFortune(onBack, { year: y, month: parseInt(m), day: parseInt(d), gender: person.gender, name: person.name });
+                showMyFortune(onBack, { year: y, month: parseInt(m), day: parseInt(d), gender: person.gender, name: person.name });
             },
-            () => showFortune(onBack, cur)
+            () => showMyFortune(onBack, cur)
         );
     };
 
@@ -211,50 +225,7 @@ export function showFortune(onBack = null, prefill = null) {
         btn.textContent = '鑑定中…';
         btn.disabled = true;
 
-        const sophieChar = 'ソフィーは20代の若い女性バーテンダー。さわやかで知的、品がある。口調は丁寧な「です・ます」調。マダムのような馴れ馴れしさやタメ口は使わない。お客様は40〜50代の紳士が多い。四柱推命の専門用語はさりげなく使い、少し意味を補足するが説明的になりすぎない。';
-        let prompt;
-        if (selectedTheme === '性格分析') {
-            prompt = `${sophieChar}
-あなたは四柱推命を極めた占い師であり、BARソフィーのバーテンダー「ソフィー」です。
-あなたにお客さんから相談がありました。
-「あの方のことが知りたい。ついては占いをしてアドバイスしてほしい」
-
-【あの方】
-生年月日：${year}年${month}月${day}日
-性別：${selectedGender}
-命式：年柱 ${pillars.year}・月柱 ${pillars.month}・日柱 ${pillars.day}
-気になる点：${worry || 'なし'}
-
-【あの方】の命式をもとに、性格・性能カルテとして、お客さんにカウンターで話すようにアドバイスしてください。
-
-・この人の本質的な気質と価値観
-・際立った強み、自然に発揮される才能
-・見落としがちな弱点、繰り返しやすいパターン
-・人生で大切にしていること、逆に苦手なこと
-
-見出しや箇条書きは使わず、ソフィーが静かにカルテを読み上げるような語り口で。全体800字を目安に。`;
-        } else if (selectedTheme === '攻略法') {
-            prompt = `${sophieChar}
-あなたは四柱推命を極めた占い師であり、BARソフィーのバーテンダー「ソフィー」です。
-あなたにお客さんから相談がありました。
-「あの方ともっと近づきたい。ついては占いをしてアドバイスしてほしい」
-
-【あの方】
-生年月日：${year}年${month}月${day}日
-性別：${selectedGender}
-命式：年柱 ${pillars.year}・月柱 ${pillars.month}・日柱 ${pillars.day}
-関係・目的：${worry || 'なし'}
-
-この【あの方】の命式から、この人への効果的な働きかけ方を考えて、お客さんにカウンターで話すようにアドバイスしてください。
-
-・何をされると心を開くか
-・どんな言葉・態度が響くか
-・やってはいけないこと、地雷になりやすいこと
-・距離を縮めるための具体的なアプローチ
-
-自然な語り口で。見出し・箇条書きは使わないこと。全体800字を目安に。`;
-        } else {
-            prompt = `${sophieChar}
+        const prompt = `${sophieChar}
 あなたは四柱推命を極めた占い師であり、BARソフィーのバーテンダー「ソフィー」です。
 貴方にお客様から相談がありました。自分の運勢を占いで見てほしいそうです。
 カウンターでお客様の相談ごとに寄り添いながら、お客様の自己発見に導き深みのあるアドバイスをしてください。
@@ -276,8 +247,8 @@ export function showFortune(onBack = null, prefill = null) {
 ・占い師として深みと説得力のある命式分析をすること
 ・単なる一般論ではなく、命式に基づいた具体的な言葉で語ること
 ・ソフィーとして品があり温かみのある語り口で
-・見出しや箇条書きは使わず、会話するように自然な文章で`;
-        }
+・見出しや箇条書きは使わず、会話するように自然な文章で
+・回答は1200字程度にまとめること`;
 
         const messages = [{ role: 'user', content: prompt }];
         const url = GAS_URL + '?messages=' + encodeURIComponent(JSON.stringify(messages));
@@ -292,14 +263,14 @@ export function showFortune(onBack = null, prefill = null) {
             const personLabel = personName ? `${personName}（${selectedGender}）` : `${year}年${month}月${day}日生（${selectedGender}）`;
             const resultHeader = `【${selectedTheme}鑑定】${personLabel}　${dateStr}`;
             const formatted = resultText
-            .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-            .replace(/\*([^*]+)\*/g, '')
-            .replace(/\*\*/g, '')
-            .replace(/^#{1,3}\s*/gm, '')
-            .replace(/^-{2,}$/gm, '')
-            .replace(/\n{3,}/g, '\n\n')
-            .replace(/\n{2,}/g, '\n')
-            .replace(/\n/g, '<br>');
+                .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\*([^*]+)\*/g, '')
+                .replace(/\*\*/g, '')
+                .replace(/^#{1,3}\s*/gm, '')
+                .replace(/^-{2,}$/gm, '')
+                .replace(/\n{3,}/g, '\n\n')
+                .replace(/\n{2,}/g, '\n')
+                .replace(/\n/g, '<br>');
 
             const resultHtml = `
                 <div style="margin:10px; border-radius:10px; border:2px solid transparent;
@@ -314,7 +285,6 @@ export function showFortune(onBack = null, prefill = null) {
                     <div style="padding:4px 12px 6px; color:#888; font-size:0.72rem; border-bottom:1px solid #222;">${resultHeader}</div>
                     <div style="padding:12px; color:#ddd; font-size:0.85rem; line-height:1.9;">${formatted}</div>
                     <div style="padding:0 10px 10px;">
-
                         <button id="ft-copy" style="width:100%; background:#1a2a3a; color:#5ba3d9;
                             border:1px solid #1a5276; height:40px; border-radius:4px;
                             font-size:0.85rem; margin-bottom:6px;">📋 結果をコピー</button>
@@ -329,7 +299,7 @@ export function showFortune(onBack = null, prefill = null) {
             if (lv) { lv.innerHTML = resultHtml; }
 
             window._fortuneBack = () => {
-                showFortune(showFortuneMenu, { year: String(year), month, day, gender: selectedGender });
+                showMyFortune(showFortuneMenu, { year: String(year), month, day, gender: selectedGender });
             };
 
             document.getElementById('ft-copy').onclick = () => {
@@ -337,7 +307,319 @@ export function showFortune(onBack = null, prefill = null) {
                     .then(() => alert('鑑定結果をコピーしました。メモアプリに貼り付けてください。'))
                     .catch(() => alert('コピーに失敗しました。'));
             };
-            document.getElementById('ft-retry').onclick = () => showFortune(onBack);
+            document.getElementById('ft-retry').onclick = () => showMyFortune(onBack);
+            document.getElementById('ft-done').onclick = () => {
+                if (onBack) { onBack(); return; }
+                if (lv) { lv.style.display = prevDisplay; lv.innerHTML = prevHtml; }
+                if (nm) nm.style.display = prevNm;
+            };
+
+        } catch (e) {
+            alert('通信エラーが発生しました。');
+            btn.textContent = 'ソフィーに鑑定してもらう';
+            btn.disabled = false;
+        }
+    };
+}
+
+export function showAboutPerson(onBack = null, prefill = null) {
+    if (prefill === null) prefill = loadSelfPrefill();
+
+    const lv = document.getElementById('list-view');
+    const nm = document.getElementById('nav-main');
+    const prevHtml = lv ? lv.innerHTML : '';
+    const prevDisplay = lv ? lv.style.display : 'none';
+    const prevNm = nm ? nm.style.display : 'none';
+
+    const monImg = document.getElementById('monitor-img');
+    if (monImg) { monImg.src = './fortune_sophie.jpeg'; }
+    if (window._renderConsole) window._renderConsole('fortune');
+    window._fortuneBack = () => showFortuneMenu();
+
+    const formHtml = `
+        <div style="margin:10px; border-radius:10px; border:2px solid transparent;
+                    background: linear-gradient(#111, #111) padding-box,
+                    linear-gradient(120deg, #ff69b4 50%, #00d2ff 100%) border-box;">
+            <div style="color:#f0b56e; padding:0 12px; font-size:0.8rem; font-weight:bold;
+                        border-bottom:1px solid #333; height:28px; line-height:28px;
+                        border-radius:8px 8px 0 0; display:flex; align-items:center; gap:6px;">
+                <img src="./sophie_face.png" style="width:20px; height:20px; border-radius:50%; object-fit:cover;">
+                あの人どんな人
+            </div>
+            <div style="padding:10px;">
+                <div style="margin-bottom:8px;">
+                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;">
+                        <div style="color:#aaa; font-size:0.75rem;">生年月日</div>
+                        <button id="ft-people" style="background:#1a2a1a; color:#7fd97f; border:1px solid #3a6a4a; padding:2px 8px; border-radius:3px; font-size:0.7rem;">📖 人物帳から選ぶ</button>
+                    </div>
+                    <div style="display:flex; gap:4px; align-items:center;">
+                        <input type="number" id="ft-year" placeholder="1980" min="1900" max="2010"
+                            value="${prefill ? prefill.year : ''}"
+                            style="width:72px; background:#000; border:1px solid #555; color:#fff;
+                                   height:38px; padding:0 8px; border-radius:4px; font-size:0.85rem;">
+                        <span style="color:#aaa; font-size:0.8rem;">年</span>
+                        <input type="number" id="ft-month" placeholder="1" min="1" max="12"
+                            value="${prefill ? prefill.month : ''}"
+                            style="width:48px; background:#000; border:1px solid #555; color:#fff;
+                                   height:38px; padding:0 8px; border-radius:4px; font-size:0.85rem;">
+                        <span style="color:#aaa; font-size:0.8rem;">月</span>
+                        <input type="number" id="ft-day" placeholder="1" min="1" max="31"
+                            value="${prefill ? prefill.day : ''}"
+                            style="width:48px; background:#000; border:1px solid #555; color:#fff;
+                                   height:38px; padding:0 8px; border-radius:4px; font-size:0.85rem;">
+                        <span style="color:#aaa; font-size:0.8rem;">日</span>
+                    </div>
+                </div>
+                <div style="margin-bottom:8px;">
+                    <div style="color:#aaa; font-size:0.75rem; margin-bottom:4px;">性別</div>
+                    <div style="display:flex; gap:8px;">
+                        <button class="ft-gender" data-val="男性"
+                            style="flex:1; background:#1a1a1a; color:#888; border:1px solid #444;
+                                   height:36px; border-radius:4px; font-size:0.85rem;">男性</button>
+                        <button class="ft-gender" data-val="女性"
+                            style="flex:1; background:#1a1a1a; color:#888; border:1px solid #444;
+                                   height:36px; border-radius:4px; font-size:0.85rem;">女性</button>
+                    </div>
+                </div>
+                <div style="margin-bottom:8px;">
+                    <div style="color:#aaa; font-size:0.75rem; margin-bottom:4px;">鑑定テーマ</div>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:4px;">
+                        <button class="ft-theme" data-val="性格分析"
+                            style="background:#1a1a1a; color:#888; border:1px solid #444;
+                                   height:36px; border-radius:4px; font-size:0.8rem;">🔍 性格分析</button>
+                        <button class="ft-theme" data-val="SWOT分析"
+                            style="background:#1a1a1a; color:#888; border:1px solid #444;
+                                   height:36px; border-radius:4px; font-size:0.8rem;">📊 SWOT分析</button>
+                        <button class="ft-theme" data-val="アプローチ法"
+                            style="background:#1a1a1a; color:#888; border:1px solid #444;
+                                   height:36px; border-radius:4px; font-size:0.8rem;">💡 アプローチ法</button>
+                        <button class="ft-theme" data-val="地雷ポイント"
+                            style="background:#1a1a1a; color:#888; border:1px solid #444;
+                                   height:36px; border-radius:4px; font-size:0.8rem;">💣 地雷ポイント</button>
+                        <button class="ft-theme" data-val="弱点と反撃法"
+                            style="background:#1a1a1a; color:#888; border:1px solid #444;
+                                   height:36px; border-radius:4px; font-size:0.8rem;">⚔️ 弱点と反撃法</button>
+                        <button class="ft-theme" data-val="プレゼント"
+                            style="background:#1a1a1a; color:#888; border:1px solid #444;
+                                   height:36px; border-radius:4px; font-size:0.8rem;">🎁 プレゼント</button>
+                    </div>
+                </div>
+                <div style="margin-bottom:10px;">
+                    <div style="color:#aaa; font-size:0.75rem; margin-bottom:4px;">気になる点・関係性など</div>
+                    <textarea id="ft-worry" rows="3" placeholder="例：職場の上司、もっと懐に入りたい"
+                        style="width:100%; background:#000; border:1px solid #555; color:#fff;
+                               padding:8px 10px; border-radius:4px; font-size:0.85rem;
+                               resize:none; font-family:inherit;"></textarea>
+                </div>
+                <button id="ft-meishiki-btn" style="width:100%; background:#1a1a2a; color:#9b59b6;
+                    border:1px solid #6a3a8a; height:36px; border-radius:4px;
+                    font-size:0.8rem; margin-bottom:6px;">📊 命式を確認する</button>
+                <div id="ft-meishiki-area" style="display:none; margin-bottom:8px;"></div>
+                <button id="ft-submit" style="width:100%; background:#0096BF; color:#ff69b4;
+                    border:2px solid #ff51a8; height:44px; border-radius:4px;
+                    font-size:0.95rem; font-weight:bold; margin-bottom:8px;">
+                    ソフィーに鑑定してもらう
+                </button>
+                <button id="ft-close" style="width:100%; background:#34495e; color:#fff;
+                    border:none; height:36px; border-radius:4px; font-size:0.85rem;">閉じる</button>
+            </div>
+        </div>`;
+
+    if (lv) { lv.style.display = 'block'; lv.innerHTML = formHtml; }
+    if (nm) nm.style.display = 'none';
+
+    let selectedGender = prefill ? prefill.gender : '';
+    const personName = prefill?.name || '';
+    let selectedTheme = '';
+
+    document.querySelectorAll('.ft-gender').forEach(btn => {
+        if (selectedGender && btn.dataset.val === selectedGender) {
+            btn.style.background = '#0096BF'; btn.style.color = '#fff'; btn.style.borderColor = '#00d2ff';
+        }
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.ft-gender').forEach(b => {
+                b.style.background = '#1a1a1a'; b.style.color = '#888'; b.style.borderColor = '#444';
+            });
+            btn.style.background = '#0096BF'; btn.style.color = '#fff'; btn.style.borderColor = '#00d2ff';
+            selectedGender = btn.dataset.val;
+        });
+    });
+
+    document.querySelectorAll('.ft-theme').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.ft-theme').forEach(b => {
+                b.style.background = '#1a1a1a'; b.style.color = '#888'; b.style.borderColor = '#444';
+            });
+            btn.style.background = '#8e44ad'; btn.style.color = '#fff'; btn.style.borderColor = '#9b59b6';
+            selectedTheme = btn.dataset.val;
+        });
+    });
+
+    document.getElementById('ft-people').onclick = () => {
+        const cur = {
+            year: document.getElementById('ft-year').value,
+            month: document.getElementById('ft-month').value,
+            day: document.getElementById('ft-day').value,
+            gender: selectedGender
+        };
+        showPeopleBook(
+            (person) => {
+                const [y, m, d] = person.birth.split('-');
+                showAboutPerson(onBack, { year: y, month: parseInt(m), day: parseInt(d), gender: person.gender, name: person.name });
+            },
+            () => showAboutPerson(onBack, cur)
+        );
+    };
+
+    document.getElementById('ft-close').onclick = () => {
+        if (onBack) { onBack(); return; }
+        if (lv) { lv.style.display = prevDisplay; lv.innerHTML = prevHtml; }
+        if (nm) nm.style.display = prevNm;
+    };
+
+    window._showMeishikiPanel = () => {
+        const y = parseInt(document.getElementById('ft-year')?.value);
+        const mo = parseInt(document.getElementById('ft-month')?.value);
+        const d = parseInt(document.getElementById('ft-day')?.value);
+        if (!y || !mo || !d) { alert('先に生年月日を入力してください'); return; }
+        const area = document.getElementById('ft-meishiki-area');
+        if (!area) return;
+        if (area.style.display !== 'none') { area.style.display = 'none'; return; }
+        import('./meishiki.js').then(m => {
+            const raw = m.getFullMeishiki(y, mo, d, selectedGender || '不明');
+            const siMap = {
+                甲:{gogyo:'木',inyo:'陽'},乙:{gogyo:'木',inyo:'陰'},
+                丙:{gogyo:'火',inyo:'陽'},丁:{gogyo:'火',inyo:'陰'},
+                戊:{gogyo:'土',inyo:'陽'},己:{gogyo:'土',inyo:'陰'},
+                庚:{gogyo:'金',inyo:'陽'},辛:{gogyo:'金',inyo:'陰'},
+                壬:{gogyo:'水',inyo:'陽'},癸:{gogyo:'水',inyo:'陰'}
+            };
+            const adapt = col => col ? { ...col, stemInfo: siMap[col.stem] || {} } : null;
+            const data = {
+                ...raw,
+                yearPillar:  adapt(raw.columns.year),
+                monthPillar: adapt(raw.columns.month),
+                dayPillar:   adapt(raw.columns.day)
+            };
+            area.style.display = 'block';
+            area.innerHTML = buildMeishikiHtml(data, y, mo, d, selectedGender);
+        });
+    };
+
+    document.getElementById('ft-meishiki-btn').onclick = () => window._showMeishikiPanel();
+
+    document.getElementById('ft-submit').onclick = async () => {
+        const year = document.getElementById('ft-year').value;
+        const month = document.getElementById('ft-month').value;
+        const day = document.getElementById('ft-day').value;
+
+        if (!year || !month || !day) { alert('生年月日を入力してください'); return; }
+        if (!selectedGender) { alert('性別を選択してください'); return; }
+        if (!selectedTheme) { alert('鑑定テーマを選択してください'); return; }
+
+        const worry = document.getElementById('ft-worry').value.trim();
+        const pillars = getThreePillars(parseInt(year), parseInt(month), parseInt(day));
+        const btn = document.getElementById('ft-submit');
+        btn.textContent = '鑑定中…';
+        btn.disabled = true;
+
+        const personInfo = `
+【あの方】
+生年月日：${year}年${month}月${day}日
+性別：${selectedGender}
+命式：年柱 ${pillars.year}・月柱 ${pillars.month}・日柱 ${pillars.day}
+気になる点・関係性：${worry || 'なし'}`;
+
+        const baseIntro = `${sophieChar}
+あなたは四柱推命を極めた占い師であり、BARソフィーのバーテンダー「ソフィー」です。
+あなたにお客さんから相談がありました。
+${personInfo}`;
+
+        let prompt;
+        if (selectedTheme === '性格分析') {
+            prompt = `${baseIntro}
+
+この人の本質的な気質・価値観・色合いを四柱推命で読み解いて、カウンターで静かに語りかけるように伝えてください。強い弱いではなく、この人ならではの色合いとして。1000字程度。`;
+        } else if (selectedTheme === 'SWOT分析') {
+            prompt = `${baseIntro}
+
+この人の強み・弱み・活かせる機会・気をつけるべき脅威を四柱推命で読み解いて、付き合い方のアドバイスも添えてください。1000字程度。`;
+        } else if (selectedTheme === 'アプローチ法') {
+            prompt = `${baseIntro}
+
+この人の心を開くためのアプローチ方法を四柱推命で読み解いて具体的に伝えてください。距離の縮め方・響く言葉・態度を含めて。1000字程度。`;
+        } else if (selectedTheme === '地雷ポイント') {
+            prompt = `${baseIntro}
+
+この人の地雷・触れてはいけない急所を四柱推命で読み解いてください。800字程度。`;
+        } else if (selectedTheme === '弱点と反撃法') {
+            prompt = `${baseIntro}
+
+この人が攻められて弱いところ・こちらの反撃ポイントを四柱推命で読み解いてください。800字程度。`;
+        } else if (selectedTheme === 'プレゼント') {
+            prompt = `${baseIntro}
+
+この人の命式から、喜ぶプレゼントとラッキーアイテムを具体的に提案してください。300字程度。`;
+        }
+
+        const messages = [{ role: 'user', content: prompt }];
+        const url = GAS_URL + '?messages=' + encodeURIComponent(JSON.stringify(messages));
+
+        try {
+            const res = await fetch(url);
+            const data = await res.json();
+
+            const resultText = data.ok ? data.text : 'エラーが発生しました。もう一度お試しください。';
+            const now = new Date();
+            const dateStr = `${now.getFullYear()}年${now.getMonth()+1}月${now.getDate()}日`;
+            const personLabel = personName ? `${personName}（${selectedGender}）` : `${year}年${month}月${day}日生（${selectedGender}）`;
+            const resultHeader = `【${selectedTheme}】${personLabel}　${dateStr}`;
+            const formatted = resultText
+                .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\*([^*]+)\*/g, '')
+                .replace(/\*\*/g, '')
+                .replace(/^#{1,3}\s*/gm, '')
+                .replace(/^-{2,}$/gm, '')
+                .replace(/\n{3,}/g, '\n\n')
+                .replace(/\n{2,}/g, '\n')
+                .replace(/\n/g, '<br>');
+
+            const resultHtml = `
+                <div style="margin:10px; border-radius:10px; border:2px solid transparent;
+                            background: linear-gradient(#111, #111) padding-box,
+                            linear-gradient(120deg, #ff69b4 50%, #00d2ff 100%) border-box;">
+                    <div style="color:#f0b56e; padding:0 12px; font-size:0.8rem; font-weight:bold;
+                                border-bottom:1px solid #333; height:28px; line-height:28px;
+                                border-radius:8px 8px 0 0; display:flex; align-items:center; gap:6px;">
+                        <img src="./sophie_face.png" style="width:20px; height:20px; border-radius:50%; object-fit:cover;">
+                        ソフィーの鑑定結果
+                    </div>
+                    <div style="padding:4px 12px 6px; color:#888; font-size:0.72rem; border-bottom:1px solid #222;">${resultHeader}</div>
+                    <div style="padding:12px; color:#ddd; font-size:0.85rem; line-height:1.9;">${formatted}</div>
+                    <div style="padding:0 10px 10px;">
+                        <button id="ft-copy" style="width:100%; background:#1a2a3a; color:#5ba3d9;
+                            border:1px solid #1a5276; height:40px; border-radius:4px;
+                            font-size:0.85rem; margin-bottom:6px;">📋 結果をコピー</button>
+                        <button id="ft-retry" style="width:100%; background:#2a1a3a; color:#c39bd3;
+                            border:1px solid #6a3a8a; height:40px; border-radius:4px;
+                            font-size:0.85rem; margin-bottom:6px;">もう一度鑑定する</button>
+                        <button id="ft-done" style="width:100%; background:#34495e; color:#fff;
+                            border:none; height:36px; border-radius:4px; font-size:0.85rem;">閉じる</button>
+                    </div>
+                </div>`;
+
+            if (lv) { lv.innerHTML = resultHtml; }
+
+            window._fortuneBack = () => {
+                showAboutPerson(showFortuneMenu, { year: String(year), month, day, gender: selectedGender });
+            };
+
+            document.getElementById('ft-copy').onclick = () => {
+                navigator.clipboard.writeText(resultHeader + '\n\n' + resultText)
+                    .then(() => alert('鑑定結果をコピーしました。メモアプリに貼り付けてください。'))
+                    .catch(() => alert('コピーに失敗しました。'));
+            };
+            document.getElementById('ft-retry').onclick = () => showAboutPerson(onBack);
             document.getElementById('ft-done').onclick = () => {
                 if (onBack) { onBack(); return; }
                 if (lv) { lv.style.display = prevDisplay; lv.innerHTML = prevHtml; }
@@ -359,7 +641,6 @@ export function showFortuneMenu() {
     const prevDisplay = lv ? lv.style.display : 'none';
     const prevNm = nm ? nm.style.display : 'none';
 
-    // 画像を元に戻す
     const monImg = document.getElementById('monitor-img');
     if (monImg) { monImg.src = './front_sophie.jpeg'; }
     if (window._renderConsole) window._renderConsole('standard');
@@ -376,8 +657,10 @@ export function showFortuneMenu() {
             </div>
             <div style="padding:10px;">
                 <button id="fm-people" class="act-btn" style="background:#1a2a1a; color:#7fd97f; border:1px solid #3a6a4a; margin-bottom:8px;">👥 人物帳</button>
-                <button id="fm-fortune" class="act-btn" style="background:#2a1a3a; color:#c39bd3;
-                    border:1px solid #6a3a8a; margin-bottom:8px;">🌟 運勢を見てもらう</button>
+                <button id="fm-my-fortune" class="act-btn" style="background:#2a1a3a; color:#c39bd3;
+                    border:1px solid #6a3a8a; margin-bottom:8px;">🌟 あなたのご相談</button>
+                <button id="fm-about-person" class="act-btn" style="background:#1a1a2a; color:#9b59b6;
+                    border:1px solid #6a3a8a; margin-bottom:8px;">👤 あの人どんな人</button>
                 <button id="fm-compat" class="act-btn" style="background:#1a2a3a; color:#5ba3d9;
                     border:1px solid #1a5276; margin-bottom:8px;">💑 相性を見てもらう</button>
                 <button id="fm-close" class="act-btn" style="background:#34495e;">閉じる</button>
@@ -388,7 +671,8 @@ export function showFortuneMenu() {
     if (nm) nm.style.display = 'none';
 
     document.getElementById('fm-people').onclick = () => showPeopleBook(null, showFortuneMenu);
-    document.getElementById('fm-fortune').onclick = () => showFortune(showFortuneMenu);
+    document.getElementById('fm-my-fortune').onclick = () => showMyFortune(showFortuneMenu);
+    document.getElementById('fm-about-person').onclick = () => showAboutPerson(showFortuneMenu);
     document.getElementById('fm-compat').onclick = () => showCompatibility(showFortuneMenu);
     document.getElementById('fm-close').onclick = () => {
         if (lv) { lv.style.display = prevDisplay; lv.innerHTML = prevHtml; }
