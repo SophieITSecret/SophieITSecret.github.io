@@ -106,7 +106,65 @@ export function getGogyoBalance(yearPillar, monthPillar, dayPillar) {
     return bal;
 }
 
-// ─── ⑤ 統合関数 ──────────────────────────────────────────────
+// ─── ⑤ 大運 ──────────────────────────────────────────────────
+
+export function getDaiyun(year, month, day, gender) {
+    const stems = ["甲","乙","丙","丁","戊","己","庚","辛","壬","癸"];
+    const branches = ["子","丑","寅","卯","辰","巳","午","未","申","酉","戌","亥"];
+
+    const yStemIdx = (year - 4 + 1000) % 10;
+    const isYoYear = yStemIdx % 2 === 0;
+    const isForward = (gender === '男性' && isYoYear) || (gender === '女性' && !isYoYear);
+
+    const setsuiriDays = [6,4,6,5,6,6,7,8,8,8,7,7];
+    const birthMonthIdx = month - 1;
+    const setsuiriDay = setsuiriDays[birthMonthIdx];
+
+    let daysToSetsuiri;
+    if (isForward) {
+        daysToSetsuiri = setsuiriDay - day;
+        if (daysToSetsuiri <= 0) {
+            const nextMonth = (birthMonthIdx + 1) % 12;
+            daysToSetsuiri = (30 - day) + setsuiriDays[nextMonth];
+        }
+    } else {
+        daysToSetsuiri = day - setsuiriDay;
+        if (daysToSetsuiri <= 0) {
+            const prevMonth = (birthMonthIdx - 1 + 12) % 12;
+            daysToSetsuiri = day + (30 - setsuiriDays[prevMonth]);
+        }
+    }
+
+    const startAge = Math.round(daysToSetsuiri / 3);
+
+    const solarMonth = birthMonthIdx;
+    const month1StemIdx = ((yStemIdx % 5) * 2 + 2) % 10;
+    const monthOffset = (solarMonth - 1 + 12) % 12;
+    const monthStemIdx = (month1StemIdx + monthOffset) % 10;
+    const monthBranchIdx = (solarMonth + 1) % 12;
+
+    const daiyunList = [];
+    for (let i = 0; i < 10; i++) {
+        const age = startAge + i * 10;
+        let stemIdx, branchIdx;
+        if (isForward) {
+            stemIdx   = (monthStemIdx   + i + 1)      % 10;
+            branchIdx = (monthBranchIdx + i + 1)      % 12;
+        } else {
+            stemIdx   = (monthStemIdx   - i - 1 + 100) % 10;
+            branchIdx = (monthBranchIdx - i - 1 + 120) % 12;
+        }
+        daiyunList.push({
+            age,
+            ageRange: `${age}～${age + 9}歳`,
+            pillar: stems[stemIdx] + branches[branchIdx]
+        });
+    }
+
+    return { startAge, isForward, daiyunList };
+}
+
+// ─── ⑥ 統合関数 ──────────────────────────────────────────────
 
 export function getFullMeishiki(year, month, day, gender) {
     const pillars = getThreePillars(year, month, day);
