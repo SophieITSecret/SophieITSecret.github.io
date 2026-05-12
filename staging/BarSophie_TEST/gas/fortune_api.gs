@@ -2,9 +2,11 @@
 // プロパティ名: ANTHROPIC_API_KEY
 const ANTHROPIC_API_KEY = PropertiesService.getScriptProperties().getProperty('ANTHROPIC_API_KEY');
 
-function doGet(e) {
+function doPost(e) {
   try {
-    const messages = JSON.parse(decodeURIComponent(e.parameter.messages));
+    const req = JSON.parse(e.postData.contents);
+    const messages = req.messages;
+    const useSearch = req.search === true;
 
     const payload = {
       model: 'claude-haiku-4-5',

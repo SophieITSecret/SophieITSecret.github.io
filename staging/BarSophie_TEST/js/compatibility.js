@@ -227,10 +227,13 @@ ${question || 'とくになし'}
 ・回答は1500字程度にまとめること`;
 
         const messages = [{ role: 'user', content: prompt }];
-        const url = GAS_URL + '?messages=' + encodeURIComponent(JSON.stringify(messages));
 
         try {
-            const res = await fetch(url);
+            const res = await fetch(GAS_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ messages, search: false })
+            });
             const data = await res.json();
 
             const resultText = data.ok ? data.text : 'エラーが発生しました。もう一度お試しください。';
