@@ -749,17 +749,41 @@ function buildMeishikiHtml(data, year, month, day, gender) {
             </div>
             <div style="color:#aaa; font-size:0.7rem; width:14px;">${count}</div>
         </div>`).join('');
+
+    const daiyun = getDaiyun(year, month, day, gender || '男性');
+    const currentAge = new Date().getFullYear() - year;
+    const daiyunHtml = daiyun.daiyunList.slice(0, 8).map(d => {
+        const isCurrent = d.age <= currentAge && currentAge < d.age + 10;
+        return `
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:3px;
+            ${isCurrent ? 'background:#1a1a3a; border-radius:4px; padding:2px 4px;' : 'padding:2px 4px;'}">
+            <div style="color:${isCurrent ? '#f0b56e' : '#666'}; font-size:0.7rem; width:72px;">
+                ${d.ageRange}
+            </div>
+            <div style="color:${isCurrent ? '#fff' : '#aaa'}; font-size:0.8rem; font-weight:${isCurrent ? 'bold' : 'normal'};">
+                ${d.pillar}
+            </div>
+            ${isCurrent ? '<div style="color:#f0b56e; font-size:0.65rem;">◀ 現在</div>' : ''}
+        </div>`;
+    }).join('');
+
     return `
         <div style="border:1px solid #6a3a8a; border-radius:6px; padding:8px; background:#0a0a1a;">
             <div style="color:#9b59b6; font-size:0.75rem; margin-bottom:6px; text-align:center;">
                 📊 ${year}年${month}月${day}日・${gender || ''}の命式
             </div>
             <div style="display:flex; border:1px solid #333; border-radius:4px; overflow:hidden; margin-bottom:8px;">
-                ${pillarHtml('年柱', data.yearPillar)}
-                ${pillarHtml('月柱', data.monthPillar)}
                 ${pillarHtml('日柱', data.dayPillar)}
+                ${pillarHtml('月柱', data.monthPillar)}
+                ${pillarHtml('年柱', data.yearPillar)}
             </div>
             <div style="font-size:0.7rem; color:#aaa; margin-bottom:4px;">五行バランス</div>
             ${balanceHtml}
+            <div style="border:1px solid #333; border-radius:4px; padding:8px; margin-top:8px;">
+                <div style="color:#aaa; font-size:0.7rem; margin-bottom:6px;">
+                    大運（${daiyun.startAge}歳起運・${daiyun.isForward ? '順行' : '逆行'}）
+                </div>
+                ${daiyunHtml}
+            </div>
         </div>`;
 }
