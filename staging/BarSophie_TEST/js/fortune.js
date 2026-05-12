@@ -1,7 +1,7 @@
 // js/fortune.js
 import { showPeopleBook } from './people.js';
 import { showCompatibility } from './compatibility.js';
-import { getThreePillars } from './meishiki.js';
+import { getThreePillars, getFullMeishiki, getDaiyun } from './meishiki.js';
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbwA1C22UhKroCFC_EPC-ugR5efyXVHlbkWywfD21HfD3-J4vm-b4ZjvIshO-i3fKk9W/exec';
 
 const sophieChar = 'ソフィーは20代の若い女性バーテンダー。さわやかで知的、品がある。口調は丁寧な「です・ます」調。マダムのような馴れ馴れしさやタメ口は使わない。お客様は40〜50代の紳士が多い。四柱推命の専門用語はさりげなく使い、少し意味を補足するが説明的になりすぎない。';
@@ -221,6 +221,24 @@ export function showMyFortune(onBack = null, prefill = null) {
 
         const worry = document.getElementById('ft-worry').value.trim();
         const pillars = getThreePillars(parseInt(year), parseInt(month), parseInt(day));
+
+        const fullData = getFullMeishiki(parseInt(year), parseInt(month), parseInt(day), selectedGender);
+        const daiyun = getDaiyun(parseInt(year), parseInt(month), parseInt(day), selectedGender);
+        const currentAge = new Date().getFullYear() - parseInt(year);
+        const currentDaiyun = daiyun.daiyunList.find((d, i) => {
+            const next = daiyun.daiyunList[i + 1];
+            return d.age <= currentAge && (!next || currentAge < next.age);
+        });
+        const meishikiDetail = `
+命式詳細：
+・年柱：${pillars.year}（通変星：${fullData?.columns?.year?.tsuhensei || ''}・十二運星：${fullData?.columns?.year?.juniUnsei || ''}）
+・月柱：${pillars.month}（通変星：${fullData?.columns?.month?.tsuhensei || ''}・十二運星：${fullData?.columns?.month?.juniUnsei || ''}）
+・日柱：${pillars.day}（通変星：日主・十二運星：${fullData?.columns?.day?.juniUnsei || ''}）
+五行バランス：${Object.entries(fullData?.gogyoBalance || {}).map(([g,c]) => `${g}${c}`).join('・')}
+大運（開始${daiyun.startAge}歳・${daiyun.isForward ? '順行' : '逆行'}）：${daiyun.daiyunList.slice(0,6).map(d => `${d.ageRange}${d.pillar}`).join('・')}
+現在の大運：${currentDaiyun ? `${currentDaiyun.ageRange} ${currentDaiyun.pillar}` : '不明'}
+`;
+
         const btn = document.getElementById('ft-submit');
         btn.textContent = '鑑定中…';
         btn.disabled = true;
@@ -234,6 +252,7 @@ export function showMyFortune(onBack = null, prefill = null) {
 生年月日：${year}年${month}月${day}日
 性別：${selectedGender}
 命式：年柱 ${pillars.year}・月柱 ${pillars.month}・日柱 ${pillars.day}
+${meishikiDetail}
 鑑定テーマ：${selectedTheme}
 特に相談したいテーマ：${worry || 'なし'}
 
@@ -519,6 +538,16 @@ export function showAboutPerson(onBack = null, prefill = null) {
 
         const worry = document.getElementById('ft-worry').value.trim();
         const pillars = getThreePillars(parseInt(year), parseInt(month), parseInt(day));
+
+        const fullData = getFullMeishiki(parseInt(year), parseInt(month), parseInt(day), selectedGender);
+        const meishikiDetail = `
+命式詳細：
+・年柱：${pillars.year}（通変星：${fullData?.columns?.year?.tsuhensei || ''}・十二運星：${fullData?.columns?.year?.juniUnsei || ''}）
+・月柱：${pillars.month}（通変星：${fullData?.columns?.month?.tsuhensei || ''}・十二運星：${fullData?.columns?.month?.juniUnsei || ''}）
+・日柱：${pillars.day}（通変星：日主・十二運星：${fullData?.columns?.day?.juniUnsei || ''}）
+五行バランス：${Object.entries(fullData?.gogyoBalance || {}).map(([g,c]) => `${g}${c}`).join('・')}
+`;
+
         const btn = document.getElementById('ft-submit');
         btn.textContent = '鑑定中…';
         btn.disabled = true;
@@ -528,6 +557,7 @@ export function showAboutPerson(onBack = null, prefill = null) {
 生年月日：${year}年${month}月${day}日
 性別：${selectedGender}
 命式：年柱 ${pillars.year}・月柱 ${pillars.month}・日柱 ${pillars.day}
+${meishikiDetail}
 気になる点・関係性：${worry || 'なし'}`;
 
         const baseIntro = `${sophieChar}
