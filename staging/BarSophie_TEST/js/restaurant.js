@@ -157,7 +157,7 @@ export function showRestaurantSearch(savedArea = '', savedGenre = '', savedBudge
         try {
             const res = await fetch(GAS_URL, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 'Content-Type': 'text/plain' },
                 body: JSON.stringify({ messages, search: true })
             });
             const data = await res.json();
