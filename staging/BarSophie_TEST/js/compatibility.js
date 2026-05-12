@@ -1,6 +1,6 @@
 // js/compatibility.js
 import { showPeopleBook } from './people.js';
-import { getThreePillars } from './meishiki.js';
+import { getThreePillars, getFullMeishiki } from './meishiki.js';
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbwA1C22UhKroCFC_EPC-ugR5efyXVHlbkWywfD21HfD3-J4vm-b4ZjvIshO-i3fKk9W/exec';
 
 export function showCompatibility(onBack = null, prefillMe = null, prefillYou = null, texts = null) {
@@ -187,6 +187,21 @@ export function showCompatibility(onBack = null, prefillMe = null, prefillYou = 
         const myPillars = getThreePillars(parseInt(myYear), parseInt(myMonth), parseInt(myDay));
         const yourPillars = getThreePillars(parseInt(yourYear), parseInt(yourMonth), parseInt(yourDay));
 
+        const myFull = getFullMeishiki(parseInt(myYear), parseInt(myMonth), parseInt(myDay), myGender);
+        const yourFull = getFullMeishiki(parseInt(yourYear), parseInt(yourMonth), parseInt(yourDay), yourGender);
+
+        const myDetail = `
+・年柱：${myPillars.year}（通変星：${myFull?.columns?.year?.tsuhensei || ''}・十二運星：${myFull?.columns?.year?.juniUnsei || ''}）
+・月柱：${myPillars.month}（通変星：${myFull?.columns?.month?.tsuhensei || ''}・十二運星：${myFull?.columns?.month?.juniUnsei || ''}）
+・日柱：${myPillars.day}（通変星：日主・十二運星：${myFull?.columns?.day?.juniUnsei || ''}）
+五行バランス：${Object.entries(myFull?.gogyoBalance || {}).map(([g,c]) => `${g}${c}`).join('・')}`;
+
+        const yourDetail = `
+・年柱：${yourPillars.year}（通変星：${yourFull?.columns?.year?.tsuhensei || ''}・十二運星：${yourFull?.columns?.year?.juniUnsei || ''}）
+・月柱：${yourPillars.month}（通変星：${yourFull?.columns?.month?.tsuhensei || ''}・十二運星：${yourFull?.columns?.month?.juniUnsei || ''}）
+・日柱：${yourPillars.day}（通変星：日主・十二運星：${yourFull?.columns?.day?.juniUnsei || ''}）
+五行バランス：${Object.entries(yourFull?.gogyoBalance || {}).map(([g,c]) => `${g}${c}`).join('・')}`;
+
         const btn = document.getElementById('cp-submit');
         btn.textContent = '鑑定中…';
         btn.disabled = true;
@@ -200,11 +215,13 @@ export function showCompatibility(onBack = null, prefillMe = null, prefillYou = 
 生年月日：${myYear}年${myMonth}月${myDay}日
 性別：${myGender}
 命式：年柱 ${myPillars.year}・月柱 ${myPillars.month}・日柱 ${myPillars.day}
+${myDetail}
 
 【お相手】
 生年月日：${yourYear}年${yourMonth}月${yourDay}日
 性別：${yourGender}
 命式：年柱 ${yourPillars.year}・月柱 ${yourPillars.month}・日柱 ${yourPillars.day}
+${yourDetail}
 
 【相手への気持ち】
 ${feeling || 'とくになし'}
