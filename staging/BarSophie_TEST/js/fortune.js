@@ -111,10 +111,6 @@ export function showMyFortune(onBack = null, prefill = null) {
                                padding:8px 10px; border-radius:4px; font-size:0.85rem;
                                resize:none; font-family:inherit;"></textarea>
                 </div>
-                <button id="ft-meishiki-btn" style="width:100%; background:#1a1a2a; color:#9b59b6;
-                    border:1px solid #6a3a8a; height:36px; border-radius:4px;
-                    font-size:0.8rem; margin-bottom:6px;">📊 命式を確認する</button>
-                <div id="ft-meishiki-area" style="display:none; margin-bottom:8px;"></div>
                 <button id="ft-submit" style="width:100%; background:#0096BF; color:#ff69b4;
                     border:2px solid #ff51a8; height:44px; border-radius:4px;
                     font-size:0.95rem; font-weight:bold; margin-bottom:8px;">
@@ -178,37 +174,6 @@ export function showMyFortune(onBack = null, prefill = null) {
         if (lv) { lv.style.display = prevDisplay; lv.innerHTML = prevHtml; }
         if (nm) nm.style.display = prevNm;
     };
-
-    window._showMeishikiPanel = () => {
-        const y = parseInt(document.getElementById('ft-year')?.value);
-        const mo = parseInt(document.getElementById('ft-month')?.value);
-        const d = parseInt(document.getElementById('ft-day')?.value);
-        if (!y || !mo || !d) { alert('先に生年月日を入力してください'); return; }
-        const area = document.getElementById('ft-meishiki-area');
-        if (!area) return;
-        if (area.style.display !== 'none') { area.style.display = 'none'; return; }
-        import('./meishiki.js').then(m => {
-            const raw = m.getFullMeishiki(y, mo, d, selectedGender || '不明');
-            const siMap = {
-                甲:{gogyo:'木',inyo:'陽'},乙:{gogyo:'木',inyo:'陰'},
-                丙:{gogyo:'火',inyo:'陽'},丁:{gogyo:'火',inyo:'陰'},
-                戊:{gogyo:'土',inyo:'陽'},己:{gogyo:'土',inyo:'陰'},
-                庚:{gogyo:'金',inyo:'陽'},辛:{gogyo:'金',inyo:'陰'},
-                壬:{gogyo:'水',inyo:'陽'},癸:{gogyo:'水',inyo:'陰'}
-            };
-            const adapt = col => col ? { ...col, stemInfo: siMap[col.stem] || {} } : null;
-            const data = {
-                ...raw,
-                yearPillar:  adapt(raw.columns.year),
-                monthPillar: adapt(raw.columns.month),
-                dayPillar:   adapt(raw.columns.day)
-            };
-            area.style.display = 'block';
-            area.innerHTML = buildMeishikiHtml(data, y, mo, d, selectedGender);
-        });
-    };
-
-    document.getElementById('ft-meishiki-btn').onclick = () => window._showMeishikiPanel();
 
     document.getElementById('ft-submit').onclick = async () => {
         const year = document.getElementById('ft-year').value;
@@ -328,6 +293,36 @@ ${meishikiDetail}
                 </div>`;
 
             if (lv) { lv.innerHTML = resultHtml; }
+
+            window._showMeishikiPanel = () => {
+                const area = document.getElementById('ft-meishiki-area')
+                             || document.getElementById('ap-meishiki-area');
+                if (!area) return;
+                if (area.style.display !== 'none') { area.style.display = 'none'; return; }
+                import('./meishiki.js').then(m => {
+                    const siMap = {
+                        甲:{gogyo:'木',inyo:'陽'},乙:{gogyo:'木',inyo:'陰'},
+                        丙:{gogyo:'火',inyo:'陽'},丁:{gogyo:'火',inyo:'陰'},
+                        戊:{gogyo:'土',inyo:'陽'},己:{gogyo:'土',inyo:'陰'},
+                        庚:{gogyo:'金',inyo:'陽'},辛:{gogyo:'金',inyo:'陰'},
+                        壬:{gogyo:'水',inyo:'陽'},癸:{gogyo:'水',inyo:'陰'}
+                    };
+                    const raw = m.getFullMeishiki(
+                        parseInt(year), parseInt(month), parseInt(day), selectedGender
+                    );
+                    const adapt = col => col ? { ...col, stemInfo: siMap[col.stem] || {} } : null;
+                    const data = {
+                        ...raw,
+                        yearPillar:  adapt(raw.columns.year),
+                        monthPillar: adapt(raw.columns.month),
+                        dayPillar:   adapt(raw.columns.day)
+                    };
+                    area.style.display = 'block';
+                    area.innerHTML = buildMeishikiHtml(
+                        data, parseInt(year), parseInt(month), parseInt(day), selectedGender
+                    );
+                });
+            };
 
             window._fortuneBack = () => {
                 showMyFortune(showFortuneMenu, { year: String(year), month, day, gender: selectedGender });
@@ -466,10 +461,6 @@ export function showAboutPerson(onBack = null, prefill = null) {
                                padding:8px 10px; border-radius:4px; font-size:0.85rem;
                                resize:none; font-family:inherit;"></textarea>
                 </div>
-                <button id="ft-meishiki-btn" style="width:100%; background:#1a1a2a; color:#9b59b6;
-                    border:1px solid #6a3a8a; height:36px; border-radius:4px;
-                    font-size:0.8rem; margin-bottom:6px;">📊 命式を確認する</button>
-                <div id="ft-meishiki-area" style="display:none; margin-bottom:8px;"></div>
                 <button id="ft-submit" style="width:100%; background:#0096BF; color:#ff69b4;
                     border:2px solid #ff51a8; height:44px; border-radius:4px;
                     font-size:0.95rem; font-weight:bold; margin-bottom:8px;">
@@ -531,37 +522,6 @@ export function showAboutPerson(onBack = null, prefill = null) {
         if (lv) { lv.style.display = prevDisplay; lv.innerHTML = prevHtml; }
         if (nm) nm.style.display = prevNm;
     };
-
-    window._showMeishikiPanel = () => {
-        const y = parseInt(document.getElementById('ft-year')?.value);
-        const mo = parseInt(document.getElementById('ft-month')?.value);
-        const d = parseInt(document.getElementById('ft-day')?.value);
-        if (!y || !mo || !d) { alert('先に生年月日を入力してください'); return; }
-        const area = document.getElementById('ft-meishiki-area');
-        if (!area) return;
-        if (area.style.display !== 'none') { area.style.display = 'none'; return; }
-        import('./meishiki.js').then(m => {
-            const raw = m.getFullMeishiki(y, mo, d, selectedGender || '不明');
-            const siMap = {
-                甲:{gogyo:'木',inyo:'陽'},乙:{gogyo:'木',inyo:'陰'},
-                丙:{gogyo:'火',inyo:'陽'},丁:{gogyo:'火',inyo:'陰'},
-                戊:{gogyo:'土',inyo:'陽'},己:{gogyo:'土',inyo:'陰'},
-                庚:{gogyo:'金',inyo:'陽'},辛:{gogyo:'金',inyo:'陰'},
-                壬:{gogyo:'水',inyo:'陽'},癸:{gogyo:'水',inyo:'陰'}
-            };
-            const adapt = col => col ? { ...col, stemInfo: siMap[col.stem] || {} } : null;
-            const data = {
-                ...raw,
-                yearPillar:  adapt(raw.columns.year),
-                monthPillar: adapt(raw.columns.month),
-                dayPillar:   adapt(raw.columns.day)
-            };
-            area.style.display = 'block';
-            area.innerHTML = buildMeishikiHtml(data, y, mo, d, selectedGender);
-        });
-    };
-
-    document.getElementById('ft-meishiki-btn').onclick = () => window._showMeishikiPanel();
 
     document.getElementById('ft-submit').onclick = async () => {
         const year = document.getElementById('ft-year').value;
@@ -688,6 +648,36 @@ ${personInfo}`;
 
             if (lv) { lv.innerHTML = resultHtml; }
 
+            window._showMeishikiPanel = () => {
+                const area = document.getElementById('ft-meishiki-area')
+                             || document.getElementById('ap-meishiki-area');
+                if (!area) return;
+                if (area.style.display !== 'none') { area.style.display = 'none'; return; }
+                import('./meishiki.js').then(m => {
+                    const siMap = {
+                        甲:{gogyo:'木',inyo:'陽'},乙:{gogyo:'木',inyo:'陰'},
+                        丙:{gogyo:'火',inyo:'陽'},丁:{gogyo:'火',inyo:'陰'},
+                        戊:{gogyo:'土',inyo:'陽'},己:{gogyo:'土',inyo:'陰'},
+                        庚:{gogyo:'金',inyo:'陽'},辛:{gogyo:'金',inyo:'陰'},
+                        壬:{gogyo:'水',inyo:'陽'},癸:{gogyo:'水',inyo:'陰'}
+                    };
+                    const raw = m.getFullMeishiki(
+                        parseInt(year), parseInt(month), parseInt(day), selectedGender
+                    );
+                    const adapt = col => col ? { ...col, stemInfo: siMap[col.stem] || {} } : null;
+                    const data = {
+                        ...raw,
+                        yearPillar:  adapt(raw.columns.year),
+                        monthPillar: adapt(raw.columns.month),
+                        dayPillar:   adapt(raw.columns.day)
+                    };
+                    area.style.display = 'block';
+                    area.innerHTML = buildMeishikiHtml(
+                        data, parseInt(year), parseInt(month), parseInt(day), selectedGender
+                    );
+                });
+            };
+
             window._fortuneBack = () => {
                 showAboutPerson(showFortuneMenu, { year: String(year), month, day, gender: selectedGender });
             };
@@ -784,24 +774,72 @@ export function showFortuneMenu() {
 
 function buildMeishikiHtml(data, year, month, day, gender) {
     const gogyoColor = { 木:'#4CAF50', 火:'#e74c3c', 土:'#f39c12', 金:'#bdc3c7', 水:'#3498db' };
+    const stemReading = {
+        甲:'きのえ',乙:'きのと',丙:'ひのえ',丁:'ひのと',
+        戊:'つちのえ',己:'つちのと',庚:'かのえ',辛:'かのと',
+        壬:'みずのえ',癸:'みずのと'
+    };
+    const branchReading = {
+        子:'ね',丑:'うし',寅:'とら',卯:'う',辰:'たつ',巳:'み',
+        午:'うま',未:'ひつじ',申:'さる',酉:'とり',戌:'いぬ',亥:'い'
+    };
+    const branchGogyo = {
+        子:'水',丑:'土',寅:'木',卯:'木',辰:'土',巳:'火',
+        午:'火',未:'土',申:'金',酉:'金',戌:'土',亥:'水'
+    };
+    const branchInyo = {
+        子:'陽',丑:'陰',寅:'陽',卯:'陰',辰:'陽',巳:'陰',
+        午:'陽',未:'陰',申:'陽',酉:'陰',戌:'陽',亥:'陰'
+    };
+    const tsuhenseiReading = {
+        比肩:'ひけん',劫財:'ごうざい',食神:'しょくじん',傷官:'しょうかん',
+        偏財:'へんざい',正財:'せいざい',偏官:'へんかん',正官:'せいかん',
+        偏印:'へんいん',印綬:'いんじゅ',日主:'にっしゅ'
+    };
+    const juniUnseiReading = {
+        長生:'ちょうせい',沐浴:'もくよく',冠帯:'かんたい',建禄:'けんろく',
+        帝旺:'ていおう',衰:'すい',病:'びょう',死:'し',墓:'ぼ',
+        絶:'ぜつ',胎:'たい',養:'よう'
+    };
     const pillarHtml = (label, pillar) => {
         if (!pillar) return '';
         const si = pillar.stemInfo || {};
         const color = gogyoColor[si.gogyo] || '#aaa';
+        const bGogyo = branchGogyo[pillar.branch] || '';
+        const bInyo  = branchInyo[pillar.branch] || '';
+        const bColor = gogyoColor[bGogyo] || '#aaa';
         return `
             <div style="flex:1; text-align:center; border-right:1px solid #333; padding:4px;">
                 <div style="color:#888; font-size:0.65rem;">${label}</div>
-                <div style="font-size:1.2rem; font-weight:bold; color:${color};">${pillar.stem || ''}</div>
-                <div style="font-size:1.1rem; color:#ddd;">${pillar.branch || ''}</div>
-                <div style="color:${color}; font-size:0.65rem;">${si.gogyo || ''}・${si.inyo || ''}</div>
-                <div style="color:#888; font-size:0.65rem; border-top:1px solid #333; margin-top:2px; padding-top:2px;">
+                <div style="font-size:1.2rem; font-weight:bold; color:${color};">
+                    ${pillar.stem || ''}
+                </div>
+                <div style="color:${color}; font-size:0.6rem;">
+                    （${stemReading[pillar.stem] || ''}）
+                </div>
+                <div style="font-size:1.1rem; color:#ddd; margin-top:4px;">
+                    ${pillar.branch || ''}
+                </div>
+                <div style="color:#aaa; font-size:0.6rem;">
+                    （${branchReading[pillar.branch] || ''}）
+                </div>
+                <div style="color:${bColor}; font-size:0.6rem;">
+                    ${bGogyo}・${bInyo}
+                </div>
+                <div style="color:#888; font-size:0.6rem; border-top:1px solid #333; margin-top:3px; padding-top:2px;">
                     蔵干 ${(pillar.kakuchu || []).join(' ')}
                 </div>
-                <div style="color:#f0b56e; font-size:0.65rem; border-top:1px solid #333; margin-top:2px; padding-top:2px;">
+                <div style="color:#f0b56e; font-size:0.6rem; border-top:1px solid #333; margin-top:2px; padding-top:2px;">
                     ${pillar.tsuhensei || ''}
+                    <span style="color:#888;">
+                        （${tsuhenseiReading[pillar.tsuhensei] || ''}）
+                    </span>
                 </div>
-                <div style="color:#9b59b6; font-size:0.65rem; border-top:1px solid #333; margin-top:2px; padding-top:2px;">
+                <div style="color:#9b59b6; font-size:0.6rem; border-top:1px solid #333; margin-top:2px; padding-top:2px;">
                     ${pillar.juniUnsei || ''}
+                    <span style="color:#888;">
+                        （${juniUnseiReading[pillar.juniUnsei] || ''}）
+                    </span>
                 </div>
             </div>`;
     };
