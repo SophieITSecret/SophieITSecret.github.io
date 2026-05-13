@@ -650,9 +650,6 @@ ${personInfo}`;
                     <div style="padding:4px 12px 6px; color:#888; font-size:0.72rem; border-bottom:1px solid #222;">${resultHeader}</div>
                     <div style="padding:12px; color:#ddd; font-size:0.85rem; line-height:1.9;">${formatted}</div>
                     <div style="padding:0 10px 10px;">
-                        <button id="ft-meishiki-btn2" style="width:100%; background:#1a1a2a; color:#9b59b6;
-                            border:1px solid #6a3a8a; height:36px; border-radius:4px;
-                            font-size:0.8rem; margin-bottom:6px;">📊 命式を確認する</button>
                         <div id="ft-meishiki-area2" style="display:none; margin-bottom:8px;"></div>
                         <button id="ft-copy" style="width:100%; background:#1a2a3a; color:#5ba3d9;
                             border:1px solid #1a5276; height:40px; border-radius:4px;
@@ -665,32 +662,12 @@ ${personInfo}`;
             if (lv) { lv.innerHTML = resultHtml; }
 
             window._showMeishikiPanel = () => {
-                const areaId = document.getElementById('ap-meishiki-area2') ?
-                               'ap-meishiki-area2' : 'ap-meishiki-area';
-                const area = document.getElementById(areaId);
-                if (!area) {
-                    const resultDiv = document.querySelector('#list-view > div > div');
-                    if (!resultDiv) return;
-                    const newArea = document.createElement('div');
-                    newArea.id = 'ap-meishiki-area2';
-                    newArea.style.display = 'none';
-                    resultDiv.appendChild(newArea);
-                }
-                const targetArea = document.getElementById('ap-meishiki-area2')
-                                || document.getElementById('ap-meishiki-area');
-                if (!targetArea) return;
-                if (targetArea.style.display !== 'none') {
-                    targetArea.style.display = 'none';
+                const area = document.getElementById('ft-meishiki-area2');
+                if (!area) return;
+                if (area.style.display !== 'none') {
+                    area.style.display = 'none';
                     return;
                 }
-                const y = parseInt(document.getElementById('ft-year')?.value
-                          || document.getElementById('ap-year')?.value) || parseInt(year);
-                const mo = parseInt(document.getElementById('ft-month')?.value
-                           || document.getElementById('ap-month')?.value) || parseInt(month);
-                const d = parseInt(document.getElementById('ft-day')?.value
-                          || document.getElementById('ap-day')?.value) || parseInt(day);
-                const g = selectedGender || '不明';
-                if (!y || !mo || !d) return;
                 import('./meishiki.js').then(m => {
                     const siMap = {
                         甲:{gogyo:'木',inyo:'陽'},乙:{gogyo:'木',inyo:'陰'},
@@ -699,22 +676,24 @@ ${personInfo}`;
                         庚:{gogyo:'金',inyo:'陽'},辛:{gogyo:'金',inyo:'陰'},
                         壬:{gogyo:'水',inyo:'陽'},癸:{gogyo:'水',inyo:'陰'}
                     };
-                    const raw = m.getFullMeishiki(y, mo, d, g);
-                    const adapt = col => col ? { ...col, stemInfo: siMap[col.stem] || {} } : null;
+                    const raw = m.getFullMeishiki(
+                        parseInt(year), parseInt(month), parseInt(day), selectedGender
+                    );
+                    const adapt = col => col ? {...col, stemInfo: siMap[col.stem] || {}} : null;
                     const data = {
                         ...raw,
-                        yearPillar:  adapt(raw.columns?.year),
+                        yearPillar: adapt(raw.columns?.year),
                         monthPillar: adapt(raw.columns?.month),
-                        dayPillar:   adapt(raw.columns?.day)
+                        dayPillar: adapt(raw.columns?.day)
                     };
-                    targetArea.style.display = 'block';
-                    targetArea.innerHTML = buildMeishikiHtml(data, y, mo, d, g);
+                    area.style.display = 'block';
+                    area.innerHTML = buildMeishikiHtml(
+                        data, parseInt(year), parseInt(month), parseInt(day), selectedGender
+                    );
                 });
             };
 
             window._fortuneBack = () => showAboutPerson(onBack);
-
-            document.getElementById('ft-meishiki-btn2').onclick = () => window._showMeishikiPanel();
 
             document.getElementById('ft-copy').onclick = () => {
                 navigator.clipboard.writeText(resultHeader + '\n\n' + resultText)
