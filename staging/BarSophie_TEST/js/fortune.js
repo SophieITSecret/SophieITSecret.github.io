@@ -1,7 +1,7 @@
 // js/fortune.js
 import { showPeopleBook } from './people.js';
 import { showCompatibility } from './compatibility.js';
-import { getThreePillars, getFullMeishiki, getDaiyun } from './meishiki.js';
+import { getThreePillars, getFullMeishiki, getDaiyun, getKakukyoku, getKuubou } from './meishiki.js';
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbwA1C22UhKroCFC_EPC-ugR5efyXVHlbkWywfD21HfD3-J4vm-b4ZjvIshO-i3fKk9W/exec';
 
 const sophieChar = 'ソフィーは20代の若い女性バーテンダー。さわやかで知的、品がある。口調は丁寧な「です・ます」調。マダムのような馴れ馴れしさやタメ口は使わない。お客様は40〜50代の紳士が多い。四柱推命の専門用語はさりげなく使い、少し意味を補足するが説明的になりすぎない。';
@@ -243,7 +243,12 @@ export function showMyFortune(onBack = null, prefill = null) {
         btn.textContent = '鑑定中…';
         btn.disabled = true;
 
+        const today = new Date();
+        const todayStr = `${today.getFullYear()}年${today.getMonth()+1}月${today.getDate()}日`;
+
         const prompt = `${sophieChar}
+【現在の日付】${todayStr}
+※鑑定は必ずこの日付を基準に行うこと。「来年は○○年」などの表現も正確に。
 あなたは四柱推命を極めた占い師であり、BARソフィーのバーテンダー「ソフィー」です。
 貴方にお客様から相談がありました。自分の運勢を占いで見てほしいそうです。
 カウンターでお客様の相談ごとに寄り添いながら、お客様の自己発見に導き深みのあるアドバイスをしてください。
@@ -307,6 +312,10 @@ ${meishikiDetail}
                     <div style="padding:4px 12px 6px; color:#888; font-size:0.72rem; border-bottom:1px solid #222;">${resultHeader}</div>
                     <div style="padding:12px; color:#ddd; font-size:0.85rem; line-height:1.9;">${formatted}</div>
                     <div style="padding:0 10px 10px;">
+                        <button id="ft-meishiki-btn2" style="width:100%; background:#1a1a2a; color:#9b59b6;
+                            border:1px solid #6a3a8a; height:36px; border-radius:4px;
+                            font-size:0.8rem; margin-bottom:6px;">📊 命式を確認する</button>
+                        <div id="ft-meishiki-area2" style="display:none; margin-bottom:8px;"></div>
                         <button id="ft-copy" style="width:100%; background:#1a2a3a; color:#5ba3d9;
                             border:1px solid #1a5276; height:40px; border-radius:4px;
                             font-size:0.85rem; margin-bottom:6px;">📋 結果をコピー</button>
@@ -322,6 +331,30 @@ ${meishikiDetail}
 
             window._fortuneBack = () => {
                 showMyFortune(showFortuneMenu, { year: String(year), month, day, gender: selectedGender });
+            };
+
+            document.getElementById('ft-meishiki-btn2').onclick = () => {
+                const area = document.getElementById('ft-meishiki-area2');
+                if (area.style.display !== 'none') { area.style.display = 'none'; return; }
+                import('./meishiki.js').then(m => {
+                    const siMap = {
+                        甲:{gogyo:'木',inyo:'陽'},乙:{gogyo:'木',inyo:'陰'},
+                        丙:{gogyo:'火',inyo:'陽'},丁:{gogyo:'火',inyo:'陰'},
+                        戊:{gogyo:'土',inyo:'陽'},己:{gogyo:'土',inyo:'陰'},
+                        庚:{gogyo:'金',inyo:'陽'},辛:{gogyo:'金',inyo:'陰'},
+                        壬:{gogyo:'水',inyo:'陽'},癸:{gogyo:'水',inyo:'陰'}
+                    };
+                    const raw = m.getFullMeishiki(parseInt(year), parseInt(month), parseInt(day), selectedGender);
+                    const adapt = col => col ? { ...col, stemInfo: siMap[col.stem] || {} } : null;
+                    const mData = {
+                        ...raw,
+                        yearPillar:  adapt(raw.columns.year),
+                        monthPillar: adapt(raw.columns.month),
+                        dayPillar:   adapt(raw.columns.day)
+                    };
+                    area.style.display = 'block';
+                    area.innerHTML = buildMeishikiHtml(mData, parseInt(year), parseInt(month), parseInt(day), selectedGender);
+                });
             };
 
             document.getElementById('ft-copy').onclick = () => {
@@ -563,7 +596,12 @@ export function showAboutPerson(onBack = null, prefill = null) {
 ${meishikiDetail}
 気になる点・関係性：${worry || 'なし'}`;
 
+        const today = new Date();
+        const todayStr = `${today.getFullYear()}年${today.getMonth()+1}月${today.getDate()}日`;
+
         const baseIntro = `${sophieChar}
+【現在の日付】${todayStr}
+※鑑定は必ずこの日付を基準に行うこと。「来年は○○年」などの表現も正確に。
 あなたは四柱推命を極めた占い師であり、BARソフィーのバーテンダー「ソフィー」です。
 あなたにお客さんから相談がありました。
 ${personInfo}`;
@@ -633,6 +671,10 @@ ${personInfo}`;
                     <div style="padding:4px 12px 6px; color:#888; font-size:0.72rem; border-bottom:1px solid #222;">${resultHeader}</div>
                     <div style="padding:12px; color:#ddd; font-size:0.85rem; line-height:1.9;">${formatted}</div>
                     <div style="padding:0 10px 10px;">
+                        <button id="ft-meishiki-btn2" style="width:100%; background:#1a1a2a; color:#9b59b6;
+                            border:1px solid #6a3a8a; height:36px; border-radius:4px;
+                            font-size:0.8rem; margin-bottom:6px;">📊 命式を確認する</button>
+                        <div id="ft-meishiki-area2" style="display:none; margin-bottom:8px;"></div>
                         <button id="ft-copy" style="width:100%; background:#1a2a3a; color:#5ba3d9;
                             border:1px solid #1a5276; height:40px; border-radius:4px;
                             font-size:0.85rem; margin-bottom:6px;">📋 結果をコピー</button>
@@ -648,6 +690,30 @@ ${personInfo}`;
 
             window._fortuneBack = () => {
                 showAboutPerson(showFortuneMenu, { year: String(year), month, day, gender: selectedGender });
+            };
+
+            document.getElementById('ft-meishiki-btn2').onclick = () => {
+                const area = document.getElementById('ft-meishiki-area2');
+                if (area.style.display !== 'none') { area.style.display = 'none'; return; }
+                import('./meishiki.js').then(m => {
+                    const siMap = {
+                        甲:{gogyo:'木',inyo:'陽'},乙:{gogyo:'木',inyo:'陰'},
+                        丙:{gogyo:'火',inyo:'陽'},丁:{gogyo:'火',inyo:'陰'},
+                        戊:{gogyo:'土',inyo:'陽'},己:{gogyo:'土',inyo:'陰'},
+                        庚:{gogyo:'金',inyo:'陽'},辛:{gogyo:'金',inyo:'陰'},
+                        壬:{gogyo:'水',inyo:'陽'},癸:{gogyo:'水',inyo:'陰'}
+                    };
+                    const raw = m.getFullMeishiki(parseInt(year), parseInt(month), parseInt(day), selectedGender);
+                    const adapt = col => col ? { ...col, stemInfo: siMap[col.stem] || {} } : null;
+                    const mData = {
+                        ...raw,
+                        yearPillar:  adapt(raw.columns.year),
+                        monthPillar: adapt(raw.columns.month),
+                        dayPillar:   adapt(raw.columns.day)
+                    };
+                    area.style.display = 'block';
+                    area.innerHTML = buildMeishikiHtml(mData, parseInt(year), parseInt(month), parseInt(day), selectedGender);
+                });
             };
 
             document.getElementById('ft-copy').onclick = () => {
@@ -767,10 +833,28 @@ function buildMeishikiHtml(data, year, month, day, gender) {
         </div>`;
     }).join('');
 
+    const dayPillarStem   = data.dayPillar?.stem || '';
+    const dayPillarBranch = data.dayPillar?.branch || '';
+    const monthBranch     = data.monthPillar?.branch || '';
+    const kakukyoku = getKakukyoku(dayPillarStem, monthBranch);
+    const kuubou    = getKuubou(dayPillarStem, dayPillarBranch);
+
     return `
         <div style="border:1px solid #6a3a8a; border-radius:6px; padding:8px; background:#0a0a1a;">
             <div style="color:#9b59b6; font-size:0.75rem; margin-bottom:6px; text-align:center;">
                 📊 ${year}年${month}月${day}日・${gender || ''}の命式
+            </div>
+            <div style="display:flex; gap:8px; margin-bottom:8px;">
+                <div style="flex:1; background:#1a1a2a; border:1px solid #6a3a8a;
+                    border-radius:4px; padding:6px; text-align:center;">
+                    <div style="color:#888; font-size:0.65rem;">格局</div>
+                    <div style="color:#9b59b6; font-size:0.9rem; font-weight:bold;">${kakukyoku}</div>
+                </div>
+                <div style="flex:1; background:#1a2a1a; border:1px solid #3a6a4a;
+                    border-radius:4px; padding:6px; text-align:center;">
+                    <div style="color:#888; font-size:0.65rem;">空亡（天中殺）</div>
+                    <div style="color:#7fd97f; font-size:0.9rem; font-weight:bold;">${kuubou}</div>
+                </div>
             </div>
             <div style="display:flex; border:1px solid #333; border-radius:4px; overflow:hidden; margin-bottom:8px;">
                 ${pillarHtml('日柱', data.dayPillar)}

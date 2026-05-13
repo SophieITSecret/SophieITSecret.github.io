@@ -164,7 +164,62 @@ export function getDaiyun(year, month, day, gender) {
     return { startAge, isForward, daiyunList };
 }
 
-// ─── ⑥ 統合関数 ──────────────────────────────────────────────
+// ─── ⑥ 格局 ──────────────────────────────────────────────────
+
+export function getKakukyoku(dayStem, monthBranch) {
+    const kakuchuTable = {
+        子:['壬'],丑:['己','癸','辛'],寅:['甲','丙','戊'],
+        卯:['乙'],辰:['戊','乙','癸'],巳:['丙','庚','戊'],
+        午:['丁','己'],未:['己','丁','乙'],申:['庚','壬','戊'],
+        酉:['辛'],戌:['戊','辛','丁'],亥:['壬','甲']
+    };
+    const stems = ['甲','乙','丙','丁','戊','己','庚','辛','壬','癸'];
+    const gogyo = ['木','木','火','火','土','土','金','金','水','水'];
+    const inyo  = ['陽','陰','陽','陰','陽','陰','陽','陰','陽','陰'];
+
+    const honki = (kakuchuTable[monthBranch] || [])[0];
+    if (!honki) return '不明';
+
+    const dayIdx   = stems.indexOf(dayStem);
+    const honkiIdx = stems.indexOf(honki);
+    if (dayIdx < 0 || honkiIdx < 0) return '不明';
+
+    const dayGogyo   = gogyo[dayIdx];
+    const honkiGogyo = gogyo[honkiIdx];
+    const dayInyo    = inyo[dayIdx];
+    const honkiInyo  = inyo[honkiIdx];
+
+    if (dayGogyo === honkiGogyo) {
+        return honkiInyo === dayInyo ? '建禄格' : '月刃格';
+    }
+
+    const seiseiMap = { 木:'火', 火:'土', 土:'金', 金:'水', 水:'木' };
+    const kokkuMap  = { 木:'土', 火:'金', 土:'水', 金:'木', 水:'火' };
+
+    if (seiseiMap[dayGogyo]   === honkiGogyo) return honkiInyo === dayInyo ? '食神格' : '傷官格';
+    if (kokkuMap[dayGogyo]    === honkiGogyo) return honkiInyo === dayInyo ? '偏財格' : '正財格';
+    if (seiseiMap[honkiGogyo] === dayGogyo)   return honkiInyo === dayInyo ? '偏官格' : '正官格';
+    if (kokkuMap[honkiGogyo]  === dayGogyo)   return honkiInyo === dayInyo ? '偏印格' : '印綬格';
+    return '不明';
+}
+
+// ─── ⑦ 空亡 ──────────────────────────────────────────────────
+
+export function getKuubou(dayStem, dayBranch) {
+    const stems    = ['甲','乙','丙','丁','戊','己','庚','辛','壬','癸'];
+    const branches = ['子','丑','寅','卯','辰','巳','午','未','申','酉','戌','亥'];
+
+    const stemIdx   = stems.indexOf(dayStem);
+    const branchIdx = branches.indexOf(dayBranch);
+    if (stemIdx < 0 || branchIdx < 0) return '不明';
+
+    const kuubouStart = (branchIdx + (10 - stemIdx % 10)) % 12;
+    const k1 = branches[kuubouStart % 12];
+    const k2 = branches[(kuubouStart + 1) % 12];
+    return `${k1}・${k2}`;
+}
+
+// ─── ⑧ 統合関数 ──────────────────────────────────────────────
 
 export function getFullMeishiki(year, month, day, gender) {
     const pillars = getThreePillars(year, month, day);

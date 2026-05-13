@@ -207,7 +207,11 @@ export function showCompatibility(onBack = null, prefillMe = null, prefillYou = 
         btn.disabled = true;
 
         const sophieChar = 'あなたはBARソフィーのソフィー（20代・女性バーテンダー）。知的で品のある、です・ます調の丁寧な語り口で四柱推命の相性鑑定をしてください。お客は40・50代。';
+        const today = new Date();
+        const todayStr = `${today.getFullYear()}年${today.getMonth()+1}月${today.getDate()}日`;
         const prompt = `${sophieChar}
+【現在の日付】${todayStr}
+※鑑定は必ずこの日付を基準に行うこと。「来年は○○年」などの表現も正確に。
 あなたは四柱推命を極めた占い師であり、BARソフィーのバーテンダー「ソフィー」です。
 カウンターで相談者の悩みに寄り添いながら、二人の相性を深く鑑定してください。
 
