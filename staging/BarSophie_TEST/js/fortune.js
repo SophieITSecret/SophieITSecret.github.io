@@ -472,6 +472,54 @@ export function showAboutPerson(onBack = null, prefill = null) {
         });
     });
 
+    window._showMeishikiPanel = () => {
+        const areaId = document.getElementById('ap-meishiki-area2') ?
+                       'ap-meishiki-area2' : 'ap-meishiki-area';
+        const area = document.getElementById(areaId);
+        if (!area) {
+            const resultDiv = document.querySelector('#list-view > div > div');
+            if (!resultDiv) return;
+            const newArea = document.createElement('div');
+            newArea.id = 'ap-meishiki-area2';
+            newArea.style.display = 'none';
+            resultDiv.appendChild(newArea);
+        }
+        const targetArea = document.getElementById('ap-meishiki-area2')
+                        || document.getElementById('ap-meishiki-area');
+        if (!targetArea) return;
+        if (targetArea.style.display !== 'none') {
+            targetArea.style.display = 'none';
+            return;
+        }
+        const y = parseInt(document.getElementById('ft-year')?.value
+                  || document.getElementById('ap-year')?.value);
+        const mo = parseInt(document.getElementById('ft-month')?.value
+                   || document.getElementById('ap-month')?.value);
+        const d = parseInt(document.getElementById('ft-day')?.value
+                  || document.getElementById('ap-day')?.value);
+        const g = selectedGender || '不明';
+        if (!y || !mo || !d) return;
+        import('./meishiki.js').then(m => {
+            const siMap = {
+                甲:{gogyo:'木',inyo:'陽'},乙:{gogyo:'木',inyo:'陰'},
+                丙:{gogyo:'火',inyo:'陽'},丁:{gogyo:'火',inyo:'陰'},
+                戊:{gogyo:'土',inyo:'陽'},己:{gogyo:'土',inyo:'陰'},
+                庚:{gogyo:'金',inyo:'陽'},辛:{gogyo:'金',inyo:'陰'},
+                壬:{gogyo:'水',inyo:'陽'},癸:{gogyo:'水',inyo:'陰'}
+            };
+            const raw = m.getFullMeishiki(y, mo, d, g);
+            const adapt = col => col ? { ...col, stemInfo: siMap[col.stem] || {} } : null;
+            const data = {
+                ...raw,
+                yearPillar:  adapt(raw.columns?.year),
+                monthPillar: adapt(raw.columns?.month),
+                dayPillar:   adapt(raw.columns?.day)
+            };
+            targetArea.style.display = 'block';
+            targetArea.innerHTML = buildMeishikiHtml(data, y, mo, d, g);
+        });
+    };
+
     document.getElementById('ft-people').onclick = () => {
         const cur = {
             year: document.getElementById('ft-year').value,
@@ -617,9 +665,32 @@ ${personInfo}`;
             if (lv) { lv.innerHTML = resultHtml; }
 
             window._showMeishikiPanel = () => {
-                const area = document.getElementById('ft-meishiki-area2');
-                if (!area) return;
-                if (area.style.display !== 'none') { area.style.display = 'none'; return; }
+                const areaId = document.getElementById('ap-meishiki-area2') ?
+                               'ap-meishiki-area2' : 'ap-meishiki-area';
+                const area = document.getElementById(areaId);
+                if (!area) {
+                    const resultDiv = document.querySelector('#list-view > div > div');
+                    if (!resultDiv) return;
+                    const newArea = document.createElement('div');
+                    newArea.id = 'ap-meishiki-area2';
+                    newArea.style.display = 'none';
+                    resultDiv.appendChild(newArea);
+                }
+                const targetArea = document.getElementById('ap-meishiki-area2')
+                                || document.getElementById('ap-meishiki-area');
+                if (!targetArea) return;
+                if (targetArea.style.display !== 'none') {
+                    targetArea.style.display = 'none';
+                    return;
+                }
+                const y = parseInt(document.getElementById('ft-year')?.value
+                          || document.getElementById('ap-year')?.value) || parseInt(year);
+                const mo = parseInt(document.getElementById('ft-month')?.value
+                           || document.getElementById('ap-month')?.value) || parseInt(month);
+                const d = parseInt(document.getElementById('ft-day')?.value
+                          || document.getElementById('ap-day')?.value) || parseInt(day);
+                const g = selectedGender || '不明';
+                if (!y || !mo || !d) return;
                 import('./meishiki.js').then(m => {
                     const siMap = {
                         甲:{gogyo:'木',inyo:'陽'},乙:{gogyo:'木',inyo:'陰'},
@@ -628,20 +699,16 @@ ${personInfo}`;
                         庚:{gogyo:'金',inyo:'陽'},辛:{gogyo:'金',inyo:'陰'},
                         壬:{gogyo:'水',inyo:'陽'},癸:{gogyo:'水',inyo:'陰'}
                     };
-                    const raw = m.getFullMeishiki(
-                        parseInt(year), parseInt(month), parseInt(day), selectedGender
-                    );
+                    const raw = m.getFullMeishiki(y, mo, d, g);
                     const adapt = col => col ? { ...col, stemInfo: siMap[col.stem] || {} } : null;
                     const data = {
                         ...raw,
-                        yearPillar:  adapt(raw.columns.year),
-                        monthPillar: adapt(raw.columns.month),
-                        dayPillar:   adapt(raw.columns.day)
+                        yearPillar:  adapt(raw.columns?.year),
+                        monthPillar: adapt(raw.columns?.month),
+                        dayPillar:   adapt(raw.columns?.day)
                     };
-                    area.style.display = 'block';
-                    area.innerHTML = buildMeishikiHtml(
-                        data, parseInt(year), parseInt(month), parseInt(day), selectedGender
-                    );
+                    targetArea.style.display = 'block';
+                    targetArea.innerHTML = buildMeishikiHtml(data, y, mo, d, g);
                 });
             };
 
