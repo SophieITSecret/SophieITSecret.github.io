@@ -284,19 +284,15 @@ ${meishikiDetail}
                         <button id="ft-copy" style="width:100%; background:#1a2a3a; color:#5ba3d9;
                             border:1px solid #1a5276; height:40px; border-radius:4px;
                             font-size:0.85rem; margin-bottom:6px;">📋 結果をコピー</button>
-                        <button id="ft-retry" style="width:100%; background:#2a1a3a; color:#c39bd3;
-                            border:1px solid #6a3a8a; height:40px; border-radius:4px;
-                            font-size:0.85rem; margin-bottom:6px;">もう一度鑑定する</button>
-                        <button id="ft-done" style="width:100%; background:#34495e; color:#fff;
-                            border:none; height:36px; border-radius:4px; font-size:0.85rem;">閉じる</button>
+                        <button id="ft-back" style="width:100%; background:#34495e; color:#fff;
+                            border:none; height:36px; border-radius:4px; font-size:0.85rem;">戻る</button>
                     </div>
                 </div>`;
 
             if (lv) { lv.innerHTML = resultHtml; }
 
             window._showMeishikiPanel = () => {
-                const area = document.getElementById('ft-meishiki-area')
-                             || document.getElementById('ap-meishiki-area');
+                const area = document.getElementById('ft-meishiki-area2');
                 if (!area) return;
                 if (area.style.display !== 'none') { area.style.display = 'none'; return; }
                 import('./meishiki.js').then(m => {
@@ -324,41 +320,16 @@ ${meishikiDetail}
                 });
             };
 
-            window._fortuneBack = () => {
-                showMyFortune(showFortuneMenu, { year: String(year), month, day, gender: selectedGender });
-            };
+            window._fortuneBack = () => showMyFortune(onBack);
 
-            document.getElementById('ft-meishiki-btn2').onclick = () => {
-                const area = document.getElementById('ft-meishiki-area2');
-                if (area.style.display !== 'none') { area.style.display = 'none'; return; }
-                import('./meishiki.js').then(m => {
-                    const siMap = {
-                        甲:{gogyo:'木',inyo:'陽'},乙:{gogyo:'木',inyo:'陰'},
-                        丙:{gogyo:'火',inyo:'陽'},丁:{gogyo:'火',inyo:'陰'},
-                        戊:{gogyo:'土',inyo:'陽'},己:{gogyo:'土',inyo:'陰'},
-                        庚:{gogyo:'金',inyo:'陽'},辛:{gogyo:'金',inyo:'陰'},
-                        壬:{gogyo:'水',inyo:'陽'},癸:{gogyo:'水',inyo:'陰'}
-                    };
-                    const raw = m.getFullMeishiki(parseInt(year), parseInt(month), parseInt(day), selectedGender);
-                    const adapt = col => col ? { ...col, stemInfo: siMap[col.stem] || {} } : null;
-                    const mData = {
-                        ...raw,
-                        yearPillar:  adapt(raw.columns.year),
-                        monthPillar: adapt(raw.columns.month),
-                        dayPillar:   adapt(raw.columns.day)
-                    };
-                    area.style.display = 'block';
-                    area.innerHTML = buildMeishikiHtml(mData, parseInt(year), parseInt(month), parseInt(day), selectedGender);
-                });
-            };
+            document.getElementById('ft-meishiki-btn2').onclick = () => window._showMeishikiPanel();
 
             document.getElementById('ft-copy').onclick = () => {
                 navigator.clipboard.writeText(resultHeader + '\n\n' + resultText)
                     .then(() => alert('鑑定結果をコピーしました。メモアプリに貼り付けてください。'))
                     .catch(() => alert('コピーに失敗しました。'));
             };
-            document.getElementById('ft-retry').onclick = () => showMyFortune(onBack);
-            document.getElementById('ft-done').onclick = () => {
+            document.getElementById('ft-back').onclick = () => {
                 if (onBack) { onBack(); return; }
                 if (lv) { lv.style.display = prevDisplay; lv.innerHTML = prevHtml; }
                 if (nm) nm.style.display = prevNm;
@@ -638,19 +609,15 @@ ${personInfo}`;
                         <button id="ft-copy" style="width:100%; background:#1a2a3a; color:#5ba3d9;
                             border:1px solid #1a5276; height:40px; border-radius:4px;
                             font-size:0.85rem; margin-bottom:6px;">📋 結果をコピー</button>
-                        <button id="ft-retry" style="width:100%; background:#2a1a3a; color:#c39bd3;
-                            border:1px solid #6a3a8a; height:40px; border-radius:4px;
-                            font-size:0.85rem; margin-bottom:6px;">もう一度鑑定する</button>
-                        <button id="ft-done" style="width:100%; background:#34495e; color:#fff;
-                            border:none; height:36px; border-radius:4px; font-size:0.85rem;">閉じる</button>
+                        <button id="ft-back" style="width:100%; background:#34495e; color:#fff;
+                            border:none; height:36px; border-radius:4px; font-size:0.85rem;">戻る</button>
                     </div>
                 </div>`;
 
             if (lv) { lv.innerHTML = resultHtml; }
 
             window._showMeishikiPanel = () => {
-                const area = document.getElementById('ft-meishiki-area')
-                             || document.getElementById('ap-meishiki-area');
+                const area = document.getElementById('ft-meishiki-area2');
                 if (!area) return;
                 if (area.style.display !== 'none') { area.style.display = 'none'; return; }
                 import('./meishiki.js').then(m => {
@@ -678,41 +645,16 @@ ${personInfo}`;
                 });
             };
 
-            window._fortuneBack = () => {
-                showAboutPerson(showFortuneMenu, { year: String(year), month, day, gender: selectedGender });
-            };
+            window._fortuneBack = () => showAboutPerson(onBack);
 
-            document.getElementById('ft-meishiki-btn2').onclick = () => {
-                const area = document.getElementById('ft-meishiki-area2');
-                if (area.style.display !== 'none') { area.style.display = 'none'; return; }
-                import('./meishiki.js').then(m => {
-                    const siMap = {
-                        甲:{gogyo:'木',inyo:'陽'},乙:{gogyo:'木',inyo:'陰'},
-                        丙:{gogyo:'火',inyo:'陽'},丁:{gogyo:'火',inyo:'陰'},
-                        戊:{gogyo:'土',inyo:'陽'},己:{gogyo:'土',inyo:'陰'},
-                        庚:{gogyo:'金',inyo:'陽'},辛:{gogyo:'金',inyo:'陰'},
-                        壬:{gogyo:'水',inyo:'陽'},癸:{gogyo:'水',inyo:'陰'}
-                    };
-                    const raw = m.getFullMeishiki(parseInt(year), parseInt(month), parseInt(day), selectedGender);
-                    const adapt = col => col ? { ...col, stemInfo: siMap[col.stem] || {} } : null;
-                    const mData = {
-                        ...raw,
-                        yearPillar:  adapt(raw.columns.year),
-                        monthPillar: adapt(raw.columns.month),
-                        dayPillar:   adapt(raw.columns.day)
-                    };
-                    area.style.display = 'block';
-                    area.innerHTML = buildMeishikiHtml(mData, parseInt(year), parseInt(month), parseInt(day), selectedGender);
-                });
-            };
+            document.getElementById('ft-meishiki-btn2').onclick = () => window._showMeishikiPanel();
 
             document.getElementById('ft-copy').onclick = () => {
                 navigator.clipboard.writeText(resultHeader + '\n\n' + resultText)
                     .then(() => alert('鑑定結果をコピーしました。メモアプリに貼り付けてください。'))
                     .catch(() => alert('コピーに失敗しました。'));
             };
-            document.getElementById('ft-retry').onclick = () => showAboutPerson(onBack);
-            document.getElementById('ft-done').onclick = () => {
+            document.getElementById('ft-back').onclick = () => {
                 if (onBack) { onBack(); return; }
                 if (lv) { lv.style.display = prevDisplay; lv.innerHTML = prevHtml; }
                 if (nm) nm.style.display = prevNm;
