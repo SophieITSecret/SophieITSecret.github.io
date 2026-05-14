@@ -440,7 +440,8 @@ export function showAboutPerson(onBack = null, prefill = null) {
                 <button id="ft-close" style="width:100%; background:#34495e; color:#fff;
                     border:none; height:36px; border-radius:4px; font-size:0.85rem;">閉じる</button>
             </div>
-        </div>`;
+        </div>
+        <div id="ap-meishiki-area2" style="display:none; margin:10px;"></div>`;
 
     if (lv) { lv.style.display = 'block'; lv.innerHTML = formHtml; }
     if (nm) nm.style.display = 'none';
@@ -473,30 +474,15 @@ export function showAboutPerson(onBack = null, prefill = null) {
     });
 
     window._showMeishikiPanel = () => {
-        const areaId = document.getElementById('ap-meishiki-area2') ?
-                       'ap-meishiki-area2' : 'ap-meishiki-area';
-        const area = document.getElementById(areaId);
-        if (!area) {
-            const resultDiv = document.querySelector('#list-view > div > div');
-            if (!resultDiv) return;
-            const newArea = document.createElement('div');
-            newArea.id = 'ap-meishiki-area2';
-            newArea.style.display = 'none';
-            resultDiv.appendChild(newArea);
-        }
-        const targetArea = document.getElementById('ap-meishiki-area2')
-                        || document.getElementById('ap-meishiki-area');
-        if (!targetArea) return;
-        if (targetArea.style.display !== 'none') {
-            targetArea.style.display = 'none';
+        const area = document.getElementById('ap-meishiki-area2');
+        if (!area) return;
+        if (area.style.display !== 'none') {
+            area.style.display = 'none';
             return;
         }
-        const y = parseInt(document.getElementById('ft-year')?.value
-                  || document.getElementById('ap-year')?.value);
-        const mo = parseInt(document.getElementById('ft-month')?.value
-                   || document.getElementById('ap-month')?.value);
-        const d = parseInt(document.getElementById('ft-day')?.value
-                  || document.getElementById('ap-day')?.value);
+        const y = parseInt(document.getElementById('ft-year')?.value);
+        const mo = parseInt(document.getElementById('ft-month')?.value);
+        const d = parseInt(document.getElementById('ft-day')?.value);
         const g = selectedGender || '不明';
         if (!y || !mo || !d) return;
         import('./meishiki.js').then(m => {
@@ -515,8 +501,8 @@ export function showAboutPerson(onBack = null, prefill = null) {
                 monthPillar: adapt(raw.columns?.month),
                 dayPillar:   adapt(raw.columns?.day)
             };
-            targetArea.style.display = 'block';
-            targetArea.innerHTML = buildMeishikiHtml(data, y, mo, d, g);
+            area.style.display = 'block';
+            area.innerHTML = buildMeishikiHtml(data, y, mo, d, g);
         });
     };
 
