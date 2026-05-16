@@ -828,7 +828,7 @@ function buildMeishikiHtml(data, year, month, day, gender) {
                 <div style="color:#888; font-size:0.65rem;">${label}</div>
                 <img src="./img/${stemImg[pillar.stem] || ''}"
                     style="width:48px; height:48px; object-fit:contain; margin-bottom:2px; cursor:pointer;"
-                    onclick="showCharacterModal('${stemImg[pillar.stem] ? './img/' + stemImg[pillar.stem] : ''}', '${pillar.stem}', 'stem')"
+                    onclick="showCharacterModal('${pillar.stem}', 'stem')"
                     onerror="this.style.display='none'">
                 <div style="font-size:1.2rem; font-weight:bold; color:${color};">
                     ${pillar.stem || ''}
@@ -838,7 +838,7 @@ function buildMeishikiHtml(data, year, month, day, gender) {
                 </div>
                 <img src="./img/${branchImg[pillar.branch] || ''}"
                     style="width:44px; height:44px; object-fit:contain; margin-bottom:2px; margin-top:4px; cursor:pointer;"
-                    onclick="showCharacterModal('${branchImg[pillar.branch] ? './img/' + branchImg[pillar.branch] : ''}', '${pillar.branch}', 'branch')"
+                    onclick="showCharacterModal('${pillar.branch}', 'branch')"
                     onerror="this.style.display='none'">
                 <div style="font-size:1.1rem; color:#ddd;">
                     ${pillar.branch || ''}
@@ -932,19 +932,34 @@ function buildMeishikiHtml(data, year, month, day, gender) {
             </div>
         </div>
         <div id="char-modal"
-            style="position:fixed; top:0; left:0; width:100%; height:100%;
+            style="position:fixed; top:0; left:0; right:0; bottom:0;
                    background:rgba(0,0,0,0.85); z-index:9999;
-                   display:none; overflow-y:auto;">
+                   display:none; overflow-y:scroll; -webkit-overflow-scrolling:touch;">
             <div id="char-modal-content"
                 style="display:flex; flex-direction:column; align-items:center;
-                       padding:16px; background:#111; border-radius:12px;
+                       padding:20px 16px; background:#111; border-radius:12px;
                        border:2px solid #9b59b6; max-width:85%;
-                       text-align:center; margin:60px auto 20px auto;">
+                       text-align:center; margin:60px auto 40px auto;">
             </div>
         </div>`;
 }
 
-window.showCharacterModal = (src, key, type) => {
+window.showCharacterModal = (key, type) => {
+    const stemImg = {
+        甲:'stem_kinoe.png', 乙:'stem_kinoto.png',
+        丙:'stem_hinoe.png', 丁:'stem_hinoto.png',
+        戊:'stem_tsuchinoe.png', 己:'stem_tsuchinoto.png',
+        庚:'stem_kanoe.png', 辛:'stem_kanoto.png',
+        壬:'stem_mizunoe.png', 癸:'stem_mizunoto.png'
+    };
+    const branchImg = {
+        子:'branch_ne.png', 丑:'branch_ushi.png',
+        寅:'branch_tora.png', 卯:'branch_u.png',
+        辰:'branch_tatsu.png', 巳:'branch_mi.png',
+        午:'branch_uma.png', 未:'branch_hitsuji.png',
+        申:'branch_saru.png', 酉:'branch_tori.png',
+        戌:'branch_inu.png', 亥:'branch_i.png'
+    };
     const stemInfo = {
         甲:{read:'きのえ',catch:'頼れる大樹',gogyo:'木・陽',desc:'強い意志と責任感を持つリーダー。困難にも折れず、まっすぐ上を目指す。'},
         乙:{read:'きのと',catch:'可憐な草花',gogyo:'木・陰',desc:'しなやかで適応力が高い。人の心を読む繊細さと、したたかな生命力を持つ。'},
@@ -972,15 +987,17 @@ window.showCharacterModal = (src, key, type) => {
         亥:{read:'いのしし',catch:'純粋な突進',gogyo:'水・陰',desc:'純粋で一途、信じた道を突き進む。直感力が強く、意外な粘り強さを持つ。'}
     };
 
-    const info = type === 'stem' ? stemInfo[key] : branchInfo[key];
-    if (!info) return;
+    const info  = type === 'stem' ? stemInfo[key]  : branchInfo[key];
+    const imgFile = type === 'stem' ? stemImg[key] : branchImg[key];
+    if (!info || !imgFile) return;
 
     const modal = document.getElementById('char-modal');
     const modalContent = document.getElementById('char-modal-content');
     if (!modal || !modalContent) return;
 
+    const src = './img/' + imgFile;
     modalContent.innerHTML = `
-        <img src="${src}" style="width:150px; height:150px; object-fit:contain; margin-bottom:12px;">
+        <img src="${src}" style="width:160px; height:160px; object-fit:contain; margin-bottom:12px;">
         <div style="color:#f0b56e; font-size:1.1rem; font-weight:bold; margin-bottom:4px;">
             ${key}（${info.read}）
         </div>
@@ -991,10 +1008,10 @@ window.showCharacterModal = (src, key, type) => {
             ${info.desc}
         </div>
         <button onclick="document.getElementById('char-modal').style.display='none'"
-            style="margin-top:10px; background:#34495e; color:#fff; border:none;
-            padding:6px 20px; border-radius:4px; font-size:0.8rem; cursor:pointer;">
+            style="margin-top:14px; background:#34495e; color:#fff; border:none;
+                   padding:8px 24px; border-radius:4px; font-size:0.85rem; cursor:pointer;">
             閉じる
         </button>`;
 
-    modal.style.display = 'flex';
+    modal.style.display = 'block';
 };
