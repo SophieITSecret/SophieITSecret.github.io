@@ -934,11 +934,13 @@ function buildMeishikiHtml(data, year, month, day, gender) {
         <div id="char-modal"
             style="display:none; position:fixed; top:0; left:0; width:100%; height:100%;
                    background:rgba(0,0,0,0.85); z-index:9999;
-                   justify-content:center; align-items:center;">
+                   justify-content:center; align-items:center;
+                   overflow-y:auto; padding:20px 0;">
             <div id="char-modal-content"
                 style="display:flex; flex-direction:column; align-items:center;
-                       padding:24px; background:#111; border-radius:12px;
-                       border:2px solid #9b59b6; max-width:90%; text-align:center;">
+                       padding:16px; background:#111; border-radius:12px;
+                       border:2px solid #9b59b6; max-width:85%; text-align:center;
+                       margin:auto;">
             </div>
         </div>`;
 }
@@ -979,7 +981,7 @@ window.showCharacterModal = (src, key, type) => {
     if (!modal || !modalContent) return;
 
     modalContent.innerHTML = `
-        <img src="${src}" style="width:180px; height:180px; object-fit:contain; margin-bottom:12px;">
+        <img src="${src}" style="width:150px; height:150px; object-fit:contain; margin-bottom:12px;">
         <div style="color:#f0b56e; font-size:1.1rem; font-weight:bold; margin-bottom:4px;">
             ${key}（${info.read}）
         </div>
@@ -990,8 +992,8 @@ window.showCharacterModal = (src, key, type) => {
             ${info.desc}
         </div>
         <button onclick="document.getElementById('char-modal').style.display='none'"
-            style="margin-top:16px; background:#34495e; color:#fff; border:none;
-            padding:8px 24px; border-radius:4px; font-size:0.85rem; cursor:pointer;">
+            style="margin-top:10px; background:#34495e; color:#fff; border:none;
+            padding:6px 20px; border-radius:4px; font-size:0.8rem; cursor:pointer;">
             閉じる
         </button>`;
 
