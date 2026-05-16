@@ -747,6 +747,21 @@ export function showFortuneMenu() {
 }
 
 function buildMeishikiHtml(data, year, month, day, gender) {
+    const stemImg = {
+        甲:'stem_kinoe.png', 乙:'stem_kinoto.png',
+        丙:'stem_hinoe.png', 丁:'stem_hinoto.png',
+        戊:'stem_tsuchinoe.png', 己:'stem_tsuchinoto.png',
+        庚:'stem_kanoe.png', 辛:'stem_kanoto.png',
+        壬:'stem_mizunoe.png', 癸:'stem_mizunoto.png'
+    };
+    const branchImg = {
+        子:'branch_ne.png', 丑:'branch_ushi.png',
+        寅:'branch_tora.png', 卯:'branch_u.png',
+        辰:'branch_tatsu.png', 巳:'branch_mi.png',
+        午:'branch_uma.png', 未:'branch_hitsuji.png',
+        申:'branch_saru.png', 酉:'branch_tori.png',
+        戌:'branch_inu.png', 亥:'branch_i.png'
+    };
     const gogyoColor = { 木:'#4CAF50', 火:'#e74c3c', 土:'#f39c12', 金:'#bdc3c7', 水:'#3498db' };
     const stemReading = {
         甲:'きのえ',乙:'きのと',丙:'ひのえ',丁:'ひのと',
@@ -785,13 +800,19 @@ function buildMeishikiHtml(data, year, month, day, gender) {
         return `
             <div style="flex:1; text-align:center; border-right:1px solid #333; padding:4px;">
                 <div style="color:#888; font-size:0.65rem;">${label}</div>
+                <img src="./img/${stemImg[pillar.stem] || ''}"
+                    style="width:48px; height:48px; object-fit:contain; margin-bottom:2px;"
+                    onerror="this.style.display='none'">
                 <div style="font-size:1.2rem; font-weight:bold; color:${color};">
                     ${pillar.stem || ''}
                 </div>
                 <div style="color:${color}; font-size:0.6rem;">
                     （${stemReading[pillar.stem] || ''}）
                 </div>
-                <div style="font-size:1.1rem; color:#ddd; margin-top:4px;">
+                <img src="./img/${branchImg[pillar.branch] || ''}"
+                    style="width:44px; height:44px; object-fit:contain; margin-bottom:2px; margin-top:4px;"
+                    onerror="this.style.display='none'">
+                <div style="font-size:1.1rem; color:#ddd;">
                     ${pillar.branch || ''}
                 </div>
                 <div style="color:#aaa; font-size:0.6rem;">
