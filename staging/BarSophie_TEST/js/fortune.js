@@ -937,7 +937,7 @@ function buildMeishikiHtml(data, year, month, day, gender) {
                    overflow-y:scroll; -webkit-overflow-scrolling:touch; display:none;">
             <div id="char-modal-content"
                 style="background:#111; border-radius:12px; border:2px solid #9b59b6;
-                       max-width:85%; width:85%; margin:80px auto 40px auto;
+                       max-width:85%; width:85%; margin:120px auto 40px auto;
                        padding:20px; text-align:center;
                        display:flex; flex-direction:column; align-items:center;">
             </div>
