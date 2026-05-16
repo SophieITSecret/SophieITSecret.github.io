@@ -747,6 +747,32 @@ export function showFortuneMenu() {
 }
 
 function buildMeishikiHtml(data, year, month, day, gender) {
+    const stemInfo = {
+        甲: { read:'きのえ', catch:'頼れる大樹', gogyo:'木・陽', desc:'強い意志と責任感を持つリーダー。困難にも折れず、まっすぐ上を目指す。' },
+        乙: { read:'きのと', catch:'可憐な草花', gogyo:'木・陰', desc:'しなやかで適応力が高い。人の心を読む繊細さと、したたかな生命力を持つ。' },
+        丙: { read:'ひのえ', catch:'情熱の太陽', gogyo:'火・陽', desc:'明るく豪快で人を惹きつける。太陽のように周囲を照らし、場を温める存在。' },
+        丁: { read:'ひのと', catch:'知性の灯火', gogyo:'火・陰', desc:'繊細で知的、深く考える思索家。小さくとも確かな光で人の心を照らす。' },
+        戊: { read:'つちのえ', catch:'不動の大山', gogyo:'土・陽', desc:'安定感と包容力を持つ守護者。どっしりと構え、周囲に安心感を与える。' },
+        己: { read:'つちのと', catch:'育みの田畑', gogyo:'土・陰', desc:'面倒見が良く、人を育てる才能がある。縁の下の力持ちとして人を支える。' },
+        庚: { read:'かのえ', catch:'剛健な刀', gogyo:'金・陽', desc:'意志が強く正義感旺盛。鋭い判断力と行動力で、困難を断ち切る力を持つ。' },
+        辛: { read:'かのと', catch:'煌めく宝石', gogyo:'金・陰', desc:'美意識が高く繊細。磨かれることで輝く、こだわりと完璧主義の持ち主。' },
+        壬: { read:'みずのえ', catch:'大海の波', gogyo:'水・陽', desc:'スケールが大きく包容力がある。自由を愛し、大きな流れの中で力を発揮する。' },
+        癸: { read:'みずのと', catch:'癒しの雫', gogyo:'水・陰', desc:'感受性豊かで直感が鋭い。静かに深く物事を見通す、癒しと知恵の持ち主。' }
+    };
+    const branchInfo = {
+        子: { read:'ねずみ', catch:'新たな始まり', gogyo:'水・陽', desc:'知恵と生命力にあふれる。小さくとも鋭い感覚で好機をつかむ、繁栄の象徴。' },
+        丑: { read:'うし', catch:'誠実な努力', gogyo:'土・陰', desc:'粘り強く着実に歩む努力家。遅くとも確実に結果を出す、信頼の象徴。' },
+        寅: { read:'とら', catch:'勇猛な飛躍', gogyo:'木・陽', desc:'勇気と行動力にあふれる。果敢に挑戦し、困難を力で切り開くリーダー。' },
+        卯: { read:'うさぎ', catch:'温和な発展', gogyo:'木・陰', desc:'穏やかで人当たりが良く愛される。しなやかな知恵で着実に前進する。' },
+        辰: { read:'たつ', catch:'偉大な力', gogyo:'土・陽', desc:'スケールが大きく夢を持つ。強大なエネルギーで大きな目標を実現する。' },
+        巳: { read:'へび', catch:'神秘の直感', gogyo:'火・陰', desc:'深く静かな知性と直感を持つ。物事の本質を見抜く、神秘的な存在。' },
+        午: { read:'うま', catch:'天を駆ける', gogyo:'火・陽', desc:'情熱的で自由を愛する。颯爽と駆け抜ける行動力と華やかさを持つ。' },
+        未: { read:'ひつじ', catch:'温かな絆', gogyo:'土・陰', desc:'穏やかで思いやり深く、人との絆を大切にする。芸術的センスも光る。' },
+        申: { read:'さる', catch:'機知の閃き', gogyo:'金・陽', desc:'機転が利き器用で賢い。状況を素早く読み、柔軟に対応する才能を持つ。' },
+        酉: { read:'とり', catch:'夜明けの先触れ', gogyo:'金・陰', desc:'美意識が高く完璧主義。細部まで丁寧に仕上げる、こだわりの持ち主。' },
+        戌: { read:'いぬ', catch:'忠誠の証', gogyo:'土・陽', desc:'誠実で義理堅く、信頼される。仲間を守る強い正義感と忠誠心を持つ。' },
+        亥: { read:'いのしし', catch:'純粋な突進', gogyo:'水・陰', desc:'純粋で一途、信じた道を突き進む。直感力が強く、意外な粘り強さを持つ。' }
+    };
     const stemImg = {
         甲:'stem_kinoe.png', 乙:'stem_kinoto.png',
         丙:'stem_hinoe.png', 丁:'stem_hinoto.png',
@@ -802,7 +828,7 @@ function buildMeishikiHtml(data, year, month, day, gender) {
                 <div style="color:#888; font-size:0.65rem;">${label}</div>
                 <img src="./img/${stemImg[pillar.stem] || ''}"
                     style="width:48px; height:48px; object-fit:contain; margin-bottom:2px; cursor:pointer;"
-                    onclick="showCharacterModal(this.src)"
+                    onclick="showCharacterModal('${stemImg[pillar.stem] ? './img/' + stemImg[pillar.stem] : ''}', '${pillar.stem}', 'stem')"
                     onerror="this.style.display='none'">
                 <div style="font-size:1.2rem; font-weight:bold; color:${color};">
                     ${pillar.stem || ''}
@@ -812,7 +838,7 @@ function buildMeishikiHtml(data, year, month, day, gender) {
                 </div>
                 <img src="./img/${branchImg[pillar.branch] || ''}"
                     style="width:44px; height:44px; object-fit:contain; margin-bottom:2px; margin-top:4px; cursor:pointer;"
-                    onclick="showCharacterModal(this.src)"
+                    onclick="showCharacterModal('${branchImg[pillar.branch] ? './img/' + branchImg[pillar.branch] : ''}', '${pillar.branch}', 'branch')"
                     onerror="this.style.display='none'">
                 <div style="font-size:1.1rem; color:#ddd;">
                     ${pillar.branch || ''}
@@ -905,20 +931,69 @@ function buildMeishikiHtml(data, year, month, day, gender) {
                 ${daiyunHtml}
             </div>
         </div>
-        <div id="char-modal" onclick="this.style.display='none'"
+        <div id="char-modal"
             style="display:none; position:fixed; top:0; left:0; width:100%; height:100%;
-                   background:rgba(0,0,0,0.8); z-index:9999;
+                   background:rgba(0,0,0,0.85); z-index:9999;
                    justify-content:center; align-items:center;">
-            <img id="char-modal-img" src=""
-                style="max-width:80%; max-height:80%; object-fit:contain;">
+            <div id="char-modal-content"
+                style="display:flex; flex-direction:column; align-items:center;
+                       padding:24px; background:#111; border-radius:12px;
+                       border:2px solid #9b59b6; max-width:90%; text-align:center;">
+            </div>
         </div>`;
 }
 
-window.showCharacterModal = (src) => {
+window.showCharacterModal = (src, key, type) => {
+    const stemInfo = {
+        甲:{read:'きのえ',catch:'頼れる大樹',gogyo:'木・陽',desc:'強い意志と責任感を持つリーダー。困難にも折れず、まっすぐ上を目指す。'},
+        乙:{read:'きのと',catch:'可憐な草花',gogyo:'木・陰',desc:'しなやかで適応力が高い。人の心を読む繊細さと、したたかな生命力を持つ。'},
+        丙:{read:'ひのえ',catch:'情熱の太陽',gogyo:'火・陽',desc:'明るく豪快で人を惹きつける。太陽のように周囲を照らし、場を温める存在。'},
+        丁:{read:'ひのと',catch:'知性の灯火',gogyo:'火・陰',desc:'繊細で知的、深く考える思索家。小さくとも確かな光で人の心を照らす。'},
+        戊:{read:'つちのえ',catch:'不動の大山',gogyo:'土・陽',desc:'安定感と包容力を持つ守護者。どっしりと構え、周囲に安心感を与える。'},
+        己:{read:'つちのと',catch:'育みの田畑',gogyo:'土・陰',desc:'面倒見が良く、人を育てる才能がある。縁の下の力持ちとして人を支える。'},
+        庚:{read:'かのえ',catch:'剛健な刀',gogyo:'金・陽',desc:'意志が強く正義感旺盛。鋭い判断力と行動力で、困難を断ち切る力を持つ。'},
+        辛:{read:'かのと',catch:'煌めく宝石',gogyo:'金・陰',desc:'美意識が高く繊細。磨かれることで輝く、こだわりと完璧主義の持ち主。'},
+        壬:{read:'みずのえ',catch:'大海の波',gogyo:'水・陽',desc:'スケールが大きく包容力がある。自由を愛し、大きな流れの中で力を発揮する。'},
+        癸:{read:'みずのと',catch:'癒しの雫',gogyo:'水・陰',desc:'感受性豊かで直感が鋭い。静かに深く物事を見通す、癒しと知恵の持ち主。'}
+    };
+    const branchInfo = {
+        子:{read:'ねずみ',catch:'新たな始まり',gogyo:'水・陽',desc:'知恵と生命力にあふれる。小さくとも鋭い感覚で好機をつかむ、繁栄の象徴。'},
+        丑:{read:'うし',catch:'誠実な努力',gogyo:'土・陰',desc:'粘り強く着実に歩む努力家。遅くとも確実に結果を出す、信頼の象徴。'},
+        寅:{read:'とら',catch:'勇猛な飛躍',gogyo:'木・陽',desc:'勇気と行動力にあふれる。果敢に挑戦し、困難を力で切り開くリーダー。'},
+        卯:{read:'うさぎ',catch:'温和な発展',gogyo:'木・陰',desc:'穏やかで人当たりが良く愛される。しなやかな知恵で着実に前進する。'},
+        辰:{read:'たつ',catch:'偉大な力',gogyo:'土・陽',desc:'スケールが大きく夢を持つ。強大なエネルギーで大きな目標を実現する。'},
+        巳:{read:'へび',catch:'神秘の直感',gogyo:'火・陰',desc:'深く静かな知性と直感を持つ。物事の本質を見抜く、神秘的な存在。'},
+        午:{read:'うま',catch:'天を駆ける',gogyo:'火・陽',desc:'情熱的で自由を愛する。颯爽と駆け抜ける行動力と華やかさを持つ。'},
+        未:{read:'ひつじ',catch:'温かな絆',gogyo:'土・陰',desc:'穏やかで思いやり深く、人との絆を大切にする。芸術的センスも光る。'},
+        申:{read:'さる',catch:'機知の閃き',gogyo:'金・陽',desc:'機転が利き器用で賢い。状況を素早く読み、柔軟に対応する才能を持つ。'},
+        酉:{read:'とり',catch:'夜明けの先触れ',gogyo:'金・陰',desc:'美意識が高く完璧主義。細部まで丁寧に仕上げる、こだわりの持ち主。'},
+        戌:{read:'いぬ',catch:'忠誠の証',gogyo:'土・陽',desc:'誠実で義理堅く、信頼される。仲間を守る強い正義感と忠誠心を持つ。'},
+        亥:{read:'いのしし',catch:'純粋な突進',gogyo:'水・陰',desc:'純粋で一途、信じた道を突き進む。直感力が強く、意外な粘り強さを持つ。'}
+    };
+
+    const info = type === 'stem' ? stemInfo[key] : branchInfo[key];
+    if (!info) return;
+
     const modal = document.getElementById('char-modal');
-    const img = document.getElementById('char-modal-img');
-    if (modal && img) {
-        img.src = src;
-        modal.style.display = 'flex';
-    }
+    const modalContent = document.getElementById('char-modal-content');
+    if (!modal || !modalContent) return;
+
+    modalContent.innerHTML = `
+        <img src="${src}" style="width:180px; height:180px; object-fit:contain; margin-bottom:12px;">
+        <div style="color:#f0b56e; font-size:1.1rem; font-weight:bold; margin-bottom:4px;">
+            ${key}（${info.read}）
+        </div>
+        <div style="color:#9b59b6; font-size:0.85rem; margin-bottom:8px;">
+            ${info.gogyo}　${info.catch}
+        </div>
+        <div style="color:#ddd; font-size:0.85rem; line-height:1.7; text-align:left; max-width:260px;">
+            ${info.desc}
+        </div>
+        <button onclick="document.getElementById('char-modal').style.display='none'"
+            style="margin-top:16px; background:#34495e; color:#fff; border:none;
+            padding:8px 24px; border-radius:4px; font-size:0.85rem; cursor:pointer;">
+            閉じる
+        </button>`;
+
+    modal.style.display = 'flex';
 };
