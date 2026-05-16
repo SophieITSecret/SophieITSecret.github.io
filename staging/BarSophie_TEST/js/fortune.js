@@ -931,17 +931,7 @@ function buildMeishikiHtml(data, year, month, day, gender) {
                 ${daiyunHtml}
             </div>
         </div>
-        <div id="char-modal"
-            style="position:fixed; top:0; left:0; width:100%; height:100%;
-                   background:rgba(0,0,0,0.85); z-index:9999;
-                   overflow-y:scroll; -webkit-overflow-scrolling:touch; display:none;">
-            <div id="char-modal-content"
-                style="background:#111; border-radius:12px; border:2px solid #9b59b6;
-                       max-width:85%; width:85%; margin:200px auto 40px auto;
-                       padding:20px; text-align:center;
-                       display:flex; flex-direction:column; align-items:center;">
-            </div>
-        </div>`;
+        `;
 }
 
 window.showCharacterModal = (key, type) => {
@@ -989,36 +979,45 @@ window.showCharacterModal = (key, type) => {
 
     const info    = type === 'stem' ? stemInfo[key]  : branchInfo[key];
     const imgFile = type === 'stem' ? stemImg[key]  : branchImg[key];
-    console.log('showCharacterModal:', key, type, 'imgFile:', imgFile, 'info:', !!info);
     if (!info || !imgFile) return;
 
-    const modal = document.getElementById('char-modal');
-    const modalContent = document.getElementById('char-modal-content');
-    if (!modal || !modalContent) return;
+    // 既存モーダルを削除してbody直下に再生成（スタッキングコンテキスト問題を回避）
+    const existing = document.getElementById('char-modal');
+    if (existing) existing.remove();
 
-    // 相対パスではなく絶対URLで組み立てる（iOS Safari対応）
     const base = location.href.replace(/[^\/]*$/, '');
     const src = base + 'img/' + imgFile;
-    console.log('modal src:', src);
 
-    modalContent.innerHTML = `
-        <img src="${src}" style="width:200px; height:200px; object-fit:contain; margin-bottom:12px;"
-            onerror="this.outerHTML='<div style=\'color:#888;font-size:0.75rem;margin-bottom:12px;\'>画像: ${imgFile}</div>'">
-        <div style="color:#f0b56e; font-size:1.1rem; font-weight:bold; margin-bottom:4px;">
-            ${key}（${info.read}）
-        </div>
-        <div style="color:#9b59b6; font-size:0.85rem; margin-bottom:8px;">
-            ${info.gogyo}　${info.catch}
-        </div>
-        <div style="color:#ddd; font-size:0.85rem; line-height:1.7; text-align:left; max-width:260px;">
-            ${info.desc}
-        </div>
-        <button onclick="document.getElementById('char-modal').style.display='none'; document.body.style.overflow='';"
-            style="margin-top:14px; background:#34495e; color:#fff; border:none;
-                   padding:8px 24px; border-radius:4px; font-size:0.85rem; cursor:pointer;">
-            閉じる
-        </button>`;
+    const modal = document.createElement('div');
+    modal.id = 'char-modal';
+    modal.style.cssText = [
+        'position:fixed', 'top:0', 'left:0', 'width:100%', 'height:100%',
+        'background:rgba(0,0,0,0.85)', 'z-index:99999',
+        'overflow-y:scroll', '-webkit-overflow-scrolling:touch'
+    ].join(';');
 
-    modal.style.display = 'block';
+    modal.innerHTML = `
+        <div style="background:#111; border-radius:12px; border:2px solid #9b59b6;
+                    max-width:85%; width:85%; margin:40px auto 40px auto;
+                    padding:20px; text-align:center;
+                    display:flex; flex-direction:column; align-items:center;">
+            <img src="${src}" style="width:200px; height:200px; object-fit:contain; margin-bottom:12px;">
+            <div style="color:#f0b56e; font-size:1.1rem; font-weight:bold; margin-bottom:4px;">
+                ${key}（${info.read}）
+            </div>
+            <div style="color:#9b59b6; font-size:0.85rem; margin-bottom:8px;">
+                ${info.gogyo}　${info.catch}
+            </div>
+            <div style="color:#ddd; font-size:0.85rem; line-height:1.7; text-align:left; max-width:260px;">
+                ${info.desc}
+            </div>
+            <button onclick="document.getElementById('char-modal').remove(); document.body.style.overflow='';"
+                style="margin-top:14px; background:#34495e; color:#fff; border:none;
+                       padding:8px 24px; border-radius:4px; font-size:0.85rem; cursor:pointer;">
+                閉じる
+            </button>
+        </div>`;
+
+    document.body.appendChild(modal);
     document.body.style.overflow = 'hidden';
 };
