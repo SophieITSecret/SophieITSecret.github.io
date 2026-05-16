@@ -932,14 +932,14 @@ function buildMeishikiHtml(data, year, month, day, gender) {
             </div>
         </div>
         <div id="char-modal"
-            style="position:fixed; top:0; left:0; right:0; bottom:0;
+            style="position:fixed; top:0; left:0; width:100%; height:100%;
                    background:rgba(0,0,0,0.85); z-index:9999;
-                   display:none; overflow-y:scroll; -webkit-overflow-scrolling:touch;">
+                   overflow-y:scroll; -webkit-overflow-scrolling:touch; display:none;">
             <div id="char-modal-content"
-                style="display:flex; flex-direction:column; align-items:center;
-                       padding:20px 16px; background:#111; border-radius:12px;
-                       border:2px solid #9b59b6; max-width:85%;
-                       text-align:center; margin:60px auto 40px auto;">
+                style="background:#111; border-radius:12px; border:2px solid #9b59b6;
+                       max-width:85%; width:85%; margin:80px auto 40px auto;
+                       padding:20px; text-align:center;
+                       display:flex; flex-direction:column; align-items:center;">
             </div>
         </div>`;
 }
@@ -1002,7 +1002,7 @@ window.showCharacterModal = (key, type) => {
     console.log('modal src:', src);
 
     modalContent.innerHTML = `
-        <img src="${src}" style="width:160px; height:160px; object-fit:contain; margin-bottom:12px;"
+        <img src="${src}" style="width:200px; height:200px; object-fit:contain; margin-bottom:12px;"
             onerror="this.outerHTML='<div style=\'color:#888;font-size:0.75rem;margin-bottom:12px;\'>画像: ${imgFile}</div>'">
         <div style="color:#f0b56e; font-size:1.1rem; font-weight:bold; margin-bottom:4px;">
             ${key}（${info.read}）
