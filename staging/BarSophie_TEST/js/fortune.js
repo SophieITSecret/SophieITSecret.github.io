@@ -932,15 +932,14 @@ function buildMeishikiHtml(data, year, month, day, gender) {
             </div>
         </div>
         <div id="char-modal"
-            style="display:none; position:fixed; top:0; left:0; width:100%; height:100%;
+            style="position:fixed; top:0; left:0; width:100%; height:100%;
                    background:rgba(0,0,0,0.85); z-index:9999;
-                   justify-content:center; align-items:center;
-                   overflow-y:auto; padding:20px 0;">
+                   display:none; overflow-y:auto;">
             <div id="char-modal-content"
                 style="display:flex; flex-direction:column; align-items:center;
                        padding:16px; background:#111; border-radius:12px;
-                       border:2px solid #9b59b6; max-width:85%; text-align:center;
-                       margin:auto;">
+                       border:2px solid #9b59b6; max-width:85%;
+                       text-align:center; margin:60px auto 20px auto;">
             </div>
         </div>`;
 }
