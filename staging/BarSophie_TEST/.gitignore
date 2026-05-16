@@ -3,6 +3,10 @@
 *.jpg
 *.gif
 
+# 干支キャラクター画像は除外
+!img/stem_*.png
+!img/branch_*.png
+
 # 音声データを無視
 *.mp3
 *.wav

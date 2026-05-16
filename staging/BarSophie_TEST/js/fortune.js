@@ -801,7 +801,8 @@ function buildMeishikiHtml(data, year, month, day, gender) {
             <div style="flex:1; text-align:center; border-right:1px solid #333; padding:4px;">
                 <div style="color:#888; font-size:0.65rem;">${label}</div>
                 <img src="./img/${stemImg[pillar.stem] || ''}"
-                    style="width:48px; height:48px; object-fit:contain; margin-bottom:2px;"
+                    style="width:48px; height:48px; object-fit:contain; margin-bottom:2px; cursor:pointer;"
+                    onclick="showCharacterModal(this.src)"
                     onerror="this.style.display='none'">
                 <div style="font-size:1.2rem; font-weight:bold; color:${color};">
                     ${pillar.stem || ''}
@@ -810,7 +811,8 @@ function buildMeishikiHtml(data, year, month, day, gender) {
                     （${stemReading[pillar.stem] || ''}）
                 </div>
                 <img src="./img/${branchImg[pillar.branch] || ''}"
-                    style="width:44px; height:44px; object-fit:contain; margin-bottom:2px; margin-top:4px;"
+                    style="width:44px; height:44px; object-fit:contain; margin-bottom:2px; margin-top:4px; cursor:pointer;"
+                    onclick="showCharacterModal(this.src)"
                     onerror="this.style.display='none'">
                 <div style="font-size:1.1rem; color:#ddd;">
                     ${pillar.branch || ''}
@@ -902,5 +904,21 @@ function buildMeishikiHtml(data, year, month, day, gender) {
                 </div>
                 ${daiyunHtml}
             </div>
+        </div>
+        <div id="char-modal" onclick="this.style.display='none'"
+            style="display:none; position:fixed; top:0; left:0; width:100%; height:100%;
+                   background:rgba(0,0,0,0.8); z-index:9999;
+                   justify-content:center; align-items:center;">
+            <img id="char-modal-img" src=""
+                style="max-width:80%; max-height:80%; object-fit:contain;">
         </div>`;
 }
+
+window.showCharacterModal = (src) => {
+    const modal = document.getElementById('char-modal');
+    const img = document.getElementById('char-modal-img');
+    if (modal && img) {
+        img.src = src;
+        modal.style.display = 'flex';
+    }
+};
