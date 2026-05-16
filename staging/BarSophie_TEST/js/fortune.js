@@ -987,17 +987,23 @@ window.showCharacterModal = (key, type) => {
         亥:{read:'いのしし',catch:'純粋な突進',gogyo:'水・陰',desc:'純粋で一途、信じた道を突き進む。直感力が強く、意外な粘り強さを持つ。'}
     };
 
-    const info  = type === 'stem' ? stemInfo[key]  : branchInfo[key];
-    const imgFile = type === 'stem' ? stemImg[key] : branchImg[key];
+    const info    = type === 'stem' ? stemInfo[key]  : branchInfo[key];
+    const imgFile = type === 'stem' ? stemImg[key]  : branchImg[key];
+    console.log('showCharacterModal:', key, type, 'imgFile:', imgFile, 'info:', !!info);
     if (!info || !imgFile) return;
 
     const modal = document.getElementById('char-modal');
     const modalContent = document.getElementById('char-modal-content');
     if (!modal || !modalContent) return;
 
-    const src = './img/' + imgFile;
+    // 相対パスではなく絶対URLで組み立てる（iOS Safari対応）
+    const base = location.href.replace(/[^\/]*$/, '');
+    const src = base + 'img/' + imgFile;
+    console.log('modal src:', src);
+
     modalContent.innerHTML = `
-        <img src="${src}" style="width:160px; height:160px; object-fit:contain; margin-bottom:12px;">
+        <img src="${src}" style="width:160px; height:160px; object-fit:contain; margin-bottom:12px;"
+            onerror="this.outerHTML='<div style=\'color:#888;font-size:0.75rem;margin-bottom:12px;\'>画像: ${imgFile}</div>'">
         <div style="color:#f0b56e; font-size:1.1rem; font-weight:bold; margin-bottom:4px;">
             ${key}（${info.read}）
         </div>
@@ -1007,11 +1013,12 @@ window.showCharacterModal = (key, type) => {
         <div style="color:#ddd; font-size:0.85rem; line-height:1.7; text-align:left; max-width:260px;">
             ${info.desc}
         </div>
-        <button onclick="document.getElementById('char-modal').style.display='none'"
+        <button onclick="document.getElementById('char-modal').style.display='none'; document.body.style.overflow='';"
             style="margin-top:14px; background:#34495e; color:#fff; border:none;
                    padding:8px 24px; border-radius:4px; font-size:0.85rem; cursor:pointer;">
             閉じる
         </button>`;
 
     modal.style.display = 'block';
+    document.body.style.overflow = 'hidden';
 };
