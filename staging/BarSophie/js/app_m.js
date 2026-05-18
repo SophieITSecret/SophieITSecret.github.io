@@ -11,6 +11,9 @@ import * as music from './music.js';
 import * as liquor from './liquor.js';
 import * as shop from './shop.js';
 import * as restaurant from './restaurant.js';
+import * as fortune from './fortune.js';
+import * as compatibility from './compatibility.js';
+import * as people from './people.js';
 
 let talkAudio;
 let ytPlayer = null;
@@ -96,10 +99,9 @@ function setup() {
     // ★以下2行を追加
     document.getElementById('btn-news').onclick = () => showNewsMarket();
     document.getElementById('btn-notice').onclick = () => {
-        import('./favorite.js').then(f => {
-            f.openNotice();
-            renderConsole('standard');
-        }).catch(e => alert("準備中です"));
+        const ice = new Audio('./voices_mp3/ice.mp3');
+        ice.onended = () => { import('./favorite.js').then(f => { f.openNotice(); renderConsole('standard'); }); };
+        ice.play().catch(() => { import('./favorite.js').then(f => { f.openNotice(); renderConsole('standard'); }); });
     };
     document.getElementById('sophie-warp').onclick = () => {
         if (nav.state !== "none") {
@@ -257,6 +259,7 @@ function showSophieMenu() {
                 ${specificHtml}
                 ${specific.length ? '<div style="border-top:1px solid #222; margin:8px 0;"></div>' : ''}
                 <button class="act-btn" id="sm-restaurant" style="background:#1a3a2a; margin-bottom:8px;">🍽️ いいお店を探す</button>
+                <button class="act-btn" id="sm-fortune" style="background:#2a1a3a; margin-bottom:8px;">🔮 ソフィーの推命占い</button>
                 <button class="act-btn" id="sm-janken" style="background:#8e1a2e; margin-bottom:8px;">🎲 じゃんけん勝負</button>
                 <button class="act-btn" style="background:#1a1a1a; color:#444; border:1px solid #222; margin-bottom:8px;" disabled>📅 この日はどんな日（近日公開）</button>
                 <button class="act-btn" id="sm-close" style="background:#34495e; margin-top:4px;">閉じる</button>
@@ -266,7 +269,14 @@ function showSophieMenu() {
 if (lv) { lv.style.display = 'block'; lv.innerHTML = menuHtml; }
     if (nm) nm.style.display = 'none';
 
-    document.getElementById('sm-restaurant').onclick = () => restaurant.showRestaurantSearch();
+    document.getElementById('sm-restaurant').onclick = async () => {
+        if (!await window.checkAccess('restaurant_search')) return;
+        restaurant.showRestaurantSearch();
+    };
+    document.getElementById('sm-fortune').onclick = async () => {
+        if (!await window.checkAccess('fortune_haiku')) return;
+        fortune.showFortuneMenu();
+    };
     document.getElementById('sm-janken').onclick = () => {
         import('./janken.js').then(j => j.startJanken());
     };
@@ -618,6 +628,19 @@ function renderConsole(mode) {
     const sBtn = `background:#0096BF; color:#ff69b4; font-size:1.4rem; font-weight:bold; flex:1.0; border:2px solid #ff51a8;`;
     const navBtn = `flex:1; background:#1a2a3a; color:#5ba3d9; font-size:1.1rem; border:none; border-radius:0; touch-action:manipulation; ${noApp}`;
 
+    if (mode === 'fortune') {
+        grid.innerHTML = `
+        <button class="c-btn" id="c-back" style="${backBtn}">戻る</button>
+        <button class="c-btn" id="c-meishiki" style="background:#1a1a2a; color:#9b59b6; border:1px solid #6a3a8a; flex:2; font-size:0.85rem;">📊 命式表</button>`;
+        document.getElementById('c-back').onclick = () => {
+            window._fortuneBack && window._fortuneBack();
+        };
+        document.getElementById('c-meishiki').onclick = () => {
+            window._showMeishikiPanel && window._showMeishikiPanel();
+        };
+        return;
+    }
+
     if (mode === 'screening') {
         grid.innerHTML = `
             <button class="c-btn" id="c-back" style="${backBtn}">戻る</button>
@@ -659,7 +682,7 @@ function renderConsole(mode) {
                 <span style="font-size:0.75rem; font-weight:bold; line-height:1.1;">おすすめ</span>
                 <span style="font-size:0.75rem; letter-spacing:1px; line-height:1.1;">SHOP</span>
             </button>
-            <button class="c-btn" id="btn-techo" style="background:rgba(34,34,34,0.8); color:#fff; border:1px solid #777; font-size:1.5rem; flex:1.0; display:flex; justify-content:center; align-items:center;">📖</button>
+            <button class="c-btn" id="btn-techo" style="background:rgba(34,34,34,0.8); color:#fff; border:1px solid #777; font-size:0.75rem; flex:1.0; display:flex; flex-direction:column; justify-content:center; align-items:center; line-height:1.3;"><span>ソフィー</span><span>ノート</span></button>
             <button class="c-btn" id="ctrl-pause" style="${pCtrl}">⏹️</button>
             <button class="c-btn" id="ctrl-play"  style="${pBtn}">▶</button>
             <button class="c-btn" id="btn-next"   style="${pCtrl}">⏭</button>`;
@@ -680,7 +703,7 @@ function renderConsole(mode) {
         // 中間メニュー：戻る（左端）・メモ・⏹️・▶・⏭
         grid.innerHTML = `
             <button class="c-btn" id="ctrl-back-txt" style="${backBtn}">戻る</button>
-            <button class="c-btn" id="btn-techo"     style="background:rgba(34,34,34,0.8); color:#fff; border:1px solid #777; font-size:1.5rem; flex:1.0; display:flex; justify-content:center; align-items:center;">📖</button>
+            <button class="c-btn" id="btn-techo"     style="background:rgba(34,34,34,0.8); color:#fff; border:1px solid #777; font-size:0.75rem; flex:1.0; display:flex; flex-direction:column; justify-content:center; align-items:center; line-height:1.3;"><span>ソフィー</span><span>ノート</span></button>
             <button class="c-btn" id="ctrl-pause"    style="${pCtrl}">⏹️</button>
             <button class="c-btn" id="ctrl-play"     style="${pBtn}">▶</button>
             <button class="c-btn" id="btn-next"      style="${pCtrl}">⏭</button>`;
