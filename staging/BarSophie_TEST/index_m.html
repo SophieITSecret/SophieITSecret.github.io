@@ -139,13 +139,47 @@
         };
 
         window.showLoginPrompt = () => {
-            if (confirm('この機能はGoogleログイン（無料会員登録）が必要です。\nログインしますか？')) {
-                window.signInWithGoogle();
-            }
+            import('./mypage.js').then(m => m.showWelcomePage(null));
         };
 
         window.showSearchLimitPrompt = () => {
-            alert('本日の検索回数上限に達しました。\n常連パス（月額300円）に加入するか、チケットを購入すると追加検索できます。');
+            const lv = document.getElementById('list-view');
+            const nm = document.getElementById('nav-main');
+            if (lv) {
+                lv.style.display = 'block';
+                lv.innerHTML = `
+                    <div style="margin:10px; border-radius:10px; border:2px solid transparent;
+                                background: linear-gradient(#111, #111) padding-box,
+                                linear-gradient(120deg, #ff69b4 50%, #00d2ff 100%) border-box;">
+                        <div style="color:#f0b56e; padding:0 12px; font-size:0.8rem; font-weight:bold;
+                                    border-bottom:1px solid #333; height:28px; line-height:28px;
+                                    border-radius:8px 8px 0 0; display:flex; align-items:center; gap:6px;">
+                            <img src="./sophie_face.png" style="width:20px; height:20px; border-radius:50%; object-fit:cover;">
+                            ソフィーより
+                        </div>
+                        <div style="padding:16px; color:#ddd; font-size:0.85rem; line-height:1.9;">
+                            今夜はもうこれ以上のご案内が難しい状況なのです。<br><br>
+                            よろしければ、常連パス（月額300円）をご検討いただけますか？
+                            チケットのご購入でも追加検索が可能でございます。<br><br>
+                            <span style="color:#aaa; font-size:0.78rem;">
+                            詳しくはマイページからご確認いただけます。
+                            </span>
+                        </div>
+                        <div style="padding:0 10px 10px;">
+                            <button id="sl-mypage" style="width:100%; background:#1a2a3a; color:#5ba3d9;
+                                border:1px solid #1a5276; height:40px; border-radius:4px;
+                                font-size:0.85rem; margin-bottom:8px;">👤 マイページを見る</button>
+                            <button id="sl-close" style="width:100%; background:#34495e; color:#fff;
+                                border:none; height:36px; border-radius:4px; font-size:0.85rem;">閉じる</button>
+                        </div>
+                    </div>`;
+                if (nm) nm.style.display = 'none';
+                document.getElementById('sl-mypage').onclick = () => window.openMyPage();
+                document.getElementById('sl-close').onclick = () => {
+                    lv.style.display = 'none';
+                    if (nm) nm.style.display = 'flex';
+                };
+            }
         };
 
         window.showPurchasePrompt = () => {
@@ -159,20 +193,29 @@
             if (window.currentUser) {
                 loginBtn.style.display = 'none';
                 userInfo.style.display = 'flex';
+                const nickname = window.currentUserData?.nickname
+                    || window.currentUser.displayName
+                    || window.currentUser.email;
+                const isAdmin = window.currentUserData?.role === 'admin';
                 userInfo.innerHTML = `
-                    <span style="color:#f0b56e; font-size:0.75rem;">
-                        ${window.currentUserData?.role === 'admin' ? '👑' : ''}
-                        ${window.currentUser.displayName || window.currentUser.email}
-                    </span>
-                    <button onclick="window.signOutUser()"
-                        style="background:none; border:1px solid #555; color:#aaa;
-                               font-size:0.7rem; padding:2px 8px; border-radius:3px; margin-left:6px;">
-                        ログアウト
-                    </button>`;
+                    <span onclick="window.openMyPage()"
+                        style="color:#f0b56e; font-size:0.75rem; cursor:pointer;">
+                        ${isAdmin ? '👑 ' : ''}${nickname}
+                    </span>`;
             } else {
                 loginBtn.style.display = 'block';
                 userInfo.style.display = 'none';
             }
+        };
+
+        window.openMyPage = () => {
+            import('./mypage.js').then(m => {
+                if (window.currentUser) {
+                    m.showMyPage(null);
+                } else {
+                    m.showWelcomePage(null);
+                }
+            });
         };
     </script>
 </head>
@@ -204,9 +247,13 @@
                 height:28px; background:#0a0a0a; border-bottom:1px solid #1a1a1a; padding:0 4px;">
                 <button id="login-btn" onclick="window.signInWithGoogle()"
                     style="background:#4285f4; color:#fff; border:none;
-                           padding:3px 10px; border-radius:3px; font-size:0.7rem;
-                           cursor:pointer; margin-right:6px;">
+                    padding:3px 10px; border-radius:3px; font-size:0.7rem;
+                    cursor:pointer; margin-right:6px;">
                     Gログイン
+                </button>
+                <button id="mypage-btn" onclick="window.openMyPage()"
+                    style="display:none; background:none; color:#f0b56e; border:none;
+                    padding:3px 6px; font-size:0.75rem; cursor:pointer; margin-right:6px;">
                 </button>
                 <div id="user-info" style="display:none; align-items:center; margin-right:6px;"></div>
             </div>

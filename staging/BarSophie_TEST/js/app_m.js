@@ -14,6 +14,7 @@ import * as restaurant from './restaurant.js';
 import * as fortune from './fortune.js';
 import * as compatibility from './compatibility.js';
 import * as people from './people.js';
+import { showWelcomePage, showMyPage } from './mypage.js';
 
 let talkAudio;
 let ytPlayer = null;

@@ -69,6 +69,7 @@ export async function openNotice() {
                 お呼びですか？
             </div>
             <div style="padding:10px;">
+                <button class="act-btn" id="notice-guide" style="background:#1a2a3a; color:#5ba3d9; border:1px solid #1a5276; margin-bottom:8px;">📋 ご利用案内</button>
                 <button class="act-btn" id="nt-how" style="background:#1a5276; margin-bottom:8px;">📖 このお店の使い方</button>
                 <button class="act-btn" id="nt-restaurant" style="background:#1a3a1a; color:#7fd97f; border:1px solid #3a6a4a; margin-bottom:8px;">🍽️ いいお店を探す</button>
                 <button class="act-btn" id="nt-fortune" style="background:#2a1a3a; color:#c39bd3; border:1px solid #6a3a8a; margin-bottom:8px;">🔮 ソフィーの推命占い</button>
@@ -80,6 +81,9 @@ export async function openNotice() {
 
     setListView(menuHtml, false);
 
+    document.getElementById('notice-guide').onclick = () => {
+        import('./mypage.js').then(m => m.showWelcomePage(null));
+    };
     document.getElementById('nt-how').onclick = () => showHowTo();
     document.getElementById('nt-restaurant').onclick = () => {
         import('./restaurant.js').then(r => r.showRestaurantSearch());
