@@ -737,9 +737,18 @@ export function showFortuneMenu() {
     if (nm) nm.style.display = 'none';
 
     document.getElementById('fm-people').onclick = () => showPeopleBook(null, showFortuneMenu);
-    document.getElementById('fm-my-fortune').onclick = () => showMyFortune(showFortuneMenu);
-    document.getElementById('fm-about-person').onclick = () => showAboutPerson(showFortuneMenu);
-    document.getElementById('fm-compat').onclick = () => showCompatibility(showFortuneMenu);
+    document.getElementById('fm-my-fortune').onclick = async () => {
+        if (!await window.checkAccess('fortune_haiku')) return;
+        showMyFortune(showFortuneMenu);
+    };
+    document.getElementById('fm-about-person').onclick = async () => {
+        if (!await window.checkAccess('fortune_haiku')) return;
+        showAboutPerson(showFortuneMenu);
+    };
+    document.getElementById('fm-compat').onclick = async () => {
+        if (!await window.checkAccess('compatibility')) return;
+        showCompatibility(showFortuneMenu);
+    };
     document.getElementById('fm-close').onclick = () => {
         if (lv) { lv.style.display = prevDisplay; lv.innerHTML = prevHtml; }
         if (nm) nm.style.display = prevNm;

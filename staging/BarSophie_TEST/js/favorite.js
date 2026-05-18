@@ -135,8 +135,9 @@ function showHowTo() {
 }
 
 export async function openTecho(folder = null) {
+    if (!await window.checkAccess('note')) return;
     nav.updateNav("techo");
-    currentFolder = folder; 
+    currentFolder = folder;
     const data = getTechoData();
     const lq = await import('./liquor.js').catch(() => null);
     

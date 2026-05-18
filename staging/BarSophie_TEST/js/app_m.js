@@ -271,11 +271,11 @@ if (lv) { lv.style.display = 'block'; lv.innerHTML = menuHtml; }
 
     document.getElementById('sm-restaurant').onclick = async () => {
         if (!await window.checkAccess('restaurant_search')) return;
-        restaurant.showRestaurantSearch();
+        import('./restaurant.js').then(r => r.showRestaurantSearch());
     };
     document.getElementById('sm-fortune').onclick = async () => {
         if (!await window.checkAccess('fortune_haiku')) return;
-        fortune.showFortuneMenu();
+        import('./fortune.js').then(f => f.showFortuneMenu());
     };
     document.getElementById('sm-janken').onclick = () => {
         import('./janken.js').then(j => j.startJanken());
