@@ -269,8 +269,14 @@ function showSophieMenu() {
 if (lv) { lv.style.display = 'block'; lv.innerHTML = menuHtml; }
     if (nm) nm.style.display = 'none';
 
-    document.getElementById('sm-restaurant').onclick = () => restaurant.showRestaurantSearch();
-    document.getElementById('sm-fortune').onclick = () => fortune.showFortuneMenu();
+    document.getElementById('sm-restaurant').onclick = async () => {
+        if (!await window.checkAccess('restaurant_search')) return;
+        restaurant.showRestaurantSearch();
+    };
+    document.getElementById('sm-fortune').onclick = async () => {
+        if (!await window.checkAccess('fortune_haiku')) return;
+        fortune.showFortuneMenu();
+    };
     document.getElementById('sm-janken').onclick = () => {
         import('./janken.js').then(j => j.startJanken());
     };

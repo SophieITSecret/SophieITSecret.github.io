@@ -9,6 +9,166 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="stylesheet" href="css/style_m.css?v=22">
+
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+        import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
+            from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+        import { getFirestore, doc, getDoc, setDoc, updateDoc, serverTimestamp }
+            from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+        const firebaseConfig = {
+            //（ここに実際のfirebaseConfigを貼り付け）
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const provider = new GoogleAuthProvider();
+
+        window.ACCESS_RULES = {
+            guest: {
+                music: true, fortune_haiku: false, fortune_sonnet: false,
+                restaurant_search: 0, compatibility: false, about_person: false, note: false,
+            },
+            free: {
+                music: true, fortune_haiku: true, fortune_sonnet: false,
+                restaurant_search: 1, compatibility: true, about_person: true, note: true,
+            },
+            active: {
+                music: true, fortune_haiku: true, fortune_sonnet: 'ticket',
+                restaurant_search: 3, compatibility: true, about_person: true, note: true,
+            },
+            vip: {
+                music: true, fortune_haiku: true, fortune_sonnet: 10,
+                restaurant_search: 999, compatibility: true, about_person: true, note: true, ai_chat: true,
+            },
+            admin: {
+                music: true, fortune_haiku: true, fortune_sonnet: 999,
+                restaurant_search: 999, compatibility: true, about_person: true, note: true, ai_chat: true,
+            }
+        };
+
+        window.currentUser = null;
+        window.currentUserData = null;
+
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                window.currentUser = user;
+                const userRef = doc(db, 'users', user.uid);
+                const userSnap = await getDoc(userRef);
+                if (userSnap.exists()) {
+                    window.currentUserData = userSnap.data();
+                } else {
+                    const newUser = {
+                        uid: user.uid, email: user.email, name: user.displayName,
+                        status: 'free', role: 'user', tickets: 0,
+                        todaySearchCount: 0, lastSearchDate: null, createdAt: serverTimestamp(),
+                    };
+                    await setDoc(userRef, newUser);
+                    window.currentUserData = newUser;
+                }
+                if (user.email === 'makimura@ms-forum.com') {
+                    window.currentUserData.role = 'admin';
+                }
+                window.updateLoginUI();
+            } else {
+                window.currentUser = null;
+                window.currentUserData = null;
+                window.updateLoginUI();
+            }
+        });
+
+        window.signInWithGoogle = async () => {
+            try {
+                await signInWithPopup(auth, provider);
+            } catch (e) {
+                console.error('ログインエラー:', e);
+                alert('ログインに失敗しました。');
+            }
+        };
+
+        window.signOutUser = async () => {
+            await signOut(auth);
+            alert('ログアウトしました。');
+        };
+
+        window.checkAccess = async (feature) => {
+            const userData = window.currentUserData;
+            if (!userData) {
+                if (feature === 'music') return true;
+                window.showLoginPrompt();
+                return false;
+            }
+            const role = userData.role === 'admin' ? 'admin' : userData.status || 'free';
+            const rules = window.ACCESS_RULES[role] || window.ACCESS_RULES.free;
+            if (role === 'admin') return true;
+
+            if (feature === 'restaurant_search') {
+                const limit = rules.restaurant_search;
+                const today = new Date().toDateString();
+                const lastDate = userData.lastSearchDate;
+                const count = lastDate === today ? (userData.todaySearchCount || 0) : 0;
+                if (count >= limit) { window.showSearchLimitPrompt(); return false; }
+                const userRef = doc(db, 'users', userData.uid);
+                await updateDoc(userRef, { todaySearchCount: count + 1, lastSearchDate: today });
+                window.currentUserData.todaySearchCount = count + 1;
+                window.currentUserData.lastSearchDate = today;
+                return true;
+            }
+
+            if (feature === 'fortune_sonnet') {
+                if (rules.fortune_sonnet === false) { window.showPurchasePrompt(); return false; }
+                if (rules.fortune_sonnet === 'ticket') {
+                    if (userData.tickets <= 0) { window.showPurchasePrompt(); return false; }
+                    const userRef = doc(db, 'users', userData.uid);
+                    await updateDoc(userRef, { tickets: userData.tickets - 1 });
+                    window.currentUserData.tickets--;
+                    return true;
+                }
+                return true;
+            }
+
+            return rules[feature] === true;
+        };
+
+        window.showLoginPrompt = () => {
+            if (confirm('この機能はGoogleログイン（無料会員登録）が必要です。\nログインしますか？')) {
+                window.signInWithGoogle();
+            }
+        };
+
+        window.showSearchLimitPrompt = () => {
+            alert('本日の検索回数上限に達しました。\n常連パス（月額300円）に加入するか、チケットを購入すると追加検索できます。');
+        };
+
+        window.showPurchasePrompt = () => {
+            alert('この機能は常連パス（月額300円）またはチケットが必要です。');
+        };
+
+        window.updateLoginUI = () => {
+            const loginBtn = document.getElementById('login-btn');
+            const userInfo = document.getElementById('user-info');
+            if (!loginBtn || !userInfo) return;
+            if (window.currentUser) {
+                loginBtn.style.display = 'none';
+                userInfo.style.display = 'flex';
+                userInfo.innerHTML = `
+                    <span style="color:#f0b56e; font-size:0.75rem;">
+                        ${window.currentUserData?.role === 'admin' ? '👑' : ''}
+                        ${window.currentUser.displayName || window.currentUser.email}
+                    </span>
+                    <button onclick="window.signOutUser()"
+                        style="background:none; border:1px solid #555; color:#aaa;
+                               font-size:0.7rem; padding:2px 8px; border-radius:3px; margin-left:6px;">
+                        ログアウト
+                    </button>`;
+            } else {
+                loginBtn.style.display = 'block';
+                userInfo.style.display = 'none';
+            }
+        };
+    </script>
 </head>
 <body>
     <div id="entry-screen">
@@ -34,6 +194,16 @@
             </div>
         </div>
         <div class="r-side">
+            <div id="label-bar" style="display:flex; align-items:center; justify-content:flex-end;
+                height:28px; background:#0a0a0a; border-bottom:1px solid #1a1a1a; padding:0 4px;">
+                <button id="login-btn" onclick="window.signInWithGoogle()"
+                    style="background:#4285f4; color:#fff; border:none;
+                           padding:3px 10px; border-radius:3px; font-size:0.7rem;
+                           cursor:pointer; margin-right:6px;">
+                    Gログイン
+                </button>
+                <div id="user-info" style="display:none; align-items:center; margin-right:6px;"></div>
+            </div>
             <div class="scroll-area" id="main-scroll">
                 
             <div id="nav-main">
