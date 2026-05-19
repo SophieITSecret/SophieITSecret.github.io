@@ -139,7 +139,7 @@
         };
 
         window.showLoginPrompt = () => {
-            import('./mypage.js').then(m => m.showWelcomePage(null));
+            import('./js/mypage.js').then(m => m.showWelcomePage(null));
         };
 
         window.showSearchLimitPrompt = () => {
@@ -209,7 +209,7 @@
         };
 
         window.openMyPage = () => {
-            import('./mypage.js').then(m => {
+            import('./js/mypage.js').then(m => {
                 if (window.currentUser) {
                     m.showMyPage(null);
                 } else {
