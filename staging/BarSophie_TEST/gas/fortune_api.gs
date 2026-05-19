@@ -3,19 +3,13 @@
 const ANTHROPIC_API_KEY = PropertiesService.getScriptProperties().getProperty('ANTHROPIC_API_KEY');
 
 function doPost(e) {
-  // 既存のdoPost（AI用）との判別
   try {
     const body = e.postData.contents;
     const parsed = JSON.parse(body);
-
-    // Stripe Webhookの場合
     if (parsed.type) {
       return handleStripeWebhook(parsed);
     }
-
-    // 既存のAI呼び出しの場合
     return handleAIRequest(parsed);
-
   } catch(err) {
     return ContentService
       .createTextOutput(JSON.stringify({ ok: false, error: err.message }))
@@ -24,22 +18,20 @@ function doPost(e) {
 }
 
 function handleStripeWebhook(event) {
-  const FIREBASE_URL = 'https://firestore.googleapis.com/v1/projects/bar-sophie/databases/(default)/documents/users';
-
-  if (event.type === 'customer.subscription.created' ||
-      event.type === 'customer.subscription.updated') {
-    const subscription = event.data.object;
-    const customerId = subscription.customer;
-    const status = subscription.status === 'active' ? 'active' : 'free';
-
-    // customerIdからメールアドレスを取得してFirestoreを更新
-    // FirebaseのREST APIを使用
-    Logger.log('Webhook received: ' + event.type + ' customer: ' + customerId);
+  if (event.type === 'checkout.session.completed') {
+    const session = event.data.object;
+    const uid = session.client_reference_id || '';
+    if (uid) {
+      updateFirestoreUserStatus(uid, 'active');
+    }
   }
 
   if (event.type === 'customer.subscription.deleted') {
     const subscription = event.data.object;
-    Logger.log('Subscription deleted: ' + subscription.customer);
+    const uid = subscription.metadata?.firebase_uid || '';
+    if (uid) {
+      updateFirestoreUserStatus(uid, 'free');
+    }
   }
 
   return ContentService
@@ -47,20 +39,39 @@ function handleStripeWebhook(event) {
     .setMimeType(ContentService.MimeType.JSON);
 }
 
+function updateFirestoreUserStatus(uid, status) {
+  const projectId = 'bar-sophie';
+  const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/users/${uid}`;
+  const token = ScriptApp.getOAuthToken();
+  const payload = {
+    fields: {
+      status: { stringValue: status },
+      updatedAt: { timestampValue: new Date().toISOString() }
+    }
+  };
+  const options = {
+    method: 'PATCH',
+    headers: {
+      'Authorization': 'Bearer ' + token,
+      'Content-Type': 'application/json'
+    },
+    payload: JSON.stringify(payload),
+    muteHttpExceptions: true
+  };
+  UrlFetchApp.fetch(url + '?updateMask.fieldPaths=status&updateMask.fieldPaths=updatedAt', options);
+}
+
 function handleAIRequest(req) {
   const messages = req.messages;
   const useSearch = req.search === true;
-
   const payload = {
     model: useSearch ? 'claude-haiku-4-5' : 'claude-sonnet-4-6',
     max_tokens: 2500,
     messages: messages
   };
-
   if (useSearch) {
     payload.tools = [{ type: 'web_search_20250305', name: 'web_search' }];
   }
-
   const response = UrlFetchApp.fetch('https://api.anthropic.com/v1/messages', {
     method: 'post',
     headers: {
@@ -71,10 +82,8 @@ function handleAIRequest(req) {
     payload: JSON.stringify(payload),
     muteHttpExceptions: true
   });
-
   const raw = response.getContentText();
   const result = JSON.parse(raw);
-
   let text = '';
   if (result.content && Array.isArray(result.content)) {
     text = result.content
@@ -84,7 +93,6 @@ function handleAIRequest(req) {
   } else {
     text = raw;
   }
-
   return ContentService
     .createTextOutput(JSON.stringify({ ok: true, text: text }))
     .setMimeType(ContentService.MimeType.JSON);
