@@ -72,7 +72,7 @@ export async function openNotice() {
                 <button class="act-btn" id="notice-guide" style="background:#1a2a3a; color:#5ba3d9; border:1px solid #1a5276; margin-bottom:8px;">📋 ご利用案内</button>
                 <button class="act-btn" id="nt-how" style="background:#1a5276; margin-bottom:8px;">📖 このお店の使い方</button>
                 <button class="act-btn" id="nt-restaurant" style="background:#1a3a1a; color:#7fd97f; border:1px solid #3a6a4a; margin-bottom:8px;">🍽️ いいお店を探す</button>
-                <button class="act-btn" id="nt-fortune" style="background:#2a1a3a; color:#c39bd3; border:1px solid #6a3a8a; margin-bottom:8px;">🔮 ソフィーの推命占い</button>
+                <button class="act-btn" id="nt-fortune" style="background:#2a1a3a; color:#c39bd3; border:1px solid #6a3a8a; margin-bottom:8px;">🔮 ソフィーの天命診断</button>
                 <div style="border-top:1px solid #222; margin:8px 0;"></div>
                 <button class="act-btn" id="nt-janken" style="background:#8e1a2e; margin-bottom:8px;">🎲 じゃんけん勝負</button>
                 <button class="act-btn" style="background:#1a1a1a; color:#444; border:1px solid #222; margin-bottom:8px;" disabled>📅 この日はどんな日（近日公開）</button>

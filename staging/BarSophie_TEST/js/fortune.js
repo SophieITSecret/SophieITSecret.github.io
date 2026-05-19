@@ -719,7 +719,7 @@ export function showFortuneMenu() {
                         border-bottom:1px solid #333; height:28px; line-height:28px;
                         border-radius:8px 8px 0 0; display:flex; align-items:center; gap:6px;">
                 <img src="./sophie_face.png" style="width:20px; height:20px; border-radius:50%; object-fit:cover;">
-                🔮 ソフィーの推命占い
+                🔮 ソフィーの天命診断
             </div>
             <div style="padding:10px;">
                 <button id="fm-people" class="act-btn" style="background:#1a2a1a; color:#7fd97f; border:1px solid #3a6a4a; margin-bottom:8px;">👥 人物帳</button>

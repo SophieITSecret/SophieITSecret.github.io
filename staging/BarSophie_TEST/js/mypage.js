@@ -43,7 +43,7 @@ export function showWelcomePage(onClose) {
                                 margin-bottom:6px;">✨ 無料登録（Googleログイン）で使えること</div>
                     <div style="color:#aaa; font-size:0.78rem; line-height:1.8;
                                 padding-left:8px;">
-                        🔮 ソフィーの推命占い<br>
+                        🔮 ソフィーの天命診断<br>
                         🍽️ いいお店を探す（1日1回）<br>
                         📖 ソフィーのノート（無制限）
                     </div>
@@ -51,7 +51,7 @@ export function showWelcomePage(onClose) {
 
                 <div style="margin-bottom:14px;">
                     <div style="color:#f0b56e; font-size:0.8rem; font-weight:bold;
-                                margin-bottom:6px;">👑 常連パス（月額300円）で使えること</div>
+                                margin-bottom:6px;">👑 ご常連パスカード（月額300円）で使えること</div>
                     <div style="color:#aaa; font-size:0.78rem; line-height:1.8;
                                 padding-left:8px;">
                         🔮 特別鑑定チケット5枚/月<br>
@@ -106,7 +106,7 @@ export function showMyPage(onClose) {
 
     const statusLabel = {
         free: '無料会員',
-        active: '常連パス会員',
+        active: 'ご常連パスカード会員',
         vip: 'VIP会員',
         admin: '管理者'
     };
@@ -156,7 +156,7 @@ export function showMyPage(onClose) {
                 <div style="background:#1a2a1a; border:1px solid #3a6a4a; border-radius:8px;
                             padding:10px; margin-bottom:12px;">
                     <div style="color:#7fd97f; font-size:0.8rem; font-weight:bold; margin-bottom:6px;">
-                        👑 常連パスにアップグレード
+                        👑 ご常連パスカードにアップグレード
                     </div>
                     <div style="color:#aaa; font-size:0.75rem; line-height:1.7; margin-bottom:8px;">
                         月額300円で特別鑑定チケット5枚/月・<br>
@@ -164,7 +164,7 @@ export function showMyPage(onClose) {
                     </div>
                     <button id="mp-upgrade" style="width:100%; background:#27ae60; color:#fff;
                         border:none; height:40px; border-radius:4px; font-size:0.85rem;
-                        font-weight:bold;">常連パスに加入する（月額300円）</button>
+                        font-weight:bold;">ご常連パスカードに加入する（月額300円）</button>
                 </div>` : ''}
 
                 <button id="mp-guide" style="width:100%; background:#1a1a2a; color:#9b59b6;

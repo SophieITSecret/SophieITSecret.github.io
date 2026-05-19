@@ -260,7 +260,7 @@ function showSophieMenu() {
                 ${specificHtml}
                 ${specific.length ? '<div style="border-top:1px solid #222; margin:8px 0;"></div>' : ''}
                 <button class="act-btn" id="sm-restaurant" style="background:#1a3a2a; margin-bottom:8px;">🍽️ いいお店を探す</button>
-                <button class="act-btn" id="sm-fortune" style="background:#2a1a3a; margin-bottom:8px;">🔮 ソフィーの推命占い</button>
+                <button class="act-btn" id="sm-fortune" style="background:#2a1a3a; margin-bottom:8px;">🔮 ソフィーの天命診断</button>
                 <button class="act-btn" id="sm-janken" style="background:#8e1a2e; margin-bottom:8px;">🎲 じゃんけん勝負</button>
                 <button class="act-btn" style="background:#1a1a1a; color:#444; border:1px solid #222; margin-bottom:8px;" disabled>📅 この日はどんな日（近日公開）</button>
                 <button class="act-btn" id="sm-close" style="background:#34495e; margin-top:4px;">閉じる</button>
