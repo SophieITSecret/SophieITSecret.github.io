@@ -200,7 +200,7 @@ export function showMyPage(onClose) {
 
     if (status === 'free') {
         document.getElementById('mp-upgrade').onclick = () => {
-            alert('準備中です。もうしばらくお待ちください。');
+            window.open('https://buy.stripe.com/test_28EdR88eF0cu8Ap0zcbMQ02', '_blank');
         };
     }
 
