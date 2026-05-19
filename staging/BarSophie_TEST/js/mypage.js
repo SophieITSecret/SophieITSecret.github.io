@@ -200,7 +200,9 @@ export function showMyPage(onClose) {
 
     if (status === 'free') {
         document.getElementById('mp-upgrade').onclick = () => {
-            window.open('https://buy.stripe.com/test_28EdR88eF0cu8Ap0zcbMQ02', '_blank');
+            const uid = window.currentUser?.uid || '';
+            const stripeUrl = 'https://buy.stripe.com/test_28EdR88eF0cu8Ap0zcbMQ02' + '?client_reference_id=' + uid;
+            window.open(stripeUrl, '_blank');
         };
     }
 
