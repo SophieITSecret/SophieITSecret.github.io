@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BARソフィー スマホ画面モックアップ</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: #050505; color: #ddd;
+  font-family: 'Hiragino Kaku Gothic ProN', 'メイリオ', sans-serif;
+  padding: 24px;
+}
+h1 { color: #f0b56e; font-size: 1.3rem; margin-bottom: 4px; }
+.subtitle { color: #555; font-size: 0.75rem; margin-bottom: 32px; }
+.section { margin-bottom: 48px; }
+.section-title {
+  color: #555; font-size: 0.7rem; font-weight: bold;
+  letter-spacing: 1px; text-transform: uppercase;
+  margin-bottom: 16px; padding-bottom: 4px;
+  border-bottom: 1px solid #1a1a1a;
+}
+.phones { display: flex; flex-wrap: wrap; gap: 28px; align-items: flex-start; }
+.phone-wrap { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.phone-label { color: #aaa; font-size: 0.72rem; text-align: center; max-width: 200px; line-height: 1.6; }
+.phone-label span { color: #666; }
+.arrow-right { color: #333; font-size: 1.5rem; align-self: center; padding-top: 40px; }
+.sep { border: none; border-top: 1px solid #1a1a1a; margin: 32px 0; }
+.phone-code {
+  font-size: 0.9rem; font-weight: bold; letter-spacing: 2px;
+  font-family: 'Courier New', monospace;
+  color: #f0b56e; background: #1a1a1a;
+  border: 1px solid #f0b56e; padding: 2px 14px;
+  border-radius: 12px;
+}
+
+/* ========== PHONE FRAME ========== */
+.phone {
+  width: 240px; height: 500px;
+  background: #1c1c1e;
+  border-radius: 36px;
+  border: 5px solid #3a3a3c;
+  box-shadow: 0 0 0 1px #555, inset 0 0 0 1px #111,
+              0 20px 60px rgba(0,0,0,0.9),
+              0 0 20px rgba(240,181,110,0.04);
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+/* pill notch */
+.phone::before {
+  content: '';
+  position: absolute;
+  top: 10px; left: 50%; transform: translateX(-50%);
+  width: 56px; height: 5px;
+  background: #111; border-radius: 3px; z-index: 200;
+}
+.phone-screen {
+  margin-top: 22px;
+  flex: 1;
+  background: #000;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ====== ENTRY SCREEN ====== */
+.p-entry {
+  flex: 1; background: #000;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 10px 20px 30px;
+}
+.p-entry img {
+  width: 75%; max-height: 320px;
+  object-fit: contain; object-position: bottom;
+  margin-bottom: 20px;
+}
+.p-entry-btn {
+  background: linear-gradient(135deg, #1a0e05, #0d0702);
+  color: #f0b56e; border: 2px solid #f0b56e;
+  border-radius: 30px; padding: 8px 20px;
+  font-size: 8.5px; font-weight: bold;
+  width: 80%; text-align: center;
+}
+
+/* ====== LOUNGE SCREEN ====== */
+.p-lounge { flex: 1; background: #000; display: flex; flex-direction: column; }
+.p-lounge-portrait {
+  flex: 1; overflow: hidden;
+  display: flex; justify-content: center; align-items: flex-end; padding: 8px;
+}
+.p-lounge-portrait img {
+  height: 100%; max-width: 80%;
+  object-fit: contain; object-position: bottom;
+}
+.p-lounge-chat {
+  min-height: 72px; padding: 8px 14px;
+  background: #050505; border-top: 1px solid #1a1a2e;
+  color: #ccc; font-size: 8px; line-height: 1.8; text-align: center;
+}
+.p-lounge-btn {
+  display: block; margin: 7px 14px;
+  padding: 7px; background: #080808;
+  border: 1px solid #f0b56e; color: #f0b56e;
+  border-radius: 6px; font-size: 8px; font-weight: bold; text-align: center;
+}
+
+/* ====== MAIN-UI: portrait = monitor top, r-side below ====== */
+.p-monitor-wrap {
+  width: 100%; flex-shrink: 0;
+  aspect-ratio: 16 / 9;
+  background: #000; border-bottom: 2px solid #00d2ff;
+  overflow: hidden; display: flex;
+  align-items: center; justify-content: center;
+}
+.p-monitor-wrap img { width: 100%; height: 100%; object-fit: cover; object-position: center top; }
+
+.p-r-side {
+  flex: 1; display: flex; flex-direction: column;
+  min-height: 0; background: #08080a;
+}
+.p-label-bar {
+  height: 20px; background: #0a0a0a;
+  border-bottom: 1px solid #1a1a1a;
+  display: flex; align-items: center; justify-content: flex-end;
+  padding: 0 6px; gap: 5px; flex-shrink: 0;
+}
+.p-login-btn {
+  background: #4285f4; color: #fff; border: none;
+  border-radius: 2px; padding: 1px 6px; font-size: 6.5px; font-weight: bold;
+}
+.p-user-name { color: #f0b56e; font-size: 7px; }
+
+.p-scroll { flex: 1; overflow-y: auto; overflow-x: hidden; min-height: 0; }
+.p-scroll::-webkit-scrollbar { width: 2px; }
+.p-scroll::-webkit-scrollbar-thumb { background: #222; }
+
+.p-disclaimer {
+  font-size: 6px; color: #333; text-align: center;
+  padding: 3px 8px; line-height: 1.5;
+  background: #050505; border-top: 1px solid #1a1a1a; flex-shrink: 0;
+}
+.p-console {
+  height: 40px; background: #080808;
+  border-top: 1px solid #333;
+  display: flex; flex-shrink: 0;
+}
+.p-btn-grid { flex: 1; display: flex; gap: 3px; padding: 3px; }
+.p-c-btn {
+  flex: 1; background: #1a1a1a; border: 1px solid #333;
+  border-radius: 3px; font-size: 7px; color: #aaa;
+  display: flex; align-items: center; justify-content: center; font-weight: bold;
+}
+.p-c-btn.wide { flex: 1.5; font-size: 10px; color: #eee; }
+.p-c-btn.gb { border-color: #27ae60; color: #27ae60; }
+.p-sophie-box {
+  width: 34px; background: #000; border-left: 1px solid #1a1a1a;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; overflow: hidden;
+}
+.p-sophie-box img { height: 90%; width: auto; object-fit: contain; object-position: bottom; }
+
+/* ====== NAV BUTTONS ====== */
+.p-nav { padding: 7px 8px; display: flex; flex-direction: column; align-items: center; gap: 5px; }
+.p-act {
+  display: block; text-align: center; border-radius: 5px;
+  padding: 6px 8px; font-size: 8px; font-weight: bold;
+  border: 1px solid #444; color: #fff; cursor: pointer; margin: 0;
+}
+.ag { background: #27ae60; border-color: #27ae60; }
+.ap { background: #8e44ad; border-color: #8e44ad; }
+.ab { background: #2980b9; border-color: #2980b9; }
+.apk { background: #1a1a2e; color: #ffb3c1; border-color: #ff69b4; }
+.ac { background: #1a3a4a; border-color: #00d2ff; }
+.adk { background: #1a1a1a; color: #aaa; border-color: #333; }
+.afo { background: #2a1a3a; color: #c39bd3; border-color: #5a3a8a; }
+.are { background: #1a3a2a; color: #7fd97f; border-color: #3a6a4a; }
+.p-btn-row { display: flex; gap: 4px; width: 100%; }
+.p-btn-row .p-act { flex: 1; }
+
+/* ====== SCROLL HEADER (sticky section label) ====== */
+.p-shdr {
+  background: #1a1a2e; color: #f0b56e;
+  padding: 0 10px; font-size: 7.5px; font-weight: bold;
+  height: 22px; line-height: 22px;
+  border-bottom: 1px solid #333;
+  display: flex; align-items: center; gap: 4px; flex-shrink: 0;
+}
+.p-shdr img { width: 14px; height: 14px; border-radius: 50%; object-fit: cover; }
+
+/* ====== PANEL (list-view panels with gradient border) ====== */
+.p-panel {
+  margin: 6px; border-radius: 7px;
+  border: 2px solid transparent;
+  background: linear-gradient(#111, #111) padding-box,
+              linear-gradient(120deg, #ff69b4 50%, #00d2ff 100%) border-box;
+}
+.p-phdr {
+  color: #f0b56e; padding: 0 8px; font-size: 7.5px; font-weight: bold;
+  border-bottom: 1px solid #333; height: 22px; line-height: 22px;
+  border-radius: 5px 5px 0 0; display: flex; align-items: center; gap: 4px;
+}
+.p-phdr img { width: 14px; height: 14px; border-radius: 50%; object-fit: cover; }
+.p-pbody { padding: 8px; }
+
+/* ====== FORM ELEMENTS ====== */
+.fr { margin-bottom: 6px; }
+.fl { color: #888; font-size: 6.5px; margin-bottom: 2px; }
+.fi {
+  width: 100%; background: #000; border: 1px solid #333;
+  border-radius: 3px; color: #fff; font-size: 7px; height: 20px; padding: 0 6px;
+}
+.chips { display: flex; flex-wrap: wrap; gap: 2px; }
+.chip { background: #1a1a1a; border: 1px solid #333; border-radius: 3px; padding: 2px 5px; font-size: 6px; color: #aaa; }
+.chip.on { background: #1a2a3a; border-color: #5ba3d9; color: #5ba3d9; }
+.chip.fo { background: #2a1a3a; border-color: #6a3a8a; color: #c39bd3; }
+
+/* ====== FORTUNE ====== */
+.p-fresult { background: #0d0d1a; border: 1px solid #3a2a5a; border-radius: 4px; padding: 6px; margin-bottom: 4px; }
+.p-ftitle { color: #c39bd3; font-size: 7.5px; font-weight: bold; margin-bottom: 4px; }
+.p-ftext { color: #ccc; font-size: 7px; line-height: 1.8; }
+.p-meishiki { background: #0d1a0d; border: 1px solid #2a4a2a; border-radius: 4px; padding: 5px; margin-bottom: 3px; }
+.p-mtitle { color: #7fd97f; font-size: 7px; font-weight: bold; margin-bottom: 4px; }
+.p-mgrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; font-size: 7px; text-align: center; }
+.mh { color: #666; background: #111; padding: 2px; }
+.mc { color: #c39bd3; background: #1a1a2a; padding: 2px; border-radius: 1px; }
+
+/* ====== RESTAURANT ====== */
+.p-rcard { background: #1a2a1a; border: 1px solid #3a6a4a; border-radius: 4px; padding: 6px; margin-bottom: 4px; }
+.p-rtitle { color: #7fd97f; font-size: 8px; font-weight: bold; }
+.p-rsub { color: #aaa; font-size: 6.5px; margin-top: 2px; line-height: 1.6; }
+.p-rbtns { display: flex; gap: 3px; margin-top: 4px; }
+.p-rbtn { flex: 1; background: #0a1a0a; border: 1px solid #2a5a2a; color: #7fd97f; font-size: 6px; padding: 3px 4px; text-align: center; border-radius: 2px; }
+
+/* ====== NOTE ====== */
+.p-nitem { background: #111; border-bottom: 1px solid #1a3a4a; padding: 6px 10px; display: flex; align-items: center; gap: 8px; }
+.p-nico { font-size: 11px; flex-shrink: 0; }
+.p-nlbl { color: #5ba3d9; font-size: 7.5px; font-weight: bold; }
+.p-nsub { color: #555; font-size: 6px; margin-top: 1px; }
+
+/* ====== MYPAGE ====== */
+.p-sbox { background: #1a1a1a; border-radius: 5px; padding: 7px; margin-bottom: 5px; }
+.p-srow { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px; }
+.p-slbl { color: #888; font-size: 6.5px; }
+.p-sval { color: #f0b56e; font-size: 7px; font-weight: bold; }
+.p-ubox { background: #1a2a1a; border: 1px solid #3a6a4a; border-radius: 5px; padding: 7px; margin-bottom: 5px; }
+.p-utitle { color: #7fd97f; font-size: 7.5px; font-weight: bold; margin-bottom: 3px; }
+.p-utext { color: #aaa; font-size: 6.5px; line-height: 1.6; margin-bottom: 5px; }
+.p-ucta { width: 100%; background: #27ae60; color: #fff; border: none; border-radius: 3px; padding: 5px 4px; font-size: 7px; text-align: center; font-weight: bold; }
+.p-wbtn { width: 100%; border: none; border-radius: 3px; padding: 5px 4px; font-size: 7.5px; font-weight: bold; text-align: center; margin-bottom: 4px; cursor: pointer; }
+
+/* badges */
+.pb { font-size: 5.5px; padding: 1px 4px; border-radius: 8px; margin-left: 3px; vertical-align: middle; }
+.pbl { background: #1a2a3a; color: #5ba3d9; border: 1px solid #1a5276; }
+.pbai { background: #2a1a3a; color: #c39bd3; border: 1px solid #6a3a8a; }
+</style>
+</head>
+<body>
+
+<h1>🍸 BARソフィー スマホ画面モックアップ</h1>
+<div class="subtitle">BarSophie_TEST — 2026-05-20　portrait: モニター上 / ナビ下 の縦積みレイアウト</div>
+
+<!-- ============================================================
+     SECTION 1: 起動フロー
+  ============================================================ -->
+<div class="section">
+  <div class="section-title">1. 起動フロー</div>
+  <div class="phones">
+
+    <!-- ① エントリー画面 -->
+    <div class="phone-wrap">
+      <div class="phone">
+        <div class="phone-screen">
+          <div class="p-entry">
+            <img src="./sophie_shake.png" alt="ソフィー">
+            <div class="p-entry-btn">🥃 ＢＡＲソフィーに入る</div>
+          </div>
+        </div>
+      </div>
+      <div class="phone-label">① エントリー画面</div>
+    </div>
+
+    <div class="arrow-right">→</div>
+
+    <!-- ② ラウンジ -->
+    <div class="phone-wrap">
+      <div class="phone">
+        <div class="phone-screen">
+          <div class="p-lounge">
+            <div class="p-lounge-portrait">
+              <img src="./sophie_shake.png" alt="ソフィー">
+            </div>
+            <div class="p-lounge-chat">
+              いらっしゃいませ。本日もようこそ、BARソフィーへ。<br>どうぞごゆっくりなさってください。
+            </div>
+            <div class="p-lounge-btn">カウンターへ進む</div>
+          </div>
+        </div>
+      </div>
+      <div class="phone-label">② ラウンジ（チャット画面）</div>
+    </div>
+
+    <div class="arrow-right">→</div>
+
+    <!-- ③ メイン画面（ルートメニュー） -->
+    <div class="phone-wrap">
+      <div class="phone">
+        <div class="phone-screen">
+          <div class="p-monitor-wrap">
+            <img src="./front_sophie.jpeg" alt="ソフィー">
+          </div>
+          <div class="p-r-side">
+            <div class="p-label-bar">
+              <div class="p-login-btn">Gログイン</div>
+            </div>
+            <div class="p-scroll">
+              <div class="p-nav">
+                <button class="p-act ag" style="width:78%;">🎵 音楽リクエスト</button>
+                <button class="p-act ap" style="width:78%;">🍸 お酒を探す</button>
+                <button class="p-act ab" style="width:78%;">🥃 お酒の話</button>
+                <div class="p-btn-row" style="width:92%;">
+                  <button class="p-act apk" style="flex:1.5;">ソフィーと話す</button>
+                  <button class="p-act ac" style="flex:1;">📰 NEWS</button>
+                </div>
+              </div>
+            </div>
+            <div class="p-disclaimer">Amazonアソシエイト参加 / 一部コンテンツはAI生成</div>
+            <div class="p-console">
+              <div class="p-btn-grid">
+                <div class="p-c-btn">SHOP</div>
+                <div class="p-c-btn">ノート</div>
+                <div class="p-c-btn">⏹️</div>
+                <div class="p-c-btn wide">▶</div>
+                <div class="p-c-btn">⏭</div>
+              </div>
+              <div class="p-sophie-box"><img src="./sophie_shake.png"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="phone-code">C</div>
+      <div class="phone-label">③ メイン画面（ルートメニュー）</div>
+    </div>
+
+  </div>
+</div>
+
+<hr class="sep">
+
+<!-- ============================================================
+     SECTION 2: ソフィーと話す → 天命診断フロー
+  ============================================================ -->
+<div class="section">
+  <div class="section-title">2. 「ソフィーと話す」→ 天命診断フロー</div>
+  <div class="phones">
+
+    <!-- ④ ソフィーと話す -->
+    <div class="phone-wrap">
+      <div class="phone">
+        <div class="phone-screen">
+          <div class="p-monitor-wrap">
+            <img src="./front_sophie.jpeg" alt="ソフィー">
+          </div>
+          <div class="p-r-side">
+            <div class="p-label-bar"><div class="p-user-name">👑 マスター</div></div>
+            <div class="p-scroll">
+              <div class="p-shdr"><img src="./sophie_face.png">ソフィーと話す</div>
+              <div style="padding:6px 8px;">
+                <button class="p-act adk" style="margin-bottom:4px; width:100%;">📋 ご利用案内</button>
+                <button class="p-act adk" style="margin-bottom:4px; width:100%;">📖 このお店の使い方</button>
+                <button class="p-act are" style="margin-bottom:4px; width:100%;">🍽️ いいお店を探す<span class="pb pbl">要ログイン</span></button>
+                <button class="p-act afo" style="margin-bottom:4px; width:100%;">🔮 天命診断<span class="pb pbl">要ログイン</span></button>
+                <button class="p-act adk" style="margin-bottom:4px; width:100%;">🎲 じゃんけん勝負</button>
+              </div>
+            </div>
+            <div class="p-console">
+              <div class="p-btn-grid">
+                <div class="p-c-btn">◀ 戻る</div>
+                <div class="p-c-btn gb">S</div>
+                <div class="p-c-btn">⏹️</div>
+                <div class="p-c-btn wide">▶</div>
+                <div class="p-c-btn">⏭</div>
+              </div>
+              <div class="p-sophie-box"><img src="./sophie_shake.png"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="phone-code">O</div>
+      <div class="phone-label">④ ソフィーと話す<br><span>state = "notice"</span></div>
+    </div>
+
+    <div class="arrow-right">→</div>
+
+    <!-- ⑤ 天命診断メニュー -->
+    <div class="phone-wrap">
+      <div class="phone">
+        <div class="phone-screen">
+          <div class="p-monitor-wrap">
+            <img src="./fortune_sophie.jpeg" alt="ソフィー占い">
+          </div>
+          <div class="p-r-side">
+            <div class="p-label-bar"><div class="p-user-name">👑 マスター</div></div>
+            <div class="p-scroll">
+              <div class="p-shdr"><img src="./sophie_face.png">🔮 天命診断</div>
+              <div style="padding:6px 8px;">
+                <button class="p-act afo" style="margin-bottom:4px; width:100%;">👥 人物帳</button>
+                <button class="p-act afo" style="margin-bottom:4px; width:100%;">🌟 あなたのご相談<span class="pb pbai">Sonnet</span></button>
+                <button class="p-act afo" style="margin-bottom:4px; width:100%;">👤 あの人どんな人<span class="pb pbai">Sonnet</span></button>
+                <button class="p-act afo" style="margin-bottom:4px; width:100%;">💑 相性を見てもらう<span class="pb pbai">Sonnet</span></button>
+              </div>
+            </div>
+            <div class="p-console">
+              <div class="p-btn-grid">
+                <div class="p-c-btn">◀ 戻る</div>
+                <div class="p-c-btn">命式表</div>
+              </div>
+              <div class="p-sophie-box"><img src="./sophie_shake.png"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="phone-code">F1</div>
+      <div class="phone-label">⑤ 天命診断メニュー</div>
+    </div>
+
+    <div class="arrow-right">→</div>
+
+    <!-- ⑥ 鑑定フォーム -->
+    <div class="phone-wrap">
+      <div class="phone">
+        <div class="phone-screen">
+          <div class="p-monitor-wrap">
+            <img src="./fortune_sophie.jpeg" alt="ソフィー占い">
+          </div>
+          <div class="p-r-side">
+            <div class="p-label-bar"><div class="p-user-name">👑 マスター</div></div>
+            <div class="p-scroll">
+              <div class="p-shdr">🌟 あなたのご相談</div>
+              <div style="padding:6px 8px;">
+                <div class="fr"><div class="fl">生年月日</div><input class="fi" value="1980-01-15" readonly></div>
+                <div class="fr">
+                  <div class="fl">性別</div>
+                  <div class="chips"><span class="chip on">男性</span><span class="chip">女性</span></div>
+                </div>
+                <div class="fr">
+                  <div class="fl">テーマ</div>
+                  <div class="chips" style="margin-bottom:2px;">
+                    <span class="chip fo">総合運</span><span class="chip">仕事</span><span class="chip">恋愛</span><span class="chip">金運</span>
+                  </div>
+                  <div class="chips">
+                    <span class="chip">1ヶ月</span><span class="chip">1年</span><span class="chip">10年</span><span class="chip">自由</span>
+                  </div>
+                </div>
+                <button class="p-act" style="background:#9b59b6; border-color:#9b59b6; width:100%; margin-top:6px;">🔮 鑑定する</button>
+              </div>
+            </div>
+            <div class="p-console">
+              <div class="p-btn-grid">
+                <div class="p-c-btn">◀ 戻る</div>
+                <div class="p-c-btn">命式表</div>
+              </div>
+              <div class="p-sophie-box"><img src="./sophie_shake.png"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="phone-code">F3a</div>
+      <div class="phone-label">⑥ 鑑定フォーム<br><span>showMyFortune()</span></div>
+    </div>
+
+    <div class="arrow-right">→</div>
+
+    <!-- ⑦ 鑑定結果 -->
+    <div class="phone-wrap">
+      <div class="phone">
+        <div class="phone-screen">
+          <div class="p-monitor-wrap">
+            <img src="./fortune_sophie.jpeg" alt="ソフィー占い">
+          </div>
+          <div class="p-r-side">
+            <div class="p-label-bar"><div class="p-user-name">👑 マスター</div></div>
+            <div class="p-scroll">
+              <div class="p-shdr">🔮 鑑定結果</div>
+              <div style="padding:6px 8px;">
+                <div class="p-fresult">
+                  <div class="p-ftitle">✨ 総合運（2024年）</div>
+                  <div class="p-ftext">天干「壬」水の流れのように、柔軟に変化を受け入れる一年になりそうです。仕事面では新しいチャンスが…</div>
+                </div>
+                <div class="p-meishiki">
+                  <div class="p-mtitle">📊 命式表（干支タップで詳細）</div>
+                  <div class="p-mgrid">
+                    <div class="mh">年</div><div class="mh">月</div><div class="mh">日</div><div class="mh">時</div>
+                    <div class="mc">壬</div><div class="mc">甲</div><div class="mc">癸</div><div class="mc">丙</div>
+                    <div class="mc">子</div><div class="mc">寅</div><div class="mc">卯</div><div class="mc">午</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="p-console">
+              <div class="p-btn-grid">
+                <div class="p-c-btn">◀ 戻る</div>
+                <div class="p-c-btn">命式表</div>
+              </div>
+              <div class="p-sophie-box"><img src="./sophie_shake.png"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="phone-code">F4</div>
+      <div class="phone-label">⑦ 鑑定結果<br><span>命式表（折りたたみ）付き</span></div>
+    </div>
+
+  </div>
+</div>
+
+<hr class="sep">
+
+<!-- ============================================================
+     SECTION 3: お店を探す
+  ============================================================ -->
+<div class="section">
+  <div class="section-title">3. いいお店を探す（restaurant.js）</div>
+  <div class="phones">
+
+    <!-- ⑧ 検索フォーム -->
+    <div class="phone-wrap">
+      <div class="phone">
+        <div class="phone-screen">
+          <div class="p-monitor-wrap">
+            <img src="./front_sophie.jpeg" alt="ソフィー">
+          </div>
+          <div class="p-r-side">
+            <div class="p-label-bar"><div class="p-user-name">マスター</div></div>
+            <div class="p-scroll">
+              <div class="p-shdr"><img src="./sophie_face.png">🍽️ いいお店を探す</div>
+              <div style="padding:6px 8px;">
+                <div class="fr"><div class="fl">エリア</div><input class="fi" value="新宿" readonly></div>
+                <div class="fr">
+                  <div class="fl">ジャンル</div>
+                  <div class="chips"><span class="chip on">和食</span><span class="chip">イタリアン</span><span class="chip">中華</span><span class="chip">居酒屋</span></div>
+                </div>
+                <div class="fr">
+                  <div class="fl">予算感</div>
+                  <div class="chips"><span class="chip">〜3千円</span><span class="chip on">3〜5千円</span><span class="chip">5千円〜</span></div>
+                </div>
+                <div class="fr"><div class="fl">こだわり</div><input class="fi" value="個室あり、落ち着いた雰囲気" readonly></div>
+                <button class="p-act ag" style="width:100%; margin-top:6px;">🔍 ソフィーに探してもらう</button>
+              </div>
+            </div>
+            <div class="p-console">
+              <div class="p-btn-grid">
+                <div class="p-c-btn" style="flex:4;">検索条件を変更する</div>
+              </div>
+              <div class="p-sophie-box"><img src="./sophie_shake.png"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="phone-code">R1</div>
+      <div class="phone-label">⑧ 検索フォーム<br><span>state = "screening"</span></div>
+    </div>
+
+    <div class="arrow-right">→</div>
+
+    <!-- ⑨ 検索結果 -->
+    <div class="phone-wrap">
+      <div class="phone">
+        <div class="phone-screen">
+          <div class="p-monitor-wrap">
+            <img src="./front_sophie.jpeg" alt="ソフィー">
+          </div>
+          <div class="p-r-side">
+            <div class="p-label-bar"><div class="p-user-name">マスター</div></div>
+            <div class="p-scroll">
+              <div class="p-shdr"><img src="./sophie_face.png">🍽️ おすすめのお店</div>
+              <div style="padding:6px 8px;">
+                <div class="p-rcard">
+                  <div class="p-rtitle">🥇 第1候補：竹乃家</div>
+                  <div class="p-rsub">新宿3丁目・和食・個室あり<br>5,000〜8,000円/人</div>
+                  <div class="p-rbtns">
+                    <div class="p-rbtn">食べログ検索</div>
+                    <div class="p-rbtn">⭐ メモ</div>
+                  </div>
+                </div>
+                <div class="p-rcard">
+                  <div class="p-rtitle">🥈 第2候補：あじさい亭</div>
+                  <div class="p-rsub">西新宿・割烹・掘りごたつ個室<br>4,000〜6,000円/人</div>
+                  <div class="p-rbtns">
+                    <div class="p-rbtn">食べログ検索</div>
+                    <div class="p-rbtn">⭐ メモ</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="p-console">
+              <div class="p-btn-grid">
+                <div class="p-c-btn" style="flex:4;">検索条件を変更する</div>
+              </div>
+              <div class="p-sophie-box"><img src="./sophie_shake.png"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="phone-code">R2</div>
+      <div class="phone-label">⑨ 検索結果<br><span>state = "result" / ⭐→ノート保存</span></div>
+    </div>
+
+  </div>
+</div>
+
+<hr class="sep">
+
+<!-- ============================================================
+     SECTION 4: ノート（M1）
+  ============================================================ -->
+<div class="section">
+  <div class="section-title">4. ソフィーのお客様ノート（favorite.js）</div>
+  <div class="phones">
+
+    <!-- ⑩ ノート M1 フォルダ -->
+    <div class="phone-wrap">
+      <div class="phone">
+        <div class="phone-screen">
+          <div class="p-monitor-wrap">
+            <img src="./front_sophie.jpeg" alt="ソフィー">
+          </div>
+          <div class="p-r-side">
+            <div class="p-label-bar"><div class="p-user-name">マスター</div></div>
+            <div class="p-scroll">
+              <div class="p-shdr"><img src="./sophie_face.png">📖 お客様ノート M1</div>
+              <div class="p-nitem"><div class="p-nico">🎵</div><div><div class="p-nlbl">お好きな歌</div><div class="p-nsub">❤️ お気に入り曲 / マイプレイリスト</div></div></div>
+              <div class="p-nitem"><div class="p-nico">🍸</div><div><div class="p-nlbl">お好きなお酒</div><div class="p-nsub">❤️ お気に入り銘柄</div></div></div>
+              <div class="p-nitem"><div class="p-nico">🍽️</div><div><div class="p-nlbl">気になるお店</div><div class="p-nsub">追加・編集・削除</div></div></div>
+              <div class="p-nitem"><div class="p-nico">🎲</div><div><div class="p-nlbl">ソフィーとの記録</div><div class="p-nsub">じゃんけん対戦履歴</div></div></div>
+              <div class="p-nitem"><div class="p-nico">📤</div><div><div class="p-nlbl">バックアップ・復元</div><div class="p-nsub">JSON / クリップボード</div></div></div>
+            </div>
+            <div class="p-console">
+              <div class="p-btn-grid">
+                <div class="p-c-btn">◀ 戻る</div>
+                <div class="p-c-btn gb">S</div>
+                <div class="p-c-btn">⏹️</div>
+                <div class="p-c-btn wide">▶</div>
+                <div class="p-c-btn">⏭</div>
+              </div>
+              <div class="p-sophie-box"><img src="./sophie_shake.png"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="phone-code">M1</div>
+      <div class="phone-label">⑩ ノート（M1）フォルダ選択<br><span>state = "techo"</span></div>
+    </div>
+
+  </div>
+</div>
+
+<hr class="sep">
+
+<!-- ============================================================
+     SECTION 5: マイページ
+  ============================================================ -->
+<div class="section">
+  <div class="section-title">5. マイページ（mypage.js）</div>
+  <div class="phones">
+
+    <!-- ⑪ ご利用案内（未ログイン） -->
+    <div class="phone-wrap">
+      <div class="phone">
+        <div class="phone-screen">
+          <div class="p-monitor-wrap">
+            <img src="./front_sophie.jpeg" alt="ソフィー">
+          </div>
+          <div class="p-r-side">
+            <div class="p-label-bar"><div class="p-login-btn">Gログイン</div></div>
+            <div class="p-scroll">
+              <div class="p-panel">
+                <div class="p-phdr"><img src="./sophie_face.png">🍸 BARソフィーへようこそ</div>
+                <div class="p-pbody">
+                  <div style="color:#888; font-size:6.5px; line-height:1.7; background:#1a1a1a; border-radius:4px; padding:5px; margin-bottom:5px;">音楽・お酒・占い・お店探しを楽しめる、大人のためのバー体験アプリです。</div>
+                  <div style="color:#7fd97f; font-size:7px; font-weight:bold; margin-bottom:3px;">🎵 今すぐ無料で楽しめること</div>
+                  <div style="color:#aaa; font-size:6.5px; line-height:1.7; padding-left:5px; margin-bottom:5px;">🎵 600曲の音楽リクエスト<br>📖 360話のお酒の話<br>🍸 800銘柄のお酒データベース<br>🎲 じゃんけん勝負</div>
+                  <div style="color:#5ba3d9; font-size:7px; font-weight:bold; margin-bottom:3px;">✨ 無料登録（Googleログイン）で使えること</div>
+                  <div style="color:#aaa; font-size:6.5px; line-height:1.7; padding-left:5px; margin-bottom:5px;">🔮 ソフィーの天命診断<br>🍽️ いいお店を探す（1日1回）<br>📖 ソフィーのノート</div>
+                  <div style="color:#f0b56e; font-size:7px; font-weight:bold; margin-bottom:3px;">👑 ご常連パスカード（月額300円）</div>
+                  <div style="color:#aaa; font-size:6.5px; line-height:1.7; padding-left:5px; margin-bottom:6px;">🔮 特別鑑定チケット5枚/月<br>🍽️ お店検索1日3回<br>✨ 今後追加の特別機能</div>
+                  <button class="p-wbtn" style="background:#4285f4; color:#fff;">Googleで無料登録する</button>
+                  <button class="p-wbtn" style="background:#34495e; color:#fff;">まずは音楽を楽しむ</button>
+                </div>
+              </div>
+            </div>
+            <div class="p-console">
+              <div class="p-btn-grid">
+                <div class="p-c-btn">SHOP</div>
+                <div class="p-c-btn">ノート</div>
+                <div class="p-c-btn">⏹️</div>
+                <div class="p-c-btn wide">▶</div>
+                <div class="p-c-btn">⏭</div>
+              </div>
+              <div class="p-sophie-box"><img src="./sophie_shake.png"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="phone-code">P1</div>
+      <div class="phone-label">⑪ ご利用案内（未ログイン）<br><span>showWelcomePage()</span></div>
+    </div>
+
+    <!-- ⑫ マイページ（free） -->
+    <div class="phone-wrap">
+      <div class="phone">
+        <div class="phone-screen">
+          <div class="p-monitor-wrap">
+            <img src="./front_sophie.jpeg" alt="ソフィー">
+          </div>
+          <div class="p-r-side">
+            <div class="p-label-bar"><div class="p-user-name">山田 太郎</div></div>
+            <div class="p-scroll">
+              <div class="p-panel">
+                <div class="p-phdr"><img src="./sophie_face.png">👤 マイページ</div>
+                <div class="p-pbody">
+                  <div class="p-sbox">
+                    <div class="p-slbl" style="margin-bottom:3px;">表示名</div>
+                    <div style="display:flex; gap:3px;">
+                      <input class="fi" value="山田 太郎" readonly style="flex:1; height:20px;">
+                      <button style="background:#0096BF; color:#fff; border:none; border-radius:2px; padding:0 5px; height:20px; font-size:6px; white-space:nowrap;">保存</button>
+                    </div>
+                  </div>
+                  <div class="p-sbox">
+                    <div class="p-srow"><div class="p-slbl">会員ステータス</div><div class="p-sval" style="color:#7fd97f;">無料会員</div></div>
+                    <div class="p-srow"><div class="p-slbl">特別鑑定チケット</div><div class="p-sval" style="color:#c39bd3;">🎫 0枚</div></div>
+                  </div>
+                  <div class="p-ubox">
+                    <div class="p-utitle">👑 ご常連パスカードにアップグレード</div>
+                    <div class="p-utext">月額300円で特別鑑定チケット5枚/月・お店検索1日3回・その他特典</div>
+                    <div class="p-ucta">ご常連パスカードに加入する（月額300円）</div>
+                  </div>
+                  <button class="p-wbtn" style="background:#1a1a2a; color:#9b59b6; border:1px solid #6a3a8a;">📋 ご利用案内を見る</button>
+                  <button class="p-wbtn" style="background:#2a1a1a; color:#e74c3c; border:1px solid #6a2a2a;">ログアウト</button>
+                  <button class="p-wbtn" style="background:#34495e; color:#fff;">閉じる</button>
+                </div>
+              </div>
+            </div>
+            <div class="p-console">
+              <div class="p-btn-grid">
+                <div class="p-c-btn">SHOP</div>
+                <div class="p-c-btn">ノート</div>
+                <div class="p-c-btn">⏹️</div>
+                <div class="p-c-btn wide">▶</div>
+                <div class="p-c-btn">⏭</div>
+              </div>
+              <div class="p-sophie-box"><img src="./sophie_shake.png"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="phone-code">P2</div>
+      <div class="phone-label">⑫ マイページ（無料会員）<br><span>showMyPage() / free</span></div>
+    </div>
+
+    <!-- ⑬ マイページ（active） -->
+    <div class="phone-wrap">
+      <div class="phone">
+        <div class="phone-screen">
+          <div class="p-monitor-wrap">
+            <img src="./front_sophie.jpeg" alt="ソフィー">
+          </div>
+          <div class="p-r-side">
+            <div class="p-label-bar"><div class="p-user-name">山田 太郎</div></div>
+            <div class="p-scroll">
+              <div class="p-panel">
+                <div class="p-phdr"><img src="./sophie_face.png">👤 マイページ</div>
+                <div class="p-pbody">
+                  <div class="p-sbox">
+                    <div class="p-slbl" style="margin-bottom:3px;">表示名</div>
+                    <div style="display:flex; gap:3px;">
+                      <input class="fi" value="山田 太郎" readonly style="flex:1; height:20px;">
+                      <button style="background:#0096BF; color:#fff; border:none; border-radius:2px; padding:0 5px; height:20px; font-size:6px; white-space:nowrap;">保存</button>
+                    </div>
+                  </div>
+                  <div class="p-sbox">
+                    <div class="p-srow"><div class="p-slbl">会員ステータス</div><div class="p-sval">ご常連パスカード会員</div></div>
+                    <div class="p-srow"><div class="p-slbl">特別鑑定チケット</div><div class="p-sval" style="color:#c39bd3;">🎫 3枚</div></div>
+                  </div>
+                  <button class="p-wbtn" style="background:#1a1a2a; color:#9b59b6; border:1px solid #6a3a8a;">📋 ご利用案内を見る</button>
+                  <button class="p-wbtn" style="background:#2a1a1a; color:#e74c3c; border:1px solid #6a2a2a;">ログアウト</button>
+                  <button class="p-wbtn" style="background:#34495e; color:#fff;">閉じる</button>
+                </div>
+              </div>
+            </div>
+            <div class="p-console">
+              <div class="p-btn-grid">
+                <div class="p-c-btn">SHOP</div>
+                <div class="p-c-btn">ノート</div>
+                <div class="p-c-btn">⏹️</div>
+                <div class="p-c-btn wide">▶</div>
+                <div class="p-c-btn">⏭</div>
+              </div>
+              <div class="p-sophie-box"><img src="./sophie_shake.png"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="phone-code">P2</div>
+      <div class="phone-label">⑬ マイページ（ご常連パスカード会員）<br><span>showMyPage() / active</span></div>
+    </div>
+
+  </div>
+</div>
+
+<hr class="sep">
+<div style="color:#2a2a2a; font-size:0.65rem; text-align:right;">
+  BARソフィー スマホ画面モックアップ — BarSophie_TEST / Claude Sonnet 4.6
+</div>
+
+</body>
+</html>

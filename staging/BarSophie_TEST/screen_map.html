@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BARソフィー 画面構成図</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #0a0a0a; color: #ddd;
+    font-family: 'Hiragino Kaku Gothic ProN', 'メイリオ', sans-serif;
+    font-size: 13px; padding: 20px;
+  }
+  h1 { color: #f0b56e; font-size: 1.2rem; margin-bottom: 6px; }
+  .subtitle { color: #666; font-size: 0.75rem; margin-bottom: 24px; }
+
+  /* ── セクションタイトル ── */
+  .section-title {
+    font-size: 0.7rem; font-weight: bold; letter-spacing: 1px;
+    text-transform: uppercase; color: #555; margin: 28px 0 10px;
+    border-bottom: 1px solid #1a1a1a; padding-bottom: 4px;
+  }
+
+  /* ── カード ── */
+  .card {
+    border-radius: 8px; padding: 10px 14px;
+    display: inline-block; min-width: 120px;
+    line-height: 1.6; vertical-align: top;
+  }
+  .card .label { font-weight: bold; font-size: 0.85rem; }
+  .card .sub   { font-size: 0.72rem; color: #aaa; margin-top: 3px; }
+  .card .badge {
+    font-size: 0.62rem; padding: 1px 6px; border-radius: 10px;
+    margin-left: 6px; vertical-align: middle;
+  }
+
+  /* カラー定義 */
+  .c-entry   { background:#1a1a1a; border:1px solid #444; }
+  .c-root    { background:#111; border:2px solid #f0b56e; }
+  .c-music   { background:#1a2a1a; border:1px solid #4CAF50; }
+  .c-liquor  { background:#2a1a2a; border:1px solid #8e44ad; }
+  .c-talk    { background:#1a2a3a; border:1px solid #3498db; }
+  .c-sophie  { background:#1a1a2e; border:1px solid #ff69b4; }
+  .c-news    { background:#1a2a3a; border:1px solid #00d2ff; }
+  .c-fortune { background:#2a1a3a; border:1px solid #9b59b6; }
+  .c-rest    { background:#1a3a2a; border:1px solid #27ae60; }
+  .c-techo   { background:#1a2a3a; border:1px solid #5ba3d9; }
+  .c-mypage  { background:#2a2a1a; border:1px solid #f0b56e; }
+  .c-stripe  { background:#1a2a1a; border:1px solid #27ae60; }
+  .c-access  { background:#2a1a1a; border:1px solid #e74c3c; }
+  .c-console { background:#111; border:1px solid #555; }
+
+  .badge-free    { background:#1a3a1a; color:#7fd97f; border:1px solid #3a6a4a; }
+  .badge-login   { background:#1a2a3a; color:#5ba3d9; border:1px solid #1a5276; }
+  .badge-ai      { background:#2a1a3a; color:#c39bd3; border:1px solid #6a3a8a; }
+
+  /* ── フロー ── */
+  .flow { display: flex; align-items: flex-start; flex-wrap: wrap; gap: 0; }
+  .arrow {
+    display: flex; align-items: center; padding: 0 6px;
+    color: #444; font-size: 1.1rem; align-self: center;
+    flex-shrink: 0;
+  }
+  .arrow.down {
+    display: block; text-align: center;
+    color: #444; font-size: 1.1rem;
+    margin: 4px 0 4px 20px; line-height: 1;
+  }
+
+  /* ── ツリー ── */
+  .tree { margin-left: 16px; border-left: 1px solid #333; padding-left: 16px; }
+  .tree-row {
+    display: flex; align-items: flex-start;
+    margin: 5px 0; position: relative;
+  }
+  .tree-row::before {
+    content: ''; position: absolute;
+    left: -16px; top: 14px;
+    width: 14px; height: 1px; background: #333;
+  }
+  .tree-row .card { flex-shrink: 0; }
+
+  /* ── グリッド ── */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+
+  /* ── テーブル ── */
+  table { border-collapse: collapse; width: 100%; }
+  th { background:#1a1a1a; color:#f0b56e; font-size:0.72rem;
+       padding:6px 10px; text-align:left; border:1px solid #222; }
+  td { padding:6px 10px; border:1px solid #1a1a1a; font-size:0.78rem; }
+  tr:nth-child(even) td { background:#0d0d0d; }
+  .ok  { color:#7fd97f; text-align:center; }
+  .ng  { color:#e74c3c; text-align:center; }
+  .num { color:#f0b56e; text-align:center; }
+
+  /* ── 区切り ── */
+  .sep { border:none; border-top:1px solid #1a1a1a; margin: 24px 0; }
+
+  /* ── ルートメニュー中央表示 ── */
+  .root-wrap {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 24px;
+    align-items: start;
+  }
+  .root-buttons { display: flex; flex-direction: column; gap: 6px; }
+
+  /* ── 画面レイアウト図 ── */
+  .screen-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+    border: 1px solid #444;
+    border-radius: 8px;
+    overflow: hidden;
+    max-width: 400px;
+  }
+  .screen-l { background:#111; padding:10px; border-right:1px solid #333; }
+  .screen-r { background:#0a0a0a; padding:0; }
+  .screen-label { color:#666; font-size:0.65rem; margin-bottom:6px; }
+  .monitor-box {
+    background:#000; border:1px solid #333; border-radius:4px;
+    height:80px; display:flex; align-items:center; justify-content:center;
+    color:#444; font-size:0.7rem;
+  }
+  .label-bar-box {
+    background:#050505; border-bottom:1px solid #1a1a1a;
+    height:24px; display:flex; align-items:center; justify-content:flex-end;
+    padding:0 8px; gap:6px;
+  }
+  .login-chip {
+    background:#4285f4; color:#fff; font-size:0.6rem;
+    padding:1px 6px; border-radius:3px;
+  }
+  .user-chip {
+    color:#f0b56e; font-size:0.65rem; cursor:pointer;
+  }
+  .scroll-box { padding:8px; }
+  .mini-btn {
+    background:#1a2a1a; border:1px solid #3a6a4a; color:#7fd97f;
+    border-radius:4px; padding:3px 8px; font-size:0.65rem;
+    display:block; width:100%; text-align:center; margin-bottom:4px;
+  }
+  .console-box {
+    background:#111; border-top:1px solid #222;
+    padding:4px 6px; display:flex; gap:3px;
+    grid-column: 1 / -1;
+  }
+  .c-btn-mini {
+    flex:1; background:#1a2a1a; color:#5c9e5c;
+    border:none; border-radius:2px; font-size:0.65rem;
+    padding:4px 2px; text-align:center;
+  }
+</style>
+</head>
+<body>
+
+<h1>🍸 BARソフィー 画面構成図</h1>
+<div class="subtitle">BarSophie_TEST — 2026-05-20 時点</div>
+
+<!-- ─────────────────────────────────── -->
+<div class="section-title">1. 画面レイアウト（メイン）</div>
+
+<div style="display:flex; gap:20px; align-items:flex-start; flex-wrap:wrap;">
+  <div>
+    <div class="screen-layout">
+      <div class="screen-l">
+        <div class="screen-label">左：モニター</div>
+        <div class="monitor-box">
+          front_sophie.jpeg<br>
+          <span style="font-size:0.6rem">（占い時: fortune_sophie.jpeg）</span>
+        </div>
+        <div style="color:#555; font-size:0.65rem; margin-top:6px; text-align:center;">
+          YouTube / TradingView<br>も切り替え表示
+        </div>
+      </div>
+      <div class="screen-r">
+        <div class="label-bar-box">
+          <span class="login-chip">Gログイン</span>
+          <span style="color:#555; font-size:0.6rem;">/ ログイン後→</span>
+          <span class="user-chip">👑 名前（タップでマイP）</span>
+        </div>
+        <div class="scroll-box">
+          <div style="color:#666; font-size:0.65rem; margin-bottom:4px;">nav-main / list-view</div>
+          <div class="mini-btn" style="background:#1a3a1a; color:#7fd97f;">🎵 音楽リクエスト</div>
+          <div class="mini-btn" style="background:#2a1a2a; color:#c39bd3; border-color:#6a3a8a;">🍸 お酒を探す</div>
+          <div class="mini-btn" style="background:#1a2a3a; color:#5ba3d9;">🥃 お酒の話</div>
+          <div style="display:flex; gap:3px; margin-bottom:4px;">
+            <div class="mini-btn" style="flex:1;">ソフィーと話す</div>
+            <div class="mini-btn" style="flex:1;">📰 NEWS</div>
+          </div>
+        </div>
+      </div>
+      <div class="console-box">
+        <div class="c-btn-mini">SHOP</div>
+        <div class="c-btn-mini">ノート</div>
+        <div class="c-btn-mini">⏹️</div>
+        <div class="c-btn-mini" style="flex:1.5;">▶</div>
+        <div class="c-btn-mini">⏭</div>
+      </div>
+    </div>
+    <div style="color:#555; font-size:0.65rem; margin-top:6px;">※コンソールは画面状態で変化（後述）</div>
+  </div>
+
+  <div style="flex:1; min-width:240px;">
+    <div class="section-title" style="margin-top:0;">コンソール状態対応</div>
+    <table>
+      <tr><th>nav.state</th><th>ボタン構成</th></tr>
+      <tr><td>none（ルート）</td><td>[SHOP][ノート][⏹️][▶][⏭]</td></tr>
+      <tr><td>tit / st / lq_list 等</td><td>[戻る][<span style="color:#0096BF;">S</span>][⏹️][▶][⏭]</td></tr>
+      <tr><td>card（銘柄カード）</td><td>[戻る][<span style="color:#0096BF;">S</span>][⏹️][◀][▶]</td></tr>
+      <tr><td>fortune（占い）</td><td>[戻る][命式表]</td></tr>
+      <tr><td>screening</td><td>[戻る][リセット][検索実行]</td></tr>
+      <tr><td>result</td><td>[検索条件を変更する]</td></tr>
+    </table>
+  </div>
+</div>
+
+<hr class="sep">
+
+<!-- ─────────────────────────────────── -->
+<div class="section-title">2. 起動フロー</div>
+
+<div class="flow">
+  <div class="card c-entry">
+    <div class="label">📱 エントリー画面</div>
+    <div class="sub">ソフィー画像<br>「BARソフィーに入る」</div>
+  </div>
+  <div class="arrow">→</div>
+  <div class="card c-entry">
+    <div class="label">💬 チャット画面（ラウンジ）</div>
+    <div class="sub">「いらっしゃいませ。」<br>「カウンターへ進む」</div>
+  </div>
+  <div class="arrow">→</div>
+  <div class="card c-root">
+    <div class="label">🍸 メイン画面</div>
+    <div class="sub">ルートメニュー表示</div>
+  </div>
+</div>
+
+<hr class="sep">
+
+<!-- ─────────────────────────────────── -->
+<div class="section-title">3. ルートメニューからの展開</div>
+
+<div class="tree">
+
+  <!-- 音楽 -->
+  <div class="tree-row">
+    <div class="card c-music" style="min-width:160px;">
+      <div class="label">🎵 音楽リクエスト</div>
+      <div class="sub">state = "tit"</div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="card c-music">
+      <div class="label">ジャンル選択</div>
+      <div class="sub">演歌/フォーク/歌謡曲…</div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="card c-music">
+      <div class="label">曲リスト</div>
+      <div class="sub">タップで再生</div>
+    </div>
+  </div>
+
+  <!-- お酒 -->
+  <div class="tree-row">
+    <div class="card c-liquor" style="min-width:160px;">
+      <div class="label">🍸 お酒を探す</div>
+      <div class="sub">state = "lq_main"</div>
+    </div>
+    <div style="margin-left:12px;">
+      <div class="flow" style="flex-wrap:wrap; gap:6px; margin-top:4px;">
+        <div class="card c-liquor">
+          <div class="label">カテゴリーリスト</div>
+          <div class="sub">state = "lq_list"<br>→ 銘柄カード（card）</div>
+        </div>
+        <div class="card c-liquor">
+          <div class="label">スクリーニング</div>
+          <div class="sub">state = "lq_scr"<br>→ 結果（lq_res）</div>
+        </div>
+        <div class="card c-liquor">
+          <div class="label">ID直接入力</div>
+          <div class="sub">→ 銘柄カード</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- お酒の話 -->
+  <div class="tree-row">
+    <div class="card c-talk" style="min-width:160px;">
+      <div class="label">🥃 お酒の話</div>
+      <div class="sub">state = "st"</div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="card c-talk">
+      <div class="label">カテゴリー選択</div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="card c-talk">
+      <div class="label">話リスト → 記事</div>
+      <div class="sub">全360話</div>
+    </div>
+  </div>
+
+  <!-- ソフィーと話す -->
+  <div class="tree-row">
+    <div class="card c-sophie" style="min-width:160px;">
+      <div class="label">💬 ソフィーと話す</div>
+      <div class="sub">state = "notice"</div>
+    </div>
+    <div style="margin-left:12px;">
+      <div style="display:flex; flex-direction:column; gap:5px; margin-top:4px;">
+        <div class="flow">
+          <div class="card c-sophie" style="min-width:140px;"><div class="label">📋 ご利用案内</div><div class="sub">→ showWelcomePage()</div></div>
+        </div>
+        <div class="flow">
+          <div class="card c-sophie" style="min-width:140px;"><div class="label">📖 このお店の使い方</div><div class="sub">テキスト表示</div></div>
+        </div>
+        <div class="flow">
+          <div class="card c-rest" style="min-width:140px;">
+            <div class="label">🍽️ いいお店を探す<span class="badge badge-login">要ログイン</span></div>
+            <div class="sub">→ restaurant.js</div>
+          </div>
+        </div>
+        <div class="flow">
+          <div class="card c-fortune" style="min-width:140px;">
+            <div class="label">🔮 天命診断<span class="badge badge-login">要ログイン</span></div>
+            <div class="sub">→ fortune.js</div>
+          </div>
+        </div>
+        <div class="flow">
+          <div class="card c-sophie" style="min-width:140px;"><div class="label">🎲 じゃんけん勝負</div><div class="sub">→ janken.js</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- NEWS -->
+  <div class="tree-row">
+    <div class="card c-news" style="min-width:160px;">
+      <div class="label">📰 NEWS・マーケット</div>
+      <div class="sub">state = "lq_main"</div>
+    </div>
+    <div style="margin-left:12px;">
+      <div class="grid-3" style="margin-top:4px; max-width:500px;">
+        <div class="card c-news"><div class="label">📺 テレ朝NEWS24</div><div class="sub">YouTube iframe</div></div>
+        <div class="card c-news"><div class="label">📷 ライブカメラ</div><div class="sub">日本4箇所<br>世界6箇所</div></div>
+        <div class="card c-news"><div class="label">📊 マーケット</div><div class="sub">TradingView<br>株価検索</div></div>
+        <div class="card c-news"><div class="label">📰 ニュース</div><div class="sub">ロイター/NHK<br>BBC/日経 等</div></div>
+        <div class="card c-news"><div class="label">🔗 便利情報</div><div class="sub">Wikipedia検索<br>フライトレーダー等</div></div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /tree -->
+
+<hr class="sep">
+
+<!-- ─────────────────────────────────── -->
+<div class="section-title">4. ソフィーの天命診断（fortune.js）<span class="badge badge-login" style="font-size:0.68rem; padding:2px 8px; margin-left:8px;">要ログイン</span></div>
+
+<div class="tree">
+  <div class="tree-row">
+    <div class="card c-fortune" style="min-width:200px;">
+      <div class="label">🔮 天命診断メニュー</div>
+      <div class="sub">showFortuneMenu()</div>
+    </div>
+  </div>
+  <div class="tree" style="margin-top:4px;">
+
+    <div class="tree-row">
+      <div class="card c-fortune" style="min-width:160px;">
+        <div class="label">👥 人物帳</div>
+        <div class="sub">people.js<br>追加・編集・削除</div>
+      </div>
+    </div>
+
+    <div class="tree-row">
+      <div class="card c-fortune" style="min-width:160px;">
+        <div class="label">🌟 あなたのご相談</div>
+        <div class="sub">showMyFortune()</div>
+      </div>
+      <div class="arrow">→</div>
+      <div class="card c-fortune">
+        <div class="label">入力フォーム</div>
+        <div class="sub">生年月日・性別・テーマ<br>総合運/仕事/恋愛/金/<br>1ヶ月/1年/10年/自由</div>
+      </div>
+      <div class="arrow">→</div>
+      <div class="card c-fortune">
+        <div class="label">AI鑑定<span class="badge badge-ai">Sonnet</span></div>
+        <div class="sub">→ 結果表示<br>📊 命式表（折りたたみ）<br>干支タップで詳細モーダル</div>
+      </div>
+    </div>
+
+    <div class="tree-row">
+      <div class="card c-fortune" style="min-width:160px;">
+        <div class="label">👤 あの人どんな人</div>
+        <div class="sub">showAboutPerson()</div>
+      </div>
+      <div class="arrow">→</div>
+      <div class="card c-fortune">
+        <div class="label">入力フォーム</div>
+        <div class="sub">生年月日・性別・テーマ<br>性格分析/SWOT/<br>アプローチ/地雷等</div>
+      </div>
+      <div class="arrow">→</div>
+      <div class="card c-fortune">
+        <div class="label">AI鑑定<span class="badge badge-ai">Sonnet</span></div>
+        <div class="sub">→ 結果表示</div>
+      </div>
+    </div>
+
+    <div class="tree-row">
+      <div class="card c-fortune" style="min-width:160px;">
+        <div class="label">💑 相性を見てもらう</div>
+        <div class="sub">compatibility.js</div>
+      </div>
+      <div class="arrow">→</div>
+      <div class="card c-fortune">
+        <div class="label">2人の生年月日・性別</div>
+        <div class="sub">→ AI鑑定 → 結果表示</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<hr class="sep">
+
+<!-- ─────────────────────────────────── -->
+<div class="section-title">5. いいお店を探す（restaurant.js）<span class="badge badge-login" style="font-size:0.68rem; padding:2px 8px; margin-left:8px;">要ログイン</span></div>
+
+<div class="flow">
+  <div class="card c-rest">
+    <div class="label">入力フォーム</div>
+    <div class="sub">エリア・ジャンル<br>予算感・こだわり</div>
+  </div>
+  <div class="arrow">→</div>
+  <div class="card c-rest">
+    <div class="label">AI検索<span class="badge badge-ai">Haiku+Web</span></div>
+  </div>
+  <div class="arrow">→</div>
+  <div class="card c-rest">
+    <div class="label">結果表示</div>
+    <div class="sub">第1・第2候補<br>食べログ検索ボタン<br>⭐メモ → ノートに保存</div>
+  </div>
+</div>
+
+<hr class="sep">
+
+<!-- ─────────────────────────────────── -->
+<div class="section-title">6. ソフィーのお客様ノート（favorite.js）<span class="badge badge-login" style="font-size:0.68rem; padding:2px 8px; margin-left:8px;">要ログイン</span></div>
+
+<div class="tree">
+  <div class="tree-row">
+    <div class="card c-techo" style="min-width:200px;">
+      <div class="label">📖 ノート M1（フォルダ選択）</div>
+      <div class="sub">state = "techo"</div>
+    </div>
+  </div>
+  <div class="tree" style="margin-top:4px;">
+    <div class="tree-row">
+      <div class="card c-techo"><div class="label">🎵 お好きな歌</div><div class="sub">❤️ お気に入り曲一覧<br>タップで再生<br>📋 マイプレイリスト</div></div>
+    </div>
+    <div class="tree-row">
+      <div class="card c-techo"><div class="label">🍸 お好きなお酒</div><div class="sub">❤️ お気に入り銘柄<br>タップで銘柄カード</div></div>
+    </div>
+    <div class="tree-row">
+      <div class="card c-techo"><div class="label">🍽️ 気になるお店</div><div class="sub">追加・編集・削除<br>リンクを開く</div></div>
+    </div>
+    <div class="tree-row">
+      <div class="card c-techo"><div class="label">🎲 ソフィーとの記録</div><div class="sub">じゃんけん対戦履歴</div></div>
+    </div>
+    <div class="tree-row">
+      <div class="card c-techo"><div class="label">📤/📥 バックアップ・復元</div><div class="sub">クリップボード経由<br>JSON形式</div></div>
+    </div>
+  </div>
+</div>
+
+<hr class="sep">
+
+<!-- ─────────────────────────────────── -->
+<div class="section-title">7. マイページ（mypage.js）</div>
+
+<div class="flow" style="align-items:flex-start; gap:12px; flex-wrap:wrap;">
+  <div>
+    <div style="color:#aaa; font-size:0.72rem; margin-bottom:6px;">未ログイン</div>
+    <div class="card c-mypage" style="min-width:200px;">
+      <div class="label">📋 ご利用案内</div>
+      <div class="sub">showWelcomePage()<br>機能説明・料金案内</div>
+    </div>
+    <div class="arrow down">↓</div>
+    <div class="card c-stripe" style="min-width:200px;">
+      <div class="label">[Googleで無料登録する]</div>
+      <div class="sub">→ signInWithGoogle()</div>
+    </div>
+  </div>
+
+  <div style="color:#444; font-size:1.5rem; align-self:center; padding:0 8px;">|</div>
+
+  <div>
+    <div style="color:#aaa; font-size:0.72rem; margin-bottom:6px;">ログイン済み（ユーザー名タップ）</div>
+    <div class="card c-mypage" style="min-width:240px;">
+      <div class="label">👤 マイページ</div>
+      <div class="sub">showMyPage()</div>
+    </div>
+    <div style="margin-top:8px; display:flex; flex-direction:column; gap:5px;">
+      <div class="card c-mypage"><div class="label">表示名変更</div><div class="sub">→ Firestore更新</div></div>
+      <div class="card c-mypage"><div class="label">会員ステータス・チケット枚数</div></div>
+      <div class="card c-stripe">
+        <div class="label">👑 ご常連パスカードに加入する</div>
+        <div class="sub">freeユーザーのみ表示<br>Stripe決済URL + ?client_reference_id=UID</div>
+      </div>
+      <div class="card c-mypage"><div class="label">📋 ご利用案内を見る</div><div class="sub">→ showWelcomePage()</div></div>
+      <div class="card c-mypage"><div class="label">ログアウト / 閉じる</div></div>
+    </div>
+  </div>
+</div>
+
+<hr class="sep">
+
+<!-- ─────────────────────────────────── -->
+<div class="section-title">8. アクセス制御マップ（window.ACCESS_RULES）</div>
+
+<table>
+  <tr>
+    <th>機能</th>
+    <th>guest<br>（未ログイン）</th>
+    <th>free<br>（無料会員）</th>
+    <th>active<br>（ご常連パスカード）</th>
+    <th>vip</th>
+    <th>admin</th>
+  </tr>
+  <tr>
+    <td>🎵 音楽・お酒・話</td>
+    <td class="ok">✅</td><td class="ok">✅</td><td class="ok">✅</td><td class="ok">✅</td><td class="ok">✅</td>
+  </tr>
+  <tr>
+    <td>🔮 天命診断（haiku）</td>
+    <td class="ng">❌</td><td class="ok">✅</td><td class="ok">✅</td><td class="ok">✅</td><td class="ok">✅</td>
+  </tr>
+  <tr>
+    <td>💑 相性診断</td>
+    <td class="ng">❌</td><td class="ok">✅</td><td class="ok">✅</td><td class="ok">✅</td><td class="ok">✅</td>
+  </tr>
+  <tr>
+    <td>📖 ノート</td>
+    <td class="ng">❌</td><td class="ok">✅</td><td class="ok">✅</td><td class="ok">✅</td><td class="ok">✅</td>
+  </tr>
+  <tr>
+    <td>🍽️ お店探し（回/日）</td>
+    <td class="num">0</td><td class="num">1</td><td class="num">3</td><td class="num">999</td><td class="ok">✅</td>
+  </tr>
+  <tr>
+    <td>🔮 特別鑑定（sonnet）</td>
+    <td class="ng">❌</td><td class="ng">❌</td><td class="num">チケット制</td><td class="num">10回</td><td class="ok">✅</td>
+  </tr>
+  <tr>
+    <td>🤖 AI会話</td>
+    <td class="ng">❌</td><td class="ng">❌</td><td class="ng">❌</td><td class="ok">✅</td><td class="ok">✅</td>
+  </tr>
+</table>
+
+<hr class="sep">
+
+<!-- ─────────────────────────────────── -->
+<div class="section-title">9. 課金フロー（Stripe → Firebase）</div>
+
+<div class="flow" style="flex-wrap:wrap; gap:8px; align-items:center;">
+  <div class="card c-mypage">
+    <div class="label">👤 マイページ</div>
+    <div class="sub">「ご常連パスカードに加入」<br>UIDをURLに付加</div>
+  </div>
+  <div class="arrow">→</div>
+  <div class="card c-stripe">
+    <div class="label">💳 Stripe決済</div>
+    <div class="sub">テスト: buy.stripe.com/test_...</div>
+  </div>
+  <div class="arrow">→</div>
+  <div class="card c-stripe">
+    <div class="label">Webhook送信</div>
+    <div class="sub">checkout.session.completed</div>
+  </div>
+  <div class="arrow">→</div>
+  <div class="card c-talk">
+    <div class="label">Cloudflare Workers</div>
+    <div class="sub">stripe-gas-proxy<br>302リダイレクト追跡</div>
+  </div>
+  <div class="arrow">→</div>
+  <div class="card c-talk">
+    <div class="label">GAS（fortune_api.gs）</div>
+    <div class="sub">handleStripeWebhook()<br>client_reference_id=UID取得</div>
+  </div>
+  <div class="arrow">→</div>
+  <div class="card c-mypage">
+    <div class="label">Firestore更新</div>
+    <div class="sub">users/{uid}.status<br>= 'active'</div>
+  </div>
+</div>
+
+<hr class="sep">
+
+<div style="color:#333; font-size:0.65rem; text-align:right;">
+  BARソフィー 画面構成図 — BarSophie_TEST / Claude Sonnet 4.6
+</div>
+
+</body>
+</html>
