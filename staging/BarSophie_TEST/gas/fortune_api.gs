@@ -22,7 +22,23 @@ function handleStripeWebhook(event) {
     const session = event.data.object;
     const uid = session.client_reference_id || '';
     if (uid) {
-      updateFirestoreUserStatus(uid, 'active');
+      const amount = session.amount_total || 0;
+      const mode = session.mode || '';
+      if (mode === 'subscription') {
+        // ご常連パスカード 月額サブスク
+        updateFirestoreUserStatus(uid, 'active', null);
+      } else if (amount === 200) {
+        // Ｓチケット 1枚
+        incrementPurchasedTickets(uid, 1);
+      } else if (amount === 500) {
+        // Ｓチケット 5枚セット
+        incrementPurchasedTickets(uid, 5);
+      } else if (amount === 360) {
+        // ご常連パスカード 1カ月お試し
+        const activeUntil = new Date();
+        activeUntil.setDate(activeUntil.getDate() + 30);
+        updateFirestoreUserStatus(uid, 'active', activeUntil.toISOString());
+      }
     }
   }
 
@@ -30,7 +46,7 @@ function handleStripeWebhook(event) {
     const subscription = event.data.object;
     const uid = subscription.metadata?.firebase_uid || '';
     if (uid) {
-      updateFirestoreUserStatus(uid, 'free');
+      updateFirestoreUserStatus(uid, 'free', null);
     }
   }
 
@@ -39,26 +55,50 @@ function handleStripeWebhook(event) {
     .setMimeType(ContentService.MimeType.JSON);
 }
 
-function updateFirestoreUserStatus(uid, status) {
+function updateFirestoreUserStatus(uid, status, activeUntil) {
   const projectId = 'bar-sophie';
   const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/users/${uid}`;
   const token = ScriptApp.getOAuthToken();
-  const payload = {
-    fields: {
-      status: { stringValue: status },
-      updatedAt: { timestampValue: new Date().toISOString() }
-    }
+  const fields = {
+    status: { stringValue: status },
+    updatedAt: { timestampValue: new Date().toISOString() }
   };
-  const options = {
+  const masks = ['status', 'updatedAt'];
+  if (activeUntil) {
+    fields.activeUntil = { stringValue: activeUntil };
+    masks.push('activeUntil');
+  }
+  const maskQuery = masks.map(f => `updateMask.fieldPaths=${f}`).join('&');
+  UrlFetchApp.fetch(`${url}?${maskQuery}`, {
     method: 'PATCH',
-    headers: {
-      'Authorization': 'Bearer ' + token,
-      'Content-Type': 'application/json'
-    },
-    payload: JSON.stringify(payload),
+    headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+    payload: JSON.stringify({ fields }),
     muteHttpExceptions: true
-  };
-  UrlFetchApp.fetch(url + '?updateMask.fieldPaths=status&updateMask.fieldPaths=updatedAt', options);
+  });
+}
+
+function incrementPurchasedTickets(uid, amount) {
+  const projectId = 'bar-sophie';
+  const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/users/${uid}`;
+  const token = ScriptApp.getOAuthToken();
+  const getRes = UrlFetchApp.fetch(url, {
+    method: 'GET',
+    headers: { 'Authorization': 'Bearer ' + token },
+    muteHttpExceptions: true
+  });
+  const userData = JSON.parse(getRes.getContentText());
+  const current = parseInt(userData.fields?.purchasedTickets?.integerValue || 0);
+  UrlFetchApp.fetch(`${url}?updateMask.fieldPaths=purchasedTickets&updateMask.fieldPaths=updatedAt`, {
+    method: 'PATCH',
+    headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+    payload: JSON.stringify({
+      fields: {
+        purchasedTickets: { integerValue: current + amount },
+        updatedAt: { timestampValue: new Date().toISOString() }
+      }
+    }),
+    muteHttpExceptions: true
+  });
 }
 
 function handleAIRequest(req) {

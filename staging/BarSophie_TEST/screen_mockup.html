@@ -33,6 +33,15 @@ h1 { color: #f0b56e; font-size: 1.3rem; margin-bottom: 4px; }
   border: 1px solid #f0b56e; padding: 2px 14px;
   border-radius: 12px;
 }
+.phone-annot { max-width: 220px; margin-top: 6px; }
+.ann {
+  font-size: 0.68rem; line-height: 1.7; margin-bottom: 3px;
+  display: flex; gap: 6px; align-items: flex-start;
+}
+.ann-bun  { color: #26c6da; font-weight: bold; font-family: monospace; flex-shrink: 0; }
+.ann-talk { color: #ffb3c1; font-weight: bold; font-family: monospace; flex-shrink: 0; }
+.ann-text-bun  { color: #26c6da; font-style: italic; }
+.ann-text-talk { color: #ffb3c1; font-style: italic; }
 
 /* ========== PHONE FRAME ========== */
 .phone {
@@ -293,13 +302,17 @@ h1 { color: #f0b56e; font-size: 1.3rem; margin-bottom: 4px; }
               <img src="./sophie_shake.png" alt="ソフィー">
             </div>
             <div class="p-lounge-chat">
-              いらっしゃいませ。本日もようこそ、BARソフィーへ。<br>どうぞごゆっくりなさってください。
+              いらっしゃいませ。
             </div>
             <div class="p-lounge-btn">カウンターへ進む</div>
           </div>
         </div>
       </div>
       <div class="phone-label">② ラウンジ（チャット画面）</div>
+      <div class="phone-annot">
+        <div class="ann"><span class="ann-bun">文</span><span class="ann-text-bun">「いらっしゃいませ。」</span></div>
+        <div class="ann"><span class="ann-talk">Ｔ</span><span class="ann-text-talk">「いらっしゃいませ。お待ちしておりました。いつものお席へどうぞ」</span></div>
+      </div>
     </div>
 
     <div class="arrow-right">→</div>
@@ -342,6 +355,9 @@ h1 { color: #f0b56e; font-size: 1.3rem; margin-bottom: 4px; }
       </div>
       <div class="phone-code">C</div>
       <div class="phone-label">③ メイン画面（ルートメニュー）</div>
+      <div class="phone-annot">
+        <div class="ann"><span class="ann-talk">Ｔ</span><span class="ann-text-talk">「今夜も有難うございます。今日はいかがなされますか？」</span></div>
+      </div>
     </div>
 
   </div>
@@ -350,10 +366,10 @@ h1 { color: #f0b56e; font-size: 1.3rem; margin-bottom: 4px; }
 <hr class="sep">
 
 <!-- ============================================================
-     SECTION 2: ソフィーと話す → 天命診断フロー
+     SECTION 2: ソフィーと話す → ソフィーの天命診断フロー
   ============================================================ -->
 <div class="section">
-  <div class="section-title">2. 「ソフィーと話す」→ 天命診断フロー</div>
+  <div class="section-title">2. 「ソフィーと話す」→ ソフィーの天命診断フロー</div>
   <div class="phones">
 
     <!-- ④ ソフィーと話す -->
@@ -371,7 +387,7 @@ h1 { color: #f0b56e; font-size: 1.3rem; margin-bottom: 4px; }
                 <button class="p-act adk" style="margin-bottom:4px; width:100%;">📋 ご利用案内</button>
                 <button class="p-act adk" style="margin-bottom:4px; width:100%;">📖 このお店の使い方</button>
                 <button class="p-act are" style="margin-bottom:4px; width:100%;">🍽️ いいお店を探す<span class="pb pbl">要ログイン</span></button>
-                <button class="p-act afo" style="margin-bottom:4px; width:100%;">🔮 天命診断<span class="pb pbl">要ログイン</span></button>
+                <button class="p-act afo" style="margin-bottom:4px; width:100%;">🔮 ソフィーの天命診断<span class="pb pbl">要ログイン</span></button>
                 <button class="p-act adk" style="margin-bottom:4px; width:100%;">🎲 じゃんけん勝負</button>
               </div>
             </div>
@@ -394,7 +410,7 @@ h1 { color: #f0b56e; font-size: 1.3rem; margin-bottom: 4px; }
 
     <div class="arrow-right">→</div>
 
-    <!-- ⑤ 天命診断メニュー -->
+    <!-- ⑤ ソフィーの天命診断 メニュー -->
     <div class="phone-wrap">
       <div class="phone">
         <div class="phone-screen">
@@ -404,7 +420,7 @@ h1 { color: #f0b56e; font-size: 1.3rem; margin-bottom: 4px; }
           <div class="p-r-side">
             <div class="p-label-bar"><div class="p-user-name">👑 マスター</div></div>
             <div class="p-scroll">
-              <div class="p-shdr"><img src="./sophie_face.png">🔮 天命診断</div>
+              <div class="p-shdr"><img src="./sophie_face.png">🔮 ソフィーの天命診断</div>
               <div style="padding:6px 8px;">
                 <button class="p-act afo" style="margin-bottom:4px; width:100%;">👥 人物帳</button>
                 <button class="p-act afo" style="margin-bottom:4px; width:100%;">🌟 あなたのご相談<span class="pb pbai">Sonnet</span></button>
@@ -423,7 +439,7 @@ h1 { color: #f0b56e; font-size: 1.3rem; margin-bottom: 4px; }
         </div>
       </div>
       <div class="phone-code">F1</div>
-      <div class="phone-label">⑤ 天命診断メニュー</div>
+      <div class="phone-label">⑤ ソフィーの天命診断 メニュー</div>
     </div>
 
     <div class="arrow-right">→</div>

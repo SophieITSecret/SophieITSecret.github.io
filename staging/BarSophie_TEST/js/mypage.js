@@ -113,7 +113,7 @@ export function showMyPage(onClose) {
 
     const nickname = userData.nickname || user.displayName || user.email;
     const status = userData.role === 'admin' ? 'admin' : (userData.status || 'free');
-    const tickets = userData.tickets || 0;
+    const totalTickets = (userData.dailyTickets || 0) + (userData.weeklyTickets || 0) + (userData.purchasedTickets || 0);
 
     const html = `
         <div style="margin:10px; border-radius:10px; border:2px solid transparent;
@@ -146,11 +146,36 @@ export function showMyPage(onClose) {
                             ${status === 'admin' ? '👑 ' : ''}${statusLabel[status] || '無料会員'}
                         </div>
                     </div>
-                    <div style="display:flex; justify-content:space-between;">
-                        <div style="color:#888; font-size:0.72rem;">特別鑑定チケット</div>
-                        <div style="color:#c39bd3; font-size:0.8rem;">🎫 ${tickets}枚</div>
+                    <div style="margin-top:2px;">
+                        <div style="color:#888; font-size:0.72rem; margin-bottom:5px;">Ｓチケット のこり</div>
+                        <div style="display:flex; justify-content:space-between; margin-bottom:3px;">
+                            <div style="color:#666; font-size:0.7rem;">今日分</div>
+                            <div style="color:#c39bd3; font-size:0.75rem;">🎫 ${userData.dailyTickets || 0}枚</div>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; margin-bottom:3px;">
+                            <div style="color:#666; font-size:0.7rem;">今週分</div>
+                            <div style="color:#c39bd3; font-size:0.75rem;">🎫 ${userData.weeklyTickets || 0}枚</div>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; border-top:1px solid #2a2a2a; padding-top:4px; margin-top:2px;">
+                            <div style="color:#666; font-size:0.7rem;">購入分</div>
+                            <div style="color:#c39bd3; font-size:0.75rem;">🎫 ${userData.purchasedTickets || 0}枚</div>
+                        </div>
                     </div>
                 </div>
+
+                ${(status === 'free' || status === 'active') ? `
+                <div style="background:#1a1a2a; border:1px solid #3a3a6a; border-radius:8px;
+                            padding:10px; margin-bottom:12px;">
+                    <div style="color:#c39bd3; font-size:0.8rem; font-weight:bold; margin-bottom:8px;">
+                        🎫 Ｓチケットを買い足す
+                    </div>
+                    <button id="mp-buy-t1" style="width:100%; background:#2a1a3a; color:#c39bd3;
+                        border:1px solid #5a3a7a; height:38px; border-radius:4px;
+                        font-size:0.82rem; margin-bottom:6px;">Ｓチケット１枚 ¥200</button>
+                    <button id="mp-buy-t5" style="width:100%; background:#2a1a3a; color:#c39bd3;
+                        border:1px solid #5a3a7a; height:38px; border-radius:4px;
+                        font-size:0.82rem;">Ｓチケット５枚セット ¥500</button>
+                </div>` : ''}
 
                 ${status === 'free' ? `
                 <div style="background:#1a2a1a; border:1px solid #3a6a4a; border-radius:8px;
@@ -159,12 +184,14 @@ export function showMyPage(onClose) {
                         👑 ご常連パスカードにアップグレード
                     </div>
                     <div style="color:#aaa; font-size:0.75rem; line-height:1.7; margin-bottom:8px;">
-                        月額300円で特別鑑定チケット5枚/月・<br>
-                        お店検索1日3回・その他特典が使えます
+                        毎日2枚・毎週5枚のＳチケット配給＋<br>占いB・店探しB1日10回
                     </div>
+                    <button id="mp-trial" style="width:100%; background:#1a3a1a; color:#7fd97f;
+                        border:1px solid #3a6a3a; height:38px; border-radius:4px;
+                        font-size:0.82rem; margin-bottom:6px;">1カ月お試し ¥360</button>
                     <button id="mp-upgrade" style="width:100%; background:#27ae60; color:#fff;
                         border:none; height:40px; border-radius:4px; font-size:0.85rem;
-                        font-weight:bold;">ご常連パスカードに加入する（月額300円）</button>
+                        font-weight:bold;">月額プラン ¥300/月</button>
                 </div>` : ''}
 
                 <button id="mp-guide" style="width:100%; background:#1a1a2a; color:#9b59b6;
@@ -198,12 +225,22 @@ export function showMyPage(onClose) {
         }
     };
 
+    const openStripe = (baseUrl) => {
+        const uid = window.currentUser?.uid || '';
+        window.open(baseUrl + '?client_reference_id=' + uid, '_blank');
+    };
+
+    if (status === 'free' || status === 'active') {
+        document.getElementById('mp-buy-t1').onclick = () =>
+            openStripe('https://buy.stripe.com/test_aFa6oJgpIfgIfb51ns9IQ03');
+        document.getElementById('mp-buy-t5').onclick = () =>
+            openStripe('https://buy.stripe.com/test_7sYeVfgpI1pS7ID4zE9IQ02');
+    }
     if (status === 'free') {
-        document.getElementById('mp-upgrade').onclick = () => {
-            const uid = window.currentUser?.uid || '';
-            const stripeUrl = 'https://buy.stripe.com/test_3cI00lflE9Wofb53vA9IQ00' + '?client_reference_id=' + uid;
-            window.open(stripeUrl, '_blank');
-        };
+        document.getElementById('mp-trial').onclick = () =>
+            openStripe('https://buy.stripe.com/test_aFa14pddw0lObYTc269IQ01');
+        document.getElementById('mp-upgrade').onclick = () =>
+            openStripe('https://buy.stripe.com/test_3cI00lflE9Wofb53vA9IQ00');
     }
 
     document.getElementById('mp-guide').onclick = () => showWelcomePage(onClose);

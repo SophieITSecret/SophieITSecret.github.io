@@ -32,27 +32,14 @@
         const db = getFirestore(app);
         const provider = new GoogleAuthProvider();
 
+        // fortune_haiku / restaurant_search: number = 1日あたり上限回数（B-level日次上限）
+        // fortune_sonnet: 'ticket' = チケット消費, 'unlimited' = 無制限
         window.ACCESS_RULES = {
-            guest: {
-                music: true, fortune_haiku: false, fortune_sonnet: false,
-                restaurant_search: 0, compatibility: false, about_person: false, note: false,
-            },
-            free: {
-                music: true, fortune_haiku: true, fortune_sonnet: false,
-                restaurant_search: 1, compatibility: true, about_person: true, note: true,
-            },
-            active: {
-                music: true, fortune_haiku: true, fortune_sonnet: 'ticket',
-                restaurant_search: 3, compatibility: true, about_person: true, note: true,
-            },
-            vip: {
-                music: true, fortune_haiku: true, fortune_sonnet: 10,
-                restaurant_search: 999, compatibility: true, about_person: true, note: true, ai_chat: true,
-            },
-            admin: {
-                music: true, fortune_haiku: true, fortune_sonnet: 999,
-                restaurant_search: 999, compatibility: true, about_person: true, note: true, ai_chat: true,
-            }
+            guest:  { music: true, fortune_haiku: 0,   fortune_sonnet: false,       restaurant_search: 0,   compatibility: false, note: false },
+            free:   { music: true, fortune_haiku: 1,   fortune_sonnet: 'ticket',    restaurant_search: 1,   compatibility: true,  note: true  },
+            active: { music: true, fortune_haiku: 10,  fortune_sonnet: 'ticket',    restaurant_search: 10,  compatibility: true,  note: true  },
+            vip:    { music: true, fortune_haiku: 999, fortune_sonnet: 'unlimited', restaurant_search: 999, compatibility: true,  note: true  },
+            admin:  { music: true, fortune_haiku: 999, fortune_sonnet: 'unlimited', restaurant_search: 999, compatibility: true,  note: true  },
         };
 
         window.currentUser = null;
@@ -65,11 +52,17 @@
                 const userSnap = await getDoc(userRef);
                 if (userSnap.exists()) {
                     window.currentUserData = userSnap.data();
+                    await window.checkAndResetTickets(window.currentUserData);
                 } else {
                     const newUser = {
                         uid: user.uid, email: user.email, name: user.displayName,
-                        status: 'free', role: 'user', tickets: 0,
-                        todaySearchCount: 0, lastSearchDate: null, createdAt: serverTimestamp(),
+                        status: 'free', role: 'user',
+                        purchasedTickets: 0,
+                        dailyTickets: 0, weeklyTickets: 1,
+                        lastDailyReset: null, lastWeeklyReset: null,
+                        todaySearchCount: 0, lastSearchDate: null,
+                        dailyFortuneBCount: 0, lastFortuneBDate: null,
+                        createdAt: serverTimestamp(),
                     };
                     await setDoc(userRef, newUser);
                     window.currentUserData = newUser;
@@ -106,36 +99,118 @@
                 window.showLoginPrompt();
                 return false;
             }
-            const role = userData.role === 'admin' ? 'admin' : userData.status || 'free';
+            const role = userData.role === 'admin' ? 'admin' : (userData.status || 'free');
+            if (role === 'admin' || role === 'vip') return true;
             const rules = window.ACCESS_RULES[role] || window.ACCESS_RULES.free;
-            if (role === 'admin') return true;
 
-            if (feature === 'restaurant_search') {
-                const limit = rules.restaurant_search;
-                const today = new Date().toDateString();
-                const lastDate = userData.lastSearchDate;
-                const count = lastDate === today ? (userData.todaySearchCount || 0) : 0;
-                if (count >= limit) { window.showSearchLimitPrompt(); return false; }
-                const userRef = doc(db, 'users', userData.uid);
-                await updateDoc(userRef, { todaySearchCount: count + 1, lastSearchDate: today });
-                window.currentUserData.todaySearchCount = count + 1;
-                window.currentUserData.lastSearchDate = today;
-                return true;
-            }
-
-            if (feature === 'fortune_sonnet') {
-                if (rules.fortune_sonnet === false) { window.showPurchasePrompt(); return false; }
-                if (rules.fortune_sonnet === 'ticket') {
-                    if (userData.tickets <= 0) { window.showPurchasePrompt(); return false; }
-                    const userRef = doc(db, 'users', userData.uid);
-                    await updateDoc(userRef, { tickets: userData.tickets - 1 });
-                    window.currentUserData.tickets--;
+            // B-level fortune (Haiku) — 日次上限
+            // app_m.js（メニュー表示）と fortune.js（選択時）の2回呼ばれるため
+            // 1回目でカウント消費 + skip-next フラグをセット、2回目はフラグで素通り
+            if (feature === 'fortune_haiku') {
+                const limit = rules.fortune_haiku || 0;
+                if (limit === 0) { window.showLoginPrompt(); return false; }
+                if (userData._skipNext_fortune_haiku) {
+                    userData._skipNext_fortune_haiku = false;
                     return true;
                 }
+                const today = new Date();
+                const todayStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+                const count = userData.lastFortuneBDate === todayStr ? (userData.dailyFortuneBCount || 0) : 0;
+                if (count >= limit) { window.showSearchLimitPrompt(); return false; }
+                const userRef = doc(db, 'users', userData.uid);
+                await updateDoc(userRef, { lastFortuneBDate: todayStr, dailyFortuneBCount: count + 1 });
+                userData.lastFortuneBDate = todayStr;
+                userData.dailyFortuneBCount = count + 1;
+                userData._skipNext_fortune_haiku = true;
                 return true;
             }
 
-            return rules[feature] === true;
+            // B-level restaurant search — 日次上限（同上、2回呼ばれる）
+            if (feature === 'restaurant_search') {
+                const limit = rules.restaurant_search || 0;
+                if (limit === 0) { window.showLoginPrompt(); return false; }
+                if (userData._skipNext_restaurant_search) {
+                    userData._skipNext_restaurant_search = false;
+                    return true;
+                }
+                const today = new Date();
+                const todayStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+                const count = userData.lastSearchDate === todayStr ? (userData.todaySearchCount || 0) : 0;
+                if (count >= limit) { window.showSearchLimitPrompt(); return false; }
+                const userRef = doc(db, 'users', userData.uid);
+                await updateDoc(userRef, { lastSearchDate: todayStr, todaySearchCount: count + 1 });
+                userData.lastSearchDate = todayStr;
+                userData.todaySearchCount = count + 1;
+                userData._skipNext_restaurant_search = true;
+                return true;
+            }
+
+            // A-level fortune (Sonnet) — チケット消費
+            if (feature === 'fortune_sonnet') {
+                if (!rules.fortune_sonnet) { window.showPurchasePrompt(); return false; }
+                if (rules.fortune_sonnet === 'unlimited') return true;
+                await window.checkAndResetTickets(userData);
+                const total = (userData.dailyTickets || 0) + (userData.weeklyTickets || 0) + (userData.purchasedTickets || 0);
+                if (total <= 0) { window.showPurchasePrompt(); return false; }
+                return await window.consumeTicket(userData);
+            }
+
+            return !!rules[feature];
+        };
+
+        // 日次・週次チケット（dailyTickets/weeklyTickets）のリセット判定と Firestore 反映
+        window.checkAndResetTickets = async (userData) => {
+            if (!userData || !userData.uid) return;
+            const role = userData.role === 'admin' ? 'admin' : (userData.status || 'free');
+            if (role !== 'free' && role !== 'active') return;
+
+            const today = new Date();
+            const pad = n => String(n).padStart(2, '0');
+            const todayStr = `${today.getFullYear()}-${pad(today.getMonth()+1)}-${pad(today.getDate())}`;
+            const dow = today.getDay();
+            const mon = new Date(today);
+            mon.setDate(today.getDate() - (dow === 0 ? 6 : dow - 1));
+            const monStr = `${mon.getFullYear()}-${pad(mon.getMonth()+1)}-${pad(mon.getDate())}`;
+
+            const updates = {};
+            if (userData.lastDailyReset !== todayStr) {
+                const alloc = role === 'active' ? 2 : 0;
+                updates.dailyTickets = alloc;
+                updates.lastDailyReset = todayStr;
+                userData.dailyTickets = alloc;
+                userData.lastDailyReset = todayStr;
+            }
+            if (userData.lastWeeklyReset !== monStr) {
+                const alloc = role === 'active' ? 5 : 1;
+                updates.weeklyTickets = alloc;
+                updates.lastWeeklyReset = monStr;
+                userData.weeklyTickets = alloc;
+                userData.lastWeeklyReset = monStr;
+            }
+            if (Object.keys(updates).length > 0) {
+                const userRef = doc(db, 'users', userData.uid);
+                await updateDoc(userRef, updates);
+            }
+        };
+
+        // dailyTickets → weeklyTickets → purchasedTickets の優先順でチケットを1枚消費
+        window.consumeTicket = async (userData) => {
+            const updates = {};
+            if ((userData.dailyTickets || 0) > 0) {
+                userData.dailyTickets -= 1;
+                updates.dailyTickets = userData.dailyTickets;
+            } else if ((userData.weeklyTickets || 0) > 0) {
+                userData.weeklyTickets -= 1;
+                updates.weeklyTickets = userData.weeklyTickets;
+            } else if ((userData.purchasedTickets || 0) > 0) {
+                userData.purchasedTickets -= 1;
+                updates.purchasedTickets = userData.purchasedTickets;
+            } else {
+                return false;
+            }
+            const userRef = doc(db, 'users', userData.uid);
+            await updateDoc(userRef, updates);
+            return true;
         };
 
         window.showLoginPrompt = () => {
