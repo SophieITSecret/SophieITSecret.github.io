@@ -11,3 +11,7 @@
 *.mp3
 *.wav
 *.m4a
+
+# Firebase / ツール系
+.firebase/
+.claude/
