@@ -121,7 +121,6 @@ function setup() {
             try { ytPlayer.mute(); ytPlayer.loadVideoById('2vfCbdmKhMw'); setTimeout(() => { ytPlayer.pauseVideo(); ytPlayer.unMute(); }, 1000); } catch (e) { }
         }
         playVoice("./voices_mp3/greeting.mp3", "いらっしゃいませ。");
-        playSophieVoice('entry');
     };
 
     document.getElementById('btn-to-bar').onclick = () => {
@@ -130,7 +129,6 @@ function setup() {
         window.speechSynthesis.cancel();
         talkAudio.pause();
         showRootMenu();
-        playVoice("./voices_mp3/menu_greeting.mp3", "いつもありがとうございます。今日はいかがされますか？");
         playSophieVoice('counter');
     };
 
