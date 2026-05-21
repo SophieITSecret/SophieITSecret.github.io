@@ -43,6 +43,7 @@ function formatResult(text, area = '', genre = '') {
 
 export async function showRestaurantSearch(savedArea = '', savedGenre = '', savedBudget = '', savedPoint = '') {
     if (!await window.checkAccess('restaurant_search')) return;
+    window.playSophieVoice?.('rest');
     const lv = document.getElementById('list-view');
     const nm = document.getElementById('nav-main');
     const prevHtml = lv ? lv.innerHTML : '';

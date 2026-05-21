@@ -126,6 +126,7 @@ export function openMusic() {
     });
 
     setListView(h, false);
+    window.playSophieVoice?.('music');
     if (_renderConsole) _renderConsole('standard');
 
     document.querySelectorAll('.item').forEach(el => el.onclick = (e) => {
@@ -144,6 +145,7 @@ function openSpecialSongs(type) {
     isMusicMode = true;
     _requestMode = false;
     renderSongList(type);
+    window.playSophieVoice?.('song');
 }
 
 function openSongs(a) {
@@ -151,6 +153,7 @@ function openSongs(a) {
     isMusicMode = true;
     _requestMode = false;
     renderSongList(a);
+    window.playSophieVoice?.('song');
 }
 
 export function renderSongList(title) {
@@ -252,6 +255,7 @@ export function openTalk() {
     let h = '<div class="label">お酒のジャンル</div>';
     [...new Set(nav.tData.map(d => d.g))].forEach(g => { h += `<div class="item" data-g="${g}" style="font-size:1.05rem; padding:0.4em 15px;">📁 ${g}</div>`; });
     setListView(h, false);
+    window.playSophieVoice?.('sake');
     if (_renderConsole) _renderConsole('standard');
 
     document.querySelectorAll('.item').forEach(el => el.onclick = (e) => {

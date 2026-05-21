@@ -141,6 +141,7 @@ export function openLiquorPortal() {
             <button id="dir-go">開く</button>
         </div>`;
     setListView(h, false);
+    window.playSophieVoice?.('find');
     if (_renderConsole) _renderConsole('standard');
 
     document.getElementById('btn-portal-cat').addEventListener('click', openMajor);

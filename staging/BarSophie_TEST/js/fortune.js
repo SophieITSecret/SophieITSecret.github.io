@@ -701,6 +701,7 @@ ${personInfo}`;
 }
 
 export function showFortuneMenu() {
+    window.playSophieVoice?.('fortune');
     const lv = document.getElementById('list-view');
     const nm = document.getElementById('nav-main');
     const prevHtml = lv ? lv.innerHTML : '';

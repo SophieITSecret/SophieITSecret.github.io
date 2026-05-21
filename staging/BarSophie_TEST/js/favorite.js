@@ -57,6 +57,7 @@ export function updateGameScore(winner) {
 
 export async function openNotice() {
     nav.updateNav("notice");
+    window.playSophieVoice?.('talk');
 
     const menuHtml = `
         <div style="margin:10px; border-radius:10px; border:2px solid transparent;
@@ -164,6 +165,7 @@ h += `<div style="padding:20px;">
       </div>`;
 
 setListView(h, false);
+        window.playSophieVoice?.('note');
         document.getElementById('f-mu').onclick = () => openTecho('S');
         document.getElementById('f-lq').onclick = () => openTecho('L');
         document.getElementById('f-rs').onclick = () => openRestaurantNote();

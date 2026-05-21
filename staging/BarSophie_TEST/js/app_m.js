@@ -16,6 +16,44 @@ import * as compatibility from './compatibility.js';
 import * as people from './people.js';
 import { showWelcomePage, showMyPage } from './mypage.js';
 
+const SOPHIE_VOICE_TIMING = {
+  entry:   0,
+  counter: 0,
+  music:   1000,
+  song:    1500,
+  sake:    1000,
+  find:    1000,
+  talk:    0,
+  rest:    500,
+  fortune: 1000,
+  news:    500,
+  note:    500,
+};
+
+function playSophieVoice(screen) {
+  const isNewComer = window.currentUserData?.createdAt &&
+    (Date.now() - window.currentUserData.createdAt.toMillis() < 24 * 60 * 60 * 1000);
+
+  let file;
+  if (isNewComer && ['entry', 'counter'].includes(screen)) {
+    file = `sophie_${screen}_nc.mp3`;
+  } else {
+    const rand = Math.random();
+    const code = screen === 'entry' || screen === 'counter'
+      ? (rand < 0.7 ? 'a' : 'b')
+      : (rand < 0.5 ? 'a' : rand < 0.7 ? 'b' : rand < 0.9 ? 'c' : 'r');
+    file = `sophie_${screen}_${code}.mp3`;
+  }
+
+  const delay = SOPHIE_VOICE_TIMING[screen] || 0;
+  setTimeout(() => {
+    const audio = new Audio(`voices_mp3/${file}`);
+    audio.play().catch(() => {});
+  }, delay);
+}
+
+window.playSophieVoice = playSophieVoice;
+
 let talkAudio;
 let ytPlayer = null;
 let ytPlayerReady = false;
@@ -83,6 +121,7 @@ function setup() {
             try { ytPlayer.mute(); ytPlayer.loadVideoById('2vfCbdmKhMw'); setTimeout(() => { ytPlayer.pauseVideo(); ytPlayer.unMute(); }, 1000); } catch (e) { }
         }
         playVoice("./voices_mp3/greeting.mp3", "いらっしゃいませ。");
+        playSophieVoice('entry');
     };
 
     document.getElementById('btn-to-bar').onclick = () => {
@@ -92,6 +131,7 @@ function setup() {
         talkAudio.pause();
         showRootMenu();
         playVoice("./voices_mp3/menu_greeting.mp3", "いつもありがとうございます。今日はいかがされますか？");
+        playSophieVoice('counter');
     };
 
     document.getElementById('btn-music').onclick = () => { if (music.openMusic) music.openMusic(); renderConsole('standard'); };
@@ -301,6 +341,7 @@ if (lv) { lv.style.display = 'block'; lv.innerHTML = menuHtml; }
 }
 
 function showNewsMarket() {
+    playSophieVoice('news');
     const lv = document.getElementById('list-view');
     const nm = document.getElementById('nav-main');
     if (nm) nm.style.display = 'none';
