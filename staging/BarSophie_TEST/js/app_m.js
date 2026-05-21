@@ -134,6 +134,13 @@ function setup() {
     setupNextButton();
     renderConsole('standard');
     showRootMenu();
+
+    window._appSetupDone = true;
+    if (window._handlePurchaseOnSetup) {
+        const fn = window._handlePurchaseOnSetup;
+        window._handlePurchaseOnSetup = null;
+        fn();
+    }
 }
 
 function playVoice(src, txt) {
