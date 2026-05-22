@@ -12,8 +12,8 @@
 
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-        import { getAuth, GoogleAuthProvider, signInWithRedirect, getRedirectResult,
-                 signOut, onAuthStateChanged }
+        import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithCustomToken,
+                 getRedirectResult, signOut, onAuthStateChanged }
             from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
         import { getFirestore, doc, getDoc, setDoc, updateDoc, serverTimestamp }
             from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
@@ -72,6 +72,8 @@
                     window.currentUserData.role = 'admin';
                 }
                 window.updateLoginUI();
+                const _loginMsg = document.getElementById('login-msg');
+                if (_loginMsg) _loginMsg.style.display = 'none';
 
                 // Stripe決済完了リダイレクト（?purchased=1）の処理
                 const _urlParams = new URLSearchParams(window.location.search);
@@ -125,16 +127,24 @@
             }
         });
 
-        getRedirectResult(auth).then(result => {
-            if (result?.user) console.log('redirect auth OK:', result.user.email);
-        }).catch(e => {
-            console.error('getRedirectResult error:', e.code, e.message);
-            // エラーを画面に表示（デバッグ用・後で削除）
-            alert('ログインエラー: ' + e.code + '\n' + e.message);
-        });
+        getRedirectResult(auth).catch(() => {});
+
+        // カスタムトークンログイン（GASからのリダイレクト受け取り）
+        const urlParams = new URLSearchParams(window.location.search);
+        const token = urlParams.get('token');
+        if (token) {
+            window.history.replaceState({}, document.title, window.location.pathname);
+            signInWithCustomToken(auth, token)
+                .then((userCredential) => {
+                    console.log('カスタムトークンログイン成功:', userCredential.user.email);
+                })
+                .catch((error) => {
+                    console.error('カスタムトークンログイン失敗:', error);
+                });
+        }
 
         window.signInWithGoogle = () => {
-            signInWithRedirect(auth, provider);
+            window.location.href = "https://script.google.com/macros/s/AKfycbzpsnurAO8-ueK1zppEqJpzxYit1lao1rZ12uNDxZDnfc66CAv5L8lckAJZdGD0q_Zj/exec";
         };
 
         window.signOutUser = async () => {
@@ -381,6 +391,11 @@
                     padding:3px 6px; font-size:0.75rem; cursor:pointer; margin-right:6px;">
                 </button>
                 <div id="user-info" style="display:none; align-items:center; margin-right:6px;"></div>
+            </div>
+            <div id="login-msg" style="display:none; padding:6px 10px;
+                background:#0d1f0d; border-bottom:1px solid #1a4a2a;
+                font-size:0.72rem; color:#a0d9a0; line-height:1.6;">
+                Googleのログイン画面が開きます。ログイン後、こちらの画面にお戻りください。初回のみのご苦労です。
             </div>
             <div class="scroll-area" id="main-scroll">
                 
