@@ -269,7 +269,7 @@ h1 { color: #f0b56e; font-size: 1.3rem; margin-bottom: 4px; }
 <body>
 
 <h1>🍸 BARソフィー スマホ画面モックアップ</h1>
-<div class="subtitle">BarSophie_TEST — 2026-05-20　portrait: モニター上 / ナビ下 の縦積みレイアウト</div>
+<div class="subtitle">BarSophie_TEST — 2026-05-22　portrait: モニター上 / ナビ下 の縦積みレイアウト</div>
 
 <!-- ============================================================
      SECTION 1: 起動フロー
@@ -356,7 +356,10 @@ h1 { color: #f0b56e; font-size: 1.3rem; margin-bottom: 4px; }
       <div class="phone-code">C</div>
       <div class="phone-label">③ メイン画面（ルートメニュー）</div>
       <div class="phone-annot">
-        <div class="ann"><span class="ann-talk">Ｔ</span><span class="ann-text-talk">「今夜も有難うございます。今日はいかがなされますか？」</span></div>
+        <div class="ann"><span class="ann-talk">Ｔ</span><span class="ann-text-talk">即時</span></div>
+        <div class="ann"><span class="ann-talk">NC</span><span class="ann-text-talk">「よくおいでいただきました。ぜひ今夜は楽しんでくださいね」</span></div>
+        <div class="ann"><span class="ann-talk">70%</span><span class="ann-text-talk">「いつも有難うございます。今夜はいかがなさいますか？」</span></div>
+        <div class="ann"><span class="ann-talk">30%</span><span class="ann-text-talk">「いつも有難うございます。今夜は、どんな夜にしましょうか」</span></div>
       </div>
     </div>
 
@@ -366,10 +369,114 @@ h1 { color: #f0b56e; font-size: 1.3rem; margin-bottom: 4px; }
 <hr class="sep">
 
 <!-- ============================================================
-     SECTION 2: ソフィーと話す → ソフィーの天命診断フロー
+     SECTION 2: 音楽リクエスト
   ============================================================ -->
 <div class="section">
-  <div class="section-title">2. 「ソフィーと話す」→ ソフィーの天命診断フロー</div>
+  <div class="section-title">2. 音楽リクエスト（music.js）</div>
+  <div class="phones">
+
+    <!-- S1 歌手リスト -->
+    <div class="phone-wrap">
+      <div class="phone">
+        <div class="phone-screen">
+          <div class="p-monitor-wrap">
+            <img src="./front_sophie.jpeg" alt="ソフィー">
+          </div>
+          <div class="p-r-side">
+            <div class="p-label-bar"><div class="p-login-btn">Gログイン</div></div>
+            <div class="p-scroll">
+              <div class="p-shdr"><img src="./sophie_face.png">🎵 音楽リクエスト</div>
+              <div style="padding:4px 8px;">
+                <button class="p-act ag" style="margin-bottom:2px; width:100%; font-size:7.5px;">宇多田ヒカル</button>
+                <button class="p-act ag" style="margin-bottom:2px; width:100%; font-size:7.5px;">椎名林檎</button>
+                <button class="p-act ag" style="margin-bottom:2px; width:100%; font-size:7.5px;">米津玄師</button>
+                <button class="p-act ag" style="margin-bottom:2px; width:100%; font-size:7.5px;">あいみょん</button>
+                <button class="p-act ag" style="margin-bottom:2px; width:100%; font-size:7.5px;">YOASOBI</button>
+                <button class="p-act ag" style="margin-bottom:2px; width:100%; font-size:7.5px;">竹内まりや</button>
+                <button class="p-act ag" style="margin-bottom:2px; width:100%; font-size:7.5px;">久保田利伸</button>
+              </div>
+            </div>
+            <div class="p-console">
+              <div class="p-btn-grid">
+                <div class="p-c-btn">◀ 戻る</div>
+                <div class="p-c-btn gb">S</div>
+                <div class="p-c-btn">⏹️</div>
+                <div class="p-c-btn wide">▶</div>
+                <div class="p-c-btn">⏭</div>
+              </div>
+              <div class="p-sophie-box"><img src="./sophie_shake.png"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="phone-code">S1</div>
+      <div class="phone-label">④ 歌手リスト<br><span>state = "music"</span></div>
+      <div class="phone-annot">
+        <div class="ann"><span class="ann-talk">Ｔ</span><span class="ann-text-talk">1秒後</span></div>
+        <div class="ann"><span class="ann-talk">50%</span><span class="ann-text-talk">「はい、音楽ですね」</span></div>
+        <div class="ann"><span class="ann-talk">20%</span><span class="ann-text-talk">「いい曲選んでくださいね」</span></div>
+        <div class="ann"><span class="ann-talk">20%</span><span class="ann-text-talk">「どんな音楽の気分ですか？」</span></div>
+        <div class="ann"><span class="ann-talk">10%</span><span class="ann-text-talk">「私も何か聞きたいです。」</span></div>
+      </div>
+    </div>
+
+    <div class="arrow-right">→</div>
+
+    <!-- S2 曲リスト -->
+    <div class="phone-wrap">
+      <div class="phone">
+        <div class="phone-screen">
+          <div class="p-monitor-wrap">
+            <img src="./front_sophie.jpeg" alt="ソフィー">
+          </div>
+          <div class="p-r-side">
+            <div class="p-label-bar"><div class="p-login-btn">Gログイン</div></div>
+            <div class="p-scroll">
+              <div class="p-shdr"><img src="./sophie_face.png">🎵 宇多田ヒカル</div>
+              <div style="padding:4px 8px;">
+                <button class="p-act ag" style="margin-bottom:2px; width:100%; font-size:7.5px;">First Love</button>
+                <button class="p-act ag" style="margin-bottom:2px; width:100%; font-size:7.5px;">Automatic</button>
+                <button class="p-act ag" style="margin-bottom:2px; width:100%; font-size:7.5px;">traveling</button>
+                <button class="p-act ag" style="margin-bottom:2px; width:100%; font-size:7.5px;">光</button>
+                <button class="p-act ag" style="margin-bottom:2px; width:100%; font-size:7.5px;">Flavor Of Life</button>
+                <button class="p-act ag" style="margin-bottom:2px; width:100%; font-size:7.5px;">花束を君に</button>
+                <button class="p-act ag" style="margin-bottom:2px; width:100%; font-size:7.5px;">Beautiful World</button>
+              </div>
+            </div>
+            <div class="p-console">
+              <div class="p-btn-grid">
+                <div class="p-c-btn">◀ 戻る</div>
+                <div class="p-c-btn gb">S</div>
+                <div class="p-c-btn">⏹️</div>
+                <div class="p-c-btn wide">▶</div>
+                <div class="p-c-btn">⏭</div>
+              </div>
+              <div class="p-sophie-box"><img src="./sophie_shake.png"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="phone-code">S2</div>
+      <div class="phone-label">⑤ 曲リスト（タップで再生）<br><span>state = "songs"</span></div>
+      <div class="phone-annot">
+        <div class="ann"><span class="ann-talk">Ｔ</span><span class="ann-text-talk">1.5秒後</span></div>
+        <div class="ann"><span class="ann-talk">50%</span><span class="ann-text-talk">「どの曲にされますか？」</span></div>
+        <div class="ann"><span class="ann-talk">20%</span><span class="ann-text-talk">「さあ、どうしましょう？」</span></div>
+        <div class="ann"><span class="ann-talk">20%</span><span class="ann-text-talk">「いい曲ばかりで、迷いますね」</span></div>
+        <div class="ann"><span class="ann-talk">10%</span><span class="ann-text-talk">「今日の気分はどれですか？」</span></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<hr class="sep">
+
+<!-- ============================================================
+     SECTION 3: ソフィーと話す → ソフィーの天命診断フロー
+  ============================================================ -->
+<div class="section">
+  <div class="section-title">3. 「ソフィーと話す」→ ソフィーの天命診断フロー</div>
   <div class="phones">
 
     <!-- ④ ソフィーと話す -->
@@ -405,7 +512,14 @@ h1 { color: #f0b56e; font-size: 1.3rem; margin-bottom: 4px; }
         </div>
       </div>
       <div class="phone-code">O</div>
-      <div class="phone-label">④ ソフィーと話す<br><span>state = "notice"</span></div>
+      <div class="phone-label">⑥ ソフィーと話す<br><span>state = "notice"</span></div>
+      <div class="phone-annot">
+        <div class="ann"><span class="ann-talk">Ｔ</span><span class="ann-text-talk">即時（iceの音の後）</span></div>
+        <div class="ann"><span class="ann-talk">50%</span><span class="ann-text-talk">「はい、およびですか？」</span></div>
+        <div class="ann"><span class="ann-talk">20%</span><span class="ann-text-talk">「はい、何なりと」</span></div>
+        <div class="ann"><span class="ann-talk">20%</span><span class="ann-text-talk">「はい、わたくしと、お話ししてくださるんですか？」</span></div>
+        <div class="ann"><span class="ann-talk">10%</span><span class="ann-text-talk">「はい、何でもお気兼ねなくおっしゃってください」</span></div>
+      </div>
     </div>
 
     <div class="arrow-right">→</div>
@@ -439,7 +553,14 @@ h1 { color: #f0b56e; font-size: 1.3rem; margin-bottom: 4px; }
         </div>
       </div>
       <div class="phone-code">F1</div>
-      <div class="phone-label">⑤ ソフィーの天命診断 メニュー</div>
+      <div class="phone-label">⑦ ソフィーの天命診断 メニュー</div>
+      <div class="phone-annot">
+        <div class="ann"><span class="ann-talk">Ｔ</span><span class="ann-text-talk">1秒後</span></div>
+        <div class="ann"><span class="ann-talk">50%</span><span class="ann-text-talk">「さあ、一緒に天命を覗いてみましょうか」</span></div>
+        <div class="ann"><span class="ann-talk">20%</span><span class="ann-text-talk">「はい、わたくしの占い、結構当たるんですよ」</span></div>
+        <div class="ann"><span class="ann-talk">20%</span><span class="ann-text-talk">「運命の羅針盤、そっと開きますね」</span></div>
+        <div class="ann"><span class="ann-talk">10%</span><span class="ann-text-talk">「占いは……わたくしも、少し緊張するんです。真剣ですから」</span></div>
+      </div>
     </div>
 
     <div class="arrow-right">→</div>
@@ -484,7 +605,7 @@ h1 { color: #f0b56e; font-size: 1.3rem; margin-bottom: 4px; }
         </div>
       </div>
       <div class="phone-code">F3a</div>
-      <div class="phone-label">⑥ 鑑定フォーム<br><span>showMyFortune()</span></div>
+      <div class="phone-label">⑧ 鑑定フォーム<br><span>showMyFortune()</span></div>
     </div>
 
     <div class="arrow-right">→</div>
@@ -526,7 +647,7 @@ h1 { color: #f0b56e; font-size: 1.3rem; margin-bottom: 4px; }
         </div>
       </div>
       <div class="phone-code">F4</div>
-      <div class="phone-label">⑦ 鑑定結果<br><span>命式表（折りたたみ）付き</span></div>
+      <div class="phone-label">⑨ 鑑定結果<br><span>命式表（折りたたみ）付き</span></div>
     </div>
 
   </div>
@@ -535,10 +656,10 @@ h1 { color: #f0b56e; font-size: 1.3rem; margin-bottom: 4px; }
 <hr class="sep">
 
 <!-- ============================================================
-     SECTION 3: お店を探す
+     SECTION 4: お店を探す
   ============================================================ -->
 <div class="section">
-  <div class="section-title">3. いいお店を探す（restaurant.js）</div>
+  <div class="section-title">4. いいお店を探す（restaurant.js）</div>
   <div class="phones">
 
     <!-- ⑧ 検索フォーム -->
@@ -576,7 +697,14 @@ h1 { color: #f0b56e; font-size: 1.3rem; margin-bottom: 4px; }
         </div>
       </div>
       <div class="phone-code">R1</div>
-      <div class="phone-label">⑧ 検索フォーム<br><span>state = "screening"</span></div>
+      <div class="phone-label">⑩ 検索フォーム<br><span>state = "screening"</span></div>
+      <div class="phone-annot">
+        <div class="ann"><span class="ann-talk">Ｔ</span><span class="ann-text-talk">0.5秒後</span></div>
+        <div class="ann"><span class="ann-talk">50%</span><span class="ann-text-talk">「はい、一緒にいいお店、探しましょう」</span></div>
+        <div class="ann"><span class="ann-talk">20%</span><span class="ann-text-talk">「どんな気分の夜ですか？」</span></div>
+        <div class="ann"><span class="ann-talk">20%</span><span class="ann-text-talk">「美味しいお店なら、結構知ってます」</span></div>
+        <div class="ann"><span class="ann-talk">10%</span><span class="ann-text-talk">「いい店見つけたら、こんど連れてってくださいね」</span></div>
+      </div>
     </div>
 
     <div class="arrow-right">→</div>
@@ -621,7 +749,7 @@ h1 { color: #f0b56e; font-size: 1.3rem; margin-bottom: 4px; }
         </div>
       </div>
       <div class="phone-code">R2</div>
-      <div class="phone-label">⑨ 検索結果<br><span>state = "result" / ⭐→ノート保存</span></div>
+      <div class="phone-label">⑪ 検索結果<br><span>state = "result" / ⭐→ノート保存</span></div>
     </div>
 
   </div>
@@ -630,10 +758,10 @@ h1 { color: #f0b56e; font-size: 1.3rem; margin-bottom: 4px; }
 <hr class="sep">
 
 <!-- ============================================================
-     SECTION 4: ノート（M1）
+     SECTION 5: ノート（M1）
   ============================================================ -->
 <div class="section">
-  <div class="section-title">4. ソフィーのお客様ノート（favorite.js）</div>
+  <div class="section-title">5. ソフィーのお客様ノート（favorite.js）</div>
   <div class="phones">
 
     <!-- ⑩ ノート M1 フォルダ -->
@@ -667,7 +795,14 @@ h1 { color: #f0b56e; font-size: 1.3rem; margin-bottom: 4px; }
         </div>
       </div>
       <div class="phone-code">M1</div>
-      <div class="phone-label">⑩ ノート（M1）フォルダ選択<br><span>state = "techo"</span></div>
+      <div class="phone-label">⑫ ノート（M1）フォルダ選択<br><span>state = "techo"</span></div>
+      <div class="phone-annot">
+        <div class="ann"><span class="ann-talk">Ｔ</span><span class="ann-text-talk">0.5秒後</span></div>
+        <div class="ann"><span class="ann-talk">50%</span><span class="ann-text-talk">「ノート、こうなってます」</span></div>
+        <div class="ann"><span class="ann-talk">20%</span><span class="ann-text-talk">「ノートを開きますね」</span></div>
+        <div class="ann"><span class="ann-talk">20%</span><span class="ann-text-talk">「あなた様の歴史ですね」</span></div>
+        <div class="ann"><span class="ann-talk">10%</span><span class="ann-text-talk">「ノートを見ると、あなた様のことが少しわかった気がします」</span></div>
+      </div>
     </div>
 
   </div>
@@ -676,10 +811,10 @@ h1 { color: #f0b56e; font-size: 1.3rem; margin-bottom: 4px; }
 <hr class="sep">
 
 <!-- ============================================================
-     SECTION 5: マイページ
+     SECTION 6: マイページ
   ============================================================ -->
 <div class="section">
-  <div class="section-title">5. マイページ（mypage.js）</div>
+  <div class="section-title">6. マイページ（mypage.js）</div>
   <div class="phones">
 
     <!-- ⑪ ご利用案内（未ログイン） -->
@@ -721,7 +856,7 @@ h1 { color: #f0b56e; font-size: 1.3rem; margin-bottom: 4px; }
         </div>
       </div>
       <div class="phone-code">P1</div>
-      <div class="phone-label">⑪ ご利用案内（未ログイン）<br><span>showWelcomePage()</span></div>
+      <div class="phone-label">⑬ ご利用案内（未ログイン）<br><span>showWelcomePage()</span></div>
     </div>
 
     <!-- ⑫ マイページ（free） -->
@@ -773,7 +908,7 @@ h1 { color: #f0b56e; font-size: 1.3rem; margin-bottom: 4px; }
         </div>
       </div>
       <div class="phone-code">P2</div>
-      <div class="phone-label">⑫ マイページ（無料会員）<br><span>showMyPage() / free</span></div>
+      <div class="phone-label">⑭ マイページ（無料会員）<br><span>showMyPage() / free</span></div>
     </div>
 
     <!-- ⑬ マイページ（active） -->
@@ -820,7 +955,7 @@ h1 { color: #f0b56e; font-size: 1.3rem; margin-bottom: 4px; }
         </div>
       </div>
       <div class="phone-code">P2</div>
-      <div class="phone-label">⑬ マイページ（ご常連パスカード会員）<br><span>showMyPage() / active</span></div>
+      <div class="phone-label">⑮ マイページ（ご常連パスカード会員）<br><span>showMyPage() / active</span></div>
     </div>
 
   </div>

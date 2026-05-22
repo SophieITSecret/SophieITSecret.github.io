@@ -12,7 +12,7 @@
 
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-        import { getAuth, GoogleAuthProvider, signInWithPopup, getRedirectResult,
+        import { getAuth, GoogleAuthProvider, signInWithRedirect, getRedirectResult,
                  signOut, onAuthStateChanged }
             from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
         import { getFirestore, doc, getDoc, setDoc, updateDoc, serverTimestamp }
@@ -125,28 +125,16 @@
             }
         });
 
-        const _isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-        // standalone PWA（ホーム画面追加）の判定
-        const _isStandalone = window.navigator.standalone === true ||
-                              window.matchMedia('(display-mode: standalone)').matches;
+        getRedirectResult(auth).then(result => {
+            if (result?.user) console.log('redirect auth OK:', result.user.email);
+        }).catch(e => {
+            console.error('getRedirectResult error:', e.code, e.message);
+            // エラーを画面に表示（デバッグ用・後で削除）
+            alert('ログインエラー: ' + e.code + '\n' + e.message);
+        });
 
-        // 以前のリダイレクト試行が残っている場合に備えて呼ぶ（通常はno-op）
-        getRedirectResult(auth).catch(() => {});
-
-        window.signInWithGoogle = async () => {
-            // iOS standalone PWA: window.openerが消えるためpopupもredirectも動作しない。
-            // ITPによるcross-domain storage blockが根本原因。Custom Domain設定で解決可能。
-            if (_isIOS && _isStandalone) {
-                alert('ホーム画面から起動した場合、Googleログインができません。\nSafariブラウザで開き直してからログインをお試しください。');
-                return;
-            }
-            try {
-                // signInWithPopupはpostMessageで結果を返すためSafari ITPの影響を受けない
-                await signInWithPopup(auth, provider);
-            } catch (e) {
-                console.error('ログインエラー:', e);
-                alert('ログインに失敗しました。');
-            }
+        window.signInWithGoogle = () => {
+            signInWithRedirect(auth, provider);
         };
 
         window.signOutUser = async () => {
