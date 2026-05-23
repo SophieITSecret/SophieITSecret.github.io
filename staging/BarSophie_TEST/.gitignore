@@ -15,3 +15,5 @@
 # Firebase / ツール系
 .firebase/
 .claude/
+.vercel
+.env*

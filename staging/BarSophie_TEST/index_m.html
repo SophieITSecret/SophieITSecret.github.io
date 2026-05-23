@@ -56,7 +56,7 @@
                     await window.checkAndResetTickets(window.currentUserData);
                 } else {
                     const newUser = {
-                        uid: user.uid, email: user.email, name: user.displayName,
+                        uid: user.uid, email: user.email, name: user.displayName || user.email || '',
                         status: 'free', role: 'user',
                         purchasedTickets: 0,
                         dailyTickets: 0, weeklyTickets: 1,
@@ -74,6 +74,24 @@
                 window.updateLoginUI();
                 const _loginMsg = document.getElementById('login-msg');
                 if (_loginMsg) _loginMsg.style.display = 'none';
+
+                // カスタムトークンログイン後のカウンター画面遷移
+                if (window._loginFromToken) {
+                    window._loginFromToken = false;
+                    const runTokenNav = () => {
+                        const _es = document.getElementById('entry-screen');
+                        const _cm = document.getElementById('chat-mode');
+                        const _mu = document.getElementById('main-ui');
+                        if (_es) _es.style.display = 'none';
+                        if (_cm) _cm.style.display = 'none';
+                        if (_mu) _mu.style.display = 'flex';
+                    };
+                    if (window._appSetupDone) {
+                        runTokenNav();
+                    } else {
+                        window._handleTokenNavOnSetup = runTokenNav;
+                    }
+                }
 
                 // Stripe決済完了リダイレクト（?purchased=1）の処理
                 const _urlParams = new URLSearchParams(window.location.search);
@@ -133,6 +151,7 @@
         const urlParams = new URLSearchParams(window.location.search);
         const token = urlParams.get('token');
         if (token) {
+            window._loginFromToken = true;
             window.history.replaceState({}, document.title, window.location.pathname);
             signInWithCustomToken(auth, token)
                 .then((userCredential) => {
@@ -140,6 +159,7 @@
                 })
                 .catch((error) => {
                     console.error('カスタムトークンログイン失敗:', error);
+                    window._loginFromToken = false;
                 });
         }
 

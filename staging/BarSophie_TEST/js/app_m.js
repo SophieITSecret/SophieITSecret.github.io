@@ -179,6 +179,11 @@ function setup() {
         window._handlePurchaseOnSetup = null;
         fn();
     }
+    if (window._handleTokenNavOnSetup) {
+        const fn = window._handleTokenNavOnSetup;
+        window._handleTokenNavOnSetup = null;
+        fn();
+    }
 }
 
 function playVoice(src, txt) {
