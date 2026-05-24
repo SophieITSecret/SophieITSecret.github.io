@@ -50,6 +50,15 @@ export async function showRestaurantSearch(savedArea = '', savedGenre = '', save
     const prevDisplay = lv ? lv.style.display : 'none';
     const prevNm = nm ? nm.style.display : 'none';
 
+    if (!window._restaurantBack) {
+        window._restaurantBack = () => {
+            window._restaurantBack = null;
+            if (onBack) { onBack(); return; }
+            if (lv) { lv.style.display = prevDisplay; lv.innerHTML = prevHtml; }
+            if (nm) nm.style.display = prevNm;
+        };
+    }
+
     const row = (label, id, placeholder, type = 'input', val = '') => `
         <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
             <div style="color:#aaa; font-size:0.75rem; min-width:48px; text-align:right; flex-shrink:0;">${label}</div>
@@ -95,8 +104,6 @@ export async function showRestaurantSearch(savedArea = '', savedGenre = '', save
                     font-size:0.95rem; font-weight:bold; margin-bottom:8px;">
                     ソフィーに探してもらう
                 </button>
-                <button id="rs-close" style="width:100%; background:#34495e; color:#fff;
-                    border:none; height:36px; border-radius:4px; font-size:0.85rem;">閉じる</button>
             </div>
         </div>`;
 
@@ -117,12 +124,6 @@ export async function showRestaurantSearch(savedArea = '', savedGenre = '', save
             selectedBudget = btn.dataset.val;
         });
     });
-
-    document.getElementById('rs-close').onclick = () => {
-        if (onBack) { onBack(); return; }
-        if (lv) { lv.style.display = prevDisplay; lv.innerHTML = prevHtml; }
-        if (nm) nm.style.display = prevNm;
-    };
 
     document.getElementById('rs-search').onclick = async () => {
         const area = document.getElementById('rs-area').value.trim();
@@ -182,8 +183,6 @@ export async function showRestaurantSearch(savedArea = '', savedGenre = '', save
                         <button id="rs-retry" style="width:100%; background:#1a3a2a; color:#7fd97f;
                             border:1px solid #3a6a4a; height:40px; border-radius:4px;
                             font-size:0.85rem; margin-bottom:6px;">条件を変えて再検索</button>
-                        <button id="rs-done" style="width:100%; background:#34495e; color:#fff;
-                            border:none; height:36px; border-radius:4px; font-size:0.85rem;">閉じる</button>
                     </div>
                 </div>`;
 
@@ -201,11 +200,6 @@ export async function showRestaurantSearch(savedArea = '', savedGenre = '', save
                 };
             });
             document.getElementById('rs-retry').onclick = () => showRestaurantSearch(area, genre, selectedBudget, point, onBack);
-            document.getElementById('rs-done').onclick = () => {
-                if (onBack) { onBack(); return; }
-                if (lv) { lv.style.display = prevDisplay; lv.innerHTML = prevHtml; }
-                if (nm) nm.style.display = prevNm;
-            };
 
         } catch (e) {
             alert('通信エラーが発生しました。');

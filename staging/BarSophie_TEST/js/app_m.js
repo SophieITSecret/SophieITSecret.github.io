@@ -141,11 +141,13 @@ function setup() {
 
     document.getElementById('btn-music').onclick = () => { if (music.openMusic) music.openMusic(); renderConsole('standard'); };
     document.getElementById('btn-sake').onclick = () => {
+        nav.updateNav("notice");
         utils.setListView(`
             <div style="padding:12px; display:flex; flex-direction:column; gap:8px;">
                 <button class="act-btn" id="sake-liquor" style="background:#8e44ad;">🍸 お酒を探す</button>
                 <button class="act-btn" id="sake-talk" style="background:var(--talk);">🥃 お酒の話</button>
             </div>`, false);
+        renderConsole('standard');
         document.getElementById('sake-liquor').onclick = liquor.openLiquorPortal;
         document.getElementById('sake-talk').onclick = () => { if (music.openTalk) music.openTalk(); renderConsole('standard'); };
     };
@@ -234,6 +236,10 @@ function showRootMenu() {
 }
 
 function handleBack() {
+    if (window._restaurantBack && (document.getElementById('rs-search') || document.getElementById('rs-retry'))) {
+        window._restaurantBack();
+        return;
+    }
     if (nav.state === "techo") {
         import('./favorite.js').then(f => {
             const folder = f.getCurrentFolder();
@@ -363,6 +369,7 @@ function showNewsMarket() {
     const nm = document.getElementById('nav-main');
     if (nm) nm.style.display = 'none';
     nav.updateNav("lq_main");
+    renderConsole('standard');
 
     const showYoutube = (videoId) => {
         const cw = document.getElementById('chart-wrapper');
@@ -420,7 +427,6 @@ function showNewsMarket() {
                     <button class="act-btn nm-btn" id="nm-newsmenu" style="background:#2a1a1a; margin:0;">📰 ニュース・情報</button>
                     <button class="act-btn nm-btn" id="nm-useful"  style="background:#1a2a2a; margin:0;">🔗 便利情報</button>
                 </div>
-                <button class="act-btn" id="nm-back" style="background:#34495e; height:36px; font-size:0.85rem;">戻る</button>
             </div>
         </div>`;
 
@@ -428,7 +434,6 @@ function showNewsMarket() {
 
     document.getElementById('nm-ann').onclick = () => showYoutube('coYw-eVU0Ks');
     document.getElementById('nm-weather').onclick = () => window.open('https://www.youtube.com/channel/UCNsidkYpIAQ4QaufptQBPHQ/live', '_blank');
-    document.getElementById('nm-back').onclick = () => showRootMenu();
 
     document.getElementById('nm-camera').onclick = () => {
         const html = `
@@ -460,17 +465,16 @@ function showNewsMarket() {
                         <button class="act-btn" style="background:#0a0a2a; margin:0; font-size:0.85rem;" onclick="window.open('https://www.youtube.com/watch?v=vytmBNhc9ig','_blank')">🌏 NASA 地球ライブ</button>
                         <button class="act-btn" style="background:#1a2a1a; margin:0; font-size:0.85rem;" onclick="window.open('https://www.youtube.com/watch?v=qpukdDslCjk','_blank')">🦁 アフリカサファリ</button>
                     </div>
-                    <button class="act-btn" id="cam-back" style="background:#34495e;">戻る</button>
                 </div>
             </div>`;
         if (lv) { lv.style.display = 'block'; lv.innerHTML = html; }
+        renderConsole('standard');
 
         document.getElementById('cam-nyc').onclick    = () => showYoutube('PGrq-2mju2s');
         document.getElementById('cam-paris').onclick = () => window.open('https://www.earthtv.com/en/webcam/paris-eiffel-tower', '_blank');
         document.getElementById('cam-london').onclick = () => showYoutube('VgRo9SBQW3U');
         document.getElementById('cam-sydney').onclick = () => showYoutube('7pcL-0Wo77U');
         document.getElementById('cam-rome').onclick   = () => showYoutube('jXYQoWAKgFE');
-        document.getElementById('cam-back').onclick   = () => showNewsMarket();
     };
 
     document.getElementById('nm-market').onclick = () => {
@@ -500,10 +504,10 @@ function showNewsMarket() {
                     <div style="color:#666; font-size:0.7rem; margin-bottom:10px;">
                         日本株：4桁　米国株：ティッカー　NYSE：NYSE:銘柄
                     </div>
-                    <button class="act-btn" id="mkt-back" style="background:#34495e;">戻る</button>
                 </div>
             </div>`;
         if (lv) { lv.style.display = 'block'; lv.innerHTML = html; }
+        renderConsole('standard');
 
         document.getElementById('mkt-nk').onclick  = () => { const cw=document.getElementById('chart-wrapper'); if(cw) cw.innerHTML=''; showChart('FOREXCOM:JP225'); };
         document.getElementById('mkt-fx').onclick  = () => { const cw=document.getElementById('chart-wrapper'); if(cw) cw.innerHTML=''; showChart('FX:USDJPY'); };
@@ -530,7 +534,6 @@ function showNewsMarket() {
         showChart(`NASDAQ:${code}`);
     }
 };
-        document.getElementById('mkt-back').onclick = () => showNewsMarket();
     };
 
     document.getElementById('nm-newsmenu').onclick = () => {
@@ -550,11 +553,10 @@ function showNewsMarket() {
                         <button class="act-btn" style="background:#1a2a3a; margin:0; font-size:0.85rem;" onclick="window.open('https://www.nikkei.com','_blank')">📰 日本経済新聞</button>
                         <button class="act-btn" style="background:#1a2a3a; margin:0; font-size:0.85rem;" onclick="window.open('https://news.yahoo.co.jp','_blank')">📰 Yahooニュース</button>
                     </div>
-                    <button class="act-btn" id="news-back" style="background:#34495e;">戻る</button>
                 </div>
             </div>`;
         if (lv) { lv.style.display = 'block'; lv.innerHTML = html; }
-        document.getElementById('news-back').onclick = () => showNewsMarket();
+        renderConsole('standard');
     };
 
     document.getElementById('nm-useful').onclick = () => {
@@ -581,16 +583,15 @@ function showNewsMarket() {
                         <button id="wiki-go" style="background:#1a3a4a; color:#fff; border:none; 
                             height:44px; padding:0 20px; border-radius:4px; font-size:1rem;">🔍 検索</button>
                     </div>
-                    <button class="act-btn" id="useful-back" style="background:#34495e;">戻る</button>
                 </div>
             </div>`;
         if (lv) { lv.style.display = 'block'; lv.innerHTML = html; }
+        renderConsole('standard');
         document.getElementById('wiki-go').onclick = () => {
             const q = document.getElementById('wiki-input').value.trim();
             if (!q) return;
             window.open(`https://ja.wikipedia.org/wiki/${encodeURIComponent(q)}`, '_blank');
         };
-        document.getElementById('useful-back').onclick = () => showNewsMarket();
     };
 }
 
@@ -696,13 +697,17 @@ function renderConsole(mode) {
 
     if (mode === 'fortune') {
         grid.innerHTML = `
-        <button class="c-btn" id="c-back" style="${backBtn}">戻る</button>
-        <button class="c-btn" id="c-meishiki" style="background:#1a1a2a; color:#9b59b6; border:1px solid #6a3a8a; flex:2; font-size:0.85rem;">📊 命式表</button>`;
+        <button class="c-btn" id="c-back"           style="${backBtn} flex:1; font-size:0.8rem;">戻る</button>
+        <button class="c-btn" id="c-fortune-submit"  style="background:#0096BF; color:#ff69b4; border:2px solid #ff51a8; flex:2.5; font-size:1rem; font-weight:bold;">ソフィーの診断</button>
+        <button class="c-btn" id="c-meishiki"        style="background:#1a1a2a; color:#9b59b6; border:1px solid #6a3a8a; flex:1.5; font-size:0.78rem;">📊 命式表</button>`;
         document.getElementById('c-back').onclick = () => {
             window._fortuneBack && window._fortuneBack();
         };
         document.getElementById('c-meishiki').onclick = () => {
             window._showMeishikiPanel && window._showMeishikiPanel();
+        };
+        document.getElementById('c-fortune-submit').onclick = () => {
+            window._fortuneSubmit && window._fortuneSubmit();
         };
         return;
     }

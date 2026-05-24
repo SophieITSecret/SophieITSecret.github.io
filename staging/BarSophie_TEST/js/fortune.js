@@ -111,13 +111,7 @@ export function showMyFortune(onBack = null, prefill = null) {
                                padding:8px 10px; border-radius:4px; font-size:0.85rem;
                                resize:none; font-family:inherit;"></textarea>
                 </div>
-                <button id="ft-submit" style="width:100%; background:#0096BF; color:#ff69b4;
-                    border:2px solid #ff51a8; height:44px; border-radius:4px;
-                    font-size:0.95rem; font-weight:bold; margin-bottom:8px;">
-                    ソフィーに鑑定してもらう
-                </button>
-                <button id="ft-close" style="width:100%; background:#34495e; color:#fff;
-                    border:none; height:36px; border-radius:4px; font-size:0.85rem;">閉じる</button>
+                <button id="ft-submit" style="display:none;"></button>
             </div>
         </div>`;
 
@@ -169,11 +163,6 @@ export function showMyFortune(onBack = null, prefill = null) {
         );
     };
 
-    document.getElementById('ft-close').onclick = () => {
-        if (onBack) { onBack(); return; }
-        if (lv) { lv.style.display = prevDisplay; lv.innerHTML = prevHtml; }
-        if (nm) nm.style.display = prevNm;
-    };
 
     document.getElementById('ft-submit').onclick = async () => {
         const year = document.getElementById('ft-year').value;
@@ -341,6 +330,10 @@ ${meishikiDetail}
             btn.disabled = false;
         }
     };
+    window._fortuneSubmit = () => {
+        const btn = document.getElementById('ft-submit');
+        if (btn && !btn.disabled) btn.click();
+    };
 }
 
 export function showAboutPerson(onBack = null, prefill = null) {
@@ -432,13 +425,7 @@ export function showAboutPerson(onBack = null, prefill = null) {
                                padding:8px 10px; border-radius:4px; font-size:0.85rem;
                                resize:none; font-family:inherit;"></textarea>
                 </div>
-                <button id="ft-submit" style="width:100%; background:#0096BF; color:#ff69b4;
-                    border:2px solid #ff51a8; height:44px; border-radius:4px;
-                    font-size:0.95rem; font-weight:bold; margin-bottom:8px;">
-                    ソフィーに鑑定してもらう
-                </button>
-                <button id="ft-close" style="width:100%; background:#34495e; color:#fff;
-                    border:none; height:36px; border-radius:4px; font-size:0.85rem;">閉じる</button>
+                <button id="ft-submit" style="display:none;"></button>
             </div>
         </div>
         <div id="ap-meishiki-area2" style="display:none; margin:10px;"></div>`;
@@ -522,11 +509,6 @@ export function showAboutPerson(onBack = null, prefill = null) {
         );
     };
 
-    document.getElementById('ft-close').onclick = () => {
-        if (onBack) { onBack(); return; }
-        if (lv) { lv.style.display = prevDisplay; lv.innerHTML = prevHtml; }
-        if (nm) nm.style.display = prevNm;
-    };
 
     document.getElementById('ft-submit').onclick = async () => {
         const year = document.getElementById('ft-year').value;
@@ -698,6 +680,10 @@ ${personInfo}`;
             btn.disabled = false;
         }
     };
+    window._fortuneSubmit = () => {
+        const btn = document.getElementById('ft-submit');
+        if (btn && !btn.disabled) btn.click();
+    };
 }
 
 export function showFortuneMenu(onBack = null) {
@@ -730,7 +716,6 @@ export function showFortuneMenu(onBack = null) {
                     border:1px solid #6a3a8a; margin-bottom:8px;">👤 あの人どんな人</button>
                 <button id="fm-compat" class="act-btn" style="background:#1a2a3a; color:#5ba3d9;
                     border:1px solid #1a5276; margin-bottom:8px;">💑 相性を見てもらう</button>
-                <button id="fm-close" class="act-btn" style="background:#34495e;">閉じる</button>
             </div>
         </div>`;
 
@@ -749,11 +734,6 @@ export function showFortuneMenu(onBack = null) {
     document.getElementById('fm-compat').onclick = async () => {
         if (!await window.checkAccess('compatibility')) return;
         showCompatibility(showFortuneMenu);
-    };
-    document.getElementById('fm-close').onclick = () => {
-        if (onBack) { onBack(); return; }
-        if (lv) { lv.style.display = prevDisplay; lv.innerHTML = prevHtml; }
-        if (nm) nm.style.display = prevNm;
     };
 }
 
