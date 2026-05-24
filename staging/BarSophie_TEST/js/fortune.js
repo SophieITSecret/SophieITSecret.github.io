@@ -700,7 +700,7 @@ ${personInfo}`;
     };
 }
 
-export function showFortuneMenu() {
+export function showFortuneMenu(onBack = null) {
     window.playSophieVoice?.('fortune');
     const lv = document.getElementById('list-view');
     const nm = document.getElementById('nav-main');
@@ -751,6 +751,7 @@ export function showFortuneMenu() {
         showCompatibility(showFortuneMenu);
     };
     document.getElementById('fm-close').onclick = () => {
+        if (onBack) { onBack(); return; }
         if (lv) { lv.style.display = prevDisplay; lv.innerHTML = prevHtml; }
         if (nm) nm.style.display = prevNm;
     };

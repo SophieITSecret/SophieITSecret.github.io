@@ -86,10 +86,7 @@ export function showWelcomePage(onClose) {
     }
     document.getElementById('wp-close').onclick = () => {
         if (onClose) onClose();
-        else {
-            if (lv) lv.style.display = 'none';
-            if (nm) nm.style.display = 'flex';
-        }
+        else { window._showRootMenu?.(); }
     };
 }
 
@@ -250,9 +247,6 @@ export function showMyPage(onClose) {
     };
     document.getElementById('mp-close').onclick = () => {
         if (onClose) onClose();
-        else {
-            if (lv) lv.style.display = 'none';
-            if (nm) nm.style.display = 'flex';
-        }
+        else { window._showRootMenu?.(); }
     };
 }

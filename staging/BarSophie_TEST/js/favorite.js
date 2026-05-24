@@ -88,14 +88,14 @@ export async function openNotice() {
                 <button class="act-btn" id="guide-howto" style="background:#1a5276;">📖 このお店の使い方</button>
             </div>`;
         setListView(subHtml, false);
-        document.getElementById('guide-welcome').onclick = () => import('./mypage.js').then(m => m.showWelcomePage(null));
+        document.getElementById('guide-welcome').onclick = () => import('./mypage.js').then(m => m.showWelcomePage(openNotice));
         document.getElementById('guide-howto').onclick = () => showHowTo();
     };
     document.getElementById('nt-restaurant').onclick = () => {
-        import('./restaurant.js').then(r => r.showRestaurantSearch());
+        import('./restaurant.js').then(r => r.showRestaurantSearch('', '', '', '', openNotice));
     };
     document.getElementById('nt-fortune').onclick = () => {
-        import('./fortune.js').then(f => f.showFortuneMenu());
+        import('./fortune.js').then(f => f.showFortuneMenu(openNotice));
     };
     document.getElementById('nt-janken').onclick = () => {
         import('./janken.js').then(j => j.startJanken());

@@ -41,7 +41,7 @@ function formatResult(text, area = '', genre = '') {
     return text.trim().replace(/\n/g, '<br>');
 }
 
-export async function showRestaurantSearch(savedArea = '', savedGenre = '', savedBudget = '', savedPoint = '') {
+export async function showRestaurantSearch(savedArea = '', savedGenre = '', savedBudget = '', savedPoint = '', onBack = null) {
     if (!await window.checkAccess('restaurant_search')) return;
     window.playSophieVoice?.('rest');
     const lv = document.getElementById('list-view');
@@ -119,6 +119,7 @@ export async function showRestaurantSearch(savedArea = '', savedGenre = '', save
     });
 
     document.getElementById('rs-close').onclick = () => {
+        if (onBack) { onBack(); return; }
         if (lv) { lv.style.display = prevDisplay; lv.innerHTML = prevHtml; }
         if (nm) nm.style.display = prevNm;
     };
@@ -199,8 +200,9 @@ export async function showRestaurantSearch(savedArea = '', savedGenre = '', save
                     });
                 };
             });
-            document.getElementById('rs-retry').onclick = () => showRestaurantSearch(area, genre, selectedBudget, point);
+            document.getElementById('rs-retry').onclick = () => showRestaurantSearch(area, genre, selectedBudget, point, onBack);
             document.getElementById('rs-done').onclick = () => {
+                if (onBack) { onBack(); return; }
                 if (lv) { lv.style.display = prevDisplay; lv.innerHTML = prevHtml; }
                 if (nm) nm.style.display = prevNm;
             };
