@@ -115,12 +115,19 @@ function setup() {
     talkAudio.onended = music.defaultOnEnded;
 
     document.getElementById('btn-enter').onclick = () => {
-        document.getElementById('entry-screen').style.display = 'none';
-        document.getElementById('chat-mode').style.display = 'flex';
-        if (ytPlayerReady && ytPlayer) {
-            try { ytPlayer.mute(); ytPlayer.loadVideoById('2vfCbdmKhMw'); setTimeout(() => { ytPlayer.pauseVideo(); ytPlayer.unMute(); }, 1000); } catch (e) { }
-        }
-        playVoice("./voices_mp3/greeting.mp3", "いらっしゃいませ。");
+        const es = document.getElementById('entry-screen');
+        es.style.transition = 'opacity 1.4s ease';
+        es.style.opacity = '0';
+        setTimeout(() => {
+            es.style.display = 'none';
+            es.style.opacity = '';
+            es.style.transition = '';
+            document.getElementById('chat-mode').style.display = 'flex';
+            if (ytPlayerReady && ytPlayer) {
+                try { ytPlayer.mute(); ytPlayer.loadVideoById('2vfCbdmKhMw'); setTimeout(() => { ytPlayer.pauseVideo(); ytPlayer.unMute(); }, 1000); } catch (e) { }
+            }
+            playVoice("./voices_mp3/greeting.mp3", "いらっしゃいませ。");
+        }, 1400);
     };
 
     document.getElementById('btn-to-bar').onclick = () => {

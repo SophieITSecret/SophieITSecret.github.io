@@ -1,3 +1,14 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@500&display=swap');
+
+@keyframes slowZoom {
+    from { transform: scale(1.0); }
+    to   { transform: scale(1.05); }
+}
+@keyframes goldBreath {
+    0%, 100% { opacity: 0.25; }
+    50%       { opacity: 0.75; }
+}
+
 :root { --bg: #000; --accent: #f0b56e; --blue: #00d2ff; --green: #27ae60; --talk: #2980b9; --text: #eee; }
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
 
@@ -8,15 +19,61 @@ body {
 }
 
 /* 入口 & ラウンジ */
-#entry-screen { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-#entry-sophie { height: 45dvh !important; max-width: 80vw; object-fit: contain; margin-bottom: 30px; }
-.btn-enter { padding: 15px 45px; font-size: 1.2rem; background: #111; border: 2px solid var(--accent); color: var(--accent); border-radius: 40px; font-weight: bold; font-family: sans-serif; }
+#entry-screen {
+    position: fixed; inset: 0; background: #000; z-index: 9999;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 28px;
+}
+.entry-img-wrap {
+    position: relative; width: min(72vw, 340px); overflow: hidden; flex-shrink: 0;
+}
+#entry-sophie {
+    width: 100%; height: auto; display: block;
+    animation: slowZoom 22s ease-in-out infinite alternate;
+    transform-origin: center center;
+}
+.entry-vignette {
+    position: absolute; inset: 0; pointer-events: none;
+    background: radial-gradient(ellipse at center, transparent 45%, rgba(0,0,0,0.80) 100%);
+}
+.entry-glow {
+    position: absolute; inset: 0; pointer-events: none;
+    background: radial-gradient(ellipse 55% 35% at 50% 55%, rgba(200,160,50,0.65) 0%, transparent 70%);
+    mix-blend-mode: screen;
+    animation: goldBreath 3.8s ease-in-out infinite;
+}
 
 #chat-mode { display: none; flex-direction: column; height: 100%; background: #000; }
-.portrait { flex: 1; display: flex; justify-content: center; align-items: center; padding: 20px; }
-.portrait img { height: 50dvh; width: auto; object-fit: contain; }
+.portrait {
+    flex: 1; display: flex; justify-content: center; align-items: center;
+    padding: 16px 0; overflow: hidden;
+}
+.lounge-img-wrap {
+    position: relative; width: min(82vw, 380px); overflow: hidden; flex-shrink: 0;
+}
+#lounge-sophie {
+    width: 100%; height: auto; display: block;
+    animation: slowZoom 22s ease-in-out infinite alternate;
+    transform-origin: center center;
+}
+.lounge-vignette {
+    position: absolute; inset: 0; pointer-events: none;
+    background: radial-gradient(ellipse at center, transparent 45%, rgba(0,0,0,0.80) 100%);
+}
 .chat-area { height: 140px; padding: 20px; background: #080808; border-top: 1px solid #1a1a2e; color: #ccc; font-size: 1.1rem; text-align: center; font-family: sans-serif; }
-.btn-to-bar { padding: 15px; background: #111; border: 1px solid var(--accent); color: var(--accent); font-weight: bold; margin: 10px 20px; border-radius: 8px; font-family: sans-serif; }
+.btn-enter {
+    font-family: 'Noto Sans JP', sans-serif; font-weight: 500; font-size: 0.95rem;
+    color: #c8ecd5; border: 3px solid rgba(80,160,110,0.80);
+    background: rgba(8,6,4,0.88); width: min(50vw, 200px);
+    padding: 11px 0; border-radius: 40px; cursor: pointer;
+}
+.btn-to-bar {
+    font-family: 'Noto Sans JP', sans-serif; font-weight: 500; font-size: 0.95rem;
+    color: #c8ecd5; border: 3px solid rgba(80,160,110,0.80);
+    background: rgba(8,6,4,0.88); width: min(50vw, 200px);
+    padding: 11px 0; border-radius: 40px; cursor: pointer;
+    margin: 10px auto; display: block;
+}
 
 /* メインUI */
 #main-ui { display: none; flex: 1; flex-direction: column; height: 100%; overflow: hidden; }
