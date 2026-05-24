@@ -116,7 +116,7 @@ function setup() {
 
     document.getElementById('btn-enter').onclick = () => {
         const es = document.getElementById('entry-screen');
-        es.style.transition = 'opacity 1.4s ease';
+        es.style.transition = 'opacity 1s ease';
         es.style.opacity = '0';
         setTimeout(() => {
             es.style.display = 'none';
@@ -127,7 +127,7 @@ function setup() {
                 try { ytPlayer.mute(); ytPlayer.loadVideoById('2vfCbdmKhMw'); setTimeout(() => { ytPlayer.pauseVideo(); ytPlayer.unMute(); }, 1000); } catch (e) { }
             }
             playVoice("./voices_mp3/greeting.mp3", "いらっしゃいませ。");
-        }, 1400);
+        }, 1000);
     };
 
     document.getElementById('btn-to-bar').onclick = () => {
@@ -140,8 +140,15 @@ function setup() {
     };
 
     document.getElementById('btn-music').onclick = () => { if (music.openMusic) music.openMusic(); renderConsole('standard'); };
-    document.getElementById('btn-liquor').onclick = liquor.openLiquorPortal;
-    document.getElementById('btn-talk').onclick = () => { if (music.openTalk) music.openTalk(); renderConsole('standard'); };
+    document.getElementById('btn-sake').onclick = () => {
+        utils.setListView(`
+            <div style="padding:12px; display:flex; flex-direction:column; gap:8px;">
+                <button class="act-btn" id="sake-liquor" style="background:#8e44ad;">🍸 お酒を探す</button>
+                <button class="act-btn" id="sake-talk" style="background:var(--talk);">🥃 お酒の話</button>
+            </div>`, false);
+        document.getElementById('sake-liquor').onclick = liquor.openLiquorPortal;
+        document.getElementById('sake-talk').onclick = () => { if (music.openTalk) music.openTalk(); renderConsole('standard'); };
+    };
     // ★以下2行を追加
     document.getElementById('btn-news').onclick = () => showNewsMarket();
     document.getElementById('btn-notice').onclick = () => {
@@ -734,14 +741,14 @@ function renderConsole(mode) {
     }
 
     if (nav.state === "none") {
-        const shopBaseStyle = "background:rgba(255, 228, 225, 0.6); color:#cc294a; border:3px solid #1e90ff; flex-direction:column; justify-content:center; align-items:center; backdrop-filter:blur(2px); padding:0; flex:1.0; display:flex;";
+        const shopBaseStyle = "background:#ffe0ec; color:#cc294a; border:3px solid #1e90ff; flex-direction:column; justify-content:center; align-items:center; backdrop-filter:blur(2px); padding:0; flex:1.0; display:flex;";
         grid.innerHTML = `
             <button class="c-btn" id="btn-shop" style="${shopBaseStyle}">
                 <span style="font-size:0.75rem; font-weight:bold; line-height:1.1;">ソフィー</span>
                 <span style="font-size:0.75rem; font-weight:bold; line-height:1.1;">おすすめ</span>
                 <span style="font-size:0.75rem; letter-spacing:1px; line-height:1.1;">SHOP</span>
             </button>
-            <button class="c-btn" id="btn-techo" style="background:rgba(34,34,34,0.8); color:#fff; border:1px solid #777; font-size:0.75rem; flex:1.0; display:flex; flex-direction:column; justify-content:center; align-items:center; line-height:1.3;"><span>ソフィー</span><span>ノート</span></button>
+            <button class="c-btn" id="btn-techo" style="background:#d0f0f8; color:#ff69b4; border:1px solid #777; font-size:0.75rem; flex:1.0; display:flex; flex-direction:column; justify-content:center; align-items:center; line-height:1.3;"><span>📓</span><span>ソフィーノート</span></button>
             <button class="c-btn" id="ctrl-pause" style="${pCtrl}">⏹️</button>
             <button class="c-btn" id="ctrl-play"  style="${pBtn}">▶</button>
             <button class="c-btn" id="btn-next"   style="${pCtrl}">⏭</button>`;
@@ -762,7 +769,7 @@ function renderConsole(mode) {
         // 中間メニュー：戻る（左端）・メモ・⏹️・▶・⏭
         grid.innerHTML = `
             <button class="c-btn" id="ctrl-back-txt" style="${backBtn}">戻る</button>
-            <button class="c-btn" id="btn-techo"     style="background:rgba(34,34,34,0.8); color:#fff; border:1px solid #777; font-size:0.75rem; flex:1.0; display:flex; flex-direction:column; justify-content:center; align-items:center; line-height:1.3;"><span>ソフィー</span><span>ノート</span></button>
+            <button class="c-btn" id="btn-techo"     style="background:#d0f0f8; color:#ff69b4; border:1px solid #777; font-size:0.75rem; flex:1.0; display:flex; flex-direction:column; justify-content:center; align-items:center; line-height:1.3;"><span>📓</span><span>ソフィーノート</span></button>
             <button class="c-btn" id="ctrl-pause"    style="${pCtrl}">⏹️</button>
             <button class="c-btn" id="ctrl-play"     style="${pBtn}">▶</button>
             <button class="c-btn" id="btn-next"      style="${pCtrl}">⏭</button>`;

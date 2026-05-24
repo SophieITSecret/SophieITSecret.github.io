@@ -70,22 +70,27 @@ export async function openNotice() {
                 お呼びですか？
             </div>
             <div style="padding:10px;">
-                <button class="act-btn" id="notice-guide" style="background:#1a2a3a; color:#5ba3d9; border:1px solid #1a5276; margin-bottom:8px;">📋 ご利用案内</button>
-                <button class="act-btn" id="nt-how" style="background:#1a5276; margin-bottom:8px;">📖 このお店の使い方</button>
                 <button class="act-btn" id="nt-restaurant" style="background:#1a3a1a; color:#7fd97f; border:1px solid #3a6a4a; margin-bottom:8px;">🍽️ いいお店を探す</button>
                 <button class="act-btn" id="nt-fortune" style="background:#2a1a3a; color:#c39bd3; border:1px solid #6a3a8a; margin-bottom:8px;">🔮 ソフィーの天命診断</button>
-                <div style="border-top:1px solid #222; margin:8px 0;"></div>
+                <button class="act-btn" style="background:#1a1a1a; color:#444; border:1px solid #222; margin-bottom:8px;" disabled>📅 この日どんな日（近日公開）</button>
                 <button class="act-btn" id="nt-janken" style="background:#8e1a2e; margin-bottom:8px;">🎲 じゃんけん勝負</button>
-                <button class="act-btn" style="background:#1a1a1a; color:#444; border:1px solid #222; margin-bottom:8px;" disabled>📅 この日はどんな日（近日公開）</button>
+                <div style="border-top:1px solid #222; margin:8px 0;"></div>
+                <button class="act-btn" id="nt-guide" style="background:#1a2a3a; color:#5ba3d9; border:1px solid #1a5276; margin-bottom:0;">📋 このお店のご案内</button>
             </div>
         </div>`;
 
     setListView(menuHtml, false);
 
-    document.getElementById('notice-guide').onclick = () => {
-        import('./mypage.js').then(m => m.showWelcomePage(null));
+    document.getElementById('nt-guide').onclick = () => {
+        const subHtml = `
+            <div style="padding:12px; display:flex; flex-direction:column; gap:8px;">
+                <button class="act-btn" id="guide-welcome" style="background:#1a2a3a; color:#5ba3d9; border:1px solid #1a5276;">📋 ご利用案内</button>
+                <button class="act-btn" id="guide-howto" style="background:#1a5276;">📖 このお店の使い方</button>
+            </div>`;
+        setListView(subHtml, false);
+        document.getElementById('guide-welcome').onclick = () => import('./mypage.js').then(m => m.showWelcomePage(null));
+        document.getElementById('guide-howto').onclick = () => showHowTo();
     };
-    document.getElementById('nt-how').onclick = () => showHowTo();
     document.getElementById('nt-restaurant').onclick = () => {
         import('./restaurant.js').then(r => r.showRestaurantSearch());
     };
