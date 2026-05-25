@@ -2,7 +2,10 @@
 import { showPeopleBook } from './people.js';
 import { showCompatibility } from './compatibility.js';
 import { getThreePillars, getFullMeishiki, getDaiyun, getKakukyoku, getKuubou } from './meishiki.js';
+import { loadGlossary } from './glossary.js';
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbwA1C22UhKroCFC_EPC-ugR5efyXVHlbkWywfD21HfD3-J4vm-b4ZjvIshO-i3fKk9W/exec';
+
+loadGlossary();
 
 const sophieChar = 'ソフィーは20代の若い女性バーテンダー。さわやかで知的、品がある。口調は丁寧な「です・ます」調。マダムのような馴れ馴れしさやタメ口は使わない。お客様は40〜50代の紳士が多い。四柱推命の専門用語はさりげなく使い、少し意味を補足するが説明的になりすぎない。';
 
@@ -821,7 +824,8 @@ function buildMeishikiHtml(data, year, month, day, gender) {
                     style="width:48px; height:48px; object-fit:contain; margin-bottom:2px; cursor:pointer;"
                     onclick="showCharacterModal('${pillar.stem}', 'stem')"
                     onerror="this.style.display='none'">
-                <div style="font-size:1.2rem; font-weight:bold; color:${color};">
+                <div style="font-size:1.2rem; font-weight:bold; color:${color}; cursor:pointer;"
+                     onclick="window.showGlossaryPopup('${pillar.stem}')">
                     ${pillar.stem || ''}
                 </div>
                 <div style="color:${color}; font-size:0.6rem;">
@@ -831,26 +835,31 @@ function buildMeishikiHtml(data, year, month, day, gender) {
                     style="width:44px; height:44px; object-fit:contain; margin-bottom:2px; margin-top:4px; cursor:pointer;"
                     onclick="showCharacterModal('${pillar.branch}', 'branch')"
                     onerror="this.style.display='none'">
-                <div style="font-size:1.1rem; color:#ddd;">
+                <div style="font-size:1.1rem; color:#ddd; cursor:pointer;"
+                     onclick="window.showGlossaryPopup('${pillar.branch}')">
                     ${pillar.branch || ''}
                 </div>
                 <div style="color:#aaa; font-size:0.6rem;">
                     （${branchReading[pillar.branch] || ''}）
                 </div>
                 <div style="color:${bColor}; font-size:0.6rem;">
-                    ${bGogyo}・${bInyo}
+                    <span style="cursor:pointer;" onclick="window.showGlossaryPopup('${bGogyo}')">${bGogyo}</span>・${bInyo}
                 </div>
                 <div style="color:#888; font-size:0.6rem; border-top:1px solid #333; margin-top:3px; padding-top:2px;">
                     蔵干 ${(pillar.kakuchu || []).join(' ')}
                 </div>
                 <div style="color:#f0b56e; font-size:0.6rem; border-top:1px solid #333; margin-top:2px; padding-top:2px;">
-                    ${pillar.tsuhensei || ''}
+                    <span style="cursor:pointer;" onclick="window.showGlossaryPopup('${pillar.tsuhensei || ''}')">
+                        ${pillar.tsuhensei || ''}
+                    </span>
                     <span style="color:#888;">
                         （${tsuhenseiReading[pillar.tsuhensei] || ''}）
                     </span>
                 </div>
                 <div style="color:#9b59b6; font-size:0.6rem; border-top:1px solid #333; margin-top:2px; padding-top:2px;">
-                    ${pillar.juniUnsei || ''}
+                    <span style="cursor:pointer;" onclick="window.showGlossaryPopup('${pillar.juniUnsei || ''}')">
+                        ${pillar.juniUnsei || ''}
+                    </span>
                     <span style="color:#888;">
                         （${juniUnseiReading[pillar.juniUnsei] || ''}）
                     </span>
@@ -861,7 +870,8 @@ function buildMeishikiHtml(data, year, month, day, gender) {
     const maxVal = Math.max(...Object.values(balance), 1);
     const balanceHtml = Object.entries(balance).map(([gogyo, count]) => `
         <div style="display:flex; align-items:center; gap:6px; margin-bottom:2px;">
-            <div style="color:${gogyoColor[gogyo]}; width:14px; font-size:0.75rem;">${gogyo}</div>
+            <div style="color:${gogyoColor[gogyo]}; width:14px; font-size:0.75rem; cursor:pointer;"
+                 onclick="window.showGlossaryPopup('${gogyo}')">${gogyo}</div>
             <div style="flex:1; background:#222; border-radius:2px; height:10px;">
                 <div style="background:${gogyoColor[gogyo]}; width:${(count/maxVal)*100}%; height:100%; border-radius:2px;"></div>
             </div>

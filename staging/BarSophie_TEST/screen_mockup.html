@@ -269,7 +269,7 @@ h1 { color: #f0b56e; font-size: 1.3rem; margin-bottom: 4px; }
 <body>
 
 <h1>🍸 BARソフィー スマホ画面モックアップ</h1>
-<div class="subtitle">BarSophie_TEST — 2026-05-22　portrait: モニター上 / ナビ下 の縦積みレイアウト</div>
+<div class="subtitle">BarSophie_TEST — 2026-05-26　portrait: モニター上 / ナビ下 の縦積みレイアウト</div>
 
 <!-- ============================================================
      SECTION 1: 起動フロー
@@ -283,12 +283,12 @@ h1 { color: #f0b56e; font-size: 1.3rem; margin-bottom: 4px; }
       <div class="phone">
         <div class="phone-screen">
           <div class="p-entry">
-            <img src="./sophie_shake.png" alt="ソフィー">
-            <div class="p-entry-btn">🥃 ＢＡＲソフィーに入る</div>
+            <img src="./BarSophieTop_q85.jpg" alt="ソフィー">
+            <div class="p-entry-btn">🥃 お店に入る</div>
           </div>
         </div>
       </div>
-      <div class="phone-label">① エントリー画面</div>
+      <div class="phone-label">① エントリー画面<br><span>BarSophieTop_q85.jpg</span></div>
     </div>
 
     <div class="arrow-right">→</div>
@@ -299,7 +299,7 @@ h1 { color: #f0b56e; font-size: 1.3rem; margin-bottom: 4px; }
         <div class="phone-screen">
           <div class="p-lounge">
             <div class="p-lounge-portrait">
-              <img src="./sophie_shake.png" alt="ソフィー">
+              <img src="./BarSophieWelcom_q85.jpg" alt="ソフィー">
             </div>
             <div class="p-lounge-chat">
               いらっしゃいませ。
@@ -308,7 +308,7 @@ h1 { color: #f0b56e; font-size: 1.3rem; margin-bottom: 4px; }
           </div>
         </div>
       </div>
-      <div class="phone-label">② ラウンジ（チャット画面）</div>
+      <div class="phone-label">② ラウンジ（チャット画面）<br><span>BarSophieWelcom_q85.jpg</span></div>
       <div class="phone-annot">
         <div class="ann"><span class="ann-bun">文</span><span class="ann-text-bun">「いらっしゃいませ。」</span></div>
         <div class="ann"><span class="ann-talk">Ｔ</span><span class="ann-text-talk">「いらっしゃいませ。お待ちしておりました。いつものお席へどうぞ」</span></div>
@@ -330,13 +330,10 @@ h1 { color: #f0b56e; font-size: 1.3rem; margin-bottom: 4px; }
             </div>
             <div class="p-scroll">
               <div class="p-nav">
-                <button class="p-act ag" style="width:78%;">🎵 音楽リクエスト</button>
-                <button class="p-act ap" style="width:78%;">🍸 お酒を探す</button>
-                <button class="p-act ab" style="width:78%;">🥃 お酒の話</button>
-                <div class="p-btn-row" style="width:92%;">
-                  <button class="p-act apk" style="flex:1.5;">ソフィーと話す</button>
-                  <button class="p-act ac" style="flex:1;">📰 NEWS</button>
-                </div>
+                <button class="p-act apk" style="width:92%;">ソフィーと話す</button>
+                <button class="p-act ag" style="width:92%;">🎵 音楽リクエスト</button>
+                <button class="p-act" style="width:92%; background:linear-gradient(135deg,#8e44ad 50%,#2980b9 100%); color:#fff; border:none;">🍸 お酒の話/探す</button>
+                <button class="p-act ac" style="width:92%;">📰 NEWS</button>
               </div>
             </div>
             <div class="p-disclaimer">Amazonアソシエイト参加 / 一部コンテンツはAI生成</div>
@@ -473,13 +470,13 @@ h1 { color: #f0b56e; font-size: 1.3rem; margin-bottom: 4px; }
 <hr class="sep">
 
 <!-- ============================================================
-     SECTION 3: ソフィーと話す → ソフィーの天命診断フロー
+     SECTION 3: ソフィーと話す → 天命診断フロー
   ============================================================ -->
 <div class="section">
-  <div class="section-title">3. 「ソフィーと話す」→ ソフィーの天命診断フロー</div>
+  <div class="section-title">3-A. 「ソフィーと話す」→ 天命診断メニュー</div>
   <div class="phones">
 
-    <!-- ④ ソフィーと話す -->
+    <!-- ⑥ ソフィーと話す -->
     <div class="phone-wrap">
       <div class="phone">
         <div class="phone-screen">
@@ -501,7 +498,7 @@ h1 { color: #f0b56e; font-size: 1.3rem; margin-bottom: 4px; }
             <div class="p-console">
               <div class="p-btn-grid">
                 <div class="p-c-btn">◀ 戻る</div>
-                <div class="p-c-btn gb">S</div>
+                <div class="p-c-btn" style="color:#ff69b4; border-color:#1e90ff; background:#d0f0f8; font-size:6px; display:flex; flex-direction:column; align-items:center; justify-content:center; line-height:1.2;">📓<br>ノート</div>
                 <div class="p-c-btn">⏹️</div>
                 <div class="p-c-btn wide">▶</div>
                 <div class="p-c-btn">⏭</div>
@@ -512,7 +509,7 @@ h1 { color: #f0b56e; font-size: 1.3rem; margin-bottom: 4px; }
         </div>
       </div>
       <div class="phone-code">O</div>
-      <div class="phone-label">⑥ ソフィーと話す<br><span>state = "notice"</span></div>
+      <div class="phone-label">⑥ ソフィーと話す<br><span>state = "notice"</span><br><span>console: 戻る｜📓ノート｜⏹️｜▶｜⏭</span></div>
       <div class="phone-annot">
         <div class="ann"><span class="ann-talk">Ｔ</span><span class="ann-text-talk">即時（iceの音の後）</span></div>
         <div class="ann"><span class="ann-talk">50%</span><span class="ann-text-talk">「はい、およびですか？」</span></div>
@@ -524,7 +521,7 @@ h1 { color: #f0b56e; font-size: 1.3rem; margin-bottom: 4px; }
 
     <div class="arrow-right">→</div>
 
-    <!-- ⑤ ソフィーの天命診断 メニュー -->
+    <!-- F1 天命診断 メニュー -->
     <div class="phone-wrap">
       <div class="phone">
         <div class="phone-screen">
@@ -534,18 +531,23 @@ h1 { color: #f0b56e; font-size: 1.3rem; margin-bottom: 4px; }
           <div class="p-r-side">
             <div class="p-label-bar"><div class="p-user-name">👑 マスター</div></div>
             <div class="p-scroll">
-              <div class="p-shdr"><img src="./sophie_face.png">🔮 ソフィーの天命診断</div>
-              <div style="padding:6px 8px;">
-                <button class="p-act afo" style="margin-bottom:4px; width:100%;">👥 人物帳</button>
-                <button class="p-act afo" style="margin-bottom:4px; width:100%;">🌟 あなたのご相談<span class="pb pbai">Sonnet</span></button>
-                <button class="p-act afo" style="margin-bottom:4px; width:100%;">👤 あの人どんな人<span class="pb pbai">Sonnet</span></button>
-                <button class="p-act afo" style="margin-bottom:4px; width:100%;">💑 相性を見てもらう<span class="pb pbai">Sonnet</span></button>
+              <div class="p-panel">
+                <div class="p-phdr"><img src="./sophie_face.png">🔮 ソフィーの天命診断</div>
+                <div class="p-pbody">
+                  <button class="p-act afo" style="margin-bottom:4px; width:100%;">🌟 あなたのご相談<span class="pb pbai">Sonnet</span></button>
+                  <button class="p-act afo" style="margin-bottom:4px; width:100%;">👤 この人どんな人<span class="pb pbai">Sonnet</span></button>
+                  <button class="p-act afo" style="margin-bottom:4px; width:100%;">💑 相性を見てもらう<span class="pb pbai">Sonnet</span></button>
+                  <button class="p-act are" style="width:100%; margin-bottom:0;">👥 人物帳</button>
+                </div>
               </div>
             </div>
             <div class="p-console">
               <div class="p-btn-grid">
                 <div class="p-c-btn">◀ 戻る</div>
-                <div class="p-c-btn">命式表</div>
+                <div class="p-c-btn" style="color:#ff69b4; border-color:#1e90ff; background:#d0f0f8; font-size:6px; display:flex; flex-direction:column; align-items:center; justify-content:center; line-height:1.2;">📓<br>ノート</div>
+                <div class="p-c-btn">⏹️</div>
+                <div class="p-c-btn wide">▶</div>
+                <div class="p-c-btn">⏭</div>
               </div>
               <div class="p-sophie-box"><img src="./sophie_shake.png"></div>
             </div>
@@ -553,7 +555,7 @@ h1 { color: #f0b56e; font-size: 1.3rem; margin-bottom: 4px; }
         </div>
       </div>
       <div class="phone-code">F1</div>
-      <div class="phone-label">⑦ ソフィーの天命診断 メニュー</div>
+      <div class="phone-label">⑦ 天命診断 メニュー<br><span>showFortuneMenu()</span><br><span>console: 戻る｜📓ノート｜⏹️｜▶｜⏭</span></div>
       <div class="phone-annot">
         <div class="ann"><span class="ann-talk">Ｔ</span><span class="ann-text-talk">1秒後</span></div>
         <div class="ann"><span class="ann-talk">50%</span><span class="ann-text-talk">「さあ、一緒に天命を覗いてみましょうか」</span></div>
@@ -563,9 +565,19 @@ h1 { color: #f0b56e; font-size: 1.3rem; margin-bottom: 4px; }
       </div>
     </div>
 
-    <div class="arrow-right">→</div>
+  </div>
+</div>
 
-    <!-- ⑥ 鑑定フォーム -->
+<hr class="sep">
+
+<!-- ============================================================
+     SECTION 3-B: あなたの天命診断フォーム → 結果
+  ============================================================ -->
+<div class="section">
+  <div class="section-title">3-B. あなたの天命診断（showMyFortune）</div>
+  <div class="phones">
+
+    <!-- F3a フォーム -->
     <div class="phone-wrap">
       <div class="phone">
         <div class="phone-screen">
@@ -575,29 +587,48 @@ h1 { color: #f0b56e; font-size: 1.3rem; margin-bottom: 4px; }
           <div class="p-r-side">
             <div class="p-label-bar"><div class="p-user-name">👑 マスター</div></div>
             <div class="p-scroll">
-              <div class="p-shdr">🌟 あなたのご相談</div>
-              <div style="padding:6px 8px;">
-                <div class="fr"><div class="fl">生年月日</div><input class="fi" value="1980-01-15" readonly></div>
-                <div class="fr">
-                  <div class="fl">性別</div>
-                  <div class="chips"><span class="chip on">男性</span><span class="chip">女性</span></div>
-                </div>
-                <div class="fr">
-                  <div class="fl">テーマ</div>
-                  <div class="chips" style="margin-bottom:2px;">
-                    <span class="chip fo">総合運</span><span class="chip">仕事</span><span class="chip">恋愛</span><span class="chip">金運</span>
+              <div class="p-panel">
+                <div class="p-phdr"><img src="./sophie_face.png">あなたの天命診断</div>
+                <div class="p-pbody">
+                  <div class="fr">
+                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:2px;">
+                      <div class="fl">生年月日 <span style="color:#555; font-size:5.5px;">（誰のでも入れられます）</span></div>
+                      <div style="background:#1a2a1a; color:#7fd97f; border:1px solid #3a6a4a; padding:1px 4px; border-radius:2px; font-size:5.5px;">📖 人物帳から選ぶ</div>
+                    </div>
+                    <div style="display:flex; gap:2px; align-items:center;">
+                      <input class="fi" style="width:40px;" placeholder="1980">
+                      <span style="color:#888; font-size:6px;">年</span>
+                      <input class="fi" style="width:24px;" placeholder="1">
+                      <span style="color:#888; font-size:6px;">月</span>
+                      <input class="fi" style="width:24px;" placeholder="1">
+                      <span style="color:#888; font-size:6px;">日</span>
+                    </div>
                   </div>
-                  <div class="chips">
-                    <span class="chip">1ヶ月</span><span class="chip">1年</span><span class="chip">10年</span><span class="chip">自由</span>
+                  <div class="fr">
+                    <div class="fl">性別</div>
+                    <div class="chips"><span class="chip on">男性</span><span class="chip">女性</span></div>
+                  </div>
+                  <div class="fr">
+                    <div class="fl">鑑定テーマ</div>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:2px;">
+                      <span class="chip fo">🌟 総合運</span><span class="chip">💼 仕事運</span>
+                      <span class="chip">💕 恋愛運</span><span class="chip">💰 金運</span>
+                      <span class="chip">📅 向こう1ヶ月</span><span class="chip">📅 向こう1年</span>
+                      <span class="chip">🔭 向こう10年</span><span class="chip">💬 これが聞きたい</span>
+                    </div>
+                  </div>
+                  <div class="fr">
+                    <div class="fl">特に気になることがあれば</div>
+                    <div style="background:#000; border:1px solid #333; border-radius:2px; height:20px; padding:2px 4px; font-size:6px; color:#444;">転職のタイミングが気になっています…</div>
                   </div>
                 </div>
-                <button class="p-act" style="background:#9b59b6; border-color:#9b59b6; width:100%; margin-top:6px;">🔮 鑑定する</button>
               </div>
             </div>
             <div class="p-console">
               <div class="p-btn-grid">
-                <div class="p-c-btn">◀ 戻る</div>
-                <div class="p-c-btn">命式表</div>
+                <div class="p-c-btn" style="background:#34495e; color:#fff; flex:1; font-size:7px;">戻る</div>
+                <div class="p-c-btn" style="background:#0096BF; color:#ff69b4; border:2px solid #ff51a8; flex:2.5; font-size:8px; font-weight:bold;">天命診断を行う</div>
+                <div class="p-c-btn" style="background:#1a1a2a; color:#9b59b6; border:1px solid #6a3a8a; flex:1.5; font-size:6.5px;">📊 命式表</div>
               </div>
               <div class="p-sophie-box"><img src="./sophie_shake.png"></div>
             </div>
@@ -605,12 +636,12 @@ h1 { color: #f0b56e; font-size: 1.3rem; margin-bottom: 4px; }
         </div>
       </div>
       <div class="phone-code">F3a</div>
-      <div class="phone-label">⑧ 鑑定フォーム<br><span>showMyFortune()</span></div>
+      <div class="phone-label">⑧ あなたの天命診断 フォーム<br><span>showMyFortune()</span><br><span>console: 戻る｜天命診断を行う｜命式表</span></div>
     </div>
 
     <div class="arrow-right">→</div>
 
-    <!-- ⑦ 鑑定結果 -->
+    <!-- F4a 結果 -->
     <div class="phone-wrap">
       <div class="phone">
         <div class="phone-screen">
@@ -620,34 +651,275 @@ h1 { color: #f0b56e; font-size: 1.3rem; margin-bottom: 4px; }
           <div class="p-r-side">
             <div class="p-label-bar"><div class="p-user-name">👑 マスター</div></div>
             <div class="p-scroll">
-              <div class="p-shdr">🔮 鑑定結果</div>
-              <div style="padding:6px 8px;">
-                <div class="p-fresult">
-                  <div class="p-ftitle">✨ 総合運（2024年）</div>
-                  <div class="p-ftext">天干「壬」水の流れのように、柔軟に変化を受け入れる一年になりそうです。仕事面では新しいチャンスが…</div>
-                </div>
-                <div class="p-meishiki">
-                  <div class="p-mtitle">📊 命式表（干支タップで詳細）</div>
-                  <div class="p-mgrid">
-                    <div class="mh">年</div><div class="mh">月</div><div class="mh">日</div><div class="mh">時</div>
-                    <div class="mc">壬</div><div class="mc">甲</div><div class="mc">癸</div><div class="mc">丙</div>
-                    <div class="mc">子</div><div class="mc">寅</div><div class="mc">卯</div><div class="mc">午</div>
+              <div class="p-panel">
+                <div class="p-phdr"><img src="./sophie_face.png">ソフィーの鑑定結果</div>
+                <div style="padding:2px 8px 4px; color:#666; font-size:5.5px; border-bottom:1px solid #222;">【総合運鑑定】1980年1月15日生（男性）　2026年5月26日</div>
+                <div class="p-pbody">
+                  <div class="p-fresult">
+                    <div class="p-ftext">天干「壬」水の流れのように、あなたの命式は今まさに大きな転換点を迎えています。月柱の甲寅が示すように、力強い木の気が…</div>
+                  </div>
+                  <div style="margin-top:4px;">
+                    <div style="background:#1a1a2a; color:#9b59b6; border:1px solid #6a3a8a; border-radius:3px; padding:3px; font-size:6.5px; text-align:center; margin-bottom:3px;">📊 命式を確認する</div>
+                    <div style="background:#1a2a3a; color:#5ba3d9; border:1px solid #1a5276; border-radius:3px; padding:3px; font-size:6.5px; text-align:center;">📋 結果をコピー</div>
                   </div>
                 </div>
               </div>
             </div>
             <div class="p-console">
               <div class="p-btn-grid">
-                <div class="p-c-btn">◀ 戻る</div>
-                <div class="p-c-btn">命式表</div>
+                <div class="p-c-btn" style="background:#34495e; color:#fff; flex:1; font-size:7px;">戻る</div>
+                <div class="p-c-btn" style="background:#0096BF; color:#ff69b4; border:2px solid #ff51a8; flex:2.5; font-size:8px; font-weight:bold;">天命診断を行う</div>
+                <div class="p-c-btn" style="background:#1a1a2a; color:#9b59b6; border:1px solid #6a3a8a; flex:1.5; font-size:6.5px;">📊 命式表</div>
               </div>
               <div class="p-sophie-box"><img src="./sophie_shake.png"></div>
             </div>
           </div>
         </div>
       </div>
-      <div class="phone-code">F4</div>
-      <div class="phone-label">⑨ 鑑定結果<br><span>命式表（折りたたみ）付き</span></div>
+      <div class="phone-code">F4a</div>
+      <div class="phone-label">⑨ あなたの天命診断 結果<br><span>命式を確認する（折りたたみ）＋コピー</span><br><span>戻る→フォームへ（入力値保持）</span></div>
+    </div>
+
+  </div>
+</div>
+
+<hr class="sep">
+
+<!-- ============================================================
+     SECTION 3-C: この人どんな人フォーム → 結果
+  ============================================================ -->
+<div class="section">
+  <div class="section-title">3-C. この人どんな人（showAboutPerson）</div>
+  <div class="phones">
+
+    <!-- F3b フォーム -->
+    <div class="phone-wrap">
+      <div class="phone">
+        <div class="phone-screen">
+          <div class="p-monitor-wrap">
+            <img src="./fortune_sophie.jpeg" alt="ソフィー占い">
+          </div>
+          <div class="p-r-side">
+            <div class="p-label-bar"><div class="p-user-name">👑 マスター</div></div>
+            <div class="p-scroll">
+              <div class="p-panel">
+                <div class="p-phdr"><img src="./sophie_face.png">この人どんな人</div>
+                <div class="p-pbody">
+                  <div class="fr">
+                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:2px;">
+                      <div class="fl">生年月日</div>
+                      <div style="background:#1a2a1a; color:#7fd97f; border:1px solid #3a6a4a; padding:1px 4px; border-radius:2px; font-size:5.5px;">📖 人物帳から選ぶ</div>
+                    </div>
+                    <div style="display:flex; gap:2px; align-items:center;">
+                      <input class="fi" style="width:40px;" placeholder="1975">
+                      <span style="color:#888; font-size:6px;">年</span>
+                      <input class="fi" style="width:24px;" placeholder="1">
+                      <span style="color:#888; font-size:6px;">月</span>
+                      <input class="fi" style="width:24px;" placeholder="1">
+                      <span style="color:#888; font-size:6px;">日</span>
+                    </div>
+                  </div>
+                  <div class="fr">
+                    <div class="fl">性別</div>
+                    <div class="chips"><span class="chip">男性</span><span class="chip on">女性</span></div>
+                  </div>
+                  <div class="fr">
+                    <div class="fl">鑑定テーマ</div>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:2px;">
+                      <span class="chip fo">🔍 性格分析</span><span class="chip">📊 SWOT分析</span>
+                      <span class="chip">💡 アプローチ法</span><span class="chip">💣 地雷ポイント</span>
+                      <span class="chip">⚔️ 弱点と反撃法</span><span class="chip">🎁 プレゼント</span>
+                    </div>
+                  </div>
+                  <div class="fr">
+                    <div class="fl">気になる点・関係性など</div>
+                    <div style="background:#000; border:1px solid #333; border-radius:2px; height:20px; padding:2px 4px; font-size:6px; color:#444;">職場の上司、もっと懐に入りたい…</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="p-console">
+              <div class="p-btn-grid">
+                <div class="p-c-btn" style="background:#34495e; color:#fff; flex:1; font-size:7px;">戻る</div>
+                <div class="p-c-btn" style="background:#0096BF; color:#ff69b4; border:2px solid #ff51a8; flex:2.5; font-size:8px; font-weight:bold;">天命診断を行う</div>
+                <div class="p-c-btn" style="background:#1a1a2a; color:#9b59b6; border:1px solid #6a3a8a; flex:1.5; font-size:6.5px;">📊 命式表</div>
+              </div>
+              <div class="p-sophie-box"><img src="./sophie_shake.png"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="phone-code">F3b</div>
+      <div class="phone-label">⑩ この人どんな人 フォーム<br><span>showAboutPerson()</span><br><span>テーマ6択・文字数はテーマ別異なる</span></div>
+    </div>
+
+    <div class="arrow-right">→</div>
+
+    <!-- F4b 結果 -->
+    <div class="phone-wrap">
+      <div class="phone">
+        <div class="phone-screen">
+          <div class="p-monitor-wrap">
+            <img src="./fortune_sophie.jpeg" alt="ソフィー占い">
+          </div>
+          <div class="p-r-side">
+            <div class="p-label-bar"><div class="p-user-name">👑 マスター</div></div>
+            <div class="p-scroll">
+              <div class="p-panel">
+                <div class="p-phdr"><img src="./sophie_face.png">ソフィーの鑑定結果</div>
+                <div style="padding:2px 8px 4px; color:#666; font-size:5.5px; border-bottom:1px solid #222;">【性格分析】1975年6月10日生（女性）　2026年5月26日</div>
+                <div class="p-pbody">
+                  <div class="p-fresult">
+                    <div class="p-ftext">この方の日干は「丁」火の陰、繊細で洞察力の鋭い方です。月柱の壬午が示すように、表に出す感情と内側の深さに大きな差があり…</div>
+                  </div>
+                  <div style="margin-top:4px;">
+                    <div style="background:#1a2a3a; color:#5ba3d9; border:1px solid #1a5276; border-radius:3px; padding:3px; font-size:6.5px; text-align:center;">📋 結果をコピー</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="p-console">
+              <div class="p-btn-grid">
+                <div class="p-c-btn" style="background:#34495e; color:#fff; flex:1; font-size:7px;">戻る</div>
+                <div class="p-c-btn" style="background:#0096BF; color:#ff69b4; border:2px solid #ff51a8; flex:2.5; font-size:8px; font-weight:bold;">天命診断を行う</div>
+                <div class="p-c-btn" style="background:#1a1a2a; color:#9b59b6; border:1px solid #6a3a8a; flex:1.5; font-size:6.5px;">📊 命式表</div>
+              </div>
+              <div class="p-sophie-box"><img src="./sophie_shake.png"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="phone-code">F4b</div>
+      <div class="phone-label">⑪ この人どんな人 結果<br><span>コピーのみ（命式は命式表コンソールから）</span><br><span>戻る→フォームへ（入力値保持）</span></div>
+    </div>
+
+  </div>
+</div>
+
+<hr class="sep">
+
+<!-- ============================================================
+     SECTION 3-D: 相性診断フォーム → 結果
+  ============================================================ -->
+<div class="section">
+  <div class="section-title">3-D. 相性診断（showCompatibility）</div>
+  <div class="phones">
+
+    <!-- F3c フォーム -->
+    <div class="phone-wrap">
+      <div class="phone">
+        <div class="phone-screen">
+          <div class="p-monitor-wrap">
+            <img src="./fortune_sophie.jpeg" alt="ソフィー占い">
+          </div>
+          <div class="p-r-side">
+            <div class="p-label-bar"><div class="p-user-name">👑 マスター</div></div>
+            <div class="p-scroll">
+              <div class="p-panel">
+                <div class="p-phdr"><img src="./sophie_face.png">💑 相性診断</div>
+                <div class="p-pbody">
+                  <!-- あなた -->
+                  <div class="fr">
+                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:2px;">
+                      <div class="fl">あなたの生年月日</div>
+                      <div style="background:#1a2a1a; color:#7fd97f; border:1px solid #3a6a4a; padding:1px 4px; border-radius:2px; font-size:5.5px;">📖 人物帳</div>
+                    </div>
+                    <div style="display:flex; gap:2px; align-items:center;">
+                      <input class="fi" style="width:36px;" placeholder="1980">
+                      <span style="color:#888; font-size:6px;">年</span>
+                      <input class="fi" style="width:22px;" placeholder="1">
+                      <span style="color:#888; font-size:6px;">月</span>
+                      <input class="fi" style="width:22px;" placeholder="1">
+                      <span style="color:#888; font-size:6px;">日</span>
+                      <div style="background:#0096BF; color:#fff; border:1px solid #00d2ff; padding:1px 4px; border-radius:2px; font-size:6px; margin-left:2px;">男</div>
+                      <div style="background:#1a1a1a; color:#888; border:1px solid #444; padding:1px 4px; border-radius:2px; font-size:6px;">女</div>
+                    </div>
+                  </div>
+                  <div style="border-top:1px solid #333; margin:4px 0;"></div>
+                  <!-- お相手 -->
+                  <div class="fr">
+                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:2px;">
+                      <div class="fl">お相手の生年月日</div>
+                      <div style="background:#1a2a1a; color:#7fd97f; border:1px solid #3a6a4a; padding:1px 4px; border-radius:2px; font-size:5.5px;">📖 人物帳</div>
+                    </div>
+                    <div style="display:flex; gap:2px; align-items:center;">
+                      <input class="fi" style="width:36px;" placeholder="1985">
+                      <span style="color:#888; font-size:6px;">年</span>
+                      <input class="fi" style="width:22px;" placeholder="1">
+                      <span style="color:#888; font-size:6px;">月</span>
+                      <input class="fi" style="width:22px;" placeholder="1">
+                      <span style="color:#888; font-size:6px;">日</span>
+                      <div style="background:#1a1a1a; color:#888; border:1px solid #444; padding:1px 4px; border-radius:2px; font-size:6px; margin-left:2px;">男</div>
+                      <div style="background:#ff69b4; color:#fff; border:1px solid #ff51a8; padding:1px 4px; border-radius:2px; font-size:6px;">女</div>
+                    </div>
+                  </div>
+                  <div style="border-top:1px solid #333; margin:4px 0;"></div>
+                  <!-- テキスト入力 -->
+                  <div class="fr">
+                    <div class="fl">相手をどう思っていますか？ <span style="color:#555;">(50字)</span></div>
+                    <div style="background:#000; border:1px solid #333; border-radius:2px; height:16px; padding:2px 4px; font-size:6px; color:#444;">好きだけど自分の気持ちがよくわからない…</div>
+                  </div>
+                  <div class="fr">
+                    <div class="fl">何が知りたいですか？ <span style="color:#555;">(50字)</span></div>
+                    <div style="background:#000; border:1px solid #333; border-radius:2px; height:16px; padding:2px 4px; font-size:6px; color:#444;">この人と将来一緒になれるか知りたい…</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="p-console">
+              <div class="p-btn-grid">
+                <div class="p-c-btn" style="background:#34495e; color:#fff; flex:1; font-size:7px;">戻る</div>
+                <div class="p-c-btn" style="background:#0096BF; color:#ff69b4; border:2px solid #ff51a8; flex:2.5; font-size:8px; font-weight:bold;">天命診断を行う</div>
+                <div class="p-c-btn" style="background:#1a1a2a; color:#9b59b6; border:1px solid #6a3a8a; flex:1.5; font-size:6.5px;">📊 命式表</div>
+              </div>
+              <div class="p-sophie-box"><img src="./sophie_shake.png"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="phone-code">F3c</div>
+      <div class="phone-label">⑫ 相性診断 フォーム<br><span>showCompatibility()</span><br><span>あなた(青)/お相手(ピンク)で色分け</span></div>
+    </div>
+
+    <div class="arrow-right">→</div>
+
+    <!-- F4c 結果 -->
+    <div class="phone-wrap">
+      <div class="phone">
+        <div class="phone-screen">
+          <div class="p-monitor-wrap">
+            <img src="./fortune_sophie.jpeg" alt="ソフィー占い">
+          </div>
+          <div class="p-r-side">
+            <div class="p-label-bar"><div class="p-user-name">👑 マスター</div></div>
+            <div class="p-scroll">
+              <div class="p-panel">
+                <div class="p-phdr"><img src="./sophie_face.png">💑 ソフィーの相性鑑定</div>
+                <div class="p-pbody">
+                  <div class="p-fresult">
+                    <div class="p-ftext">お二人の命式を拝見しました。あなたの壬水とお相手の丁火は「丁壬合」の関係で、互いに深く惹かれ合う宿命を持っています…</div>
+                  </div>
+                  <div style="color:#666; font-size:5.5px; border-top:1px solid #333; padding-top:3px; margin-top:3px; margin-bottom:3px;">相性鑑定　1980/1/15（男）× 1985/3/20（女）　2026年5月26日</div>
+                  <div style="margin-top:2px;">
+                    <div style="background:#1a1a2a; color:#9b59b6; border:1px solid #6a3a8a; border-radius:3px; padding:3px; font-size:6.5px; text-align:center; margin-bottom:3px;">📊 命式を確認する</div>
+                    <div style="background:#1a2a3a; color:#5ba3d9; border:1px solid #1a5276; border-radius:3px; padding:3px; font-size:6.5px; text-align:center;">📋 結果をコピー</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="p-console">
+              <div class="p-btn-grid">
+                <div class="p-c-btn" style="background:#34495e; color:#fff; flex:1; font-size:7px;">戻る</div>
+                <div class="p-c-btn" style="background:#0096BF; color:#ff69b4; border:2px solid #ff51a8; flex:2.5; font-size:8px; font-weight:bold;">天命診断を行う</div>
+                <div class="p-c-btn" style="background:#1a1a2a; color:#9b59b6; border:1px solid #6a3a8a; flex:1.5; font-size:6.5px;">📊 命式表</div>
+              </div>
+              <div class="p-sophie-box"><img src="./sophie_shake.png"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="phone-code">F4c</div>
+      <div class="phone-label">⑬ 相性診断 結果<br><span>命式を確認する（両名分・折りたたみ）＋コピー</span><br><span>戻る→フォームへ（入力値保持）</span></div>
     </div>
 
   </div>
