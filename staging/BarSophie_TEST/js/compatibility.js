@@ -214,7 +214,13 @@ export function showCompatibility(onBack = null, prefillMe = null, prefillYou = 
         const savedYou = { year: yourYear, month: yourMonth, day: yourDay, gender: yourGender };
         const savedTexts = { feeling, question };
         const ctrlBtn = document.getElementById('c-fortune-submit');
-        if (ctrlBtn) { ctrlBtn.textContent = '天命を診断中'; ctrlBtn.disabled = true; }
+        let colorTimer = null;
+        if (ctrlBtn) {
+            ctrlBtn.textContent = '診断中';
+            ctrlBtn.disabled = true;
+            let flip = false;
+            colorTimer = setInterval(() => { flip = !flip; ctrlBtn.style.color = flip ? '#ff1493' : '#ff69b4'; }, 1000);
+        }
 
         const myPillars = getThreePillars(parseInt(myYear), parseInt(myMonth), parseInt(myDay));
         const yourPillars = getThreePillars(parseInt(yourYear), parseInt(yourMonth), parseInt(yourDay));
@@ -325,7 +331,8 @@ ${question || 'とくになし'}
                 </div>`;
 
             if (lv) { lv.innerHTML = resultHtml; }
-            if (ctrlBtn) { ctrlBtn.textContent = '天命診断を行う'; ctrlBtn.disabled = false; }
+            if (colorTimer) { clearInterval(colorTimer); colorTimer = null; }
+            if (ctrlBtn) { ctrlBtn.textContent = '天命診断を行う'; ctrlBtn.style.color = '#ff69b4'; ctrlBtn.disabled = false; }
 
             window._fortuneBack = () => showCompatibility(onBack, savedMe, savedYou, savedTexts);
 
@@ -359,7 +366,8 @@ ${question || 'とくになし'}
             alert('通信エラーが発生しました。');
             btn.textContent = 'ソフィーに鑑定してもらう';
             btn.disabled = false;
-            if (ctrlBtn) { ctrlBtn.textContent = '天命診断を行う'; ctrlBtn.disabled = false; }
+            if (colorTimer) { clearInterval(colorTimer); colorTimer = null; }
+            if (ctrlBtn) { ctrlBtn.textContent = '天命診断を行う'; ctrlBtn.style.color = '#ff69b4'; ctrlBtn.disabled = false; }
         }
     };
 }

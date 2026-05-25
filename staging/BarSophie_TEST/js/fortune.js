@@ -195,7 +195,13 @@ export function showMyFortune(onBack = null, prefill = null) {
         const worry = document.getElementById('ft-worry').value.trim();
         const savedPrefill = { year, month, day, gender: selectedGender };
         const ctrlBtn = document.getElementById('c-fortune-submit');
-        if (ctrlBtn) { ctrlBtn.textContent = '天命を診断中'; ctrlBtn.disabled = true; }
+        let colorTimer = null;
+        if (ctrlBtn) {
+            ctrlBtn.textContent = '診断中';
+            ctrlBtn.disabled = true;
+            let flip = false;
+            colorTimer = setInterval(() => { flip = !flip; ctrlBtn.style.color = flip ? '#ff1493' : '#ff69b4'; }, 1000);
+        }
 
         const pillars = getThreePillars(parseInt(year), parseInt(month), parseInt(day));
 
@@ -295,14 +301,13 @@ ${meishikiDetail}
                         <div id="ft-meishiki-area2" style="display:none; margin-bottom:8px;"></div>
                         <button id="ft-copy" style="width:100%; background:#1a2a3a; color:#5ba3d9;
                             border:1px solid #1a5276; height:40px; border-radius:4px;
-                            font-size:0.85rem; margin-bottom:6px;">📋 結果をコピー</button>
-                        <button id="ft-back" style="width:100%; background:#34495e; color:#fff;
-                            border:none; height:36px; border-radius:4px; font-size:0.85rem;">戻る</button>
+                            font-size:0.85rem;">📋 結果をコピー</button>
                     </div>
                 </div>`;
 
             if (lv) { lv.innerHTML = resultHtml; }
-            if (ctrlBtn) { ctrlBtn.textContent = '天命診断を行う'; ctrlBtn.disabled = false; }
+            if (colorTimer) { clearInterval(colorTimer); colorTimer = null; }
+            if (ctrlBtn) { ctrlBtn.textContent = '天命診断を行う'; ctrlBtn.style.color = '#ff69b4'; ctrlBtn.disabled = false; }
 
             window._showMeishikiPanel = () => {
                 const area = document.getElementById('ft-meishiki-area2');
@@ -327,13 +332,13 @@ ${meishikiDetail}
                     .then(() => alert('鑑定結果をコピーしました。メモアプリに貼り付けてください。'))
                     .catch(() => alert('コピーに失敗しました。'));
             };
-            document.getElementById('ft-back').onclick = () => showMyFortune(onBack, savedPrefill);
 
         } catch (e) {
             alert('通信エラーが発生しました。');
             btn.textContent = 'ソフィーに鑑定してもらう';
             btn.disabled = false;
-            if (ctrlBtn) { ctrlBtn.textContent = '天命診断を行う'; ctrlBtn.disabled = false; }
+            if (colorTimer) { clearInterval(colorTimer); colorTimer = null; }
+            if (ctrlBtn) { ctrlBtn.textContent = '天命診断を行う'; ctrlBtn.style.color = '#ff69b4'; ctrlBtn.disabled = false; }
         }
     };
     window._fortuneSubmit = () => {
@@ -528,7 +533,13 @@ export function showAboutPerson(onBack = null, prefill = null) {
         const worry = document.getElementById('ft-worry').value.trim();
         const savedPrefill = { year, month, day, gender: selectedGender, name: personName };
         const ctrlBtn = document.getElementById('c-fortune-submit');
-        if (ctrlBtn) { ctrlBtn.textContent = '天命を診断中'; ctrlBtn.disabled = true; }
+        let colorTimer = null;
+        if (ctrlBtn) {
+            ctrlBtn.textContent = '診断中';
+            ctrlBtn.disabled = true;
+            let flip = false;
+            colorTimer = setInterval(() => { flip = !flip; ctrlBtn.style.color = flip ? '#ff1493' : '#ff69b4'; }, 1000);
+        }
 
         const pillars = getThreePillars(parseInt(year), parseInt(month), parseInt(day));
 
@@ -631,14 +642,13 @@ ${personInfo}`;
                         <div id="ft-meishiki-area2" style="display:none; margin-bottom:8px;"></div>
                         <button id="ft-copy" style="width:100%; background:#1a2a3a; color:#5ba3d9;
                             border:1px solid #1a5276; height:40px; border-radius:4px;
-                            font-size:0.85rem; margin-bottom:6px;">📋 結果をコピー</button>
-                        <button id="ft-back" style="width:100%; background:#34495e; color:#fff;
-                            border:none; height:36px; border-radius:4px; font-size:0.85rem;">戻る</button>
+                            font-size:0.85rem;">📋 結果をコピー</button>
                     </div>
                 </div>`;
 
             if (lv) { lv.innerHTML = resultHtml; }
-            if (ctrlBtn) { ctrlBtn.textContent = '天命診断を行う'; ctrlBtn.disabled = false; }
+            if (colorTimer) { clearInterval(colorTimer); colorTimer = null; }
+            if (ctrlBtn) { ctrlBtn.textContent = '天命診断を行う'; ctrlBtn.style.color = '#ff69b4'; ctrlBtn.disabled = false; }
 
             window._showMeishikiPanel = () => {
                 const area = document.getElementById('ft-meishiki-area2');
@@ -661,13 +671,13 @@ ${personInfo}`;
                     .then(() => alert('鑑定結果をコピーしました。メモアプリに貼り付けてください。'))
                     .catch(() => alert('コピーに失敗しました。'));
             };
-            document.getElementById('ft-back').onclick = () => showAboutPerson(onBack, savedPrefill);
 
         } catch (e) {
             alert('通信エラーが発生しました。');
             btn.textContent = 'ソフィーに鑑定してもらう';
             btn.disabled = false;
-            if (ctrlBtn) { ctrlBtn.textContent = '天命診断を行う'; ctrlBtn.disabled = false; }
+            if (colorTimer) { clearInterval(colorTimer); colorTimer = null; }
+            if (ctrlBtn) { ctrlBtn.textContent = '天命診断を行う'; ctrlBtn.style.color = '#ff69b4'; ctrlBtn.disabled = false; }
         }
     };
     window._fortuneSubmit = () => {
