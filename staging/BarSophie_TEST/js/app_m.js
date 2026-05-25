@@ -698,7 +698,7 @@ function renderConsole(mode) {
     if (mode === 'fortune') {
         grid.innerHTML = `
         <button class="c-btn" id="c-back"           style="${backBtn} flex:1; font-size:0.8rem;">戻る</button>
-        <button class="c-btn" id="c-fortune-submit"  style="background:#0096BF; color:#ff69b4; border:2px solid #ff51a8; flex:2.5; font-size:1rem; font-weight:bold;">ソフィーの診断</button>
+        <button class="c-btn" id="c-fortune-submit"  style="background:#0096BF; color:#ff69b4; border:2px solid #ff51a8; flex:2.5; font-size:1rem; font-weight:bold;">天命診断を行う</button>
         <button class="c-btn" id="c-meishiki"        style="background:#1a1a2a; color:#9b59b6; border:1px solid #6a3a8a; flex:1.5; font-size:0.78rem;">📊 命式表</button>`;
         document.getElementById('c-back').onclick = () => {
             window._fortuneBack && window._fortuneBack();

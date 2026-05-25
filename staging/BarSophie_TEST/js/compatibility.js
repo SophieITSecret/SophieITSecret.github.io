@@ -13,7 +13,7 @@ export function showCompatibility(onBack = null, prefillMe = null, prefillYou = 
     const monImg = document.getElementById('monitor-img');
     if (monImg) monImg.src = './fortune_sophie.jpeg';
     if (window._renderConsole) window._renderConsole('fortune');
-    window._fortuneBack = () => showCompatibility(onBack);
+    window._fortuneBack = () => { if (onBack) onBack(); else import('./fortune.js').then(f => f.showFortuneMenu()); };
 
     const dateInput = (prefix, label, pf) => {
         const isYou = prefix === 'cp-you';
@@ -67,7 +67,7 @@ export function showCompatibility(onBack = null, prefillMe = null, prefillYou = 
                         border-bottom:1px solid #333; height:28px; line-height:28px;
                         border-radius:8px 8px 0 0; display:flex; align-items:center; gap:6px;">
                 <img src="./sophie_face.png" style="width:20px; height:20px; border-radius:50%; object-fit:cover;">
-                💑 相性鑑定
+                💑 相性診断
             </div>
             <div style="padding:10px;">
                 ${dateInput('cp-me', 'あなた', prefillMe)}
@@ -90,15 +90,10 @@ export function showCompatibility(onBack = null, prefillMe = null, prefillYou = 
                                resize:none; font-family:inherit;">${texts ? texts.question : ''}</textarea>
                     <div id="cp-question-count" style="color:#666; font-size:0.7rem; text-align:right;">残り${texts ? 50 - texts.question.length : 50}文字</div>
                 </div>
-                <button id="cp-submit" style="width:100%; background:#0096BF; color:#ff69b4;
-                    border:2px solid #ff51a8; height:44px; border-radius:4px;
-                    font-size:0.95rem; font-weight:bold; margin-bottom:8px;">
-                    ソフィーに鑑定してもらう
-                </button>
-                <button id="cp-close" style="width:100%; background:#34495e; color:#fff;
-                    border:none; height:36px; border-radius:4px; font-size:0.85rem;">閉じる</button>
+                <button id="cp-submit" style="display:none;"></button>
             </div>
-        </div>`;
+        </div>
+        <div id="cp-meishiki-area" style="display:none; margin:10px;"></div>`;
 
     if (lv) { lv.style.display = 'block'; lv.innerHTML = formHtml; }
     if (nm) nm.style.display = 'none';
@@ -163,9 +158,41 @@ export function showCompatibility(onBack = null, prefillMe = null, prefillYou = 
         );
     };
 
-    document.getElementById('cp-close').onclick = () => {
-        if (onBack) onBack();
-        else import('./fortune.js').then(f => f.showFortuneMenu());
+    window._fortuneSubmit = () => {
+        const btn = document.getElementById('cp-submit');
+        if (btn && !btn.disabled) btn.click();
+    };
+
+    window._showMeishikiPanel = () => {
+        const area = document.getElementById('cp-meishiki-area');
+        if (!area) return;
+        if (area.style.display !== 'none') { area.style.display = 'none'; return; }
+        const myY = parseInt(document.getElementById('cp-me-year')?.value);
+        const myM = parseInt(document.getElementById('cp-me-month')?.value);
+        const myD = parseInt(document.getElementById('cp-me-day')?.value);
+        const yourY = parseInt(document.getElementById('cp-you-year')?.value);
+        const yourM = parseInt(document.getElementById('cp-you-month')?.value);
+        const yourD = parseInt(document.getElementById('cp-you-day')?.value);
+        if ((!myY || !myM || !myD) && (!yourY || !yourM || !yourD)) return;
+        const buildFn = window.buildMeishikiHtml;
+        if (!buildFn) return;
+        import('./meishiki.js').then(m => {
+            const siMap = {甲:{gogyo:'木',inyo:'陽'},乙:{gogyo:'木',inyo:'陰'},丙:{gogyo:'火',inyo:'陽'},丁:{gogyo:'火',inyo:'陰'},戊:{gogyo:'土',inyo:'陽'},己:{gogyo:'土',inyo:'陰'},庚:{gogyo:'金',inyo:'陽'},辛:{gogyo:'金',inyo:'陰'},壬:{gogyo:'水',inyo:'陽'},癸:{gogyo:'水',inyo:'陰'}};
+            const adapt = col => col ? { ...col, stemInfo: siMap[col.stem] || {} } : null;
+            let html = '';
+            if (myY && myM && myD) {
+                const raw = m.getFullMeishiki(myY, myM, myD, myGender || '不明');
+                const data = { ...raw, yearPillar: adapt(raw.columns?.year), monthPillar: adapt(raw.columns?.month), dayPillar: adapt(raw.columns?.day) };
+                html += `<div style="margin-bottom:8px;"><div style="color:#aaa;font-size:0.72rem;margin-bottom:4px;">あなたの命式</div>${buildFn(data, myY, myM, myD, myGender || '不明')}</div>`;
+            }
+            if (yourY && yourM && yourD) {
+                const raw = m.getFullMeishiki(yourY, yourM, yourD, yourGender || '不明');
+                const data = { ...raw, yearPillar: adapt(raw.columns?.year), monthPillar: adapt(raw.columns?.month), dayPillar: adapt(raw.columns?.day) };
+                html += `<div><div style="color:#aaa;font-size:0.72rem;margin-bottom:4px;">お相手の命式</div>${buildFn(data, yourY, yourM, yourD, yourGender || '不明')}</div>`;
+            }
+            area.innerHTML = html;
+            area.style.display = 'block';
+        });
     };
 
     document.getElementById('cp-submit').onclick = async () => {
@@ -183,6 +210,11 @@ export function showCompatibility(onBack = null, prefillMe = null, prefillYou = 
 
         const feeling = document.getElementById('cp-feeling').value.trim();
         const question = document.getElementById('cp-question').value.trim();
+        const savedMe = { year: myYear, month: myMonth, day: myDay, gender: myGender };
+        const savedYou = { year: yourYear, month: yourMonth, day: yourDay, gender: yourGender };
+        const savedTexts = { feeling, question };
+        const ctrlBtn = document.getElementById('c-fortune-submit');
+        if (ctrlBtn) { ctrlBtn.textContent = '天命を診断中'; ctrlBtn.disabled = true; }
 
         const myPillars = getThreePillars(parseInt(myYear), parseInt(myMonth), parseInt(myDay));
         const yourPillars = getThreePillars(parseInt(yourYear), parseInt(yourMonth), parseInt(yourDay));
@@ -282,38 +314,52 @@ ${question || 'とくになし'}
                         <div style="color:#888; font-size:0.75rem; text-align:center; padding:4px 0; border-bottom:1px solid #333; margin-bottom:8px;">
                             相性鑑定　${myYear}/${myMonth}/${myDay}（${myGender}）×${yourYear}/${yourMonth}/${yourDay}（${yourGender}）　${new Date().toLocaleDateString('ja-JP')}
                         </div>
+                        <button id="cp-meishiki-btn" style="width:100%; background:#1a1a2a; color:#9b59b6;
+                            border:1px solid #6a3a8a; height:36px; border-radius:4px;
+                            font-size:0.8rem; margin-bottom:6px;">📊 命式を確認する</button>
+                        <div id="cp-meishiki-area-result" style="display:none; margin-bottom:8px;"></div>
                         <button id="cp-copy" style="width:100%; background:#1a2a3a; color:#5ba3d9;
                             border:1px solid #1a5276; height:40px; border-radius:4px;
-                            font-size:0.85rem; margin-bottom:6px;">📋 結果をコピー</button>
-                        <button id="cp-retry" style="width:100%; background:#2a1a3a; color:#c39bd3;
-                            border:1px solid #6a3a8a; height:40px; border-radius:4px;
-                            font-size:0.85rem; margin-bottom:6px;">もう一度鑑定する</button>
-                        <button id="cp-done" style="width:100%; background:#34495e; color:#fff;
-                            border:none; height:36px; border-radius:4px; font-size:0.85rem;">閉じる</button>
+                            font-size:0.85rem;">📋 結果をコピー</button>
                     </div>
                 </div>`;
 
             if (lv) { lv.innerHTML = resultHtml; }
+            if (ctrlBtn) { ctrlBtn.textContent = '天命診断を行う'; ctrlBtn.disabled = false; }
 
-            window._fortuneBack = () => showCompatibility(onBack);
+            window._fortuneBack = () => showCompatibility(onBack, savedMe, savedYou, savedTexts);
 
+            window._showMeishikiPanel = () => {
+                const area = document.getElementById('cp-meishiki-area-result');
+                if (!area) return;
+                if (area.style.display !== 'none') { area.style.display = 'none'; return; }
+                const buildFn = window.buildMeishikiHtml;
+                if (!buildFn) return;
+                import('./meishiki.js').then(m => {
+                    const siMap = {甲:{gogyo:'木',inyo:'陽'},乙:{gogyo:'木',inyo:'陰'},丙:{gogyo:'火',inyo:'陽'},丁:{gogyo:'火',inyo:'陰'},戊:{gogyo:'土',inyo:'陽'},己:{gogyo:'土',inyo:'陰'},庚:{gogyo:'金',inyo:'陽'},辛:{gogyo:'金',inyo:'陰'},壬:{gogyo:'水',inyo:'陽'},癸:{gogyo:'水',inyo:'陰'}};
+                    const adapt = col => col ? { ...col, stemInfo: siMap[col.stem] || {} } : null;
+                    const myRaw = m.getFullMeishiki(parseInt(myYear), parseInt(myMonth), parseInt(myDay), myGender);
+                    const myData = { ...myRaw, yearPillar: adapt(myRaw.columns?.year), monthPillar: adapt(myRaw.columns?.month), dayPillar: adapt(myRaw.columns?.day) };
+                    const yourRaw = m.getFullMeishiki(parseInt(yourYear), parseInt(yourMonth), parseInt(yourDay), yourGender);
+                    const yourData = { ...yourRaw, yearPillar: adapt(yourRaw.columns?.year), monthPillar: adapt(yourRaw.columns?.month), dayPillar: adapt(yourRaw.columns?.day) };
+                    area.innerHTML = `<div style="margin-bottom:8px;"><div style="color:#aaa;font-size:0.72rem;margin-bottom:4px;">あなたの命式</div>${buildFn(myData, parseInt(myYear), parseInt(myMonth), parseInt(myDay), myGender)}</div><div><div style="color:#aaa;font-size:0.72rem;margin-bottom:4px;">お相手の命式</div>${buildFn(yourData, parseInt(yourYear), parseInt(yourMonth), parseInt(yourDay), yourGender)}</div>`;
+                    area.style.display = 'block';
+                });
+            };
+
+            document.getElementById('cp-meishiki-btn').onclick = () => window._showMeishikiPanel();
             document.getElementById('cp-copy').onclick = () => {
-                const header = `【相性鑑定】${myYear}/${myMonth}/${myDay}（${myGender}）×${yourYear}/${yourMonth}/${yourDay}（${yourGender}）　${new Date().toLocaleDateString('ja-JP')}\n\n`;
+                const header = `【相性診断】${myYear}/${myMonth}/${myDay}（${myGender}）×${yourYear}/${yourMonth}/${yourDay}（${yourGender}）　${new Date().toLocaleDateString('ja-JP')}\n\n`;
                 navigator.clipboard.writeText(header + resultText)
                     .then(() => alert('鑑定結果をコピーしました。'))
                     .catch(() => alert('コピーに失敗しました。'));
-            };
-            
-            document.getElementById('cp-retry').onclick = () => showCompatibility(onBack);
-            document.getElementById('cp-done').onclick = () => {
-                if (onBack) onBack();
-                else import('./fortune.js').then(f => f.showFortuneMenu());
             };
 
         } catch (e) {
             alert('通信エラーが発生しました。');
             btn.textContent = 'ソフィーに鑑定してもらう';
             btn.disabled = false;
+            if (ctrlBtn) { ctrlBtn.textContent = '天命診断を行う'; ctrlBtn.disabled = false; }
         }
     };
 }

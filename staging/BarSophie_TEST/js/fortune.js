@@ -38,12 +38,12 @@ export function showMyFortune(onBack = null, prefill = null) {
                         border-bottom:1px solid #333; height:28px; line-height:28px;
                         border-radius:8px 8px 0 0; display:flex; align-items:center; gap:6px;">
                 <img src="./sophie_face.png" style="width:20px; height:20px; border-radius:50%; object-fit:cover;">
-                ソフィーの運勢鑑定
+                あなたの天命診断
             </div>
             <div style="padding:10px;">
                 <div style="margin-bottom:8px;">
                     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;">
-                        <div style="color:#aaa; font-size:0.75rem;">生年月日</div>
+                        <div style="color:#aaa; font-size:0.75rem;">生年月日 <span style="color:#666; font-size:0.7rem;">（誰のでも入れられます）</span></div>
                         <button id="ft-people" style="background:#1a2a1a; color:#7fd97f; border:1px solid #3a6a4a; padding:2px 8px; border-radius:3px; font-size:0.7rem;">📖 人物帳から選ぶ</button>
                     </div>
                     <div style="display:flex; gap:4px; align-items:center;">
@@ -113,7 +113,8 @@ export function showMyFortune(onBack = null, prefill = null) {
                 </div>
                 <button id="ft-submit" style="display:none;"></button>
             </div>
-        </div>`;
+        </div>
+        <div id="ft-meishiki-area-form" style="display:none; margin:10px;"></div>`;
 
     if (lv) { lv.style.display = 'block'; lv.innerHTML = formHtml; }
     if (nm) nm.style.display = 'none';
@@ -163,6 +164,24 @@ export function showMyFortune(onBack = null, prefill = null) {
         );
     };
 
+    window._showMeishikiPanel = () => {
+        const area = document.getElementById('ft-meishiki-area-form');
+        if (!area) return;
+        if (area.style.display !== 'none') { area.style.display = 'none'; return; }
+        const y = parseInt(document.getElementById('ft-year')?.value);
+        const mo = parseInt(document.getElementById('ft-month')?.value);
+        const d = parseInt(document.getElementById('ft-day')?.value);
+        const g = selectedGender || '不明';
+        if (!y || !mo || !d) return;
+        import('./meishiki.js').then(m => {
+            const siMap = {甲:{gogyo:'木',inyo:'陽'},乙:{gogyo:'木',inyo:'陰'},丙:{gogyo:'火',inyo:'陽'},丁:{gogyo:'火',inyo:'陰'},戊:{gogyo:'土',inyo:'陽'},己:{gogyo:'土',inyo:'陰'},庚:{gogyo:'金',inyo:'陽'},辛:{gogyo:'金',inyo:'陰'},壬:{gogyo:'水',inyo:'陽'},癸:{gogyo:'水',inyo:'陰'}};
+            const raw = m.getFullMeishiki(y, mo, d, g);
+            const adapt = col => col ? { ...col, stemInfo: siMap[col.stem] || {} } : null;
+            const data = { ...raw, yearPillar: adapt(raw.columns?.year), monthPillar: adapt(raw.columns?.month), dayPillar: adapt(raw.columns?.day) };
+            area.style.display = 'block';
+            area.innerHTML = buildMeishikiHtml(data, y, mo, d, g);
+        });
+    };
 
     document.getElementById('ft-submit').onclick = async () => {
         const year = document.getElementById('ft-year').value;
@@ -174,6 +193,10 @@ export function showMyFortune(onBack = null, prefill = null) {
         if (!selectedTheme) { alert('鑑定テーマを選択してください'); return; }
 
         const worry = document.getElementById('ft-worry').value.trim();
+        const savedPrefill = { year, month, day, gender: selectedGender };
+        const ctrlBtn = document.getElementById('c-fortune-submit');
+        if (ctrlBtn) { ctrlBtn.textContent = '天命を診断中'; ctrlBtn.disabled = true; }
+
         const pillars = getThreePillars(parseInt(year), parseInt(month), parseInt(day));
 
         const fullData = getFullMeishiki(parseInt(year), parseInt(month), parseInt(day), selectedGender);
@@ -279,37 +302,23 @@ ${meishikiDetail}
                 </div>`;
 
             if (lv) { lv.innerHTML = resultHtml; }
+            if (ctrlBtn) { ctrlBtn.textContent = '天命診断を行う'; ctrlBtn.disabled = false; }
 
             window._showMeishikiPanel = () => {
                 const area = document.getElementById('ft-meishiki-area2');
                 if (!area) return;
                 if (area.style.display !== 'none') { area.style.display = 'none'; return; }
                 import('./meishiki.js').then(m => {
-                    const siMap = {
-                        甲:{gogyo:'木',inyo:'陽'},乙:{gogyo:'木',inyo:'陰'},
-                        丙:{gogyo:'火',inyo:'陽'},丁:{gogyo:'火',inyo:'陰'},
-                        戊:{gogyo:'土',inyo:'陽'},己:{gogyo:'土',inyo:'陰'},
-                        庚:{gogyo:'金',inyo:'陽'},辛:{gogyo:'金',inyo:'陰'},
-                        壬:{gogyo:'水',inyo:'陽'},癸:{gogyo:'水',inyo:'陰'}
-                    };
-                    const raw = m.getFullMeishiki(
-                        parseInt(year), parseInt(month), parseInt(day), selectedGender
-                    );
+                    const siMap = {甲:{gogyo:'木',inyo:'陽'},乙:{gogyo:'木',inyo:'陰'},丙:{gogyo:'火',inyo:'陽'},丁:{gogyo:'火',inyo:'陰'},戊:{gogyo:'土',inyo:'陽'},己:{gogyo:'土',inyo:'陰'},庚:{gogyo:'金',inyo:'陽'},辛:{gogyo:'金',inyo:'陰'},壬:{gogyo:'水',inyo:'陽'},癸:{gogyo:'水',inyo:'陰'}};
+                    const raw = m.getFullMeishiki(parseInt(year), parseInt(month), parseInt(day), selectedGender);
                     const adapt = col => col ? { ...col, stemInfo: siMap[col.stem] || {} } : null;
-                    const data = {
-                        ...raw,
-                        yearPillar:  adapt(raw.columns.year),
-                        monthPillar: adapt(raw.columns.month),
-                        dayPillar:   adapt(raw.columns.day)
-                    };
+                    const data = { ...raw, yearPillar: adapt(raw.columns.year), monthPillar: adapt(raw.columns.month), dayPillar: adapt(raw.columns.day) };
                     area.style.display = 'block';
-                    area.innerHTML = buildMeishikiHtml(
-                        data, parseInt(year), parseInt(month), parseInt(day), selectedGender
-                    );
+                    area.innerHTML = buildMeishikiHtml(data, parseInt(year), parseInt(month), parseInt(day), selectedGender);
                 });
             };
 
-            window._fortuneBack = () => showMyFortune(onBack);
+            window._fortuneBack = () => showMyFortune(onBack, savedPrefill);
 
             document.getElementById('ft-meishiki-btn2').onclick = () => window._showMeishikiPanel();
 
@@ -318,16 +327,13 @@ ${meishikiDetail}
                     .then(() => alert('鑑定結果をコピーしました。メモアプリに貼り付けてください。'))
                     .catch(() => alert('コピーに失敗しました。'));
             };
-            document.getElementById('ft-back').onclick = () => {
-                if (onBack) { onBack(); return; }
-                if (lv) { lv.style.display = prevDisplay; lv.innerHTML = prevHtml; }
-                if (nm) nm.style.display = prevNm;
-            };
+            document.getElementById('ft-back').onclick = () => showMyFortune(onBack, savedPrefill);
 
         } catch (e) {
             alert('通信エラーが発生しました。');
             btn.textContent = 'ソフィーに鑑定してもらう';
             btn.disabled = false;
+            if (ctrlBtn) { ctrlBtn.textContent = '天命診断を行う'; ctrlBtn.disabled = false; }
         }
     };
     window._fortuneSubmit = () => {
@@ -358,7 +364,7 @@ export function showAboutPerson(onBack = null, prefill = null) {
                         border-bottom:1px solid #333; height:28px; line-height:28px;
                         border-radius:8px 8px 0 0; display:flex; align-items:center; gap:6px;">
                 <img src="./sophie_face.png" style="width:20px; height:20px; border-radius:50%; object-fit:cover;">
-                あの人どんな人
+                この人どんな人
             </div>
             <div style="padding:10px;">
                 <div style="margin-bottom:8px;">
@@ -520,6 +526,10 @@ export function showAboutPerson(onBack = null, prefill = null) {
         if (!selectedTheme) { alert('鑑定テーマを選択してください'); return; }
 
         const worry = document.getElementById('ft-worry').value.trim();
+        const savedPrefill = { year, month, day, gender: selectedGender, name: personName };
+        const ctrlBtn = document.getElementById('c-fortune-submit');
+        if (ctrlBtn) { ctrlBtn.textContent = '天命を診断中'; ctrlBtn.disabled = true; }
+
         const pillars = getThreePillars(parseInt(year), parseInt(month), parseInt(day));
 
         const fullData = getFullMeishiki(parseInt(year), parseInt(month), parseInt(day), selectedGender);
@@ -536,7 +546,7 @@ export function showAboutPerson(onBack = null, prefill = null) {
         btn.disabled = true;
 
         const personInfo = `
-【あの方】
+【この方】
 生年月日：${year}年${month}月${day}日
 性別：${selectedGender}
 命式：年柱 ${pillars.year}・月柱 ${pillars.month}・日柱 ${pillars.day}
@@ -628,56 +638,36 @@ ${personInfo}`;
                 </div>`;
 
             if (lv) { lv.innerHTML = resultHtml; }
+            if (ctrlBtn) { ctrlBtn.textContent = '天命診断を行う'; ctrlBtn.disabled = false; }
 
             window._showMeishikiPanel = () => {
                 const area = document.getElementById('ft-meishiki-area2');
                 if (!area) return;
-                if (area.style.display !== 'none') {
-                    area.style.display = 'none';
-                    return;
-                }
+                if (area.style.display !== 'none') { area.style.display = 'none'; return; }
                 import('./meishiki.js').then(m => {
-                    const siMap = {
-                        甲:{gogyo:'木',inyo:'陽'},乙:{gogyo:'木',inyo:'陰'},
-                        丙:{gogyo:'火',inyo:'陽'},丁:{gogyo:'火',inyo:'陰'},
-                        戊:{gogyo:'土',inyo:'陽'},己:{gogyo:'土',inyo:'陰'},
-                        庚:{gogyo:'金',inyo:'陽'},辛:{gogyo:'金',inyo:'陰'},
-                        壬:{gogyo:'水',inyo:'陽'},癸:{gogyo:'水',inyo:'陰'}
-                    };
-                    const raw = m.getFullMeishiki(
-                        parseInt(year), parseInt(month), parseInt(day), selectedGender
-                    );
+                    const siMap = {甲:{gogyo:'木',inyo:'陽'},乙:{gogyo:'木',inyo:'陰'},丙:{gogyo:'火',inyo:'陽'},丁:{gogyo:'火',inyo:'陰'},戊:{gogyo:'土',inyo:'陽'},己:{gogyo:'土',inyo:'陰'},庚:{gogyo:'金',inyo:'陽'},辛:{gogyo:'金',inyo:'陰'},壬:{gogyo:'水',inyo:'陽'},癸:{gogyo:'水',inyo:'陰'}};
+                    const raw = m.getFullMeishiki(parseInt(year), parseInt(month), parseInt(day), selectedGender);
                     const adapt = col => col ? {...col, stemInfo: siMap[col.stem] || {}} : null;
-                    const data = {
-                        ...raw,
-                        yearPillar: adapt(raw.columns?.year),
-                        monthPillar: adapt(raw.columns?.month),
-                        dayPillar: adapt(raw.columns?.day)
-                    };
+                    const data = { ...raw, yearPillar: adapt(raw.columns?.year), monthPillar: adapt(raw.columns?.month), dayPillar: adapt(raw.columns?.day) };
                     area.style.display = 'block';
-                    area.innerHTML = buildMeishikiHtml(
-                        data, parseInt(year), parseInt(month), parseInt(day), selectedGender
-                    );
+                    area.innerHTML = buildMeishikiHtml(data, parseInt(year), parseInt(month), parseInt(day), selectedGender);
                 });
             };
 
-            window._fortuneBack = () => showAboutPerson(onBack);
+            window._fortuneBack = () => showAboutPerson(onBack, savedPrefill);
 
             document.getElementById('ft-copy').onclick = () => {
                 navigator.clipboard.writeText(resultHeader + '\n\n' + resultText)
                     .then(() => alert('鑑定結果をコピーしました。メモアプリに貼り付けてください。'))
                     .catch(() => alert('コピーに失敗しました。'));
             };
-            document.getElementById('ft-back').onclick = () => {
-                if (onBack) { onBack(); return; }
-                if (lv) { lv.style.display = prevDisplay; lv.innerHTML = prevHtml; }
-                if (nm) nm.style.display = prevNm;
-            };
+            document.getElementById('ft-back').onclick = () => showAboutPerson(onBack, savedPrefill);
 
         } catch (e) {
             alert('通信エラーが発生しました。');
             btn.textContent = 'ソフィーに鑑定してもらう';
             btn.disabled = false;
+            if (ctrlBtn) { ctrlBtn.textContent = '天命診断を行う'; ctrlBtn.disabled = false; }
         }
     };
     window._fortuneSubmit = () => {
@@ -709,13 +699,13 @@ export function showFortuneMenu(onBack = null) {
                 🔮 ソフィーの天命診断
             </div>
             <div style="padding:10px;">
-                <button id="fm-people" class="act-btn" style="background:#1a2a1a; color:#7fd97f; border:1px solid #3a6a4a; margin-bottom:8px;">👥 人物帳</button>
                 <button id="fm-my-fortune" class="act-btn" style="background:#2a1a3a; color:#c39bd3;
                     border:1px solid #6a3a8a; margin-bottom:8px;">🌟 あなたのご相談</button>
                 <button id="fm-about-person" class="act-btn" style="background:#1a1a2a; color:#9b59b6;
-                    border:1px solid #6a3a8a; margin-bottom:8px;">👤 あの人どんな人</button>
+                    border:1px solid #6a3a8a; margin-bottom:8px;">👤 この人どんな人</button>
                 <button id="fm-compat" class="act-btn" style="background:#1a2a3a; color:#5ba3d9;
                     border:1px solid #1a5276; margin-bottom:8px;">💑 相性を見てもらう</button>
+                <button id="fm-people" class="act-btn" style="background:#1a2a1a; color:#7fd97f; border:1px solid #3a6a4a; margin-bottom:0;">👥 人物帳</button>
             </div>
         </div>`;
 
@@ -1012,3 +1002,5 @@ window.showCharacterModal = (key, type) => {
     document.body.appendChild(modal);
     document.body.style.overflow = 'hidden';
 };
+
+window.buildMeishikiHtml = buildMeishikiHtml;
