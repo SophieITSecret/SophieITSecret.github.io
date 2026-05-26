@@ -300,7 +300,7 @@ ${question || 'とくになし'}
                 .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
                 .replace(/\*([^*]+)\*/g, '')
                 .replace(/\*\*/g, '')
-                .replace(/^#{1,3}\s*/gm, '')
+                .replace(/^#{1,3}\s*(.+)$/gm, '<span style="color:#f0b56e; font-weight:bold; font-size:0.88rem; display:block; margin:8px 0 2px;">$1</span>')
                 .replace(/^-{2,}$/gm, '')
                 .replace(/\n{2,}/g, '\n')
                 .replace(/\n/g, '<br>');
@@ -371,8 +371,9 @@ ${question || 'とくになし'}
             };
 
             document.getElementById('cp-fullscreen-result').onclick = () => {
-                const header = `【相性診断】${myYear}/${myMonth}/${myDay}（${myGender}）×${yourYear}/${yourMonth}/${yourDay}（${yourGender}）\n\n`;
-                window.showResultFullscreen('💑 ソフィーの相性鑑定', header + resultText);
+                const hdrText = `【相性診断】${myYear}/${myMonth}/${myDay}（${myGender}）×${yourYear}/${yourMonth}/${yourDay}（${yourGender}）`;
+                const hdrHtml = `<div style="color:#888; font-size:0.78rem; margin-bottom:12px; padding-bottom:8px; border-bottom:1px solid #333;">${hdrText}</div>`;
+                window.showResultFullscreen('💑 ソフィーの相性鑑定', hdrHtml + formatted);
             };
 
             document.getElementById('cp-fullscreen-meishiki').onclick = () => {

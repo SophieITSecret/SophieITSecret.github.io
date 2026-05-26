@@ -279,7 +279,7 @@ ${meishikiDetail}
                 .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
                 .replace(/\*([^*]+)\*/g, '')
                 .replace(/\*\*/g, '')
-                .replace(/^#{1,3}\s*/gm, '')
+                .replace(/^#{1,3}\s*(.+)$/gm, '<span style="color:#f0b56e; font-weight:bold; font-size:0.88rem; display:block; margin:8px 0 2px;">$1</span>')
                 .replace(/^-{2,}$/gm, '')
                 .replace(/\n{3,}/g, '\n\n')
                 .replace(/\n{2,}/g, '\n')
@@ -355,7 +355,8 @@ ${meishikiDetail}
             };
 
             document.getElementById('ft-fullscreen-result').onclick = () => {
-                window.showResultFullscreen('ソフィーの鑑定結果', resultHeader + '\n\n' + resultText);
+                const hdrHtml = `<div style="color:#888; font-size:0.78rem; margin-bottom:12px; padding-bottom:8px; border-bottom:1px solid #333;">${resultHeader}</div>`;
+                window.showResultFullscreen('ソフィーの鑑定結果', hdrHtml + formatted);
             };
 
             document.getElementById('ft-fullscreen-meishiki').onclick = () => window._meishikiFullscreen();
@@ -647,7 +648,7 @@ ${personInfo}`;
                 .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
                 .replace(/\*([^*]+)\*/g, '')
                 .replace(/\*\*/g, '')
-                .replace(/^#{1,3}\s*/gm, '')
+                .replace(/^#{1,3}\s*(.+)$/gm, '<span style="color:#f0b56e; font-weight:bold; font-size:0.88rem; display:block; margin:8px 0 2px;">$1</span>')
                 .replace(/^-{2,}$/gm, '')
                 .replace(/\n{3,}/g, '\n\n')
                 .replace(/\n{2,}/g, '\n')
@@ -718,7 +719,8 @@ ${personInfo}`;
             };
 
             document.getElementById('ft-fullscreen-result').onclick = () => {
-                window.showResultFullscreen('ソフィーの鑑定結果', resultHeader + '\n\n' + resultText);
+                const hdrHtml = `<div style="color:#888; font-size:0.78rem; margin-bottom:12px; padding-bottom:8px; border-bottom:1px solid #333;">${resultHeader}</div>`;
+                window.showResultFullscreen('ソフィーの鑑定結果', hdrHtml + formatted);
             };
 
             document.getElementById('ft-fullscreen-meishiki').onclick = () => window._meishikiFullscreen();

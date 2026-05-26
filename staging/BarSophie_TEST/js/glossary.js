@@ -93,8 +93,7 @@ export function showResultFullscreen(title, text) {
                     style="background:none; border:none; color:#888; font-size:1.4rem; cursor:pointer; line-height:1;">✕</button>
         </div>
         <div style="flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch;
-                    padding:16px; color:#ddd; font-size:0.85rem; line-height:1.9;
-                    white-space:pre-wrap;">${text}</div>`;
+                    padding:16px; color:#ddd; font-size:15px; line-height:1.8;">${text}</div>`;
 
     document.body.appendChild(overlay);
 }
@@ -123,7 +122,7 @@ export function showMeishikiHtmlFullscreen(html) {
                     style="background:none; border:none; color:#888; font-size:1.4rem;
                            cursor:pointer; line-height:1; padding:0 4px;">✕</button>
         </div>
-        <div style="flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; padding:12px;">
+        <div style="flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; padding:12px; line-height:1.8;">
             ${html}
         </div>`;
 
