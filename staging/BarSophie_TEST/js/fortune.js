@@ -305,9 +305,14 @@ ${meishikiDetail}
                         <button id="ft-copy" style="width:100%; background:#1a2a3a; color:#5ba3d9;
                             border:1px solid #1a5276; height:40px; border-radius:4px;
                             font-size:0.85rem;">📋 結果をコピー</button>
-                        <button id="ft-fullscreen" style="width:100%; background:#1a1a2a; color:#aaa;
-                            border:1px solid #444; height:36px; border-radius:4px;
-                            font-size:0.8rem; margin-top:6px;">⛶ 全画面で見る</button>
+                        <div style="display:flex; gap:6px; margin-top:6px;">
+                            <button id="ft-fullscreen-result" style="flex:1; background:#1a1a2a; color:#aaa;
+                                border:1px solid #444; height:36px; border-radius:4px;
+                                font-size:0.72rem; cursor:pointer;">📄 診断を全画面</button>
+                            <button id="ft-fullscreen-meishiki" style="flex:1; background:#1a1a2a; color:#aaa;
+                                border:1px solid #444; height:36px; border-radius:4px;
+                                font-size:0.72rem; cursor:pointer;">🀄 命式表を全画面</button>
+                        </div>
                     </div>
                 </div>`;
 
@@ -329,6 +334,16 @@ ${meishikiDetail}
                 });
             };
 
+            window._meishikiFullscreen = () => {
+                import('./meishiki.js').then(m => {
+                    const siMap = {甲:{gogyo:'木',inyo:'陽'},乙:{gogyo:'木',inyo:'陰'},丙:{gogyo:'火',inyo:'陽'},丁:{gogyo:'火',inyo:'陰'},戊:{gogyo:'土',inyo:'陽'},己:{gogyo:'土',inyo:'陰'},庚:{gogyo:'金',inyo:'陽'},辛:{gogyo:'金',inyo:'陰'},壬:{gogyo:'水',inyo:'陽'},癸:{gogyo:'水',inyo:'陰'}};
+                    const raw = m.getFullMeishiki(parseInt(year), parseInt(month), parseInt(day), selectedGender);
+                    const adapt = col => col ? { ...col, stemInfo: siMap[col.stem] || {} } : null;
+                    const data = { ...raw, yearPillar: adapt(raw.columns.year), monthPillar: adapt(raw.columns.month), dayPillar: adapt(raw.columns.day) };
+                    window.showMeishikiHtmlFullscreen(buildMeishikiHtml(data, parseInt(year), parseInt(month), parseInt(day), selectedGender));
+                });
+            };
+
             window._fortuneBack = () => showMyFortune(onBack, savedPrefill);
 
             document.getElementById('ft-meishiki-btn2').onclick = () => window._showMeishikiPanel();
@@ -339,9 +354,11 @@ ${meishikiDetail}
                     .catch(() => alert('コピーに失敗しました。'));
             };
 
-            document.getElementById('ft-fullscreen').onclick = () => {
+            document.getElementById('ft-fullscreen-result').onclick = () => {
                 window.showResultFullscreen('ソフィーの鑑定結果', resultHeader + '\n\n' + resultText);
             };
+
+            document.getElementById('ft-fullscreen-meishiki').onclick = () => window._meishikiFullscreen();
 
         } catch (e) {
             alert('通信エラーが発生しました。');
@@ -653,9 +670,14 @@ ${personInfo}`;
                         <button id="ft-copy" style="width:100%; background:#1a2a3a; color:#5ba3d9;
                             border:1px solid #1a5276; height:40px; border-radius:4px;
                             font-size:0.85rem;">📋 結果をコピー</button>
-                        <button id="ft-fullscreen" style="width:100%; background:#1a1a2a; color:#aaa;
-                            border:1px solid #444; height:36px; border-radius:4px;
-                            font-size:0.8rem; margin-top:6px;">⛶ 全画面で見る</button>
+                        <div style="display:flex; gap:6px; margin-top:6px;">
+                            <button id="ft-fullscreen-result" style="flex:1; background:#1a1a2a; color:#aaa;
+                                border:1px solid #444; height:36px; border-radius:4px;
+                                font-size:0.72rem; cursor:pointer;">📄 診断を全画面</button>
+                            <button id="ft-fullscreen-meishiki" style="flex:1; background:#1a1a2a; color:#aaa;
+                                border:1px solid #444; height:36px; border-radius:4px;
+                                font-size:0.72rem; cursor:pointer;">🀄 命式表を全画面</button>
+                        </div>
                     </div>
                 </div>`;
 
@@ -677,6 +699,16 @@ ${personInfo}`;
                 });
             };
 
+            window._meishikiFullscreen = () => {
+                import('./meishiki.js').then(m => {
+                    const siMap = {甲:{gogyo:'木',inyo:'陽'},乙:{gogyo:'木',inyo:'陰'},丙:{gogyo:'火',inyo:'陽'},丁:{gogyo:'火',inyo:'陰'},戊:{gogyo:'土',inyo:'陽'},己:{gogyo:'土',inyo:'陰'},庚:{gogyo:'金',inyo:'陽'},辛:{gogyo:'金',inyo:'陰'},壬:{gogyo:'水',inyo:'陽'},癸:{gogyo:'水',inyo:'陰'}};
+                    const raw = m.getFullMeishiki(parseInt(year), parseInt(month), parseInt(day), selectedGender);
+                    const adapt = col => col ? {...col, stemInfo: siMap[col.stem] || {}} : null;
+                    const data = { ...raw, yearPillar: adapt(raw.columns?.year), monthPillar: adapt(raw.columns?.month), dayPillar: adapt(raw.columns?.day) };
+                    window.showMeishikiHtmlFullscreen(buildMeishikiHtml(data, parseInt(year), parseInt(month), parseInt(day), selectedGender));
+                });
+            };
+
             window._fortuneBack = () => showAboutPerson(onBack, savedPrefill);
 
             document.getElementById('ft-copy').onclick = () => {
@@ -685,9 +717,11 @@ ${personInfo}`;
                     .catch(() => alert('コピーに失敗しました。'));
             };
 
-            document.getElementById('ft-fullscreen').onclick = () => {
+            document.getElementById('ft-fullscreen-result').onclick = () => {
                 window.showResultFullscreen('ソフィーの鑑定結果', resultHeader + '\n\n' + resultText);
             };
+
+            document.getElementById('ft-fullscreen-meishiki').onclick = () => window._meishikiFullscreen();
 
         } catch (e) {
             alert('通信エラーが発生しました。');

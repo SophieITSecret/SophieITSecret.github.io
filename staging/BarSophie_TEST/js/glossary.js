@@ -101,6 +101,37 @@ export function showResultFullscreen(title, text) {
 
 window.showResultFullscreen = showResultFullscreen;
 
+export function showMeishikiHtmlFullscreen(html) {
+    const existing = document.getElementById('meishiki-fullscreen');
+    if (existing) existing.remove();
+
+    const overlay = document.createElement('div');
+    overlay.id = 'meishiki-fullscreen';
+    overlay.style.cssText = [
+        'position:fixed', 'inset:0',
+        'background:#0a0a0a',
+        'z-index:99997',
+        'display:flex', 'flex-direction:column',
+        'box-sizing:border-box'
+    ].join(';');
+
+    overlay.innerHTML = `
+        <div style="display:flex; align-items:center; padding:12px 16px; border-bottom:1px solid #333;
+                    background:#111; flex-shrink:0;">
+            <div style="color:#f0b56e; font-weight:bold; font-size:0.9rem; flex:1;">📊 命式表</div>
+            <button onclick="document.getElementById('meishiki-fullscreen').remove()"
+                    style="background:none; border:none; color:#888; font-size:1.4rem;
+                           cursor:pointer; line-height:1; padding:0 4px;">✕</button>
+        </div>
+        <div style="flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; padding:12px;">
+            ${html}
+        </div>`;
+
+    document.body.appendChild(overlay);
+}
+
+window.showMeishikiHtmlFullscreen = showMeishikiHtmlFullscreen;
+
 let _guideData = null;
 let _guideLoadPromise = null;
 

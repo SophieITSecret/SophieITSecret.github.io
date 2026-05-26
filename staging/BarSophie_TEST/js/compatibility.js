@@ -327,9 +327,14 @@ ${question || 'とくになし'}
                         <button id="cp-copy" style="width:100%; background:#1a2a3a; color:#5ba3d9;
                             border:1px solid #1a5276; height:40px; border-radius:4px;
                             font-size:0.85rem;">📋 結果をコピー</button>
-                        <button id="cp-fullscreen" style="width:100%; background:#1a1a2a; color:#aaa;
-                            border:1px solid #444; height:36px; border-radius:4px;
-                            font-size:0.8rem; margin-top:6px;">⛶ 全画面で見る</button>
+                        <div style="display:flex; gap:6px; margin-top:6px;">
+                            <button id="cp-fullscreen-result" style="flex:1; background:#1a1a2a; color:#aaa;
+                                border:1px solid #444; height:36px; border-radius:4px;
+                                font-size:0.72rem; cursor:pointer;">📄 診断を全画面</button>
+                            <button id="cp-fullscreen-meishiki" style="flex:1; background:#1a1a2a; color:#aaa;
+                                border:1px solid #444; height:36px; border-radius:4px;
+                                font-size:0.72rem; cursor:pointer;">🀄 命式表を全画面</button>
+                        </div>
                     </div>
                 </div>`;
 
@@ -365,9 +370,24 @@ ${question || 'とくになし'}
                     .catch(() => alert('コピーに失敗しました。'));
             };
 
-            document.getElementById('cp-fullscreen').onclick = () => {
+            document.getElementById('cp-fullscreen-result').onclick = () => {
                 const header = `【相性診断】${myYear}/${myMonth}/${myDay}（${myGender}）×${yourYear}/${yourMonth}/${yourDay}（${yourGender}）\n\n`;
                 window.showResultFullscreen('💑 ソフィーの相性鑑定', header + resultText);
+            };
+
+            document.getElementById('cp-fullscreen-meishiki').onclick = () => {
+                const buildFn = window.buildMeishikiHtml;
+                if (!buildFn) return;
+                import('./meishiki.js').then(m => {
+                    const siMap = {甲:{gogyo:'木',inyo:'陽'},乙:{gogyo:'木',inyo:'陰'},丙:{gogyo:'火',inyo:'陽'},丁:{gogyo:'火',inyo:'陰'},戊:{gogyo:'土',inyo:'陽'},己:{gogyo:'土',inyo:'陰'},庚:{gogyo:'金',inyo:'陽'},辛:{gogyo:'金',inyo:'陰'},壬:{gogyo:'水',inyo:'陽'},癸:{gogyo:'水',inyo:'陰'}};
+                    const adapt = col => col ? { ...col, stemInfo: siMap[col.stem] || {} } : null;
+                    const myRaw = m.getFullMeishiki(parseInt(myYear), parseInt(myMonth), parseInt(myDay), myGender);
+                    const myData = { ...myRaw, yearPillar: adapt(myRaw.columns?.year), monthPillar: adapt(myRaw.columns?.month), dayPillar: adapt(myRaw.columns?.day) };
+                    const yourRaw = m.getFullMeishiki(parseInt(yourYear), parseInt(yourMonth), parseInt(yourDay), yourGender);
+                    const yourData = { ...yourRaw, yearPillar: adapt(yourRaw.columns?.year), monthPillar: adapt(yourRaw.columns?.month), dayPillar: adapt(yourRaw.columns?.day) };
+                    const html = `<div style="margin-bottom:8px;"><div style="color:#aaa;font-size:0.72rem;margin-bottom:4px;">あなたの命式</div>${buildFn(myData, parseInt(myYear), parseInt(myMonth), parseInt(myDay), myGender)}</div><div><div style="color:#aaa;font-size:0.72rem;margin-bottom:4px;">お相手の命式</div>${buildFn(yourData, parseInt(yourYear), parseInt(yourMonth), parseInt(yourDay), yourGender)}</div>`;
+                    window.showMeishikiHtmlFullscreen(html);
+                });
             };
 
         } catch (e) {
