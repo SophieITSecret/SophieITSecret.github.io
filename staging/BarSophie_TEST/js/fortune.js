@@ -305,6 +305,9 @@ ${meishikiDetail}
                         <button id="ft-copy" style="width:100%; background:#1a2a3a; color:#5ba3d9;
                             border:1px solid #1a5276; height:40px; border-radius:4px;
                             font-size:0.85rem;">📋 結果をコピー</button>
+                        <button id="ft-fullscreen" style="width:100%; background:#1a1a2a; color:#aaa;
+                            border:1px solid #444; height:36px; border-radius:4px;
+                            font-size:0.8rem; margin-top:6px;">⛶ 全画面で見る</button>
                     </div>
                 </div>`;
 
@@ -334,6 +337,10 @@ ${meishikiDetail}
                 navigator.clipboard.writeText(resultHeader + '\n\n' + resultText)
                     .then(() => alert('鑑定結果をコピーしました。メモアプリに貼り付けてください。'))
                     .catch(() => alert('コピーに失敗しました。'));
+            };
+
+            document.getElementById('ft-fullscreen').onclick = () => {
+                window.showResultFullscreen('ソフィーの鑑定結果', resultHeader + '\n\n' + resultText);
             };
 
         } catch (e) {
@@ -646,6 +653,9 @@ ${personInfo}`;
                         <button id="ft-copy" style="width:100%; background:#1a2a3a; color:#5ba3d9;
                             border:1px solid #1a5276; height:40px; border-radius:4px;
                             font-size:0.85rem;">📋 結果をコピー</button>
+                        <button id="ft-fullscreen" style="width:100%; background:#1a1a2a; color:#aaa;
+                            border:1px solid #444; height:36px; border-radius:4px;
+                            font-size:0.8rem; margin-top:6px;">⛶ 全画面で見る</button>
                     </div>
                 </div>`;
 
@@ -673,6 +683,10 @@ ${personInfo}`;
                 navigator.clipboard.writeText(resultHeader + '\n\n' + resultText)
                     .then(() => alert('鑑定結果をコピーしました。メモアプリに貼り付けてください。'))
                     .catch(() => alert('コピーに失敗しました。'));
+            };
+
+            document.getElementById('ft-fullscreen').onclick = () => {
+                window.showResultFullscreen('ソフィーの鑑定結果', resultHeader + '\n\n' + resultText);
             };
 
         } catch (e) {
@@ -910,12 +924,15 @@ function buildMeishikiHtml(data, year, month, day, gender) {
                 <div style="flex:1; background:#1a1a2a; border:1px solid #6a3a8a;
                     border-radius:4px; padding:6px; text-align:center;">
                     <div style="color:#888; font-size:0.65rem;">格局</div>
-                    <div style="color:#9b59b6; font-size:0.9rem; font-weight:bold;">${kakukyoku}</div>
+                    <div style="color:#9b59b6; font-size:0.9rem; font-weight:bold; cursor:pointer;"
+                         onclick="window.showGlossaryPopup('${kakukyoku}')">${kakukyoku}</div>
                 </div>
                 <div style="flex:1; background:#1a2a1a; border:1px solid #3a6a4a;
                     border-radius:4px; padding:6px; text-align:center;">
-                    <div style="color:#888; font-size:0.65rem;">空亡（天中殺）</div>
-                    <div style="color:#7fd97f; font-size:0.9rem; font-weight:bold;">${kuubou}</div>
+                    <div style="color:#888; font-size:0.65rem; cursor:pointer;"
+                         onclick="window.showGlossaryPopup('空亡とは')">空亡（天中殺）</div>
+                    <div style="color:#7fd97f; font-size:0.9rem; font-weight:bold; cursor:pointer;"
+                         onclick="window.showGlossaryPopup('${kuubou.replace('・', '')}空亡')">${kuubou}</div>
                 </div>
             </div>
             <div style="display:flex; border:1px solid #333; border-radius:4px; overflow:hidden; margin-bottom:8px;">
@@ -931,6 +948,11 @@ function buildMeishikiHtml(data, year, month, day, gender) {
                 </div>
                 ${daiyunHtml}
             </div>
+            <button onclick="window.showMeishikiGuide()"
+                    style="width:100%; margin-top:8px; background:none; border:1px solid #3a3a4a;
+                           color:#666; font-size:0.72rem; height:28px; border-radius:4px; cursor:pointer;">
+                📖 命式表の読み方
+            </button>
         </div>
         `;
 }

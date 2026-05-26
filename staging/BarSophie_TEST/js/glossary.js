@@ -8,7 +8,7 @@ let _loadPromise = null;
 export function loadGlossary() {
     if (_data) return Promise.resolve(_data);
     if (_loadPromise) return _loadPromise;
-    _loadPromise = fetch('./shichushisei_glossary_v2.json')
+    _loadPromise = fetch('./shichushisei_glossary_v3.json')
         .then(r => r.json())
         .then(d => { _data = d; return d; });
     return _loadPromise;
@@ -70,3 +70,128 @@ export async function showGlossaryPopup(term) {
 }
 
 window.showGlossaryPopup = showGlossaryPopup;
+
+export function showResultFullscreen(title, text) {
+    const existing = document.getElementById('result-fullscreen');
+    if (existing) existing.remove();
+
+    const overlay = document.createElement('div');
+    overlay.id = 'result-fullscreen';
+    overlay.style.cssText = [
+        'position:fixed', 'inset:0',
+        'background:#0a0a0a',
+        'z-index:99997',
+        'display:flex', 'flex-direction:column',
+        'box-sizing:border-box'
+    ].join(';');
+
+    overlay.innerHTML = `
+        <div style="display:flex; align-items:center; padding:12px 16px; border-bottom:1px solid #333;
+                    background:#111; flex-shrink:0;">
+            <div style="color:#f0b56e; font-weight:bold; font-size:0.9rem; flex:1;">${title}</div>
+            <button onclick="document.getElementById('result-fullscreen').remove()"
+                    style="background:none; border:none; color:#888; font-size:1.4rem; cursor:pointer; line-height:1;">✕</button>
+        </div>
+        <div style="flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch;
+                    padding:16px; color:#ddd; font-size:0.85rem; line-height:1.9;
+                    white-space:pre-wrap;">${text}</div>`;
+
+    document.body.appendChild(overlay);
+}
+
+window.showResultFullscreen = showResultFullscreen;
+
+let _guideData = null;
+let _guideLoadPromise = null;
+
+function _loadGuide() {
+    if (_guideData) return Promise.resolve(_guideData);
+    if (_guideLoadPromise) return _guideLoadPromise;
+    _guideLoadPromise = fetch('./meishiki_guide.json')
+        .then(r => r.json())
+        .then(d => { _guideData = d; return d; });
+    return _guideLoadPromise;
+}
+
+function _renderGuideSection(sec) {
+    let html = `
+        <div style="margin-bottom:22px;">
+            <div style="color:#f0b56e; font-size:0.85rem; font-weight:bold; margin-bottom:8px;
+                        padding-bottom:5px; border-bottom:1px solid #333;">${sec.title}</div>
+            <div style="color:#ccc; font-size:0.82rem; line-height:1.9;">${sec.content}</div>`;
+
+    if (sec.items) {
+        html += '<div style="margin-top:10px;">';
+        for (const item of sec.items) {
+            html += `
+            <div style="display:flex; gap:8px; margin-bottom:6px; padding:6px 10px;
+                        background:#1a1a2a; border-radius:4px; align-items:flex-start;">
+                <span style="color:#9b59b6; font-weight:bold; font-size:0.8rem;
+                             white-space:nowrap; min-width:2em;">${item.label}</span>
+                <span style="color:#aaa; font-size:0.78rem; line-height:1.7;">${item.desc}</span>
+            </div>`;
+        }
+        html += '</div>';
+    }
+
+    if (sec.steps) {
+        html += '<div style="margin-top:10px;">';
+        for (const s of sec.steps) {
+            html += `
+            <div style="display:flex; gap:10px; margin-bottom:10px; align-items:flex-start;">
+                <div style="background:#9b59b6; color:#fff; border-radius:50%;
+                            width:20px; height:20px; min-width:20px; display:flex;
+                            align-items:center; justify-content:center;
+                            font-size:0.7rem; font-weight:bold;">${s.step}</div>
+                <div>
+                    <div style="color:#f0b56e; font-size:0.8rem; font-weight:bold; margin-bottom:2px;">${s.label}</div>
+                    <div style="color:#aaa; font-size:0.78rem; line-height:1.7;">${s.desc}</div>
+                </div>
+            </div>`;
+        }
+        html += '</div>';
+    }
+
+    if (sec.tips) {
+        html += '<ul style="margin:10px 0 0 0; padding-left:18px;">';
+        for (const tip of sec.tips) {
+            html += `<li style="color:#aaa; font-size:0.78rem; line-height:1.8; margin-bottom:4px;">${tip}</li>`;
+        }
+        html += '</ul>';
+    }
+
+    html += '</div>';
+    return html;
+}
+
+export async function showMeishikiGuide() {
+    const guide = await _loadGuide();
+    const existing = document.getElementById('meishiki-guide-modal');
+    if (existing) existing.remove();
+
+    const overlay = document.createElement('div');
+    overlay.id = 'meishiki-guide-modal';
+    overlay.style.cssText = [
+        'position:fixed', 'inset:0',
+        'background:#0a0a0a',
+        'z-index:99997',
+        'display:flex', 'flex-direction:column',
+        'box-sizing:border-box'
+    ].join(';');
+
+    overlay.innerHTML = `
+        <div style="display:flex; align-items:center; padding:12px 16px; border-bottom:1px solid #333;
+                    background:#111; flex-shrink:0;">
+            <div style="color:#f0b56e; font-weight:bold; font-size:0.9rem; flex:1;">📖 ${guide.title}</div>
+            <button onclick="document.getElementById('meishiki-guide-modal').remove()"
+                    style="background:none; border:none; color:#888; font-size:1.4rem;
+                           cursor:pointer; line-height:1; padding:0 4px;">✕</button>
+        </div>
+        <div style="flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; padding:16px;">
+            ${guide.sections.map(_renderGuideSection).join('')}
+        </div>`;
+
+    document.body.appendChild(overlay);
+}
+
+window.showMeishikiGuide = showMeishikiGuide;

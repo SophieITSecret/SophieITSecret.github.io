@@ -327,6 +327,9 @@ ${question || 'とくになし'}
                         <button id="cp-copy" style="width:100%; background:#1a2a3a; color:#5ba3d9;
                             border:1px solid #1a5276; height:40px; border-radius:4px;
                             font-size:0.85rem;">📋 結果をコピー</button>
+                        <button id="cp-fullscreen" style="width:100%; background:#1a1a2a; color:#aaa;
+                            border:1px solid #444; height:36px; border-radius:4px;
+                            font-size:0.8rem; margin-top:6px;">⛶ 全画面で見る</button>
                     </div>
                 </div>`;
 
@@ -360,6 +363,11 @@ ${question || 'とくになし'}
                 navigator.clipboard.writeText(header + resultText)
                     .then(() => alert('鑑定結果をコピーしました。'))
                     .catch(() => alert('コピーに失敗しました。'));
+            };
+
+            document.getElementById('cp-fullscreen').onclick = () => {
+                const header = `【相性診断】${myYear}/${myMonth}/${myDay}（${myGender}）×${yourYear}/${yourMonth}/${yourDay}（${yourGender}）\n\n`;
+                window.showResultFullscreen('💑 ソフィーの相性鑑定', header + resultText);
             };
 
         } catch (e) {
