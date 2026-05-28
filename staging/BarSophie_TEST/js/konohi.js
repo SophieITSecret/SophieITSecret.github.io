@@ -4,6 +4,7 @@ import * as nav from './navigation.js';
 
 let _data = null;
 let _loadPromise = null;
+let _onBack = null;
 
 function _load() {
     if (_data) return Promise.resolve(_data);
@@ -16,9 +17,23 @@ function _load() {
 
 function _todayKey() {
     const d = new Date();
-    const m = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    return `${m}-${day}`;
+    return String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+
+function _adjacentKey(key, delta) {
+    const [m, d] = key.split('-').map(Number);
+    const date = new Date(2000, m - 1, d + delta); // 2000: うるう年でFeb29が使える
+    return String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0');
+}
+
+function _sortEntries(entries) {
+    return [...entries].sort((a, b) => {
+        const aBC = a.year.startsWith('BC');
+        const bBC = b.year.startsWith('BC');
+        if (!aBC && !bBC) return parseInt(b.year) - parseInt(a.year);
+        if (aBC && bBC) return parseInt(a.year.slice(2)) - parseInt(b.year.slice(2)); // BC44 < BC660
+        return aBC ? 1 : -1; // BC は末尾
+    });
 }
 
 function _buildCard(entry, idx) {
@@ -57,7 +72,7 @@ function _buildCard(entry, idx) {
                 <span style="color:#1a6a9a; font-weight:bold; font-size:0.78rem;
                              letter-spacing:0.5px;">${entry.year}年</span>
                 <div style="color:#1a2a3a; font-size:0.875rem; line-height:1.55;
-                            margin-top:3px; font-weight:${entry.description ? '500' : 'normal'};">
+                            margin-top:3px; font-weight:${hasDesc ? '500' : 'normal'};">
                     ${entry.title}
                 </div>
             </div>
@@ -67,55 +82,91 @@ function _buildCard(entry, idx) {
     </div>`;
 }
 
-export async function showKonoHi(onBack) {
-    nav.updateNav('konohi');
-
-    window._konohiBack = () => {
-        if (typeof onBack === 'function') onBack();
-    };
-
-    const key = _todayKey();
+function _showDay(key) {
+    const data = _data;
+    const entries = _sortEntries(data[key] || []);
     const [month, day] = key.split('-').map(Number);
 
-    const loadingHtml = `
-        <div style="background:#e8f4f8; min-height:100%; padding:16px; box-sizing:border-box;">
-            <div style="color:#4a8caa; text-align:center; padding:40px; font-size:0.9rem;">読み込み中…</div>
-        </div>`;
-    setListView(loadingHtml, false);
+    const todayKey = _todayKey();
+    const prevKey = _adjacentKey(key, -1);
+    const nextKey = _adjacentKey(key, +1);
 
-    const data = await _load();
-    const entries = data[key] || [];
+    window._konohiNav = (k) => _showDay(k);
 
-    if (entries.length === 0) {
-        const emptyHtml = `
-            <div style="background:#e8f4f8; min-height:100%; padding:16px; box-sizing:border-box;">
-                <div style="color:#1a2a3a; font-size:1rem; font-weight:bold; text-align:center; padding:40px 0;">
-                    ${month}月${day}日のデータはありません
-                </div>
-            </div>`;
-        setListView(emptyHtml, false);
-        return;
-    }
+    const cards = entries.length > 0
+        ? entries.map((e, i) => _buildCard(e, i)).join('')
+        : `<div style="color:#888; text-align:center; padding:32px 0; font-size:0.88rem;">この日のデータはありません</div>`;
 
-    const cards = entries.map((e, i) => _buildCard(e, i)).join('');
+    const todayBtn = key !== todayKey ? `
+        <div style="text-align:center; margin-bottom:10px;">
+            <button onclick="window._konohiNav('${todayKey}')"
+                    style="background:#ffe0ec; color:#a0003a; border:1px solid #f0a0bf;
+                           border-radius:20px; padding:4px 18px; font-size:0.78rem; cursor:pointer;">
+                今日に戻る
+            </button>
+        </div>` : '';
 
     const html = `
         <div style="background:#e8f4f8; min-height:100%; padding:12px 12px 24px; box-sizing:border-box;">
-            <div style="display:flex; align-items:center; gap:8px;
-                        background:#1a6a9a; border-radius:10px;
-                        padding:10px 14px; margin-bottom:14px;">
-                <span style="font-size:1.1rem;">📅</span>
-                <div>
-                    <div style="color:#fff; font-weight:bold; font-size:0.95rem; line-height:1.3;">
-                        ${month}月${day}日の出来事
+
+            <div style="background:#ffe0ec; border-radius:10px; padding:9px 10px;
+                        margin-bottom:14px; display:flex; align-items:center; gap:4px;">
+
+                <button onclick="window._konohiNav('${prevKey}')"
+                        style="background:none; border:none; color:#a0003a; font-size:1.15rem;
+                               cursor:pointer; padding:0 6px; line-height:1; flex-shrink:0;
+                               -webkit-tap-highlight-color:transparent;">◀</button>
+
+                <div style="flex:1; text-align:center; position:relative;">
+                    <div onclick="var p=document.getElementById('kh-picker');if(p.showPicker)p.showPicker();else p.click();"
+                         style="cursor:pointer; display:inline-block;">
+                        <span style="color:#a0003a; font-weight:bold; font-size:0.95rem;
+                                     border-bottom:1px dotted #c0406080; line-height:1.5;">
+                            ${month}月${day}日の出来事
+                        </span>
+                        <span style="font-size:0.68rem; color:#c04060; margin-left:3px;">📅</span>
                     </div>
-                    <div style="color:#b8d8ea; font-size:0.72rem; margin-top:1px;">
-                        ${entries.length}件 ／ 説明ありはタップで展開
+                    <input type="date" id="kh-picker"
+                           style="position:absolute; opacity:0; width:1px; height:1px;
+                                  top:0; left:50%; pointer-events:none;"
+                           value="2000-${key}">
+                    <div style="color:#c04060; font-size:0.71rem; margin-top:1px;">
+                        ${entries.length}件${entries.length > 0 ? ' ／ 説明ありはタップで展開' : ''}
                     </div>
                 </div>
+
+                <button onclick="window._konohiNav('${nextKey}')"
+                        style="background:none; border:none; color:#a0003a; font-size:1.15rem;
+                               cursor:pointer; padding:0 6px; line-height:1; flex-shrink:0;
+                               -webkit-tap-highlight-color:transparent;">▶</button>
             </div>
+
+            ${todayBtn}
             ${cards}
         </div>`;
 
     setListView(html, false);
+
+    const picker = document.getElementById('kh-picker');
+    if (picker) {
+        picker.addEventListener('change', (e) => {
+            if (!e.target.value) return;
+            const parts = e.target.value.split('-');
+            _showDay(`${parts[1]}-${parts[2]}`);
+        });
+    }
+}
+
+export async function showKonoHi(onBack) {
+    nav.updateNav('konohi');
+    _onBack = onBack;
+    window._konohiBack = () => { if (typeof _onBack === 'function') _onBack(); };
+
+    setListView(`
+        <div style="background:#e8f4f8; min-height:100%; padding:16px; box-sizing:border-box;">
+            <div style="color:#4a8caa; text-align:center; padding:40px; font-size:0.9rem;">読み込み中…</div>
+        </div>`, false);
+
+    await _load();
+    _showDay(_todayKey());
 }
