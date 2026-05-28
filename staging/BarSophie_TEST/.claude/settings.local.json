@@ -4,7 +4,8 @@
       "Bash(Get-ChildItem -Path \"d:\\\\Sophie\\\\SophieITSecret.github.io\\\\staging\\\\BarSophie_TEST\\\\js\\\\\" -Filter \"*.js\" -File | Select-Object -ExpandProperty FullName)",
       "Bash(python rename_images.py)",
       "Bash(python -X utf8 rename_images.py)",
-      "Bash(git add *)"
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)"
     ]
   }
 }
