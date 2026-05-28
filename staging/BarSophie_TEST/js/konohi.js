@@ -5,7 +5,6 @@ import * as nav from './navigation.js';
 let _data = null;
 let _loadPromise = null;
 let _onBack = null;
-let _pickerInput = null;
 
 function _load() {
     if (_data) return Promise.resolve(_data);
@@ -32,8 +31,8 @@ function _sortEntries(entries) {
         const aBC = a.year.startsWith('BC');
         const bBC = b.year.startsWith('BC');
         if (!aBC && !bBC) return parseInt(b.year) - parseInt(a.year);
-        if (aBC && bBC) return parseInt(a.year.slice(2)) - parseInt(b.year.slice(2)); // BC44 < BC660
-        return aBC ? 1 : -1; // BC は末尾
+        if (aBC && bBC) return parseInt(a.year.slice(2)) - parseInt(b.year.slice(2));
+        return aBC ? 1 : -1;
     });
 }
 
@@ -48,9 +47,10 @@ function _buildCard(entry, idx) {
             ${entry.description}
         </div>` : '';
 
+    // ③ ▼ をタイトル行の右端に配置
     const toggleIcon = hasDesc ? `
-        <span id="${iconId}" style="color:#a0003a; font-size:0.85rem; flex-shrink:0;
-                    padding-left:10px; padding-top:2px; user-select:none;">▼</span>` : '';
+        <span id="${iconId}" style="color:#a0003a; font-size:0.82rem; flex-shrink:0;
+                    padding-left:8px; line-height:1.55; user-select:none;">▼</span>` : '';
 
     const cardClick = hasDesc
         ? `onclick="(function(){
@@ -68,14 +68,12 @@ function _buildCard(entry, idx) {
          style="background:#fff; border-radius:10px;
                 box-shadow:0 1px 5px rgba(26,42,58,0.10), 0 0 0 1px rgba(26,42,58,0.04);
                 margin-bottom:10px; padding:13px 15px; user-select:none;">
-        <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-            <div style="flex:1;">
-                <span style="color:#1a6a9a; font-weight:bold; font-size:0.78rem;
-                             letter-spacing:0.5px;">${entry.year}年</span>
-                <div style="color:#1a2a3a; font-size:0.875rem; line-height:1.55;
-                            margin-top:3px; font-weight:${hasDesc ? '500' : 'normal'};">
-                    ${entry.title}
-                </div>
+        <span style="color:#1a6a9a; font-weight:bold; font-size:0.78rem;
+                     letter-spacing:0.5px;">${entry.year}年</span>
+        <div style="display:flex; align-items:flex-start; margin-top:3px;">
+            <div style="flex:1; color:#1a2a3a; font-size:0.875rem; line-height:1.55;
+                        font-weight:${hasDesc ? '500' : 'normal'};">
+                ${entry.title}
             </div>
             ${toggleIcon}
         </div>
@@ -98,15 +96,17 @@ function _showDay(key) {
         ? entries.map((e, i) => _buildCard(e, i)).join('')
         : `<div style="color:#888; text-align:center; padding:32px 0; font-size:0.88rem;">この日のデータはありません</div>`;
 
+    // ② 今日に戻るボタン: ソフィーカラー水色
     const todayBtn = key !== todayKey ? `
         <div style="text-align:center; margin-bottom:10px;">
             <button onclick="window._konohiNav('${todayKey}')"
-                    style="background:#ffe0ec; color:#a0003a; border:1px solid #f0a0bf;
-                           border-radius:20px; padding:4px 18px; font-size:0.78rem; cursor:pointer;">
+                    style="background:#0096BF; color:#fff; border:none;
+                           border-radius:20px; padding:5px 20px; font-size:0.78rem; cursor:pointer;">
                 今日に戻る
             </button>
         </div>` : '';
 
+    // ① input[type=date] を日付テキスト全体に opacity:0 で重ねる（iOS Safari 対応）
     const html = `
         <div style="background:#e8f4f8; min-height:100%; padding:12px 12px 24px; box-sizing:border-box;">
 
@@ -119,12 +119,17 @@ function _showDay(key) {
                                -webkit-tap-highlight-color:transparent;">◀</button>
 
                 <div style="flex:1; text-align:center;">
-                    <div id="kh-date-btn" style="cursor:pointer; display:inline-block;">
+                    <div style="display:inline-block; position:relative;">
                         <span style="color:#a0003a; font-weight:bold; font-size:0.95rem;
                                      border-bottom:1px dotted #c0406080; line-height:1.5;">
                             ${month}月${day}日の出来事
                         </span>
                         <span style="font-size:0.68rem; color:#c04060; margin-left:3px;">📅</span>
+                        <input type="date" id="kh-picker"
+                               style="position:absolute; inset:0; width:100%; height:100%;
+                                      opacity:0; cursor:pointer; font-size:16px;
+                                      -webkit-appearance:none; border:none; padding:0; margin:0;"
+                               value="2000-${key}">
                     </div>
                     <div style="color:#c04060; font-size:0.71rem; margin-top:1px;">
                         ${entries.length}件${entries.length > 0 ? ' ／ 説明ありはタップで展開' : ''}
@@ -143,24 +148,13 @@ function _showDay(key) {
 
     setListView(html, false);
 
-    // iOS Safari 対応: body に hidden input を生成して .click() でトリガー
-    if (_pickerInput && _pickerInput.parentNode) {
-        _pickerInput.parentNode.removeChild(_pickerInput);
-    }
-    _pickerInput = document.createElement('input');
-    _pickerInput.type = 'date';
-    _pickerInput.style.display = 'none';
-    _pickerInput.value = `2000-${key}`;
-    document.body.appendChild(_pickerInput);
-    _pickerInput.addEventListener('change', (e) => {
-        if (!e.target.value) return;
-        const parts = e.target.value.split('-');
-        _showDay(`${parts[1]}-${parts[2]}`);
-    });
-
-    const dateBtn = document.getElementById('kh-date-btn');
-    if (dateBtn) {
-        dateBtn.addEventListener('click', () => _pickerInput.click());
+    const picker = document.getElementById('kh-picker');
+    if (picker) {
+        picker.addEventListener('change', (e) => {
+            if (!e.target.value) return;
+            const parts = e.target.value.split('-');
+            _showDay(`${parts[1]}-${parts[2]}`);
+        });
     }
 }
 
