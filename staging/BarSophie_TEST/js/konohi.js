@@ -129,7 +129,7 @@ function _showDay(key) {
                                style="position:absolute; inset:0; width:100%; height:100%;
                                       opacity:0; cursor:pointer; font-size:16px;
                                       -webkit-appearance:none; border:none; padding:0; margin:0;"
-                               value="2000-${key}">
+                               value="${new Date().getFullYear()}-${key}">
                     </div>
                     <div style="color:#c04060; font-size:0.71rem; margin-top:1px;">
                         ${entries.length}件${entries.length > 0 ? ' ／ 説明ありはタップで展開' : ''}
