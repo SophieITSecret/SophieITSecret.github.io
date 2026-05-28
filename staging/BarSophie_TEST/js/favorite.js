@@ -97,6 +97,9 @@ export async function openNotice() {
     document.getElementById('nt-fortune').onclick = () => {
         import('./fortune.js').then(f => f.showFortuneMenu(openNotice));
     };
+    document.getElementById('nt-konohi').onclick = () => {
+        import('./konohi.js').then(k => k.showKonoHi(openNotice));
+    };
     document.getElementById('nt-janken').onclick = () => {
         import('./janken.js').then(j => j.startJanken());
     };

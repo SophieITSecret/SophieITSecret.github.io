@@ -712,6 +712,15 @@ function renderConsole(mode) {
         return;
     }
 
+    if (mode === 'konohi') {
+        grid.innerHTML = `
+            <button class="c-btn" id="c-back" style="${backBtn} flex:1; font-size:0.85rem;">戻る</button>`;
+        document.getElementById('c-back').onclick = () => {
+            window._konohiBack && window._konohiBack();
+        };
+        return;
+    }
+
     if (mode === 'screening') {
         grid.innerHTML = `
             <button class="c-btn" id="c-back" style="${backBtn}">戻る</button>
