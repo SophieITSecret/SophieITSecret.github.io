@@ -5,6 +5,7 @@ import * as nav from './navigation.js';
 let _data = null;
 let _loadPromise = null;
 let _onBack = null;
+let _pickerInput = null;
 
 function _load() {
     if (_data) return Promise.resolve(_data);
@@ -48,7 +49,7 @@ function _buildCard(entry, idx) {
         </div>` : '';
 
     const toggleIcon = hasDesc ? `
-        <span id="${iconId}" style="color:#4a8caa; font-size:0.85rem; flex-shrink:0;
+        <span id="${iconId}" style="color:#a0003a; font-size:0.85rem; flex-shrink:0;
                     padding-left:10px; padding-top:2px; user-select:none;">▼</span>` : '';
 
     const cardClick = hasDesc
@@ -117,19 +118,14 @@ function _showDay(key) {
                                cursor:pointer; padding:0 6px; line-height:1; flex-shrink:0;
                                -webkit-tap-highlight-color:transparent;">◀</button>
 
-                <div style="flex:1; text-align:center; position:relative;">
-                    <div onclick="var p=document.getElementById('kh-picker');if(p.showPicker)p.showPicker();else p.click();"
-                         style="cursor:pointer; display:inline-block;">
+                <div style="flex:1; text-align:center;">
+                    <div id="kh-date-btn" style="cursor:pointer; display:inline-block;">
                         <span style="color:#a0003a; font-weight:bold; font-size:0.95rem;
                                      border-bottom:1px dotted #c0406080; line-height:1.5;">
                             ${month}月${day}日の出来事
                         </span>
                         <span style="font-size:0.68rem; color:#c04060; margin-left:3px;">📅</span>
                     </div>
-                    <input type="date" id="kh-picker"
-                           style="position:absolute; opacity:0; width:1px; height:1px;
-                                  top:0; left:50%; pointer-events:none;"
-                           value="2000-${key}">
                     <div style="color:#c04060; font-size:0.71rem; margin-top:1px;">
                         ${entries.length}件${entries.length > 0 ? ' ／ 説明ありはタップで展開' : ''}
                     </div>
@@ -147,13 +143,24 @@ function _showDay(key) {
 
     setListView(html, false);
 
-    const picker = document.getElementById('kh-picker');
-    if (picker) {
-        picker.addEventListener('change', (e) => {
-            if (!e.target.value) return;
-            const parts = e.target.value.split('-');
-            _showDay(`${parts[1]}-${parts[2]}`);
-        });
+    // iOS Safari 対応: body に hidden input を生成して .click() でトリガー
+    if (_pickerInput && _pickerInput.parentNode) {
+        _pickerInput.parentNode.removeChild(_pickerInput);
+    }
+    _pickerInput = document.createElement('input');
+    _pickerInput.type = 'date';
+    _pickerInput.style.display = 'none';
+    _pickerInput.value = `2000-${key}`;
+    document.body.appendChild(_pickerInput);
+    _pickerInput.addEventListener('change', (e) => {
+        if (!e.target.value) return;
+        const parts = e.target.value.split('-');
+        _showDay(`${parts[1]}-${parts[2]}`);
+    });
+
+    const dateBtn = document.getElementById('kh-date-btn');
+    if (dateBtn) {
+        dateBtn.addEventListener('click', () => _pickerInput.click());
     }
 }
 
