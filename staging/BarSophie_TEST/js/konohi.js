@@ -161,7 +161,11 @@ function _showDay(key) {
 export async function showKonoHi(onBack) {
     nav.updateNav('konohi');
     _onBack = onBack;
-    window._konohiBack = () => { if (typeof _onBack === 'function') _onBack(); };
+    window._konohiBack = () => {
+        if (typeof _onBack === 'function') _onBack();
+        window._renderConsole?.('standard');
+    };
+    window._renderConsole?.('konohi');
 
     setListView(`
         <div style="background:#e8f4f8; min-height:100%; padding:16px; box-sizing:border-box;">
