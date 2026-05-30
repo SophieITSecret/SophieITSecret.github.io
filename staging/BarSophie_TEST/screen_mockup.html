@@ -186,6 +186,7 @@ h1 { color: #f0b56e; font-size: 1.3rem; margin-bottom: 4px; }
 .adk { background: #1a1a1a; color: #aaa; border-color: #333; }
 .afo { background: #2a1a3a; color: #c39bd3; border-color: #5a3a8a; }
 .are { background: #1a3a2a; color: #7fd97f; border-color: #3a6a4a; }
+.akh { background: #1a2a3a; color: #7fb8d7; border-color: #3a5a7a; }
 .p-btn-row { display: flex; gap: 4px; width: 100%; }
 .p-btn-row .p-act { flex: 1; }
 
@@ -492,6 +493,7 @@ h1 { color: #f0b56e; font-size: 1.3rem; margin-bottom: 4px; }
                 <button class="p-act adk" style="margin-bottom:4px; width:100%;">📖 このお店の使い方</button>
                 <button class="p-act are" style="margin-bottom:4px; width:100%;">🍽️ いいお店を探す<span class="pb pbl">要ログイン</span></button>
                 <button class="p-act afo" style="margin-bottom:4px; width:100%;">🔮 ソフィーの天命診断<span class="pb pbl">要ログイン</span></button>
+                <button class="p-act akh" style="margin-bottom:4px; width:100%;">📅 この日どんな日<span class="pb pbl">要ログイン</span></button>
                 <button class="p-act adk" style="margin-bottom:4px; width:100%;">🎲 じゃんけん勝負</button>
               </div>
             </div>
@@ -563,6 +565,144 @@ h1 { color: #f0b56e; font-size: 1.3rem; margin-bottom: 4px; }
         <div class="ann"><span class="ann-talk">20%</span><span class="ann-text-talk">「運命の羅針盤、そっと開きますね」</span></div>
         <div class="ann"><span class="ann-talk">10%</span><span class="ann-text-talk">「占いは……わたくしも、少し緊張するんです。真剣ですから」</span></div>
       </div>
+    </div>
+
+  </div>
+</div>
+
+<hr class="sep">
+
+<!-- ============================================================
+     SECTION 3-K: この日どんな日
+  ============================================================ -->
+<div class="section">
+  <div class="section-title">3-K. 「この日どんな日」(K1) — showKonoHi()</div>
+  <div class="phones">
+
+    <!-- K1 出来事一覧 -->
+    <div class="phone-wrap">
+      <div class="phone">
+        <div class="phone-screen">
+          <div class="p-monitor-wrap">
+            <img src="./front_sophie.jpeg" alt="ソフィー">
+          </div>
+          <div class="p-r-side">
+            <div class="p-label-bar"><div class="p-user-name">👑 マスター</div></div>
+            <div class="p-scroll" style="background:#e8f4f8; padding:0;">
+              <!-- タイトルバー -->
+              <div style="background:#ffe0ec; border-radius:6px; margin:5px 5px 5px;
+                          padding:5px 4px; display:flex; align-items:center; gap:2px;">
+                <span style="color:#a0003a; font-size:9px; padding:0 3px; cursor:pointer;">◀</span>
+                <div style="flex:1; text-align:center;">
+                  <div style="color:#a0003a; font-weight:bold; font-size:7px; line-height:1.4;">
+                    5月30日の出来事 <span style="font-size:6px;">📅</span>
+                  </div>
+                  <div style="color:#c04060; font-size:5.5px; margin-top:1px;">9件 ／ 説明ありはタップで展開</div>
+                </div>
+                <span style="color:#a0003a; font-size:9px; padding:0 3px; cursor:pointer;">▶</span>
+              </div>
+              <!-- カード群 -->
+              <div style="padding:0 5px 8px;">
+                <div style="background:#fff; border-radius:5px; padding:5px 6px; margin-bottom:4px;
+                            box-shadow:0 1px 3px rgba(26,42,58,0.1);">
+                  <span style="color:#1a6a9a; font-size:5.5px; font-weight:bold;">1971年</span>
+                  <div style="display:flex; align-items:flex-start; margin-top:2px;">
+                    <div style="flex:1; color:#1a2a3a; font-size:6px; line-height:1.4; font-weight:500;">惑星軌道に乗った初の探査機マリナー９号打ち上げ</div>
+                    <span style="color:#a0003a; font-size:7px; padding-left:3px;">▼</span>
+                  </div>
+                </div>
+                <div style="background:#fff; border-radius:5px; padding:5px 6px; margin-bottom:4px;
+                            box-shadow:0 1px 3px rgba(26,42,58,0.1);">
+                  <span style="color:#1a6a9a; font-size:5.5px; font-weight:bold;">1631年</span>
+                  <div style="display:flex; align-items:flex-start; margin-top:2px;">
+                    <div style="flex:1; color:#1a2a3a; font-size:6px; line-height:1.4;">フランス初の新聞ラ・ガゼットが創刊された日</div>
+                  </div>
+                </div>
+                <div style="background:#fff; border-radius:5px; padding:5px 6px; margin-bottom:4px;
+                            box-shadow:0 1px 3px rgba(26,42,58,0.1);">
+                  <span style="color:#1a6a9a; font-size:5.5px; font-weight:bold;">1431年</span>
+                  <div style="display:flex; align-items:flex-start; margin-top:2px;">
+                    <div style="flex:1; color:#1a2a3a; font-size:6px; line-height:1.4;">ジャンヌ・ダルクが異端審問の末フランスで火刑</div>
+                  </div>
+                </div>
+                <div style="background:#fff; border-radius:5px; padding:5px 6px;
+                            box-shadow:0 1px 3px rgba(26,42,58,0.1);">
+                  <span style="color:#1a6a9a; font-size:5.5px; font-weight:bold;">819年</span>
+                  <div style="display:flex; align-items:flex-start; margin-top:2px;">
+                    <div style="flex:1; color:#1a2a3a; font-size:6px; line-height:1.4;">空海が高野山で金剛峯寺の開創に着手</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="p-console">
+              <div class="p-btn-grid" style="grid-template-columns: 1fr;">
+                <div class="p-c-btn" style="border:1px solid #5ba3d9;">◀ 戻る</div>
+              </div>
+              <div class="p-sophie-box"><img src="./sophie_shake.png"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="phone-code">K1</div>
+      <div class="phone-label">⑦' この日どんな日<br><span>showKonoHi()</span><br><span>state = "konohi"</span><br><span>console: 戻る のみ</span></div>
+    </div>
+
+    <div class="arrow-right" style="padding-top:20px; font-size:1rem; color:#555;">◀ ▶ 日付移動<br>📅 ピッカー</div>
+
+    <!-- K1 説明文展開状態 -->
+    <div class="phone-wrap">
+      <div class="phone">
+        <div class="phone-screen">
+          <div class="p-monitor-wrap">
+            <img src="./front_sophie.jpeg" alt="ソフィー">
+          </div>
+          <div class="p-r-side">
+            <div class="p-label-bar"><div class="p-user-name">👑 マスター</div></div>
+            <div class="p-scroll" style="background:#e8f4f8; padding:0;">
+              <div style="background:#ffe0ec; border-radius:6px; margin:5px 5px 5px;
+                          padding:5px 4px; display:flex; align-items:center; gap:2px;">
+                <span style="color:#a0003a; font-size:9px; padding:0 3px;">◀</span>
+                <div style="flex:1; text-align:center;">
+                  <div style="color:#a0003a; font-weight:bold; font-size:7px;">5月30日の出来事 📅</div>
+                  <div style="color:#c04060; font-size:5.5px; margin-top:1px;">9件 ／ 説明ありはタップで展開</div>
+                </div>
+                <span style="color:#a0003a; font-size:9px; padding:0 3px;">▶</span>
+              </div>
+              <div style="padding:0 5px 8px;">
+                <!-- 展開済みカード -->
+                <div style="background:#fff; border-radius:5px; padding:5px 6px; margin-bottom:4px;
+                            box-shadow:0 1px 3px rgba(26,42,58,0.1);">
+                  <span style="color:#1a6a9a; font-size:5.5px; font-weight:bold;">1971年</span>
+                  <div style="display:flex; align-items:flex-start; margin-top:2px;">
+                    <div style="flex:1; color:#1a2a3a; font-size:6px; line-height:1.4; font-weight:500;">惑星軌道に乗った初の探査機マリナー９号打ち上げ</div>
+                    <span style="color:#a0003a; font-size:7px; padding-left:3px;">▲</span>
+                  </div>
+                  <!-- 展開された説明文 -->
+                  <div style="color:#3a5a6a; font-size:5.5px; line-height:1.7; margin-top:5px;
+                              padding-top:5px; border-top:1px solid #c8e4ef;">
+                    NASAが打ち上げた火星探査機。惑星軌道に投入された史上初の宇宙船となり、火星の地形を詳細にマッピングした。
+                  </div>
+                </div>
+                <div style="background:#fff; border-radius:5px; padding:5px 6px; margin-bottom:4px;
+                            box-shadow:0 1px 3px rgba(26,42,58,0.1);">
+                  <span style="color:#1a6a9a; font-size:5.5px; font-weight:bold;">1631年</span>
+                  <div style="display:flex; align-items:flex-start; margin-top:2px;">
+                    <div style="flex:1; color:#1a2a3a; font-size:6px; line-height:1.4;">フランス初の新聞ラ・ガゼットが創刊された日</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="p-console">
+              <div class="p-btn-grid" style="grid-template-columns: 1fr;">
+                <div class="p-c-btn" style="border:1px solid #5ba3d9;">◀ 戻る</div>
+              </div>
+              <div class="p-sophie-box"><img src="./sophie_shake.png"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="phone-code">K1</div>
+      <div class="phone-label">説明文展開後<br><span>▼ タップで▲に変わり展開</span></div>
     </div>
 
   </div>
