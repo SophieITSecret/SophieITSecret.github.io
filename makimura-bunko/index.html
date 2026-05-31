@@ -197,59 +197,13 @@
 
   .edited-mark { font-size: 0.7em; color: #e67e22; margin-left: 4px; }
   .empty { text-align: center; padding: 50px; color: #999; font-size: 1em; }
+  .pagination { display:flex; align-items:center; justify-content:center; gap:8px; padding:10px 20px 14px; flex-wrap:wrap; }
+  .pagination button { padding:5px 12px; border:1px solid #ccc; border-radius:4px; background:white; cursor:pointer; font-size:0.88em; color:#333; }
+  .pagination button:hover:not(:disabled) { background:#e8f0fb; border-color:#2d6a9f; }
+  .pagination button:disabled { opacity:0.35; cursor:default; }
+  .pagination button.active { background:#1a3a6b; color:white; border-color:#1a3a6b; font-weight:bold; }
+  .pagination .pg-info { font-size:0.82em; color:#666; }
   footer { text-align: center; padding: 16px; color: #aaa; font-size: 0.78em; }
-  /* ===== サイドパネル ===== */
-  .app-layout { display: flex; height: calc(100vh - 43px); overflow: hidden; position: relative; }
-  .main-col { flex: 1; overflow-y: auto; min-width: 0; }
-  .preview-panel {
-    width: 0; min-width: 0; overflow: hidden;
-    transition: width 0.25s ease, min-width 0.25s ease;
-    border-left: 1px solid #d0d8e8;
-    background: #f8faff;
-    display: flex; flex-direction: column;
-    position: relative;
-  }
-  .preview-panel.open { width: 45%; min-width: 320px; }
-  .preview-header {
-    display: flex; align-items: center; gap: 8px;
-    padding: 8px 12px; background: #1a3a6b; color: white;
-    font-size: 0.82em; flex-shrink: 0;
-  }
-  .preview-title { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
-  .preview-actions { display: flex; gap: 6px; flex-shrink: 0; }
-  .preview-btn {
-    padding: 3px 8px; border: 1px solid rgba(255,255,255,0.4); border-radius: 4px;
-    background: rgba(255,255,255,0.12); color: white; cursor: pointer; font-size: 0.82em;
-    text-decoration: none; white-space: nowrap;
-  }
-  .preview-btn:hover { background: rgba(255,255,255,0.25); }
-  .preview-iframe-wrap { flex: 1; position: relative; }
-  .preview-iframe-wrap iframe { width: 100%; height: 100%; border: none; display: block; }
-  .preview-placeholder {
-    position: absolute; inset: 0; display: flex; flex-direction: column;
-    align-items: center; justify-content: center; gap: 10px;
-    color: #aaa; font-size: 0.9em; text-align: center; padding: 20px;
-  }
-  .preview-placeholder .icon { font-size: 2.5em; }
-
-  @media (max-width: 900px) {
-    .app-layout { flex-direction: column; height: auto; overflow: visible; }
-    .main-col { overflow-y: visible; }
-    .preview-panel { width: 100% !important; min-width: 0 !important; border-left: none; border-top: 2px solid #1a3a6b; }
-    .preview-panel.open { height: 60vh; }
-    .preview-panel:not(.open) { height: 0; }
-  }
-
-  .btn-preview-inline {
-    display: inline-block; margin-left: 6px; opacity: 0;
-    font-size: 0.75em; padding: 1px 5px; border-radius: 3px;
-    background: #e8f0fe; color: #1a3a6b; border: 1px solid #c5d8f8;
-    cursor: pointer; vertical-align: middle; white-space: nowrap;
-    transition: opacity 0.12s;
-  }
-  tr:hover .btn-preview-inline { opacity: 1; }
-  @media (hover: none) { .btn-preview-inline { opacity: 0.5; } }
-
 
   /* ===== ログイン画面 ===== */
   #login-screen {
@@ -303,7 +257,7 @@
 <div class="stats" id="stats-bar"></div>
 
 <div class="search-bar">
-  <input type="text" id="search-input" placeholder="🔍 書名・著者で検索..." oninput="filterBooks()">
+  <input type="text" id="search-input" placeholder="🔍 書名・著者で検索..." oninput="filterBooksDebounced()">
   <select id="cat-filter" onchange="filterBooks()">
     <option value="">── 大分類（全て）──</option>
     <option value="01">01 日本史</option><option value="02">02 東洋史</option>
@@ -328,7 +282,7 @@
   <span class="result-count" id="result-count"></span>
 </div>
 
-<div class="app-layout"><div class="main-col"><div class="table-wrap">
+<div class="table-wrap">
   <table id="book-table">
     <colgroup>
       <col class="c-no"><col class="c-cat"><col class="c-title">
@@ -344,29 +298,10 @@
     <tbody id="table-body"></tbody>
   </table>
   <div class="empty" id="empty-msg" style="display:none">該当する書籍が見つかりません</div>
+  <div class="pagination" id="pagination"></div>
 </div>
 
 <footer>牧村文庫 蔵書目録 — 全1,198冊 — Powered by Claude</footer>
-</div><!-- /main-col -->
-
-<!-- サイドプレビューパネル -->
-<div class="preview-panel" id="preview-panel">
-  <div class="preview-header">
-    <span class="preview-title" id="preview-title">プレビュー</span>
-    <div class="preview-actions">
-      <a class="preview-btn" id="preview-newtab" href="#" target="_blank">🔗 新タブ</a>
-      <button class="preview-btn" onclick="closePreview()">✕ 閉じる</button>
-    </div>
-  </div>
-  <div class="preview-iframe-wrap">
-    <div class="preview-placeholder" id="preview-placeholder">
-      <span class="icon">📄</span>
-      <span>書名をクリックするとここでプレビューします</span>
-    </div>
-    <iframe id="preview-iframe" src="about:blank" allowfullscreen style="display:none"></iframe>
-  </div>
-</div>
-</div><!-- /app-layout -->
 
 <!-- 編集モーダル -->
 <div class="modal-bg" id="edit-modal">
@@ -455,6 +390,15 @@ let edits = {};
 // ##EDITS_END##
 try { const saved = localStorage.getItem(EDITS_KEY); if (saved) edits = Object.assign(edits, JSON.parse(saved)); } catch(e) {}
 
+const PAGE_SIZE = 50;
+let currentPage = 1;
+let filteredBooks = [];
+let _filterTimer = null;
+function filterBooksDebounced() {
+  clearTimeout(_filterTimer);
+  _filterTimer = setTimeout(filterBooks, 220);
+}
+
 function saveEditsToStorage() {
   try { localStorage.setItem(EDITS_KEY, JSON.stringify(edits)); } catch(e) {}
 }
@@ -485,44 +429,6 @@ function clearFilters() {
   filterBooks();
 }
 
-
-// ===== プレビューパネル =====
-let currentPreviewId = null;
-function openPreview(fileId, title) {
-  if (!fileId) return;
-  const panel = document.getElementById("preview-panel");
-  const iframe = document.getElementById("preview-iframe");
-  const placeholder = document.getElementById("preview-placeholder");
-  const titleEl = document.getElementById("preview-title");
-  const newtab = document.getElementById("preview-newtab");
-
-  currentPreviewId = fileId;
-  const previewUrl = `https://drive.google.com/file/d/${fileId}/preview`;
-  const downloadUrl = `https://drive.google.com/uc?export=download&id=${fileId}`;
-
-  titleEl.textContent = title;
-  newtab.href = downloadUrl;
-  iframe.src = previewUrl;
-  iframe.style.display = "block";
-  placeholder.style.display = "none";
-  panel.classList.add("open");
-
-  // スマホ: パネルまでスクロール
-  if (window.innerWidth <= 900) {
-    panel.scrollIntoView({ behavior: "smooth" });
-  }
-}
-function closePreview() {
-  const panel = document.getElementById("preview-panel");
-  const iframe = document.getElementById("preview-iframe");
-  const placeholder = document.getElementById("preview-placeholder");
-  panel.classList.remove("open");
-  iframe.src = "about:blank";
-  iframe.style.display = "none";
-  placeholder.style.display = "flex";
-  currentPreviewId = null;
-}
-
 function filterBooks() {
   const q = document.getElementById("search-input").value.toLowerCase();
   const cat = document.getElementById("cat-filter").value;
@@ -538,14 +444,11 @@ function filterBooks() {
     if (cat && b.cat !== cat) return false;
     if (time && !(b.time||"").includes(time)) return false;
     if (region && !(b.region||"").includes(region)) return false;
-    if (q) {
-      const haystack = (b.title+" "+b.author+" "+b.detail).toLowerCase();
-      const terms = q.trim().split(/\s+/);
-      if (!terms.every(t => haystack.includes(t))) return false;
-    }
+    if (q) { if (!(b.title+" "+b.author+" "+b.detail).toLowerCase().includes(q)) return false; }
     return true;
   });
 
+  currentPage = 1;
   renderTable(filtered);
   const editCount = Object.keys(edits).length;
   let countStr = `${filtered.length}件 / ${BOOKS.length}件`;
@@ -555,15 +458,30 @@ function filterBooks() {
 }
 
 function renderTable(books) {
+  filteredBooks = books;
+  renderPage();
+}
+
+function renderPage() {
   const tbody = document.getElementById("table-body");
   const empty = document.getElementById("empty-msg");
-  if (books.length === 0) { tbody.innerHTML = ""; empty.style.display = "block"; return; }
+  const pg    = document.getElementById("pagination");
+  if (filteredBooks.length === 0) {
+    tbody.innerHTML = "";
+    empty.style.display = "block";
+    pg.innerHTML = "";
+    return;
+  }
   empty.style.display = "none";
-  tbody.innerHTML = books.map(b => {
+  const totalPages = Math.ceil(filteredBooks.length / PAGE_SIZE);
+  if (currentPage > totalPages) currentPage = totalPages;
+  const start = (currentPage - 1) * PAGE_SIZE;
+  const pageBooks = filteredBooks.slice(start, start + PAGE_SIZE);
+
+  tbody.innerHTML = pageBooks.map(b => {
     const mark = b._edited ? '<span class="edited-mark">✏</span>' : '';
-    const fileId = b.url ? (b.url.match(/id=([^&]+)/)||[])[1] : null;
     const titleCell = b.url
-      ? `<span class="no-link" style="cursor:pointer;color:#1a3a6b;font-weight:500" onclick="openPreview('${fileId}','${esc(b.title).replace(/'/g,"&#39;")}')">${esc(b.title)}</span><button class="btn-preview-inline" onclick="openPreview('${fileId}','${esc(b.title).replace(/'/g,"&#39;")}')">👁 プレビュー</button>${mark}`
+      ? `<a href="${b.url}" target="_blank">${esc(b.title)}</a>${mark}`
       : `<span class="no-link">${esc(b.title)}</span>${mark}`;
     const tt = (b.time||"").split(" ").filter(Boolean).map(t=>`<span class="time">${t}</span>`).join("");
     const rt = (b.region||"").split(" ").filter(Boolean).map(t=>`<span class="region">${t}</span>`).join("");
@@ -574,15 +492,35 @@ function renderTable(books) {
       <td class="title">${titleCell}</td>
       <td class="author">${esc(b.author)}</td>
       <td class="edit-cell"><button class="btn-edit" onclick="openEdit(${b.no})" title="編集">✏️</button></td>
-      <td class="tags">${tt}</td>
-      <td class="tags">${rt}</td>
-      <td class="tags">${dt}</td>
+      <td class="tags">${tt}${rt}${dt}</td>
     </tr>`;
   }).join("");
+
+  // ページネーションUI
+  if (totalPages <= 1) { pg.innerHTML = ""; return; }
+  let btns = `<span class="pg-info">${filteredBooks.length}件中 ${start+1}〜${Math.min(start+PAGE_SIZE, filteredBooks.length)}件</span>`;
+  btns += `<button onclick="goPage(${currentPage-1})" ${currentPage===1?'disabled':''}>◀ 前</button>`;
+  // ページボタン（最大7個表示）
+  const range = 3;
+  let lo = Math.max(1, currentPage-range), hi = Math.min(totalPages, currentPage+range);
+  if (lo > 1) btns += `<button onclick="goPage(1)">1</button>${lo>2?'<span>…</span>':''}`;
+  for (let p=lo; p<=hi; p++) {
+    btns += `<button class="${p===currentPage?'active':''}" onclick="goPage(${p})">${p}</button>`;
+  }
+  if (hi < totalPages) btns += `${hi<totalPages-1?'<span>…</span>':''}<button onclick="goPage(${totalPages})">${totalPages}</button>`;
+  btns += `<button onclick="goPage(${currentPage+1})" ${currentPage===totalPages?'disabled':''}>次 ▶</button>`;
+  pg.innerHTML = btns;
 }
 
-// --- 編集モーダル ---
-let editingNo = null;
+function goPage(p) {
+  const totalPages = Math.ceil(filteredBooks.length / PAGE_SIZE);
+  if (p < 1 || p > totalPages) return;
+  currentPage = p;
+  renderPage();
+  window.scrollTo(0, 0);
+}
+
+
 function openEdit(no) {
   const b = getBook(no);
   if (!b) return;
@@ -734,48 +672,26 @@ function doFinalize() {
     return Object.assign({}, b, e);
   });
 
-  // ★ outerHTML取得前に：モーダル・editsをリセットしてDOMをクリーンにする
+  // モーダル・editsをリセットしてDOMをクリーンにする
   closeConfirm();
   try { localStorage.removeItem(EDITS_KEY); } catch(e2) {}
   edits = {};
   buildStatsBar();
   filterBooks();
 
-  // ★ DOM更新を待ってからHTML取得＆ダウンロード（モーダルが閉じた状態でキャプチャ）
+  // JSONのみをダウンロード（outerHTML取得によるフリーズを回避）
   setTimeout(function() {
-    const source = document.documentElement.outerHTML;
-    const newBooksStr = JSON.stringify(finalBooks);
-
-    const newSource = source
-      .replace(
-        /\/\/ ##BOOKS_START##[\s\S]*?\/\/ ##BOOKS_END##/,
-        '// ##BOOKS_START##\nconst BOOKS = ' + newBooksStr + ';\n// ##BOOKS_END##'
-      )
-      .replace(
-        /\/\/ ##EDITS_START##[\s\S]*?\/\/ ##EDITS_END##/,
-        '// ##EDITS_START##\nlet edits = {};\n// ##EDITS_END##'
-      );
-
-    // ダウンロード（iOS Safari対応）
-    const blob = new Blob([newSource], { type: "text/html;charset=utf-8" });
+    const jsonStr = JSON.stringify(finalBooks, null, 2);
+    const blob = new Blob([jsonStr], { type: "application/json;charset=utf-8" });
     const url = URL.createObjectURL(blob);
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
-                  (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-    if (isIOS) {
-      const newTab = window.open(url, '_blank');
-      if (!newTab) {
-        alert('ポップアップがブロックされています。ブラウザの設定でポップアップを許可してください。');
-      }
-      setTimeout(function() { URL.revokeObjectURL(url); }, 10000);
-    } else {
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "牧村文庫_蔵書検索.html";
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      setTimeout(function() { URL.revokeObjectURL(url); }, 3000);
-    }
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "makimura_books.json";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function() { URL.revokeObjectURL(url); }, 3000);
+    alert("書誌データを makimura_books.json としてダウンロードしました。\nClaude に渡してHTMLを更新してください。");
   }, 100);
 }
 
