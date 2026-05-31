@@ -788,16 +788,36 @@ function doFinalize() {
   buildStatsBar();
   filterBooks();
 
-  // JSONのみダウンロード（outerHTMLフリーズ回避）
+  // HTMLをダウンロード（自己完結型）
   setTimeout(function() {
-    const jsonStr = JSON.stringify(finalBooks, null, 2);
-    const blob = new Blob([jsonStr], { type: "application/json;charset=utf-8" });
+    const source = document.documentElement.outerHTML;
+    const newBooksStr = JSON.stringify(finalBooks);
+    const newSource = source
+      .replace(
+        /\/\/ ##BOOKS_START##[\s\S]*?\/\/ ##BOOKS_END##/,
+        '// ##BOOKS_START##\nconst BOOKS = ' + newBooksStr + ';\n// ##BOOKS_END##'
+      )
+      .replace(
+        /\/\/ ##EDITS_START##[\s\S]*?\/\/ ##EDITS_END##/,
+        '// ##EDITS_START##\nlet edits = {};\n// ##EDITS_END##'
+      );
+    const blob = new Blob([newSource], { type: "text/html;charset=utf-8" });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url; a.download = "makimura_books.json";
-    document.body.appendChild(a); a.click(); document.body.removeChild(a);
-    setTimeout(function() { URL.revokeObjectURL(url); }, 3000);
-    alert("makimura_books.json をダウンロードしました。\nClaudeに渡してHTMLを更新してください。");
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+                  (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    if (isIOS) {
+      const newTab = window.open(url, '_blank');
+      if (!newTab) alert('ポップアップがブロックされています。');
+      setTimeout(function() { URL.revokeObjectURL(url); }, 10000);
+    } else {
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "index.html";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(function() { URL.revokeObjectURL(url); }, 3000);
+    }
   }, 100);
 }
 
