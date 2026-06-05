@@ -5,6 +5,8 @@ import * as nav from './navigation.js';
 let _data = null;
 let _loadPromise = null;
 let _onBack = null;
+let _narration = null;
+let _narrationKey = null;
 
 function _load() {
     if (_data) return Promise.resolve(_data);
@@ -143,6 +145,14 @@ function _showDay(key) {
             </div>
 
             ${todayBtn}
+            ${(_narration && key === _narrationKey) ? `
+            <div style="background:rgba(160,0,58,0.07); border-left:3px solid #c04060;
+                        border-radius:0 6px 6px 0; padding:10px 12px; margin-bottom:12px;">
+                <div style="color:#a0003a; font-size:0.68rem; margin-bottom:5px; font-weight:bold;">
+                    📻 ソフィーのひとこと
+                </div>
+                <div style="color:#c8b090; font-size:0.8rem; line-height:1.9;">${_narration}</div>
+            </div>` : ''}
             ${cards}
         </div>`;
 
@@ -158,9 +168,11 @@ function _showDay(key) {
     }
 }
 
-export async function showKonoHi(onBack) {
+export async function showKonoHi(onBack, narration = null) {
     nav.updateNav('konohi');
     _onBack = onBack;
+    _narration = narration;
+    _narrationKey = _todayKey();
     window._konohiBack = () => {
         if (typeof _onBack === 'function') _onBack();
         window._renderConsole?.('standard');

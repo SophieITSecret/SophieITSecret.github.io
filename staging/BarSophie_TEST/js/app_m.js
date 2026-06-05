@@ -94,6 +94,7 @@ window.onYouTubeIframeAPIReady = function () {
         events: {
             onReady: () => {
                 ytPlayerReady = true;
+                window._ytPlayer = ytPlayer;
                 music.setYtReady(ytPlayer);
                 music.initMusic(talkAudio, ytPlayer, true, document.getElementById('telop'));
             },
@@ -188,6 +189,8 @@ function setup() {
     setupNextButton();
     renderConsole('standard');
     showRootMenu();
+
+    import('./sophie_today.js').then(m => m.initToday(showRootMenu));
 
     window._appSetupDone = true;
     if (window._handlePurchaseOnSetup) {
