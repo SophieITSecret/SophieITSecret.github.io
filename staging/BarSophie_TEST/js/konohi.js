@@ -230,20 +230,43 @@ async function _showDay(key) {
     }
 
     // ▶/⏸ トグル再生ボタン
+    // カウンターからの自動再生(window._sophieTodayAudio)も同ボタンで制御
     const playBtn = document.getElementById('kh-narration-play');
     if (playBtn && todayEntry?.mp3) {
+        // 自動再生中なら即⏸表示。終了時に▶に戻す
+        if (window._sophieTodayAudio && !window._sophieTodayAudio.paused) {
+            playBtn.textContent = '⏸';
+            const onAutoEnd = () => { if (playBtn) playBtn.textContent = '▶'; };
+            window._sophieTodayAudio.addEventListener('ended', onAutoEnd);
+            window._sophieTodayAudio.addEventListener('error', onAutoEnd);
+            window._sophieTodayAudio.addEventListener('pause', onAutoEnd);
+        }
+
         playBtn.addEventListener('click', (e) => {
             e.stopPropagation();
+
+            // 自動再生音声を優先制御
+            const shared = window._sophieTodayAudio;
+            if (shared && !shared.paused) {
+                shared.pause();
+                playBtn.textContent = '▶';
+                return;
+            }
+            if (shared && shared.paused && shared.currentTime > 0) {
+                shared.play().catch(() => {});
+                playBtn.textContent = '⏸';
+                return;
+            }
+
+            // 手動再生のトグル
             if (_narrationAudio && !_narrationAudio.paused) {
-                // 再生中 → 一時停止
                 _narrationAudio.pause();
                 playBtn.textContent = '▶';
             } else if (_narrationAudio && _narrationAudio.paused) {
-                // 一時停止中 → 再開
                 _narrationAudio.play().catch(() => {});
                 playBtn.textContent = '⏸';
             } else {
-                // 未再生 or 終了済み → 新規再生
+                // 新規再生
                 const player = window._ytPlayer;
                 _narrationOrigVol = null;
                 if (player) {
@@ -252,8 +275,8 @@ async function _showDay(key) {
                 _narrationAudio = new Audio(`./voices_mp3/${todayEntry.mp3}`);
                 playBtn.textContent = '⏸';
                 const done = () => {
-                    if (_narrationOrigVol !== null) {
-                        if (player) { try { player.setVolume(_narrationOrigVol); } catch(e) {} }
+                    if (_narrationOrigVol !== null && player) {
+                        try { player.setVolume(_narrationOrigVol); } catch(e) {}
                         _narrationOrigVol = null;
                     }
                     _narrationAudio = null;

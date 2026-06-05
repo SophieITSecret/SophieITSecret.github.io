@@ -91,7 +91,7 @@ body {
 /* 右側レイアウト（スクロール上・コンソール下） */
 .r-side { flex: 1; display: flex; flex-direction: column; min-height: 0; position: relative; }
 .scroll-area { flex: 1; overflow-y: scroll; overflow-x: hidden; background: #08080a; -webkit-overflow-scrolling: touch; }
-#nav-main { padding: 12px; display: block; }
+#nav-main { padding: 0; display: block; }
 .act-btn { width: 100%; height: 48px; margin-bottom: 10px; border-radius: 8px; border: 1px solid #444; font-weight: bold; color: #fff !important; font-size: 1.1rem; display: block !important; font-family: sans-serif; }
 
 /* コントローラー領域（下固定） */

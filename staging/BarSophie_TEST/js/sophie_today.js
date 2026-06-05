@@ -39,11 +39,17 @@ function _restoreYoutube(vol) {
 }
 
 function _onTap(entry) {
-    // 1. ダッキング + 音声再生
+    // 1. ダッキング + 音声再生（K1の▶ボタンで制御できるよう window に公開）
     if (entry.mp3) {
         const originalVol = _duckYoutube();
         const audio = new Audio(`./voices_mp3/${entry.mp3}`);
-        const restore = () => _restoreYoutube(originalVol);
+        window._sophieTodayAudio = audio;
+        window._sophieTodayOrigVol = originalVol;
+        const restore = () => {
+            _restoreYoutube(originalVol);
+            window._sophieTodayAudio = null;
+            window._sophieTodayOrigVol = null;
+        };
         audio.addEventListener('ended', restore);
         audio.addEventListener('error', restore);
         audio.play().catch(restore);
