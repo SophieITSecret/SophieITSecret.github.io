@@ -407,19 +407,22 @@
             </div>
         </div>
         <div class="r-side">
-            <div id="label-bar" style="display:flex; align-items:center; justify-content:flex-end;
+            <div id="label-bar" style="display:flex; align-items:center;
                 height:28px; background:#0a0a0a; border-bottom:1px solid #1a1a1a; padding:0 4px;">
-                <button id="login-btn" onclick="window.signInWithGoogle()"
-                    style="background:#4285f4; color:#fff; border:none;
-                    padding:3px 10px; border-radius:3px; font-size:0.7rem;
-                    cursor:pointer; margin-right:6px;">
-                    Gログイン
-                </button>
-                <button id="mypage-btn" onclick="window.openMyPage()"
-                    style="display:none; background:none; color:#f0b56e; border:none;
-                    padding:3px 6px; font-size:0.75rem; cursor:pointer; margin-right:6px;">
-                </button>
-                <div id="user-info" style="display:none; align-items:center; margin-right:6px;"></div>
+                <div id="today-date-info" style="flex:1; overflow:hidden; padding-left:2px;"></div>
+                <div style="display:flex; align-items:center; flex-shrink:0;">
+                    <button id="login-btn" onclick="window.signInWithGoogle()"
+                        style="background:#4285f4; color:#fff; border:none;
+                        padding:3px 10px; border-radius:3px; font-size:0.7rem;
+                        cursor:pointer; margin-right:6px;">
+                        Gログイン
+                    </button>
+                    <button id="mypage-btn" onclick="window.openMyPage()"
+                        style="display:none; background:none; color:#f0b56e; border:none;
+                        padding:3px 6px; font-size:0.75rem; cursor:pointer; margin-right:6px;">
+                    </button>
+                    <div id="user-info" style="display:none; align-items:center; margin-right:6px;"></div>
+                </div>
             </div>
             <div id="login-msg" style="display:none; padding:6px 10px;
                 background:#0d1f0d; border-bottom:1px solid #1a4a2a;

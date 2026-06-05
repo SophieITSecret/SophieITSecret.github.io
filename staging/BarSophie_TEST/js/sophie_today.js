@@ -1,6 +1,7 @@
 // js/sophie_today.js
-// カウンター画面に「この日どんな日」カードを表示
-// sophie_today.json（配列）から当日エントリを検索し、タップで音声+K1遷移
+// カウンター画面に「この日どんな日」を表示
+// - label-bar (#today-date-info) に日付・曜日・暦を表示
+// - nav-main (#today-card) にタイトル行「今日は：〇〇」を表示
 
 let _onBack = null;
 
@@ -16,10 +17,8 @@ function _weekdayJa() {
 async function _load() {
     try {
         const res = await fetch('./sophie_today.json');
-        const arr = await res.json();
-        const key = _todayKey();
-        return arr.find(e => e.date === key) || null;
-    } catch (e) { return null; }
+        return await res.json();
+    } catch (e) { return []; }
 }
 
 function _duckYoutube() {
@@ -41,9 +40,8 @@ function _restoreYoutube(vol) {
 
 function _onTap(entry) {
     // 1. ダッキング + 音声再生
-    let originalVol = null;
     if (entry.mp3) {
-        originalVol = _duckYoutube();
+        const originalVol = _duckYoutube();
         const audio = new Audio(`./voices_mp3/${entry.mp3}`);
         const restore = () => _restoreYoutube(originalVol);
         audio.addEventListener('ended', restore);
@@ -51,49 +49,52 @@ function _onTap(entry) {
         audio.play().catch(restore);
     }
 
-    // 2. K1画面へ遷移（音声が鳴り始めてから遷移）
+    // 2. K1画面へ遷移（200ms遅延で音声優先）
     setTimeout(() => {
-        import('./konohi.js').then(k => {
-            k.showKonoHi(_onBack, entry.narration || null);
-        });
+        import('./konohi.js').then(k => k.showKonoHi(_onBack));
     }, 200);
 }
 
 export async function initToday(onBack) {
     _onBack = onBack;
 
-    const entry = await _load();
-    if (!entry) return;
+    const arr = await _load();
+    if (!arr.length) return;
 
-    const card = document.getElementById('today-card');
-    if (!card) return;
+    const key = _todayKey();
+    const entry = arr.find(e => e.date === key);
+    if (!entry) return;
 
     const d = new Date();
     const month = d.getMonth() + 1;
     const day = d.getDate();
     const wd = _weekdayJa();
 
+    // --- 修正1: 日付行を label-bar (#today-date-info) に表示 ---
     const calendarHtml = entry.calendar
-        ? ` <span style="color:#9a8060; font-size:0.68rem; margin-left:3px;">${entry.calendar_type === '祝日' ? '🗾 ' : ''}${entry.calendar}</span>`
+        ? `<span style="color:#9a8060; margin-left:4px;">${entry.calendar_type === '祝日' ? '🗾 ' : ''}${entry.calendar}</span>`
         : '';
 
-    const title = entry.entries?.[0]?.title || '';
-
-    card.innerHTML = `
-        <div style="width:92%; margin:0 auto; padding:7px 10px 6px;
-                    background:rgba(255,255,255,0.03); border-radius:6px;
-                    border:1px solid rgba(255,255,255,0.06);">
-            <div style="color:#888; font-size:0.7rem; margin-bottom:3px;
-                        display:flex; align-items:center; user-select:none; pointer-events:none;">
-                <span style="margin-right:5px;">📅</span>
+    const dateInfo = document.getElementById('today-date-info');
+    if (dateInfo) {
+        dateInfo.innerHTML = `
+            <span style="display:flex; align-items:center; gap:3px;
+                         color:#888; font-size:0.68rem; white-space:nowrap; user-select:none; pointer-events:none;">
+                <span>📅</span>
                 <span>${month}月${day}日 ${wd}曜日${calendarHtml}</span>
-            </div>
-            <div id="today-entry-btn"
-                 style="color:#b8a878; font-size:0.78rem; line-height:1.5; padding-left:4px;
-                        cursor:pointer; -webkit-tap-highlight-color:transparent; user-select:none;">
-                ${title}
-            </div>
-        </div>`;
+            </span>`;
+    }
 
-    document.getElementById('today-entry-btn').addEventListener('click', () => _onTap(entry));
+    // --- 修正2: タイトル行を nav-main (#today-card) に「今日は：」付きで表示 ---
+    const title = entry.entries?.[0]?.title || '';
+    const card = document.getElementById('today-card');
+    if (card && title) {
+        card.innerHTML = `
+            <div id="today-entry-btn"
+                 style="width:92%; margin:0 auto; padding:4px 10px;
+                        cursor:pointer; -webkit-tap-highlight-color:transparent; user-select:none;">
+                <span style="color:#ffb3c1; font-size:0.78rem; font-weight:bold;">今日は：</span><span style="color:#c8b090; font-size:0.78rem;">${title}</span>
+            </div>`;
+        document.getElementById('today-entry-btn').addEventListener('click', () => _onTap(entry));
+    }
 }

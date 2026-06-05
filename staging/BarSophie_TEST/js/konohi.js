@@ -2,11 +2,15 @@
 import { setListView } from './utils.js';
 import * as nav from './navigation.js';
 
+// this_day_history.json キャッシュ
 let _data = null;
 let _loadPromise = null;
+
+// sophie_today.json キャッシュ（narration用）
+let _todayArr = null;
+let _todayLoadPromise = null;
+
 let _onBack = null;
-let _narration = null;
-let _narrationKey = null;
 
 function _load() {
     if (_data) return Promise.resolve(_data);
@@ -17,6 +21,21 @@ function _load() {
     return _loadPromise;
 }
 
+function _loadToday() {
+    if (_todayArr) return Promise.resolve(_todayArr);
+    if (_todayLoadPromise) return _todayLoadPromise;
+    _todayLoadPromise = fetch('./sophie_today.json')
+        .then(r => r.json())
+        .then(d => { _todayArr = d; return d; })
+        .catch(() => { _todayArr = []; return []; });
+    return _todayLoadPromise;
+}
+
+function _getTodayEntry(key) {
+    if (!_todayArr) return null;
+    return _todayArr.find(e => e.date === key) || null;
+}
+
 function _todayKey() {
     const d = new Date();
     return String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
@@ -24,7 +43,7 @@ function _todayKey() {
 
 function _adjacentKey(key, delta) {
     const [m, d] = key.split('-').map(Number);
-    const date = new Date(2000, m - 1, d + delta); // 2000: うるう年でFeb29が使える
+    const date = new Date(2000, m - 1, d + delta);
     return String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0');
 }
 
@@ -38,6 +57,21 @@ function _sortEntries(entries) {
     });
 }
 
+function _playAudio(mp3) {
+    const player = window._ytPlayer;
+    let originalVol = null;
+    if (player) {
+        try { originalVol = player.getVolume(); player.setVolume(Math.round(originalVol * 0.2)); } catch(e) {}
+    }
+    const audio = new Audio(`./voices_mp3/${mp3}`);
+    const restore = () => {
+        if (originalVol !== null && player) { try { player.setVolume(originalVol); } catch(e) {} }
+    };
+    audio.addEventListener('ended', restore);
+    audio.addEventListener('error', restore);
+    audio.play().catch(restore);
+}
+
 function _buildCard(entry, idx) {
     const hasDesc = !!entry.description;
     const descId = `kh-desc-${idx}`;
@@ -49,7 +83,6 @@ function _buildCard(entry, idx) {
             ${entry.description}
         </div>` : '';
 
-    // ③ ▼ をタイトル行の右端に配置
     const toggleIcon = hasDesc ? `
         <span id="${iconId}" style="color:#a0003a; font-size:0.82rem; flex-shrink:0;
                     padding-left:8px; line-height:1.55; user-select:none;">▼</span>` : '';
@@ -83,7 +116,7 @@ function _buildCard(entry, idx) {
     </div>`;
 }
 
-function _showDay(key) {
+async function _showDay(key) {
     const data = _data;
     const entries = _sortEntries(data[key] || []);
     const [month, day] = key.split('-').map(Number);
@@ -94,11 +127,14 @@ function _showDay(key) {
 
     window._konohiNav = (k) => _showDay(k);
 
+    // sophie_today.json から当日エントリを取得
+    await _loadToday();
+    const todayEntry = _getTodayEntry(key);
+
     const cards = entries.length > 0
         ? entries.map((e, i) => _buildCard(e, i)).join('')
         : `<div style="color:#888; text-align:center; padding:32px 0; font-size:0.88rem;">この日のデータはありません</div>`;
 
-    // ② 今日に戻るボタン: ソフィーカラー水色
     const todayBtn = key !== todayKey ? `
         <div style="text-align:center; margin-bottom:10px;">
             <button onclick="window._konohiNav('${todayKey}')"
@@ -108,7 +144,24 @@ function _showDay(key) {
             </button>
         </div>` : '';
 
-    // ① input[type=date] を日付テキスト全体に opacity:0 で重ねる（iOS Safari 対応）
+    // ソフィーのひとことブロック（narrationがある日のみ）
+    const narrationBlock = (todayEntry && todayEntry.narration) ? `
+        <div style="background:rgba(160,0,58,0.07); border-left:3px solid #c04060;
+                    border-radius:0 6px 6px 0; padding:10px 12px; margin-bottom:12px;">
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;">
+                <div style="color:#a0003a; font-size:0.82rem; font-weight:bold; flex:1; padding-right:8px; line-height:1.4;">
+                    ${todayEntry.entries?.[0]?.title || ''}
+                </div>
+                ${todayEntry.mp3 ? `
+                <button id="kh-narration-play"
+                        style="background:rgba(160,0,58,0.15); border:1px solid #c04060; color:#a0003a;
+                               border-radius:50%; width:26px; height:26px; font-size:0.75rem;
+                               cursor:pointer; flex-shrink:0; display:flex; align-items:center; justify-content:center;
+                               -webkit-tap-highlight-color:transparent;">▶</button>` : ''}
+            </div>
+            <div style="color:#c8b090; font-size:0.8rem; line-height:1.9;">${todayEntry.narration}</div>
+        </div>` : '';
+
     const html = `
         <div style="background:#e8f4f8; min-height:100%; padding:12px 12px 24px; box-sizing:border-box;">
 
@@ -145,19 +198,13 @@ function _showDay(key) {
             </div>
 
             ${todayBtn}
-            ${(_narration && key === _narrationKey) ? `
-            <div style="background:rgba(160,0,58,0.07); border-left:3px solid #c04060;
-                        border-radius:0 6px 6px 0; padding:10px 12px; margin-bottom:12px;">
-                <div style="color:#a0003a; font-size:0.68rem; margin-bottom:5px; font-weight:bold;">
-                    📻 ソフィーのひとこと
-                </div>
-                <div style="color:#c8b090; font-size:0.8rem; line-height:1.9;">${_narration}</div>
-            </div>` : ''}
+            ${narrationBlock}
             ${cards}
         </div>`;
 
     setListView(html, false);
 
+    // 日付ピッカー
     const picker = document.getElementById('kh-picker');
     if (picker) {
         picker.addEventListener('change', (e) => {
@@ -166,13 +213,20 @@ function _showDay(key) {
             _showDay(`${parts[1]}-${parts[2]}`);
         });
     }
+
+    // ▶ 再生ボタン（手動再生。自動再生はしない）
+    const playBtn = document.getElementById('kh-narration-play');
+    if (playBtn && todayEntry?.mp3) {
+        playBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            _playAudio(todayEntry.mp3);
+        });
+    }
 }
 
-export async function showKonoHi(onBack, narration = null) {
+export async function showKonoHi(onBack) {
     nav.updateNav('konohi');
     _onBack = onBack;
-    _narration = narration;
-    _narrationKey = _todayKey();
     window._konohiBack = () => {
         if (typeof _onBack === 'function') _onBack();
         window._renderConsole?.('standard');
