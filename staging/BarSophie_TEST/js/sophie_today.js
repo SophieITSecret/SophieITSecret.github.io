@@ -51,10 +51,12 @@ function _onTap(entry) {
         audio.play().catch(restore);
     }
 
-    // 2. K1画面へ遷移（narration を渡す）
-    import('./konohi.js').then(k => {
-        k.showKonoHi(_onBack, entry.narration || null);
-    });
+    // 2. K1画面へ遷移（音声が鳴り始めてから遷移）
+    setTimeout(() => {
+        import('./konohi.js').then(k => {
+            k.showKonoHi(_onBack, entry.narration || null);
+        });
+    }, 200);
 }
 
 export async function initToday(onBack) {
