@@ -11,6 +11,8 @@ let _todayArr = null;
 let _todayLoadPromise = null;
 
 let _onBack = null;
+let _narrationAudio = null;
+let _narrationOrigVol = null;
 
 function _load() {
     if (_data) return Promise.resolve(_data);
@@ -55,6 +57,18 @@ function _sortEntries(entries) {
         if (aBC && bBC) return parseInt(a.year.slice(2)) - parseInt(b.year.slice(2));
         return aBC ? 1 : -1;
     });
+}
+
+function _stopNarration() {
+    if (_narrationAudio) {
+        _narrationAudio.pause();
+        _narrationAudio = null;
+    }
+    if (_narrationOrigVol !== null) {
+        const player = window._ytPlayer;
+        if (player) { try { player.setVolume(_narrationOrigVol); } catch(e) {} }
+        _narrationOrigVol = null;
+    }
 }
 
 function _playAudio(mp3) {
@@ -117,6 +131,7 @@ function _buildCard(entry, idx) {
 }
 
 async function _showDay(key) {
+    _stopNarration(); // ページ移動時に再生停止・音量復元
     const data = _data;
     const entries = _sortEntries(data[key] || []);
     const [month, day] = key.split('-').map(Number);
@@ -214,12 +229,40 @@ async function _showDay(key) {
         });
     }
 
-    // ▶ 再生ボタン（手動再生。自動再生はしない）
+    // ▶/⏸ トグル再生ボタン
     const playBtn = document.getElementById('kh-narration-play');
     if (playBtn && todayEntry?.mp3) {
         playBtn.addEventListener('click', (e) => {
             e.stopPropagation();
-            _playAudio(todayEntry.mp3);
+            if (_narrationAudio && !_narrationAudio.paused) {
+                // 再生中 → 一時停止
+                _narrationAudio.pause();
+                playBtn.textContent = '▶';
+            } else if (_narrationAudio && _narrationAudio.paused) {
+                // 一時停止中 → 再開
+                _narrationAudio.play().catch(() => {});
+                playBtn.textContent = '⏸';
+            } else {
+                // 未再生 or 終了済み → 新規再生
+                const player = window._ytPlayer;
+                _narrationOrigVol = null;
+                if (player) {
+                    try { _narrationOrigVol = player.getVolume(); player.setVolume(Math.round(_narrationOrigVol * 0.2)); } catch(e) {}
+                }
+                _narrationAudio = new Audio(`./voices_mp3/${todayEntry.mp3}`);
+                playBtn.textContent = '⏸';
+                const done = () => {
+                    if (_narrationOrigVol !== null) {
+                        if (player) { try { player.setVolume(_narrationOrigVol); } catch(e) {} }
+                        _narrationOrigVol = null;
+                    }
+                    _narrationAudio = null;
+                    if (playBtn) playBtn.textContent = '▶';
+                };
+                _narrationAudio.addEventListener('ended', done);
+                _narrationAudio.addEventListener('error', done);
+                _narrationAudio.play().catch(done);
+            }
         });
     }
 }
