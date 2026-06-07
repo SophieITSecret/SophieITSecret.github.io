@@ -97,7 +97,7 @@ export async function initToday(onBack) {
     if (card && title) {
         card.innerHTML = `
             <div id="today-entry-btn"
-                 style="padding:4px 4px 4px 2px; overflow:hidden; white-space:nowrap; text-overflow:ellipsis;
+                 style="padding:4px 4px 4px 0; overflow:hidden; white-space:nowrap; text-overflow:ellipsis;
                         cursor:pointer; -webkit-tap-highlight-color:transparent; user-select:none;">
                 <span style="color:#ffb3c1; font-size:0.78rem; font-weight:bold;">今日は：</span><span style="color:#c8b090; font-size:0.78rem;">${title}</span>
             </div>`;

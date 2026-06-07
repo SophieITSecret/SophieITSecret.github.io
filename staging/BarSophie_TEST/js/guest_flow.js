@@ -119,19 +119,23 @@ function _startMemberCaution() {
     const cancel = () => {
         cancelled = true;
         if (_cautionTimer) { clearTimeout(_cautionTimer); _cautionTimer = null; }
-        document.removeEventListener('click', cancel, true);
-        document.removeEventListener('touchstart', cancel, true);
+        document.removeEventListener('click', cancel);
+        document.removeEventListener('touchstart', cancel);
         window._cancelGuestCaution = null;
     };
     window._cancelGuestCaution = cancel;
-    document.addEventListener('click', cancel, true);
-    document.addEventListener('touchstart', cancel, true);
+    // 現在のタップイベントが完全に終わってから登録（iOS の同一イベントによる誤キャンセル防止）
+    setTimeout(() => {
+        if (cancelled) return;
+        document.addEventListener('click', cancel);
+        document.addEventListener('touchstart', cancel);
+    }, 0);
 
     const fireVoice = () => {
         if (cancelled) return;
         _cautionTimer = null;
-        document.removeEventListener('click', cancel, true);
-        document.removeEventListener('touchstart', cancel, true);
+        document.removeEventListener('click', cancel);
+        document.removeEventListener('touchstart', cancel);
         window._cancelGuestCaution = null;
         _playVoice('member_caution_01.mp3');
     };
