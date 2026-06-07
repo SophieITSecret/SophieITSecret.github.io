@@ -1,4 +1,4 @@
-// js/guest_flow.js — ゲスト着席フロー・会員カウション
+// js/guest_flow.js — ゲスト着席フロー
 
 let _cautionTimer = null;
 
@@ -112,34 +112,8 @@ function _showGuestReturn(onDone) {
     );
 }
 
-function _showMemberHint(onDone) {
-    _playVoice('member_caution_01.mp3');
-
-    const navInner = document.querySelector('#nav-main > div');
-    if (!navInner || document.getElementById('sophie-caution')) return;
-
-    const hint = document.createElement('div');
-    hint.id = 'sophie-caution';
-    hint.style.cssText = 'width:92%; display:flex; justify-content:flex-end; margin-bottom:2px;';
-    hint.innerHTML = `<button id="btn-howto-hint"
-        style="background:#0a1a2a; border:1px solid #3a5a7a; color:#7fb8d7;
-               border-radius:50px; padding:4px 14px 4px 6px;
-               cursor:pointer; -webkit-tap-highlight-color:transparent;
-               display:inline-flex; align-items:center; gap:6px; font-size:0.72rem;">
-        <img src="./sophie_face.png" style="width:18px; height:18px; border-radius:50%; object-fit:cover; flex-shrink:0;">
-        お店の使い方
-    </button>`;
-    navInner.insertBefore(hint, navInner.firstChild);
-
-    document.getElementById('btn-howto-hint').addEventListener('click', () => {
-        hint.remove();
-        import('./guide.js').then(g => g.showGuideScreen(onDone));
-    });
-}
-
-function _startMemberCaution(onDone) {
+function _startMemberCaution() {
     if (_cautionTimer) { clearTimeout(_cautionTimer); _cautionTimer = null; }
-
     let cancelled = false;
 
     const cancel = () => {
@@ -153,29 +127,28 @@ function _startMemberCaution(onDone) {
     document.addEventListener('click', cancel, true);
     document.addEventListener('touchstart', cancel, true);
 
-    const fireHint = () => {
+    const fireVoice = () => {
         if (cancelled) return;
         _cautionTimer = null;
         document.removeEventListener('click', cancel, true);
         document.removeEventListener('touchstart', cancel, true);
         window._cancelGuestCaution = null;
-        _showMemberHint(onDone);
+        _playVoice('member_caution_01.mp3');
     };
 
-    // Wait 100ms for playSophieVoice to create the audio object, then
-    // listen for greeting to end + 3s. Fallback: 10s from counter arrival.
+    // グリーティング音声が終わってから3秒後、または着席から10秒後に発火
     setTimeout(() => {
         if (cancelled) return;
         const greetAudio = window._lastSophieVoiceAudio;
         if (greetAudio && !greetAudio.ended) {
             greetAudio.addEventListener('ended', () => {
-                if (!cancelled) _cautionTimer = setTimeout(fireHint, 3000);
+                if (!cancelled) _cautionTimer = setTimeout(fireVoice, 3000);
             }, { once: true });
             greetAudio.addEventListener('error', () => {
-                if (!cancelled) _cautionTimer = setTimeout(fireHint, 3000);
+                if (!cancelled) _cautionTimer = setTimeout(fireVoice, 3000);
             }, { once: true });
         } else {
-            _cautionTimer = setTimeout(fireHint, 10000);
+            _cautionTimer = setTimeout(fireVoice, 10000);
         }
     }, 100);
 }
@@ -183,8 +156,8 @@ function _startMemberCaution(onDone) {
 // Returns true if guest (greeting suppressed), false if member (caller should play greeting)
 export function startCounterFlow(onDone) {
     if (window.currentUser) {
-        _startMemberCaution(onDone);
-        return false;
+        _startMemberCaution();
+        return false;  // ヒントボタンは showRootMenu が常時表示する
     }
     const hasVisited = localStorage.getItem('sophie_visited');
     if (!hasVisited) {
@@ -193,9 +166,4 @@ export function startCounterFlow(onDone) {
         _showGuestReturn(onDone);
     }
     return true;
-}
-
-export function cleanupCaution() {
-    window._cancelGuestCaution?.();
-    document.getElementById('sophie-caution')?.remove();
 }

@@ -105,8 +105,18 @@ export function showGuideScreen(onClose) {
         if (_origVol !== null && player) { try { player.setVolume(_origVol); } catch(e) {} _origVol = null; }
     };
 
-    playBtn.addEventListener('click', () => {
+    const _startPlay = () => {
         const player = window._ytPlayer;
+        if (player) { try { _origVol = player.getVolume(); player.setVolume(Math.round(_origVol * 0.2)); } catch(e) {} }
+        _audio = new Audio(`./voices_mp3/${mp3}`);
+        playBtn.textContent = '⏸';
+        const done = () => { playBtn.textContent = '▶'; _restoreVol(); };
+        _audio.addEventListener('ended', done);
+        _audio.addEventListener('error', done);
+        _audio.play().catch(done);
+    };
+
+    playBtn.addEventListener('click', () => {
         if (_audio && !_audio.paused) {
             _audio.pause();
             playBtn.textContent = '▶';
@@ -114,15 +124,12 @@ export function showGuideScreen(onClose) {
             _audio.play().catch(() => {});
             playBtn.textContent = '⏸';
         } else {
-            if (player) { try { _origVol = player.getVolume(); player.setVolume(Math.round(_origVol * 0.2)); } catch(e) {} }
-            _audio = new Audio(`./voices_mp3/${mp3}`);
-            playBtn.textContent = '⏸';
-            const done = () => { playBtn.textContent = '▶'; _restoreVol(); };
-            _audio.addEventListener('ended', done);
-            _audio.addEventListener('error', done);
-            _audio.play().catch(done);
+            _startPlay();
         }
     });
+
+    // 画面が開いたら自動再生（ユーザー操作から呼ばれるので iOS でも OK）
+    _startPlay();
 
     stopBtn.addEventListener('click', () => {
         if (_audio) { _audio.pause(); _audio.currentTime = 0; _audio = null; }

@@ -32,8 +32,9 @@ const SOPHIE_VOICE_TIMING = {
 };
 
 function playSophieVoice(screen) {
-  const isNewComer = window.currentUserData?.createdAt &&
-    (Date.now() - window.currentUserData.createdAt.toMillis() < 24 * 60 * 60 * 1000);
+  const _cat = window.currentUserData?.createdAt;
+  const isNewComer = _cat && typeof _cat.toMillis === 'function' &&
+    (Date.now() - _cat.toMillis() < 24 * 60 * 60 * 1000);
 
   let file;
   if (isNewComer && ['entry', 'counter'].includes(screen)) {
@@ -244,7 +245,30 @@ function showRootMenu() {
     if (mon) { mon.classList.remove('expanded'); }
     utils.showLSide();
 
+    if (window.currentUser) _insertHintButton();
     renderConsole('standard');
+}
+
+function _insertHintButton() {
+    if (document.getElementById('sophie-caution')) return;
+    const navInner = document.querySelector('#nav-main > div');
+    if (!navInner) return;
+    const hint = document.createElement('div');
+    hint.id = 'sophie-caution';
+    hint.style.cssText = 'width:92%; display:flex; justify-content:flex-end; margin-bottom:2px;';
+    hint.innerHTML = `<button id="btn-howto-hint"
+        style="background:#ffffff; border:1px solid #ccc; color:#444;
+               border-radius:50px; padding:4px 14px 4px 6px;
+               cursor:pointer; -webkit-tap-highlight-color:transparent;
+               display:inline-flex; align-items:center; gap:6px; font-size:0.72rem;">
+        <img src="./sophie_face.png" style="width:18px; height:18px; border-radius:50%; object-fit:cover; flex-shrink:0;">
+        お店の使い方
+    </button>`;
+    navInner.insertBefore(hint, navInner.firstChild);
+    document.getElementById('btn-howto-hint').addEventListener('click', () => {
+        hint.remove();
+        import('./guide.js').then(g => g.showGuideScreen(showRootMenu));
+    });
 }
 
 function handleBack() {
