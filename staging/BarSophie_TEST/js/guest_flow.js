@@ -124,35 +124,36 @@ function _showGuestReturn(onDone) {
 
 function _startMemberCaution() {
     if (_cautionTimer) { clearTimeout(_cautionTimer); _cautionTimer = null; }
-    let cancelled = false;
+    let fired = false;
     _dbg('caution: START');
 
-    const cancel = () => {
-        if (cancelled) return;
-        cancelled = true;
+    // iOS: ユーザージェスチャーの同期コンテキスト内で Audio を作成しておく
+    // （数秒後の setTimeout 内で new Audio().play() すると REJECTED になる）
+    const cautionAudio = new Audio('./voices_mp3/member_caution_01.mp3');
+    cautionAudio.preload = 'auto';
+
+    window._cancelGuestCaution = () => {
+        if (fired) return;
+        fired = true;
         _dbg('caution: CANCELLED');
         if (_cautionTimer) { clearTimeout(_cautionTimer); _cautionTimer = null; }
-        document.removeEventListener('click', cancel);
-        document.removeEventListener('touchstart', cancel);
         window._cancelGuestCaution = null;
     };
-    window._cancelGuestCaution = cancel;
-    // 現在のタップイベントが完全に終わってから登録（iOS の同一イベントによる誤キャンセル防止）
-    setTimeout(() => {
-        if (cancelled) return;
-        _dbg('caution: listeners ON');
-        document.addEventListener('click', cancel);
-        document.addEventListener('touchstart', cancel);
-    }, 0);
 
     const fireVoice = () => {
-        if (cancelled) return;
-        _dbg('caution: FIRE');
+        if (fired) return;
+        fired = true;
         _cautionTimer = null;
-        document.removeEventListener('click', cancel);
-        document.removeEventListener('touchstart', cancel);
         window._cancelGuestCaution = null;
-        _playVoice('member_caution_01.mp3');
+        _dbg('caution: FIRE');
+        const player = window._ytPlayer;
+        let origVol = null;
+        if (player) { try { origVol = player.getVolume(); player.setVolume(Math.round(origVol * 0.2)); } catch(e) {} }
+        const done = () => { if (origVol !== null && player) { try { player.setVolume(origVol); } catch(e) {} } };
+        cautionAudio.addEventListener('ended', done, { once: true });
+        cautionAudio.addEventListener('error', () => { _dbg('ERROR caution'); done(); }, { once: true });
+        _dbg('play: member_caution_01');
+        cautionAudio.play().catch(() => { _dbg('REJECTED caution'); done(); });
     };
 
     // 着席から10秒後を必ず仕掛ける（フォールバック）
@@ -160,13 +161,13 @@ function _startMemberCaution() {
 
     // グリーティングが先に終わった場合は「終了+3秒」に前倒し
     setTimeout(() => {
-        if (cancelled) return;
+        if (fired) return;
         const greetAudio = window._lastSophieVoiceAudio;
         _dbg(`caution: greet ended=${greetAudio?.ended} src=${greetAudio?.src?.split('/').pop()}`);
         if (greetAudio && !greetAudio.ended) {
             greetAudio.addEventListener('ended', () => {
                 _dbg('caution: greet ended → switch to +3s');
-                if (!cancelled && _cautionTimer) {
+                if (!fired && _cautionTimer) {
                     clearTimeout(_cautionTimer);
                     _cautionTimer = setTimeout(fireVoice, 3000);
                 }
