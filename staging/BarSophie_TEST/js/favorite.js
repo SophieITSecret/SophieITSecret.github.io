@@ -55,9 +55,41 @@ export function updateGameScore(winner) {
     return { myWins: data.janken.myWins, sophieWins: data.janken.sophieWins };
 }
 
+function _showGuestPrompt() {
+    const lv = document.getElementById('list-view');
+    if (!lv) return;
+    new Audio('./voices_mp3/guest_login_01.mp3').play().catch(() => {});
+    lv.innerHTML = `
+        <div style="margin:10px; border-radius:10px; border:2px solid transparent;
+                    background: linear-gradient(#111,#111) padding-box,
+                    linear-gradient(120deg,#ff69b4 50%,#00d2ff 100%) border-box;">
+            <div style="color:#f0b56e; padding:0 12px; font-size:0.8rem; font-weight:bold;
+                        border-bottom:1px solid #333; height:28px; line-height:28px;
+                        border-radius:8px 8px 0 0; display:flex; align-items:center; gap:6px;">
+                <img src="./sophie_face.png" style="width:20px; height:20px; border-radius:50%; object-fit:cover;">
+                ソフィーより
+            </div>
+            <div style="padding:14px 12px 12px;">
+                <div style="color:#c8b090; font-size:0.88rem; line-height:1.85; margin-bottom:14px;">
+                    こちらは会員様向けです。よろしければ、Googleアカウントでご登録お願いします。
+                </div>
+                <button id="gp-register" style="width:100%; background:#4285f4; color:#fff;
+                    border:none; height:44px; border-radius:4px; font-size:0.95rem;
+                    font-weight:bold; margin-bottom:8px;">会員登録する</button>
+                <button id="gp-back" style="width:100%; background:#34495e; color:#fff;
+                    border:none; height:40px; border-radius:4px; font-size:0.85rem;">戻る</button>
+            </div>
+        </div>`;
+    document.getElementById('gp-register').addEventListener('click', () => window.signInWithGoogle());
+    document.getElementById('gp-back').addEventListener('click', () => openNotice());
+}
+
 export async function openNotice() {
     nav.updateNav("notice");
     window.playSophieVoice?.('talk');
+
+    const isGuest = !window.currentUser;
+    const GS = 'background:#1a1a1a; color:#555; border:1px solid #2a2a2a;';
 
     const menuHtml = `
         <div style="margin:10px; border-radius:10px; border:2px solid transparent;
@@ -70,9 +102,15 @@ export async function openNotice() {
                 お呼びですか？
             </div>
             <div style="padding:10px;">
-                <button class="act-btn" id="nt-restaurant" style="background:#1a3a1a; color:#7fd97f; border:1px solid #3a6a4a; margin-bottom:8px;">🍽️ いいお店を探す</button>
-                <button class="act-btn" id="nt-fortune" style="background:#2a1a3a; color:#c39bd3; border:1px solid #6a3a8a; margin-bottom:8px;">🔮 ソフィーの天命診断</button>
-                <button class="act-btn" id="nt-konohi" style="background:#1a2a3a; color:#7fb8d7; border:1px solid #3a5a7a; margin-bottom:8px;">📅 この日どんな日</button>
+                <button class="act-btn" id="nt-restaurant"
+                    style="${isGuest ? GS : 'background:#1a3a1a; color:#7fd97f; border:1px solid #3a6a4a;'} margin-bottom:8px;">
+                    🍽️ いいお店を探す${isGuest ? ' 🔑' : ''}</button>
+                <button class="act-btn" id="nt-fortune"
+                    style="${isGuest ? GS : 'background:#2a1a3a; color:#c39bd3; border:1px solid #6a3a8a;'} margin-bottom:8px;">
+                    🔮 ソフィーの天命診断${isGuest ? ' 🔑' : ''}</button>
+                <button class="act-btn" id="nt-konohi"
+                    style="${isGuest ? GS : 'background:#1a2a3a; color:#7fb8d7; border:1px solid #3a5a7a;'} margin-bottom:8px;">
+                    📅 この日どんな日${isGuest ? ' 🔑' : ''}</button>
                 <button class="act-btn" id="nt-janken" style="background:#8e1a2e; margin-bottom:8px;">🎲 じゃんけん勝負</button>
                 <div style="border-top:1px solid #222; margin:8px 0;"></div>
                 <button class="act-btn" id="nt-guide" style="background:#1a2a3a; color:#5ba3d9; border:1px solid #1a5276; margin-bottom:0;">📋 このお店のご案内</button>
@@ -81,28 +119,23 @@ export async function openNotice() {
 
     setListView(menuHtml, false);
 
-    document.getElementById('nt-guide').onclick = () => {
-        const subHtml = `
-            <div style="padding:12px; display:flex; flex-direction:column; gap:8px;">
-                <button class="act-btn" id="guide-welcome" style="background:#1a2a3a; color:#5ba3d9; border:1px solid #1a5276;">📋 ご利用案内</button>
-                <button class="act-btn" id="guide-howto" style="background:#1a5276;">📖 このお店の使い方</button>
-            </div>`;
-        setListView(subHtml, false);
-        document.getElementById('guide-welcome').onclick = () => import('./mypage.js').then(m => m.showWelcomePage(openNotice));
-        document.getElementById('guide-howto').onclick = () => showHowTo();
-    };
-    document.getElementById('nt-restaurant').onclick = () => {
-        import('./restaurant.js').then(r => r.showRestaurantSearch('', '', '', '', openNotice));
-    };
-    document.getElementById('nt-fortune').onclick = () => {
-        import('./fortune.js').then(f => f.showFortuneMenu(openNotice));
-    };
-    document.getElementById('nt-konohi').onclick = () => {
-        import('./konohi.js').then(k => k.showKonoHi(openNotice));
-    };
-    document.getElementById('nt-janken').onclick = () => {
+    document.getElementById('nt-guide').onclick = () =>
+        import('./guide.js').then(g => g.showGuideScreen(openNotice));
+
+    document.getElementById('nt-restaurant').onclick = isGuest
+        ? () => _showGuestPrompt()
+        : () => import('./restaurant.js').then(r => r.showRestaurantSearch('', '', '', '', openNotice));
+
+    document.getElementById('nt-fortune').onclick = isGuest
+        ? () => _showGuestPrompt()
+        : () => import('./fortune.js').then(f => f.showFortuneMenu(openNotice));
+
+    document.getElementById('nt-konohi').onclick = isGuest
+        ? () => _showGuestPrompt()
+        : () => import('./konohi.js').then(k => k.showKonoHi(openNotice));
+
+    document.getElementById('nt-janken').onclick = () =>
         import('./janken.js').then(j => j.startJanken());
-    };
 }
 
 function showNews() {

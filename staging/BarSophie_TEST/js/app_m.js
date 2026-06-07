@@ -138,6 +138,7 @@ function setup() {
         talkAudio.pause();
         showRootMenu();
         playSophieVoice('counter');
+        import('./guest_flow.js').then(m => m.startCounterFlow(showRootMenu));
     };
 
     document.getElementById('btn-music').onclick = () => { if (music.openMusic) music.openMusic(); renderConsole('standard'); };
@@ -225,6 +226,8 @@ function showRootMenu() {
     lv.style.display = 'none';
     nm.style.display = 'block';
     nav.updateNav("none");
+    window._cancelGuestCaution?.();
+    document.getElementById('sophie-caution')?.remove();
     yt.style.display = 'none';
     img.src = './front_sophie.jpeg';
     img.style.display = 'block';
