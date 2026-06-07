@@ -42,6 +42,7 @@ C　カウンター（ルートメニュー）
         　　<span style="color:#e8607a">　　NC　「よくおいでいただきました。ぜひ今夜は楽しんでくださいね」</span>　<span style="color:#27ae60">sophie_counter_nc.mp3</span>
         　　<span style="color:#e8607a">　　70%　「いつも有難うございます。今夜はいかがなさいますか？」</span>　<span style="color:#27ae60">sophie_counter_a.mp3</span>
         　　<span style="color:#e8607a">　　30%　「いつも有難うございます。今夜は、どんな夜にしましょうか」</span>　<span style="color:#27ae60">sophie_counter_b.mp3</span>
+        　　<span style="color:#e8607a">Ｔ　挨拶終了+3秒（または着席10秒後）「大丈夫ですか？使い方ボタン押していただければわたくしがご案内します。」</span>　<span style="color:#27ae60">member_caution_01.mp3</span>
 │
 ├─ O　ソフィーと話す（openNotice）
 │       　　<span style="color:#e8607a">Ｔ　即時</span>
