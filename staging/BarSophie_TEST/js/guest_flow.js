@@ -2,18 +2,28 @@
 
 let _cautionTimer = null;
 
+// ▼ DEBUG: 画面上にトーストを表示（問題確認後に削除）
+function _dbg(msg) {
+    const el = document.createElement('div');
+    el.textContent = `[DBG] ${msg}`;
+    el.style.cssText = 'position:fixed;bottom:70px;right:6px;background:rgba(0,0,0,0.85);color:#ff0;font-size:10px;padding:3px 7px;border-radius:4px;z-index:9999;pointer-events:none;';
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 5000);
+}
+
 function _playVoice(mp3, onEnd) {
     const player = window._ytPlayer;
     let origVol = null;
     if (player) { try { origVol = player.getVolume(); player.setVolume(Math.round(origVol * 0.2)); } catch(e) {} }
     const audio = new Audio(`./voices_mp3/${mp3}`);
+    _dbg(`play: ${mp3}`);
     const done = () => {
         if (origVol !== null && player) { try { player.setVolume(origVol); } catch(e) {} }
         if (onEnd) onEnd();
     };
     audio.addEventListener('ended', done);
-    audio.addEventListener('error', done);
-    audio.play().catch(done);
+    audio.addEventListener('error', () => { _dbg(`ERROR: ${mp3}`); done(); });
+    audio.play().catch(e => { _dbg(`REJECTED: ${mp3}`); done(); });
 }
 
 function _showDialogue(msg, buttons) {
@@ -115,9 +125,12 @@ function _showGuestReturn(onDone) {
 function _startMemberCaution() {
     if (_cautionTimer) { clearTimeout(_cautionTimer); _cautionTimer = null; }
     let cancelled = false;
+    _dbg('caution: START');
 
     const cancel = () => {
+        if (cancelled) return;
         cancelled = true;
+        _dbg('caution: CANCELLED');
         if (_cautionTimer) { clearTimeout(_cautionTimer); _cautionTimer = null; }
         document.removeEventListener('click', cancel);
         document.removeEventListener('touchstart', cancel);
@@ -127,12 +140,14 @@ function _startMemberCaution() {
     // 現在のタップイベントが完全に終わってから登録（iOS の同一イベントによる誤キャンセル防止）
     setTimeout(() => {
         if (cancelled) return;
+        _dbg('caution: listeners ON');
         document.addEventListener('click', cancel);
         document.addEventListener('touchstart', cancel);
     }, 0);
 
     const fireVoice = () => {
         if (cancelled) return;
+        _dbg('caution: FIRE');
         _cautionTimer = null;
         document.removeEventListener('click', cancel);
         document.removeEventListener('touchstart', cancel);
@@ -147,8 +162,10 @@ function _startMemberCaution() {
     setTimeout(() => {
         if (cancelled) return;
         const greetAudio = window._lastSophieVoiceAudio;
+        _dbg(`caution: greet ended=${greetAudio?.ended} src=${greetAudio?.src?.split('/').pop()}`);
         if (greetAudio && !greetAudio.ended) {
             greetAudio.addEventListener('ended', () => {
+                _dbg('caution: greet ended → switch to +3s');
                 if (!cancelled && _cautionTimer) {
                     clearTimeout(_cautionTimer);
                     _cautionTimer = setTimeout(fireVoice, 3000);
