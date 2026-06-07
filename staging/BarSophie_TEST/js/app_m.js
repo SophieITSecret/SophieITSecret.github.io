@@ -251,20 +251,20 @@ function showRootMenu() {
 
 function _insertHintButton() {
     if (document.getElementById('sophie-caution')) return;
-    const navInner = document.querySelector('#nav-main > div');
-    if (!navInner) return;
+    const row = document.getElementById('today-row');
+    if (!row) return;
     const hint = document.createElement('div');
     hint.id = 'sophie-caution';
-    hint.style.cssText = 'width:92%; display:flex; justify-content:flex-end; margin-bottom:2px;';
+    hint.style.cssText = 'flex-shrink:0;';
     hint.innerHTML = `<button id="btn-howto-hint"
-        style="background:#ffffff; border:1px solid #ccc; color:#444;
-               border-radius:50px; padding:4px 14px 4px 6px;
+        style="background:#ffffff; border:1px solid #5ba3d9; color:#444;
+               border-radius:50px; padding:4px 14px 4px 20px;
                cursor:pointer; -webkit-tap-highlight-color:transparent;
                display:inline-flex; align-items:center; gap:6px; font-size:0.72rem;">
         <img src="./sophie_face.png" style="width:18px; height:18px; border-radius:50%; object-fit:cover; flex-shrink:0;">
         お店の使い方
     </button>`;
-    navInner.insertBefore(hint, navInner.firstChild);
+    row.appendChild(hint);
     document.getElementById('btn-howto-hint').addEventListener('click', () => {
         hint.remove();
         import('./guide.js').then(g => g.showGuideScreen(showRootMenu));

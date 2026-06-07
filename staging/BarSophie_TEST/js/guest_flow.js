@@ -136,19 +136,20 @@ function _startMemberCaution() {
         _playVoice('member_caution_01.mp3');
     };
 
-    // グリーティング音声が終わってから3秒後、または着席から10秒後に発火
+    // 着席から10秒後を必ず仕掛ける（フォールバック）
+    _cautionTimer = setTimeout(fireVoice, 10000);
+
+    // グリーティングが先に終わった場合は「終了+3秒」に前倒し
     setTimeout(() => {
         if (cancelled) return;
         const greetAudio = window._lastSophieVoiceAudio;
         if (greetAudio && !greetAudio.ended) {
             greetAudio.addEventListener('ended', () => {
-                if (!cancelled) _cautionTimer = setTimeout(fireVoice, 3000);
+                if (!cancelled && _cautionTimer) {
+                    clearTimeout(_cautionTimer);
+                    _cautionTimer = setTimeout(fireVoice, 3000);
+                }
             }, { once: true });
-            greetAudio.addEventListener('error', () => {
-                if (!cancelled) _cautionTimer = setTimeout(fireVoice, 3000);
-            }, { once: true });
-        } else {
-            _cautionTimer = setTimeout(fireVoice, 10000);
         }
     }, 100);
 }
