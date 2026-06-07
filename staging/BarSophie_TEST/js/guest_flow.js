@@ -120,12 +120,14 @@ function _showMemberHint(onDone) {
 
     const hint = document.createElement('div');
     hint.id = 'sophie-caution';
-    hint.style.cssText = 'width:92%; text-align:right;';
+    hint.style.cssText = 'width:92%; display:flex; justify-content:flex-end; margin-bottom:2px;';
     hint.innerHTML = `<button id="btn-howto-hint"
-        style="background:transparent; border:none; color:#777; font-size:0.72rem;
-               padding:2px 6px; cursor:pointer; -webkit-tap-highlight-color:transparent;
-               text-decoration:underline; text-decoration-color:#555;">
-        📋 お店の使い方
+        style="background:#0a1a2a; border:1px solid #3a5a7a; color:#7fb8d7;
+               border-radius:50px; padding:4px 14px 4px 6px;
+               cursor:pointer; -webkit-tap-highlight-color:transparent;
+               display:inline-flex; align-items:center; gap:6px; font-size:0.72rem;">
+        <img src="./sophie_face.png" style="width:18px; height:18px; border-radius:50%; object-fit:cover; flex-shrink:0;">
+        お店の使い方
     </button>`;
     navInner.insertBefore(hint, navInner.firstChild);
 
@@ -138,30 +140,51 @@ function _showMemberHint(onDone) {
 function _startMemberCaution(onDone) {
     if (_cautionTimer) { clearTimeout(_cautionTimer); _cautionTimer = null; }
 
+    let cancelled = false;
+
     const cancel = () => {
+        cancelled = true;
         if (_cautionTimer) { clearTimeout(_cautionTimer); _cautionTimer = null; }
         document.removeEventListener('click', cancel, true);
         document.removeEventListener('touchstart', cancel, true);
         window._cancelGuestCaution = null;
     };
-
     window._cancelGuestCaution = cancel;
     document.addEventListener('click', cancel, true);
     document.addEventListener('touchstart', cancel, true);
 
-    _cautionTimer = setTimeout(() => {
+    const fireHint = () => {
+        if (cancelled) return;
         _cautionTimer = null;
         document.removeEventListener('click', cancel, true);
         document.removeEventListener('touchstart', cancel, true);
         window._cancelGuestCaution = null;
         _showMemberHint(onDone);
-    }, 3000);
+    };
+
+    // Wait 100ms for playSophieVoice to create the audio object, then
+    // listen for greeting to end + 3s. Fallback: 10s from counter arrival.
+    setTimeout(() => {
+        if (cancelled) return;
+        const greetAudio = window._lastSophieVoiceAudio;
+        if (greetAudio && !greetAudio.ended) {
+            greetAudio.addEventListener('ended', () => {
+                if (!cancelled) _cautionTimer = setTimeout(fireHint, 3000);
+            }, { once: true });
+            greetAudio.addEventListener('error', () => {
+                if (!cancelled) _cautionTimer = setTimeout(fireHint, 3000);
+            }, { once: true });
+        } else {
+            _cautionTimer = setTimeout(fireHint, 10000);
+        }
+    }, 100);
 }
 
+// Returns true if guest (greeting suppressed), false if member (caller should play greeting)
 export function startCounterFlow(onDone) {
     if (window.currentUser) {
         _startMemberCaution(onDone);
-        return;
+        return false;
     }
     const hasVisited = localStorage.getItem('sophie_visited');
     if (!hasVisited) {
@@ -169,6 +192,7 @@ export function startCounterFlow(onDone) {
     } else {
         _showGuestReturn(onDone);
     }
+    return true;
 }
 
 export function cleanupCaution() {

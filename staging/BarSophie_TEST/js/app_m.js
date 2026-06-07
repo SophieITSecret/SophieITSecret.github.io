@@ -15,6 +15,7 @@ import * as fortune from './fortune.js';
 import * as compatibility from './compatibility.js';
 import * as people from './people.js';
 import { showWelcomePage, showMyPage } from './mypage.js';
+import * as guestFlow from './guest_flow.js';
 
 const SOPHIE_VOICE_TIMING = {
   entry:   0,
@@ -48,6 +49,7 @@ function playSophieVoice(screen) {
   const delay = SOPHIE_VOICE_TIMING[screen] || 0;
   setTimeout(() => {
     const audio = new Audio(`voices_mp3/${file}`);
+    window._lastSophieVoiceAudio = audio;
     audio.play().catch(() => {});
   }, delay);
 }
@@ -82,6 +84,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     setup();
     window._renderConsole = renderConsole;
     window._showRootMenu = showRootMenu;
+    window._startCounterFlow = () => {
+        const isGuest = guestFlow.startCounterFlow(showRootMenu);
+        if (!isGuest) playSophieVoice('counter');
+    };
 
     const tag = document.createElement('script');
     tag.src = "https://www.youtube.com/iframe_api";
@@ -137,8 +143,8 @@ function setup() {
         window.speechSynthesis.cancel();
         talkAudio.pause();
         showRootMenu();
-        playSophieVoice('counter');
-        import('./guest_flow.js').then(m => m.startCounterFlow(showRootMenu));
+        const isGuest = guestFlow.startCounterFlow(showRootMenu);
+        if (!isGuest) playSophieVoice('counter');
     };
 
     document.getElementById('btn-music').onclick = () => { if (music.openMusic) music.openMusic(); renderConsole('standard'); };

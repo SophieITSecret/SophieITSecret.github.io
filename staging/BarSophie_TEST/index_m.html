@@ -85,6 +85,8 @@
                         if (_es) _es.style.display = 'none';
                         if (_cm) _cm.style.display = 'none';
                         if (_mu) _mu.style.display = 'flex';
+                        window._showRootMenu?.();
+                        window._startCounterFlow?.();
                     };
                     if (window._appSetupDone) {
                         runTokenNav();
