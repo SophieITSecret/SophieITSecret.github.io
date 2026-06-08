@@ -270,7 +270,7 @@ h1 { color: #f0b56e; font-size: 1.3rem; margin-bottom: 4px; }
 <body>
 
 <h1>🍸 BARソフィー スマホ画面モックアップ</h1>
-<div class="subtitle">BarSophie_TEST — 2026-05-26　portrait: モニター上 / ナビ下 の縦積みレイアウト</div>
+<div class="subtitle">BarSophie_TEST — 2026-06-07　portrait: モニター上 / ナビ下 の縦積みレイアウト</div>
 
 <!-- ============================================================
      SECTION 1: 起動フロー
@@ -331,6 +331,16 @@ h1 { color: #f0b56e; font-size: 1.3rem; margin-bottom: 4px; }
             </div>
             <div class="p-scroll">
               <div class="p-nav">
+                <!-- today-row: 今日は：+ お店の使い方ボタン（flex 同一行）-->
+                <div style="width:92%; display:flex; align-items:center; gap:3px; min-height:20px; margin-bottom:8px;">
+                  <div style="flex:1; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; font-size:6.5px;">
+                    <span style="color:#ffb3c1; font-weight:bold;">今日は：</span><span style="color:#c8b090;">マリナー9号打ち上げ（1971）</span>
+                  </div>
+                  <button style="flex-shrink:0; background:#fff; border:1px solid #5ba3d9; color:#444; border-radius:50px; padding:2px 6px 2px 10px; display:inline-flex; align-items:center; gap:3px; font-size:5.5px; white-space:nowrap; cursor:pointer;">
+                    <img src="./sophie_face.png" style="width:10px; height:10px; border-radius:50%; object-fit:cover; flex-shrink:0;">
+                    お店の使い方
+                  </button>
+                </div>
                 <button class="p-act apk" style="width:92%;">ソフィーと話す</button>
                 <button class="p-act ag" style="width:92%;">🎵 音楽リクエスト</button>
                 <button class="p-act" style="width:92%; background:linear-gradient(135deg,#8e44ad 50%,#2980b9 100%); color:#fff; border:none;">🍸 お酒の話/探す</button>
@@ -352,13 +362,201 @@ h1 { color: #f0b56e; font-size: 1.3rem; margin-bottom: 4px; }
         </div>
       </div>
       <div class="phone-code">C</div>
-      <div class="phone-label">③ メイン画面（ルートメニュー）</div>
+      <div class="phone-label">③ メイン画面（ルートメニュー）<br><span>today-row：今日は：＋お店の使い方ボタン（同一行）</span></div>
       <div class="phone-annot">
-        <div class="ann"><span class="ann-talk">Ｔ</span><span class="ann-text-talk">即時</span></div>
+        <div class="ann"><span class="ann-talk">Ｔ</span><span class="ann-text-talk">即時（着席グリーティング）</span></div>
         <div class="ann"><span class="ann-talk">NC</span><span class="ann-text-talk">「よくおいでいただきました。ぜひ今夜は楽しんでくださいね」</span></div>
         <div class="ann"><span class="ann-talk">70%</span><span class="ann-text-talk">「いつも有難うございます。今夜はいかがなさいますか？」</span></div>
         <div class="ann"><span class="ann-talk">30%</span><span class="ann-text-talk">「いつも有難うございます。今夜は、どんな夜にしましょうか」</span></div>
+        <div class="ann"><span class="ann-talk">Ｔ</span><span class="ann-text-talk">挨拶終了+3秒（または着席10秒後・会員のみ）</span></div>
+        <div class="ann"><span class="ann-talk" style="color:#27ae60;">↓</span><span class="ann-text-talk" style="color:#ffb3c1;">「大丈夫ですか？使い方ボタン押していただければわたくしがご案内します。」</span></div>
+        <div class="ann"><span class="ann-bun">📁</span><span class="ann-text-bun">member_caution_01.mp3</span></div>
       </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ============================================================
+     SECTION 1-B: お店の使い方・ご案内画面（guide.js）
+  ============================================================ -->
+<div class="section">
+  <div class="section-title">1-B. お店の使い方・ご案内画面（guide.js）</div>
+  <div class="phones">
+
+    <!-- G1 ゲスト（未ログイン） -->
+    <div class="phone-wrap">
+      <div class="phone">
+        <div class="phone-screen">
+          <div class="p-monitor-wrap">
+            <img src="./front_sophie.jpeg" alt="ソフィー">
+          </div>
+          <div class="p-r-side">
+            <div class="p-label-bar"><div class="p-login-btn">Gログイン</div></div>
+            <div class="p-scroll">
+              <div class="p-panel">
+                <div class="p-phdr"><img src="./sophie_face.png">🍸 BARソフィーへようこそ</div>
+                <div class="p-pbody">
+                  <div style="display:flex; align-items:center; gap:6px; margin-bottom:7px;
+                              background:#1a1a1a; border-radius:5px; padding:5px 7px;">
+                    <img src="./sophie_face.png" style="width:20px; height:20px; border-radius:50%; object-fit:cover; flex-shrink:0;">
+                    <div style="flex:1; color:#c8b090; font-size:6px;">ソフィーのご案内</div>
+                    <div style="background:rgba(160,0,58,0.15); border:1px solid #c04060; color:#a0003a;
+                                border-radius:50%; width:18px; height:18px; font-size:7px;
+                                display:flex; align-items:center; justify-content:center;">▶</div>
+                    <div style="background:#1a1a1a; border:1px solid #444; color:#666;
+                                border-radius:50%; width:18px; height:18px; font-size:7px;
+                                display:flex; align-items:center; justify-content:center;">⏹</div>
+                  </div>
+                  <div style="background:rgba(0,150,191,0.10); border:1px solid rgba(0,150,191,0.22); border-radius:4px; padding:5px; margin-bottom:4px;">
+                    <div style="color:#7fd97f; font-size:7px; font-weight:bold; margin-bottom:3px;">✨ 未登録でも楽しめます</div>
+                    <div style="color:#aaa; font-size:6px; line-height:1.8;">🎵 600曲の音楽リクエスト<br>📖 360話のお酒の話<br>🍸 800銘柄のお酒データベース<br>📺 NEWS・マーケット</div>
+                  </div>
+                  <div style="padding:5px; margin-bottom:4px; opacity:0.55;">
+                    <div style="color:#5ba3d9; font-size:7px; font-weight:bold; margin-bottom:3px;">✨ 無料登録会員になるとできること</div>
+                    <div style="color:#666; font-size:6px; line-height:1.8;">📅 この日どんな日<br>🔮 天命診断（ライト）<br>🍽️ お店を探す（1日1回）<br>📓 ソフィーのノート</div>
+                  </div>
+                  <div style="padding:5px; margin-bottom:6px; opacity:0.55;">
+                    <div style="color:#f0b56e; font-size:7px; font-weight:bold; margin-bottom:3px;">✨ ご常連パスカード（月額300円）</div>
+                    <div style="color:#666; font-size:6px; line-height:1.8;">🔮 天命診断（プレミア）<br>🍽️ お店を探す（1日3回）<br>💎 プレミアチケット月5枚</div>
+                  </div>
+                  <button style="width:100%; background:#4285f4; color:#fff; border:none; height:26px; border-radius:3px; font-size:7.5px; font-weight:bold; margin-bottom:4px;">会員登録する</button>
+                  <button style="width:100%; background:#34495e; color:#fff; border:none; height:22px; border-radius:3px; font-size:7px;">閉じる</button>
+                </div>
+              </div>
+            </div>
+            <div class="p-console">
+              <div class="p-btn-grid">
+                <div class="p-c-btn">SHOP</div>
+                <div class="p-c-btn">ノート</div>
+                <div class="p-c-btn">⏹️</div>
+                <div class="p-c-btn wide">▶</div>
+                <div class="p-c-btn">⏭</div>
+              </div>
+              <div class="p-sophie-box"><img src="./sophie_shake.png"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="phone-code">G1</div>
+      <div class="phone-label">ご案内画面（ゲスト）<br><span>guide_guest.mp3 自動再生</span><br><span>s1 HL／s2・s3 DIM</span><br><span>「会員登録する」ボタンあり</span></div>
+      <div class="phone-annot">
+        <div class="ann"><span class="ann-bun">文</span><span class="ann-text-bun">起動フロー「はい、お願いします」<br>またはルートの「お店の使い方」から呼ばれる</span></div>
+      </div>
+    </div>
+
+    <!-- G2 無料会員 -->
+    <div class="phone-wrap">
+      <div class="phone">
+        <div class="phone-screen">
+          <div class="p-monitor-wrap">
+            <img src="./front_sophie.jpeg" alt="ソフィー">
+          </div>
+          <div class="p-r-side">
+            <div class="p-label-bar"><div class="p-user-name">👑 マスター</div></div>
+            <div class="p-scroll">
+              <div class="p-panel">
+                <div class="p-phdr"><img src="./sophie_face.png">🍸 BARソフィーへようこそ</div>
+                <div class="p-pbody">
+                  <div style="display:flex; align-items:center; gap:6px; margin-bottom:7px;
+                              background:#1a1a1a; border-radius:5px; padding:5px 7px;">
+                    <img src="./sophie_face.png" style="width:20px; height:20px; border-radius:50%; object-fit:cover; flex-shrink:0;">
+                    <div style="flex:1; color:#c8b090; font-size:6px;">ソフィーのご案内</div>
+                    <div style="background:rgba(160,0,58,0.15); border:1px solid #c04060; color:#a0003a;
+                                border-radius:50%; width:18px; height:18px; font-size:7px;
+                                display:flex; align-items:center; justify-content:center;">▶</div>
+                    <div style="background:#1a1a1a; border:1px solid #444; color:#666;
+                                border-radius:50%; width:18px; height:18px; font-size:7px;
+                                display:flex; align-items:center; justify-content:center;">⏹</div>
+                  </div>
+                  <div style="background:rgba(0,150,191,0.10); border:1px solid rgba(0,150,191,0.22); border-radius:4px; padding:5px; margin-bottom:4px;">
+                    <div style="color:#7fd97f; font-size:7px; font-weight:bold; margin-bottom:3px;">✨ 未登録でも楽しめます</div>
+                    <div style="color:#aaa; font-size:6px; line-height:1.8;">🎵 600曲の音楽リクエスト<br>📖 360話のお酒の話<br>🍸 800銘柄のお酒データベース<br>📺 NEWS・マーケット</div>
+                  </div>
+                  <div style="background:rgba(0,150,191,0.10); border:1px solid rgba(0,150,191,0.22); border-radius:4px; padding:5px; margin-bottom:4px;">
+                    <div style="color:#5ba3d9; font-size:7px; font-weight:bold; margin-bottom:3px;">✨ 無料登録会員になるとできること</div>
+                    <div style="color:#aaa; font-size:6px; line-height:1.8;">📅 この日どんな日<br>🔮 天命診断（ライト）<br>🍽️ お店を探す（1日1回）<br>📓 ソフィーのノート</div>
+                  </div>
+                  <div style="padding:5px; margin-bottom:6px; opacity:0.55;">
+                    <div style="color:#f0b56e; font-size:7px; font-weight:bold; margin-bottom:3px;">✨ ご常連パスカード（月額300円）</div>
+                    <div style="color:#666; font-size:6px; line-height:1.8;">🔮 天命診断（プレミア）<br>🍽️ お店を探す（1日3回）<br>💎 プレミアチケット月5枚</div>
+                  </div>
+                  <button style="width:100%; background:#34495e; color:#fff; border:none; height:26px; border-radius:3px; font-size:7.5px;">閉じる</button>
+                </div>
+              </div>
+            </div>
+            <div class="p-console">
+              <div class="p-btn-grid">
+                <div class="p-c-btn">SHOP</div>
+                <div class="p-c-btn">ノート</div>
+                <div class="p-c-btn">⏹️</div>
+                <div class="p-c-btn wide">▶</div>
+                <div class="p-c-btn">⏭</div>
+              </div>
+              <div class="p-sophie-box"><img src="./sophie_shake.png"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="phone-code">G2</div>
+      <div class="phone-label">ご案内画面（無料会員）<br><span>guide_member.mp3 自動再生</span><br><span>s1・s2 HL／s3 DIM</span></div>
+    </div>
+
+    <!-- G3 ご常連パスカード会員 -->
+    <div class="phone-wrap">
+      <div class="phone">
+        <div class="phone-screen">
+          <div class="p-monitor-wrap">
+            <img src="./front_sophie.jpeg" alt="ソフィー">
+          </div>
+          <div class="p-r-side">
+            <div class="p-label-bar"><div class="p-user-name">👑 マスター</div></div>
+            <div class="p-scroll">
+              <div class="p-panel">
+                <div class="p-phdr"><img src="./sophie_face.png">🍸 BARソフィーへようこそ</div>
+                <div class="p-pbody">
+                  <div style="display:flex; align-items:center; gap:6px; margin-bottom:7px;
+                              background:#1a1a1a; border-radius:5px; padding:5px 7px;">
+                    <img src="./sophie_face.png" style="width:20px; height:20px; border-radius:50%; object-fit:cover; flex-shrink:0;">
+                    <div style="flex:1; color:#c8b090; font-size:6px;">ソフィーのご案内</div>
+                    <div style="background:rgba(160,0,58,0.15); border:1px solid #c04060; color:#a0003a;
+                                border-radius:50%; width:18px; height:18px; font-size:7px;
+                                display:flex; align-items:center; justify-content:center;">▶</div>
+                    <div style="background:#1a1a1a; border:1px solid #444; color:#666;
+                                border-radius:50%; width:18px; height:18px; font-size:7px;
+                                display:flex; align-items:center; justify-content:center;">⏹</div>
+                  </div>
+                  <div style="background:rgba(0,150,191,0.10); border:1px solid rgba(0,150,191,0.22); border-radius:4px; padding:5px; margin-bottom:4px;">
+                    <div style="color:#7fd97f; font-size:7px; font-weight:bold; margin-bottom:3px;">✨ 未登録でも楽しめます</div>
+                    <div style="color:#aaa; font-size:6px; line-height:1.8;">🎵 600曲の音楽リクエスト<br>📖 360話のお酒の話<br>🍸 800銘柄のお酒データベース<br>📺 NEWS・マーケット</div>
+                  </div>
+                  <div style="background:rgba(0,150,191,0.10); border:1px solid rgba(0,150,191,0.22); border-radius:4px; padding:5px; margin-bottom:4px;">
+                    <div style="color:#5ba3d9; font-size:7px; font-weight:bold; margin-bottom:3px;">✨ 無料登録会員になるとできること</div>
+                    <div style="color:#aaa; font-size:6px; line-height:1.8;">📅 この日どんな日<br>🔮 天命診断（ライト）<br>🍽️ お店を探す（1日1回）<br>📓 ソフィーのノート</div>
+                  </div>
+                  <div style="background:rgba(0,150,191,0.10); border:1px solid rgba(0,150,191,0.22); border-radius:4px; padding:5px; margin-bottom:6px;">
+                    <div style="color:#f0b56e; font-size:7px; font-weight:bold; margin-bottom:3px;">✨ ご常連パスカード（月額300円）</div>
+                    <div style="color:#aaa; font-size:6px; line-height:1.8;">🔮 天命診断（プレミア）<br>🍽️ お店を探す（1日3回）<br>💎 プレミアチケット月5枚</div>
+                  </div>
+                  <button style="width:100%; background:#34495e; color:#fff; border:none; height:26px; border-radius:3px; font-size:7.5px;">閉じる</button>
+                </div>
+              </div>
+            </div>
+            <div class="p-console">
+              <div class="p-btn-grid">
+                <div class="p-c-btn">SHOP</div>
+                <div class="p-c-btn">ノート</div>
+                <div class="p-c-btn">⏹️</div>
+                <div class="p-c-btn wide">▶</div>
+                <div class="p-c-btn">⏭</div>
+              </div>
+              <div class="p-sophie-box"><img src="./sophie_shake.png"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="phone-code">G3</div>
+      <div class="phone-label">ご案内画面（ご常連パスカード）<br><span>guide_premium.mp3 自動再生</span><br><span>s1・s2・s3 すべて HL</span></div>
     </div>
 
   </div>

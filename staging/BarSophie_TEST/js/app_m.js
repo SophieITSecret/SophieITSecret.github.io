@@ -16,6 +16,7 @@ import * as compatibility from './compatibility.js';
 import * as people from './people.js';
 import { showWelcomePage, showMyPage } from './mypage.js';
 import * as guestFlow from './guest_flow.js';
+import * as djSophie from './dj_sophie.js';
 
 const SOPHIE_VOICE_TIMING = {
   entry:   0,
@@ -148,7 +149,7 @@ function setup() {
         if (!isGuest) playSophieVoice('counter');
     };
 
-    document.getElementById('btn-music').onclick = () => { if (music.openMusic) music.openMusic(); renderConsole('standard'); };
+    document.getElementById('btn-music').onclick = _showMusicSubmenu;
     document.getElementById('btn-sake').onclick = () => {
         nav.updateNav("notice");
         utils.setListView(`
@@ -249,6 +250,46 @@ function showRootMenu() {
     renderConsole('standard');
 }
 
+function _showMusicSubmenu() {
+    const lv = document.getElementById('list-view');
+    const nm = document.getElementById('nav-main');
+    if (nm) nm.style.display = 'none';
+    if (lv) {
+        lv.style.display = 'block';
+        lv.innerHTML = `
+            <div style="margin:10px; border-radius:10px; border:2px solid transparent;
+                        background:linear-gradient(#111,#111) padding-box,
+                        linear-gradient(120deg,#ff69b4 50%,#00d2ff 100%) border-box;">
+                <div style="color:#f0b56e; padding:0 12px; font-size:0.8rem; font-weight:bold;
+                            border-bottom:1px solid #333; height:28px; line-height:28px;
+                            border-radius:8px 8px 0 0; display:flex; align-items:center; gap:6px;">
+                    <img src="./sophie_face.png" style="width:20px;height:20px;border-radius:50%;object-fit:cover;">
+                    🎵 DJソフィー／音楽リクエスト
+                </div>
+                <div style="padding:10px; display:flex; flex-direction:column; gap:8px;">
+                    <button class="act-btn" id="ms-dj"
+                            style="background:#1a1a2e; border:1.5px solid #ff69b4; color:#ff69b4;">
+                        🎙️ DJソフィーの歌とお酒の物語
+                    </button>
+                    <button class="act-btn" id="ms-music" style="background:var(--green);">
+                        🎵 音楽リクエスト
+                    </button>
+                </div>
+            </div>`;
+    }
+    nav.updateNav('notice');
+    renderConsole('standard');
+
+    document.getElementById('ms-dj').onclick = () => {
+        playSophieVoice('music');
+        djSophie.showDJList(showRootMenu);
+    };
+    document.getElementById('ms-music').onclick = () => {
+        if (music.openMusic) music.openMusic();
+        renderConsole('standard');
+    };
+}
+
 function _insertHintButton() {
     if (document.getElementById('sophie-caution')) return;
     const row = document.getElementById('today-row');
@@ -288,6 +329,7 @@ function handleBack() {
         });
         return;
     }
+    if (nav.state === 'dj') { showRootMenu(); return; }
     if (["shop", "notice"].includes(nav.state)) { showRootMenu(); return; }
     if (liquor.handleLiquorBack && liquor.handleLiquorBack()) return;
     if (music.handleBack && music.handleBack()) return;
@@ -730,6 +772,17 @@ function renderConsole(mode) {
     const backBtn = `background:#34495e; color:#fff; flex:1; font-size:0.95rem; font-weight:bold; border:1px solid #5ba3d9;`;
     const sBtn = `background:#0096BF; color:#ff69b4; font-size:1.4rem; font-weight:bold; flex:1.0; border:2px solid #ff51a8;`;
     const navBtn = `flex:1; background:#1a2a3a; color:#5ba3d9; font-size:1.1rem; border:none; border-radius:0; touch-action:manipulation; ${noApp}`;
+
+    if (mode === 'dj_player') {
+        grid.innerHTML = `
+            <button class="c-btn" id="c-dj-close" style="${backBtn}">閉じる</button>
+            <button class="c-btn" id="c-dj-stop"  style="${pCtrl}">⏹️</button>
+            <button class="c-btn" id="c-dj-play"  style="${pBtn}">▶</button>`;
+        document.getElementById('c-dj-close').onclick = () => djSophie.djClose(window._djBackFn || showRootMenu);
+        document.getElementById('c-dj-stop').onclick  = () => djSophie.djStop();
+        document.getElementById('c-dj-play').onclick  = () => djSophie.djPlay();
+        return;
+    }
 
     if (mode === 'fortune') {
         grid.innerHTML = `
