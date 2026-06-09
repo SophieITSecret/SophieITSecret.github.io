@@ -776,9 +776,11 @@ function renderConsole(mode) {
     if (mode === 'dj_player') {
         grid.innerHTML = `
             <button class="c-btn" id="c-dj-close" style="${backBtn}">閉じる</button>
+            <button class="c-btn" id="c-dj-skip"  style="${navBtn}">⏭</button>
             <button class="c-btn" id="c-dj-stop"  style="${pCtrl}">⏹️</button>
             <button class="c-btn" id="c-dj-play"  style="${pBtn}">▶</button>`;
         document.getElementById('c-dj-close').onclick = () => djSophie.djClose(window._djBackFn || showRootMenu);
+        document.getElementById('c-dj-skip').onclick  = () => djSophie.djSkip();
         document.getElementById('c-dj-stop').onclick  = () => djSophie.djStop();
         document.getElementById('c-dj-play').onclick  = () => djSophie.djPlay();
         return;

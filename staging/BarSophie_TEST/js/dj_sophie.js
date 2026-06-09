@@ -7,6 +7,8 @@ let _origVol = null;
 let _slideTimer = null;
 let _orientationHandler = null;
 let _currentEpisode = null;
+let _narrationSkipFn = null;  // ジェスチャーコンテキストで呼ばれるスキップ関数
+let _djYtPreloaded = false;   // ジェスチャーコンテキストでYTをプリロード済み
 
 // ---- ユーティリティ ----
 
@@ -44,17 +46,23 @@ function _loadYoutube(ytId) {
     if (thumb) thumb.style.display = 'none';
 
     const player = window._ytPlayer;
-    if (player) {
-        try {
-            // ミュートで即時再生開始（ブラウザの自動再生ポリシーを回避）
-            player.mute();
+    if (!player) return;
+    try {
+        if (_djYtPreloaded) {
+            // ジェスチャーコンテキストでプリロード済み → アンミュートして先頭から再生
+            _djYtPreloaded = false;
+            if (_origVol !== null) { player.setVolume(_origVol); _origVol = null; }
+            else { player.setVolume(100); }
+            player.unMute();
+            player.seekTo(0, true);
+            player.playVideo();
+        } else {
+            // 通常フォールバック（BGM再生中なら既に "activated" 状態）
+            _restoreBgm();
             player.loadVideoById(ytId);
-            // バッファリング開始後にアンミュート
-            setTimeout(() => {
-                try { player.unMute(); player.playVideo(); } catch(e) {}
-            }, 1200);
-        } catch(e) {}
-    }
+            player.playVideo();
+        }
+    } catch(e) {}
 }
 
 // ---- DJ0: エピソード一覧 ----
@@ -142,8 +150,24 @@ export function showDJPlayer(episode, onBackToList) {
     // スライド画像をモニターに表示
     _setMonitorImg(`./img/dj/${episode.slide_img}`);
 
-    // BGMダッキング
-    _duckBgm();
+    // ---- iOS自動再生対策: ユーザージェスチャーコンテキスト内でYTをプリロード ----
+    // stopVideo() を呼ばず、ミュートで先行ロードすることでiOSの再生ロックを回避する
+    const player = window._ytPlayer;
+    if (player && episode.youtube_id) {
+        try {
+            _origVol = player.getVolume();
+        } catch(e) { _origVol = 100; }
+        try {
+            player.mute();
+            player.loadVideoById(episode.youtube_id);
+            _djYtPreloaded = true;
+        } catch(e) {
+            _origVol = null;
+            _duckBgm(); // フォールバック: プリロード失敗時はBGMダッキング
+        }
+    } else {
+        _duckBgm();
+    }
 
     // エピソード情報パネル（縦画面時）
     lv.innerHTML = `
@@ -180,20 +204,35 @@ export function showDJPlayer(episode, onBackToList) {
     _narrationAudio = new Audio(`./voices_mp3/${episode.mp3}`);
     _narrationAudio.preload = 'auto';
 
+    // ナレーション終了後の処理（共通化）
     let _done = false;
+    const _showSophie = () => {
+        _setMonitorImg('./front_sophie.jpeg');
+        const thumbEl = document.getElementById('dj-thumb');
+        if (thumbEl) thumbEl.style.display = 'block';
+        const lsImg = document.querySelector('#dj-landscape-panel .dj-ls-sophie');
+        if (lsImg) lsImg.src = './front_sophie.jpeg';
+    };
+
+    // 通常終了（非同期 → setTimeoutで遅延）
     const _onEnd = () => {
         if (_done) return;
         _done = true;
+        _narrationSkipFn = null;
         if (_slideTimer) { clearTimeout(_slideTimer); _slideTimer = null; }
-        _setMonitorImg('./front_sophie.jpeg');
-        thumb.style.display = 'block';
-        // 横画面パネルのソフィー写真も更新
-        const lsImg = document.querySelector('#dj-landscape-panel .dj-ls-sophie');
-        if (lsImg) lsImg.src = './front_sophie.jpeg';
-        _restoreBgm();
-        const player = window._ytPlayer;
-        if (player) { try { player.stopVideo(); } catch(e) {} }
-        setTimeout(() => _loadYoutube(episode.youtube_id), 500);
+        _showSophie();
+        setTimeout(() => _loadYoutube(episode.youtube_id), 300);
+    };
+
+    // スキップ（ジェスチャー → 同期的にloadYoutube呼び出し）
+    _narrationSkipFn = () => {
+        if (_done) return;
+        _done = true;
+        _narrationSkipFn = null;
+        if (_narrationAudio) { try { _narrationAudio.pause(); } catch(e) {} }
+        if (_slideTimer) { clearTimeout(_slideTimer); _slideTimer = null; }
+        _showSophie();
+        _loadYoutube(episode.youtube_id); // ジェスチャーコンテキスト内で同期呼び出し
     };
 
     _narrationAudio.addEventListener('ended', _onEnd, { once: true });
@@ -203,10 +242,7 @@ export function showDJPlayer(episode, onBackToList) {
     // 20秒後: ソフィー写真に切り替え＋サムネイル表示
     _slideTimer = setTimeout(() => {
         if (_done) return;
-        _setMonitorImg('./front_sophie.jpeg');
-        thumb.style.display = 'block';
-        const lsImg = document.querySelector('#dj-landscape-panel .dj-ls-sophie');
-        if (lsImg) lsImg.src = './front_sophie.jpeg';
+        _showSophie();
     }, 20000);
 
     // 横画面自動対応
@@ -221,7 +257,7 @@ function _applyLandscapeLayout(episode) {
     const rSide = document.querySelector('.r-side');
     if (!rSide) return;
 
-    // スライド画像 or 現在のモニター表示と同期
+    // 現在のモニター表示と同期
     const monImg = document.getElementById('monitor-img');
     const currentSrc = (monImg && monImg.style.display !== 'none')
         ? monImg.src
@@ -230,12 +266,14 @@ function _applyLandscapeLayout(episode) {
     const panel = document.createElement('div');
     panel.id = 'dj-landscape-panel';
     panel.style.cssText = 'position:absolute;inset:0;z-index:200;display:flex;flex-direction:column;background:#000;';
+
+    const btnStyle = 'width:100%;border:none;cursor:pointer;font-weight:bold;touch-action:manipulation;-webkit-tap-highlight-color:transparent;';
     panel.innerHTML = `
         <div style="position:relative;flex:1;overflow:hidden;min-height:0;">
             <img class="dj-ls-sophie" src="${currentSrc}"
                  style="width:100%;height:100%;object-fit:cover;display:block;">
             <div style="position:absolute;top:10px;left:10px;right:10px;
-                        background:rgba(0,0,0,0.55);border-radius:6px;padding:6px 8px;">
+                        background:rgba(0,0,0,0.6);border-radius:6px;padding:6px 8px;">
                 <div style="color:#f0b56e;font-size:0.82rem;font-weight:bold;
                             line-height:1.4;text-shadow:0 1px 4px #000;">${episode.title}</div>
                 <div style="color:#c8b090;font-size:0.7rem;margin-top:2px;text-shadow:0 1px 3px #000;">
@@ -243,22 +281,25 @@ function _applyLandscapeLayout(episode) {
                 </div>
             </div>
         </div>
-        <div style="display:flex;gap:4px;padding:4px 4px 0;">
-            <button id="dj-ls-stop" style="flex:1;height:36px;background:#1a2b1a;
-                color:#5c9e5c;border:none;font-size:1.1rem;border-radius:4px;cursor:pointer;">⏹️</button>
-            <button id="dj-ls-play" style="flex:1;height:36px;background:#1a3a1a;
-                color:#7fd97f;border:none;font-size:1.2rem;border-radius:4px;cursor:pointer;">▶</button>
-        </div>
+        <button id="dj-ls-skip"
+                style="${btnStyle}height:40px;background:#1a2a3a;color:#5ba3d9;
+                       font-size:0.85rem;border-top:1px solid #2a3a4a;">⏭ スキップ</button>
+        <button id="dj-ls-stop"
+                style="${btnStyle}height:40px;background:#1a2b1a;color:#5c9e5c;
+                       font-size:1.1rem;border-top:1px solid #1f3020;">⏹</button>
+        <button id="dj-ls-play"
+                style="${btnStyle}height:40px;background:#1a3a1a;color:#7fd97f;
+                       font-size:1.3rem;border-top:1px solid #203a20;">▶</button>
         <button id="dj-ls-close"
-                style="height:48px;background:#34495e;color:#fff;border:none;
-                       border-top:1px solid #5ba3d9;font-size:0.9rem;font-weight:bold;
-                       cursor:pointer;margin:4px 0 0;">閉じる</button>`;
+                style="${btnStyle}height:50px;background:#34495e;color:#fff;
+                       font-size:0.95rem;border-top:2px solid #5ba3d9;">閉じる</button>`;
 
     rSide.style.position = 'relative';
     rSide.appendChild(panel);
 
-    document.getElementById('dj-ls-stop').onclick  = djStop;
-    document.getElementById('dj-ls-play').onclick  = djPlay;
+    document.getElementById('dj-ls-skip').onclick  = () => djSkip();
+    document.getElementById('dj-ls-stop').onclick  = () => djStop();
+    document.getElementById('dj-ls-play').onclick  = () => djPlay();
     document.getElementById('dj-ls-close').onclick = () => djClose(window._djBackFn || (() => {}));
 }
 
@@ -311,7 +352,7 @@ function _showThumbModal(slideImg) {
     modal.addEventListener('click', () => modal.remove());
 }
 
-// ---- コントロール（app_m.js の renderConsole から呼ばれる） ----
+// ---- コントロール ----
 
 export function djPlay() {
     if (_narrationAudio && !_narrationAudio.ended) {
@@ -320,21 +361,38 @@ export function djPlay() {
     }
     const yt = document.getElementById('yt-wrapper');
     if (yt && yt.style.display !== 'none') {
-        const player = window._ytPlayer;
-        if (player) { try { player.playVideo(); } catch(e) {} }
+        try { window._ytPlayer?.playVideo(); } catch(e) {}
     }
 }
 
 export function djStop() {
     if (_narrationAudio && !_narrationAudio.paused) _narrationAudio.pause();
+    try { window._ytPlayer?.pauseVideo(); } catch(e) {}
+}
+
+export function djSkip() {
+    const yt = document.getElementById('yt-wrapper');
     const player = window._ytPlayer;
-    if (player) { try { player.pauseVideo(); } catch(e) {} }
+    if (yt && yt.style.display !== 'none' && player) {
+        // YouTube再生中 → 曲の末尾（10秒前）へシーク
+        try {
+            const dur = player.getDuration();
+            if (dur > 0) player.seekTo(Math.max(0, dur - 10), true);
+        } catch(e) {}
+        return;
+    }
+    // ナレーション中 → ジェスチャーコンテキストでYouTubeへスキップ
+    if (_narrationSkipFn) {
+        const fn = _narrationSkipFn;
+        _narrationSkipFn = null;
+        fn();
+    }
 }
 
 export function djClose(onBack) {
     if (_slideTimer) { clearTimeout(_slideTimer); _slideTimer = null; }
     if (_narrationAudio) { _narrationAudio.pause(); _narrationAudio = null; }
-    _restoreBgm();
+    _narrationSkipFn = null;
     _removeOrientation();
 
     document.getElementById('dj-thumb')?.remove();
@@ -342,8 +400,16 @@ export function djClose(onBack) {
 
     const yt = document.getElementById('yt-wrapper');
     if (yt) yt.style.display = 'none';
+
     const player = window._ytPlayer;
-    if (player) { try { player.stopVideo(); } catch(e) {} }
+    if (player) {
+        if (_origVol !== null) {
+            try { player.setVolume(_origVol); player.unMute(); } catch(e) {}
+            _origVol = null;
+        }
+        try { player.stopVideo(); } catch(e) {}
+    }
+    _djYtPreloaded = false;
 
     const img = document.getElementById('monitor-img');
     if (img) { img.src = './front_sophie.jpeg'; img.style.display = 'block'; }
