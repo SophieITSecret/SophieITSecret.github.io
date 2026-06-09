@@ -189,7 +189,7 @@ export function showDJPlayer(episode, onBackToList) {
     thumb.src = `./img/dj/${episode.slide_img}`;
     thumb.style.cssText = [
         'position:absolute', 'top:8px', 'right:8px',
-        'width:144px', 'height:80px', 'object-fit:cover',
+        'width:216px', 'height:120px', 'object-fit:cover',
         'border-radius:5px', 'border:1px solid rgba(255,255,255,0.35)',
         'display:none', 'cursor:pointer', 'z-index:50',
         'box-shadow:0 2px 10px rgba(0,0,0,0.9)',
@@ -295,7 +295,7 @@ function _applyLandscapeLayout(episode) {
     panel.innerHTML = `
         <div style="position:relative;flex:1;overflow:hidden;min-height:0;">
             <img class="dj-ls-sophie" src="${_sophieSrc}"
-                 style="width:100%;height:100%;object-fit:contain;display:block;background:#111;">
+                 style="width:100%;height:100%;object-fit:cover;display:block;">
             <div id="dj-ls-title"
                  style="display:${_titleVisible ? 'block' : 'none'};
                         position:absolute;top:6px;left:6px;max-width:92%;
@@ -308,16 +308,16 @@ function _applyLandscapeLayout(episode) {
             </div>
         </div>
         <button id="dj-ls-skip"
-                style="${btnStyle}height:38px;background:#1a2a3a;color:#5ba3d9;
+                style="${btnStyle}height:55px;background:#1a2a3a;color:#5ba3d9;
                        font-size:0.8rem;border-top:1px solid #2a3a4a;">⏭ スキップ</button>
-        <button id="dj-ls-stop"
-                style="${btnStyle}height:38px;background:#1a2b1a;color:#5c9e5c;
-                       font-size:1rem;border-top:1px solid #1f3020;">⏹</button>
         <button id="dj-ls-play"
-                style="${btnStyle}height:38px;background:#1a3a1a;color:#7fd97f;
+                style="${btnStyle}height:55px;background:#1a3a1a;color:#7fd97f;
                        font-size:1.2rem;border-top:1px solid #203a20;">▶</button>
+        <button id="dj-ls-stop"
+                style="${btnStyle}height:55px;background:#1a2b1a;color:#5c9e5c;
+                       font-size:1rem;border-top:1px solid #1f3020;">⏹</button>
         <button id="dj-ls-close"
-                style="${btnStyle}height:46px;background:#34495e;color:#fff;
+                style="${btnStyle}height:55px;background:#34495e;color:#fff;
                        font-size:0.88rem;border-top:2px solid #5ba3d9;">閉じる</button>`;
 
     rSide.appendChild(panel);
