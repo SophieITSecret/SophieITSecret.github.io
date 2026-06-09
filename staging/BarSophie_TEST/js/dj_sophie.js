@@ -257,26 +257,29 @@ function _applyLandscapeLayout(episode) {
     const rSide = document.querySelector('.r-side');
     if (!rSide) return;
 
-    // 現在のモニター表示と同期
-    const monImg = document.getElementById('monitor-img');
-    const currentSrc = (monImg && monImg.style.display !== 'none')
-        ? monImg.src
-        : `./img/dj/${episode.slide_img}`;
+    // 右パネルを固定幅200pxに縮小（CSSの flex:1 !important を上書き）
+    rSide.style.setProperty('flex', '0 0 200px', 'important');
+    rSide.style.position = 'relative';
 
     const panel = document.createElement('div');
     panel.id = 'dj-landscape-panel';
-    panel.style.cssText = 'position:absolute;inset:0;z-index:200;display:flex;flex-direction:column;background:#000;';
+    panel.style.cssText = 'position:absolute;inset:0;z-index:200;display:flex;flex-direction:column;background:#111;';
 
     const btnStyle = 'width:100%;border:none;cursor:pointer;font-weight:bold;touch-action:manipulation;-webkit-tap-highlight-color:transparent;';
+    // 20秒経過後（ソフィー写真フェーズ）または横回転した場合は front_sophie を使う
+    const _monImg = document.getElementById('monitor-img');
+    const _sophieSrc = (_monImg && _monImg.src && _monImg.src.includes('front_sophie'))
+        ? './front_sophie.jpeg' : './sophie_shake.png';
+
     panel.innerHTML = `
         <div style="position:relative;flex:1;overflow:hidden;min-height:0;">
-            <img class="dj-ls-sophie" src="${currentSrc}"
-                 style="width:100%;height:100%;object-fit:cover;display:block;">
-            <div style="position:absolute;top:10px;left:10px;right:10px;
-                        background:rgba(0,0,0,0.6);border-radius:6px;padding:6px 8px;">
-                <div style="color:#f0b56e;font-size:0.82rem;font-weight:bold;
-                            line-height:1.4;text-shadow:0 1px 4px #000;">${episode.title}</div>
-                <div style="color:#c8b090;font-size:0.7rem;margin-top:2px;text-shadow:0 1px 3px #000;">
+            <img class="dj-ls-sophie" src="${_sophieSrc}"
+                 style="width:100%;height:100%;object-fit:contain;display:block;background:#111;">
+            <div style="position:absolute;top:8px;left:8px;max-width:92%;
+                        background:rgba(0,0,0,0.68);border-radius:5px;padding:5px 7px;">
+                <div style="color:#f0b56e;font-size:0.72rem;font-weight:bold;
+                            line-height:1.3;text-shadow:0 1px 4px #000;">${episode.title}</div>
+                <div style="color:#c8b090;font-size:0.62rem;margin-top:1px;text-shadow:0 1px 3px #000;">
                     ${episode.artist}「${episode.song}」
                 </div>
             </div>
@@ -294,7 +297,6 @@ function _applyLandscapeLayout(episode) {
                 style="${btnStyle}height:50px;background:#34495e;color:#fff;
                        font-size:0.95rem;border-top:2px solid #5ba3d9;">閉じる</button>`;
 
-    rSide.style.position = 'relative';
     rSide.appendChild(panel);
 
     document.getElementById('dj-ls-skip').onclick  = () => djSkip();
@@ -304,6 +306,8 @@ function _applyLandscapeLayout(episode) {
 }
 
 function _removeLandscapeLayout() {
+    const rSide = document.querySelector('.r-side');
+    if (rSide) rSide.style.removeProperty('flex');
     document.getElementById('dj-landscape-panel')?.remove();
 }
 
