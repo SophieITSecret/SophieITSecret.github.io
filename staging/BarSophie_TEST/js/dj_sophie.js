@@ -9,8 +9,8 @@ let _orientationHandler = null;
 let _currentEpisode = null;
 let _narrationSkipFn = null;
 let _djYtPreloaded = false;
-let _sophiePhase = false;     // _showSophie() が呼ばれた後 true
-let _lastIsLandscape = null;  // 向き変化の重複処理防止
+let _sophiePhase = false;
+let _lastIsLandscape = null;
 
 // ---- ユーティリティ ----
 
@@ -76,29 +76,29 @@ export async function showDJList(onBack) {
     if (nm) nm.style.display = 'none';
     if (!lv) return;
     lv.style.display = 'block';
-    lv.innerHTML = `<div style="padding:20px; color:#888; text-align:center;">読み込み中...</div>`;
+    lv.innerHTML = `<div style="padding:20px;color:#888;text-align:center;">読み込み中...</div>`;
 
     let episodes = [];
     try {
         const res = await fetch('./dj_stories.json');
         episodes = await res.json();
     } catch(e) {
-        lv.innerHTML = `<div style="padding:20px; color:#e74c3c; text-align:center;">データの読み込みに失敗しました</div>`;
+        lv.innerHTML = `<div style="padding:20px;color:#e74c3c;text-align:center;">データの読み込みに失敗しました</div>`;
         return;
     }
 
     if (!episodes.length) {
-        lv.innerHTML = `<div style="padding:20px; color:#888; text-align:center;">エピソードがまだありません</div>`;
+        lv.innerHTML = `<div style="padding:20px;color:#888;text-align:center;">エピソードがまだありません</div>`;
         return;
     }
 
     let html = `
-        <div style="margin:10px; border-radius:10px; border:2px solid transparent;
+        <div style="margin:10px;border-radius:10px;border:2px solid transparent;
                     background:linear-gradient(#111,#111) padding-box,
                     linear-gradient(120deg,#ff69b4 50%,#00d2ff 100%) border-box;">
-            <div style="color:#f0b56e; padding:0 12px; font-size:0.8rem; font-weight:bold;
-                        border-bottom:1px solid #333; height:28px; line-height:28px;
-                        border-radius:8px 8px 0 0; display:flex; align-items:center; gap:6px;">
+            <div style="color:#f0b56e;padding:0 12px;font-size:0.8rem;font-weight:bold;
+                        border-bottom:1px solid #333;height:28px;line-height:28px;
+                        border-radius:8px 8px 0 0;display:flex;align-items:center;gap:6px;">
                 <img src="./sophie_face.png" style="width:20px;height:20px;border-radius:50%;object-fit:cover;">
                 🎙️ DJソフィーの歌とお酒の物語
             </div>
@@ -107,16 +107,16 @@ export async function showDJList(onBack) {
     episodes.forEach(ep => {
         html += `
             <div class="dj-ep-card" data-id="${ep.id}"
-                 style="padding:10px 14px; border-bottom:1px solid #222; cursor:pointer;
+                 style="padding:10px 14px;border-bottom:1px solid #222;cursor:pointer;
                         -webkit-tap-highlight-color:transparent;">
-                <div style="display:flex; align-items:baseline; gap:8px; margin-bottom:3px;">
-                    <span style="color:#5ba3d9; font-size:0.72rem; font-weight:bold; flex-shrink:0;">#${ep.id}</span>
-                    <span style="color:#888; font-size:0.68rem; flex-shrink:0;">${ep.date}</span>
+                <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:3px;">
+                    <span style="color:#5ba3d9;font-size:0.72rem;font-weight:bold;flex-shrink:0;">#${ep.id}</span>
+                    <span style="color:#888;font-size:0.68rem;flex-shrink:0;">${ep.date}</span>
                 </div>
-                <div style="color:#f0b56e; font-size:0.9rem; font-weight:bold; line-height:1.4; margin-bottom:3px;">${ep.title}</div>
-                <div style="color:#aaa; font-size:0.78rem;">
+                <div style="color:#f0b56e;font-size:0.9rem;font-weight:bold;line-height:1.4;margin-bottom:3px;">${ep.title}</div>
+                <div style="color:#aaa;font-size:0.78rem;">
                     <span style="color:#c8b090;">${ep.artist}</span>
-                    <span style="color:#555; margin:0 4px;">／</span>
+                    <span style="color:#555;margin:0 4px;">／</span>
                     <span>「${ep.song}」</span>
                 </div>
             </div>`;
@@ -167,14 +167,14 @@ export function showDJPlayer(episode, onBackToList) {
     }
 
     lv.innerHTML = `
-        <div style="padding:10px 14px 8px;">
-            <div style="color:#f0b56e; font-size:0.92rem; font-weight:bold; line-height:1.5; margin-bottom:3px;">${episode.title}</div>
-            <div style="color:#aaa; font-size:0.78rem;">
+        <div style="padding:6px 12px 5px;">
+            <div style="color:#f0b56e;font-size:0.82rem;font-weight:bold;line-height:1.4;margin-bottom:2px;">${episode.title}</div>
+            <div style="color:#aaa;font-size:0.70rem;">
                 <span style="color:#c8b090;">${episode.artist}</span>
-                <span style="color:#555; margin:0 4px;">／</span>
+                <span style="color:#555;margin:0 4px;">／</span>
                 <span>「${episode.song}」</span>
             </div>
-            <div style="color:#888; font-size:0.68rem; margin-top:3px;">#${episode.id}&nbsp;&nbsp;${episode.date}</div>
+            <div style="color:#888;font-size:0.62rem;margin-top:2px;">#${episode.id}&nbsp;&nbsp;${episode.date}</div>
         </div>`;
 
     // モニター右上サムネイル
@@ -183,10 +183,10 @@ export function showDJPlayer(episode, onBackToList) {
     thumb.id  = 'dj-thumb';
     thumb.src = `./img/dj/${episode.slide_img}`;
     thumb.style.cssText = [
-        'position:absolute', 'top:8px', 'right:8px',
-        'width:216px', 'height:120px', 'object-fit:cover',
-        'border-radius:5px', 'border:1px solid rgba(255,255,255,0.35)',
-        'display:none', 'cursor:pointer', 'z-index:50',
+        'position:absolute','top:8px','right:8px',
+        'width:216px','height:120px','object-fit:cover',
+        'border-radius:5px','border:1px solid rgba(255,255,255,0.35)',
+        'display:none','cursor:pointer','z-index:50',
         'box-shadow:0 2px 10px rgba(0,0,0,0.9)',
     ].join(';');
     if (mon) mon.appendChild(thumb);
@@ -200,12 +200,10 @@ export function showDJPlayer(episode, onBackToList) {
 
     let _done = false;
 
-    // ソフィー写真フェーズへ切り替え（モニター + サムネイル + 横画面タイトル）
     const _showSophie = () => {
         _setMonitorImg('./front_sophie.jpeg');
         const thumbEl = document.getElementById('dj-thumb');
         if (thumbEl) thumbEl.style.display = 'block';
-        // 横画面パネルの写真は変更しない。タイトルオーバーレイだけ表示
         _sophiePhase = true;
         const lsTitle = document.getElementById('dj-ls-title');
         if (lsTitle) lsTitle.style.display = 'block';
@@ -217,7 +215,7 @@ export function showDJPlayer(episode, onBackToList) {
         _narrationSkipFn = null;
         if (_slideTimer) { clearTimeout(_slideTimer); _slideTimer = null; }
         _showSophie();
-        setTimeout(() => _loadYoutube(episode.youtube_id), 300);
+        _loadYoutube(episode.youtube_id);
     };
 
     _narrationSkipFn = () => {
@@ -242,32 +240,35 @@ export function showDJPlayer(episode, onBackToList) {
     _setupOrientation(mon, episode);
 }
 
-// ---- 横画面レイアウト（position:fixed で確実にオーバーレイ） ----
+// ---- 横画面レイアウト ----
 
 function _applyLandscapeLayout(episode) {
     document.getElementById('dj-landscape-panel')?.remove();
 
-    // r-sideをCSSで非表示 & main-uiに右余白を追加（固定パネルと重ならないよう）
+    const rSide = document.querySelector('.r-side');
+    if (!rSide) return;
+
+    // CSSでr-side幅固定・子要素非表示（JSでstyleを直接操作しない → 復元時に破損なし）
     let styleEl = document.getElementById('dj-ls-style');
     if (!styleEl) {
         styleEl = document.createElement('style');
         styleEl.id = 'dj-ls-style';
         document.head.appendChild(styleEl);
     }
-    styleEl.textContent = '.r-side { display: none !important; } #main-ui { padding-right: 100px !important; }';
+    styleEl.textContent =
+        '.r-side{flex:0 0 100px!important;max-width:100px!important;overflow:hidden!important;position:relative!important;}' +
+        '.r-side>*:not(#dj-landscape-panel){display:none!important;}';
 
+    const btnStyle = 'width:100%;border:none;cursor:pointer;font-weight:bold;touch-action:manipulation;-webkit-tap-highlight-color:transparent;flex-shrink:0;';
     const panel = document.createElement('div');
     panel.id = 'dj-landscape-panel';
-    // position:fixed でビューポート右端に固定（r-sideのDOMから独立）
-    panel.style.cssText = 'position:fixed;top:0;right:0;width:100px;bottom:0;z-index:8000;display:flex;flex-direction:column;background:#111;';
-
-    const btnStyle = 'width:100%;border:none;cursor:pointer;font-weight:bold;touch-action:manipulation;-webkit-tap-highlight-color:transparent;';
+    panel.style.cssText = 'position:absolute;top:0;left:0;right:0;bottom:0;display:flex;flex-direction:column;background:#111;z-index:500;';
     panel.innerHTML = `
-        <div style="position:relative;flex:1;overflow:hidden;min-height:0;">
+        <div style="flex:1;position:relative;overflow:hidden;">
             <img class="dj-ls-sophie" src="./sophie_shake.png"
-                 style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;">
+                 style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;display:block;z-index:1;">
             <div id="dj-ls-title"
-                 style="display:none;position:absolute;top:6px;left:6px;right:6px;
+                 style="display:none;position:absolute;top:6px;left:6px;right:6px;z-index:2;
                         background:rgba(0,0,0,0.75);border-radius:4px;padding:4px 6px;">
                 <div style="color:#f0b56e;font-size:0.62rem;font-weight:bold;
                             line-height:1.3;text-shadow:0 1px 4px #000;">${episode.title}</div>
@@ -289,9 +290,8 @@ function _applyLandscapeLayout(episode) {
                 style="${btnStyle}height:55px;background:#34495e;color:#fff;
                        font-size:0.88rem;border-top:2px solid #5ba3d9;">閉じる</button>`;
 
-    document.body.appendChild(panel);
+    rSide.appendChild(panel);
 
-    // _showSophie() が既に呼ばれていれば即タイトル表示
     if (_sophiePhase) {
         const lsTitle = document.getElementById('dj-ls-title');
         if (lsTitle) lsTitle.style.display = 'block';
@@ -304,7 +304,6 @@ function _applyLandscapeLayout(episode) {
 }
 
 function _removeLandscapeLayout() {
-    // CSSを解除してr-sideを復元
     const styleEl = document.getElementById('dj-ls-style');
     if (styleEl) styleEl.textContent = '';
     document.getElementById('dj-landscape-panel')?.remove();
@@ -316,7 +315,7 @@ function _setupOrientation(mon, episode) {
     _lastIsLandscape = null;
     const _update = () => {
         const isLandscape = window.matchMedia('(orientation: landscape)').matches;
-        if (isLandscape === _lastIsLandscape) return; // 向きが変わっていなければスキップ
+        if (isLandscape === _lastIsLandscape) return;
         _lastIsLandscape = isLandscape;
         if (isLandscape) {
             mon.classList.add('expanded');
