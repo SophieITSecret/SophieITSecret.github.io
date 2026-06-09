@@ -9,6 +9,7 @@ let _orientationHandler = null;
 let _currentEpisode = null;
 let _narrationSkipFn = null;  // ジェスチャーコンテキストで呼ばれるスキップ関数
 let _djYtPreloaded = false;   // ジェスチャーコンテキストでYTをプリロード済み
+let _rSideHidden = null;      // 横画面時に非表示にしたr-sideの子要素リスト
 
 // ---- ユーティリティ ----
 
@@ -212,6 +213,9 @@ export function showDJPlayer(episode, onBackToList) {
         if (thumbEl) thumbEl.style.display = 'block';
         const lsImg = document.querySelector('#dj-landscape-panel .dj-ls-sophie');
         if (lsImg) lsImg.src = './front_sophie.jpeg';
+        // ソフィー写真フェーズに切り替わったタイミングでタイトルオーバーレイを表示
+        const lsTitle = document.getElementById('dj-ls-title');
+        if (lsTitle) lsTitle.style.display = 'block';
     };
 
     // 通常終了（非同期 → setTimeoutで遅延）
@@ -257,45 +261,64 @@ function _applyLandscapeLayout(episode) {
     const rSide = document.querySelector('.r-side');
     if (!rSide) return;
 
-    // 右パネルを固定幅200pxに縮小（CSSの flex:1 !important を上書き）
-    rSide.style.setProperty('flex', '0 0 200px', 'important');
+    // ---- CSS注入でr-sideを100px固定幅に（Safariで inline setProperty が効かないため） ----
+    let styleEl = document.getElementById('dj-ls-style');
+    if (!styleEl) {
+        styleEl = document.createElement('style');
+        styleEl.id = 'dj-ls-style';
+        document.head.appendChild(styleEl);
+    }
+    styleEl.textContent = '.r-side { flex: 0 0 100px !important; max-width: 100px !important; }';
+
+    // ---- r-sideの既存コンテンツを非表示（z-index競合回避） ----
+    _rSideHidden = [];
+    for (const child of Array.from(rSide.children)) {
+        if (child.id !== 'dj-landscape-panel') {
+            _rSideHidden.push([child, child.style.display]);
+            child.style.display = 'none';
+        }
+    }
+
     rSide.style.position = 'relative';
 
-    const panel = document.createElement('div');
-    panel.id = 'dj-landscape-panel';
-    panel.style.cssText = 'position:absolute;inset:0;z-index:200;display:flex;flex-direction:column;background:#111;';
-
-    const btnStyle = 'width:100%;border:none;cursor:pointer;font-weight:bold;touch-action:manipulation;-webkit-tap-highlight-color:transparent;';
-    // 20秒経過後（ソフィー写真フェーズ）または横回転した場合は front_sophie を使う
+    // ---- ソフィー写真の選択（20秒後はfront_sophie、それ以前はsophis_shake） ----
     const _monImg = document.getElementById('monitor-img');
     const _sophieSrc = (_monImg && _monImg.src && _monImg.src.includes('front_sophie'))
         ? './front_sophie.jpeg' : './sophie_shake.png';
+    const _titleVisible = _monImg && _monImg.src && _monImg.src.includes('front_sophie');
 
+    const panel = document.createElement('div');
+    panel.id = 'dj-landscape-panel';
+    panel.style.cssText = 'position:absolute;inset:0;display:flex;flex-direction:column;background:#111;';
+
+    const btnStyle = 'width:100%;border:none;cursor:pointer;font-weight:bold;touch-action:manipulation;-webkit-tap-highlight-color:transparent;';
     panel.innerHTML = `
         <div style="position:relative;flex:1;overflow:hidden;min-height:0;">
             <img class="dj-ls-sophie" src="${_sophieSrc}"
                  style="width:100%;height:100%;object-fit:contain;display:block;background:#111;">
-            <div style="position:absolute;top:8px;left:8px;max-width:92%;
-                        background:rgba(0,0,0,0.68);border-radius:5px;padding:5px 7px;">
-                <div style="color:#f0b56e;font-size:0.72rem;font-weight:bold;
+            <div id="dj-ls-title"
+                 style="display:${_titleVisible ? 'block' : 'none'};
+                        position:absolute;top:6px;left:6px;max-width:92%;
+                        background:rgba(0,0,0,0.72);border-radius:4px;padding:4px 6px;">
+                <div style="color:#f0b56e;font-size:0.65rem;font-weight:bold;
                             line-height:1.3;text-shadow:0 1px 4px #000;">${episode.title}</div>
-                <div style="color:#c8b090;font-size:0.62rem;margin-top:1px;text-shadow:0 1px 3px #000;">
+                <div style="color:#c8b090;font-size:0.58rem;margin-top:1px;text-shadow:0 1px 3px #000;">
                     ${episode.artist}「${episode.song}」
                 </div>
             </div>
         </div>
         <button id="dj-ls-skip"
-                style="${btnStyle}height:40px;background:#1a2a3a;color:#5ba3d9;
-                       font-size:0.85rem;border-top:1px solid #2a3a4a;">⏭ スキップ</button>
+                style="${btnStyle}height:38px;background:#1a2a3a;color:#5ba3d9;
+                       font-size:0.8rem;border-top:1px solid #2a3a4a;">⏭ スキップ</button>
         <button id="dj-ls-stop"
-                style="${btnStyle}height:40px;background:#1a2b1a;color:#5c9e5c;
-                       font-size:1.1rem;border-top:1px solid #1f3020;">⏹</button>
+                style="${btnStyle}height:38px;background:#1a2b1a;color:#5c9e5c;
+                       font-size:1rem;border-top:1px solid #1f3020;">⏹</button>
         <button id="dj-ls-play"
-                style="${btnStyle}height:40px;background:#1a3a1a;color:#7fd97f;
-                       font-size:1.3rem;border-top:1px solid #203a20;">▶</button>
+                style="${btnStyle}height:38px;background:#1a3a1a;color:#7fd97f;
+                       font-size:1.2rem;border-top:1px solid #203a20;">▶</button>
         <button id="dj-ls-close"
-                style="${btnStyle}height:50px;background:#34495e;color:#fff;
-                       font-size:0.95rem;border-top:2px solid #5ba3d9;">閉じる</button>`;
+                style="${btnStyle}height:46px;background:#34495e;color:#fff;
+                       font-size:0.88rem;border-top:2px solid #5ba3d9;">閉じる</button>`;
 
     rSide.appendChild(panel);
 
@@ -306,8 +329,18 @@ function _applyLandscapeLayout(episode) {
 }
 
 function _removeLandscapeLayout() {
-    const rSide = document.querySelector('.r-side');
-    if (rSide) rSide.style.removeProperty('flex');
+    // CSS注入を解除
+    const styleEl = document.getElementById('dj-ls-style');
+    if (styleEl) styleEl.textContent = '';
+
+    // r-sideの子要素を元の表示状態に戻す
+    if (_rSideHidden) {
+        for (const [child, prevDisplay] of _rSideHidden) {
+            child.style.display = prevDisplay;
+        }
+        _rSideHidden = null;
+    }
+
     document.getElementById('dj-landscape-panel')?.remove();
 }
 
