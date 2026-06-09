@@ -25,8 +25,8 @@ function _restoreBgm() {
 }
 
 function _setMonitorImg(src) {
-    const img = document.getElementById('monitor-img');
-    const yt  = document.getElementById('yt-wrapper');
+    const img   = document.getElementById('monitor-img');
+    const yt    = document.getElementById('yt-wrapper');
     const lside = document.querySelector('.l-side');
     if (lside) lside.style.display = 'flex';
     if (img) { img.src = src; img.style.display = 'block'; }
@@ -42,8 +42,19 @@ function _loadYoutube(ytId) {
     if (img) img.style.display = 'none';
     if (yt)  yt.style.display = 'block';
     if (thumb) thumb.style.display = 'none';
+
     const player = window._ytPlayer;
-    if (player) { try { player.loadVideoById(ytId); } catch(e) {} }
+    if (player) {
+        try {
+            // ミュートで即時再生開始（ブラウザの自動再生ポリシーを回避）
+            player.mute();
+            player.loadVideoById(ytId);
+            // バッファリング開始後にアンミュート
+            setTimeout(() => {
+                try { player.unMute(); player.playVideo(); } catch(e) {}
+            }, 1200);
+        } catch(e) {}
+    }
 }
 
 // ---- DJ0: エピソード一覧 ----
@@ -134,7 +145,7 @@ export function showDJPlayer(episode, onBackToList) {
     // BGMダッキング
     _duckBgm();
 
-    // エピソード情報パネル
+    // エピソード情報パネル（縦画面時）
     lv.innerHTML = `
         <div style="padding:10px 14px 8px;">
             <div style="color:#f0b56e; font-size:0.92rem; font-weight:bold; line-height:1.5; margin-bottom:3px;">${episode.title}</div>
@@ -153,15 +164,15 @@ export function showDJPlayer(episode, onBackToList) {
     thumb.src = `./img/dj/${episode.slide_img}`;
     thumb.style.cssText = [
         'position:absolute', 'top:8px', 'right:8px',
-        'width:72px', 'height:40px', 'object-fit:cover',
-        'border-radius:4px', 'border:1px solid rgba(255,255,255,0.3)',
+        'width:144px', 'height:80px', 'object-fit:cover',
+        'border-radius:5px', 'border:1px solid rgba(255,255,255,0.35)',
         'display:none', 'cursor:pointer', 'z-index:50',
-        'box-shadow:0 2px 8px rgba(0,0,0,0.8)',
+        'box-shadow:0 2px 10px rgba(0,0,0,0.9)',
     ].join(';');
     if (mon) mon.appendChild(thumb);
     thumb.addEventListener('click', () => _showThumbModal(episode.slide_img));
 
-    // コンソールモードをDJプレイヤーに（バック先を先に保存）
+    // コンソールモード（バック先を先に保存）
     window._djBackFn = onBackToList;
     window._renderConsole?.('dj_player');
 
@@ -176,6 +187,9 @@ export function showDJPlayer(episode, onBackToList) {
         if (_slideTimer) { clearTimeout(_slideTimer); _slideTimer = null; }
         _setMonitorImg('./front_sophie.jpeg');
         thumb.style.display = 'block';
+        // 横画面パネルのソフィー写真も更新
+        const lsImg = document.querySelector('#dj-landscape-panel .dj-ls-sophie');
+        if (lsImg) lsImg.src = './front_sophie.jpeg';
         _restoreBgm();
         const player = window._ytPlayer;
         if (player) { try { player.stopVideo(); } catch(e) {} }
@@ -191,20 +205,79 @@ export function showDJPlayer(episode, onBackToList) {
         if (_done) return;
         _setMonitorImg('./front_sophie.jpeg');
         thumb.style.display = 'block';
+        const lsImg = document.querySelector('#dj-landscape-panel .dj-ls-sophie');
+        if (lsImg) lsImg.src = './front_sophie.jpeg';
     }, 20000);
 
     // 横画面自動対応
-    _setupOrientation(mon);
+    _setupOrientation(mon, episode);
 }
 
-// ---- 横画面 ----
+// ---- 横画面レイアウト ----
 
-function _setupOrientation(mon) {
+function _applyLandscapeLayout(episode) {
+    document.getElementById('dj-landscape-panel')?.remove();
+
+    const rSide = document.querySelector('.r-side');
+    if (!rSide) return;
+
+    // スライド画像 or 現在のモニター表示と同期
+    const monImg = document.getElementById('monitor-img');
+    const currentSrc = (monImg && monImg.style.display !== 'none')
+        ? monImg.src
+        : `./img/dj/${episode.slide_img}`;
+
+    const panel = document.createElement('div');
+    panel.id = 'dj-landscape-panel';
+    panel.style.cssText = 'position:absolute;inset:0;z-index:200;display:flex;flex-direction:column;background:#000;';
+    panel.innerHTML = `
+        <div style="position:relative;flex:1;overflow:hidden;min-height:0;">
+            <img class="dj-ls-sophie" src="${currentSrc}"
+                 style="width:100%;height:100%;object-fit:cover;display:block;">
+            <div style="position:absolute;top:10px;left:10px;right:10px;
+                        background:rgba(0,0,0,0.55);border-radius:6px;padding:6px 8px;">
+                <div style="color:#f0b56e;font-size:0.82rem;font-weight:bold;
+                            line-height:1.4;text-shadow:0 1px 4px #000;">${episode.title}</div>
+                <div style="color:#c8b090;font-size:0.7rem;margin-top:2px;text-shadow:0 1px 3px #000;">
+                    ${episode.artist}「${episode.song}」
+                </div>
+            </div>
+        </div>
+        <div style="display:flex;gap:4px;padding:4px 4px 0;">
+            <button id="dj-ls-stop" style="flex:1;height:36px;background:#1a2b1a;
+                color:#5c9e5c;border:none;font-size:1.1rem;border-radius:4px;cursor:pointer;">⏹️</button>
+            <button id="dj-ls-play" style="flex:1;height:36px;background:#1a3a1a;
+                color:#7fd97f;border:none;font-size:1.2rem;border-radius:4px;cursor:pointer;">▶</button>
+        </div>
+        <button id="dj-ls-close"
+                style="height:48px;background:#34495e;color:#fff;border:none;
+                       border-top:1px solid #5ba3d9;font-size:0.9rem;font-weight:bold;
+                       cursor:pointer;margin:4px 0 0;">閉じる</button>`;
+
+    rSide.style.position = 'relative';
+    rSide.appendChild(panel);
+
+    document.getElementById('dj-ls-stop').onclick  = djStop;
+    document.getElementById('dj-ls-play').onclick  = djPlay;
+    document.getElementById('dj-ls-close').onclick = () => djClose(window._djBackFn || (() => {}));
+}
+
+function _removeLandscapeLayout() {
+    document.getElementById('dj-landscape-panel')?.remove();
+}
+
+function _setupOrientation(mon, episode) {
     _removeOrientation();
     if (!mon) return;
     const _update = () => {
-        if (window.matchMedia('(orientation: landscape)').matches) mon.classList.add('expanded');
-        else mon.classList.remove('expanded');
+        const isLandscape = window.matchMedia('(orientation: landscape)').matches;
+        if (isLandscape) {
+            mon.classList.add('expanded');
+            _applyLandscapeLayout(episode);
+        } else {
+            mon.classList.remove('expanded');
+            _removeLandscapeLayout();
+        }
     };
     _update();
     _orientationHandler = _update;
@@ -219,6 +292,7 @@ function _removeOrientation() {
         _orientationHandler = null;
     }
     document.querySelector('.monitor')?.classList.remove('expanded');
+    _removeLandscapeLayout();
 }
 
 // ---- サムネイル拡大モーダル ----
@@ -244,7 +318,6 @@ export function djPlay() {
         if (_narrationAudio.paused) _narrationAudio.play().catch(() => {});
         return;
     }
-    // YouTubeフェーズ
     const yt = document.getElementById('yt-wrapper');
     if (yt && yt.style.display !== 'none') {
         const player = window._ytPlayer;
