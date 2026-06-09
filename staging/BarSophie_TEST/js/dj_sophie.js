@@ -211,9 +211,8 @@ export function showDJPlayer(episode, onBackToList) {
         _setMonitorImg('./front_sophie.jpeg');
         const thumbEl = document.getElementById('dj-thumb');
         if (thumbEl) thumbEl.style.display = 'block';
-        const lsImg = document.querySelector('#dj-landscape-panel .dj-ls-sophie');
-        if (lsImg) lsImg.src = './front_sophie.jpeg';
-        // ソフィー写真フェーズに切り替わったタイミングでタイトルオーバーレイを表示
+        // 横画面パネルの写真は常にsophis_shakeのまま変更しない
+        // ソフィー写真フェーズに入ったタイミングでタイトルオーバーレイだけ表示
         const lsTitle = document.getElementById('dj-ls-title');
         if (lsTitle) lsTitle.style.display = 'block';
     };
@@ -281,11 +280,8 @@ function _applyLandscapeLayout(episode) {
 
     rSide.style.position = 'relative';
 
-    // ---- ソフィー写真の選択（20秒後はfront_sophie、それ以前はsophis_shake） ----
-    const _monImg = document.getElementById('monitor-img');
-    const _sophieSrc = (_monImg && _monImg.src && _monImg.src.includes('front_sophie'))
-        ? './front_sophie.jpeg' : './sophie_shake.png';
-    const _titleVisible = _monImg && _monImg.src && _monImg.src.includes('front_sophie');
+    // 横画面パネルの写真は常に sophie_shake.png（ナレーション終了後も変更しない）
+    // タイトルオーバーレイは _showSophie() が呼ばれるまで非表示
 
     const panel = document.createElement('div');
     panel.id = 'dj-landscape-panel';
@@ -294,10 +290,10 @@ function _applyLandscapeLayout(episode) {
     const btnStyle = 'width:100%;border:none;cursor:pointer;font-weight:bold;touch-action:manipulation;-webkit-tap-highlight-color:transparent;';
     panel.innerHTML = `
         <div style="position:relative;flex:1;overflow:hidden;min-height:0;">
-            <img class="dj-ls-sophie" src="${_sophieSrc}"
-                 style="width:100%;height:100%;object-fit:cover;display:block;">
+            <img class="dj-ls-sophie" src="./sophie_shake.png"
+                 style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;">
             <div id="dj-ls-title"
-                 style="display:${_titleVisible ? 'block' : 'none'};
+                 style="display:none;
                         position:absolute;top:6px;left:6px;max-width:92%;
                         background:rgba(0,0,0,0.72);border-radius:4px;padding:4px 6px;">
                 <div style="color:#f0b56e;font-size:0.65rem;font-weight:bold;
