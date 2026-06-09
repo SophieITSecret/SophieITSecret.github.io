@@ -7,9 +7,10 @@ let _origVol = null;
 let _slideTimer = null;
 let _orientationHandler = null;
 let _currentEpisode = null;
-let _narrationSkipFn = null;  // ジェスチャーコンテキストで呼ばれるスキップ関数
-let _djYtPreloaded = false;   // ジェスチャーコンテキストでYTをプリロード済み
-let _rSideHidden = null;      // 横画面時に非表示にしたr-sideの子要素リスト
+let _narrationSkipFn = null;
+let _djYtPreloaded = false;
+let _sophiePhase = false;     // _showSophie() が呼ばれた後 true
+let _lastIsLandscape = null;  // 向き変化の重複処理防止
 
 // ---- ユーティリティ ----
 
@@ -50,7 +51,6 @@ function _loadYoutube(ytId) {
     if (!player) return;
     try {
         if (_djYtPreloaded) {
-            // ジェスチャーコンテキストでプリロード済み → アンミュートして先頭から再生
             _djYtPreloaded = false;
             if (_origVol !== null) { player.setVolume(_origVol); _origVol = null; }
             else { player.setVolume(100); }
@@ -58,7 +58,6 @@ function _loadYoutube(ytId) {
             player.seekTo(0, true);
             player.playVideo();
         } else {
-            // 通常フォールバック（BGM再生中なら既に "activated" 状態）
             _restoreBgm();
             player.loadVideoById(ytId);
             player.playVideo();
@@ -138,6 +137,7 @@ export async function showDJList(onBack) {
 
 export function showDJPlayer(episode, onBackToList) {
     _currentEpisode = episode;
+    _sophiePhase = false;
     nav.updateNav('dj');
 
     const lv  = document.getElementById('list-view');
@@ -148,29 +148,24 @@ export function showDJPlayer(episode, onBackToList) {
     if (!lv) return;
     lv.style.display = 'block';
 
-    // スライド画像をモニターに表示
     _setMonitorImg(`./img/dj/${episode.slide_img}`);
 
-    // ---- iOS自動再生対策: ユーザージェスチャーコンテキスト内でYTをプリロード ----
-    // stopVideo() を呼ばず、ミュートで先行ロードすることでiOSの再生ロックを回避する
+    // iOS自動再生対策: ジェスチャーコンテキストでYTをプリロード
     const player = window._ytPlayer;
     if (player && episode.youtube_id) {
-        try {
-            _origVol = player.getVolume();
-        } catch(e) { _origVol = 100; }
+        try { _origVol = player.getVolume(); } catch(e) { _origVol = 100; }
         try {
             player.mute();
             player.loadVideoById(episode.youtube_id);
             _djYtPreloaded = true;
         } catch(e) {
             _origVol = null;
-            _duckBgm(); // フォールバック: プリロード失敗時はBGMダッキング
+            _duckBgm();
         }
     } else {
         _duckBgm();
     }
 
-    // エピソード情報パネル（縦画面時）
     lv.innerHTML = `
         <div style="padding:10px 14px 8px;">
             <div style="color:#f0b56e; font-size:0.92rem; font-weight:bold; line-height:1.5; margin-bottom:3px;">${episode.title}</div>
@@ -182,7 +177,7 @@ export function showDJPlayer(episode, onBackToList) {
             <div style="color:#888; font-size:0.68rem; margin-top:3px;">#${episode.id}&nbsp;&nbsp;${episode.date}</div>
         </div>`;
 
-    // モニター右上サムネイル（20秒後に出現）
+    // モニター右上サムネイル
     document.getElementById('dj-thumb')?.remove();
     const thumb = document.createElement('img');
     thumb.id  = 'dj-thumb';
@@ -197,27 +192,25 @@ export function showDJPlayer(episode, onBackToList) {
     if (mon) mon.appendChild(thumb);
     thumb.addEventListener('click', () => _showThumbModal(episode.slide_img));
 
-    // コンソールモード（バック先を先に保存）
     window._djBackFn = onBackToList;
     window._renderConsole?.('dj_player');
 
-    // ナレーション（ユーザージェスチャーのコンテキストで生成）
     _narrationAudio = new Audio(`./voices_mp3/${episode.mp3}`);
     _narrationAudio.preload = 'auto';
 
-    // ナレーション終了後の処理（共通化）
     let _done = false;
+
+    // ソフィー写真フェーズへ切り替え（モニター + サムネイル + 横画面タイトル）
     const _showSophie = () => {
         _setMonitorImg('./front_sophie.jpeg');
         const thumbEl = document.getElementById('dj-thumb');
         if (thumbEl) thumbEl.style.display = 'block';
-        // 横画面パネルの写真は常にsophis_shakeのまま変更しない
-        // ソフィー写真フェーズに入ったタイミングでタイトルオーバーレイだけ表示
+        // 横画面パネルの写真は変更しない。タイトルオーバーレイだけ表示
+        _sophiePhase = true;
         const lsTitle = document.getElementById('dj-ls-title');
         if (lsTitle) lsTitle.style.display = 'block';
     };
 
-    // 通常終了（非同期 → setTimeoutで遅延）
     const _onEnd = () => {
         if (_done) return;
         _done = true;
@@ -227,7 +220,6 @@ export function showDJPlayer(episode, onBackToList) {
         setTimeout(() => _loadYoutube(episode.youtube_id), 300);
     };
 
-    // スキップ（ジェスチャー → 同期的にloadYoutube呼び出し）
     _narrationSkipFn = () => {
         if (_done) return;
         _done = true;
@@ -235,57 +227,39 @@ export function showDJPlayer(episode, onBackToList) {
         if (_narrationAudio) { try { _narrationAudio.pause(); } catch(e) {} }
         if (_slideTimer) { clearTimeout(_slideTimer); _slideTimer = null; }
         _showSophie();
-        _loadYoutube(episode.youtube_id); // ジェスチャーコンテキスト内で同期呼び出し
+        _loadYoutube(episode.youtube_id);
     };
 
     _narrationAudio.addEventListener('ended', _onEnd, { once: true });
     _narrationAudio.addEventListener('error', _onEnd, { once: true });
     _narrationAudio.play().catch(_onEnd);
 
-    // 20秒後: ソフィー写真に切り替え＋サムネイル表示
     _slideTimer = setTimeout(() => {
         if (_done) return;
         _showSophie();
     }, 20000);
 
-    // 横画面自動対応
     _setupOrientation(mon, episode);
 }
 
-// ---- 横画面レイアウト ----
+// ---- 横画面レイアウト（position:fixed で確実にオーバーレイ） ----
 
 function _applyLandscapeLayout(episode) {
     document.getElementById('dj-landscape-panel')?.remove();
 
-    const rSide = document.querySelector('.r-side');
-    if (!rSide) return;
-
-    // ---- CSS注入でr-sideを100px固定幅に（Safariで inline setProperty が効かないため） ----
+    // r-sideをCSSで非表示 & main-uiに右余白を追加（固定パネルと重ならないよう）
     let styleEl = document.getElementById('dj-ls-style');
     if (!styleEl) {
         styleEl = document.createElement('style');
         styleEl.id = 'dj-ls-style';
         document.head.appendChild(styleEl);
     }
-    styleEl.textContent = '.r-side { flex: 0 0 100px !important; max-width: 100px !important; }';
-
-    // ---- r-sideの既存コンテンツを非表示（z-index競合回避） ----
-    _rSideHidden = [];
-    for (const child of Array.from(rSide.children)) {
-        if (child.id !== 'dj-landscape-panel') {
-            _rSideHidden.push([child, child.style.display]);
-            child.style.display = 'none';
-        }
-    }
-
-    rSide.style.position = 'relative';
-
-    // 横画面パネルの写真は常に sophie_shake.png（ナレーション終了後も変更しない）
-    // タイトルオーバーレイは _showSophie() が呼ばれるまで非表示
+    styleEl.textContent = '.r-side { display: none !important; } #main-ui { padding-right: 100px !important; }';
 
     const panel = document.createElement('div');
     panel.id = 'dj-landscape-panel';
-    panel.style.cssText = 'position:absolute;inset:0;display:flex;flex-direction:column;background:#111;';
+    // position:fixed でビューポート右端に固定（r-sideのDOMから独立）
+    panel.style.cssText = 'position:fixed;top:0;right:0;width:100px;bottom:0;z-index:8000;display:flex;flex-direction:column;background:#111;';
 
     const btnStyle = 'width:100%;border:none;cursor:pointer;font-weight:bold;touch-action:manipulation;-webkit-tap-highlight-color:transparent;';
     panel.innerHTML = `
@@ -293,12 +267,11 @@ function _applyLandscapeLayout(episode) {
             <img class="dj-ls-sophie" src="./sophie_shake.png"
                  style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;">
             <div id="dj-ls-title"
-                 style="display:none;
-                        position:absolute;top:6px;left:6px;max-width:92%;
-                        background:rgba(0,0,0,0.72);border-radius:4px;padding:4px 6px;">
-                <div style="color:#f0b56e;font-size:0.65rem;font-weight:bold;
+                 style="display:none;position:absolute;top:6px;left:6px;right:6px;
+                        background:rgba(0,0,0,0.75);border-radius:4px;padding:4px 6px;">
+                <div style="color:#f0b56e;font-size:0.62rem;font-weight:bold;
                             line-height:1.3;text-shadow:0 1px 4px #000;">${episode.title}</div>
-                <div style="color:#c8b090;font-size:0.58rem;margin-top:1px;text-shadow:0 1px 3px #000;">
+                <div style="color:#c8b090;font-size:0.56rem;margin-top:1px;text-shadow:0 1px 3px #000;">
                     ${episode.artist}「${episode.song}」
                 </div>
             </div>
@@ -316,7 +289,13 @@ function _applyLandscapeLayout(episode) {
                 style="${btnStyle}height:55px;background:#34495e;color:#fff;
                        font-size:0.88rem;border-top:2px solid #5ba3d9;">閉じる</button>`;
 
-    rSide.appendChild(panel);
+    document.body.appendChild(panel);
+
+    // _showSophie() が既に呼ばれていれば即タイトル表示
+    if (_sophiePhase) {
+        const lsTitle = document.getElementById('dj-ls-title');
+        if (lsTitle) lsTitle.style.display = 'block';
+    }
 
     document.getElementById('dj-ls-skip').onclick  = () => djSkip();
     document.getElementById('dj-ls-stop').onclick  = () => djStop();
@@ -325,26 +304,20 @@ function _applyLandscapeLayout(episode) {
 }
 
 function _removeLandscapeLayout() {
-    // CSS注入を解除
+    // CSSを解除してr-sideを復元
     const styleEl = document.getElementById('dj-ls-style');
     if (styleEl) styleEl.textContent = '';
-
-    // r-sideの子要素を元の表示状態に戻す
-    if (_rSideHidden) {
-        for (const [child, prevDisplay] of _rSideHidden) {
-            child.style.display = prevDisplay;
-        }
-        _rSideHidden = null;
-    }
-
     document.getElementById('dj-landscape-panel')?.remove();
 }
 
 function _setupOrientation(mon, episode) {
     _removeOrientation();
     if (!mon) return;
+    _lastIsLandscape = null;
     const _update = () => {
         const isLandscape = window.matchMedia('(orientation: landscape)').matches;
+        if (isLandscape === _lastIsLandscape) return; // 向きが変わっていなければスキップ
+        _lastIsLandscape = isLandscape;
         if (isLandscape) {
             mon.classList.add('expanded');
             _applyLandscapeLayout(episode);
@@ -365,6 +338,7 @@ function _removeOrientation() {
         window.removeEventListener('resize', _orientationHandler);
         _orientationHandler = null;
     }
+    _lastIsLandscape = null;
     document.querySelector('.monitor')?.classList.remove('expanded');
     _removeLandscapeLayout();
 }
@@ -407,14 +381,12 @@ export function djSkip() {
     const yt = document.getElementById('yt-wrapper');
     const player = window._ytPlayer;
     if (yt && yt.style.display !== 'none' && player) {
-        // YouTube再生中 → 曲の末尾（10秒前）へシーク
         try {
             const dur = player.getDuration();
             if (dur > 0) player.seekTo(Math.max(0, dur - 10), true);
         } catch(e) {}
         return;
     }
-    // ナレーション中 → ジェスチャーコンテキストでYouTubeへスキップ
     if (_narrationSkipFn) {
         const fn = _narrationSkipFn;
         _narrationSkipFn = null;
@@ -426,6 +398,7 @@ export function djClose(onBack) {
     if (_slideTimer) { clearTimeout(_slideTimer); _slideTimer = null; }
     if (_narrationAudio) { _narrationAudio.pause(); _narrationAudio = null; }
     _narrationSkipFn = null;
+    _sophiePhase = false;
     _removeOrientation();
 
     document.getElementById('dj-thumb')?.remove();
