@@ -323,13 +323,16 @@ function _startSpecialFlow(episode) {
     const segments = episode.segments || [];
 
     const _playSegment = (idx) => {
-        if (idx >= segments.length) {
-            if (episode.mp3_ending) _playAfterAudio(episode.mp3_ending);
-            return;
-        }
+        if (idx >= segments.length) return;
         const seg = segments[idx];
         _updateSpecialSubtitle(episode, idx);
         if (idx > 0) _showSophieMonitor();
+
+        if (!seg.youtube_id) {
+            // youtube_idなし = 締めトーク（音声のみ再生して終了）
+            _playAfterAudio(seg.mp3);
+            return;
+        }
 
         _playNarration(seg.mp3, () => {
             _showSophieMonitor();
@@ -347,10 +350,15 @@ function _updateSpecialSubtitle(episode, idx) {
     const seg = episode.segments[idx];
     if (!seg) return;
     const n = episode.segments.length;
-    el.innerHTML = `<span style="color:#c8b090;">${seg.artist}</span>`
-        + `<span style="color:#555;margin:0 4px;">／</span>`
-        + `<span>「${seg.song}」</span>`
-        + `<span style="color:#777;font-size:0.6rem;margin-left:4px;">(${idx + 1}/${n})</span>`;
+    const pos = `<span style="color:#777;font-size:0.6rem;margin-left:4px;">(${idx + 1}/${n})</span>`;
+    if (seg.artist || seg.song) {
+        el.innerHTML = `<span style="color:#c8b090;">${seg.artist || ''}</span>`
+            + (seg.artist && seg.song ? `<span style="color:#555;margin:0 4px;">／</span>` : '')
+            + (seg.song ? `<span>「${seg.song}」</span>` : '')
+            + pos;
+    } else {
+        el.innerHTML = pos;
+    }
 }
 
 // ---- 横画面レイアウト ----
