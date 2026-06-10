@@ -184,7 +184,7 @@ export function showDJPlayer(episode, onBackToList) {
     thumb.src = `./img/dj/${episode.slide_img}`;
     thumb.style.cssText = [
         'position:absolute','top:8px','right:8px',
-        'width:216px','height:120px','object-fit:cover',
+        'width:144px','height:80px','object-fit:cover',
         'border-radius:5px','border:1px solid rgba(255,255,255,0.35)',
         'display:none','cursor:pointer','z-index:50',
         'box-shadow:0 2px 10px rgba(0,0,0,0.9)',
@@ -203,10 +203,13 @@ export function showDJPlayer(episode, onBackToList) {
     const _showSophie = () => {
         _setMonitorImg('./front_sophie.jpeg');
         const thumbEl = document.getElementById('dj-thumb');
-        if (thumbEl) thumbEl.style.display = 'block';
+        if (thumbEl) {
+            const ls = window.matchMedia('(orientation: landscape)').matches;
+            thumbEl.style.width  = ls ? '216px' : '144px';
+            thumbEl.style.height = ls ? '120px' : '80px';
+            thumbEl.style.display = 'block';
+        }
         _sophiePhase = true;
-        const lsTitle = document.getElementById('dj-ls-title');
-        if (lsTitle) lsTitle.style.display = 'block';
     };
 
     const _onEnd = () => {
@@ -266,16 +269,7 @@ function _applyLandscapeLayout(episode) {
     panel.innerHTML = `
         <div style="flex:1;position:relative;overflow:hidden;">
             <img class="dj-ls-sophie" src="./sophie_shake.png"
-                 style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;display:block;z-index:1;">
-            <div id="dj-ls-title"
-                 style="display:none;position:absolute;top:6px;left:6px;right:6px;z-index:2;
-                        background:rgba(0,0,0,0.75);border-radius:4px;padding:4px 6px;">
-                <div style="color:#f0b56e;font-size:0.62rem;font-weight:bold;
-                            line-height:1.3;text-shadow:0 1px 4px #000;">${episode.title}</div>
-                <div style="color:#c8b090;font-size:0.56rem;margin-top:1px;text-shadow:0 1px 3px #000;">
-                    ${episode.artist}「${episode.song}」
-                </div>
-            </div>
+                 style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;display:block;">
         </div>
         <button id="dj-ls-skip"
                 style="${btnStyle}height:55px;background:#1a2a3a;color:#5ba3d9;
@@ -291,11 +285,6 @@ function _applyLandscapeLayout(episode) {
                        font-size:0.88rem;border-top:2px solid #5ba3d9;">閉じる</button>`;
 
     rSide.appendChild(panel);
-
-    if (_sophiePhase) {
-        const lsTitle = document.getElementById('dj-ls-title');
-        if (lsTitle) lsTitle.style.display = 'block';
-    }
 
     document.getElementById('dj-ls-skip').onclick  = () => djSkip();
     document.getElementById('dj-ls-stop').onclick  = () => djStop();
@@ -317,12 +306,19 @@ function _setupOrientation(mon, episode) {
         const isLandscape = window.matchMedia('(orientation: landscape)').matches;
         if (isLandscape === _lastIsLandscape) return;
         _lastIsLandscape = isLandscape;
+        const thumbEl = document.getElementById('dj-thumb');
         if (isLandscape) {
             mon.classList.add('expanded');
             _applyLandscapeLayout(episode);
+            if (thumbEl && thumbEl.style.display !== 'none') {
+                thumbEl.style.width = '216px'; thumbEl.style.height = '120px';
+            }
         } else {
             mon.classList.remove('expanded');
             _removeLandscapeLayout();
+            if (thumbEl && thumbEl.style.display !== 'none') {
+                thumbEl.style.width = '144px'; thumbEl.style.height = '80px';
+            }
         }
     };
     _update();
