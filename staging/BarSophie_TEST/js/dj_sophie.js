@@ -169,8 +169,11 @@ export function showDJPlayer(episode, onBackToList) {
     try { if (window._lastSophieVoiceAudio) window._lastSophieVoiceAudio.pause(); } catch(e) {}
 
     // iOS自動再生対策: yt-wrapper が見えている状態でプリロード（_setMonitorImg より先に実行）
+    // showRootMenu が yt-wrapper を非表示にしているため、ここで一時的に表示してから loadVideoById する
     const segments = episode.segments || [];
     const firstYtId = segments[0]?.youtube_id || null;
+    const ytEl = document.getElementById('yt-wrapper');
+    if (ytEl && firstYtId) ytEl.style.display = 'block';
     const player = window._ytPlayer;
     if (player && firstYtId) {
         try { _origVol = player.getVolume(); } catch(e) { _origVol = 100; }
