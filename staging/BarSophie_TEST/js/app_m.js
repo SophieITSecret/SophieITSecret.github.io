@@ -115,11 +115,19 @@ window.onYouTubeIframeAPIReady = function () {
                         fn();
                         return;
                     }
+                    if (window._djYtPreloading) return; // DJプリロード中はmusic.next()スキップ
                     if (music.isAutoPlayMode && music.isAutoPlayMode()) {
                         music.nextAutoPlay();
                     } else if (music.isAutoPlay && music.isMusicMode) {
                         music.next();
                     }
+                }
+            },
+            onError: () => {
+                if (window._djYtEndCallback) {
+                    const fn = window._djYtEndCallback;
+                    window._djYtEndCallback = null;
+                    fn();
                 }
             }
         }

@@ -6,6 +6,7 @@ let _narrationAudio = null;
 let _afterAudio = null;
 let _origVol = null;
 let _slideTimer = null;
+let _autoReturnTimer = null;
 let _orientationHandler = null;
 let _currentEpisode = null;
 let _narrationSkipFn = null;
@@ -53,10 +54,11 @@ function _loadYoutube(ytId) {
     try {
         if (_djYtPreloaded) {
             _djYtPreloaded = false;
+            window._djYtPreloading = false;
             if (_origVol !== null) { player.setVolume(_origVol); _origVol = null; }
             else { player.setVolume(100); }
             player.unMute();
-            player.seekTo(0, true);
+            player.loadVideoById(ytId);
             player.playVideo();
         } else {
             _restoreBgm();
@@ -181,6 +183,7 @@ export function showDJPlayer(episode, onBackToList) {
             player.mute();
             player.loadVideoById(firstYtId);
             _djYtPreloaded = true;
+            window._djYtPreloading = true;
         } catch(e) {
             _origVol = null;
             _duckBgm();
@@ -270,7 +273,7 @@ function _playNarration(mp3, onDone) {
     }, 20000);
 }
 
-function _playAfterAudio(mp3) {
+function _playAfterAudio(mp3, onComplete) {
     _showSophieMonitor();
     if (_afterAudio) { try { _afterAudio.pause(); } catch(e) {} }
     _afterAudio = new Audio(`./voices_mp3/${mp3}`);
@@ -279,11 +282,13 @@ function _playAfterAudio(mp3) {
         _afterAudio = null;
         _narrationSkipFn = null;
         window._djNarrationActive = false;
+        if (onComplete) onComplete();
     };
     _narrationSkipFn = () => {
         if (_afterAudio) { try { _afterAudio.pause(); } catch(e) {} _afterAudio = null; }
         _narrationSkipFn = null;
         window._djNarrationActive = false;
+        if (onComplete) onComplete();
     };
     window._djNarrationActive = true;
     _afterAudio.addEventListener('ended', done, { once: true });
@@ -297,15 +302,25 @@ function _startFlow(episode) {
     const segments = episode.segments || [];
     const isMulti = segments.length > 1;
 
+    const onAllDone = () => {
+        _autoReturnTimer = setTimeout(() => {
+            _autoReturnTimer = null;
+            const backFn = window._djBackFn;
+            if (backFn) djClose(backFn);
+        }, 1500);
+    };
+
     const _playSegment = (idx) => {
-        if (idx >= segments.length) return;
+        if (idx >= segments.length) {
+            onAllDone();
+            return;
+        }
         const seg = segments[idx];
         if (isMulti) _updateSubtitle(episode, idx);
         if (idx > 0) _showSophieMonitor();
 
         if (!seg.youtube_id) {
-            // youtube_idなし = しゃべりで終了
-            _playAfterAudio(seg.mp3);
+            _playAfterAudio(seg.mp3, onAllDone);
             return;
         }
 
@@ -489,9 +504,11 @@ export function djSkip() {
 
 export function djClose(onBack) {
     if (_slideTimer) { clearTimeout(_slideTimer); _slideTimer = null; }
+    if (_autoReturnTimer) { clearTimeout(_autoReturnTimer); _autoReturnTimer = null; }
     if (_narrationAudio) { _narrationAudio.pause(); _narrationAudio = null; }
     if (_afterAudio) { _afterAudio.pause(); _afterAudio = null; }
     window._djYtEndCallback = null;
+    window._djYtPreloading = false;
     _narrationSkipFn = null;
     window._djNarrationActive = false;
     _sophiePhase = false;
