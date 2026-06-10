@@ -139,6 +139,8 @@ export function showGuideScreen(onClose) {
 
     if (!isLoggedIn) {
         document.getElementById('p1-register')?.addEventListener('click', () => {
+            if (_audio) { _audio.pause(); _audio = null; }
+            _restoreVol();
             window.signInWithGoogle();
         });
     }

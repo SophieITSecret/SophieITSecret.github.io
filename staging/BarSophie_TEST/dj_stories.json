@@ -1,13 +1,39 @@
 [
   {
-    "id": "001",
+    "id": "008",
+    "type": "special",
     "date": "2026-06-09",
     "title": "悲しい酒――ひばりさんが泣いた理由",
     "artist": "美空ひばり",
     "song": "悲しい酒",
+    "slide_img": "dj_008.jpg",
+    "segments": [
+      { "mp3": "dj_008_01.mp3", "youtube_id": "DBpqqhORgYQ" },
+      { "mp3": "dj_008_02.mp3" }
+    ]
+  },
+  {
+    "id": "002",
+    "type": "special",
+    "date": "2026-06-09",
+    "title": "昭和の歌謡史・10年代　蘇州夜曲",
+    "artist": "李香蘭",
+    "song": "蘇州夜曲",
+    "slide_img": "dj_002.jpg",
+    "segments": [
+      { "mp3": "dj_002_01.mp3", "youtube_id": "w0ht7Wkkc3s" }
+    ]
+  },
+  {
+    "id": "001",
+    "type": "special",
+    "date": "2026-06-09",
+    "title": "昭和の歌謡史・一桁代　影を慕いて",
+    "artist": "藤山一郎",
+    "song": "影を慕いて",
     "slide_img": "dj_001.jpg",
     "segments": [
-      { "mp3": "dj_001_01.mp3", "youtube_id": "DBpqqhORgYQ" }
+      { "mp3": "dj_001_01.mp3", "youtube_id": "b4FhvO2nJhQ" }
     ]
   }
 ]
