@@ -3,6 +3,7 @@
 import * as nav from './navigation.js';
 
 let _narrationAudio = null;
+let _afterAudio = null;
 let _origVol = null;
 let _slideTimer = null;
 let _orientationHandler = null;
@@ -65,6 +66,18 @@ function _loadYoutube(ytId) {
     } catch(e) {}
 }
 
+function _showSophieMonitor() {
+    _setMonitorImg('./front_sophie.jpeg');
+    const thumbEl = document.getElementById('dj-thumb');
+    if (thumbEl) {
+        const ls = window.matchMedia('(orientation: landscape)').matches;
+        thumbEl.style.width  = ls ? '216px' : '144px';
+        thumbEl.style.height = ls ? '120px' : '80px';
+        thumbEl.style.display = 'block';
+    }
+    _sophiePhase = true;
+}
+
 // ---- DJ0: エピソード一覧 ----
 
 export async function showDJList(onBack) {
@@ -105,6 +118,15 @@ export async function showDJList(onBack) {
             <div style="padding:6px 0;">`;
 
     episodes.forEach(ep => {
+        const type = ep.type || 'single';
+        let subtitleHtml;
+        if (type === 'special') {
+            subtitleHtml = `<span style="color:#c8b090;">全${ep.segments?.length || 0}曲</span>`;
+        } else {
+            subtitleHtml = `<span style="color:#c8b090;">${ep.artist}</span>`
+                + `<span style="color:#555;margin:0 4px;">／</span>`
+                + `<span>「${ep.song}」</span>`;
+        }
         html += `
             <div class="dj-ep-card" data-id="${ep.id}"
                  style="padding:10px 14px;border-bottom:1px solid #222;cursor:pointer;
@@ -114,11 +136,7 @@ export async function showDJList(onBack) {
                     <span style="color:#888;font-size:0.68rem;flex-shrink:0;">${ep.date}</span>
                 </div>
                 <div style="color:#f0b56e;font-size:0.9rem;font-weight:bold;line-height:1.4;margin-bottom:3px;">${ep.title}</div>
-                <div style="color:#aaa;font-size:0.78rem;">
-                    <span style="color:#c8b090;">${ep.artist}</span>
-                    <span style="color:#555;margin:0 4px;">／</span>
-                    <span>「${ep.song}」</span>
-                </div>
+                <div style="color:#aaa;font-size:0.78rem;">${subtitleHtml}</div>
             </div>`;
     });
 
@@ -136,6 +154,7 @@ export async function showDJList(onBack) {
 // ---- DJ1: 再生画面 ----
 
 export function showDJPlayer(episode, onBackToList) {
+    const type = episode.type || 'single';
     _currentEpisode = episode;
     _sophiePhase = false;
     nav.updateNav('dj');
@@ -148,18 +167,21 @@ export function showDJPlayer(episode, onBackToList) {
     if (!lv) return;
     lv.style.display = 'block';
 
-    // 競合する音声を即停止（挨拶・カウション・talkAudio）
+    // 競合する音声を即停止
     if (window._cancelGuestCaution) window._cancelGuestCaution();
     try { const ta = document.getElementById('talk-audio'); if (ta) ta.pause(); } catch(e) {}
     try { if (window._lastSophieVoiceAudio) window._lastSophieVoiceAudio.pause(); } catch(e) {}
 
     // iOS自動再生対策: yt-wrapper が見えている状態でプリロード（_setMonitorImg より先に実行）
+    const firstYtId = type === 'special'
+        ? (episode.segments?.[0]?.youtube_id || null)
+        : (episode.youtube_id || null);
     const player = window._ytPlayer;
-    if (player && episode.youtube_id) {
+    if (player && firstYtId) {
         try { _origVol = player.getVolume(); } catch(e) { _origVol = 100; }
         try {
             player.mute();
-            player.loadVideoById(episode.youtube_id);
+            player.loadVideoById(firstYtId);
             _djYtPreloaded = true;
         } catch(e) {
             _origVol = null;
@@ -169,16 +191,24 @@ export function showDJPlayer(episode, onBackToList) {
         _duckBgm();
     }
 
-    _setMonitorImg(`./img/dj/${episode.slide_img}`);
+    const slideImgSrc = episode.slide_img
+        ? `./img/dj/${episode.slide_img}`
+        : './front_sophie.jpeg';
+    _setMonitorImg(slideImgSrc);
 
+    // エピソード情報パネル
+    let subtitleHtml;
+    if (type === 'special') {
+        subtitleHtml = `<span id="dj-ep-subtitle" style="color:#c8b090;">全${episode.segments?.length || 0}曲</span>`;
+    } else {
+        subtitleHtml = `<span style="color:#c8b090;">${episode.artist}</span>`
+            + `<span style="color:#555;margin:0 4px;">／</span>`
+            + `<span>「${episode.song}」</span>`;
+    }
     lv.innerHTML = `
         <div style="padding:6px 12px 5px;">
             <div style="color:#f0b56e;font-size:0.82rem;font-weight:bold;line-height:1.4;margin-bottom:2px;">${episode.title}</div>
-            <div style="color:#aaa;font-size:0.70rem;">
-                <span style="color:#c8b090;">${episode.artist}</span>
-                <span style="color:#555;margin:0 4px;">／</span>
-                <span>「${episode.song}」</span>
-            </div>
+            <div style="color:#aaa;font-size:0.70rem;">${subtitleHtml}</div>
             <div style="color:#888;font-size:0.62rem;margin-top:2px;">#${episode.id}&nbsp;&nbsp;${episode.date}</div>
         </div>`;
 
@@ -186,7 +216,7 @@ export function showDJPlayer(episode, onBackToList) {
     document.getElementById('dj-thumb')?.remove();
     const thumb = document.createElement('img');
     thumb.id  = 'dj-thumb';
-    thumb.src = `./img/dj/${episode.slide_img}`;
+    thumb.src = slideImgSrc;
     thumb.style.cssText = [
         'position:absolute','top:8px','right:8px',
         'width:144px','height:80px','object-fit:cover',
@@ -195,60 +225,132 @@ export function showDJPlayer(episode, onBackToList) {
         'box-shadow:0 2px 10px rgba(0,0,0,0.9)',
     ].join(';');
     if (mon) mon.appendChild(thumb);
-    thumb.addEventListener('click', () => _showThumbModal(episode.slide_img));
+    if (episode.slide_img) thumb.addEventListener('click', () => _showThumbModal(episode.slide_img));
 
     window._djBackFn = onBackToList;
     window._renderConsole?.('dj_player');
 
-    _narrationAudio = new Audio(`./voices_mp3/${episode.mp3}`);
+    _setupOrientation(mon, episode);
+
+    if (type === 'single_after') {
+        _startSingleAfterFlow(episode);
+    } else if (type === 'special') {
+        _startSpecialFlow(episode);
+    } else {
+        _startSingleFlow(episode);
+    }
+}
+
+// ---- 共通再生ヘルパー ----
+
+function _playNarration(mp3, onDone) {
+    if (_narrationAudio) { try { _narrationAudio.pause(); } catch(e) {} }
+    if (_slideTimer) { clearTimeout(_slideTimer); _slideTimer = null; }
+
+    _narrationAudio = new Audio(`./voices_mp3/${mp3}`);
     _narrationAudio.preload = 'auto';
+    let _invoked = false;
 
-    let _done = false;
-
-    const _showSophie = () => {
-        _setMonitorImg('./front_sophie.jpeg');
-        const thumbEl = document.getElementById('dj-thumb');
-        if (thumbEl) {
-            const ls = window.matchMedia('(orientation: landscape)').matches;
-            thumbEl.style.width  = ls ? '216px' : '144px';
-            thumbEl.style.height = ls ? '120px' : '80px';
-            thumbEl.style.display = 'block';
-        }
-        _sophiePhase = true;
-    };
-
-    const _onEnd = () => {
-        if (_done) return;
-        _done = true;
+    const done = () => {
+        if (_invoked) return;
+        _invoked = true;
         _narrationSkipFn = null;
         if (_slideTimer) { clearTimeout(_slideTimer); _slideTimer = null; }
         window._djNarrationActive = false;
-        _showSophie();
-        _loadYoutube(episode.youtube_id);
+        onDone();
     };
 
     _narrationSkipFn = () => {
-        if (_done) return;
-        _done = true;
+        if (_invoked) return;
+        _invoked = true;
         _narrationSkipFn = null;
         if (_narrationAudio) { try { _narrationAudio.pause(); } catch(e) {} }
         if (_slideTimer) { clearTimeout(_slideTimer); _slideTimer = null; }
         window._djNarrationActive = false;
-        _showSophie();
-        _loadYoutube(episode.youtube_id);
+        onDone();
     };
 
-    _narrationAudio.addEventListener('ended', _onEnd, { once: true });
-    _narrationAudio.addEventListener('error', _onEnd, { once: true });
-    _narrationAudio.play().catch(_onEnd);
+    _narrationAudio.addEventListener('ended', done, { once: true });
+    _narrationAudio.addEventListener('error', done, { once: true });
+    _narrationAudio.play().catch(done);
     window._djNarrationActive = true;
 
     _slideTimer = setTimeout(() => {
-        if (_done) return;
-        _showSophie();
+        if (_invoked) return;
+        _showSophieMonitor();
     }, 20000);
+}
 
-    _setupOrientation(mon, episode);
+function _playAfterAudio(mp3) {
+    _showSophieMonitor();
+    if (_afterAudio) { try { _afterAudio.pause(); } catch(e) {} }
+    _afterAudio = new Audio(`./voices_mp3/${mp3}`);
+    _afterAudio.preload = 'auto';
+    const done = () => {
+        _afterAudio = null;
+        _narrationSkipFn = null;
+        window._djNarrationActive = false;
+    };
+    _narrationSkipFn = () => {
+        if (_afterAudio) { try { _afterAudio.pause(); } catch(e) {} _afterAudio = null; }
+        _narrationSkipFn = null;
+        window._djNarrationActive = false;
+    };
+    window._djNarrationActive = true;
+    _afterAudio.addEventListener('ended', done, { once: true });
+    _afterAudio.addEventListener('error', done, { once: true });
+    _afterAudio.play().catch(done);
+}
+
+// ---- 再生フロー ----
+
+function _startSingleFlow(episode) {
+    _playNarration(episode.mp3, () => {
+        _showSophieMonitor();
+        _loadYoutube(episode.youtube_id);
+    });
+}
+
+function _startSingleAfterFlow(episode) {
+    _playNarration(episode.mp3, () => {
+        _showSophieMonitor();
+        window._djYtEndCallback = () => _playAfterAudio(episode.mp3_after);
+        _loadYoutube(episode.youtube_id);
+    });
+}
+
+function _startSpecialFlow(episode) {
+    const segments = episode.segments || [];
+
+    const _playSegment = (idx) => {
+        if (idx >= segments.length) {
+            if (episode.mp3_ending) _playAfterAudio(episode.mp3_ending);
+            return;
+        }
+        const seg = segments[idx];
+        _updateSpecialSubtitle(episode, idx);
+        if (idx > 0) _showSophieMonitor();
+
+        _playNarration(seg.mp3, () => {
+            _showSophieMonitor();
+            window._djYtEndCallback = () => _playSegment(idx + 1);
+            _loadYoutube(seg.youtube_id);
+        });
+    };
+
+    _playSegment(0);
+}
+
+function _updateSpecialSubtitle(episode, idx) {
+    const el = document.getElementById('dj-ep-subtitle');
+    if (!el) return;
+    const seg = episode.segments[idx];
+    if (!seg) return;
+    const n = episode.segments.length;
+    el.innerHTML = `<span style="color:#c8b090;">${seg.artist}</span>`
+        + `<span style="color:#555;margin:0 4px;">／</span>`
+        + `<span>「${seg.song}」</span>`
+        + `<span style="color:#777;font-size:0.6rem;margin-left:4px;">(${idx + 1}/${n})</span>`;
 }
 
 // ---- 横画面レイアウト ----
@@ -369,6 +471,10 @@ export function djPlay() {
         if (_narrationAudio.paused) _narrationAudio.play().catch(() => {});
         return;
     }
+    if (_afterAudio && !_afterAudio.ended) {
+        if (_afterAudio.paused) _afterAudio.play().catch(() => {});
+        return;
+    }
     const yt = document.getElementById('yt-wrapper');
     if (yt && yt.style.display !== 'none') {
         try { window._ytPlayer?.playVideo(); } catch(e) {}
@@ -377,6 +483,7 @@ export function djPlay() {
 
 export function djStop() {
     if (_narrationAudio && !_narrationAudio.paused) _narrationAudio.pause();
+    if (_afterAudio && !_afterAudio.paused) _afterAudio.pause();
     try { window._ytPlayer?.pauseVideo(); } catch(e) {}
 }
 
@@ -400,6 +507,8 @@ export function djSkip() {
 export function djClose(onBack) {
     if (_slideTimer) { clearTimeout(_slideTimer); _slideTimer = null; }
     if (_narrationAudio) { _narrationAudio.pause(); _narrationAudio = null; }
+    if (_afterAudio) { _afterAudio.pause(); _afterAudio = null; }
+    window._djYtEndCallback = null;
     _narrationSkipFn = null;
     window._djNarrationActive = false;
     _sophiePhase = false;

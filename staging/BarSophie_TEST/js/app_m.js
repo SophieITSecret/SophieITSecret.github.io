@@ -109,6 +109,12 @@ window.onYouTubeIframeAPIReady = function () {
             },
             onStateChange: (e) => {
                 if (e.data === YT.PlayerState.ENDED) {
+                    if (window._djYtEndCallback) {
+                        const fn = window._djYtEndCallback;
+                        window._djYtEndCallback = null;
+                        fn();
+                        return;
+                    }
                     if (music.isAutoPlayMode && music.isAutoPlayMode()) {
                         music.nextAutoPlay();
                     } else if (music.isAutoPlay && music.isMusicMode) {
