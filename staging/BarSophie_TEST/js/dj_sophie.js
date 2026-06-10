@@ -279,11 +279,11 @@ function _playNarration(mp3, onDone) {
     }, 20000);
 }
 
-function _playAfterAudio(mp3, onComplete) {
+function _playAfterAudio(mp3, onComplete, preCreated) {
     _showSophieMonitor();
     if (_afterAudio) { try { _afterAudio.pause(); } catch(e) {} }
-    _afterAudio = new Audio(`./voices_mp3/${mp3}`);
-    _afterAudio.preload = 'auto';
+    _afterAudio = preCreated || new Audio(`./voices_mp3/${mp3}`);
+    if (!preCreated) _afterAudio.preload = 'auto';
     const done = () => {
         _afterAudio = null;
         _narrationSkipFn = null;
@@ -308,6 +308,17 @@ function _startFlow(episode) {
     const segments = episode.segments || [];
     const isMulti = segments.length > 1;
 
+    // iOS: ユーザーゼスチャーのコンテキスト内でAudioを事前作成しておく
+    // YouTube終了後にnew Audio().play()するとiOSに拒否されるため
+    const _preAudio = {};
+    segments.forEach(seg => {
+        if (seg.mp3 && !seg.youtube_id) {
+            const a = new Audio(`./voices_mp3/${seg.mp3}`);
+            a.preload = 'auto';
+            _preAudio[seg.mp3] = a;
+        }
+    });
+
     const onAllDone = () => {
         _autoReturnTimer = setTimeout(() => {
             _autoReturnTimer = null;
@@ -326,7 +337,7 @@ function _startFlow(episode) {
         if (idx > 0) _showSophieMonitor();
 
         if (!seg.youtube_id) {
-            _playAfterAudio(seg.mp3, onAllDone);
+            _playAfterAudio(seg.mp3, onAllDone, _preAudio[seg.mp3]);
             return;
         }
 
