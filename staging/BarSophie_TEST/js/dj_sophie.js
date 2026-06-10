@@ -118,15 +118,12 @@ export async function showDJList(onBack) {
             <div style="padding:6px 0;">`;
 
     episodes.forEach(ep => {
-        const type = ep.type || 'single';
-        let subtitleHtml;
-        if (type === 'special') {
-            subtitleHtml = `<span style="color:#c8b090;">全${ep.segments?.length || 0}曲</span>`;
-        } else {
-            subtitleHtml = `<span style="color:#c8b090;">${ep.artist}</span>`
-                + `<span style="color:#555;margin:0 4px;">／</span>`
-                + `<span>「${ep.song}」</span>`;
-        }
+        const segs = ep.segments || [];
+        const subtitleHtml = segs.length > 1
+            ? `<span style="color:#c8b090;">全${segs.length}曲</span>`
+            : `<span style="color:#c8b090;">${ep.artist || ''}</span>`
+                + (ep.artist && ep.song ? `<span style="color:#555;margin:0 4px;">／</span>` : '')
+                + (ep.song ? `<span>「${ep.song}」</span>` : '');
         html += `
             <div class="dj-ep-card" data-id="${ep.id}"
                  style="padding:10px 14px;border-bottom:1px solid #222;cursor:pointer;
@@ -154,7 +151,6 @@ export async function showDJList(onBack) {
 // ---- DJ1: 再生画面 ----
 
 export function showDJPlayer(episode, onBackToList) {
-    const type = episode.type || 'single';
     _currentEpisode = episode;
     _sophiePhase = false;
     nav.updateNav('dj');
@@ -173,9 +169,8 @@ export function showDJPlayer(episode, onBackToList) {
     try { if (window._lastSophieVoiceAudio) window._lastSophieVoiceAudio.pause(); } catch(e) {}
 
     // iOS自動再生対策: yt-wrapper が見えている状態でプリロード（_setMonitorImg より先に実行）
-    const firstYtId = type === 'special'
-        ? (episode.segments?.[0]?.youtube_id || null)
-        : (episode.youtube_id || null);
+    const segments = episode.segments || [];
+    const firstYtId = segments[0]?.youtube_id || null;
     const player = window._ytPlayer;
     if (player && firstYtId) {
         try { _origVol = player.getVolume(); } catch(e) { _origVol = 100; }
@@ -197,14 +192,12 @@ export function showDJPlayer(episode, onBackToList) {
     _setMonitorImg(slideImgSrc);
 
     // エピソード情報パネル
-    let subtitleHtml;
-    if (type === 'special') {
-        subtitleHtml = `<span id="dj-ep-subtitle" style="color:#c8b090;">全${episode.segments?.length || 0}曲</span>`;
-    } else {
-        subtitleHtml = `<span style="color:#c8b090;">${episode.artist}</span>`
-            + `<span style="color:#555;margin:0 4px;">／</span>`
-            + `<span>「${episode.song}」</span>`;
-    }
+    const isMulti = segments.length > 1;
+    const subtitleHtml = isMulti
+        ? `<span id="dj-ep-subtitle" style="color:#c8b090;">全${segments.length}曲</span>`
+        : `<span style="color:#c8b090;">${episode.artist || ''}</span>`
+            + (episode.artist && episode.song ? `<span style="color:#555;margin:0 4px;">／</span>` : '')
+            + (episode.song ? `<span>「${episode.song}」</span>` : '');
     lv.innerHTML = `
         <div style="padding:6px 12px 5px;">
             <div style="color:#f0b56e;font-size:0.82rem;font-weight:bold;line-height:1.4;margin-bottom:2px;">${episode.title}</div>
@@ -231,14 +224,7 @@ export function showDJPlayer(episode, onBackToList) {
     window._renderConsole?.('dj_player');
 
     _setupOrientation(mon, episode);
-
-    if (type === 'single_after') {
-        _startSingleAfterFlow(episode);
-    } else if (type === 'special') {
-        _startSpecialFlow(episode);
-    } else {
-        _startSingleFlow(episode);
-    }
+    _startFlow(episode);
 }
 
 // ---- 共通再生ヘルパー ----
@@ -304,32 +290,18 @@ function _playAfterAudio(mp3) {
 
 // ---- 再生フロー ----
 
-function _startSingleFlow(episode) {
-    _playNarration(episode.mp3, () => {
-        _showSophieMonitor();
-        _loadYoutube(episode.youtube_id);
-    });
-}
-
-function _startSingleAfterFlow(episode) {
-    _playNarration(episode.mp3, () => {
-        _showSophieMonitor();
-        window._djYtEndCallback = () => _playAfterAudio(episode.mp3_after);
-        _loadYoutube(episode.youtube_id);
-    });
-}
-
-function _startSpecialFlow(episode) {
+function _startFlow(episode) {
     const segments = episode.segments || [];
+    const isMulti = segments.length > 1;
 
     const _playSegment = (idx) => {
         if (idx >= segments.length) return;
         const seg = segments[idx];
-        _updateSpecialSubtitle(episode, idx);
+        if (isMulti) _updateSubtitle(episode, idx);
         if (idx > 0) _showSophieMonitor();
 
         if (!seg.youtube_id) {
-            // youtube_idなし = 締めトーク（音声のみ再生して終了）
+            // youtube_idなし = しゃべりで終了
             _playAfterAudio(seg.mp3);
             return;
         }
@@ -344,7 +316,7 @@ function _startSpecialFlow(episode) {
     _playSegment(0);
 }
 
-function _updateSpecialSubtitle(episode, idx) {
+function _updateSubtitle(episode, idx) {
     const el = document.getElementById('dj-ep-subtitle');
     if (!el) return;
     const seg = episode.segments[idx];
