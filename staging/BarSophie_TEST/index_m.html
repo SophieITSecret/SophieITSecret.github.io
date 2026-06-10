@@ -155,18 +155,45 @@
         if (token) {
             window._loginFromToken = true;
             window.history.replaceState({}, document.title, window.location.pathname);
+            // PWA が別タブで認証した場合に備えて localStorage にも保存（同一オリジン共有）
+            try { localStorage.setItem('_bs_auth_token', JSON.stringify({t: token, ts: Date.now()})); } catch(e) {}
             signInWithCustomToken(auth, token)
                 .then((userCredential) => {
+                    try { localStorage.removeItem('_bs_auth_token'); } catch(e) {}
                     console.log('カスタムトークンログイン成功:', userCredential.user.email);
                 })
                 .catch((error) => {
+                    try { localStorage.removeItem('_bs_auth_token'); } catch(e) {}
                     console.error('カスタムトークンログイン失敗:', error);
                     window._loginFromToken = false;
                 });
         }
 
+        // PWAモード: Safari タブで認証完了後、フォアグラウンド復帰時にトークンを回収
+        if (window.navigator.standalone) {
+            const _checkPendingToken = () => {
+                if (window.currentUser) return;
+                try {
+                    const stored = localStorage.getItem('_bs_auth_token');
+                    if (!stored) return;
+                    const {t, ts} = JSON.parse(stored);
+                    localStorage.removeItem('_bs_auth_token');
+                    if (Date.now() - ts < 300000) { // 5分以内なら有効
+                        signInWithCustomToken(auth, t).catch(() => {});
+                    }
+                } catch(e) {}
+            };
+            document.addEventListener('visibilitychange', () => { if (!document.hidden) _checkPendingToken(); });
+            window.addEventListener('pageshow', _checkPendingToken);
+        }
+
         window.signInWithGoogle = () => {
-            window.location.href = "https://bar-sophie-auth.vercel.app/api/callback";
+            if (window.navigator.standalone) {
+                // PWAモード: PWA を離脱させず Safari タブで認証（タブを閉じてアプリに戻る）
+                window.open("https://bar-sophie-auth.vercel.app/api/callback", '_blank');
+            } else {
+                window.location.href = "https://bar-sophie-auth.vercel.app/api/callback";
+            }
         };
 
         window.signOutUser = async () => {

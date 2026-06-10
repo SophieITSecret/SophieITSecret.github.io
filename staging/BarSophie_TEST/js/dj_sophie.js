@@ -148,9 +148,12 @@ export function showDJPlayer(episode, onBackToList) {
     if (!lv) return;
     lv.style.display = 'block';
 
-    _setMonitorImg(`./img/dj/${episode.slide_img}`);
+    // 競合する音声を即停止（挨拶・カウション・talkAudio）
+    if (window._cancelGuestCaution) window._cancelGuestCaution();
+    try { const ta = document.getElementById('talk-audio'); if (ta) ta.pause(); } catch(e) {}
+    try { if (window._lastSophieVoiceAudio) window._lastSophieVoiceAudio.pause(); } catch(e) {}
 
-    // iOS自動再生対策: ジェスチャーコンテキストでYTをプリロード
+    // iOS自動再生対策: yt-wrapper が見えている状態でプリロード（_setMonitorImg より先に実行）
     const player = window._ytPlayer;
     if (player && episode.youtube_id) {
         try { _origVol = player.getVolume(); } catch(e) { _origVol = 100; }
@@ -165,6 +168,8 @@ export function showDJPlayer(episode, onBackToList) {
     } else {
         _duckBgm();
     }
+
+    _setMonitorImg(`./img/dj/${episode.slide_img}`);
 
     lv.innerHTML = `
         <div style="padding:6px 12px 5px;">
@@ -217,6 +222,7 @@ export function showDJPlayer(episode, onBackToList) {
         _done = true;
         _narrationSkipFn = null;
         if (_slideTimer) { clearTimeout(_slideTimer); _slideTimer = null; }
+        window._djNarrationActive = false;
         _showSophie();
         _loadYoutube(episode.youtube_id);
     };
@@ -227,6 +233,7 @@ export function showDJPlayer(episode, onBackToList) {
         _narrationSkipFn = null;
         if (_narrationAudio) { try { _narrationAudio.pause(); } catch(e) {} }
         if (_slideTimer) { clearTimeout(_slideTimer); _slideTimer = null; }
+        window._djNarrationActive = false;
         _showSophie();
         _loadYoutube(episode.youtube_id);
     };
@@ -234,6 +241,7 @@ export function showDJPlayer(episode, onBackToList) {
     _narrationAudio.addEventListener('ended', _onEnd, { once: true });
     _narrationAudio.addEventListener('error', _onEnd, { once: true });
     _narrationAudio.play().catch(_onEnd);
+    window._djNarrationActive = true;
 
     _slideTimer = setTimeout(() => {
         if (_done) return;
@@ -393,6 +401,7 @@ export function djClose(onBack) {
     if (_slideTimer) { clearTimeout(_slideTimer); _slideTimer = null; }
     if (_narrationAudio) { _narrationAudio.pause(); _narrationAudio = null; }
     _narrationSkipFn = null;
+    window._djNarrationActive = false;
     _sophiePhase = false;
     _removeOrientation();
 

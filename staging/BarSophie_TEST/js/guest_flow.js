@@ -130,9 +130,12 @@ function _startMemberCaution() {
 
     const fireVoice = () => {
         if (fired) return;
+        if (window._djNarrationActive) return; // DJナレーション中はスキップ
         fired = true;
         _cautionTimer = null;
         window._cancelGuestCaution = null;
+        // 挨拶音声が流れていれば停止してカウションを優先
+        try { if (window._lastSophieVoiceAudio && !window._lastSophieVoiceAudio.paused) window._lastSophieVoiceAudio.pause(); } catch(e) {}
         const player = window._ytPlayer;
         let origVol = null;
         if (player) { try { origVol = player.getVolume(); player.setVolume(Math.round(origVol * 0.2)); } catch(e) {} }

@@ -33,6 +33,7 @@ const SOPHIE_VOICE_TIMING = {
 };
 
 function playSophieVoice(screen) {
+  if (window._djNarrationActive) return;
   const _cat = window.currentUserData?.createdAt;
   const isNewComer = _cat && typeof _cat.toMillis === 'function' &&
     (Date.now() - _cat.toMillis() < 24 * 60 * 60 * 1000);

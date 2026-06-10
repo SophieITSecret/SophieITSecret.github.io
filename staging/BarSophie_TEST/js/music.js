@@ -385,6 +385,7 @@ function setMon(m, s) {
 }
 
 function prep(t, isM, id = null, originalTxt = null) {
+    if (!isM && window._djNarrationActive) return; // DJナレーション中は音楽リクエスト応答をスキップ
     window.speechSynthesis.cancel();
     try { talkAudio.pause(); if (talkAudio.readyState > 0) talkAudio.currentTime = 0; } catch(e) {}
     lastTxt = t; isMusicMode = isM; isPaused = false;
