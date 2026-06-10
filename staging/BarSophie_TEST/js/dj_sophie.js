@@ -36,7 +36,8 @@ function _setMonitorImg(src) {
     const lside = document.querySelector('.l-side');
     if (lside) lside.style.display = 'flex';
     if (img) { img.src = src; img.style.display = 'block'; }
-    if (yt)  yt.style.display = 'none';
+    // プリロード中はyt-wrapperをdisplay:noneにしない（iOSが動画を一時停止するのを防ぐ）
+    if (yt && !window._djYtPreloading) yt.style.display = 'none';
 }
 
 function _loadYoutube(ytId) {
@@ -51,21 +52,26 @@ function _loadYoutube(ytId) {
 
     const player = window._ytPlayer;
     if (!player) return;
-    try {
-        if (_djYtPreloaded) {
-            _djYtPreloaded = false;
-            window._djYtPreloading = false;
-            if (_origVol !== null) { player.setVolume(_origVol); _origVol = null; }
-            else { player.setVolume(100); }
-            player.unMute();
-            player.loadVideoById(ytId);
-            player.playVideo();
-        } else {
-            _restoreBgm();
-            player.loadVideoById(ytId);
-            player.playVideo();
-        }
-    } catch(e) {}
+    if (_djYtPreloaded) {
+        _djYtPreloaded = false;
+        window._djYtPreloading = false;
+        try { if (_origVol !== null) { player.setVolume(_origVol); _origVol = null; } else { player.setVolume(100); } } catch(e) {}
+        try { player.unMute(); } catch(e) {}
+        try {
+            const state = player.getPlayerState();
+            if (state === -1) {
+                // 動画がロードされていない（埋め込み制限など）→ loadVideoByIdで再試行→onErrorが発火してコールバックが進む
+                player.loadVideoById(ytId);
+            } else {
+                // iOSはタップ時に確立したautoplay許可でseekTo+playVideoが機能する
+                player.seekTo(0, true);
+                player.playVideo();
+            }
+        } catch(e) {}
+    } else {
+        _restoreBgm();
+        try { player.loadVideoById(ytId); player.playVideo(); } catch(e) {}
+    }
 }
 
 function _showSophieMonitor() {
