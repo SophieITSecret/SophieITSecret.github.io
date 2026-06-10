@@ -282,7 +282,6 @@ function _showMusicSubmenu() {
     renderConsole('standard');
 
     document.getElementById('ms-dj').onclick = () => {
-        playSophieVoice('music');
         djSophie.showDJList(showRootMenu);
     };
     document.getElementById('ms-music').onclick = () => {

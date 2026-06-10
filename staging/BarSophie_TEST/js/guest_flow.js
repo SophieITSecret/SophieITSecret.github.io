@@ -1,5 +1,7 @@
 // js/guest_flow.js — ゲスト着席フロー
 
+import * as nav from './navigation.js';
+
 let _cautionTimer = null;
 
 function _playVoice(mp3, onEnd) {
@@ -131,6 +133,7 @@ function _startMemberCaution() {
     const fireVoice = () => {
         if (fired) return;
         if (window._djNarrationActive) return; // DJナレーション中はスキップ
+        if (nav.state !== 'none') return; // 別画面に遷移済みならスキップ
         fired = true;
         _cautionTimer = null;
         window._cancelGuestCaution = null;
