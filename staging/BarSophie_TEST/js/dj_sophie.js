@@ -505,7 +505,7 @@ export function djStop() {
 export function djSkip() {
     const yt = document.getElementById('yt-wrapper');
     const player = window._ytPlayer;
-    if (yt && yt.style.display !== 'none' && player) {
+    if (yt && yt.style.display !== 'none' && player && !window._djYtPreloading) {
         try {
             const dur = player.getDuration();
             if (dur > 0) player.seekTo(Math.max(0, dur - 10), true);
