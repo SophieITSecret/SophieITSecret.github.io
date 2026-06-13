@@ -18,6 +18,24 @@
     ]
   },
   {
+    "id": "009",
+    "type": "special",
+    "date": "2026-06-14",
+    "title": "昭和の歌謡史・50年代　勝手にしやがれ",
+    "artist": "沢田研二",
+    "song": "勝手にしやがれ",
+    "slide_img": "dj_006.jpg",
+    "segments": [
+      {
+        "mp3": "dj_006_01.mp3",
+        "youtube_id": "VZbADPnLklI"
+      },
+      {
+        "mp3": "dj_006_02.mp3"
+      }
+    ]
+  },
+  {
     "id": "005",
     "type": "special",
     "date": "2026-06-13",
