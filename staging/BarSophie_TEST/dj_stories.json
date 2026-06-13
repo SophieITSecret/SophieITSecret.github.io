@@ -24,14 +24,14 @@
     "title": "昭和の歌謡史・40年代　神田川",
     "artist": "かぐや姫",
     "song": "神田川",
-    "slide_img": "dj_005",
+    "slide_img": "dj_005.jpg",
     "segments": [
       {
-        "mp3": "dj_005_01",
+        "mp3": "dj_005_01.mp3",
         "youtube_id": "JSgyHiKESGw"
       },
       {
-        "mp3": "dj_005_02"
+        "mp3": "dj_005_02.mp3"
       }
     ]
   },
