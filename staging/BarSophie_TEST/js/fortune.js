@@ -1082,6 +1082,9 @@ export async function showDailyAdvice(onBack = null, prefillOverride = null) {
                 <button id="da-submit" style="width:100%; background:#1a2a1a; color:#7fd97f;
                     border:2px solid #3a6a4a; height:44px; border-radius:6px;
                     font-size:0.9rem; font-weight:bold;">🌙 今日のアドバイスを聞く</button>
+                <button id="da-submit-tomorrow" style="width:100%; background:#0d1829; color:#5ba3d9;
+                    border:1px solid #1a3a6a; height:40px; border-radius:6px;
+                    font-size:0.85rem; font-weight:bold; margin-top:4px;">🌙 明日のアドバイスを聞く</button>
             </div>
         </div>`;
 
@@ -1210,6 +1213,146 @@ ${detail}
         } catch {
             alert('通信エラーが発生しました。');
             if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = '🌙 今日のアドバイスを聞く'; }
+        }
+    };
+
+    const showTomorrowResult = (text, fromCache, gradeUsed, tomorrowDate) => {
+        const formatted = text
+            .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+            .replace(/\*([^*]+)\*/g, '')
+            .replace(/\*\*/g, '')
+            .replace(/^#{1,3}\s*(.+)$/gm, '<span style="color:#5ba3d9; font-weight:bold; font-size:0.88rem; display:block; margin:8px 0 2px;">$1</span>')
+            .replace(/^-{2,}$/gm, '')
+            .replace(/\n{2,}/g, '\n')
+            .replace(/\n/g, '<br>');
+
+        const cacheNote = fromCache ? '<span style="color:#555; font-size:0.65rem;">（取得済み）</span>' : '';
+        const gradeLabel = gradeUsed === 'premium' ? 'プレミア' : 'ライト';
+        const d = tomorrowDate || new Date();
+        const dateStr = `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日`;
+
+        const html = `
+            <div style="margin:10px; border-radius:10px; border:2px solid transparent;
+                        background: linear-gradient(#111, #111) padding-box,
+                        linear-gradient(120deg, #1a3a6a 50%, #5ba3d9 100%) border-box;">
+                <div style="color:#5ba3d9; padding:0 12px; font-size:0.8rem; font-weight:bold;
+                            border-bottom:1px solid #333; height:28px; line-height:28px;
+                            border-radius:8px 8px 0 0; display:flex; align-items:center; gap:6px;">
+                    <img src="./sophie_face.png" style="width:20px; height:20px; border-radius:50%; object-fit:cover;">
+                    🌙 明日のアドバイス・${gradeLabel} ${cacheNote}
+                </div>
+                <div style="padding:12px; color:#ddd; font-size:0.85rem; line-height:1.9;">${formatted}</div>
+                <div style="padding:0 10px 10px;">
+                    <div style="color:#888; font-size:0.72rem; text-align:center; margin-bottom:8px;">${dateStr}（明日）</div>
+                    <button id="da-tomorrow-copy" style="width:100%; background:#1a2a3a; color:#5ba3d9;
+                        border:1px solid #1a5276; height:40px; border-radius:4px;
+                        font-size:0.85rem; margin-bottom:6px;">📋 コピーする</button>
+                    <button id="da-tomorrow-back" style="width:100%; background:#1a1a1a; color:#555;
+                        border:1px solid #333; height:36px; border-radius:4px;
+                        font-size:0.75rem;">← フォームに戻る</button>
+                </div>
+            </div>`;
+
+        if (lv) lv.innerHTML = html;
+        if (nm) nm.style.display = 'none';
+
+        document.getElementById('da-tomorrow-copy').onclick = () => {
+            navigator.clipboard.writeText(`🌙 明日のアドバイス・${gradeLabel}（${dateStr}）\n\n${text}`)
+                .then(() => alert('コピーしました。'))
+                .catch(() => alert('コピーに失敗しました。'));
+        };
+        document.getElementById('da-tomorrow-back').onclick = () => { showDailyAdvice(onBack); };
+    };
+
+    document.getElementById('da-submit-tomorrow').onclick = async () => {
+        const year = document.getElementById('da-year').value;
+        const month = document.getElementById('da-month').value;
+        const day = document.getElementById('da-day').value;
+        if (!year || !month || !day) { alert('生年月日を入力してください'); return; }
+        if (!selectedGender) { alert('性別を選択してください'); return; }
+
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        const tomorrowKey = tomorrow.toISOString().slice(0, 10);
+
+        try {
+            const tc = JSON.parse(localStorage.getItem('sophie_tomorrow_fortune') || 'null');
+            if (tc && tc.date === tomorrowKey) {
+                showTomorrowResult(tc.text, true, tc.grade || 'light', tomorrow);
+                return;
+            }
+        } catch {}
+
+        if (selectedGrade === 'light') {
+            if (!await window.checkAccess('fortune_haiku')) return;
+        } else {
+            if (!await window.checkAccess('fortune_sonnet')) return;
+        }
+
+        const pillars = getThreePillars(parseInt(year), parseInt(month), parseInt(day));
+        const tomorrowStr = `${tomorrow.getFullYear()}年${tomorrow.getMonth()+1}月${tomorrow.getDate()}日`;
+        const tomorrowPillars = getThreePillars(tomorrow.getFullYear(), tomorrow.getMonth()+1, tomorrow.getDate());
+
+        let tomorrowPrompt;
+        if (selectedGrade === 'light') {
+            tomorrowPrompt = `${sophieChar}
+【現在の日付】${tomorrowStr}（明日の鑑定です）
+あなたはBARソフィーのバーテンダー「ソフィー」です。
+
+【お客様】
+生年月日：${year}年${month}月${day}日
+性別：${selectedGender}
+命式：年柱 ${pillars.year}・月柱 ${pillars.month}・日柱 ${pillars.day}
+明日の干支：${tomorrowPillars.day}（年：${tomorrowPillars.year}・月：${tomorrowPillars.month}）
+
+明日の運気と過ごし方について、ひとことアドバイスをしてください。ソフィーらしい品のある語り口で、100字以内でお願いします。`;
+        } else {
+            const fullMeishiki = getFullMeishiki(parseInt(year), parseInt(month), parseInt(day), selectedGender);
+            const detail = `
+・年柱：${pillars.year}（通変星：${fullMeishiki?.columns?.year?.tsuhensei || ''}・十二運星：${fullMeishiki?.columns?.year?.juniUnsei || ''}）
+・月柱：${pillars.month}（通変星：${fullMeishiki?.columns?.month?.tsuhensei || ''}・十二運星：${fullMeishiki?.columns?.month?.juniUnsei || ''}）
+・日柱：${pillars.day}（十二運星：${fullMeishiki?.columns?.day?.juniUnsei || ''}）
+五行バランス：${Object.entries(fullMeishiki?.gogyoBalance || {}).map(([g,c]) => `${g}${c}`).join('・')}`;
+            tomorrowPrompt = `${sophieChar}
+【現在の日付】${tomorrowStr}（明日の鑑定です）
+あなたはBARソフィーのバーテンダー「ソフィー」です。四柱推命を極めた占い師として、明日一日の詳細なアドバイスをお客様にお伝えください。
+
+【お客様】
+生年月日：${year}年${month}月${day}日
+性別：${selectedGender}
+${detail}
+明日の干支：${tomorrowPillars.day}（年：${tomorrowPillars.year}・月：${tomorrowPillars.month}）
+
+【鑑定の内容】
+1. 明日の運気概観（日柱との相性・五行の流れ）
+2. 特に意識すべき時間帯・行動
+3. 明日のラッキーポイント（色・方角・食べ物など）
+4. 注意すべき点・避けるべきこと
+5. 明日一日を締めるソフィーのひとこと
+
+品のある語り口で500字程度にまとめてください。`;
+        }
+
+        const tomorrowBtn = document.getElementById('da-submit-tomorrow');
+        if (tomorrowBtn) { tomorrowBtn.disabled = true; tomorrowBtn.textContent = '占い中...'; }
+
+        try {
+            const res = await fetch(GAS_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain' },
+                body: JSON.stringify({ messages: [{ role: 'user', content: tomorrowPrompt }], search: false, grade: selectedGrade })
+            });
+            const data = await res.json();
+            const text = data.ok ? data.text : 'エラーが発生しました。';
+            localStorage.setItem('sophie_tomorrow_fortune', JSON.stringify({
+                date: tomorrowKey, text, grade: selectedGrade,
+                birth: `${year}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`,
+                gender: selectedGender
+            }));
+            showTomorrowResult(text, false, selectedGrade, tomorrow);
+        } catch {
+            alert('通信エラーが発生しました。');
+            if (tomorrowBtn) { tomorrowBtn.disabled = false; tomorrowBtn.textContent = '🌙 明日のアドバイスを聞く'; }
         }
     };
 }

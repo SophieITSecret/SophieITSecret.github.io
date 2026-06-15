@@ -260,6 +260,7 @@ function showRootMenu() {
     window._cancelGuestCaution?.();
     document.getElementById('sophie-caution')?.remove();
     document.getElementById('daily-advice-pill')?.remove();
+    document.getElementById('quick-action-row')?.remove();
     yt.style.display = 'none';
     img.src = './front_sophie.jpeg';
     img.style.display = 'block';
@@ -313,9 +314,21 @@ function _showMusicSubmenu() {
     };
 }
 
+function _ensureQuickActionRow() {
+    const existing = document.getElementById('quick-action-row');
+    if (existing) return existing;
+    const todayRow = document.getElementById('today-row');
+    if (!todayRow) return null;
+    const qRow = document.createElement('div');
+    qRow.id = 'quick-action-row';
+    qRow.style.cssText = 'width:100%; display:flex; align-items:center; gap:3px; margin-bottom:4px;';
+    todayRow.parentElement.insertBefore(qRow, todayRow);
+    return qRow;
+}
+
 function _insertDailyAdviceButton() {
     if (document.getElementById('daily-advice-pill')) return;
-    const row = document.getElementById('today-row');
+    const row = _ensureQuickActionRow();
     if (!row) return;
     const todayKey = new Date().toISOString().slice(0, 10);
     let cached = null;
@@ -326,7 +339,7 @@ function _insertDailyAdviceButton() {
     pill.innerHTML = `<button id="btn-daily-advice"
         style="background:${cached ? '#1a2a1a' : '#111'}; border:1px solid ${cached ? '#3a6a4a' : '#333'};
                color:${cached ? '#7fd97f' : '#888'};
-               border-radius:50px; padding:4px 10px;
+               border-radius:50px; padding:3px 10px;
                cursor:pointer; -webkit-tap-highlight-color:transparent;
                display:inline-flex; align-items:center; gap:4px; font-size:0.68rem; white-space:nowrap;">
         🌙${cached ? '今日のアドバイス✓' : '今日のアドバイス'}
@@ -342,17 +355,17 @@ function _insertDailyAdviceButton() {
 
 function _insertHintButton() {
     if (document.getElementById('sophie-caution')) return;
-    const row = document.getElementById('today-row');
+    const row = _ensureQuickActionRow();
     if (!row) return;
     const hint = document.createElement('div');
     hint.id = 'sophie-caution';
     hint.style.cssText = 'flex-shrink:0;';
     hint.innerHTML = `<button id="btn-howto-hint"
         style="background:#ffffff; border:1px solid #5ba3d9; color:#444;
-               border-radius:50px; padding:4px 14px 4px 20px;
+               border-radius:50px; padding:3px 8px 3px 10px;
                cursor:pointer; -webkit-tap-highlight-color:transparent;
-               display:inline-flex; align-items:center; gap:6px; font-size:0.72rem;">
-        <img src="./sophie_face.png" style="width:18px; height:18px; border-radius:50%; object-fit:cover; flex-shrink:0;">
+               display:inline-flex; align-items:center; gap:4px; font-size:0.68rem;">
+        <img src="./sophie_face.png" style="width:16px; height:16px; border-radius:50%; object-fit:cover; flex-shrink:0;">
         お店の使い方
     </button>`;
     row.appendChild(hint);
