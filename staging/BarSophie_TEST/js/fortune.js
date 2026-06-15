@@ -1307,22 +1307,25 @@ ${detail}
         }
 
         const pillars = getThreePillars(parseInt(year), parseInt(month), parseInt(day));
+        const todayDateObj = new Date();
+        const todayStr = `${todayDateObj.getFullYear()}年${todayDateObj.getMonth()+1}月${todayDateObj.getDate()}日`;
         const tomorrowStr = `${tomorrow.getFullYear()}年${tomorrow.getMonth()+1}月${tomorrow.getDate()}日`;
         const tomorrowPillars = getThreePillars(tomorrow.getFullYear(), tomorrow.getMonth()+1, tomorrow.getDate());
 
         let tomorrowPrompt;
         if (selectedGrade === 'light') {
             tomorrowPrompt = `${sophieChar}
-【現在の日付】${tomorrowStr}（明日の鑑定です）
+【今日の日付】${todayStr}
+【鑑定対象】明日（${tomorrowStr}）
 あなたはBARソフィーのバーテンダー「ソフィー」です。
 
 【お客様】
 生年月日：${year}年${month}月${day}日
 性別：${selectedGender}
 命式：年柱 ${pillars.year}・月柱 ${pillars.month}・日柱 ${pillars.day}
-明日の干支：${tomorrowPillars.day}（年：${tomorrowPillars.year}・月：${tomorrowPillars.month}）
+${tomorrowStr}の干支：${tomorrowPillars.day}（年：${tomorrowPillars.year}・月：${tomorrowPillars.month}）
 
-明日の運気と過ごし方について、ひとことアドバイスをしてください。ソフィーらしい品のある語り口で、100字以内でお願いします。`;
+${tomorrowStr}（明日）の運気と過ごし方について、ひとことアドバイスをしてください。ソフィーらしい品のある語り口で、100字以内でお願いします。`;
         } else {
             const fullMeishiki = getFullMeishiki(parseInt(year), parseInt(month), parseInt(day), selectedGender);
             const detail = `
@@ -1331,21 +1334,22 @@ ${detail}
 ・日柱：${pillars.day}（十二運星：${fullMeishiki?.columns?.day?.juniUnsei || ''}）
 五行バランス：${Object.entries(fullMeishiki?.gogyoBalance || {}).map(([g,c]) => `${g}${c}`).join('・')}`;
             tomorrowPrompt = `${sophieChar}
-【現在の日付】${tomorrowStr}（明日の鑑定です）
-あなたはBARソフィーのバーテンダー「ソフィー」です。四柱推命を極めた占い師として、明日一日の詳細なアドバイスをお客様にお伝えください。
+【今日の日付】${todayStr}
+【鑑定対象】明日（${tomorrowStr}）
+あなたはBARソフィーのバーテンダー「ソフィー」です。四柱推命を極めた占い師として、明日（${tomorrowStr}）の詳細なアドバイスをお客様にお伝えください。
 
 【お客様】
 生年月日：${year}年${month}月${day}日
 性別：${selectedGender}
 ${detail}
-明日の干支：${tomorrowPillars.day}（年：${tomorrowPillars.year}・月：${tomorrowPillars.month}）
+${tomorrowStr}の干支：${tomorrowPillars.day}（年：${tomorrowPillars.year}・月：${tomorrowPillars.month}）
 
 【鑑定の内容】
-1. 明日の運気概観（日柱との相性・五行の流れ）
+1. ${tomorrowStr}（明日）の運気概観（日柱との相性・五行の流れ）
 2. 特に意識すべき時間帯・行動
-3. 明日のラッキーポイント（色・方角・食べ物など）
+3. ${tomorrowStr}（明日）のラッキーポイント（色・方角・食べ物など）
 4. 注意すべき点・避けるべきこと
-5. 明日一日を締めるソフィーのひとこと
+5. 明日（${tomorrowStr}）を締めるソフィーのひとこと
 
 品のある語り口で500字程度にまとめてください。`;
         }
