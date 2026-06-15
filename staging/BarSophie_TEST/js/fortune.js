@@ -42,7 +42,7 @@ export function showMyFortune(onBack = null, prefill = null) {
     const makeDots = (filled, total) => Array.from({length: total}, (_, i) =>
         `<span style="color:${i < filled ? '#f0b56e' : '#444'}; font-size:0.75rem;">●</span>`).join('');
 
-    const lightDotsHtml = makeDots(lightRemaining, lightLimit);
+    const lightDotsHtml = makeDots(Math.min(5, lightRemaining), Math.min(5, lightLimit));
     const premiumDotsHtml = makeDots(Math.min(5, totalTickets), 5);
 
     const formHtml = `
@@ -60,43 +60,43 @@ export function showMyFortune(onBack = null, prefill = null) {
                     <div style="flex:1; border:1px solid #333; border-radius:6px; padding:8px;">
                         <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;">
                             <div style="color:#aaa; font-size:0.72rem;">生年月日</div>
-                            <button id="ft-people" style="background:#1a2a1a; color:#7fd97f; border:1px solid #3a6a4a; padding:2px 6px; border-radius:3px; font-size:0.65rem;">📖 人物帳</button>
+                            <button id="ft-people" style="background:#1a2a1a; color:#7fd97f; border:1px solid #3a6a4a; padding:5px 12px; border-radius:5px; font-size:0.72rem;">📖 人物帳</button>
                         </div>
                         <div style="display:flex; gap:3px; align-items:center; margin-bottom:6px;">
                             <input type="number" id="ft-year" placeholder="1980" min="1900" max="2010"
                                 value="${prefill ? prefill.year : ''}"
                                 style="width:60px; background:#000; border:1px solid #555; color:#fff;
-                                       height:34px; padding:0 6px; border-radius:4px; font-size:0.8rem;">
+                                       height:28px; padding:0 6px; border-radius:4px; font-size:0.8rem;">
                             <span style="color:#aaa; font-size:0.75rem;">年</span>
                             <input type="number" id="ft-month" placeholder="1" min="1" max="12"
                                 value="${prefill ? prefill.month : ''}"
                                 style="width:40px; background:#000; border:1px solid #555; color:#fff;
-                                       height:34px; padding:0 6px; border-radius:4px; font-size:0.8rem;">
+                                       height:28px; padding:0 6px; border-radius:4px; font-size:0.8rem;">
                             <span style="color:#aaa; font-size:0.75rem;">月</span>
                             <input type="number" id="ft-day" placeholder="1" min="1" max="31"
                                 value="${prefill ? prefill.day : ''}"
                                 style="width:40px; background:#000; border:1px solid #555; color:#fff;
-                                       height:34px; padding:0 6px; border-radius:4px; font-size:0.8rem;">
+                                       height:28px; padding:0 6px; border-radius:4px; font-size:0.8rem;">
                             <span style="color:#aaa; font-size:0.75rem;">日</span>
                         </div>
                         <div style="display:flex; gap:6px;">
                             <button class="ft-gender" data-val="男性"
                                 style="flex:1; background:#1a1a1a; color:#888; border:1px solid #444;
-                                       height:30px; border-radius:4px; font-size:0.8rem;">男性</button>
+                                       height:28px; border-radius:4px; font-size:0.8rem;">男性</button>
                             <button class="ft-gender" data-val="女性"
                                 style="flex:1; background:#1a1a1a; color:#888; border:1px solid #444;
-                                       height:30px; border-radius:4px; font-size:0.8rem;">女性</button>
+                                       height:28px; border-radius:4px; font-size:0.8rem;">女性</button>
                         </div>
                     </div>
-                    <div style="display:flex; flex-direction:column; gap:6px; width:112px; flex-shrink:0;">
+                    <div style="display:flex; flex-direction:column; gap:6px; width:96px; flex-shrink:0;">
                         <button id="ft-grade-light" style="background:#2a2a1a; border:2px solid #f0b56e;
                             border-radius:6px; padding:7px 8px; text-align:left; cursor:pointer; width:100%;">
-                            <div style="font-weight:bold; color:#f0b56e; font-size:0.78rem; margin-bottom:2px;">ライト診断</div>
+                            <div style="font-weight:bold; color:#f0b56e; font-size:0.75rem; margin-bottom:2px;">ライト診断</div>
                             <div>${lightDotsHtml}</div>
                         </button>
                         <button id="ft-grade-premium" style="background:#1a1a2a; border:1px solid #555;
                             border-radius:6px; padding:7px 8px; text-align:left; cursor:pointer; width:100%;">
-                            <div style="font-weight:bold; color:#9b59b6; font-size:0.78rem; margin-bottom:2px;">プレミア診断</div>
+                            <div style="font-weight:bold; color:#9b59b6; font-size:0.75rem; margin-bottom:2px;">プレミア診断</div>
                             <div>${premiumDotsHtml}</div>
                         </button>
                     </div>
@@ -482,7 +482,7 @@ export function showAboutPerson(onBack = null, prefill = null) {
     const makeDots = (filled, total) => Array.from({length: total}, (_, i) =>
         `<span style="color:${i < filled ? '#f0b56e' : '#444'}; font-size:0.75rem;">●</span>`).join('');
 
-    const lightDotsHtml = makeDots(lightRemaining, lightLimit);
+    const lightDotsHtml = makeDots(Math.min(5, lightRemaining), Math.min(5, lightLimit));
     const premiumDotsHtml = makeDots(Math.min(5, totalTickets), 5);
 
     const formHtml = `
@@ -500,43 +500,43 @@ export function showAboutPerson(onBack = null, prefill = null) {
                     <div style="flex:1; border:1px solid #333; border-radius:6px; padding:8px;">
                         <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;">
                             <div style="color:#aaa; font-size:0.72rem;">生年月日</div>
-                            <button id="ft-people" style="background:#1a2a1a; color:#7fd97f; border:1px solid #3a6a4a; padding:2px 6px; border-radius:3px; font-size:0.65rem;">📖 人物帳</button>
+                            <button id="ft-people" style="background:#1a2a1a; color:#7fd97f; border:1px solid #3a6a4a; padding:5px 12px; border-radius:5px; font-size:0.72rem;">📖 人物帳</button>
                         </div>
                         <div style="display:flex; gap:3px; align-items:center; margin-bottom:6px;">
                             <input type="number" id="ft-year" placeholder="1980" min="1900" max="2010"
                                 value="${prefill ? prefill.year : ''}"
                                 style="width:60px; background:#000; border:1px solid #555; color:#fff;
-                                       height:34px; padding:0 6px; border-radius:4px; font-size:0.8rem;">
+                                       height:28px; padding:0 6px; border-radius:4px; font-size:0.8rem;">
                             <span style="color:#aaa; font-size:0.75rem;">年</span>
                             <input type="number" id="ft-month" placeholder="1" min="1" max="12"
                                 value="${prefill ? prefill.month : ''}"
                                 style="width:40px; background:#000; border:1px solid #555; color:#fff;
-                                       height:34px; padding:0 6px; border-radius:4px; font-size:0.8rem;">
+                                       height:28px; padding:0 6px; border-radius:4px; font-size:0.8rem;">
                             <span style="color:#aaa; font-size:0.75rem;">月</span>
                             <input type="number" id="ft-day" placeholder="1" min="1" max="31"
                                 value="${prefill ? prefill.day : ''}"
                                 style="width:40px; background:#000; border:1px solid #555; color:#fff;
-                                       height:34px; padding:0 6px; border-radius:4px; font-size:0.8rem;">
+                                       height:28px; padding:0 6px; border-radius:4px; font-size:0.8rem;">
                             <span style="color:#aaa; font-size:0.75rem;">日</span>
                         </div>
                         <div style="display:flex; gap:6px;">
                             <button class="ft-gender" data-val="男性"
                                 style="flex:1; background:#1a1a1a; color:#888; border:1px solid #444;
-                                       height:30px; border-radius:4px; font-size:0.8rem;">男性</button>
+                                       height:28px; border-radius:4px; font-size:0.8rem;">男性</button>
                             <button class="ft-gender" data-val="女性"
                                 style="flex:1; background:#1a1a1a; color:#888; border:1px solid #444;
-                                       height:30px; border-radius:4px; font-size:0.8rem;">女性</button>
+                                       height:28px; border-radius:4px; font-size:0.8rem;">女性</button>
                         </div>
                     </div>
-                    <div style="display:flex; flex-direction:column; gap:6px; width:112px; flex-shrink:0;">
+                    <div style="display:flex; flex-direction:column; gap:6px; width:96px; flex-shrink:0;">
                         <button id="ft-grade-light" style="background:#2a2a1a; border:2px solid #f0b56e;
                             border-radius:6px; padding:7px 8px; text-align:left; cursor:pointer; width:100%;">
-                            <div style="font-weight:bold; color:#f0b56e; font-size:0.78rem; margin-bottom:2px;">ライト診断</div>
+                            <div style="font-weight:bold; color:#f0b56e; font-size:0.75rem; margin-bottom:2px;">ライト診断</div>
                             <div>${lightDotsHtml}</div>
                         </button>
                         <button id="ft-grade-premium" style="background:#1a1a2a; border:1px solid #555;
                             border-radius:6px; padding:7px 8px; text-align:left; cursor:pointer; width:100%;">
-                            <div style="font-weight:bold; color:#9b59b6; font-size:0.78rem; margin-bottom:2px;">プレミア診断</div>
+                            <div style="font-weight:bold; color:#9b59b6; font-size:0.75rem; margin-bottom:2px;">プレミア診断</div>
                             <div>${premiumDotsHtml}</div>
                         </button>
                     </div>
@@ -911,8 +911,8 @@ export function showFortuneMenu(onBack = null) {
                 🔮 ソフィーの天命診断
             </div>
             <div style="padding:10px;">
-                <button id="fm-daily" class="act-btn" style="background:#1a2a1a; color:#7fd97f;
-                    border:1px solid #3a6a4a; margin-bottom:8px;">${dailyLabel}</button>
+                <button id="fm-daily" class="act-btn" style="background:#ffffff; color:#ff69b4;
+                    border:2px solid #00d2ff; margin-bottom:8px; font-weight:bold;">${dailyLabel}</button>
                 <button id="fm-my-fortune" class="act-btn" style="background:#2a1a3a; color:#c39bd3;
                     border:1px solid #6a3a8a; margin-bottom:8px;">🌟 あなたのご相談</button>
                 <button id="fm-about-person" class="act-btn" style="background:#1a1a2a; color:#9b59b6;
@@ -936,7 +936,7 @@ export function showFortuneMenu(onBack = null) {
     };
 }
 
-export async function showDailyAdvice(onBack = null) {
+export async function showDailyAdvice(onBack = null, prefillOverride = null) {
     const lv = document.getElementById('list-view');
     const nm = document.getElementById('nav-main');
     const monImg = document.getElementById('monitor-img');
@@ -945,6 +945,18 @@ export async function showDailyAdvice(onBack = null) {
     window._fortuneBack = () => { if (onBack) onBack(); };
 
     const todayKey = new Date().toISOString().slice(0, 10);
+    const userData = window.currentUserData || {};
+    const role = userData.role === 'admin' ? 'admin' : (userData.status || userData.role || 'guest');
+    const lightLimitMap = { guest: 0, free: 1, active: 3, vip: 99, admin: 99 };
+    const lightLimit = lightLimitMap[role] || 0;
+    const usedToday = userData.lastFortuneBDate === todayKey ? (userData.dailyFortuneBCount || 0) : 0;
+    const lightRemaining = Math.max(0, lightLimit - usedToday);
+    const totalTickets = (userData.dailyTickets || 0) + (userData.weeklyTickets || 0) + (userData.purchasedTickets || 0);
+
+    const makeDots = (filled, total) => Array.from({length: total}, (_, i) =>
+        `<span style="color:${i < filled ? '#f0b56e' : '#444'}; font-size:0.75rem;">●</span>`).join('');
+    const lightDotsHtml = makeDots(Math.min(5, lightRemaining), Math.min(5, lightLimit));
+    const premiumDotsHtml = makeDots(Math.min(5, totalTickets), 5);
 
     const getCached = () => {
         try {
@@ -953,7 +965,7 @@ export async function showDailyAdvice(onBack = null) {
         } catch { return null; }
     };
 
-    const showResult = (text, fromCache = false) => {
+    const showResult = (text, fromCache = false, gradeUsed = 'light') => {
         const formatted = text
             .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
             .replace(/\*([^*]+)\*/g, '')
@@ -964,6 +976,7 @@ export async function showDailyAdvice(onBack = null) {
             .replace(/\n/g, '<br>');
 
         const cacheNote = fromCache ? '<span style="color:#555; font-size:0.65rem;">（本日取得済み）</span>' : '';
+        const gradeLabel = gradeUsed === 'premium' ? 'プレミア' : 'ライト';
         const d = new Date();
         const dateStr = `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日`;
 
@@ -975,7 +988,7 @@ export async function showDailyAdvice(onBack = null) {
                             border-bottom:1px solid #333; height:28px; line-height:28px;
                             border-radius:8px 8px 0 0; display:flex; align-items:center; gap:6px;">
                     <img src="./sophie_face.png" style="width:20px; height:20px; border-radius:50%; object-fit:cover;">
-                    🌙 今日のアドバイス ${cacheNote}
+                    🌙 今日のアドバイス・${gradeLabel} ${cacheNote}
                 </div>
                 <div style="padding:12px; color:#ddd; font-size:0.85rem; line-height:1.9;">${formatted}</div>
                 <div style="padding:0 10px 10px;">
@@ -985,7 +998,7 @@ export async function showDailyAdvice(onBack = null) {
                         font-size:0.85rem; margin-bottom:6px;">📋 コピーする</button>
                     <button id="da-refresh" style="width:100%; background:#1a1a1a; color:#555;
                         border:1px solid #333; height:36px; border-radius:4px;
-                        font-size:0.75rem;">🔄 もう一度引き直す（ライト消費）</button>
+                        font-size:0.75rem;">🔄 もう一度引き直す（ライト/プレミア消費）</button>
                 </div>
             </div>`;
 
@@ -993,7 +1006,7 @@ export async function showDailyAdvice(onBack = null) {
         if (nm) nm.style.display = 'none';
 
         document.getElementById('da-copy').onclick = () => {
-            navigator.clipboard.writeText(`🌙 今日のアドバイス（${dateStr}）\n\n${text}`)
+            navigator.clipboard.writeText(`🌙 今日のアドバイス・${gradeLabel}（${dateStr}）\n\n${text}`)
                 .then(() => alert('コピーしました。'))
                 .catch(() => alert('コピーに失敗しました。'));
         };
@@ -1004,22 +1017,9 @@ export async function showDailyAdvice(onBack = null) {
     };
 
     const cached = getCached();
-    if (cached) { showResult(cached.text, true); return; }
+    if (cached) { showResult(cached.text, true, cached.grade || 'light'); return; }
 
-    const prefill = loadSelfPrefill();
-    const genderBtns = (prefix, pf) => {
-        const mSel = pf && pf.gender === '男性';
-        const fSel = pf && pf.gender === '女性';
-        return `
-            <button class="da-gender" data-val="男性"
-                style="background:${mSel ? '#0096BF' : '#1a1a1a'}; color:${mSel ? '#fff' : '#888'};
-                       border:1px solid ${mSel ? '#00d2ff' : '#444'};
-                       height:34px; padding:0 12px; border-radius:4px; font-size:0.8rem;">男</button>
-            <button class="da-gender" data-val="女性"
-                style="background:${fSel ? '#0096BF' : '#1a1a1a'}; color:${fSel ? '#fff' : '#888'};
-                       border:1px solid ${fSel ? '#00d2ff' : '#444'};
-                       height:34px; padding:0 12px; border-radius:4px; font-size:0.8rem;">女</button>`;
-    };
+    const prefill = prefillOverride !== null ? prefillOverride : loadSelfPrefill();
 
     const formHtml = `
         <div style="margin:10px; border-radius:10px; border:2px solid transparent;
@@ -1032,27 +1032,50 @@ export async function showDailyAdvice(onBack = null) {
                 🌙 今日のアドバイス
             </div>
             <div style="padding:10px;">
-                <div style="color:#aaa; font-size:0.72rem; margin-bottom:4px;">あなたの生年月日</div>
-                <div style="display:flex; gap:4px; align-items:center; margin-bottom:10px;">
-                    <input type="number" id="da-year" placeholder="1980" min="1900" max="2010"
-                        value="${prefill ? prefill.year : ''}"
-                        style="width:62px; background:#000; border:1px solid #555; color:#fff;
-                               height:36px; padding:0 6px; border-radius:4px; font-size:0.82rem;">
-                    <span style="color:#aaa; font-size:0.75rem;">年</span>
-                    <input type="number" id="da-month" placeholder="1" min="1" max="12"
-                        value="${prefill ? prefill.month : ''}"
-                        style="width:40px; background:#000; border:1px solid #555; color:#fff;
-                               height:36px; padding:0 6px; border-radius:4px; font-size:0.82rem;">
-                    <span style="color:#aaa; font-size:0.75rem;">月</span>
-                    <input type="number" id="da-day" placeholder="1" min="1" max="31"
-                        value="${prefill ? prefill.day : ''}"
-                        style="width:40px; background:#000; border:1px solid #555; color:#fff;
-                               height:36px; padding:0 6px; border-radius:4px; font-size:0.82rem;">
-                    <span style="color:#aaa; font-size:0.75rem;">日</span>
-                    <div style="display:flex; gap:4px; margin-left:4px;">${genderBtns('da', prefill)}</div>
+                <div style="display:flex; gap:6px; margin-bottom:8px;">
+                    <button id="da-grade-light" style="flex:1; background:#2a2a1a; border:2px solid #f0b56e;
+                        border-radius:6px; padding:6px 8px; text-align:left; cursor:pointer;">
+                        <div style="font-weight:bold; color:#f0b56e; font-size:0.75rem; margin-bottom:2px;">ライト診断</div>
+                        <div>${lightDotsHtml}</div>
+                    </button>
+                    <button id="da-grade-premium" style="flex:1; background:#1a1a2a; border:1px solid #555;
+                        border-radius:6px; padding:6px 8px; text-align:left; cursor:pointer;">
+                        <div style="font-weight:bold; color:#9b59b6; font-size:0.75rem; margin-bottom:2px;">プレミア診断</div>
+                        <div>${premiumDotsHtml}</div>
+                    </button>
                 </div>
-                <div style="color:#666; font-size:0.72rem; margin-bottom:10px; border-top:1px solid #222; padding-top:6px;">
-                    ライト診断を1回消費します（本日1回のみ）
+                <div style="border-top:1px solid #333; padding-top:8px; margin-bottom:6px;">
+                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;">
+                        <div style="color:#aaa; font-size:0.72rem;">生年月日</div>
+                        <button id="da-people" style="background:#1a2a1a; color:#7fd97f; border:1px solid #3a6a4a; padding:5px 12px; border-radius:5px; font-size:0.72rem;">📖 人物帳</button>
+                    </div>
+                    <div style="display:flex; gap:3px; align-items:center; margin-bottom:6px;">
+                        <input type="number" id="da-year" placeholder="1980" min="1900" max="2010"
+                            value="${prefill ? prefill.year : ''}"
+                            style="width:60px; background:#000; border:1px solid #555; color:#fff;
+                                   height:28px; padding:0 6px; border-radius:4px; font-size:0.8rem;">
+                        <span style="color:#aaa; font-size:0.75rem;">年</span>
+                        <input type="number" id="da-month" placeholder="1" min="1" max="12"
+                            value="${prefill ? prefill.month : ''}"
+                            style="width:40px; background:#000; border:1px solid #555; color:#fff;
+                                   height:28px; padding:0 6px; border-radius:4px; font-size:0.8rem;">
+                        <span style="color:#aaa; font-size:0.75rem;">月</span>
+                        <input type="number" id="da-day" placeholder="1" min="1" max="31"
+                            value="${prefill ? prefill.day : ''}"
+                            style="width:40px; background:#000; border:1px solid #555; color:#fff;
+                                   height:28px; padding:0 6px; border-radius:4px; font-size:0.8rem;">
+                        <span style="color:#aaa; font-size:0.75rem;">日</span>
+                        <button class="da-gender" data-val="男性"
+                            style="background:${prefill && prefill.gender === '男性' ? '#0096BF' : '#1a1a1a'};
+                                   color:${prefill && prefill.gender === '男性' ? '#fff' : '#888'};
+                                   border:1px solid ${prefill && prefill.gender === '男性' ? '#00d2ff' : '#444'};
+                                   height:28px; padding:0 10px; border-radius:4px; font-size:0.8rem; margin-left:4px;">男</button>
+                        <button class="da-gender" data-val="女性"
+                            style="background:${prefill && prefill.gender === '女性' ? '#0096BF' : '#1a1a1a'};
+                                   color:${prefill && prefill.gender === '女性' ? '#fff' : '#888'};
+                                   border:1px solid ${prefill && prefill.gender === '女性' ? '#00d2ff' : '#444'};
+                                   height:28px; padding:0 10px; border-radius:4px; font-size:0.8rem;">女</button>
+                    </div>
                 </div>
                 <button id="da-submit" style="width:100%; background:#1a2a1a; color:#7fd97f;
                     border:2px solid #3a6a4a; height:44px; border-radius:6px;
@@ -1064,6 +1087,22 @@ export async function showDailyAdvice(onBack = null) {
     if (nm) nm.style.display = 'none';
 
     let selectedGender = prefill ? prefill.gender : '';
+    let selectedGrade = 'light';
+
+    function _updateGradeUIDA() {
+        const lb = document.getElementById('da-grade-light');
+        const pb = document.getElementById('da-grade-premium');
+        if (selectedGrade === 'light') {
+            lb.style.border = '2px solid #f0b56e'; lb.style.background = '#2a2a1a';
+            pb.style.border = '1px solid #555'; pb.style.background = '#1a1a2a';
+        } else {
+            lb.style.border = '1px solid #555'; lb.style.background = '#1a1a2a';
+            pb.style.border = '2px solid #9b59b6'; pb.style.background = '#1a0a2a';
+        }
+    }
+
+    document.getElementById('da-grade-light').onclick = () => { selectedGrade = 'light'; _updateGradeUIDA(); };
+    document.getElementById('da-grade-premium').onclick = () => { selectedGrade = 'premium'; _updateGradeUIDA(); };
 
     document.querySelectorAll('.da-gender').forEach(btn => {
         btn.addEventListener('click', () => {
@@ -1075,6 +1114,22 @@ export async function showDailyAdvice(onBack = null) {
         });
     });
 
+    document.getElementById('da-people').onclick = () => {
+        const cur = {
+            year: document.getElementById('da-year').value,
+            month: document.getElementById('da-month').value,
+            day: document.getElementById('da-day').value,
+            gender: selectedGender
+        };
+        showPeopleBook(
+            (person) => {
+                const [y, m, d] = person.birth.split('-');
+                showDailyAdvice(onBack, { year: y, month: parseInt(m), day: parseInt(d), gender: person.gender });
+            },
+            () => showDailyAdvice(onBack, cur)
+        );
+    };
+
     document.getElementById('da-submit').onclick = async () => {
         const year = document.getElementById('da-year').value;
         const month = document.getElementById('da-month').value;
@@ -1082,14 +1137,20 @@ export async function showDailyAdvice(onBack = null) {
         if (!year || !month || !day) { alert('生年月日を入力してください'); return; }
         if (!selectedGender) { alert('性別を選択してください'); return; }
 
-        if (!await window.checkAccess('fortune_haiku')) return;
+        if (selectedGrade === 'light') {
+            if (!await window.checkAccess('fortune_haiku')) return;
+        } else {
+            if (!await window.checkAccess('fortune_sonnet')) return;
+        }
 
         const pillars = getThreePillars(parseInt(year), parseInt(month), parseInt(day));
         const today = new Date();
         const todayStr = `${today.getFullYear()}年${today.getMonth()+1}月${today.getDate()}日`;
         const todayPillars = getThreePillars(today.getFullYear(), today.getMonth()+1, today.getDate());
 
-        const prompt = `${sophieChar}
+        let prompt;
+        if (selectedGrade === 'light') {
+            prompt = `${sophieChar}
 【現在の日付】${todayStr}
 あなたはBARソフィーのバーテンダー「ソフィー」です。
 
@@ -1100,6 +1161,32 @@ export async function showDailyAdvice(onBack = null) {
 今日の干支：${todayPillars.day}（年：${todayPillars.year}・月：${todayPillars.month}）
 
 今日の運気と過ごし方について、ひとことアドバイスをしてください。ソフィーらしい品のある語り口で、100字以内でお願いします。`;
+        } else {
+            const fullMeishiki = getFullMeishiki(parseInt(year), parseInt(month), parseInt(day), selectedGender);
+            const detail = `
+・年柱：${pillars.year}（通変星：${fullMeishiki?.columns?.year?.tsuhensei || ''}・十二運星：${fullMeishiki?.columns?.year?.juniUnsei || ''}）
+・月柱：${pillars.month}（通変星：${fullMeishiki?.columns?.month?.tsuhensei || ''}・十二運星：${fullMeishiki?.columns?.month?.juniUnsei || ''}）
+・日柱：${pillars.day}（十二運星：${fullMeishiki?.columns?.day?.juniUnsei || ''}）
+五行バランス：${Object.entries(fullMeishiki?.gogyoBalance || {}).map(([g,c]) => `${g}${c}`).join('・')}`;
+            prompt = `${sophieChar}
+【現在の日付】${todayStr}
+あなたはBARソフィーのバーテンダー「ソフィー」です。四柱推命を極めた占い師として、今日一日の詳細なアドバイスをお客様にお伝えください。
+
+【お客様】
+生年月日：${year}年${month}月${day}日
+性別：${selectedGender}
+${detail}
+今日の干支：${todayPillars.day}（年：${todayPillars.year}・月：${todayPillars.month}）
+
+【鑑定の内容】
+1. 今日の運気概観（日柱との相性・五行の流れ）
+2. 特に意識すべき時間帯・行動
+3. 今日のラッキーポイント（色・方角・食べ物など）
+4. 注意すべき点・避けるべきこと
+5. 今日一日を締めるソフィーのひとこと
+
+品のある語り口で500字程度にまとめてください。`;
+        }
 
         const submitBtn = document.getElementById('da-submit');
         if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = '占い中...'; }
@@ -1108,12 +1195,16 @@ export async function showDailyAdvice(onBack = null) {
             const res = await fetch(GAS_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'text/plain' },
-                body: JSON.stringify({ messages: [{ role: 'user', content: prompt }], search: false, grade: 'light' })
+                body: JSON.stringify({ messages: [{ role: 'user', content: prompt }], search: false, grade: selectedGrade })
             });
             const data = await res.json();
             const text = data.ok ? data.text : 'エラーが発生しました。';
-            localStorage.setItem('sophie_daily_fortune', JSON.stringify({ date: todayKey, text, birth: `${year}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`, gender: selectedGender }));
-            showResult(text, false);
+            localStorage.setItem('sophie_daily_fortune', JSON.stringify({
+                date: todayKey, text, grade: selectedGrade,
+                birth: `${year}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`,
+                gender: selectedGender
+            }));
+            showResult(text, false, selectedGrade);
         } catch {
             alert('通信エラーが発生しました。');
             if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = '🌙 今日のアドバイスを聞く'; }

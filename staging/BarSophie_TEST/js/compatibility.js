@@ -22,9 +22,9 @@ export function showCompatibility(onBack = null, prefillMe = null, prefillYou = 
     const totalTickets = (userData.dailyTickets || 0) + (userData.weeklyTickets || 0) + (userData.purchasedTickets || 0);
 
     const makeDots = (filled, total) => Array.from({length: total}, (_, i) =>
-        `<span style="color:${i < filled ? '#f0b56e' : '#444'}; font-size:0.75rem;">●</span>`).join('');
+        `<span style="color:${i < filled ? '#f0b56e' : '#444'}; font-size:0.72rem;">●</span>`).join('');
 
-    const lightDotsHtml = makeDots(lightRemaining, lightLimit);
+    const lightDotsHtml = makeDots(Math.min(5, lightRemaining), Math.min(5, lightLimit));
     const premiumDotsHtml = makeDots(Math.min(5, totalTickets), 5);
 
     const dateInput = (prefix, label, pf) => {
@@ -38,35 +38,33 @@ export function showCompatibility(onBack = null, prefillMe = null, prefillYou = 
         const fColor = pf && pf.gender === '女性' ? '#fff' : '#888';
         const fBorder = pf && pf.gender === '女性' ? selBorder : '#444';
         return `
-        <div style="margin-bottom:6px;">
+        <div style="margin-bottom:4px;">
             <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:3px;">
-                <div style="color:#aaa; font-size:0.72rem;">${label}の生年月日</div>
-                <button id="${prefix}-people" style="background:#1a2a1a; color:#7fd97f; border:1px solid #3a6a4a; padding:2px 6px; border-radius:3px; font-size:0.65rem;">📖 人物帳</button>
+                <div style="color:#aaa; font-size:0.7rem;">${label}</div>
+                <button id="${prefix}-people" style="background:#1a2a1a; color:#7fd97f; border:1px solid #3a6a4a; padding:4px 10px; border-radius:4px; font-size:0.68rem;">📖 人物帳</button>
             </div>
-            <div style="display:flex; gap:3px; align-items:center;">
+            <div style="display:flex; gap:2px; align-items:center; flex-wrap:nowrap;">
                 <input type="number" id="${prefix}-year" placeholder="1980" min="1900" max="2010"
                     value="${pf ? pf.year : ''}"
-                    style="width:60px; background:#000; border:1px solid #555; color:#fff;
-                           height:34px; padding:0 6px; border-radius:4px; font-size:0.8rem;">
-                <span style="color:#aaa; font-size:0.75rem;">年</span>
+                    style="width:52px; background:#000; border:1px solid #555; color:#fff;
+                           height:26px; padding:0 4px; border-radius:4px; font-size:0.75rem;">
+                <span style="color:#aaa; font-size:0.68rem;">年</span>
                 <input type="number" id="${prefix}-month" placeholder="1" min="1" max="12"
                     value="${pf ? pf.month : ''}"
-                    style="width:40px; background:#000; border:1px solid #555; color:#fff;
-                           height:34px; padding:0 6px; border-radius:4px; font-size:0.8rem;">
-                <span style="color:#aaa; font-size:0.75rem;">月</span>
+                    style="width:32px; background:#000; border:1px solid #555; color:#fff;
+                           height:26px; padding:0 4px; border-radius:4px; font-size:0.75rem;">
+                <span style="color:#aaa; font-size:0.68rem;">月</span>
                 <input type="number" id="${prefix}-day" placeholder="1" min="1" max="31"
                     value="${pf ? pf.day : ''}"
-                    style="width:40px; background:#000; border:1px solid #555; color:#fff;
-                           height:34px; padding:0 6px; border-radius:4px; font-size:0.8rem;">
-                <span style="color:#aaa; font-size:0.75rem;">日</span>
-                <div style="display:flex; gap:4px; margin-left:4px;">
-                    <button class="${prefix}-gender" data-val="男性"
-                        style="background:${mBg}; color:${mColor}; border:1px solid ${mBorder};
-                               height:34px; padding:0 10px; border-radius:4px; font-size:0.75rem;">男</button>
-                    <button class="${prefix}-gender" data-val="女性"
-                        style="background:${fBg}; color:${fColor}; border:1px solid ${fBorder};
-                               height:34px; padding:0 10px; border-radius:4px; font-size:0.75rem;">女</button>
-                </div>
+                    style="width:32px; background:#000; border:1px solid #555; color:#fff;
+                           height:26px; padding:0 4px; border-radius:4px; font-size:0.75rem;">
+                <span style="color:#aaa; font-size:0.68rem;">日</span>
+                <button class="${prefix}-gender" data-val="男性"
+                    style="background:${mBg}; color:${mColor}; border:1px solid ${mBorder};
+                           height:26px; padding:0 8px; border-radius:4px; font-size:0.72rem; margin-left:3px;">男</button>
+                <button class="${prefix}-gender" data-val="女性"
+                    style="background:${fBg}; color:${fColor}; border:1px solid ${fBorder};
+                           height:26px; padding:0 8px; border-radius:4px; font-size:0.72rem;">女</button>
             </div>
         </div>`;
     };
@@ -82,25 +80,26 @@ export function showCompatibility(onBack = null, prefillMe = null, prefillYou = 
                 💑 相性診断
             </div>
             <div style="padding:10px;">
-                <div style="display:flex; gap:6px; margin-bottom:8px;">
-                    <button id="cp-grade-light" style="flex:1; background:#2a2a1a; border:2px solid #f0b56e;
-                        border-radius:6px; padding:6px 8px; text-align:left; cursor:pointer;">
-                        <div style="font-weight:bold; color:#f0b56e; font-size:0.78rem; margin-bottom:2px;">ライト診断</div>
-                        <div>${lightDotsHtml}</div>
-                    </button>
-                    <button id="cp-grade-premium" style="flex:1; background:#1a1a2a; border:1px solid #555;
-                        border-radius:6px; padding:6px 8px; text-align:left; cursor:pointer;">
-                        <div style="font-weight:bold; color:#9b59b6; font-size:0.78rem; margin-bottom:2px;">プレミア診断</div>
-                        <div>${premiumDotsHtml}</div>
-                    </button>
+                <div style="display:flex; gap:6px; margin-bottom:8px; align-items:stretch;">
+                    <div style="flex:1; min-width:0;">
+                        ${dateInput('cp-me', 'あなた', prefillMe)}
+                        <div style="border-top:1px solid #2a2a2a; margin:5px 0;"></div>
+                        ${dateInput('cp-you', 'お相手', prefillYou)}
+                    </div>
+                    <div style="display:flex; flex-direction:column; gap:4px; width:88px; flex-shrink:0;">
+                        <button id="cp-grade-light" style="flex:1; background:#2a2a1a; border:2px solid #f0b56e;
+                            border-radius:6px; padding:6px 8px; text-align:left; cursor:pointer;">
+                            <div style="font-weight:bold; color:#f0b56e; font-size:0.72rem; margin-bottom:3px;">ライト診断</div>
+                            <div>${lightDotsHtml}</div>
+                        </button>
+                        <button id="cp-grade-premium" style="flex:1; background:#1a1a2a; border:1px solid #555;
+                            border-radius:6px; padding:6px 8px; text-align:left; cursor:pointer;">
+                            <div style="font-weight:bold; color:#9b59b6; font-size:0.72rem; margin-bottom:3px;">プレミア診断</div>
+                            <div>${premiumDotsHtml}</div>
+                        </button>
+                    </div>
                 </div>
-                <div style="border-top:1px solid #333; margin-bottom:8px; padding-top:8px;">
-                    ${dateInput('cp-me', 'あなた', prefillMe)}
-                </div>
-                <div style="border-top:1px solid #333; margin-bottom:8px; padding-top:6px;">
-                    ${dateInput('cp-you', 'お相手', prefillYou)}
-                </div>
-                <div style="border-top:1px solid #333; margin:8px 0 6px;"></div>
+                <div style="border-top:1px solid #333; margin:4px 0 8px;"></div>
                 <div style="margin-bottom:6px;">
                     <div style="color:#aaa; font-size:0.72rem; margin-bottom:3px;">相手をどう思っていますか？</div>
                     <textarea id="cp-feeling" rows="2" maxlength="50" placeholder="例：好きだけど自分の気持ちがよくわからない"

@@ -54,7 +54,7 @@ export function showWelcomePage(onClose) {
                                 margin-bottom:6px;">👑 ご常連パスカード（月額300円）で使えること</div>
                     <div style="color:#aaa; font-size:0.78rem; line-height:1.8;
                                 padding-left:8px;">
-                        🔮 特別鑑定チケット5枚/月<br>
+                        ✨ プレミアチケット5枚/月（毎日2枚＋毎週5枚配給）<br>
                         🍽️ いいお店を探す（1日3回）<br>
                         ✨ 今後追加される特別機能
                     </div>
@@ -111,6 +111,13 @@ export function showMyPage(onClose) {
     const nickname = userData.nickname || user.displayName || user.email;
     const status = userData.role === 'admin' ? 'admin' : (userData.status || 'free');
     const totalTickets = (userData.dailyTickets || 0) + (userData.weeklyTickets || 0) + (userData.purchasedTickets || 0);
+    const lightLimitMap = { guest: 0, free: 1, active: 3, vip: 99, admin: 99 };
+    const lightLimit = lightLimitMap[status] || 0;
+    const todayKey = new Date().toISOString().slice(0, 10);
+    const usedLightToday = userData.lastFortuneBDate === todayKey ? (userData.dailyFortuneBCount || 0) : 0;
+    const lightRemaining = Math.max(0, lightLimit - usedLightToday);
+    const makeDots = (filled, total) => Array.from({length: Math.min(total, 5)}, (_, i) =>
+        `<span style="color:${i < Math.min(filled, 5) ? '#f0b56e' : '#333'}; font-size:0.85rem;">●</span>`).join('');
 
     const html = `
         <div style="margin:10px; border-radius:10px; border:2px solid transparent;
@@ -143,19 +150,25 @@ export function showMyPage(onClose) {
                             ${status === 'admin' ? '👑 ' : ''}${statusLabel[status] || '無料会員'}
                         </div>
                     </div>
-                    <div style="margin-top:2px;">
-                        <div style="color:#888; font-size:0.72rem; margin-bottom:5px;">Ｓチケット のこり</div>
-                        <div style="display:flex; justify-content:space-between; margin-bottom:3px;">
-                            <div style="color:#666; font-size:0.7rem;">今日分</div>
-                            <div style="color:#c39bd3; font-size:0.75rem;">🎫 ${userData.dailyTickets || 0}枚</div>
+                    <div style="margin-top:6px;">
+                        <div style="background:#111; border-radius:6px; padding:8px; margin-bottom:6px;">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:3px;">
+                                <div style="color:#f0b56e; font-size:0.72rem; font-weight:bold;">🌙 ライトチケット（本日）</div>
+                                <div style="color:#f0b56e; font-size:0.72rem;">${lightRemaining}／${Math.min(lightLimit, 5)}</div>
+                            </div>
+                            <div>${makeDots(lightRemaining, lightLimit)}</div>
+                            <div style="color:#555; font-size:0.65rem; margin-top:3px;">毎日リセット（あなたのご相談・今日のアドバイスほか）</div>
                         </div>
-                        <div style="display:flex; justify-content:space-between; margin-bottom:3px;">
-                            <div style="color:#666; font-size:0.7rem;">今週分</div>
-                            <div style="color:#c39bd3; font-size:0.75rem;">🎫 ${userData.weeklyTickets || 0}枚</div>
-                        </div>
-                        <div style="display:flex; justify-content:space-between; border-top:1px solid #2a2a2a; padding-top:4px; margin-top:2px;">
-                            <div style="color:#666; font-size:0.7rem;">購入分</div>
-                            <div style="color:#c39bd3; font-size:0.75rem;">🎫 ${userData.purchasedTickets || 0}枚</div>
+                        <div style="background:#111; border-radius:6px; padding:8px;">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:3px;">
+                                <div style="color:#9b59b6; font-size:0.72rem; font-weight:bold;">✨ プレミアチケット</div>
+                                <div style="color:#9b59b6; font-size:0.72rem;">残り ${totalTickets}枚</div>
+                            </div>
+                            <div>${makeDots(totalTickets, 5)}</div>
+                            <div style="display:flex; justify-content:space-between; margin-top:5px;">
+                                <div style="color:#555; font-size:0.65rem;">今日分 ${userData.dailyTickets || 0}枚 ／ 今週分 ${userData.weeklyTickets || 0}枚</div>
+                                <div style="color:#555; font-size:0.65rem;">購入 ${userData.purchasedTickets || 0}枚</div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -164,14 +177,14 @@ export function showMyPage(onClose) {
                 <div style="background:#1a1a2a; border:1px solid #3a3a6a; border-radius:8px;
                             padding:10px; margin-bottom:12px;">
                     <div style="color:#c39bd3; font-size:0.8rem; font-weight:bold; margin-bottom:8px;">
-                        🎫 Ｓチケットを買い足す
+                        🎫 プレミアチケットを買い足す
                     </div>
                     <button id="mp-buy-t1" style="width:100%; background:#2a1a3a; color:#c39bd3;
                         border:1px solid #5a3a7a; height:38px; border-radius:4px;
-                        font-size:0.82rem; margin-bottom:6px;">Ｓチケット１枚 ¥200</button>
+                        font-size:0.82rem; margin-bottom:6px;">プレミアチケット１枚 ¥200</button>
                     <button id="mp-buy-t5" style="width:100%; background:#2a1a3a; color:#c39bd3;
                         border:1px solid #5a3a7a; height:38px; border-radius:4px;
-                        font-size:0.82rem;">Ｓチケット５枚セット ¥500</button>
+                        font-size:0.82rem;">プレミアチケット５枚セット ¥500</button>
                 </div>` : ''}
 
                 ${status === 'free' ? `
@@ -181,7 +194,7 @@ export function showMyPage(onClose) {
                         👑 ご常連パスカードにアップグレード
                     </div>
                     <div style="color:#aaa; font-size:0.75rem; line-height:1.7; margin-bottom:8px;">
-                        毎日2枚・毎週5枚のＳチケット配給＋<br>占いB・店探しB1日10回
+                        毎日2枚・毎週5枚のプレミアチケット配給＋<br>占いB・店探しB1日10回
                     </div>
                     <button id="mp-trial" style="width:100%; background:#1a3a1a; color:#7fd97f;
                         border:1px solid #3a6a3a; height:38px; border-radius:4px;
