@@ -100,6 +100,10 @@ export function showCompatibility(onBack = null, prefillMe = null, prefillYou = 
                     </div>
                 </div>
                 <div style="border-top:1px solid #333; margin:4px 0 8px;"></div>
+                <div style="display:flex; gap:6px; margin-bottom:8px;">
+                    <button id="cp-style-balance" style="flex:1; background:#2a1a00; border:2px solid #f0b56e; border-radius:4px; height:30px; color:#f0b56e; font-size:0.75rem; cursor:pointer;">バランス</button>
+                    <button id="cp-style-straight" style="flex:1; background:#1a1a1a; border:1px solid #444; border-radius:4px; height:30px; color:#888; font-size:0.75rem; cursor:pointer;">ストレート</button>
+                </div>
                 <div style="margin-bottom:6px;">
                     <div style="color:#aaa; font-size:0.72rem; margin-bottom:3px;">相手をどう思っていますか？</div>
                     <textarea id="cp-feeling" rows="2" maxlength="50" placeholder="例：好きだけど自分の気持ちがよくわからない"
@@ -127,6 +131,7 @@ export function showCompatibility(onBack = null, prefillMe = null, prefillYou = 
     let myGender = prefillMe ? prefillMe.gender : '';
     let yourGender = prefillYou ? prefillYou.gender : '';
     let selectedGrade = 'light';
+    let selectedStyle = 'balance';
 
     function _updateGradeUI() {
         const lightBtn = document.getElementById('cp-grade-light');
@@ -144,8 +149,23 @@ export function showCompatibility(onBack = null, prefillMe = null, prefillYou = 
         }
     }
 
+    function _updateStyleUI() {
+        const balBtn = document.getElementById('cp-style-balance');
+        const strBtn = document.getElementById('cp-style-straight');
+        if (!balBtn || !strBtn) return;
+        if (selectedStyle === 'balance') {
+            balBtn.style.border = '2px solid #f0b56e'; balBtn.style.background = '#2a1a00'; balBtn.style.color = '#f0b56e';
+            strBtn.style.border = '1px solid #444'; strBtn.style.background = '#1a1a1a'; strBtn.style.color = '#888';
+        } else {
+            balBtn.style.border = '1px solid #444'; balBtn.style.background = '#1a1a1a'; balBtn.style.color = '#888';
+            strBtn.style.border = '2px solid #ff6b6b'; strBtn.style.background = '#2a0a0a'; strBtn.style.color = '#ff6b6b';
+        }
+    }
+
     document.getElementById('cp-grade-light').onclick = () => { selectedGrade = 'light'; _updateGradeUI(); };
     document.getElementById('cp-grade-premium').onclick = () => { selectedGrade = 'premium'; _updateGradeUI(); };
+    document.getElementById('cp-style-balance').onclick = () => { selectedStyle = 'balance'; _updateStyleUI(); };
+    document.getElementById('cp-style-straight').onclick = () => { selectedStyle = 'straight'; _updateStyleUI(); };
 
     document.querySelectorAll('.cp-me-gender').forEach(btn => {
         btn.addEventListener('click', () => {
@@ -349,6 +369,9 @@ ${question || 'とくになし'}
 ・ソフィーとして品があり温かみのある語り口で
 ・斜体や演出の地の文は入れないこと
 ・回答は1000字程度にまとめること`;
+            if (selectedStyle === 'straight') {
+                prompt += `\n【鑑定スタイル】\nお客様はズバッと率直な鑑定を希望されています。\n良い面だけでなく、課題・弱点・注意点を忖度しないで包み隠さず伝えること。\nマイルドな表現で丸めない。ただしソフィーとしての品と温かみは保つこと。`;
+            }
         }
 
         const messages = [{ role: 'user', content: prompt }];
@@ -357,7 +380,7 @@ ${question || 'とくになし'}
             const res = await fetch(GAS_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'text/plain' },
-                body: JSON.stringify({ messages, search: false, grade: selectedGrade })
+                body: JSON.stringify({ messages, search: false, grade: selectedGrade, style: selectedStyle })
             });
             const data = await res.json();
 

@@ -102,7 +102,7 @@ export function showMyFortune(onBack = null, prefill = null) {
                     </div>
                 </div>
                 <div style="margin-bottom:8px;">
-                    <div style="color:#aaa; font-size:0.72rem; margin-bottom:4px;">鑑定テーマ</div>
+                    <div style="color:#aaa; font-size:0.72rem; margin-bottom:4px;">鑑定テーマ とスタイル</div>
                     <div style="display:grid; grid-template-columns:1fr 1fr; gap:4px;">
                         <button class="ft-theme" data-val="総合運"
                             style="background:#1a1a1a; color:#888; border:1px solid #444;
@@ -129,6 +129,10 @@ export function showMyFortune(onBack = null, prefill = null) {
                             style="background:#1a1a1a; color:#555; border:1px solid #2a2a2a;
                                    height:36px; border-radius:4px; font-size:0.8rem;">💬 これが聞きたい</button>
                     </div>
+                </div>
+                <div style="display:flex; gap:6px; margin-bottom:8px;">
+                    <button id="ft-style-balance" style="flex:1; background:#2a1a00; border:2px solid #f0b56e; border-radius:4px; height:30px; color:#f0b56e; font-size:0.75rem; cursor:pointer;">バランス</button>
+                    <button id="ft-style-straight" style="flex:1; background:#1a1a1a; border:1px solid #444; border-radius:4px; height:30px; color:#888; font-size:0.75rem; cursor:pointer;">ストレート</button>
                 </div>
                 <div style="margin-bottom:10px;">
                     <div id="ft-worry-label" style="color:#aaa; font-size:0.72rem; margin-bottom:4px;">特に気になることがあれば</div>
@@ -186,8 +190,25 @@ export function showMyFortune(onBack = null, prefill = null) {
         });
     }
 
+    let selectedStyle = 'balance';
+
+    function _updateStyleUI() {
+        const balBtn = document.getElementById('ft-style-balance');
+        const strBtn = document.getElementById('ft-style-straight');
+        if (!balBtn || !strBtn) return;
+        if (selectedStyle === 'balance') {
+            balBtn.style.border = '2px solid #f0b56e'; balBtn.style.background = '#2a1a00'; balBtn.style.color = '#f0b56e';
+            strBtn.style.border = '1px solid #444'; strBtn.style.background = '#1a1a1a'; strBtn.style.color = '#888';
+        } else {
+            balBtn.style.border = '1px solid #444'; balBtn.style.background = '#1a1a1a'; balBtn.style.color = '#888';
+            strBtn.style.border = '2px solid #ff6b6b'; strBtn.style.background = '#2a0a0a'; strBtn.style.color = '#ff6b6b';
+        }
+    }
+
     document.getElementById('ft-grade-light').onclick = () => { selectedGrade = 'light'; _updateGradeUI(); };
     document.getElementById('ft-grade-premium').onclick = () => { selectedGrade = 'premium'; _updateGradeUI(); };
+    document.getElementById('ft-style-balance').onclick = () => { selectedStyle = 'balance'; _updateStyleUI(); };
+    document.getElementById('ft-style-straight').onclick = () => { selectedStyle = 'straight'; _updateStyleUI(); };
 
     document.querySelectorAll('.ft-gender').forEach(btn => {
         if (selectedGender && btn.dataset.val === selectedGender) {
@@ -315,13 +336,6 @@ ${worry ? `特に相談したいこと：${worry}` : ''}
 大運（開始${daiyun.startAge}歳・${daiyun.isForward ? '順行' : '逆行'}）：${daiyun.daiyunList.slice(0,6).map(d => `${d.ageRange}${d.pillar}`).join('・')}
 現在の大運：${currentDaiyun ? `${currentDaiyun.ageRange} ${currentDaiyun.pillar}` : '不明'}
 `;
-            // ▼ 率直鑑定スタイル — 元に戻す場合はこの定数を空文字列 '' に変更
-            const _myFortuneStyle = `
-【鑑定スタイル】
-お客様はズバッと率直な鑑定を希望されています。
-良い面だけでなく、課題・弱点・注意点を忖度しないで包み隠さず伝えること。
-マイルドな表現で丸めない。ただしソフィーとしての品と温かみは保つこと。
-`;
             prompt = `${sophieChar}
 【現在の日付】${todayStr}
 ※鑑定は必ずこの日付を基準に行うこと。「来年は○○年」などの表現も正確に。
@@ -336,7 +350,7 @@ ${worry ? `特に相談したいこと：${worry}` : ''}
 ${meishikiDetail}
 鑑定テーマ：${selectedTheme}
 特に相談したいテーマ：${worry || 'なし'}
-${_myFortuneStyle}
+
 【対話の進め方】
 1. この方の本質的な性格・才能・宿命を読む。その際、自然な語りの中で、この人ならではの強み、見落としがちな弱み、これから開ける可能性、気をつけるべき点にさりげなく触れること
 2. 現在の大運・年運（${today.getFullYear()}年）の流れを読んで伝える
@@ -349,6 +363,9 @@ ${_myFortuneStyle}
 ・ソフィーとして品があり温かみのある語り口で
 ・見出しや箇条書きは使わず、会話するように自然な文章で
 ・回答は1200字程度にまとめること`;
+            if (selectedStyle === 'straight') {
+                prompt += `\n【鑑定スタイル】\nお客様はズバッと率直な鑑定を希望されています。\n良い面だけでなく、課題・弱点・注意点を忖度しないで包み隠さず伝えること。\nマイルドな表現で丸めない。ただしソフィーとしての品と温かみは保つこと。`;
+            }
         }
 
         const messages = [{ role: 'user', content: prompt }];
@@ -357,7 +374,7 @@ ${_myFortuneStyle}
             const res = await fetch(GAS_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'text/plain' },
-                body: JSON.stringify({ messages, search: false, grade: selectedGrade })
+                body: JSON.stringify({ messages, search: false, grade: selectedGrade, style: selectedStyle })
             });
             const data = await res.json();
 
@@ -549,7 +566,7 @@ export function showAboutPerson(onBack = null, prefill = null) {
                     </div>
                 </div>
                 <div style="margin-bottom:8px;">
-                    <div style="color:#aaa; font-size:0.72rem; margin-bottom:4px;">鑑定テーマ</div>
+                    <div style="color:#aaa; font-size:0.72rem; margin-bottom:4px;">鑑定テーマ とスタイル</div>
                     <div style="display:grid; grid-template-columns:1fr 1fr; gap:4px;">
                         <button class="ft-theme" data-val="性格分析"
                             style="background:#1a1a1a; color:#888; border:1px solid #444;
@@ -570,6 +587,10 @@ export function showAboutPerson(onBack = null, prefill = null) {
                             style="background:#1a1a1a; color:#555; border:1px solid #2a2a2a;
                                    height:36px; border-radius:4px; font-size:0.8rem;">🎁 プレゼント</button>
                     </div>
+                </div>
+                <div style="display:flex; gap:6px; margin-bottom:8px;">
+                    <button id="ft-style-balance" style="flex:1; background:#2a1a00; border:2px solid #f0b56e; border-radius:4px; height:30px; color:#f0b56e; font-size:0.75rem; cursor:pointer;">バランス</button>
+                    <button id="ft-style-straight" style="flex:1; background:#1a1a1a; border:1px solid #444; border-radius:4px; height:30px; color:#888; font-size:0.75rem; cursor:pointer;">ストレート</button>
                 </div>
                 <div style="margin-bottom:10px;">
                     <div style="color:#aaa; font-size:0.72rem; margin-bottom:4px;">気になる点・関係性など</div>
@@ -627,8 +648,25 @@ export function showAboutPerson(onBack = null, prefill = null) {
         });
     }
 
+    let selectedStyle = 'balance';
+
+    function _updateStyleUI() {
+        const balBtn = document.getElementById('ft-style-balance');
+        const strBtn = document.getElementById('ft-style-straight');
+        if (!balBtn || !strBtn) return;
+        if (selectedStyle === 'balance') {
+            balBtn.style.border = '2px solid #f0b56e'; balBtn.style.background = '#2a1a00'; balBtn.style.color = '#f0b56e';
+            strBtn.style.border = '1px solid #444'; strBtn.style.background = '#1a1a1a'; strBtn.style.color = '#888';
+        } else {
+            balBtn.style.border = '1px solid #444'; balBtn.style.background = '#1a1a1a'; balBtn.style.color = '#888';
+            strBtn.style.border = '2px solid #ff6b6b'; strBtn.style.background = '#2a0a0a'; strBtn.style.color = '#ff6b6b';
+        }
+    }
+
     document.getElementById('ft-grade-light').onclick = () => { selectedGrade = 'light'; _updateGradeUI(); };
     document.getElementById('ft-grade-premium').onclick = () => { selectedGrade = 'premium'; _updateGradeUI(); };
+    document.getElementById('ft-style-balance').onclick = () => { selectedStyle = 'balance'; _updateStyleUI(); };
+    document.getElementById('ft-style-straight').onclick = () => { selectedStyle = 'straight'; _updateStyleUI(); };
 
     document.querySelectorAll('.ft-gender').forEach(btn => {
         if (selectedGender && btn.dataset.val === selectedGender) {
@@ -782,6 +820,9 @@ ${worry ? `気になる点・関係性：${worry}` : ''}`;
 
 この人の命式から、喜ぶプレゼントとラッキーアイテムを具体的に提案してください。300字程度。`;
             }
+            if (selectedStyle === 'straight') {
+                prompt += `\n【鑑定スタイル】\nお客様はズバッと率直な鑑定を希望されています。\n良い面だけでなく、課題・弱点・注意点を忖度しないで包み隠さず伝えること。\nマイルドな表現で丸めない。ただしソフィーとしての品と温かみは保つこと。`;
+            }
         }
 
         const messages = [{ role: 'user', content: prompt }];
@@ -790,7 +831,7 @@ ${worry ? `気になる点・関係性：${worry}` : ''}`;
             const res = await fetch(GAS_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'text/plain' },
-                body: JSON.stringify({ messages, search: false, grade: selectedGrade })
+                body: JSON.stringify({ messages, search: false, grade: selectedGrade, style: selectedStyle })
             });
             const data = await res.json();
 
