@@ -75,27 +75,33 @@ export function showResultFullscreen(title, text) {
     const existing = document.getElementById('result-fullscreen');
     if (existing) existing.remove();
 
+    const scrollArea = document.getElementById('main-scroll');
+    if (scrollArea) scrollArea.style.pointerEvents = 'none';
+
     const overlay = document.createElement('div');
     overlay.id = 'result-fullscreen';
-    overlay.style.cssText = 'position:fixed;inset:0;background:#0a0a0a;z-index:99997;display:flex;flex-direction:column;box-sizing:border-box;';
+    overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;width:100%;height:100%;background:#0a0a0a;z-index:99997;display:flex;flex-direction:column;box-sizing:border-box;';
 
     const header = document.createElement('div');
-    header.style.cssText = 'display:flex;align-items:center;padding:12px 16px;border-bottom:1px solid #333;background:#111;flex-shrink:0;';
+    header.style.cssText = 'display:flex;align-items:center;padding:12px 16px;border-bottom:1px solid #333;background:#111;flex-shrink:0;position:sticky;top:0;z-index:2;';
 
     const titleEl = document.createElement('div');
     titleEl.style.cssText = 'color:#f0b56e;font-weight:bold;font-size:0.9rem;flex:1;';
     titleEl.textContent = title;
 
     const closeBtn = document.createElement('button');
-    closeBtn.style.cssText = 'background:none;border:none;color:#888;font-size:1.6rem;cursor:pointer;line-height:1;padding:0 4px;-webkit-tap-highlight-color:transparent;';
+    closeBtn.style.cssText = 'background:none;border:none;color:#aaa;font-size:1.6rem;cursor:pointer;line-height:1;padding:8px 12px;-webkit-tap-highlight-color:transparent;min-width:44px;min-height:44px;touch-action:manipulation;';
     closeBtn.textContent = '✕';
-    closeBtn.addEventListener('click', () => overlay.remove());
+    closeBtn.addEventListener('click', () => {
+        if (scrollArea) scrollArea.style.pointerEvents = '';
+        overlay.remove();
+    });
 
     header.appendChild(titleEl);
     header.appendChild(closeBtn);
 
     const body = document.createElement('div');
-    body.style.cssText = 'flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px;color:#ddd;font-size:15px;line-height:1.8;';
+    body.style.cssText = 'flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px;color:#ddd;font-size:15px;line-height:1.8;';
     body.innerHTML = text;
 
     overlay.appendChild(header);
@@ -109,27 +115,35 @@ export function showMeishikiHtmlFullscreen(html) {
     const existing = document.getElementById('meishiki-fullscreen');
     if (existing) existing.remove();
 
+    // iOS Safari: -webkit-overflow-scrolling:touch のスクロールレイヤーが
+    // position:fixed オーバーレイのタッチを奪う既知バグを回避
+    const scrollArea = document.getElementById('main-scroll');
+    if (scrollArea) scrollArea.style.pointerEvents = 'none';
+
     const overlay = document.createElement('div');
     overlay.id = 'meishiki-fullscreen';
-    overlay.style.cssText = 'position:fixed;inset:0;background:#0a0a0a;z-index:99997;display:flex;flex-direction:column;box-sizing:border-box;';
+    overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;width:100%;height:100%;background:#0a0a0a;z-index:99997;display:flex;flex-direction:column;box-sizing:border-box;';
 
     const header = document.createElement('div');
-    header.style.cssText = 'display:flex;align-items:center;padding:12px 16px;border-bottom:1px solid #333;background:#111;flex-shrink:0;';
+    header.style.cssText = 'display:flex;align-items:center;padding:12px 16px;border-bottom:1px solid #333;background:#111;flex-shrink:0;position:sticky;top:0;z-index:2;';
 
     const titleEl = document.createElement('div');
     titleEl.style.cssText = 'color:#f0b56e;font-weight:bold;font-size:0.9rem;flex:1;';
     titleEl.textContent = '📊 命式表';
 
     const closeBtn = document.createElement('button');
-    closeBtn.style.cssText = 'background:none;border:none;color:#888;font-size:1.6rem;cursor:pointer;line-height:1;padding:0 4px;-webkit-tap-highlight-color:transparent;';
+    closeBtn.style.cssText = 'background:none;border:none;color:#aaa;font-size:1.6rem;cursor:pointer;line-height:1;padding:8px 12px;-webkit-tap-highlight-color:transparent;min-width:44px;min-height:44px;touch-action:manipulation;';
     closeBtn.textContent = '✕';
-    closeBtn.addEventListener('click', () => overlay.remove());
+    closeBtn.addEventListener('click', () => {
+        if (scrollArea) scrollArea.style.pointerEvents = '';
+        overlay.remove();
+    });
 
     header.appendChild(titleEl);
     header.appendChild(closeBtn);
 
     const body = document.createElement('div');
-    body.style.cssText = 'flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:12px;line-height:1.8;';
+    body.style.cssText = 'flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:12px;line-height:1.8;';
     body.innerHTML = html;
 
     overlay.appendChild(header);
@@ -207,29 +221,29 @@ export async function showMeishikiGuide() {
     const existing = document.getElementById('meishiki-guide-modal');
     if (existing) existing.remove();
 
+    const scrollArea = document.getElementById('main-scroll');
+    if (scrollArea) scrollArea.style.pointerEvents = 'none';
+
     const overlay = document.createElement('div');
     overlay.id = 'meishiki-guide-modal';
-    overlay.style.cssText = [
-        'position:fixed', 'inset:0',
-        'background:#0a0a0a',
-        'z-index:99997',
-        'display:flex', 'flex-direction:column',
-        'box-sizing:border-box'
-    ].join(';');
+    overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;width:100%;height:100%;background:#0a0a0a;z-index:99997;display:flex;flex-direction:column;box-sizing:border-box;';
 
     const gHeader = document.createElement('div');
-    gHeader.style.cssText = 'display:flex;align-items:center;padding:12px 16px;border-bottom:1px solid #333;background:#111;flex-shrink:0;';
+    gHeader.style.cssText = 'display:flex;align-items:center;padding:12px 16px;border-bottom:1px solid #333;background:#111;flex-shrink:0;position:sticky;top:0;z-index:2;';
     const gTitle = document.createElement('div');
     gTitle.style.cssText = 'color:#f0b56e;font-weight:bold;font-size:0.9rem;flex:1;';
     gTitle.textContent = `📖 ${guide.title}`;
     const gClose = document.createElement('button');
-    gClose.style.cssText = 'background:none;border:none;color:#888;font-size:1.6rem;cursor:pointer;line-height:1;padding:0 4px;-webkit-tap-highlight-color:transparent;';
+    gClose.style.cssText = 'background:none;border:none;color:#aaa;font-size:1.6rem;cursor:pointer;line-height:1;padding:8px 12px;-webkit-tap-highlight-color:transparent;min-width:44px;min-height:44px;touch-action:manipulation;';
     gClose.textContent = '✕';
-    gClose.addEventListener('click', () => overlay.remove());
+    gClose.addEventListener('click', () => {
+        if (scrollArea) scrollArea.style.pointerEvents = '';
+        overlay.remove();
+    });
     gHeader.appendChild(gTitle);
     gHeader.appendChild(gClose);
     const gBody = document.createElement('div');
-    gBody.style.cssText = 'flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px;';
+    gBody.style.cssText = 'flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px;';
     gBody.innerHTML = guide.sections.map(_renderGuideSection).join('');
     overlay.appendChild(gHeader);
     overlay.appendChild(gBody);

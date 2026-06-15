@@ -315,6 +315,13 @@ ${worry ? `特に相談したいこと：${worry}` : ''}
 大運（開始${daiyun.startAge}歳・${daiyun.isForward ? '順行' : '逆行'}）：${daiyun.daiyunList.slice(0,6).map(d => `${d.ageRange}${d.pillar}`).join('・')}
 現在の大運：${currentDaiyun ? `${currentDaiyun.ageRange} ${currentDaiyun.pillar}` : '不明'}
 `;
+            // ▼ 率直鑑定スタイル — 元に戻す場合はこの定数を空文字列 '' に変更
+            const _myFortuneStyle = `
+【鑑定スタイル】
+お客様はズバッと率直な鑑定を希望されています。
+良い面だけでなく、課題・弱点・注意点を忖度しないで包み隠さず伝えること。
+マイルドな表現で丸めない。ただしソフィーとしての品と温かみは保つこと。
+`;
             prompt = `${sophieChar}
 【現在の日付】${todayStr}
 ※鑑定は必ずこの日付を基準に行うこと。「来年は○○年」などの表現も正確に。
@@ -329,7 +336,7 @@ ${worry ? `特に相談したいこと：${worry}` : ''}
 ${meishikiDetail}
 鑑定テーマ：${selectedTheme}
 特に相談したいテーマ：${worry || 'なし'}
-
+${_myFortuneStyle}
 【対話の進め方】
 1. この方の本質的な性格・才能・宿命を読む。その際、自然な語りの中で、この人ならではの強み、見落としがちな弱み、これから開ける可能性、気をつけるべき点にさりげなく触れること
 2. 現在の大運・年運（${today.getFullYear()}年）の流れを読んで伝える
