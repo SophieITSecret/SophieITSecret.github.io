@@ -260,7 +260,6 @@ function showRootMenu() {
     window._cancelGuestCaution?.();
     document.getElementById('sophie-caution')?.remove();
     document.getElementById('daily-advice-pill')?.remove();
-    document.getElementById('quick-action-row')?.remove();
     yt.style.display = 'none';
     img.src = './front_sophie.jpeg';
     img.style.display = 'block';
@@ -314,37 +313,26 @@ function _showMusicSubmenu() {
     };
 }
 
-function _ensureQuickActionRow() {
-    const existing = document.getElementById('quick-action-row');
-    if (existing) return existing;
-    const todayRow = document.getElementById('today-row');
-    if (!todayRow) return null;
-    const qRow = document.createElement('div');
-    qRow.id = 'quick-action-row';
-    qRow.style.cssText = 'width:100%; display:flex; align-items:center; gap:3px; margin-bottom:4px;';
-    todayRow.parentElement.insertBefore(qRow, todayRow);
-    return qRow;
-}
-
 function _insertDailyAdviceButton() {
     if (document.getElementById('daily-advice-pill')) return;
-    const row = _ensureQuickActionRow();
-    if (!row) return;
+    const bar = document.getElementById('label-bar');
+    if (!bar) return;
     const todayKey = new Date().toISOString().slice(0, 10);
     let cached = null;
     try { const r = JSON.parse(localStorage.getItem('sophie_daily_fortune') || 'null'); cached = r && r.date === todayKey ? r : null; } catch {}
     const pill = document.createElement('div');
     pill.id = 'daily-advice-pill';
-    pill.style.cssText = 'flex-shrink:0;';
+    pill.style.cssText = 'flex-shrink:0; margin:0 4px;';
     pill.innerHTML = `<button id="btn-daily-advice"
         style="background:${cached ? '#1a2a1a' : '#111'}; border:1px solid ${cached ? '#3a6a4a' : '#333'};
                color:${cached ? '#7fd97f' : '#888'};
-               border-radius:50px; padding:3px 10px;
+               border-radius:50px; padding:2px 8px; height:20px;
                cursor:pointer; -webkit-tap-highlight-color:transparent;
-               display:inline-flex; align-items:center; gap:4px; font-size:0.68rem; white-space:nowrap;">
+               display:inline-flex; align-items:center; gap:3px; font-size:0.63rem; white-space:nowrap;">
         🌙${cached ? '今日のアドバイス✓' : '今日のアドバイス'}
     </button>`;
-    row.insertBefore(pill, row.querySelector('#sophie-caution') || null);
+    const dateInfo = document.getElementById('today-date-info');
+    bar.insertBefore(pill, dateInfo ? dateInfo.nextSibling : bar.lastChild);
     document.getElementById('btn-daily-advice').addEventListener('click', () => {
         import('./fortune.js').then(f => {
             nav.updateNav('fortune');
@@ -355,7 +343,7 @@ function _insertDailyAdviceButton() {
 
 function _insertHintButton() {
     if (document.getElementById('sophie-caution')) return;
-    const row = _ensureQuickActionRow();
+    const row = document.getElementById('today-row');
     if (!row) return;
     const hint = document.createElement('div');
     hint.id = 'sophie-caution';
@@ -368,7 +356,7 @@ function _insertHintButton() {
         <img src="./sophie_face.png" style="width:16px; height:16px; border-radius:50%; object-fit:cover; flex-shrink:0;">
         お店の使い方
     </button>`;
-    row.appendChild(hint);
+    row.insertBefore(hint, row.firstChild);
     document.getElementById('btn-howto-hint').addEventListener('click', () => {
         hint.remove();
         import('./guide.js').then(g => g.showGuideScreen(showRootMenu));

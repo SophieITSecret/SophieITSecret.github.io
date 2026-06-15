@@ -938,7 +938,7 @@ export function showFortuneMenu(onBack = null) {
     };
 }
 
-export async function showDailyAdvice(onBack = null, prefillOverride = null) {
+export async function showDailyAdvice(onBack = null, prefillOverride = null, forceForm = false) {
     const lv = document.getElementById('list-view');
     const nm = document.getElementById('nav-main');
     const monImg = document.getElementById('monitor-img');
@@ -1000,7 +1000,7 @@ export async function showDailyAdvice(onBack = null, prefillOverride = null) {
                         font-size:0.85rem; margin-bottom:6px;">📋 コピーする</button>
                     <button id="da-refresh" style="width:100%; background:#1a1a1a; color:#555;
                         border:1px solid #333; height:36px; border-radius:4px;
-                        font-size:0.75rem;">🔄 もう一度引き直す（ライト/プレミア消費）</button>
+                        font-size:0.75rem;">↩ 入力フォームに戻る</button>
                 </div>
             </div>`;
 
@@ -1013,13 +1013,20 @@ export async function showDailyAdvice(onBack = null, prefillOverride = null) {
                 .catch(() => alert('コピーに失敗しました。'));
         };
         document.getElementById('da-refresh').onclick = () => {
-            localStorage.removeItem('sophie_daily_fortune');
-            showDailyAdvice(onBack);
+            let backPrefill = null;
+            try {
+                const r = JSON.parse(localStorage.getItem('sophie_daily_fortune') || 'null');
+                if (r?.birth) {
+                    const [y, m, d] = r.birth.split('-');
+                    backPrefill = { year: y, month: parseInt(m), day: parseInt(d), gender: r.gender };
+                }
+            } catch {}
+            showDailyAdvice(onBack, backPrefill, true);
         };
     };
 
     const cached = getCached();
-    if (cached) { showResult(cached.text, true, cached.grade || 'light'); return; }
+    if (cached && !forceForm) { showResult(cached.text, true, cached.grade || 'light'); return; }
 
     const prefill = prefillOverride !== null ? prefillOverride : loadSelfPrefill();
 
@@ -1249,7 +1256,7 @@ ${detail}
                         font-size:0.85rem; margin-bottom:6px;">📋 コピーする</button>
                     <button id="da-tomorrow-back" style="width:100%; background:#1a1a1a; color:#555;
                         border:1px solid #333; height:36px; border-radius:4px;
-                        font-size:0.75rem;">← フォームに戻る</button>
+                        font-size:0.75rem;">↩ 入力フォームに戻る</button>
                 </div>
             </div>`;
 
@@ -1261,7 +1268,17 @@ ${detail}
                 .then(() => alert('コピーしました。'))
                 .catch(() => alert('コピーに失敗しました。'));
         };
-        document.getElementById('da-tomorrow-back').onclick = () => { showDailyAdvice(onBack); };
+        document.getElementById('da-tomorrow-back').onclick = () => {
+            let backPrefill = null;
+            try {
+                const tc = JSON.parse(localStorage.getItem('sophie_tomorrow_fortune') || 'null');
+                if (tc?.birth) {
+                    const [y, m, d] = tc.birth.split('-');
+                    backPrefill = { year: y, month: parseInt(m), day: parseInt(d), gender: tc.gender };
+                }
+            } catch {}
+            showDailyAdvice(onBack, backPrefill, true);
+        };
     };
 
     document.getElementById('da-submit-tomorrow').onclick = async () => {
