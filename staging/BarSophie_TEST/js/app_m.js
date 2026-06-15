@@ -34,6 +34,10 @@ const SOPHIE_VOICE_TIMING = {
 
 function playSophieVoice(screen) {
   if (window._djNarrationActive) return;
+  if (window._lastSophieVoiceAudio) {
+    window._lastSophieVoiceAudio.pause();
+    window._lastSophieVoiceAudio = null;
+  }
   const _cat = window.currentUserData?.createdAt;
   const isNewComer = _cat && typeof _cat.toMillis === 'function' &&
     (Date.now() - _cat.toMillis() < 24 * 60 * 60 * 1000);
@@ -239,6 +243,10 @@ function playVoice(src, txt) {
 }
 
 function showRootMenu() {
+    if (window._lastSophieVoiceAudio) {
+        window._lastSophieVoiceAudio.pause();
+        window._lastSophieVoiceAudio = null;
+    }
     const lv = document.getElementById('list-view');
     const nm = document.getElementById('nav-main');
     const img = document.getElementById('monitor-img');

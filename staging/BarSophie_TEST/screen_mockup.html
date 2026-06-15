@@ -105,7 +105,7 @@ h1 { color: #f0b56e; font-size: 1.3rem; margin-bottom: 4px; }
   object-fit: contain; object-position: bottom;
 }
 .p-lounge-chat {
-  min-height: 72px; padding: 8px 14px;
+  min-height: 48px; padding: 6px 14px;
   background: #050505; border-top: 1px solid #1a1a2e;
   color: #ccc; font-size: 8px; line-height: 1.8; text-align: center;
 }
@@ -270,7 +270,7 @@ h1 { color: #f0b56e; font-size: 1.3rem; margin-bottom: 4px; }
 <body>
 
 <h1>🍸 BARソフィー スマホ画面モックアップ</h1>
-<div class="subtitle">BarSophie_TEST — 2026-06-07　portrait: モニター上 / ナビ下 の縦積みレイアウト</div>
+<div class="subtitle">BarSophie_TEST — 2026-06-15　portrait: モニター上 / ナビ下 の縦積みレイアウト</div>
 
 <!-- ============================================================
      SECTION 1: 起動フロー
@@ -331,11 +331,12 @@ h1 { color: #f0b56e; font-size: 1.3rem; margin-bottom: 4px; }
             </div>
             <div class="p-scroll">
               <div class="p-nav">
-                <!-- today-row: 今日は：+ お店の使い方ボタン（flex 同一行）-->
-                <div style="width:92%; display:flex; align-items:center; gap:3px; min-height:20px; margin-bottom:8px;">
-                  <div style="flex:1; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; font-size:6.5px;">
-                    <span style="color:#ffb3c1; font-weight:bold;">今日は：</span><span style="color:#c8b090;">マリナー9号打ち上げ（1971）</span>
-                  </div>
+                <!-- today-row: 今日のアドバイス(pill) + お店の使い方ボタン（flex 同一行）-->
+                <div style="width:92%; display:flex; align-items:center; gap:3px; min-height:20px; margin-bottom:8px; flex-wrap:nowrap;">
+                  <!-- 今日のアドバイス pill（キャッシュあり=緑） -->
+                  <button style="flex-shrink:0; background:#1a2a1a; border:1px solid #3a6a4a; color:#7fd97f; border-radius:50px; padding:2px 6px; display:inline-flex; align-items:center; gap:2px; font-size:5.5px; white-space:nowrap; cursor:pointer;">
+                    🌙今日のアドバイス✓
+                  </button>
                   <button style="flex-shrink:0; background:#fff; border:1px solid #5ba3d9; color:#444; border-radius:50px; padding:2px 6px 2px 10px; display:inline-flex; align-items:center; gap:3px; font-size:5.5px; white-space:nowrap; cursor:pointer;">
                     <img src="./sophie_face.png" style="width:10px; height:10px; border-radius:50%; object-fit:cover; flex-shrink:0;">
                     お店の使い方
@@ -362,7 +363,7 @@ h1 { color: #f0b56e; font-size: 1.3rem; margin-bottom: 4px; }
         </div>
       </div>
       <div class="phone-code">C</div>
-      <div class="phone-label">③ メイン画面（ルートメニュー）<br><span>today-row：今日は：＋お店の使い方ボタン（同一行）</span></div>
+      <div class="phone-label">③ メイン画面（ルートメニュー）<br><span>today-row：🌙今日のアドバイス(pill)＋お店の使い方(pill)（ログイン済のみ）</span></div>
       <div class="phone-annot">
         <div class="ann"><span class="ann-talk">Ｔ</span><span class="ann-text-talk">即時（着席グリーティング）</span></div>
         <div class="ann"><span class="ann-talk">NC</span><span class="ann-text-talk">「よくおいでいただきました。ぜひ今夜は楽しんでくださいね」</span></div>
@@ -734,9 +735,10 @@ h1 { color: #f0b56e; font-size: 1.3rem; margin-bottom: 4px; }
               <div class="p-panel">
                 <div class="p-phdr"><img src="./sophie_face.png">🔮 ソフィーの天命診断</div>
                 <div class="p-pbody">
-                  <button class="p-act afo" style="margin-bottom:4px; width:100%;">🌟 あなたのご相談<span class="pb pbai">Sonnet</span></button>
-                  <button class="p-act afo" style="margin-bottom:4px; width:100%;">👤 この人どんな人<span class="pb pbai">Sonnet</span></button>
-                  <button class="p-act afo" style="margin-bottom:4px; width:100%;">💑 相性を見てもらう<span class="pb pbai">Sonnet</span></button>
+                  <button style="display:block; width:100%; margin-bottom:4px; border-radius:5px; padding:6px 8px; font-size:8px; font-weight:bold; background:#ffffff; color:#ff69b4; border:2px solid #00d2ff; cursor:pointer;">🌙 今日のアドバイスを聞く</button>
+                  <button class="p-act afo" style="margin-bottom:4px; width:100%;">🌟 あなたのご相談</button>
+                  <button class="p-act afo" style="margin-bottom:4px; width:100%;">👤 この人どんな人</button>
+                  <button class="p-act afo" style="margin-bottom:4px; width:100%;">💑 相性を見てもらう</button>
                   <button class="p-act are" style="width:100%; margin-bottom:0;">👥 人物帳</button>
                 </div>
               </div>
@@ -755,7 +757,7 @@ h1 { color: #f0b56e; font-size: 1.3rem; margin-bottom: 4px; }
         </div>
       </div>
       <div class="phone-code">F1</div>
-      <div class="phone-label">⑦ 天命診断 メニュー<br><span>showFortuneMenu()</span><br><span>console: 戻る｜📓ノート｜⏹️｜▶｜⏭</span></div>
+      <div class="phone-label">⑦ 天命診断 メニュー<br><span>showFortuneMenu()</span><br><span>🌙今日のアドバイス：白背景・ピンク文字・水色枠</span><br><span>console: 戻る｜📓ノート｜⏹️｜▶｜⏭</span></div>
       <div class="phone-annot">
         <div class="ann"><span class="ann-talk">Ｔ</span><span class="ann-text-talk">1秒後</span></div>
         <div class="ann"><span class="ann-talk">50%</span><span class="ann-text-talk">「さあ、一緒に天命を覗いてみましょうか」</span></div>
@@ -909,6 +911,120 @@ h1 { color: #f0b56e; font-size: 1.3rem; margin-bottom: 4px; }
 <hr class="sep">
 
 <!-- ============================================================
+     SECTION 3-E: 今日のアドバイス（showDailyAdvice）
+  ============================================================ -->
+<div class="section">
+  <div class="section-title">3-E. 今日のアドバイス（showDailyAdvice）← カウンターpill / F1メニューから</div>
+  <div class="phones">
+
+    <!-- F-daily フォーム（キャッシュなし） -->
+    <div class="phone-wrap">
+      <div class="phone">
+        <div class="phone-screen">
+          <div class="p-monitor-wrap">
+            <img src="./fortune_sophie.jpeg" alt="ソフィー占い">
+          </div>
+          <div class="p-r-side">
+            <div class="p-label-bar"><div class="p-user-name">👑 マスター</div></div>
+            <div class="p-scroll">
+              <div class="p-panel">
+                <div class="p-phdr"><img src="./sophie_face.png">🌙 今日のアドバイス</div>
+                <div class="p-pbody">
+                  <!-- グレード選択ボタン -->
+                  <div style="display:flex; gap:3px; margin-bottom:6px;">
+                    <button style="flex:1; background:#2a2a1a; border:2px solid #f0b56e; color:#f0b56e; border-radius:4px; padding:3px; font-size:6px; font-weight:bold;">
+                      ライト診断<br>
+                      <span style="color:#f0b56e;">●●●</span><span style="color:#333;">○○</span>
+                    </button>
+                    <button style="flex:1; background:#1a1a2a; border:1px solid #555; color:#888; border-radius:4px; padding:3px; font-size:6px;">
+                      プレミア診断<br>
+                      <span style="color:#f0b56e;">●●</span><span style="color:#333;">○○○</span>
+                    </button>
+                  </div>
+                  <!-- 生年月日 -->
+                  <div class="fr">
+                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:2px;">
+                      <div class="fl">生年月日</div>
+                      <div style="background:#1a2a1a; color:#7fd97f; border:1px solid #3a6a4a; padding:1px 5px; border-radius:2px; font-size:5.5px;">👥 人物帳</div>
+                    </div>
+                    <div style="display:flex; gap:2px; align-items:center;">
+                      <input class="fi" style="width:40px;" placeholder="1980">
+                      <span style="color:#888; font-size:6px;">年</span>
+                      <input class="fi" style="width:22px;" placeholder="3">
+                      <span style="color:#888; font-size:6px;">月</span>
+                      <input class="fi" style="width:22px;" placeholder="15">
+                      <span style="color:#888; font-size:6px;">日</span>
+                    </div>
+                  </div>
+                  <!-- 性別 -->
+                  <div class="fr">
+                    <div class="fl">性別</div>
+                    <div class="chips"><span class="chip on">男性</span><span class="chip">女性</span></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="p-console">
+              <div class="p-btn-grid">
+                <div class="p-c-btn" style="background:#34495e; color:#fff; flex:1; font-size:7px;">戻る</div>
+                <div class="p-c-btn" style="background:#0096BF; color:#ff69b4; border:2px solid #ff51a8; flex:2.5; font-size:8px; font-weight:bold;">天命診断を行う</div>
+                <div class="p-c-btn" style="background:#1a1a2a; color:#9b59b6; border:1px solid #6a3a8a; flex:1.5; font-size:6.5px;">📊 命式表</div>
+              </div>
+              <div class="p-sophie-box"><img src="./sophie_shake.png"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="phone-code">F0</div>
+      <div class="phone-label">今日のアドバイス フォーム<br><span>showDailyAdvice()</span><br><span>デフォルト：bar_sophie_self から自動入力</span><br><span>人物帳で他者のデータも選択可</span></div>
+    </div>
+
+    <div class="arrow-right">→</div>
+
+    <!-- F-daily 結果（キャッシュあり） -->
+    <div class="phone-wrap">
+      <div class="phone">
+        <div class="phone-screen">
+          <div class="p-monitor-wrap">
+            <img src="./fortune_sophie.jpeg" alt="ソフィー占い">
+          </div>
+          <div class="p-r-side">
+            <div class="p-label-bar"><div class="p-user-name">👑 マスター</div></div>
+            <div class="p-scroll">
+              <div class="p-panel">
+                <div class="p-phdr"><img src="./sophie_face.png">🌙 今日のアドバイス</div>
+                <div class="p-pbody">
+                  <div style="background:#1a2a1a; border:1px solid #3a6a4a; border-radius:3px; padding:3px 5px; font-size:6px; color:#7fd97f; margin-bottom:4px;">✅ 本日取得済み（ライト診断）</div>
+                  <div class="p-fresult">
+                    <div class="p-ftext">今日は金気が静かに力を蓄える日です。焦らず、じっくりと物事を進めることで、思わぬ縁が開けてまいります。</div>
+                  </div>
+                  <div style="margin-top:4px;">
+                    <div style="background:#2a1a1a; color:#888; border:1px solid #333; border-radius:3px; padding:3px; font-size:6px; text-align:center;">🔄 今日の運勢を引き直す</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="p-console">
+              <div class="p-btn-grid">
+                <div class="p-c-btn" style="background:#34495e; color:#fff; flex:1; font-size:7px;">戻る</div>
+                <div class="p-c-btn" style="background:#0096BF; color:#ff69b4; border:2px solid #ff51a8; flex:2.5; font-size:8px; font-weight:bold;">天命診断を行う</div>
+                <div class="p-c-btn" style="background:#1a1a2a; color:#9b59b6; border:1px solid #6a3a8a; flex:1.5; font-size:6.5px;">📊 命式表</div>
+              </div>
+              <div class="p-sophie-box"><img src="./sophie_shake.png"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="phone-code">F0</div>
+      <div class="phone-label">今日のアドバイス 結果<br><span>キャッシュあり：当日は再表示</span><br><span>「引き直す」でキャッシュ削除→再送信</span></div>
+    </div>
+
+  </div>
+</div>
+
+<hr class="sep">
+
+<!-- ============================================================
      SECTION 3-B: あなたの天命診断フォーム → 結果
   ============================================================ -->
 <div class="section">
@@ -928,36 +1044,50 @@ h1 { color: #f0b56e; font-size: 1.3rem; margin-bottom: 4px; }
               <div class="p-panel">
                 <div class="p-phdr"><img src="./sophie_face.png">あなたの天命診断</div>
                 <div class="p-pbody">
-                  <div class="fr">
-                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:2px;">
-                      <div class="fl">生年月日 <span style="color:#555; font-size:5.5px;">（誰のでも入れられます）</span></div>
-                      <div style="background:#1a2a1a; color:#7fd97f; border:1px solid #3a6a4a; padding:1px 4px; border-radius:2px; font-size:5.5px;">📖 人物帳から選ぶ</div>
+                  <!-- 入力エリア + グレードボタン 右側縦配置 -->
+                  <div style="display:flex; gap:4px; margin-bottom:4px; align-items:stretch;">
+                    <div style="flex:1; min-width:0;">
+                      <div class="fr">
+                        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:2px;">
+                          <div class="fl">生年月日</div>
+                          <div style="background:#1a2a1a; color:#7fd97f; border:1px solid #3a6a4a; padding:1px 5px; border-radius:2px; font-size:5.5px;">👥 人物帳</div>
+                        </div>
+                        <div style="display:flex; gap:2px; align-items:center;">
+                          <input class="fi" style="width:36px;" placeholder="1980">
+                          <span style="color:#888; font-size:6px;">年</span>
+                          <input class="fi" style="width:20px;" placeholder="1">
+                          <span style="color:#888; font-size:6px;">月</span>
+                          <input class="fi" style="width:20px;" placeholder="1">
+                          <span style="color:#888; font-size:6px;">日</span>
+                        </div>
+                      </div>
+                      <div class="fr" style="margin-bottom:0;">
+                        <div class="fl">性別</div>
+                        <div class="chips"><span class="chip on">男性</span><span class="chip">女性</span></div>
+                      </div>
                     </div>
-                    <div style="display:flex; gap:2px; align-items:center;">
-                      <input class="fi" style="width:40px;" placeholder="1980">
-                      <span style="color:#888; font-size:6px;">年</span>
-                      <input class="fi" style="width:24px;" placeholder="1">
-                      <span style="color:#888; font-size:6px;">月</span>
-                      <input class="fi" style="width:24px;" placeholder="1">
-                      <span style="color:#888; font-size:6px;">日</span>
+                    <!-- グレードボタン縦配置 -->
+                    <div style="display:flex; flex-direction:column; gap:3px; width:52px; flex-shrink:0;">
+                      <button style="flex:1; background:#2a2a1a; border:2px solid #f0b56e; color:#f0b56e; border-radius:4px; padding:2px; font-size:5px; font-weight:bold; line-height:1.4;">
+                        ライト<br><span style="color:#f0b56e;">●●●</span><span style="color:#333;">○○</span>
+                      </button>
+                      <button style="flex:1; background:#1a1a2a; border:1px solid #555; color:#777; border-radius:4px; padding:2px; font-size:5px; line-height:1.4;">
+                        プレミア<br><span style="color:#f0b56e;">●●</span><span style="color:#333;">○○○</span>
+                      </button>
                     </div>
-                  </div>
-                  <div class="fr">
-                    <div class="fl">性別</div>
-                    <div class="chips"><span class="chip on">男性</span><span class="chip">女性</span></div>
                   </div>
                   <div class="fr">
                     <div class="fl">鑑定テーマ</div>
                     <div style="display:grid; grid-template-columns:1fr 1fr; gap:2px;">
                       <span class="chip fo">🌟 総合運</span><span class="chip">💼 仕事運</span>
                       <span class="chip">💕 恋愛運</span><span class="chip">💰 金運</span>
-                      <span class="chip">📅 向こう1ヶ月</span><span class="chip">📅 向こう1年</span>
-                      <span class="chip">🔭 向こう10年</span><span class="chip">💬 これが聞きたい</span>
+                      <span class="chip" style="opacity:0.35;">📅 1ヶ月</span><span class="chip" style="opacity:0.35;">📅 1年</span>
+                      <span class="chip" style="opacity:0.35;">🔭 10年</span><span class="chip" style="opacity:0.35;">💬 聞きたい</span>
                     </div>
                   </div>
                   <div class="fr">
                     <div class="fl">特に気になることがあれば</div>
-                    <div style="background:#000; border:1px solid #333; border-radius:2px; height:20px; padding:2px 4px; font-size:6px; color:#444;">転職のタイミングが気になっています…</div>
+                    <div style="background:#000; border:1px solid #333; border-radius:2px; height:18px; padding:2px 4px; font-size:6px; color:#444;">転職のタイミングが気になっています…</div>
                   </div>
                 </div>
               </div>
@@ -974,7 +1104,7 @@ h1 { color: #f0b56e; font-size: 1.3rem; margin-bottom: 4px; }
         </div>
       </div>
       <div class="phone-code">F3a</div>
-      <div class="phone-label">⑧ あなたの天命診断 フォーム<br><span>showMyFortune()</span><br><span>console: 戻る｜天命診断を行う｜命式表</span></div>
+      <div class="phone-label">⑧ あなたの天命診断 フォーム<br><span>showMyFortune()</span><br><span>右側縦配置：ライト/プレミアボタン＋ドット（max5）</span><br><span>ライト時：後半4テーマ disabled（opacity:0.35）</span><br><span>console: 戻る｜天命診断を行う｜命式表</span></div>
     </div>
 
     <div class="arrow-right">→</div>
@@ -1043,35 +1173,49 @@ h1 { color: #f0b56e; font-size: 1.3rem; margin-bottom: 4px; }
               <div class="p-panel">
                 <div class="p-phdr"><img src="./sophie_face.png">この人どんな人</div>
                 <div class="p-pbody">
-                  <div class="fr">
-                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:2px;">
-                      <div class="fl">生年月日</div>
-                      <div style="background:#1a2a1a; color:#7fd97f; border:1px solid #3a6a4a; padding:1px 4px; border-radius:2px; font-size:5.5px;">📖 人物帳から選ぶ</div>
+                  <!-- 入力エリア + グレードボタン 右側縦配置 -->
+                  <div style="display:flex; gap:4px; margin-bottom:4px; align-items:stretch;">
+                    <div style="flex:1; min-width:0;">
+                      <div class="fr">
+                        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:2px;">
+                          <div class="fl">生年月日</div>
+                          <div style="background:#1a2a1a; color:#7fd97f; border:1px solid #3a6a4a; padding:1px 5px; border-radius:2px; font-size:5.5px;">👥 人物帳</div>
+                        </div>
+                        <div style="display:flex; gap:2px; align-items:center;">
+                          <input class="fi" style="width:36px;" placeholder="1975">
+                          <span style="color:#888; font-size:6px;">年</span>
+                          <input class="fi" style="width:20px;" placeholder="6">
+                          <span style="color:#888; font-size:6px;">月</span>
+                          <input class="fi" style="width:20px;" placeholder="10">
+                          <span style="color:#888; font-size:6px;">日</span>
+                        </div>
+                      </div>
+                      <div class="fr" style="margin-bottom:0;">
+                        <div class="fl">性別</div>
+                        <div class="chips"><span class="chip">男性</span><span class="chip on">女性</span></div>
+                      </div>
                     </div>
-                    <div style="display:flex; gap:2px; align-items:center;">
-                      <input class="fi" style="width:40px;" placeholder="1975">
-                      <span style="color:#888; font-size:6px;">年</span>
-                      <input class="fi" style="width:24px;" placeholder="1">
-                      <span style="color:#888; font-size:6px;">月</span>
-                      <input class="fi" style="width:24px;" placeholder="1">
-                      <span style="color:#888; font-size:6px;">日</span>
+                    <!-- グレードボタン縦配置 -->
+                    <div style="display:flex; flex-direction:column; gap:3px; width:52px; flex-shrink:0;">
+                      <button style="flex:1; background:#2a2a1a; border:2px solid #f0b56e; color:#f0b56e; border-radius:4px; padding:2px; font-size:5px; font-weight:bold; line-height:1.4;">
+                        ライト<br><span style="color:#f0b56e;">●●●●</span><span style="color:#333;">○</span>
+                      </button>
+                      <button style="flex:1; background:#1a1a2a; border:1px solid #555; color:#777; border-radius:4px; padding:2px; font-size:5px; line-height:1.4;">
+                        プレミア<br><span style="color:#f0b56e;">●●</span><span style="color:#333;">○○○</span>
+                      </button>
                     </div>
-                  </div>
-                  <div class="fr">
-                    <div class="fl">性別</div>
-                    <div class="chips"><span class="chip">男性</span><span class="chip on">女性</span></div>
                   </div>
                   <div class="fr">
                     <div class="fl">鑑定テーマ</div>
                     <div style="display:grid; grid-template-columns:1fr 1fr; gap:2px;">
                       <span class="chip fo">🔍 性格分析</span><span class="chip">📊 SWOT分析</span>
-                      <span class="chip">💡 アプローチ法</span><span class="chip">💣 地雷ポイント</span>
-                      <span class="chip">⚔️ 弱点と反撃法</span><span class="chip">🎁 プレゼント</span>
+                      <span class="chip" style="opacity:0.35;">💡 アプローチ</span><span class="chip" style="opacity:0.35;">💣 地雷</span>
+                      <span class="chip" style="opacity:0.35;">⚔️ 弱点/反撃</span><span class="chip" style="opacity:0.35;">🎁 プレゼント</span>
                     </div>
                   </div>
                   <div class="fr">
                     <div class="fl">気になる点・関係性など</div>
-                    <div style="background:#000; border:1px solid #333; border-radius:2px; height:20px; padding:2px 4px; font-size:6px; color:#444;">職場の上司、もっと懐に入りたい…</div>
+                    <div style="background:#000; border:1px solid #333; border-radius:2px; height:16px; padding:2px 4px; font-size:6px; color:#444;">職場の上司、もっと懐に入りたい…</div>
                   </div>
                 </div>
               </div>
@@ -1088,7 +1232,7 @@ h1 { color: #f0b56e; font-size: 1.3rem; margin-bottom: 4px; }
         </div>
       </div>
       <div class="phone-code">F3b</div>
-      <div class="phone-label">⑩ この人どんな人 フォーム<br><span>showAboutPerson()</span><br><span>テーマ6択・文字数はテーマ別異なる</span></div>
+      <div class="phone-label">⑩ この人どんな人 フォーム<br><span>showAboutPerson()</span><br><span>右側縦配置：ライト/プレミアボタン＋ドット</span><br><span>ライト時：性格分析/SWOTのみ、他は disabled</span></div>
     </div>
 
     <div class="arrow-right">→</div>
@@ -1156,50 +1300,63 @@ h1 { color: #f0b56e; font-size: 1.3rem; margin-bottom: 4px; }
               <div class="p-panel">
                 <div class="p-phdr"><img src="./sophie_face.png">💑 相性診断</div>
                 <div class="p-pbody">
-                  <!-- あなた -->
-                  <div class="fr">
-                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:2px;">
-                      <div class="fl">あなたの生年月日</div>
-                      <div style="background:#1a2a1a; color:#7fd97f; border:1px solid #3a6a4a; padding:1px 4px; border-radius:2px; font-size:5.5px;">📖 人物帳</div>
+                  <!-- 入力エリア + グレードボタン 右側縦配置 -->
+                  <div style="display:flex; gap:4px; margin-bottom:4px; align-items:stretch;">
+                    <div style="flex:1; min-width:0;">
+                      <!-- あなた -->
+                      <div class="fr" style="margin-bottom:3px;">
+                        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:2px;">
+                          <div class="fl">あなた</div>
+                          <div style="background:#1a2a1a; color:#7fd97f; border:1px solid #3a6a4a; padding:1px 4px; border-radius:2px; font-size:5px;">👥 人物帳</div>
+                        </div>
+                        <div style="display:flex; gap:1px; align-items:center;">
+                          <input class="fi" style="width:32px;" placeholder="1980">
+                          <span style="color:#888; font-size:5.5px;">年</span>
+                          <input class="fi" style="width:18px;" placeholder="1">
+                          <span style="color:#888; font-size:5.5px;">月</span>
+                          <input class="fi" style="width:18px;" placeholder="15">
+                          <span style="color:#888; font-size:5.5px;">日</span>
+                          <div style="background:#0096BF; color:#fff; border:1px solid #00d2ff; padding:1px 3px; border-radius:2px; font-size:5.5px; margin-left:1px;">男</div>
+                          <div style="background:#1a1a1a; color:#888; border:1px solid #444; padding:1px 3px; border-radius:2px; font-size:5.5px;">女</div>
+                        </div>
+                      </div>
+                      <div style="border-top:1px solid #2a2a2a; margin:3px 0;"></div>
+                      <!-- お相手 -->
+                      <div class="fr" style="margin-bottom:0;">
+                        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:2px;">
+                          <div class="fl">お相手</div>
+                          <div style="background:#1a2a1a; color:#7fd97f; border:1px solid #3a6a4a; padding:1px 4px; border-radius:2px; font-size:5px;">👥 人物帳</div>
+                        </div>
+                        <div style="display:flex; gap:1px; align-items:center;">
+                          <input class="fi" style="width:32px;" placeholder="1985">
+                          <span style="color:#888; font-size:5.5px;">年</span>
+                          <input class="fi" style="width:18px;" placeholder="3">
+                          <span style="color:#888; font-size:5.5px;">月</span>
+                          <input class="fi" style="width:18px;" placeholder="20">
+                          <span style="color:#888; font-size:5.5px;">日</span>
+                          <div style="background:#1a1a1a; color:#888; border:1px solid #444; padding:1px 3px; border-radius:2px; font-size:5.5px; margin-left:1px;">男</div>
+                          <div style="background:#ff69b4; color:#fff; border:1px solid #ff51a8; padding:1px 3px; border-radius:2px; font-size:5.5px;">女</div>
+                        </div>
+                      </div>
                     </div>
-                    <div style="display:flex; gap:2px; align-items:center;">
-                      <input class="fi" style="width:36px;" placeholder="1980">
-                      <span style="color:#888; font-size:6px;">年</span>
-                      <input class="fi" style="width:22px;" placeholder="1">
-                      <span style="color:#888; font-size:6px;">月</span>
-                      <input class="fi" style="width:22px;" placeholder="1">
-                      <span style="color:#888; font-size:6px;">日</span>
-                      <div style="background:#0096BF; color:#fff; border:1px solid #00d2ff; padding:1px 4px; border-radius:2px; font-size:6px; margin-left:2px;">男</div>
-                      <div style="background:#1a1a1a; color:#888; border:1px solid #444; padding:1px 4px; border-radius:2px; font-size:6px;">女</div>
+                    <!-- グレードボタン縦配置 -->
+                    <div style="display:flex; flex-direction:column; gap:3px; width:52px; flex-shrink:0;">
+                      <button style="flex:1; background:#2a2a1a; border:2px solid #f0b56e; color:#f0b56e; border-radius:4px; padding:2px; font-size:5px; font-weight:bold; line-height:1.4;">
+                        ライト<br><span style="color:#f0b56e;">●●●</span><span style="color:#333;">○○</span>
+                      </button>
+                      <button style="flex:1; background:#1a1a2a; border:1px solid #555; color:#777; border-radius:4px; padding:2px; font-size:5px; line-height:1.4;">
+                        プレミア<br><span style="color:#f0b56e;">●●</span><span style="color:#333;">○○○</span>
+                      </button>
                     </div>
                   </div>
-                  <div style="border-top:1px solid #333; margin:4px 0;"></div>
-                  <!-- お相手 -->
-                  <div class="fr">
-                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:2px;">
-                      <div class="fl">お相手の生年月日</div>
-                      <div style="background:#1a2a1a; color:#7fd97f; border:1px solid #3a6a4a; padding:1px 4px; border-radius:2px; font-size:5.5px;">📖 人物帳</div>
-                    </div>
-                    <div style="display:flex; gap:2px; align-items:center;">
-                      <input class="fi" style="width:36px;" placeholder="1985">
-                      <span style="color:#888; font-size:6px;">年</span>
-                      <input class="fi" style="width:22px;" placeholder="1">
-                      <span style="color:#888; font-size:6px;">月</span>
-                      <input class="fi" style="width:22px;" placeholder="1">
-                      <span style="color:#888; font-size:6px;">日</span>
-                      <div style="background:#1a1a1a; color:#888; border:1px solid #444; padding:1px 4px; border-radius:2px; font-size:6px; margin-left:2px;">男</div>
-                      <div style="background:#ff69b4; color:#fff; border:1px solid #ff51a8; padding:1px 4px; border-radius:2px; font-size:6px;">女</div>
-                    </div>
-                  </div>
-                  <div style="border-top:1px solid #333; margin:4px 0;"></div>
                   <!-- テキスト入力 -->
                   <div class="fr">
-                    <div class="fl">相手をどう思っていますか？ <span style="color:#555;">(50字)</span></div>
-                    <div style="background:#000; border:1px solid #333; border-radius:2px; height:16px; padding:2px 4px; font-size:6px; color:#444;">好きだけど自分の気持ちがよくわからない…</div>
+                    <div class="fl">相手への気持ち <span style="color:#555;">(50字)</span></div>
+                    <div style="background:#000; border:1px solid #333; border-radius:2px; height:14px; padding:2px 4px; font-size:6px; color:#444;">好きだけど自分の気持ちがよくわからない…</div>
                   </div>
                   <div class="fr">
-                    <div class="fl">何が知りたいですか？ <span style="color:#555;">(50字)</span></div>
-                    <div style="background:#000; border:1px solid #333; border-radius:2px; height:16px; padding:2px 4px; font-size:6px; color:#444;">この人と将来一緒になれるか知りたい…</div>
+                    <div class="fl">知りたいこと <span style="color:#555;">(50字)</span></div>
+                    <div style="background:#000; border:1px solid #333; border-radius:2px; height:14px; padding:2px 4px; font-size:6px; color:#444;">この人と将来一緒になれるか知りたい…</div>
                   </div>
                 </div>
               </div>
@@ -1216,7 +1373,7 @@ h1 { color: #f0b56e; font-size: 1.3rem; margin-bottom: 4px; }
         </div>
       </div>
       <div class="phone-code">F3c</div>
-      <div class="phone-label">⑫ 相性診断 フォーム<br><span>showCompatibility()</span><br><span>あなた(青)/お相手(ピンク)で色分け</span></div>
+      <div class="phone-label">⑫ 相性診断 フォーム<br><span>showCompatibility()</span><br><span>右側縦配置：ライト/プレミアボタン＋ドット</span><br><span>あなた(青)/お相手(ピンク)で色分け</span></div>
     </div>
 
     <div class="arrow-right">→</div>
@@ -1446,7 +1603,7 @@ h1 { color: #f0b56e; font-size: 1.3rem; margin-bottom: 4px; }
                   <div style="color:#5ba3d9; font-size:7px; font-weight:bold; margin-bottom:3px;">✨ 無料登録（Googleログイン）で使えること</div>
                   <div style="color:#aaa; font-size:6.5px; line-height:1.7; padding-left:5px; margin-bottom:5px;">🔮 ソフィーの天命診断<br>🍽️ いいお店を探す（1日1回）<br>📖 ソフィーのノート</div>
                   <div style="color:#f0b56e; font-size:7px; font-weight:bold; margin-bottom:3px;">👑 ご常連パスカード（月額300円）</div>
-                  <div style="color:#aaa; font-size:6.5px; line-height:1.7; padding-left:5px; margin-bottom:6px;">🔮 特別鑑定チケット5枚/月<br>🍽️ お店検索1日3回<br>✨ 今後追加の特別機能</div>
+                  <div style="color:#aaa; font-size:6.5px; line-height:1.7; padding-left:5px; margin-bottom:6px;">✨ プレミアチケット5枚/月（毎日2枚＋毎週5枚配給）<br>🍽️ お店検索1日3回<br>✨ 今後追加の特別機能</div>
                   <button class="p-wbtn" style="background:#4285f4; color:#fff;">Googleで無料登録する</button>
                   <button class="p-wbtn" style="background:#34495e; color:#fff;">まずは音楽を楽しむ</button>
                 </div>
@@ -1490,12 +1647,32 @@ h1 { color: #f0b56e; font-size: 1.3rem; margin-bottom: 4px; }
                     </div>
                   </div>
                   <div class="p-sbox">
-                    <div class="p-srow"><div class="p-slbl">会員ステータス</div><div class="p-sval" style="color:#7fd97f;">無料会員</div></div>
-                    <div class="p-srow"><div class="p-slbl">特別鑑定チケット</div><div class="p-sval" style="color:#c39bd3;">🎫 0枚</div></div>
+                    <div class="p-srow" style="margin-bottom:4px;"><div class="p-slbl">会員ステータス</div><div class="p-sval" style="color:#7fd97f;">無料会員</div></div>
+                    <!-- ライトチケット -->
+                    <div style="background:#111; border-radius:4px; padding:4px 5px; margin-bottom:3px;">
+                      <div class="p-srow" style="margin-bottom:1px;">
+                        <div style="color:#f0b56e; font-size:6px; font-weight:bold;">🌙 ライトチケット（本日）</div>
+                        <div style="color:#f0b56e; font-size:6px;">1／1</div>
+                      </div>
+                      <div><span style="color:#f0b56e; font-size:7px;">●</span><span style="color:#333; font-size:7px;">○○○○</span></div>
+                      <div style="color:#444; font-size:5px; margin-top:1px;">毎日リセット</div>
+                    </div>
+                    <!-- プレミアチケット -->
+                    <div style="background:#111; border-radius:4px; padding:4px 5px;">
+                      <div class="p-srow" style="margin-bottom:1px;">
+                        <div style="color:#9b59b6; font-size:6px; font-weight:bold;">✨ プレミアチケット</div>
+                        <div style="color:#9b59b6; font-size:6px;">残り 0枚</div>
+                      </div>
+                      <div><span style="color:#333; font-size:7px;">○○○○○</span></div>
+                      <div style="display:flex; justify-content:space-between; margin-top:1px;">
+                        <div style="color:#444; font-size:5px;">今日分0枚 ／ 今週分0枚</div>
+                        <div style="color:#444; font-size:5px;">購入0枚</div>
+                      </div>
+                    </div>
                   </div>
                   <div class="p-ubox">
                     <div class="p-utitle">👑 ご常連パスカードにアップグレード</div>
-                    <div class="p-utext">月額300円で特別鑑定チケット5枚/月・お店検索1日3回・その他特典</div>
+                    <div class="p-utext">毎日2枚・毎週5枚のプレミアチケット配給＋お店検索1日3回</div>
                     <div class="p-ucta">ご常連パスカードに加入する（月額300円）</div>
                   </div>
                   <button class="p-wbtn" style="background:#1a1a2a; color:#9b59b6; border:1px solid #6a3a8a;">📋 ご利用案内を見る</button>
@@ -1542,8 +1719,28 @@ h1 { color: #f0b56e; font-size: 1.3rem; margin-bottom: 4px; }
                     </div>
                   </div>
                   <div class="p-sbox">
-                    <div class="p-srow"><div class="p-slbl">会員ステータス</div><div class="p-sval">ご常連パスカード会員</div></div>
-                    <div class="p-srow"><div class="p-slbl">特別鑑定チケット</div><div class="p-sval" style="color:#c39bd3;">🎫 3枚</div></div>
+                    <div class="p-srow" style="margin-bottom:4px;"><div class="p-slbl">会員ステータス</div><div class="p-sval">ご常連パスカード会員</div></div>
+                    <!-- ライトチケット -->
+                    <div style="background:#111; border-radius:4px; padding:4px 5px; margin-bottom:3px;">
+                      <div class="p-srow" style="margin-bottom:1px;">
+                        <div style="color:#f0b56e; font-size:6px; font-weight:bold;">🌙 ライトチケット（本日）</div>
+                        <div style="color:#f0b56e; font-size:6px;">3／3</div>
+                      </div>
+                      <div><span style="color:#f0b56e; font-size:7px;">●●●</span><span style="color:#333; font-size:7px;">○○</span></div>
+                      <div style="color:#444; font-size:5px; margin-top:1px;">毎日リセット</div>
+                    </div>
+                    <!-- プレミアチケット -->
+                    <div style="background:#111; border-radius:4px; padding:4px 5px;">
+                      <div class="p-srow" style="margin-bottom:1px;">
+                        <div style="color:#9b59b6; font-size:6px; font-weight:bold;">✨ プレミアチケット</div>
+                        <div style="color:#9b59b6; font-size:6px;">残り 7枚</div>
+                      </div>
+                      <div><span style="color:#f0b56e; font-size:7px;">●●●●●</span></div>
+                      <div style="display:flex; justify-content:space-between; margin-top:1px;">
+                        <div style="color:#444; font-size:5px;">今日分2枚 ／ 今週分5枚</div>
+                        <div style="color:#444; font-size:5px;">購入0枚</div>
+                      </div>
+                    </div>
                   </div>
                   <button class="p-wbtn" style="background:#1a1a2a; color:#9b59b6; border:1px solid #6a3a8a;">📋 ご利用案内を見る</button>
                   <button class="p-wbtn" style="background:#2a1a1a; color:#e74c3c; border:1px solid #6a2a2a;">ログアウト</button>

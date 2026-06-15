@@ -1,4 +1,4 @@
-# BARソフィー 画面構成ツリー（2026-06-07）
+# BARソフィー 画面構成ツリー（2026-06-15）
 
 ## 凡例
 - 🆓 ゲスト利用可
@@ -21,6 +21,7 @@
 ---
 
 C　カウンター（ルートメニュー）
+        　　ピルボタン「🌙 今日のアドバイス」← ログイン済み常時表示（キャッシュあり=緑✓／なし=グレー） → F0
         　　ヒントボタン「お店の使い方」← ログイン済み常時表示 → P1
 
 **ゲスト（初回来店）**　着席ダイアログ
@@ -65,13 +66,20 @@ C　カウンター（ルートメニュー）
 │       │       　　<span style="color:#e8607a">　　20%　「運命の羅針盤、そっと開きますね」</span>　<span style="color:#27ae60">sophie_fortune_c.mp3</span>
 │       │       　　<span style="color:#e8607a">　　10%　「占いは……わたくしも、少し緊張するんです。真剣ですから」</span>　<span style="color:#27ae60">sophie_fortune_r.mp3</span>
 │       │       　　<span style="color:#4a9eff">ゲストタップ時</span>　→　<span style="color:#e8607a">Ｔ</span>　<span style="color:#27ae60">guest_login_01.mp3</span>
+│       │       ├─ F0　🌙 今日のアドバイス：フォーム（← カウンターピルからも入れる）
+│       │       │       　　グレード選択：ライト（fortune_haiku） / プレミア（fortune_sonnet）
+│       │       │       　　デフォルトprefill：bar_sophie_self / 人物帳選択可
+│       │       │       　　キャッシュ：sophie_daily_fortune（当日は再表示）
+│       │       │       └─ F4　アドバイス結果（localStorage保存）
 │       │       ├─ F2　人物帳
-│       │       ├─ F3a　あなたのご相談：フォーム
-│       │       │       └─ F4　鑑定結果（命式表付き）　👑
-│       │       ├─ F3b　あの人どんな人：フォーム
-│       │       │       └─ F4　鑑定結果　👑
-│       │       └─ F3c　相性を見てもらう：フォーム
-│       │               └─ F4　鑑定結果　👑
+│       │       ├─ F3a　あなたのご相談：フォーム　ライト/プレミア選択（右側縦配置）
+│       │       │       　　ライト：4テーマのみ選択可　プレミア：全8テーマ
+│       │       │       └─ F4　鑑定結果（命式表付き）
+│       │       ├─ F3b　あの人どんな人：フォーム　ライト/プレミア選択（右側縦配置）
+│       │       │       　　ライト：性格分析/SWOT分析のみ　プレミア：全6テーマ
+│       │       │       └─ F4　鑑定結果
+│       │       └─ F3c　相性を見てもらう：フォーム　ライト/プレミア選択（右側縦配置）
+│       │               └─ F4　鑑定結果
 │       ├─ K1　この日どんな日　🔑
 │       │       　　<span style="color:#4a9eff">ゲストタップ時</span>　→　<span style="color:#e8607a">Ｔ</span>　<span style="color:#27ae60">guest_login_01.mp3</span>
 │       │       　　データ：this_day_history.json（366日・2348件）
@@ -165,13 +173,16 @@ P1　ご利用案内（showGuideScreen / guide.js）
         　　<span style="color:#e8607a">　　無料会員</span>　<span style="color:#27ae60">guide_member.mp3</span>
         　　<span style="color:#e8607a">　　プレミアム</span>　<span style="color:#27ae60">guide_premium.mp3</span>
 P2　マイページ showMyPage()　　　　← ログイン済みユーザー名タップ
-        └─ （free時のみ）Stripe決済 ─→ P2更新（activeへ）
+        　　🌙 ライトチケット（本日残）●ドット表示（最大5）　毎日リセット
+        　　✨ プレミアチケット（合計枚数）●ドット表示（最大5）　内訳：今日分・今週分・購入分
+        └─ （free/active時）Stripe決済 ─→ P2更新
 
 ---
 
 ## 備考
 - **LT** は L2a/L2b/L2c どこからでも到達
-- **F4** は F3a / F3b / F3c 共通の結果画面
+- **F0** は カウンターピルボタン・F1メニュー「今日のアドバイス」どちらからも入れる。結果はlocalStorageキャッシュ（当日のみ）
+- **F4** は F3a / F3b / F3c / F0 共通の結果画面
 - **P1** は O「このお店のご案内」・カウンター常時ヒントボタン・ゲスト来店ダイアログから到達
 - **X（お酒を探す／お酒の話）** は C ルートの統合ボタンから L1・N1 を選択する中間メニュー
 - **SHOP**（コンソール）は nav.state=none 時のみフッターに表示、それ以外はソフィーノートに差し替え
