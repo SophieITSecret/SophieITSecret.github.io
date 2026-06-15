@@ -322,7 +322,7 @@ function _insertDailyAdviceButton() {
     try { const r = JSON.parse(localStorage.getItem('sophie_daily_fortune') || 'null'); cached = r && r.date === todayKey ? r : null; } catch {}
     const pill = document.createElement('div');
     pill.id = 'daily-advice-pill';
-    pill.style.cssText = 'flex-shrink:0; margin:0 4px;';
+    pill.style.cssText = 'flex-shrink:0; margin:0 10px 0 4px;';
     pill.innerHTML = `<button id="btn-daily-advice"
         style="background:${cached ? '#1a2a1a' : '#111'}; border:1px solid ${cached ? '#3a6a4a' : '#333'};
                color:${cached ? '#7fd97f' : '#888'};
@@ -356,7 +356,7 @@ function _insertHintButton() {
         <img src="./sophie_face.png" style="width:16px; height:16px; border-radius:50%; object-fit:cover; flex-shrink:0;">
         お店の使い方
     </button>`;
-    row.insertBefore(hint, row.firstChild);
+    row.appendChild(hint);
     document.getElementById('btn-howto-hint').addEventListener('click', () => {
         hint.remove();
         import('./guide.js').then(g => g.showGuideScreen(showRootMenu));

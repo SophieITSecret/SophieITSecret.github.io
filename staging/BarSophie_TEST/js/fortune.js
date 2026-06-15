@@ -284,7 +284,7 @@ export function showMyFortune(onBack = null, prefill = null) {
 
         let prompt;
         if (selectedGrade === 'light') {
-            const todayPillars = getThreePillars(today.getFullYear(), today.getMonth()+1, today.getDate());
+            const pillars = getThreePillars(parseInt(year), parseInt(month), parseInt(day));
             prompt = `${sophieChar}
 【現在の日付】${todayStr}
 あなたはBARソフィーのバーテンダー「ソフィー」です。
@@ -292,11 +292,11 @@ export function showMyFortune(onBack = null, prefill = null) {
 【お客様】
 生年月日：${year}年${month}月${day}日
 性別：${selectedGender}
-今日の干支：${todayPillars.day}（年：${todayPillars.year}・月：${todayPillars.month}）
+命式：年柱 ${pillars.year}・月柱 ${pillars.month}・日柱 ${pillars.day}
 鑑定テーマ：${selectedTheme}
 ${worry ? `特に相談したいこと：${worry}` : ''}
 
-この方の${selectedTheme}についてひとことお告げをしてください。ソフィーらしい品のある語り口で、100字以内でお願いします。`;
+この方の命式をもとに、${selectedTheme}についてひとことお告げをしてください。ソフィーらしい品のある語り口で、100字以内でお願いします。`;
         } else {
             const pillars = getThreePillars(parseInt(year), parseInt(month), parseInt(day));
             const fullData = getFullMeishiki(parseInt(year), parseInt(month), parseInt(day), selectedGender);
@@ -1004,7 +1004,7 @@ export async function showDailyAdvice(onBack = null, prefillOverride = null, for
                 </div>
             </div>`;
 
-        if (lv) lv.innerHTML = html;
+        if (lv) { lv.style.display = 'block'; lv.innerHTML = html; }
         if (nm) nm.style.display = 'none';
 
         document.getElementById('da-copy').onclick = () => {
