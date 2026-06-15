@@ -6,14 +6,26 @@ const GAS_URL = 'https://script.google.com/macros/s/AKfycbwA1C22UhKroCFC_EPC-ugR
 export function showCompatibility(onBack = null, prefillMe = null, prefillYou = null, texts = null) {
     const lv = document.getElementById('list-view');
     const nm = document.getElementById('nav-main');
-    const prevHtml = lv ? lv.innerHTML : '';
-    const prevDisplay = lv ? lv.style.display : 'none';
-    const prevNm = nm ? nm.style.display : 'none';
 
     const monImg = document.getElementById('monitor-img');
     if (monImg) monImg.src = './fortune_sophie.jpeg';
     if (window._renderConsole) window._renderConsole('fortune');
     window._fortuneBack = () => { if (onBack) onBack(); else import('./fortune.js').then(f => f.showFortuneMenu()); };
+
+    const userData = window.currentUserData || {};
+    const role = userData.role === 'admin' ? 'admin' : (userData.status || userData.role || 'guest');
+    const lightLimitMap = { guest: 0, free: 1, active: 3, vip: 99, admin: 99 };
+    const lightLimit = lightLimitMap[role] || 0;
+    const todayKey = new Date().toISOString().slice(0, 10);
+    const usedToday = userData.lastFortuneBDate === todayKey ? (userData.dailyFortuneBCount || 0) : 0;
+    const lightRemaining = Math.max(0, lightLimit - usedToday);
+    const totalTickets = (userData.dailyTickets || 0) + (userData.weeklyTickets || 0) + (userData.purchasedTickets || 0);
+
+    const makeDots = (filled, total) => Array.from({length: total}, (_, i) =>
+        `<span style="color:${i < filled ? '#f0b56e' : '#444'}; font-size:0.75rem;">●</span>`).join('');
+
+    const lightDotsHtml = makeDots(lightRemaining, lightLimit);
+    const premiumDotsHtml = makeDots(Math.min(5, totalTickets), 5);
 
     const dateInput = (prefix, label, pf) => {
         const isYou = prefix === 'cp-you';
@@ -26,34 +38,34 @@ export function showCompatibility(onBack = null, prefillMe = null, prefillYou = 
         const fColor = pf && pf.gender === '女性' ? '#fff' : '#888';
         const fBorder = pf && pf.gender === '女性' ? selBorder : '#444';
         return `
-        <div style="margin-bottom:8px;">
-            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;">
-                <div style="color:#aaa; font-size:0.75rem;">${label}の生年月日</div>
-                <button id="${prefix}-people" style="background:#1a2a1a; color:#7fd97f; border:1px solid #3a6a4a; padding:2px 8px; border-radius:3px; font-size:0.7rem;">📖 人物帳</button>
+        <div style="margin-bottom:6px;">
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:3px;">
+                <div style="color:#aaa; font-size:0.72rem;">${label}の生年月日</div>
+                <button id="${prefix}-people" style="background:#1a2a1a; color:#7fd97f; border:1px solid #3a6a4a; padding:2px 6px; border-radius:3px; font-size:0.65rem;">📖 人物帳</button>
             </div>
-            <div style="display:flex; gap:4px; align-items:center;">
+            <div style="display:flex; gap:3px; align-items:center;">
                 <input type="number" id="${prefix}-year" placeholder="1980" min="1900" max="2010"
                     value="${pf ? pf.year : ''}"
-                    style="width:72px; background:#000; border:1px solid #555; color:#fff;
-                           height:38px; padding:0 8px; border-radius:4px; font-size:0.85rem;">
-                <span style="color:#aaa; font-size:0.8rem;">年</span>
+                    style="width:60px; background:#000; border:1px solid #555; color:#fff;
+                           height:34px; padding:0 6px; border-radius:4px; font-size:0.8rem;">
+                <span style="color:#aaa; font-size:0.75rem;">年</span>
                 <input type="number" id="${prefix}-month" placeholder="1" min="1" max="12"
                     value="${pf ? pf.month : ''}"
-                    style="width:48px; background:#000; border:1px solid #555; color:#fff;
-                           height:38px; padding:0 8px; border-radius:4px; font-size:0.85rem;">
-                <span style="color:#aaa; font-size:0.8rem;">月</span>
+                    style="width:40px; background:#000; border:1px solid #555; color:#fff;
+                           height:34px; padding:0 6px; border-radius:4px; font-size:0.8rem;">
+                <span style="color:#aaa; font-size:0.75rem;">月</span>
                 <input type="number" id="${prefix}-day" placeholder="1" min="1" max="31"
                     value="${pf ? pf.day : ''}"
-                    style="width:48px; background:#000; border:1px solid #555; color:#fff;
-                           height:38px; padding:0 8px; border-radius:4px; font-size:0.85rem;">
-                <span style="color:#aaa; font-size:0.8rem;">日</span>
+                    style="width:40px; background:#000; border:1px solid #555; color:#fff;
+                           height:34px; padding:0 6px; border-radius:4px; font-size:0.8rem;">
+                <span style="color:#aaa; font-size:0.75rem;">日</span>
                 <div style="display:flex; gap:4px; margin-left:4px;">
                     <button class="${prefix}-gender" data-val="男性"
                         style="background:${mBg}; color:${mColor}; border:1px solid ${mBorder};
-                               height:38px; padding:0 8px; border-radius:4px; font-size:0.75rem;">男</button>
+                               height:34px; padding:0 10px; border-radius:4px; font-size:0.75rem;">男</button>
                     <button class="${prefix}-gender" data-val="女性"
                         style="background:${fBg}; color:${fColor}; border:1px solid ${fBorder};
-                               height:38px; padding:0 8px; border-radius:4px; font-size:0.75rem;">女</button>
+                               height:34px; padding:0 10px; border-radius:4px; font-size:0.75rem;">女</button>
                 </div>
             </div>
         </div>`;
@@ -70,24 +82,39 @@ export function showCompatibility(onBack = null, prefillMe = null, prefillYou = 
                 💑 相性診断
             </div>
             <div style="padding:10px;">
-                ${dateInput('cp-me', 'あなた', prefillMe)}
-                <div style="border-top:1px solid #333; margin:8px 0;"></div>
-                ${dateInput('cp-you', 'お相手', prefillYou)}
-                <div style="border-top:1px solid #333; margin:8px 0;"></div>
-                <div style="margin-bottom:8px;">
-                    <div style="color:#aaa; font-size:0.75rem; margin-bottom:4px;">相手をどう思っていますか？</div>
-                    <textarea id="cp-feeling" rows="2" maxlength="50" placeholder="例：好きだけど自分の気持ちがよくわからない、一緒にいると落ち着くが刺激がない"
+                <div style="display:flex; gap:6px; margin-bottom:8px;">
+                    <button id="cp-grade-light" style="flex:1; background:#2a2a1a; border:2px solid #f0b56e;
+                        border-radius:6px; padding:6px 8px; text-align:left; cursor:pointer;">
+                        <div style="font-weight:bold; color:#f0b56e; font-size:0.78rem; margin-bottom:2px;">ライト診断</div>
+                        <div>${lightDotsHtml}</div>
+                    </button>
+                    <button id="cp-grade-premium" style="flex:1; background:#1a1a2a; border:1px solid #555;
+                        border-radius:6px; padding:6px 8px; text-align:left; cursor:pointer;">
+                        <div style="font-weight:bold; color:#9b59b6; font-size:0.78rem; margin-bottom:2px;">プレミア診断</div>
+                        <div>${premiumDotsHtml}</div>
+                    </button>
+                </div>
+                <div style="border-top:1px solid #333; margin-bottom:8px; padding-top:8px;">
+                    ${dateInput('cp-me', 'あなた', prefillMe)}
+                </div>
+                <div style="border-top:1px solid #333; margin-bottom:8px; padding-top:6px;">
+                    ${dateInput('cp-you', 'お相手', prefillYou)}
+                </div>
+                <div style="border-top:1px solid #333; margin:8px 0 6px;"></div>
+                <div style="margin-bottom:6px;">
+                    <div style="color:#aaa; font-size:0.72rem; margin-bottom:3px;">相手をどう思っていますか？</div>
+                    <textarea id="cp-feeling" rows="2" maxlength="50" placeholder="例：好きだけど自分の気持ちがよくわからない"
                         style="width:100%; background:#000; border:1px solid #555; color:#fff;
                                padding:8px 10px; border-radius:4px; font-size:0.85rem;
-                               resize:none; font-family:inherit;">${texts ? texts.feeling : ''}</textarea>
+                               resize:none; font-family:inherit; box-sizing:border-box;">${texts ? texts.feeling : ''}</textarea>
                     <div id="cp-feeling-count" style="color:#666; font-size:0.7rem; text-align:right;">残り${texts ? 50 - texts.feeling.length : 50}文字</div>
                 </div>
                 <div style="margin-bottom:10px;">
-                    <div style="color:#aaa; font-size:0.75rem; margin-bottom:4px;">何が知りたいですか？</div>
-                    <textarea id="cp-question" rows="2" maxlength="50" placeholder="例：この人と将来一緒になれるか、どう接すればうまくいくか、踏み出していいか"
+                    <div style="color:#aaa; font-size:0.72rem; margin-bottom:3px;">何が知りたいですか？</div>
+                    <textarea id="cp-question" rows="2" maxlength="50" placeholder="例：この人と将来一緒になれるか"
                         style="width:100%; background:#000; border:1px solid #555; color:#fff;
                                padding:8px 10px; border-radius:4px; font-size:0.85rem;
-                               resize:none; font-family:inherit;">${texts ? texts.question : ''}</textarea>
+                               resize:none; font-family:inherit; box-sizing:border-box;">${texts ? texts.question : ''}</textarea>
                     <div id="cp-question-count" style="color:#666; font-size:0.7rem; text-align:right;">残り${texts ? 50 - texts.question.length : 50}文字</div>
                 </div>
                 <button id="cp-submit" style="display:none;"></button>
@@ -100,6 +127,26 @@ export function showCompatibility(onBack = null, prefillMe = null, prefillYou = 
 
     let myGender = prefillMe ? prefillMe.gender : '';
     let yourGender = prefillYou ? prefillYou.gender : '';
+    let selectedGrade = 'light';
+
+    function _updateGradeUI() {
+        const lightBtn = document.getElementById('cp-grade-light');
+        const premiumBtn = document.getElementById('cp-grade-premium');
+        if (selectedGrade === 'light') {
+            lightBtn.style.border = '2px solid #f0b56e';
+            lightBtn.style.background = '#2a2a1a';
+            premiumBtn.style.border = '1px solid #555';
+            premiumBtn.style.background = '#1a1a2a';
+        } else {
+            lightBtn.style.border = '1px solid #555';
+            lightBtn.style.background = '#1a1a2a';
+            premiumBtn.style.border = '2px solid #9b59b6';
+            premiumBtn.style.background = '#1a0a2a';
+        }
+    }
+
+    document.getElementById('cp-grade-light').onclick = () => { selectedGrade = 'light'; _updateGradeUI(); };
+    document.getElementById('cp-grade-premium').onclick = () => { selectedGrade = 'premium'; _updateGradeUI(); };
 
     document.querySelectorAll('.cp-me-gender').forEach(btn => {
         btn.addEventListener('click', () => {
@@ -122,12 +169,10 @@ export function showCompatibility(onBack = null, prefillMe = null, prefillYou = 
     });
 
     document.getElementById('cp-feeling').oninput = function() {
-        const remaining = 50 - this.value.length;
-        document.getElementById('cp-feeling-count').textContent = '残り' + remaining + '文字';
+        document.getElementById('cp-feeling-count').textContent = '残り' + (50 - this.value.length) + '文字';
     };
     document.getElementById('cp-question').oninput = function() {
-        const remaining = 50 - this.value.length;
-        document.getElementById('cp-question-count').textContent = '残り' + remaining + '文字';
+        document.getElementById('cp-question-count').textContent = '残り' + (50 - this.value.length) + '文字';
     };
 
     const getState = () => ({
@@ -208,6 +253,12 @@ export function showCompatibility(onBack = null, prefillMe = null, prefillYou = 
         if (!yourYear || !yourMonth || !yourDay) { alert('お相手の生年月日を入力してください'); return; }
         if (!yourGender) { alert('お相手の性別を選択してください'); return; }
 
+        if (selectedGrade === 'light') {
+            if (!await window.checkAccess('fortune_haiku')) return;
+        } else {
+            if (!await window.checkAccess('fortune_sonnet')) return;
+        }
+
         const feeling = document.getElementById('cp-feeling').value.trim();
         const question = document.getElementById('cp-question').value.trim();
         const savedMe = { year: myYear, month: myMonth, day: myDay, gender: myGender };
@@ -225,29 +276,44 @@ export function showCompatibility(onBack = null, prefillMe = null, prefillYou = 
         const myPillars = getThreePillars(parseInt(myYear), parseInt(myMonth), parseInt(myDay));
         const yourPillars = getThreePillars(parseInt(yourYear), parseInt(yourMonth), parseInt(yourDay));
 
-        const myFull = getFullMeishiki(parseInt(myYear), parseInt(myMonth), parseInt(myDay), myGender);
-        const yourFull = getFullMeishiki(parseInt(yourYear), parseInt(yourMonth), parseInt(yourDay), yourGender);
-
-        const myDetail = `
-・年柱：${myPillars.year}（通変星：${myFull?.columns?.year?.tsuhensei || ''}・十二運星：${myFull?.columns?.year?.juniUnsei || ''}）
-・月柱：${myPillars.month}（通変星：${myFull?.columns?.month?.tsuhensei || ''}・十二運星：${myFull?.columns?.month?.juniUnsei || ''}）
-・日柱：${myPillars.day}（通変星：日主・十二運星：${myFull?.columns?.day?.juniUnsei || ''}）
-五行バランス：${Object.entries(myFull?.gogyoBalance || {}).map(([g,c]) => `${g}${c}`).join('・')}`;
-
-        const yourDetail = `
-・年柱：${yourPillars.year}（通変星：${yourFull?.columns?.year?.tsuhensei || ''}・十二運星：${yourFull?.columns?.year?.juniUnsei || ''}）
-・月柱：${yourPillars.month}（通変星：${yourFull?.columns?.month?.tsuhensei || ''}・十二運星：${yourFull?.columns?.month?.juniUnsei || ''}）
-・日柱：${yourPillars.day}（通変星：日主・十二運星：${yourFull?.columns?.day?.juniUnsei || ''}）
-五行バランス：${Object.entries(yourFull?.gogyoBalance || {}).map(([g,c]) => `${g}${c}`).join('・')}`;
-
         const btn = document.getElementById('cp-submit');
-        btn.textContent = '鑑定中…';
         btn.disabled = true;
 
         const sophieChar = 'あなたはBARソフィーのソフィー（20代・女性バーテンダー）。知的で品のある、です・ます調の丁寧な語り口で四柱推命の相性鑑定をしてください。お客は40・50代。';
         const today = new Date();
         const todayStr = `${today.getFullYear()}年${today.getMonth()+1}月${today.getDate()}日`;
-        const prompt = `${sophieChar}
+
+        let prompt;
+        if (selectedGrade === 'light') {
+            prompt = `${sophieChar}
+【現在の日付】${todayStr}
+
+【相談者】
+生年月日：${myYear}年${myMonth}月${myDay}日・${myGender}
+命式：年柱 ${myPillars.year}・月柱 ${myPillars.month}・日柱 ${myPillars.day}
+
+【お相手】
+生年月日：${yourYear}年${yourMonth}月${yourDay}日・${yourGender}
+命式：年柱 ${yourPillars.year}・月柱 ${yourPillars.month}・日柱 ${yourPillars.day}
+
+${feeling ? `気持ち：${feeling}` : ''}${question ? `\n知りたいこと：${question}` : ''}
+
+二人の相性についてひとことお告げをしてください。ソフィーらしい品のある語り口で、100字以内でお願いします。`;
+        } else {
+            const myFull = getFullMeishiki(parseInt(myYear), parseInt(myMonth), parseInt(myDay), myGender);
+            const yourFull = getFullMeishiki(parseInt(yourYear), parseInt(yourMonth), parseInt(yourDay), yourGender);
+            const myDetail = `
+・年柱：${myPillars.year}（通変星：${myFull?.columns?.year?.tsuhensei || ''}・十二運星：${myFull?.columns?.year?.juniUnsei || ''}）
+・月柱：${myPillars.month}（通変星：${myFull?.columns?.month?.tsuhensei || ''}・十二運星：${myFull?.columns?.month?.juniUnsei || ''}）
+・日柱：${myPillars.day}（通変星：日主・十二運星：${myFull?.columns?.day?.juniUnsei || ''}）
+五行バランス：${Object.entries(myFull?.gogyoBalance || {}).map(([g,c]) => `${g}${c}`).join('・')}`;
+            const yourDetail = `
+・年柱：${yourPillars.year}（通変星：${yourFull?.columns?.year?.tsuhensei || ''}・十二運星：${yourFull?.columns?.year?.juniUnsei || ''}）
+・月柱：${yourPillars.month}（通変星：${yourFull?.columns?.month?.tsuhensei || ''}・十二運星：${yourFull?.columns?.month?.juniUnsei || ''}）
+・日柱：${yourPillars.day}（通変星：日主・十二運星：${yourFull?.columns?.day?.juniUnsei || ''}）
+五行バランス：${Object.entries(yourFull?.gogyoBalance || {}).map(([g,c]) => `${g}${c}`).join('・')}`;
+
+            prompt = `${sophieChar}
 【現在の日付】${todayStr}
 ※鑑定は必ずこの日付を基準に行うこと。「来年は○○年」などの表現も正確に。
 あなたは四柱推命を極めた占い師であり、BARソフィーのバーテンダー「ソフィー」です。
@@ -283,7 +349,8 @@ ${question || 'とくになし'}
 ・腕のいい占い師として深みと説得力のある鑑定をすること
 ・ソフィーとして品があり温かみのある語り口で
 ・斜体や演出の地の文は入れないこと
-・回答は1500字程度にまとめること`;
+・回答は1000字程度にまとめること`;
+        }
 
         const messages = [{ role: 'user', content: prompt }];
 
@@ -291,11 +358,12 @@ ${question || 'とくになし'}
             const res = await fetch(GAS_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'text/plain' },
-                body: JSON.stringify({ messages, search: false })
+                body: JSON.stringify({ messages, search: false, grade: selectedGrade })
             });
             const data = await res.json();
 
             const resultText = data.ok ? data.text : 'エラーが発生しました。もう一度お試しください。';
+            const gradeLabel = selectedGrade === 'light' ? 'ライト' : 'プレミア';
             const formatted = resultText
                 .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
                 .replace(/\*([^*]+)\*/g, '')
@@ -318,7 +386,7 @@ ${question || 'とくになし'}
                     <div style="padding:12px; color:#ddd; font-size:0.85rem; line-height:1.9;">${formatted}</div>
                     <div style="padding:0 10px 10px;">
                         <div style="color:#888; font-size:0.75rem; text-align:center; padding:4px 0; border-bottom:1px solid #333; margin-bottom:8px;">
-                            相性鑑定　${myYear}/${myMonth}/${myDay}（${myGender}）×${yourYear}/${yourMonth}/${yourDay}（${yourGender}）　${new Date().toLocaleDateString('ja-JP')}
+                            相性鑑定・${gradeLabel}　${myYear}/${myMonth}/${myDay}（${myGender}）×${yourYear}/${yourMonth}/${yourDay}（${yourGender}）　${new Date().toLocaleDateString('ja-JP')}
                         </div>
                         <button id="cp-meishiki-btn" style="width:100%; background:#1a1a2a; color:#9b59b6;
                             border:1px solid #6a3a8a; height:36px; border-radius:4px;
@@ -364,14 +432,14 @@ ${question || 'とくになし'}
 
             document.getElementById('cp-meishiki-btn').onclick = () => window._showMeishikiPanel();
             document.getElementById('cp-copy').onclick = () => {
-                const header = `【相性診断】${myYear}/${myMonth}/${myDay}（${myGender}）×${yourYear}/${yourMonth}/${yourDay}（${yourGender}）　${new Date().toLocaleDateString('ja-JP')}\n\n`;
+                const header = `【相性診断・${gradeLabel}】${myYear}/${myMonth}/${myDay}（${myGender}）×${yourYear}/${yourMonth}/${yourDay}（${yourGender}）　${new Date().toLocaleDateString('ja-JP')}\n\n`;
                 navigator.clipboard.writeText(header + resultText)
                     .then(() => alert('鑑定結果をコピーしました。'))
                     .catch(() => alert('コピーに失敗しました。'));
             };
 
             document.getElementById('cp-fullscreen-result').onclick = () => {
-                const hdrText = `【相性診断】${myYear}/${myMonth}/${myDay}（${myGender}）×${yourYear}/${yourMonth}/${yourDay}（${yourGender}）`;
+                const hdrText = `【相性診断・${gradeLabel}】${myYear}/${myMonth}/${myDay}（${myGender}）×${yourYear}/${yourMonth}/${yourDay}（${yourGender}）`;
                 const hdrHtml = `<div style="color:#888; font-size:0.78rem; margin-bottom:12px; padding-bottom:8px; border-bottom:1px solid #333;">${hdrText}</div>`;
                 window.showResultFullscreen('💑 ソフィーの相性鑑定', hdrHtml + formatted);
             };
@@ -393,7 +461,6 @@ ${question || 'とくになし'}
 
         } catch (e) {
             alert('通信エラーが発生しました。');
-            btn.textContent = 'ソフィーに鑑定してもらう';
             btn.disabled = false;
             if (colorTimer) { clearInterval(colorTimer); colorTimer = null; }
             if (ctrlBtn) { ctrlBtn.textContent = '天命診断を行う'; ctrlBtn.style.color = '#ff69b4'; ctrlBtn.disabled = false; }

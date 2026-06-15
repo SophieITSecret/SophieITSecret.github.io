@@ -27,12 +27,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "staging/BarSophie_TEST/ソフィーの一言集.md",
+                "file": "staging/BarSophie_TEST/BARソフィー 画面構成ツリー.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "ソフィーの一言集"
+              "title": "BARソフィー 画面構成ツリー"
             }
           }
         ],
@@ -200,6 +200,7 @@
   },
   "active": "fa60d22dcf12e1d7",
   "lastOpenFiles": [
+    "staging/BarSophie_TEST/ソフィーの一言集.md",
     "staging/BarSophie_TEST/voices_mp3/sophie_counter_nc.mp3",
     "無題のフォルダ",
     "staging/BarSophie_TEST/screen_mockup.html.tmp.21884.8f6677efba37",
@@ -211,7 +212,6 @@
     "staging/BarSophie_TEST/voices_mp3/210.mp3",
     "staging/BarSophie_TEST/BARソフィー 画面構成ツリー.md",
     "staging/BarSophie_TEST/firebase-debug.log",
-    "staging/BarSophie_TEST/BARソフィー 画面構成ツリー.md.tmp.21884.42639ce7bd78",
     "makimura-bunko/音声メモ.md"
   ]
 }

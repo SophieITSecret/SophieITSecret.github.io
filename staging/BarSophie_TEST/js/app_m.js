@@ -251,6 +251,7 @@ function showRootMenu() {
     nav.updateNav("none");
     window._cancelGuestCaution?.();
     document.getElementById('sophie-caution')?.remove();
+    document.getElementById('daily-advice-pill')?.remove();
     yt.style.display = 'none';
     img.src = './front_sophie.jpeg';
     img.style.display = 'block';
@@ -261,7 +262,7 @@ function showRootMenu() {
     if (mon) { mon.classList.remove('expanded'); }
     utils.showLSide();
 
-    if (window.currentUser) _insertHintButton();
+    if (window.currentUser) { _insertDailyAdviceButton(); _insertHintButton(); }
     renderConsole('standard');
 }
 
@@ -302,6 +303,33 @@ function _showMusicSubmenu() {
         if (music.openMusic) music.openMusic();
         renderConsole('standard');
     };
+}
+
+function _insertDailyAdviceButton() {
+    if (document.getElementById('daily-advice-pill')) return;
+    const row = document.getElementById('today-row');
+    if (!row) return;
+    const todayKey = new Date().toISOString().slice(0, 10);
+    let cached = null;
+    try { const r = JSON.parse(localStorage.getItem('sophie_daily_fortune') || 'null'); cached = r && r.date === todayKey ? r : null; } catch {}
+    const pill = document.createElement('div');
+    pill.id = 'daily-advice-pill';
+    pill.style.cssText = 'flex-shrink:0;';
+    pill.innerHTML = `<button id="btn-daily-advice"
+        style="background:${cached ? '#1a2a1a' : '#111'}; border:1px solid ${cached ? '#3a6a4a' : '#333'};
+               color:${cached ? '#7fd97f' : '#888'};
+               border-radius:50px; padding:4px 10px;
+               cursor:pointer; -webkit-tap-highlight-color:transparent;
+               display:inline-flex; align-items:center; gap:4px; font-size:0.68rem; white-space:nowrap;">
+        🌙${cached ? '今日のアドバイス✓' : '今日のアドバイス'}
+    </button>`;
+    row.insertBefore(pill, row.querySelector('#sophie-caution') || null);
+    document.getElementById('btn-daily-advice').addEventListener('click', () => {
+        import('./fortune.js').then(f => {
+            nav.updateNav('fortune');
+            f.showDailyAdvice(showRootMenu);
+        });
+    });
 }
 
 function _insertHintButton() {
