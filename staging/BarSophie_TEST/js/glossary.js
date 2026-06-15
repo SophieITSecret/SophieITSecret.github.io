@@ -77,24 +77,29 @@ export function showResultFullscreen(title, text) {
 
     const overlay = document.createElement('div');
     overlay.id = 'result-fullscreen';
-    overlay.style.cssText = [
-        'position:fixed', 'inset:0',
-        'background:#0a0a0a',
-        'z-index:99997',
-        'display:flex', 'flex-direction:column',
-        'box-sizing:border-box'
-    ].join(';');
+    overlay.style.cssText = 'position:fixed;inset:0;background:#0a0a0a;z-index:99997;display:flex;flex-direction:column;box-sizing:border-box;';
 
-    overlay.innerHTML = `
-        <div style="display:flex; align-items:center; padding:12px 16px; border-bottom:1px solid #333;
-                    background:#111; flex-shrink:0;">
-            <div style="color:#f0b56e; font-weight:bold; font-size:0.9rem; flex:1;">${title}</div>
-            <button onclick="document.getElementById('result-fullscreen').remove()"
-                    style="background:none; border:none; color:#888; font-size:1.4rem; cursor:pointer; line-height:1;">✕</button>
-        </div>
-        <div style="flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch;
-                    padding:16px; color:#ddd; font-size:15px; line-height:1.8;">${text}</div>`;
+    const header = document.createElement('div');
+    header.style.cssText = 'display:flex;align-items:center;padding:12px 16px;border-bottom:1px solid #333;background:#111;flex-shrink:0;';
 
+    const titleEl = document.createElement('div');
+    titleEl.style.cssText = 'color:#f0b56e;font-weight:bold;font-size:0.9rem;flex:1;';
+    titleEl.textContent = title;
+
+    const closeBtn = document.createElement('button');
+    closeBtn.style.cssText = 'background:none;border:none;color:#888;font-size:1.6rem;cursor:pointer;line-height:1;padding:0 4px;-webkit-tap-highlight-color:transparent;';
+    closeBtn.textContent = '✕';
+    closeBtn.addEventListener('click', () => overlay.remove());
+
+    header.appendChild(titleEl);
+    header.appendChild(closeBtn);
+
+    const body = document.createElement('div');
+    body.style.cssText = 'flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px;color:#ddd;font-size:15px;line-height:1.8;';
+    body.innerHTML = text;
+
+    overlay.appendChild(header);
+    overlay.appendChild(body);
     document.body.appendChild(overlay);
 }
 
@@ -106,26 +111,29 @@ export function showMeishikiHtmlFullscreen(html) {
 
     const overlay = document.createElement('div');
     overlay.id = 'meishiki-fullscreen';
-    overlay.style.cssText = [
-        'position:fixed', 'inset:0',
-        'background:#0a0a0a',
-        'z-index:99997',
-        'display:flex', 'flex-direction:column',
-        'box-sizing:border-box'
-    ].join(';');
+    overlay.style.cssText = 'position:fixed;inset:0;background:#0a0a0a;z-index:99997;display:flex;flex-direction:column;box-sizing:border-box;';
 
-    overlay.innerHTML = `
-        <div style="display:flex; align-items:center; padding:12px 16px; border-bottom:1px solid #333;
-                    background:#111; flex-shrink:0;">
-            <div style="color:#f0b56e; font-weight:bold; font-size:0.9rem; flex:1;">📊 命式表</div>
-            <button onclick="document.getElementById('meishiki-fullscreen').remove()"
-                    style="background:none; border:none; color:#888; font-size:1.4rem;
-                           cursor:pointer; line-height:1; padding:0 4px;">✕</button>
-        </div>
-        <div style="flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; padding:12px; line-height:1.8;">
-            ${html}
-        </div>`;
+    const header = document.createElement('div');
+    header.style.cssText = 'display:flex;align-items:center;padding:12px 16px;border-bottom:1px solid #333;background:#111;flex-shrink:0;';
 
+    const titleEl = document.createElement('div');
+    titleEl.style.cssText = 'color:#f0b56e;font-weight:bold;font-size:0.9rem;flex:1;';
+    titleEl.textContent = '📊 命式表';
+
+    const closeBtn = document.createElement('button');
+    closeBtn.style.cssText = 'background:none;border:none;color:#888;font-size:1.6rem;cursor:pointer;line-height:1;padding:0 4px;-webkit-tap-highlight-color:transparent;';
+    closeBtn.textContent = '✕';
+    closeBtn.addEventListener('click', () => overlay.remove());
+
+    header.appendChild(titleEl);
+    header.appendChild(closeBtn);
+
+    const body = document.createElement('div');
+    body.style.cssText = 'flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:12px;line-height:1.8;';
+    body.innerHTML = html;
+
+    overlay.appendChild(header);
+    overlay.appendChild(body);
     document.body.appendChild(overlay);
 }
 
@@ -209,18 +217,22 @@ export async function showMeishikiGuide() {
         'box-sizing:border-box'
     ].join(';');
 
-    overlay.innerHTML = `
-        <div style="display:flex; align-items:center; padding:12px 16px; border-bottom:1px solid #333;
-                    background:#111; flex-shrink:0;">
-            <div style="color:#f0b56e; font-weight:bold; font-size:0.9rem; flex:1;">📖 ${guide.title}</div>
-            <button onclick="document.getElementById('meishiki-guide-modal').remove()"
-                    style="background:none; border:none; color:#888; font-size:1.4rem;
-                           cursor:pointer; line-height:1; padding:0 4px;">✕</button>
-        </div>
-        <div style="flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; padding:16px;">
-            ${guide.sections.map(_renderGuideSection).join('')}
-        </div>`;
-
+    const gHeader = document.createElement('div');
+    gHeader.style.cssText = 'display:flex;align-items:center;padding:12px 16px;border-bottom:1px solid #333;background:#111;flex-shrink:0;';
+    const gTitle = document.createElement('div');
+    gTitle.style.cssText = 'color:#f0b56e;font-weight:bold;font-size:0.9rem;flex:1;';
+    gTitle.textContent = `📖 ${guide.title}`;
+    const gClose = document.createElement('button');
+    gClose.style.cssText = 'background:none;border:none;color:#888;font-size:1.6rem;cursor:pointer;line-height:1;padding:0 4px;-webkit-tap-highlight-color:transparent;';
+    gClose.textContent = '✕';
+    gClose.addEventListener('click', () => overlay.remove());
+    gHeader.appendChild(gTitle);
+    gHeader.appendChild(gClose);
+    const gBody = document.createElement('div');
+    gBody.style.cssText = 'flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px;';
+    gBody.innerHTML = guide.sections.map(_renderGuideSection).join('');
+    overlay.appendChild(gHeader);
+    overlay.appendChild(gBody);
     document.body.appendChild(overlay);
 }
 

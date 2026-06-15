@@ -911,8 +911,10 @@ export function showFortuneMenu(onBack = null) {
                 🔮 ソフィーの天命診断
             </div>
             <div style="padding:10px;">
-                <button id="fm-daily" class="act-btn" style="background:#ffffff; color:#ff69b4;
-                    border:2px solid #00d2ff; margin-bottom:8px; font-weight:bold;">${dailyLabel}</button>
+                <button id="fm-daily" style="width:100%; height:48px; display:block; border-radius:8px;
+                    font-weight:bold; font-size:1.1rem; font-family:sans-serif;
+                    background:#ffffff; color:#ff69b4;
+                    border:2px solid #00d2ff; margin-bottom:8px; cursor:pointer;">${dailyLabel}</button>
                 <button id="fm-my-fortune" class="act-btn" style="background:#2a1a3a; color:#c39bd3;
                     border:1px solid #6a3a8a; margin-bottom:8px;">🌟 あなたのご相談</button>
                 <button id="fm-about-person" class="act-btn" style="background:#1a1a2a; color:#9b59b6;
@@ -1477,30 +1479,23 @@ window.showCharacterModal = (key, type) => {
         'overflow-y:scroll', '-webkit-overflow-scrolling:touch'
     ].join(';');
 
-    modal.innerHTML = `
-        <div style="background:#111; border-radius:12px; border:2px solid #9b59b6;
-                    max-width:85%; width:85%; margin:40px auto 40px auto;
-                    padding:20px; text-align:center;
-                    display:flex; flex-direction:column; align-items:center;">
-            <img src="${src}" style="width:200px; height:200px; object-fit:contain; margin-bottom:12px;">
-            <div style="color:#f0b56e; font-size:1.1rem; font-weight:bold; margin-bottom:4px;">
-                ${key}（${info.read}）
-            </div>
-            <div style="color:#9b59b6; font-size:0.85rem; margin-bottom:8px;">
-                ${info.gogyo}　${info.catch}
-            </div>
-            <div style="color:#ddd; font-size:0.85rem; line-height:1.7; text-align:left; max-width:260px;">
-                ${info.desc}
-            </div>
-            <button onclick="document.getElementById('char-modal').remove(); document.body.style.overflow='';"
-                style="margin-top:14px; background:#34495e; color:#fff; border:none;
-                       padding:8px 24px; border-radius:4px; font-size:0.85rem; cursor:pointer;">
-                閉じる
-            </button>
-        </div>`;
+    const inner = document.createElement('div');
+    inner.style.cssText = 'background:#111;border-radius:12px;border:2px solid #9b59b6;max-width:85%;width:85%;margin:40px auto 40px auto;padding:20px;text-align:center;display:flex;flex-direction:column;align-items:center;';
+    inner.innerHTML = `
+        <img src="${src}" style="width:200px; height:200px; object-fit:contain; margin-bottom:12px;">
+        <div style="color:#f0b56e; font-size:1.1rem; font-weight:bold; margin-bottom:4px;">${key}（${info.read}）</div>
+        <div style="color:#9b59b6; font-size:0.85rem; margin-bottom:8px;">${info.gogyo}　${info.catch}</div>
+        <div style="color:#ddd; font-size:0.85rem; line-height:1.7; text-align:left; max-width:260px;">${info.desc}</div>`;
+    const closeBtn = document.createElement('button');
+    closeBtn.style.cssText = 'margin-top:14px;background:#34495e;color:#fff;border:none;padding:8px 24px;border-radius:4px;font-size:0.85rem;cursor:pointer;-webkit-tap-highlight-color:transparent;';
+    closeBtn.textContent = '閉じる';
+    closeBtn.addEventListener('click', () => { modal.remove(); document.body.style.overflow = ''; });
+    inner.appendChild(closeBtn);
+    modal.appendChild(inner);
 
     document.body.appendChild(modal);
     document.body.style.overflow = 'hidden';
+    modal.addEventListener('click', (e) => { if (e.target === modal) { modal.remove(); document.body.style.overflow = ''; } });
 };
 
 window.buildMeishikiHtml = buildMeishikiHtml;
