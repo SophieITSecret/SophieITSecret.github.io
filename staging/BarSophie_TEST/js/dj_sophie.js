@@ -13,6 +13,10 @@ let _narrationSkipFn = null;
 let _djYtPreloaded = false;
 let _sophiePhase = false;
 let _lastIsLandscape = null;
+let _continuousPlay = false;
+let _episodesAsc = [];
+let _startEpisodeId = null;
+let _preAudioMap = {};
 
 // ---- ユーティリティ ----
 
@@ -74,6 +78,12 @@ function _loadYoutube(ytId) {
     }
 }
 
+// segmentsには「語り＋YouTube」の曲セグメントと、締めの語りのみのセグメントが混在するため、
+// 曲数はyoutube_idを持つセグメントの数で数える（segments.lengthそのものではない）
+function _songCount(segments) {
+    return (segments || []).filter(s => s.youtube_id).length;
+}
+
 function _showSophieMonitor() {
     _setMonitorImg('./front_sophie.jpeg');
     const thumbEl = document.getElementById('dj-thumb');
@@ -84,6 +94,36 @@ function _showSophieMonitor() {
         thumbEl.style.display = 'block';
     }
     _sophiePhase = true;
+}
+
+// ---- 連続再生 ----
+
+function _sortByIdAsc(episodes) {
+    return [...episodes].sort((a, b) => a.id.localeCompare(b.id));
+}
+
+function _getNextEpisode(currentId) {
+    if (!_episodesAsc.length) return null;
+    const idx = _episodesAsc.findIndex(e => e.id === currentId);
+    if (idx === -1) return null;
+    const nextIdx = (idx + 1) % _episodesAsc.length;
+    const next = _episodesAsc[nextIdx];
+    if (next.id === _startEpisodeId) return null;
+    return next;
+}
+
+// iOS: ユーザージェスチャーのコンテキスト内でAudioを事前作成しておく
+// （setTimeout経由の連続再生でも、後でplay()できるようにするため）
+function _preCreateAudioForEpisodes(episodeList) {
+    episodeList.forEach(ep => {
+        (ep.segments || []).forEach(seg => {
+            if (seg.mp3 && !seg.youtube_id && !_preAudioMap[seg.mp3]) {
+                const a = new Audio(`./voices_mp3/${seg.mp3}`);
+                a.preload = 'auto';
+                _preAudioMap[seg.mp3] = a;
+            }
+        });
+    });
 }
 
 // ---- DJ0: エピソード一覧 ----
@@ -113,6 +153,13 @@ export async function showDJList(onBack) {
         return;
     }
 
+    _episodesAsc = _sortByIdAsc(episodes);
+    _continuousPlay = localStorage.getItem('dj_continuous_play') === 'true';
+
+    const toggleStyle = (on) => on
+        ? 'background:#2a1a00;border:2px solid #f0b56e;color:#f0b56e;'
+        : 'background:#1a1a1a;border:1px solid #444;color:#888;';
+
     let html = `
         <div style="margin:10px;border-radius:10px;border:2px solid transparent;
                     background:linear-gradient(#111,#111) padding-box,
@@ -121,14 +168,17 @@ export async function showDJList(onBack) {
                         border-bottom:1px solid #333;height:28px;line-height:28px;
                         border-radius:8px 8px 0 0;display:flex;align-items:center;gap:6px;">
                 <img src="./sophie_face.png" style="width:20px;height:20px;border-radius:50%;object-fit:cover;">
-                🎙️ DJソフィーの歌とお酒の物語
+                <span style="flex:1;">🎙️ DJソフィーの歌とお酒の物語</span>
+            </div>
+            <div style="padding:6px 12px;border-bottom:1px solid #222;display:flex;align-items:center;justify-content:flex-end;">
+                <button id="dj-continuous-toggle" style="${toggleStyle(_continuousPlay)}border-radius:14px;padding:4px 14px;font-size:0.72rem;cursor:pointer;-webkit-tap-highlight-color:transparent;">🔁 連続再生 ${_continuousPlay ? 'ON' : 'OFF'}</button>
             </div>
             <div style="padding:6px 0;">`;
 
     episodes.forEach(ep => {
-        const segs = ep.segments || [];
-        const subtitleHtml = segs.length > 1
-            ? `<span style="color:#c8b090;">全${segs.length}曲</span>`
+        const songCount = _songCount(ep.segments);
+        const subtitleHtml = songCount > 1
+            ? `<span style="color:#c8b090;">全${songCount}曲</span>`
             : `<span style="color:#c8b090;">${ep.artist || ''}</span>`
                 + (ep.artist && ep.song ? `<span style="color:#555;margin:0 4px;">／</span>` : '')
                 + (ep.song ? `<span>「${ep.song}」</span>` : '');
@@ -148,6 +198,16 @@ export async function showDJList(onBack) {
     html += `</div></div>`;
     lv.innerHTML = html;
 
+    document.getElementById('dj-continuous-toggle')?.addEventListener('click', () => {
+        _continuousPlay = !_continuousPlay;
+        localStorage.setItem('dj_continuous_play', _continuousPlay ? 'true' : 'false');
+        const btn = document.getElementById('dj-continuous-toggle');
+        if (btn) {
+            btn.style.cssText = `${toggleStyle(_continuousPlay)}border-radius:14px;padding:4px 14px;font-size:0.72rem;cursor:pointer;-webkit-tap-highlight-color:transparent;`;
+            btn.textContent = `🔁 連続再生 ${_continuousPlay ? 'ON' : 'OFF'}`;
+        }
+    });
+
     document.querySelectorAll('.dj-ep-card').forEach(card => {
         card.addEventListener('click', () => {
             const ep = episodes.find(e => e.id === card.dataset.id);
@@ -159,6 +219,12 @@ export async function showDJList(onBack) {
 // ---- DJ1: 再生画面 ----
 
 export function showDJPlayer(episode, onBackToList) {
+    _startEpisodeId = episode.id;
+    _preCreateAudioForEpisodes(_continuousPlay ? _episodesAsc : [episode]);
+    _playEpisode(episode, onBackToList);
+}
+
+function _playEpisode(episode, onBackToList) {
     _currentEpisode = episode;
     _sophiePhase = false;
     nav.updateNav('dj');
@@ -204,9 +270,10 @@ export function showDJPlayer(episode, onBackToList) {
     _setMonitorImg(slideImgSrc);
 
     // エピソード情報パネル
-    const isMulti = segments.length > 1;
+    const songCount = _songCount(segments);
+    const isMulti = songCount > 1;
     const subtitleHtml = isMulti
-        ? `<span id="dj-ep-subtitle" style="color:#c8b090;">全${segments.length}曲</span>`
+        ? `<span id="dj-ep-subtitle" style="color:#c8b090;">全${songCount}曲</span>`
         : `<span style="color:#c8b090;">${episode.artist || ''}</span>`
             + (episode.artist && episode.song ? `<span style="color:#555;margin:0 4px;">／</span>` : '')
             + (episode.song ? `<span>「${episode.song}」</span>` : '');
@@ -306,20 +373,29 @@ function _playAfterAudio(mp3, onComplete, preCreated) {
 
 function _startFlow(episode) {
     const segments = episode.segments || [];
-    const isMulti = segments.length > 1;
+    const isMulti = _songCount(segments) > 1;
 
-    // iOS: ユーザーゼスチャーのコンテキスト内でAudioを事前作成しておく
-    // YouTube終了後にnew Audio().play()するとiOSに拒否されるため
-    const _preAudio = {};
+    // iOS: ユーザージェスチャーのコンテキスト内でAudioを事前作成しておく必要があるため
+    // 未生成分のみフォールバックで作成（通常はshowDJPlayerで事前作成済み）
     segments.forEach(seg => {
-        if (seg.mp3 && !seg.youtube_id) {
+        if (seg.mp3 && !seg.youtube_id && !_preAudioMap[seg.mp3]) {
             const a = new Audio(`./voices_mp3/${seg.mp3}`);
             a.preload = 'auto';
-            _preAudio[seg.mp3] = a;
+            _preAudioMap[seg.mp3] = a;
         }
     });
 
     const onAllDone = () => {
+        if (_continuousPlay) {
+            const next = _getNextEpisode(episode.id);
+            if (next) {
+                _autoReturnTimer = setTimeout(() => {
+                    _autoReturnTimer = null;
+                    _playEpisode(next, window._djBackFn);
+                }, 1500);
+                return;
+            }
+        }
         _autoReturnTimer = setTimeout(() => {
             _autoReturnTimer = null;
             const backFn = window._djBackFn;
@@ -337,7 +413,7 @@ function _startFlow(episode) {
         if (idx > 0) _showSophieMonitor();
 
         if (!seg.youtube_id) {
-            _playAfterAudio(seg.mp3, onAllDone, _preAudio[seg.mp3]);
+            _playAfterAudio(seg.mp3, onAllDone, _preAudioMap[seg.mp3]);
             return;
         }
 
@@ -355,9 +431,11 @@ function _updateSubtitle(episode, idx) {
     const el = document.getElementById('dj-ep-subtitle');
     if (!el) return;
     const seg = episode.segments[idx];
-    if (!seg) return;
-    const n = episode.segments.length;
-    const pos = `<span style="color:#777;font-size:0.6rem;margin-left:4px;">(${idx + 1}/${n})</span>`;
+    if (!seg || !seg.youtube_id) return; // 締めの語りのみのセグメントは曲ではないので表示を更新しない
+    const songSegs = episode.segments.filter(s => s.youtube_id);
+    const songIdx = songSegs.indexOf(seg);
+    const n = songSegs.length;
+    const pos = `<span style="color:#777;font-size:0.6rem;margin-left:4px;">(${songIdx + 1}/${n})</span>`;
     if (seg.artist || seg.song) {
         el.innerHTML = `<span style="color:#c8b090;">${seg.artist || ''}</span>`
             + (seg.artist && seg.song ? `<span style="color:#555;margin:0 4px;">／</span>` : '')
@@ -529,6 +607,8 @@ export function djClose(onBack) {
     _narrationSkipFn = null;
     window._djNarrationActive = false;
     _sophiePhase = false;
+    _startEpisodeId = null;
+    _preAudioMap = {};
     _removeOrientation();
 
     document.getElementById('dj-thumb')?.remove();
