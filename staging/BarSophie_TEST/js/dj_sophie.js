@@ -113,11 +113,12 @@ function _getNextEpisode(currentId) {
 }
 
 // iOS: ユーザージェスチャーのコンテキスト内でAudioを事前作成しておく
-// （setTimeout経由の連続再生でも、後でplay()できるようにするため）
+// （setTimeout経由の連続再生でも、後でplay()できるようにするため。
+//   YouTube前の語り・後の語り、どちらも対象にする）
 function _preCreateAudioForEpisodes(episodeList) {
     episodeList.forEach(ep => {
         (ep.segments || []).forEach(seg => {
-            if (seg.mp3 && !seg.youtube_id && !_preAudioMap[seg.mp3]) {
+            if (seg.mp3 && !_preAudioMap[seg.mp3]) {
                 const a = new Audio(`./voices_mp3/${seg.mp3}`);
                 a.preload = 'auto';
                 _preAudioMap[seg.mp3] = a;
@@ -308,12 +309,12 @@ function _playEpisode(episode, onBackToList) {
 
 // ---- 共通再生ヘルパー ----
 
-function _playNarration(mp3, onDone) {
+function _playNarration(mp3, onDone, preCreated) {
     if (_narrationAudio) { try { _narrationAudio.pause(); } catch(e) {} }
     if (_slideTimer) { clearTimeout(_slideTimer); _slideTimer = null; }
 
-    _narrationAudio = new Audio(`./voices_mp3/${mp3}`);
-    _narrationAudio.preload = 'auto';
+    _narrationAudio = preCreated || new Audio(`./voices_mp3/${mp3}`);
+    if (!preCreated) _narrationAudio.preload = 'auto';
     let _invoked = false;
 
     const done = () => {
@@ -378,7 +379,7 @@ function _startFlow(episode) {
     // iOS: ユーザージェスチャーのコンテキスト内でAudioを事前作成しておく必要があるため
     // 未生成分のみフォールバックで作成（通常はshowDJPlayerで事前作成済み）
     segments.forEach(seg => {
-        if (seg.mp3 && !seg.youtube_id && !_preAudioMap[seg.mp3]) {
+        if (seg.mp3 && !_preAudioMap[seg.mp3]) {
             const a = new Audio(`./voices_mp3/${seg.mp3}`);
             a.preload = 'auto';
             _preAudioMap[seg.mp3] = a;
@@ -421,7 +422,7 @@ function _startFlow(episode) {
             _showSophieMonitor();
             window._djYtEndCallback = () => _playSegment(idx + 1);
             _loadYoutube(seg.youtube_id);
-        });
+        }, _preAudioMap[seg.mp3]);
     };
 
     _playSegment(0);
