@@ -116,12 +116,16 @@ function _getNextEpisode(currentId) {
 // iOS: ユーザージェスチャーのコンテキスト内でAudioを事前作成しておく
 // （setTimeout経由の連続再生でも、後でplay()できるようにするため。
 //   YouTube前の語り・後の語り、どちらも対象にする）
-function _preCreateAudioForEpisodes(episodeList) {
+// eager=trueの場合のみpreload='auto'を付与する。連続再生では全話分を一度に
+// 作成するため、一括preload='auto'にすると同時ダウンロード過多でiOSが
+// 一部の音声をハングさせる恐れがあるので、オブジェクト生成のみ行い
+// 実際の読み込みは再生時（.play()）に委ねる
+function _preCreateAudioForEpisodes(episodeList, eager) {
     episodeList.forEach(ep => {
         (ep.segments || []).forEach(seg => {
             if (seg.mp3 && !_preAudioMap[seg.mp3]) {
                 const a = new Audio(`./voices_mp3/${seg.mp3}`);
-                a.preload = 'auto';
+                if (eager) a.preload = 'auto';
                 _preAudioMap[seg.mp3] = a;
             }
         });
@@ -222,7 +226,7 @@ export async function showDJList(onBack) {
 
 export function showDJPlayer(episode, onBackToList) {
     _startEpisodeId = episode.id;
-    _preCreateAudioForEpisodes(_continuousPlay ? _episodesAsc : [episode]);
+    _preCreateAudioForEpisodes(_continuousPlay ? _episodesAsc : [episode], !_continuousPlay);
     // 連続再生での話の切り替え（setTimeout経由・ジェスチャー外）でも鳴らせるよう、
     // 最初のジェスチャー内でAudioを作成しておく
     _iceAudio = new Audio('./voices_mp3/ice.mp3');
@@ -240,6 +244,7 @@ function _playIceTransition(onDone) {
     audio.addEventListener('ended', done, { once: true });
     audio.addEventListener('error', done, { once: true });
     audio.play().catch(done);
+    setTimeout(done, 5000); // ハング時の安全策
 }
 
 function _playEpisode(episode, onBackToList) {
@@ -362,6 +367,11 @@ function _playNarration(mp3, onDone, preCreated) {
         if (_invoked) return;
         _showSophieMonitor();
     }, 20000);
+
+    // 安全策: ended/errorのどちらも発火せずハングした場合に備え、
+    // 一定時間後に強制的に次へ進める（_djNarrationActiveが永久にtrueのまま
+    // 残ってソフィーの声などが鳴らなくなるのを防ぐ）
+    setTimeout(done, 45000);
 }
 
 function _playAfterAudio(mp3, onComplete, preCreated) {
@@ -369,13 +379,18 @@ function _playAfterAudio(mp3, onComplete, preCreated) {
     if (_afterAudio) { try { _afterAudio.pause(); } catch(e) {} }
     _afterAudio = preCreated || new Audio(`./voices_mp3/${mp3}`);
     if (!preCreated) _afterAudio.preload = 'auto';
+    let _invoked = false;
     const done = () => {
+        if (_invoked) return;
+        _invoked = true;
         _afterAudio = null;
         _narrationSkipFn = null;
         window._djNarrationActive = false;
         if (onComplete) onComplete();
     };
     _narrationSkipFn = () => {
+        if (_invoked) return;
+        _invoked = true;
         if (_afterAudio) { try { _afterAudio.pause(); } catch(e) {} _afterAudio = null; }
         _narrationSkipFn = null;
         window._djNarrationActive = false;
@@ -385,6 +400,9 @@ function _playAfterAudio(mp3, onComplete, preCreated) {
     _afterAudio.addEventListener('ended', done, { once: true });
     _afterAudio.addEventListener('error', done, { once: true });
     _afterAudio.play().catch(done);
+
+    // 安全策: ended/errorのどちらも発火せずハングした場合に備えた強制タイムアウト
+    setTimeout(done, 45000);
 }
 
 // ---- 再生フロー ----
