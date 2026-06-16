@@ -17,6 +17,7 @@ let _continuousPlay = false;
 let _episodesAsc = [];
 let _startEpisodeId = null;
 let _preAudioMap = {};
+let _iceAudio = null;
 
 // ---- ユーティリティ ----
 
@@ -222,7 +223,23 @@ export async function showDJList(onBack) {
 export function showDJPlayer(episode, onBackToList) {
     _startEpisodeId = episode.id;
     _preCreateAudioForEpisodes(_continuousPlay ? _episodesAsc : [episode]);
+    // 連続再生での話の切り替え（setTimeout経由・ジェスチャー外）でも鳴らせるよう、
+    // 最初のジェスチャー内でAudioを作成しておく
+    _iceAudio = new Audio('./voices_mp3/ice.mp3');
+    _iceAudio.preload = 'auto';
     _playEpisode(episode, onBackToList);
+}
+
+// エピソード開始時（連続再生での切り替え時も含む）に氷の音を挟んで繋ぎを滑らかにする
+function _playIceTransition(onDone) {
+    const audio = _iceAudio;
+    if (!audio) { onDone(); return; }
+    let invoked = false;
+    const done = () => { if (invoked) return; invoked = true; onDone(); };
+    try { audio.currentTime = 0; } catch(e) {}
+    audio.addEventListener('ended', done, { once: true });
+    audio.addEventListener('error', done, { once: true });
+    audio.play().catch(done);
 }
 
 function _playEpisode(episode, onBackToList) {
@@ -304,7 +321,7 @@ function _playEpisode(episode, onBackToList) {
     window._renderConsole?.('dj_player');
 
     _setupOrientation(mon, episode);
-    _startFlow(episode);
+    _playIceTransition(() => _startFlow(episode));
 }
 
 // ---- 共通再生ヘルパー ----
@@ -603,6 +620,7 @@ export function djClose(onBack) {
     if (_autoReturnTimer) { clearTimeout(_autoReturnTimer); _autoReturnTimer = null; }
     if (_narrationAudio) { _narrationAudio.pause(); _narrationAudio = null; }
     if (_afterAudio) { _afterAudio.pause(); _afterAudio = null; }
+    if (_iceAudio) { _iceAudio.pause(); _iceAudio = null; }
     window._djYtEndCallback = null;
     window._djYtPreloading = false;
     _narrationSkipFn = null;
