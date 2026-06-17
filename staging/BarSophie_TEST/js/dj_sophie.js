@@ -338,10 +338,12 @@ function _playNarration(mp3, onDone, preCreated) {
     _narrationAudio = preCreated || new Audio(`./voices_mp3/${mp3}`);
     if (!preCreated) _narrationAudio.preload = 'auto';
     let _invoked = false;
+    let _safetyTimer = null;
 
     const done = () => {
         if (_invoked) return;
         _invoked = true;
+        if (_safetyTimer) { clearTimeout(_safetyTimer); _safetyTimer = null; }
         _narrationSkipFn = null;
         if (_slideTimer) { clearTimeout(_slideTimer); _slideTimer = null; }
         window._djNarrationActive = false;
@@ -351,6 +353,7 @@ function _playNarration(mp3, onDone, preCreated) {
     _narrationSkipFn = () => {
         if (_invoked) return;
         _invoked = true;
+        if (_safetyTimer) { clearTimeout(_safetyTimer); _safetyTimer = null; }
         _narrationSkipFn = null;
         if (_narrationAudio) { try { _narrationAudio.pause(); } catch(e) {} }
         if (_slideTimer) { clearTimeout(_slideTimer); _slideTimer = null; }
@@ -368,10 +371,20 @@ function _playNarration(mp3, onDone, preCreated) {
         _showSophieMonitor();
     }, 20000);
 
-    // 安全策: ended/errorのどちらも発火せずハングした場合に備え、
-    // 一定時間後に強制的に次へ進める（_djNarrationActiveが永久にtrueのまま
-    // 残ってソフィーの声などが鳴らなくなるのを防ぐ）
-    setTimeout(done, 45000);
+    // 安全策: ハング時に_djNarrationActiveが永久trueのままになるのを防ぐ
+    // 音声の実際の長さ+30秒でタイムアウト（長さ不明の場合は5分）
+    const _armSafety = () => {
+        if (_invoked) return;
+        if (_safetyTimer) clearTimeout(_safetyTimer);
+        const dur = _narrationAudio.duration;
+        _safetyTimer = setTimeout(done, (dur && isFinite(dur)) ? (dur + 30) * 1000 : 300000);
+    };
+    if (_narrationAudio.readyState >= 1 && _narrationAudio.duration && isFinite(_narrationAudio.duration)) {
+        _armSafety();
+    } else {
+        _safetyTimer = setTimeout(done, 300000);
+        _narrationAudio.addEventListener('loadedmetadata', _armSafety, { once: true });
+    }
 }
 
 function _playAfterAudio(mp3, onComplete, preCreated) {
@@ -380,9 +393,11 @@ function _playAfterAudio(mp3, onComplete, preCreated) {
     _afterAudio = preCreated || new Audio(`./voices_mp3/${mp3}`);
     if (!preCreated) _afterAudio.preload = 'auto';
     let _invoked = false;
+    let _safetyTimer = null;
     const done = () => {
         if (_invoked) return;
         _invoked = true;
+        if (_safetyTimer) { clearTimeout(_safetyTimer); _safetyTimer = null; }
         _afterAudio = null;
         _narrationSkipFn = null;
         window._djNarrationActive = false;
@@ -391,6 +406,7 @@ function _playAfterAudio(mp3, onComplete, preCreated) {
     _narrationSkipFn = () => {
         if (_invoked) return;
         _invoked = true;
+        if (_safetyTimer) { clearTimeout(_safetyTimer); _safetyTimer = null; }
         if (_afterAudio) { try { _afterAudio.pause(); } catch(e) {} _afterAudio = null; }
         _narrationSkipFn = null;
         window._djNarrationActive = false;
@@ -401,8 +417,19 @@ function _playAfterAudio(mp3, onComplete, preCreated) {
     _afterAudio.addEventListener('error', done, { once: true });
     _afterAudio.play().catch(done);
 
-    // 安全策: ended/errorのどちらも発火せずハングした場合に備えた強制タイムアウト
-    setTimeout(done, 45000);
+    // 安全策: ハング時のフォールバック（音声の実際の長さ+30秒、長さ不明の場合は5分）
+    const _armSafety = () => {
+        if (_invoked) return;
+        if (_safetyTimer) clearTimeout(_safetyTimer);
+        const dur = _afterAudio?.duration;
+        _safetyTimer = setTimeout(done, (dur && isFinite(dur)) ? (dur + 30) * 1000 : 300000);
+    };
+    if (_afterAudio.readyState >= 1 && _afterAudio.duration && isFinite(_afterAudio.duration)) {
+        _armSafety();
+    } else {
+        _safetyTimer = setTimeout(done, 300000);
+        _afterAudio.addEventListener('loadedmetadata', _armSafety, { once: true });
+    }
 }
 
 // ---- 再生フロー ----
