@@ -14,6 +14,8 @@ let _requestMode = false;
 let _autoPlayMode = false;
 let _autoPlayList = [];
 let _autoPlayIdx = 0;  // ★現在のインデックスを直接管理
+let _autoPlayStartIdx = 0;  // 開始位置（一周検出用）
+let _continuousPlaySongs = localStorage.getItem('songs_continuous_play') === 'true';
 
 export function isAutoPlayMode() { return _autoPlayMode; }
 
@@ -21,11 +23,20 @@ export function stopAutoPlay() {
     _autoPlayMode = false;
     _autoPlayList = [];
     _autoPlayIdx = 0;
+    _autoPlayStartIdx = 0;
 }
 
 export function nextAutoPlay() {
     if (!_autoPlayMode || _autoPlayList.length === 0) return;
-    _autoPlayIdx = (_autoPlayIdx + 1) % _autoPlayList.length;
+    const nextIdx = (_autoPlayIdx + 1) % _autoPlayList.length;
+    if (nextIdx === _autoPlayStartIdx) {
+        // 一周完了 → 停止してリスト表示に戻る
+        const artist = _autoPlayList[0]?.a || '再生リスト';
+        stopAutoPlay();
+        renderSongList(artist);
+        return;
+    }
+    _autoPlayIdx = nextIdx;
     playAutoPlaySong(_autoPlayIdx);
 }
 
@@ -33,6 +44,7 @@ export function startAutoPlay(list, startIdx) {
     _autoPlayMode = true;
     _autoPlayList = list;
     _autoPlayIdx = startIdx;
+    _autoPlayStartIdx = startIdx;
     isMusicMode = true;
     playAutoPlaySong(startIdx);
 }
@@ -161,7 +173,15 @@ export function renderSongList(title) {
     const labelText  = _requestMode ? `🎤 リクエストどうぞ　─　${title}` : title;
     const itemBg     = _requestMode ? 'background:#1a0a0a;' : '';
 
-    let h = `<div class="label" style="${labelStyle}">${labelText}</div>`;
+    const _ts = (on) => on
+        ? 'background:#2a1a00;border:2px solid #f0b56e;color:#f0b56e;'
+        : 'background:#1a1a1a;border:1px solid #444;color:#888;';
+    const toggleBtn = !_requestMode
+        ? `<button id="songs-continuous-toggle" style="${_ts(_continuousPlaySongs)}border-radius:14px;padding:2px 10px;font-size:0.68rem;cursor:pointer;-webkit-tap-highlight-color:transparent;flex-shrink:0;">🔁 連続 ${_continuousPlaySongs ? 'ON' : 'OFF'}</button>`
+        : '';
+    const labelInlineStyle = _requestMode ? labelStyle : 'display:flex;align-items:center;';
+
+    let h = `<div class="label" style="${labelInlineStyle}"><span style="flex:1;">${labelText}</span>${toggleBtn}</div>`;
     nav.curP.forEach((m, i) => {
         const isSophie = m.ti && (m.ti.includes("みずいろのシグナル") || m.ti.includes("水色のシグナル"));
         const color = isSophie ? `color: var(--blue);` : `color: #eee;`;
@@ -175,12 +195,21 @@ export function renderSongList(title) {
         if (!isNaN(i)) {
             if (_requestMode) {
                 handleRequest(i);
+            } else if (_continuousPlaySongs) {
+                startAutoPlay(nav.curP, i);
             } else {
                 nav.updateNav(undefined, undefined, undefined, i);
                 setMon('v', nav.curP[i].u);
                 prep(`${nav.curP[i].a}さんの${nav.curP[i].ti}です`, true);
             }
         }
+    });
+
+    document.getElementById('songs-continuous-toggle')?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        _continuousPlaySongs = !_continuousPlaySongs;
+        localStorage.setItem('songs_continuous_play', _continuousPlaySongs ? 'true' : 'false');
+        renderSongList(title);
     });
 }
 
