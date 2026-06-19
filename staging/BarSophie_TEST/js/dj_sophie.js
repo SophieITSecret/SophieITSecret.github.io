@@ -346,6 +346,7 @@ function _playNarration(mp3, onDone, preCreated) {
         if (_safetyTimer) { clearTimeout(_safetyTimer); _safetyTimer = null; }
         _narrationSkipFn = null;
         if (_slideTimer) { clearTimeout(_slideTimer); _slideTimer = null; }
+        if (_narrationAudio) { try { _narrationAudio.pause(); } catch(e) {} }
         window._djNarrationActive = false;
         onDone();
     };
@@ -363,7 +364,9 @@ function _playNarration(mp3, onDone, preCreated) {
 
     _narrationAudio.addEventListener('ended', done, { once: true });
     _narrationAudio.addEventListener('error', done, { once: true });
-    _narrationAudio.play().catch(done);
+    // iOS: play()がrejectされても実際には再生中の場合があるため、
+    // catchではdone()を呼ばない。ended/error/安全タイムアウトに委ねる
+    _narrationAudio.play().catch(() => {});
     window._djNarrationActive = true;
 
     _slideTimer = setTimeout(() => {
@@ -398,6 +401,7 @@ function _playAfterAudio(mp3, onComplete, preCreated) {
         if (_invoked) return;
         _invoked = true;
         if (_safetyTimer) { clearTimeout(_safetyTimer); _safetyTimer = null; }
+        if (_afterAudio) { try { _afterAudio.pause(); } catch(e) {} }
         _afterAudio = null;
         _narrationSkipFn = null;
         window._djNarrationActive = false;
@@ -415,7 +419,9 @@ function _playAfterAudio(mp3, onComplete, preCreated) {
     window._djNarrationActive = true;
     _afterAudio.addEventListener('ended', done, { once: true });
     _afterAudio.addEventListener('error', done, { once: true });
-    _afterAudio.play().catch(done);
+    // iOS: play()がrejectされても実際には再生中の場合があるため、
+    // catchではdone()を呼ばない。ended/error/安全タイムアウトに委ねる
+    _afterAudio.play().catch(() => {});
 
     // 安全策: ハング時のフォールバック（音声の実際の長さ+30秒、長さ不明の場合は5分）
     const _armSafety = () => {
@@ -452,6 +458,12 @@ function _startFlow(episode) {
         if (_continuousPlay) {
             const next = _getNextEpisode(episode.id);
             if (next) {
+                // 次話の音声のプリロードを今から開始（1.5秒の猶予でダウンロード促進）
+                (next.segments || []).forEach(seg => {
+                    if (seg.mp3 && _preAudioMap[seg.mp3]) {
+                        _preAudioMap[seg.mp3].preload = 'auto';
+                    }
+                });
                 _autoReturnTimer = setTimeout(() => {
                     _autoReturnTimer = null;
                     _playEpisode(next, window._djBackFn);
