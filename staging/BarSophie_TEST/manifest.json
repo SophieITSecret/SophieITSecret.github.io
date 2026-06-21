@@ -1,7 +1,7 @@
 {
   "name": "BARソフィー",
   "short_name": "ソフィー",
-  "start_url": "/",
+  "start_url": "/index_m.html",
   "display": "standalone",
   "background_color": "#0a0a1a",
   "theme_color": "#26c6da",

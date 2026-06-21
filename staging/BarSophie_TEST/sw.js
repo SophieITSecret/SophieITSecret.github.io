@@ -2,7 +2,6 @@
 const CACHE_NAME = 'bar-sophie-v1';
 
 const STATIC_ASSETS = [
-  '/',
   '/index_m.html',
   '/manifest.json',
   '/icons/icon-192.png',
