@@ -4,10 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Bar Sophie v13.0 Modular</title>
-    <link rel="apple-touch-icon" href="bar_sophie.jpeg">
-    <meta name="apple-mobile-web-app-title" content="BARソフィー">
+    <!-- PWA対応 -->
+    <link rel="manifest" href="/manifest.json">
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="BARソフィー">
     <link rel="stylesheet" href="css/style_m.css?v=22">
 
     <script type="module">
@@ -498,5 +500,14 @@
     </div>
 
     <script type="module" src="js/app_m.js?v=24"></script>
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js')
+            .then(reg => console.log('SW registered:', reg))
+            .catch(err => console.log('SW registration failed:', err));
+        });
+      }
+    </script>
 </body>
 </html>
