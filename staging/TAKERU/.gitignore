@@ -1,7 +1,12 @@
-# 画像データを無視
+# 画像データを無視（カード画像・背景画像）
 *.png
 *.jpg
 *.gif
+
+# PWAアイコンは例外（Git管理対象）
+!icon-192.png
+!icon-512.png
+!takeru-touch-icon.png
 
 # 音声データを無視
 *.mp3
