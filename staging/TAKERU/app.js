@@ -65,7 +65,8 @@ async function loadCSV() {
             genre: c[1]?.trim() || '',
             section: c[2]?.trim() || '',
             title: c[3]?.trim() || '',
-            body: c[4]?.trim() || ''
+            body: c[4]?.trim() || '',
+            grade: c[5]?.trim() || '3級-軍事と戦略'
         })).filter(d => d.id);
     } catch (e) {
         console.error('CSVロード失敗:', e);
@@ -226,7 +227,7 @@ function showGradeMenu() {
                 <div class="subject-row">
                     <button class="subject-btn btn-grade3" data-grade="3級-軍事と戦略">軍事と戦略</button>
                     <button class="subject-btn btn-coming" disabled>国家と法律</button>
-                    <button class="subject-btn btn-coming" disabled>戦争の歴史</button>
+                    <button class="subject-btn btn-grade3" data-grade="3級-戦争の歴史">戦争の歴史</button>
                 </div>
             </div>
         </div>
@@ -247,11 +248,12 @@ function showGenreMenu() {
     navState = 'genre';
     isMenuVisible = true;
     showMenuView();
-    const genres = [...new Set(cardData.map(d => d.genre))];
+    const genres = [...new Set(cardData.filter(d => d.grade === curGrade).map(d => d.genre))];
+    const gradeBanner = curGrade.replace('3級-', '３級　').replace('2級-', '２級　').replace('1級-', '１級　');
     let html = `
         <div class="double-banner-wrap">
             <div class="top-btn btn-jukou banner-btn banner-small">📚 受　講</div>
-            <div class="grade-btn btn-grade3 banner-btn banner-small">３級　軍事と戦略</div>
+            <div class="grade-btn btn-grade3 banner-btn banner-small">${gradeBanner}</div>
         </div>
         <div class="menu-label">▶ 科目・ジャンルを選ぶ</div>
     `;
