@@ -233,7 +233,7 @@ function showGradeMenu() {
         </div>
     `;
     menuContent.onclick = (e) => {
-        const btn = e.target.closest('.subject-btn[data-grade]');
+        const btn = e.target.closest('.subject-btn[data-subject]');
         if (!btn) return;
         curSubject = btn.dataset.subject;
         showGenreMenu();
