@@ -334,7 +334,7 @@ function showSectionedCardList(genre) {
         const section = item.dataset.section;
         const idx = parseInt(item.dataset.sectionIdx);
         if (section && !isNaN(idx)) {
-            curSection = cardData.filter(d => d.section === section);
+            curSection = cardData.filter(d => d.genre === curGenre && d.section === section);
             showCard(idx);
         }
     };
