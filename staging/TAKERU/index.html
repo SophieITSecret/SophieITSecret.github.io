@@ -7,6 +7,8 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="TAKERU">
     <link rel="apple-touch-icon" href="takeru-touch-icon.png">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0d0d1a">
     <title>TAKERU｜MSアカデミー</title>
     <link rel="stylesheet" href="style.css">
 </head>
@@ -76,5 +78,12 @@
     <button id="btn-settings">⚙</button>
     <div class="ver">TAKERU v2.3</div>
     <script src="app.js"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js');
+            });
+        }
+    </script>
 </body>
 </html>
