@@ -352,7 +352,10 @@ function showFlatCardList(genre) {
 
     let html = `<div class="menu-label">◀ ${genre}</div>`;
     curSection.forEach((card, i) => {
-        html += `<div class="menu-item" data-idx="${i}">${i + 1}. ${card.title}</div>`;
+        const type = /F\d+$/.test(card.id) ? 'fact' : /C\d+$/.test(card.id) ? 'com' : null;
+        const badge = type ? `<span class="card-badge badge-${type}">${type === 'fact' ? '史実' : '解説'}</span> ` : '';
+        const title = card.title.replace(/^→/, '').trim();
+        html += `<div class="menu-item" data-idx="${i}">${badge}${i + 1}. ${title}</div>`;
     });
     menuContent.innerHTML = html;
     menuContent.onclick = (e) => {
@@ -375,8 +378,10 @@ function showCard(idx) {
     showTextView();
 
     const sectionLabel = curSection[0]?.section || curGenre;
-    cardProgress.innerText = `${sectionLabel}　${curIndex + 1} / ${curSection.length}`;
-    cardTitle.innerText = card.title;
+    const cardType = /F\d+$/.test(card.id) ? 'fact' : /C\d+$/.test(card.id) ? 'com' : null;
+    const typeBadge = cardType ? ` <span class="card-badge badge-${cardType}">${cardType === 'fact' ? '史実' : '解説'}</span>` : '';
+    cardProgress.innerHTML = `${sectionLabel}　${curIndex + 1} / ${curSection.length}${typeBadge}`;
+    cardTitle.innerText = card.title.replace(/^→/, '').trim();
     cardBody.innerText = card.body;
     textView.scrollTop = 0;
 
