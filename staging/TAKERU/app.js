@@ -8,7 +8,7 @@ let curSection = [];
 let curIndex = 0;
 let navState = 'top';
 let curGenre = '';
-let curGrade = '3級';
+let curSubject = '3級';
 let curLinkGenre = '';
 let autoRead = false;
 let isMenuVisible = false;
@@ -66,7 +66,7 @@ async function loadCSV() {
             section: c[2]?.trim() || '',
             title: c[3]?.trim() || '',
             body: c[4]?.trim() || '',
-            grade: c[5]?.trim() || '3級-軍事と戦略'
+            subject: c[5]?.trim() || '3級-軍事と戦略'
         })).filter(d => d.id);
     } catch (e) {
         console.error('CSVロード失敗:', e);
@@ -202,7 +202,7 @@ function showTopMenu() {
 // 級選択（受講ボタンを看板として持ち込み）
 // ==========================================
 function showGradeMenu() {
-    navState = 'grade';
+    navState = 'subject';
     isMenuVisible = true;
     btnSettings.style.display = 'none';
     showMenuView();
@@ -225,9 +225,9 @@ function showGradeMenu() {
                 </div>
                 <div class="grade-label grade-label-3">３級　戦士の視点</div>
                 <div class="subject-row">
-                    <button class="subject-btn btn-grade3" data-grade="3級-軍事と戦略">軍事と戦略</button>
-                    <button class="subject-btn btn-grade3" data-grade="3級-国家と法律">国家と法律</button>
-                    <button class="subject-btn btn-grade3" data-grade="3級-戦争の歴史">戦争の歴史</button>
+                    <button class="subject-btn btn-grade3" data-subject="3級-軍事と戦略">軍事と戦略</button>
+                    <button class="subject-btn btn-grade3" data-subject="3級-国家と法律">国家と法律</button>
+                    <button class="subject-btn btn-grade3" data-subject="3級-戦争の歴史">戦争の歴史</button>
                 </div>
             </div>
         </div>
@@ -235,7 +235,7 @@ function showGradeMenu() {
     menuContent.onclick = (e) => {
         const btn = e.target.closest('.subject-btn[data-grade]');
         if (!btn) return;
-        curGrade = btn.dataset.grade;
+        curSubject = btn.dataset.subject;
         showGenreMenu();
     };
 }
@@ -248,12 +248,12 @@ function showGenreMenu() {
     navState = 'genre';
     isMenuVisible = true;
     showMenuView();
-    const genres = [...new Set(cardData.filter(d => d.grade === curGrade).map(d => d.genre))];
-    const gradeBanner = curGrade.replace('3級-', '３級　').replace('2級-', '２級　').replace('1級-', '１級　');
+    const genres = [...new Set(cardData.filter(d => d.subject === curSubject).map(d => d.genre))];
+    const subjectBanner = curSubject.replace('3級-', '３級　').replace('2級-', '２級　').replace('1級-', '１級　');
     let html = `
         <div class="double-banner-wrap">
             <div class="top-btn btn-jukou banner-btn banner-small">📚 受　講</div>
-            <div class="grade-btn btn-grade3 banner-btn banner-small">${gradeBanner}</div>
+            <div class="grade-btn btn-grade3 banner-btn banner-small">${subjectBanner}</div>
         </div>
         <div class="menu-label">▶ 科目・ジャンルを選ぶ</div>
     `;
@@ -377,10 +377,16 @@ function showCard(idx) {
     hideVoiceWarning();
     showTextView();
 
-    const sectionLabel = curSection[0]?.section || curGenre;
     const cardType = /F\d+$/.test(card.id) ? 'fact' : /C\d+$/.test(card.id) ? 'com' : null;
     const typeBadge = cardType ? ` <span class="card-badge badge-${cardType}">${cardType === 'fact' ? '史実' : '解説'}</span>` : '';
-    cardProgress.innerHTML = `${sectionLabel}　${curIndex + 1} / ${curSection.length}${typeBadge}`;
+    if (card.section) {
+        cardProgress.innerHTML =
+            `<div class="prog-unit">${curGenre}</div>` +
+            `<div>${card.section}　${curIndex + 1} / ${curSection.length}${typeBadge}</div>`;
+    } else {
+        cardProgress.innerHTML =
+            `<div class="prog-unit">${curGenre}　${curIndex + 1} / ${curSection.length}${typeBadge}</div>`;
+    }
     cardTitle.innerText = card.title.replace(/^→/, '').trim();
     cardBody.innerText = card.body;
     textView.scrollTop = 0;
@@ -562,7 +568,7 @@ function setupButtons() {
             else if (navState === 'sectionedlist') showGenreMenu();
             else if (navState === 'section') showGenreMenu();
             else if (navState === 'genre') showGradeMenu();
-            else if (navState === 'grade') showTopMenu();
+            else if (navState === 'subject') showTopMenu();
             else if (navState === 'linklist') showLinkGenreMenu();
             else if (navState === 'linkgenre') showTopMenu();
             else showTopMenu();
