@@ -211,19 +211,19 @@ function showGradeMenu() {
         <div class="sub-menu-wrap">
             <div class="top-btn btn-jukou banner-btn">📚 受　講</div>
             <div class="sub-panel-wrap">
-                <div class="grade-label grade-label-1">１級　将軍の心得</div>
+                <div class="grade-label grade-label-1">１級　将軍の視点</div>
                 <div class="subject-row">
                     <button class="subject-btn btn-coming" disabled>軍事と戦略</button>
                     <button class="subject-btn btn-coming" disabled>国家と法律</button>
                     <button class="subject-btn btn-coming" disabled>戦争の歴史</button>
                 </div>
-                <div class="grade-label grade-label-2">２級　司令官の心得</div>
+                <div class="grade-label grade-label-2">２級　指揮官の視点</div>
                 <div class="subject-row">
                     <button class="subject-btn btn-coming" disabled>軍事と戦略</button>
                     <button class="subject-btn btn-coming" disabled>国家と法律</button>
                     <button class="subject-btn btn-coming" disabled>戦争の歴史</button>
                 </div>
-                <div class="grade-label grade-label-3">３級　戦士の心得</div>
+                <div class="grade-label grade-label-3">３級　戦士の視点</div>
                 <div class="subject-row">
                     <button class="subject-btn btn-grade3" data-grade="3級-軍事と戦略">軍事と戦略</button>
                     <button class="subject-btn btn-grade3" data-grade="3級-国家と法律">国家と法律</button>
@@ -242,7 +242,7 @@ function showGradeMenu() {
 
 // ==========================================
 // ジャンル→セクション→カード
-// 受講2層目：「受講」＋「3級 戦士の心得」の2枚看板
+// 受講2層目：「受講」＋「3級 戦士の視点」の2枚看板
 // ==========================================
 function showGenreMenu() {
     navState = 'genre';
