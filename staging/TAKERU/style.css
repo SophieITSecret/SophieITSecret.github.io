@@ -420,6 +420,19 @@ body {
 }
 
 /* ==================== リンク一覧 ==================== */
+.section-header {
+    padding: 5px 14px;
+    font-size: 0.75rem;
+    font-family: 'Oswald', sans-serif;
+    letter-spacing: 0.08em;
+    background: var(--label-bg);
+    color: var(--label-color);
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 28px;
+    z-index: 9;
+}
+
 .link-field-header {
     padding: 5px 14px;
     font-size: 0.75rem;

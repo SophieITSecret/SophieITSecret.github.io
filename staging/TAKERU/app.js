@@ -263,7 +263,10 @@ function showGenreMenu() {
         const item = e.target.closest('.menu-item');
         if (!item) return;
         const genre = item.dataset.genre;
-        if (genre) showSectionMenu(genre);
+        if (!genre) return;
+        const hasSections = cardData.filter(d => d.genre === genre).some(d => d.section !== '');
+        if (hasSections) showSectionedCardList(genre);
+        else showFlatCardList(genre);
     };
 }
 
@@ -306,6 +309,58 @@ function showCardList(section) {
     };
 }
 
+function showSectionedCardList(genre) {
+    navState = 'sectionedlist';
+    isMenuVisible = true;
+    curGenre = genre;
+    showMenuView();
+
+    const genreCards = cardData.filter(d => d.genre === genre);
+    const sections = [...new Set(genreCards.map(d => d.section))];
+
+    let html = `<div class="menu-label">◀ ${genre}</div>`;
+    sections.forEach(s => {
+        const sCards = genreCards.filter(d => d.section === s);
+        html += `<div class="section-header">${s}</div>`;
+        sCards.forEach((card, i) => {
+            html += `<div class="menu-item" data-section="${s}" data-section-idx="${i}">${i + 1}. ${card.title}</div>`;
+        });
+    });
+
+    menuContent.innerHTML = html;
+    menuContent.onclick = (e) => {
+        const item = e.target.closest('.menu-item[data-section]');
+        if (!item) return;
+        const section = item.dataset.section;
+        const idx = parseInt(item.dataset.sectionIdx);
+        if (section && !isNaN(idx)) {
+            curSection = cardData.filter(d => d.section === section);
+            showCard(idx);
+        }
+    };
+}
+
+function showFlatCardList(genre) {
+    navState = 'cardlist';
+    isMenuVisible = true;
+    curGenre = genre;
+    curSection = cardData.filter(d => d.genre === genre);
+    curIndex = 0;
+    showMenuView();
+
+    let html = `<div class="menu-label">◀ ${genre}</div>`;
+    curSection.forEach((card, i) => {
+        html += `<div class="menu-item" data-idx="${i}">${i + 1}. ${card.title}</div>`;
+    });
+    menuContent.innerHTML = html;
+    menuContent.onclick = (e) => {
+        const item = e.target.closest('.menu-item');
+        if (!item) return;
+        const idx = parseInt(item.dataset.idx);
+        if (!isNaN(idx)) showCard(idx);
+    };
+}
+
 function showCard(idx) {
     if (!curSection.length) return;
     curIndex = Math.max(0, Math.min(idx, curSection.length - 1));
@@ -317,7 +372,8 @@ function showCard(idx) {
     hideVoiceWarning();
     showTextView();
 
-    cardProgress.innerText = `${curSection[0].section}　${curIndex + 1} / ${curSection.length}`;
+    const sectionLabel = curSection[0]?.section || curGenre;
+    cardProgress.innerText = `${sectionLabel}　${curIndex + 1} / ${curSection.length}`;
     cardTitle.innerText = card.title;
     cardBody.innerText = card.body;
     textView.scrollTop = 0;
@@ -491,10 +547,12 @@ function setupButtons() {
             if (navState === 'card' && curIndex > 0) {
                 showCard(curIndex - 1);
             } else {
-                showCardList(curSection[0]?.section || '');
+                if (curSection[0]?.section) showSectionedCardList(curGenre);
+                else showFlatCardList(curGenre);
             }
         } else {
-            if (navState === 'cardlist') showSectionMenu(curGenre);
+            if (navState === 'cardlist') showGenreMenu();
+            else if (navState === 'sectionedlist') showGenreMenu();
             else if (navState === 'section') showGenreMenu();
             else if (navState === 'genre') showGradeMenu();
             else if (navState === 'grade') showTopMenu();
@@ -512,15 +570,19 @@ function setupButtons() {
     btnToggle.onclick = () => {
         if (!isMenuVisible) {
             if (curSection.length && navState === 'card') {
-                showCardList(curSection[0].section);
-                setTimeout(() => {
-                    document.querySelectorAll('#menu-content .menu-item').forEach((el, i) => {
-                        el.classList.toggle('active-item', i === curIndex);
-                    });
-                }, 50);
+                if (curSection[0]?.section) {
+                    showSectionedCardList(curGenre);
+                } else {
+                    showFlatCardList(curGenre);
+                    setTimeout(() => {
+                        document.querySelectorAll('#menu-content .menu-item').forEach((el, i) => {
+                            el.classList.toggle('active-item', i === curIndex);
+                        });
+                    }, 50);
+                }
             } else showMenuView();
         } else {
-            if (curSection.length && (navState === 'card' || navState === 'cardlist')) {
+            if (curSection.length && (navState === 'card' || navState === 'cardlist' || navState === 'sectionedlist')) {
                 navState = 'card';
                 isMenuVisible = false;
                 showCard(curIndex);
@@ -553,7 +615,7 @@ function showSectionComplete() {
     navState = 'complete';
     isMenuVisible = false;
     showTextView();
-    cardProgress.innerText = curSection[0]?.section || '';
+    cardProgress.innerText = curSection[0]?.section || curGenre;
     cardTitle.innerText = '✅ セクション完了';
     cardBody.innerText = `全${curSection.length}枚を読み終えました。\n\n「🏠」でトップメニューへ戻れます。`;
     cardImage.style.display = 'none';
