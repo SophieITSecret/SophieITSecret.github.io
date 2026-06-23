@@ -226,7 +226,7 @@ function showGradeMenu() {
                 <div class="grade-label grade-label-3">３級　戦士の心得</div>
                 <div class="subject-row">
                     <button class="subject-btn btn-grade3" data-grade="3級-軍事と戦略">軍事と戦略</button>
-                    <button class="subject-btn btn-coming" disabled>国家と法律</button>
+                    <button class="subject-btn btn-grade3" data-grade="3級-国家と法律">国家と法律</button>
                     <button class="subject-btn btn-grade3" data-grade="3級-戦争の歴史">戦争の歴史</button>
                 </div>
             </div>
