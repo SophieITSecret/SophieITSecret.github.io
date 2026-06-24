@@ -6,7 +6,7 @@ const STATIC_ASSETS = [
   '/manifest.json',
   '/icons/icon-192.png',
   '/icons/icon-512.png',
-  '/icons/apple-touch-icon.png',
+  '/icons/apple-touch-icon-v2.png',
   '/css/style_m.css',
   '/js/app_m.js',
   '/js/navigation.js',
