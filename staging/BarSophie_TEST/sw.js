@@ -1,5 +1,5 @@
 // sw.js — BARソフィー Service Worker
-const CACHE_NAME = 'bar-sophie-v1';
+const CACHE_NAME = 'bar-sophie-v2';
 
 const STATIC_ASSETS = [
   '/index_m.html',
