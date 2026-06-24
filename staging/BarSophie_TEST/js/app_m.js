@@ -254,6 +254,9 @@ function showRootMenu() {
     const tel = document.getElementById('telop');
     const mon = document.querySelector('.monitor');
 
+    // ★ yt非表示前に判定（iOSがdisplay:none時にonStateChangeを同期発火するため）
+    const _musicWasActive = _isMusicActive();
+
     lv.style.display = 'none';
     nm.style.display = 'block';
     nav.updateNav("none");
@@ -274,8 +277,7 @@ function showRootMenu() {
     if (window.currentUserData?.role === 'admin') { _insertMenuModeToggle(); }
     renderConsole('standard');
 
-    const _musicActive = music.isMusicMode || (typeof music.isAutoPlayMode === 'function' && music.isAutoPlayMode());
-    if (_isTsundereMode() && !_musicActive) {
+    if (_isTsundereMode() && !_musicWasActive) {
         _initTsundereMenu();
     } else {
         _showClassicButtons();
@@ -283,6 +285,17 @@ function showRootMenu() {
 }
 
 // ---- ツンデレ動的メニュー ----
+
+function _isMusicActive() {
+    if (music.isMusicMode) return true;
+    if (typeof music.isAutoPlayMode === 'function' && music.isAutoPlayMode()) return true;
+    if (window._djNarrationActive || window._djYtEndCallback) return true; // DJSophie再生中
+    try {
+        const s = window._ytPlayer?.getPlayerState?.();
+        if (s === 1 || s === 3) return true; // 1=再生中, 3=バッファリング
+    } catch(e) {}
+    return false;
+}
 
 let _wrongCount = 0;
 
@@ -460,6 +473,17 @@ function _tdHandleWrong() {
 }
 
 function _tdOshioki() {
+    // iOS自動再生対策（DJSophieと同パターン）:
+    // ユーザージェスチャー内でyt-wrapperをblockにしてmuted preload
+    // monitor-imgがz-index:5で覆っているのでソフィー顔は引き続き見える
+    const yt  = document.getElementById('yt-wrapper');
+    const img = document.getElementById('monitor-img');
+    if (yt) yt.style.display = 'block';
+    try {
+        window._ytPlayer?.mute();
+        window._ytPlayer?.loadVideoById('2vfCbdmKhMw');
+    } catch(e) {}
+
     const voiceAudio = new Audio('./voices_mp3/sophie_counter_oshioki.mp3');
     voiceAudio.play().catch(() => {});
 
@@ -470,23 +494,34 @@ function _tdOshioki() {
     });
     setTimeout(() => { _tdClearArea(); _wrongCount = 0; }, all.length * 120 + 350);
 
-    // 音声終了後にYouTube再生（フォールバック8秒）
+    // 音声終了後: monitor-imgを隠してYouTubeを表示・再生
     let ytStarted = false;
     const startYt = () => {
         if (ytStarted) return;
         ytStarted = true;
-        try { window._ytPlayer?.setVolume(20); } catch(e) {}
-        const yt  = document.getElementById('yt-wrapper');
-        const img = document.getElementById('monitor-img');
-        if (yt)  yt.style.display  = 'block';
         if (img) img.style.display = 'none';
+        try {
+            window._ytPlayer?.unMute();
+            window._ytPlayer?.setVolume(80);
+            window._ytPlayer?.playVideo();
+        } catch(e) {}
         const prev = window._djYtEndCallback;
         window._djYtEndCallback = () => {
             window._djYtEndCallback = prev;
             try { window._ytPlayer?.setVolume(100); } catch(e) {}
             showRootMenu();
         };
-        try { window._ytPlayer?.loadVideoById('2vfCbdmKhMw'); } catch(e) {}
+        // 3秒後に再生状態を確認、未再生ならルートメニューに戻す
+        setTimeout(() => {
+            try {
+                const s = window._ytPlayer?.getPlayerState?.();
+                if (s !== 1 && s !== 3 && window._djYtEndCallback) {
+                    window._djYtEndCallback = null;
+                    try { window._ytPlayer?.setVolume(100); } catch(e2) {}
+                    showRootMenu();
+                }
+            } catch(e) {}
+        }, 3000);
     };
     voiceAudio.onended = startYt;
     voiceAudio.onerror = startYt;
