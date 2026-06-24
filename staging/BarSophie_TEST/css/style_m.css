@@ -8,6 +8,15 @@
     0%, 100% { opacity: 0.25; }
     50%       { opacity: 0.75; }
 }
+@keyframes sophieButtonIn {
+    0%   { opacity: 0; transform: translateY(10px); box-shadow: 0 0 0px transparent; }
+    60%  { box-shadow: 0 0 18px #26c6da; }
+    100% { opacity: 1; transform: translateY(0);    box-shadow: 0 0 6px #26c6da; }
+}
+@keyframes sophieButtonOut {
+    0%   { opacity: 1; transform: scale(1); }
+    100% { opacity: 0; transform: scale(0.85); }
+}
 
 :root { --bg: #000; --accent: #f0b56e; --blue: #00d2ff; --green: #27ae60; --talk: #2980b9; --text: #eee; }
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }

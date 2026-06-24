@@ -271,7 +271,198 @@ function showRootMenu() {
     utils.showLSide();
 
     if (window.currentUser) { _insertDailyAdviceButton(); _insertHintButton(); }
+    if (window.currentUserData?.role === 'admin') { _insertMenuModeToggle(); }
     renderConsole('standard');
+
+    if (_isTsundereMode()) {
+        _initTsundereMenu();
+    } else {
+        _restoreClassicHandlers();
+        ['btn-music', 'btn-sake', 'btn-news'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.style.display = '';
+        });
+    }
+}
+
+// ---- ツンデレ動的メニュー ----
+
+let _wrongCount = 0;
+
+const _TD_BUTTONS = [
+    { id: 'td-music',      emoji: '🎵', label: '音楽',           prob: 0.30, needsLogin: false,
+      action: () => _showMusicSubmenu() },
+    { id: 'td-sake',       emoji: '🍸', label: 'お酒',           prob: 0.20, needsLogin: false,
+      action: () => document.getElementById('btn-sake')?.click() },
+    { id: 'td-news',       emoji: '📰', label: 'ニュース',       prob: 0.15, needsLogin: false,
+      action: () => showNewsMarket() },
+    { id: 'td-konohi',     emoji: '📅', label: 'この日どんな日', prob: 0.15, needsLogin: true,
+      action: () => { nav.updateNav('konohi'); import('./konohi.js').then(k => k.showKonoHi(showRootMenu)); } },
+    { id: 'td-fortune',    emoji: '🔮', label: '占い',           prob: 0.10, needsLogin: true,
+      action: async () => { if (!await window.checkAccess?.('fortune_haiku')) return; fortune.showFortuneMenu(); } },
+    { id: 'td-restaurant', emoji: '🗺️', label: '店探し',        prob: 0.05, needsLogin: true,
+      action: async () => { if (!await window.checkAccess?.('restaurant_search')) return; restaurant.showRestaurantSearch(); } },
+    { id: 'td-janken',     emoji: '✋', label: 'じゃんけん',     prob: 0.05, needsLogin: false,
+      action: () => import('./janken.js').then(j => j.startJanken()) },
+];
+
+function _isTsundereMode() {
+    return (localStorage.getItem('sophie_menu_mode') || 'tsundere') === 'tsundere';
+}
+
+function _initTsundereMenu() {
+    _wrongCount = 0;
+    ['btn-music', 'btn-sake', 'btn-news'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) { el.style.display = 'none'; el.style.animation = ''; }
+    });
+    const area = document.getElementById('tsundere-random-area');
+    if (area) { area.innerHTML = ''; area.style.display = 'none'; }
+    const btnNotice = document.getElementById('btn-notice');
+    if (btnNotice) {
+        btnNotice.onclick = () => {
+            _playTdVoice('./voices_mp3/sophie_counter_offer.mp3');
+            _tdShowRandom();
+        };
+    }
+}
+
+function _tdPickTwo(exclude = []) {
+    const avail = _TD_BUTTONS.filter(b => !exclude.includes(b.id));
+    const pickOne = (pool) => {
+        let r = Math.random() * pool.reduce((s, b) => s + b.prob, 0);
+        for (const b of pool) { r -= b.prob; if (r <= 0) return b; }
+        return pool[pool.length - 1];
+    };
+    const first  = pickOne(avail);
+    const second = pickOne(avail.filter(b => b.id !== first.id));
+    return [first, second];
+}
+
+function _tdShowRandom(exclude = []) {
+    const area = document.getElementById('tsundere-random-area');
+    if (!area) return;
+    const picked   = _tdPickTwo(exclude);
+    const isGuest  = !window.currentUser;
+    area.innerHTML = '';
+    area.style.display = 'flex';
+
+    picked.forEach((btn, i) => {
+        const locked = isGuest && btn.needsLogin;
+        const el = document.createElement('button');
+        el.className = 'act-btn';
+        el.style.cssText = `width:92%; animation: sophieButtonIn 0.4s ease ${i * 0.15}s both;
+            ${locked ? 'opacity:0.45; filter:grayscale(0.6);' : ''}`;
+        el.dataset.tdId = btn.id;
+        el.textContent  = `${btn.emoji} ${btn.label}`;
+        el.onclick = () => {
+            if (locked) { _tdGuestPrompt(); return; }
+            _tdClearArea();
+            _wrongCount = 0;
+            btn.action();
+        };
+        area.appendChild(el);
+    });
+
+    // 操作ボタン行
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex; gap:8px; width:92%; animation: sophieButtonIn 0.4s ease 0.3s both;';
+    row.innerHTML = `
+        <button id="td-wrong-btn" class="act-btn"
+            style="flex:1; background:#2a1a1a; border:1px solid #884444; color:#ffaaaa;
+                   font-size:0.85rem; margin-bottom:0;">❌ 違うよ</button>
+        <button id="td-menu-btn" class="act-btn"
+            style="flex:1; background:#1a1a2a; border:1px solid #448844; color:#aaffaa;
+                   font-size:0.85rem; margin-bottom:0;">📋 メニュー見せて</button>`;
+    area.appendChild(row);
+
+    area.dataset.picked = picked.map(b => b.id).join(',');
+    document.getElementById('td-wrong-btn').onclick = _tdHandleWrong;
+    document.getElementById('td-menu-btn').onclick  = _tdHandleShowMenu;
+}
+
+function _tdHandleWrong() {
+    _wrongCount++;
+    if (_wrongCount >= 3) { _tdOshioki(); return; }
+    const mp3 = _wrongCount === 1 ? 'sophie_counter_wrong1.mp3' : 'sophie_counter_wrong2.mp3';
+    _playTdVoice(`./voices_mp3/${mp3}`);
+    const area  = document.getElementById('tsundere-random-area');
+    const btns  = area.querySelectorAll('button[data-td-id]');
+    btns.forEach(b => { b.style.animation = 'sophieButtonOut 0.3s ease forwards'; });
+    const prev  = (area.dataset.picked || '').split(',');
+    setTimeout(() => _tdShowRandom(prev), 380);
+}
+
+function _tdOshioki() {
+    _playTdVoice('./voices_mp3/sophie_counter_oshioki.mp3');
+    const area = document.getElementById('tsundere-random-area');
+    const all  = [...area.querySelectorAll('button')];
+    all.forEach((b, i) => {
+        setTimeout(() => { b.style.animation = 'sophieButtonOut 0.25s ease forwards'; }, i * 120);
+    });
+    setTimeout(() => {
+        _tdClearArea();
+        _wrongCount = 0;
+        // BGMダッキング
+        try { window._ytPlayer?.setVolume(20); } catch(e) {}
+        const yt  = document.getElementById('yt-wrapper');
+        const img = document.getElementById('monitor-img');
+        if (yt)  yt.style.display  = 'block';
+        if (img) img.style.display = 'none';
+        const prev = window._djYtEndCallback;
+        window._djYtEndCallback = () => {
+            window._djYtEndCallback = prev;
+            try { window._ytPlayer?.setVolume(100); } catch(e) {}
+            showRootMenu();
+        };
+        try { window._ytPlayer?.loadVideoById('2vfCbdmKhMw'); } catch(e) {}
+    }, all.length * 120 + 350);
+}
+
+function _tdHandleShowMenu() {
+    _playTdVoice('./voices_mp3/sophie_counter_menu.mp3');
+    _wrongCount = 0;
+    _tdClearArea();
+    _restoreClassicHandlers();
+    ['btn-music', 'btn-sake', 'btn-news'].forEach((id, i) => {
+        const el = document.getElementById(id);
+        if (el) { el.style.display = ''; el.style.animation = `sophieButtonIn 0.4s ease ${i * 0.1}s both`; }
+    });
+}
+
+function _tdClearArea() {
+    const area = document.getElementById('tsundere-random-area');
+    if (area) { area.innerHTML = ''; area.style.display = 'none'; }
+}
+
+function _tdGuestPrompt() {
+    const a = new Audio('./voices_mp3/guest_login_01.mp3');
+    a.play().catch(() => {});
+    const area = document.getElementById('tsundere-random-area');
+    if (!area || document.getElementById('td-login-btn')) return;
+    const btn = document.createElement('button');
+    btn.id = 'td-login-btn';
+    btn.className = 'act-btn';
+    btn.style.cssText = 'width:92%; background:#1a1a3a; border:1px solid #5ba3d9; color:#5ba3d9; animation: sophieButtonIn 0.4s ease both;';
+    btn.textContent = '🔑 会員登録する';
+    btn.onclick = () => showMyPage(showRootMenu);
+    area.appendChild(btn);
+}
+
+function _restoreClassicHandlers() {
+    const btnNotice = document.getElementById('btn-notice');
+    if (btnNotice) {
+        btnNotice.onclick = () => {
+            const ice = new Audio('./voices_mp3/ice.mp3');
+            ice.onended = () => { import('./favorite.js').then(f => { f.openNotice(); renderConsole('standard'); }); };
+            ice.play().catch(() => { import('./favorite.js').then(f => { f.openNotice(); renderConsole('standard'); }); });
+        };
+    }
+}
+
+function _playTdVoice(src) {
+    const a = new Audio(src);
+    a.play().catch(() => {});
 }
 
 function _showMusicSubmenu() {
@@ -338,6 +529,31 @@ function _insertDailyAdviceButton() {
             nav.updateNav('fortune');
             f.showDailyAdvice(showRootMenu);
         });
+    });
+}
+
+function _insertMenuModeToggle() {
+    if (document.getElementById('admin-menu-toggle')) return;
+    const row = document.getElementById('today-row');
+    if (!row) return;
+    const mode = localStorage.getItem('sophie_menu_mode') || 'tsundere';
+    const wrap = document.createElement('div');
+    wrap.id = 'admin-menu-toggle';
+    wrap.style.cssText = 'flex-shrink:0; margin-left:2px;';
+    wrap.innerHTML = `<button id="btn-mode-toggle"
+        title="メニューモード切替（管理者）"
+        style="background:${mode === 'tsundere' ? '#2a1a2a' : '#1a2a1a'}; border:1px solid ${mode === 'tsundere' ? '#aa66aa' : '#66aa66'};
+               color:${mode === 'tsundere' ? '#cc88cc' : '#88cc88'};
+               border-radius:50px; padding:3px 8px; cursor:pointer;
+               display:inline-flex; align-items:center; gap:3px; font-size:0.65rem;">
+        ⚙ ${mode === 'tsundere' ? 'ツンデレ' : 'クラシック'}
+    </button>`;
+    row.appendChild(wrap);
+    document.getElementById('btn-mode-toggle').addEventListener('click', () => {
+        const next = (localStorage.getItem('sophie_menu_mode') || 'tsundere') === 'tsundere' ? 'classic' : 'tsundere';
+        localStorage.setItem('sophie_menu_mode', next);
+        wrap.remove();
+        showRootMenu();
     });
 }
 
