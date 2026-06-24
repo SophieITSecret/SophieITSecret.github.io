@@ -280,7 +280,7 @@ function showRootMenu() {
         _restoreClassicHandlers();
         ['btn-music', 'btn-sake', 'btn-news'].forEach(id => {
             const el = document.getElementById(id);
-            if (el) el.style.display = '';
+            if (el) el.style.removeProperty('display');
         });
     }
 }
@@ -290,19 +290,19 @@ function showRootMenu() {
 let _wrongCount = 0;
 
 const _TD_BUTTONS = [
-    { id: 'td-music',      emoji: '🎵', label: '音楽',           prob: 0.30, needsLogin: false,
+    { id: 'td-music',      shortLabel: '歌',     prob: 0.30, needsLogin: false,
       action: () => _showMusicSubmenu() },
-    { id: 'td-sake',       emoji: '🍸', label: 'お酒',           prob: 0.20, needsLogin: false,
+    { id: 'td-sake',       shortLabel: 'お酒',   prob: 0.20, needsLogin: false,
       action: () => document.getElementById('btn-sake')?.click() },
-    { id: 'td-news',       emoji: '📰', label: 'ニュース',       prob: 0.15, needsLogin: false,
+    { id: 'td-news',       shortLabel: 'NEWS',   prob: 0.15, needsLogin: false,
       action: () => showNewsMarket() },
-    { id: 'td-konohi',     emoji: '📅', label: 'この日どんな日', prob: 0.15, needsLogin: true,
+    { id: 'td-konohi',     shortLabel: 'この日', prob: 0.15, needsLogin: true,
       action: () => { nav.updateNav('konohi'); import('./konohi.js').then(k => k.showKonoHi(showRootMenu)); } },
-    { id: 'td-fortune',    emoji: '🔮', label: '占い',           prob: 0.10, needsLogin: true,
+    { id: 'td-fortune',    shortLabel: '占い',   prob: 0.10, needsLogin: true,
       action: async () => { if (!await window.checkAccess?.('fortune_haiku')) return; fortune.showFortuneMenu(); } },
-    { id: 'td-restaurant', emoji: '🗺️', label: '店探し',        prob: 0.05, needsLogin: true,
+    { id: 'td-restaurant', shortLabel: 'お店',   prob: 0.05, needsLogin: true,
       action: async () => { if (!await window.checkAccess?.('restaurant_search')) return; restaurant.showRestaurantSearch(); } },
-    { id: 'td-janken',     emoji: '✋', label: 'じゃんけん',     prob: 0.05, needsLogin: false,
+    { id: 'td-janken',     shortLabel: '勝負',   prob: 0.05, needsLogin: false,
       action: () => import('./janken.js').then(j => j.startJanken()) },
 ];
 
@@ -314,17 +314,52 @@ function _initTsundereMenu() {
     _wrongCount = 0;
     ['btn-music', 'btn-sake', 'btn-news'].forEach(id => {
         const el = document.getElementById(id);
-        if (el) { el.style.display = 'none'; el.style.animation = ''; }
+        if (el) { el.style.setProperty('display', 'none', 'important'); el.style.animation = ''; }
     });
     const area = document.getElementById('tsundere-random-area');
     if (area) { area.innerHTML = ''; area.style.display = 'none'; }
+
     const btnNotice = document.getElementById('btn-notice');
-    if (btnNotice) {
-        btnNotice.onclick = () => {
-            _playTdVoice('./voices_mp3/sophie_counter_offer.mp3');
-            _tdShowRandom();
-        };
+    if (!btnNotice) return;
+
+    // オリジナルスタイルを先に保存（removeProperty前に）
+    if (!btnNotice.dataset.originalStyle) {
+        btnNotice.dataset.originalStyle = btnNotice.getAttribute('style') || '';
     }
+    // サブタイトルを非表示
+    const sub = btnNotice.querySelector('span:last-child');
+    if (sub) sub.style.setProperty('display', 'none', 'important');
+
+    // ツンデレ専用スタイル：小さめ・丸・ソフィーカラーグロー
+    btnNotice.setAttribute('style', [
+        'display:flex !important',
+        'flex-direction:column',
+        'align-items:center',
+        'justify-content:center',
+        'width:auto',
+        'max-width:65%',
+        'min-width:160px',
+        'height:auto',
+        'min-height:0',
+        'padding:16px 40px',
+        'border-radius:50px',
+        'background:linear-gradient(135deg,rgba(0,70,100,0.3),rgba(120,0,70,0.3))',
+        'border:1.5px solid rgba(38,198,218,0.75)',
+        'color:#f4d0f0',
+        'font-size:1rem',
+        'letter-spacing:0.12em',
+        'margin-top:32px',
+        'animation:sophieButtonIn 0.6s ease both, sophieGlow 2.8s ease-in-out 0.7s infinite',
+    ].join(';'));
+
+    btnNotice.onclick = () => {
+        _playTdVoice('./voices_mp3/sophie_counter_offer.mp3');
+        btnNotice.style.animation = 'sophieButtonOut 0.35s ease forwards';
+        setTimeout(() => {
+            btnNotice.style.setProperty('display', 'none', 'important');
+            _tdShowRandom();
+        }, 380);
+    };
 }
 
 function _tdPickTwo(exclude = []) {
@@ -342,39 +377,68 @@ function _tdPickTwo(exclude = []) {
 function _tdShowRandom(exclude = []) {
     const area = document.getElementById('tsundere-random-area');
     if (!area) return;
-    const picked   = _tdPickTwo(exclude);
-    const isGuest  = !window.currentUser;
+    const picked  = _tdPickTwo(exclude);
+    const isGuest = !window.currentUser;
     area.innerHTML = '';
-    area.style.display = 'flex';
+    area.style.cssText = 'display:flex; flex-direction:column; align-items:center; gap:14px; width:100%; padding:8px 0 4px;';
 
-    picked.forEach((btn, i) => {
+    // 2ボタン横並び
+    const btnRow = document.createElement('div');
+    btnRow.style.cssText = 'display:flex; gap:16px; justify-content:center; width:100%; animation:sophieButtonIn 0.45s ease 0.05s both;';
+
+    picked.forEach(btn => {
         const locked = isGuest && btn.needsLogin;
         const el = document.createElement('button');
-        el.className = 'act-btn';
-        el.style.cssText = `width:92%; animation: sophieButtonIn 0.4s ease ${i * 0.15}s both;
-            ${locked ? 'opacity:0.45; filter:grayscale(0.6);' : ''}`;
         el.dataset.tdId = btn.id;
-        el.textContent  = `${btn.emoji} ${btn.label}`;
+        el.textContent  = btn.shortLabel;
+        el.style.cssText = [
+            'flex:0 1 auto',
+            'min-width:100px',
+            'padding:14px 28px',
+            'border-radius:50px',
+            'font-size:1.05rem',
+            'font-weight:bold',
+            'letter-spacing:0.08em',
+            'cursor:pointer',
+            'border:1px solid rgba(200,160,240,0.45)',
+            'background:linear-gradient(135deg,rgba(20,10,40,0.9),rgba(40,10,50,0.9))',
+            'color:' + (locked ? '#666' : '#e8c0f8'),
+            'box-shadow:0 0 16px rgba(160,80,240,0.2)',
+            locked ? 'filter:grayscale(0.7)' : '',
+        ].join(';');
         el.onclick = () => {
             if (locked) { _tdGuestPrompt(); return; }
             _tdClearArea();
+            _restoreNoticeBtn();
             _wrongCount = 0;
             btn.action();
         };
-        area.appendChild(el);
+        btnRow.appendChild(el);
     });
+    area.appendChild(btnRow);
 
-    // 操作ボタン行
-    const row = document.createElement('div');
-    row.style.cssText = 'display:flex; gap:8px; width:92%; animation: sophieButtonIn 0.4s ease 0.3s both;';
-    row.innerHTML = `
-        <button id="td-wrong-btn" class="act-btn"
-            style="flex:1; background:#2a1a1a; border:1px solid #884444; color:#ffaaaa;
-                   font-size:0.85rem; margin-bottom:0;">❌ 違うよ</button>
-        <button id="td-menu-btn" class="act-btn"
-            style="flex:1; background:#1a1a2a; border:1px solid #448844; color:#aaffaa;
-                   font-size:0.85rem; margin-bottom:0;">📋 メニュー見せて</button>`;
-    area.appendChild(row);
+    // 操作ボタン行（小さめピル）
+    const ctrlRow = document.createElement('div');
+    ctrlRow.style.cssText = 'display:flex; gap:12px; justify-content:center; margin-top:12px; animation:sophieButtonIn 0.4s ease 0.25s both;';
+    [
+        { id: 'td-wrong-btn', text: '違うよ',      color: '#cc6666', border: 'rgba(180,80,80,0.5)' },
+        { id: 'td-menu-btn',  text: 'メニュー見せて', color: '#88bbaa', border: 'rgba(80,160,130,0.5)' },
+    ].forEach(c => {
+        const b = document.createElement('button');
+        b.id = c.id;
+        b.textContent = c.text;
+        b.style.cssText = [
+            'padding:8px 20px',
+            'border-radius:50px',
+            'font-size:0.8rem',
+            'cursor:pointer',
+            'background:rgba(10,10,20,0.8)',
+            `border:1px solid ${c.border}`,
+            `color:${c.color}`,
+        ].join(';');
+        ctrlRow.appendChild(b);
+    });
+    area.appendChild(ctrlRow);
 
     area.dataset.picked = picked.map(b => b.id).join(',');
     document.getElementById('td-wrong-btn').onclick = _tdHandleWrong;
@@ -426,13 +490,14 @@ function _tdHandleShowMenu() {
     _restoreClassicHandlers();
     ['btn-music', 'btn-sake', 'btn-news'].forEach((id, i) => {
         const el = document.getElementById(id);
-        if (el) { el.style.display = ''; el.style.animation = `sophieButtonIn 0.4s ease ${i * 0.1}s both`; }
+        if (el) { el.style.removeProperty('display'); el.style.animation = `sophieButtonIn 0.4s ease ${i * 0.1}s both`; }
     });
 }
 
 function _tdClearArea() {
     const area = document.getElementById('tsundere-random-area');
     if (area) { area.innerHTML = ''; area.style.display = 'none'; }
+    _restoreNoticeBtn();
 }
 
 function _tdGuestPrompt() {
@@ -449,7 +514,17 @@ function _tdGuestPrompt() {
     area.appendChild(btn);
 }
 
+function _restoreNoticeBtn() {
+    const btnNotice = document.getElementById('btn-notice');
+    if (!btnNotice) return;
+    const orig = btnNotice.dataset.originalStyle;
+    if (orig !== undefined) btnNotice.setAttribute('style', orig);
+    const sub = btnNotice.querySelector('span:last-child');
+    if (sub) sub.style.removeProperty('display');
+}
+
 function _restoreClassicHandlers() {
+    _restoreNoticeBtn();
     const btnNotice = document.getElementById('btn-notice');
     if (btnNotice) {
         btnNotice.onclick = () => {
