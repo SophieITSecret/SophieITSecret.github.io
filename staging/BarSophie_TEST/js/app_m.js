@@ -274,14 +274,11 @@ function showRootMenu() {
     if (window.currentUserData?.role === 'admin') { _insertMenuModeToggle(); }
     renderConsole('standard');
 
-    if (_isTsundereMode()) {
+    const _musicActive = music.isMusicMode || (typeof music.isAutoPlayMode === 'function' && music.isAutoPlayMode());
+    if (_isTsundereMode() && !_musicActive) {
         _initTsundereMenu();
     } else {
-        _restoreClassicHandlers();
-        ['btn-music', 'btn-sake', 'btn-news'].forEach(id => {
-            const el = document.getElementById(id);
-            if (el) el.style.removeProperty('display');
-        });
+        _showClassicButtons();
     }
 }
 
@@ -355,10 +352,8 @@ function _initTsundereMenu() {
     btnNotice.onclick = () => {
         _playTdVoice('./voices_mp3/sophie_counter_offer.mp3');
         btnNotice.style.animation = 'sophieButtonOut 0.35s ease forwards';
-        setTimeout(() => {
-            btnNotice.style.setProperty('display', 'none', 'important');
-            _tdShowRandom();
-        }, 380);
+        setTimeout(() => { btnNotice.style.setProperty('display', 'none', 'important'); }, 380);
+        setTimeout(() => { _tdShowRandom(); }, 3000);
     };
 }
 
@@ -380,31 +375,32 @@ function _tdShowRandom(exclude = []) {
     const picked  = _tdPickTwo(exclude);
     const isGuest = !window.currentUser;
     area.innerHTML = '';
-    area.style.cssText = 'display:flex; flex-direction:column; align-items:center; gap:14px; width:100%; padding:8px 0 4px;';
+    area.style.cssText = 'display:flex; flex-direction:column; align-items:center; width:100%; padding:8px 0 4px;';
 
-    // 2ボタン横並び
+    // 2ボタン横並び（コンテナにはアニメなし→長方形グロー防止）
     const btnRow = document.createElement('div');
-    btnRow.style.cssText = 'display:flex; gap:16px; justify-content:center; width:100%; animation:sophieButtonIn 0.45s ease 0.05s both;';
+    btnRow.style.cssText = 'display:flex; gap:20px; justify-content:center; width:100%;';
 
-    picked.forEach(btn => {
+    picked.forEach((btn, i) => {
         const locked = isGuest && btn.needsLogin;
         const el = document.createElement('button');
         el.dataset.tdId = btn.id;
         el.textContent  = btn.shortLabel;
         el.style.cssText = [
             'flex:0 1 auto',
-            'min-width:100px',
-            'padding:14px 28px',
+            'min-width:110px',
+            'padding:16px 32px',
             'border-radius:50px',
-            'font-size:1.05rem',
+            'font-size:1.15rem',
             'font-weight:bold',
-            'letter-spacing:0.08em',
+            'letter-spacing:0.1em',
             'cursor:pointer',
-            'border:1px solid rgba(200,160,240,0.45)',
-            'background:linear-gradient(135deg,rgba(20,10,40,0.9),rgba(40,10,50,0.9))',
-            'color:' + (locked ? '#666' : '#e8c0f8'),
-            'box-shadow:0 0 16px rgba(160,80,240,0.2)',
-            locked ? 'filter:grayscale(0.7)' : '',
+            'border:1.5px solid rgba(38,198,218,0.8)',
+            'background:linear-gradient(135deg,rgba(0,70,110,0.75),rgba(100,0,80,0.75))',
+            'color:' + (locked ? '#555' : '#f4d8ff'),
+            'box-shadow:0 0 22px rgba(38,198,218,0.5), 0 0 10px rgba(255,105,180,0.3)',
+            locked ? 'filter:grayscale(0.7); opacity:0.45' : '',
+            `animation:sophieButtonIn 0.45s ease ${i * 0.18}s both`,
         ].join(';');
         el.onclick = () => {
             if (locked) { _tdGuestPrompt(); return; }
@@ -417,24 +413,25 @@ function _tdShowRandom(exclude = []) {
     });
     area.appendChild(btnRow);
 
-    // 操作ボタン行（小さめピル）
+    // 操作ボタン行（小さめピル）— 長方形グロー防止のためtdFadeIn使用
     const ctrlRow = document.createElement('div');
-    ctrlRow.style.cssText = 'display:flex; gap:12px; justify-content:center; margin-top:12px; animation:sophieButtonIn 0.4s ease 0.25s both;';
+    ctrlRow.style.cssText = 'display:flex; gap:12px; justify-content:center; margin-top:72px;';
     [
-        { id: 'td-wrong-btn', text: '違うよ',      color: '#cc6666', border: 'rgba(180,80,80,0.5)' },
-        { id: 'td-menu-btn',  text: 'メニュー見せて', color: '#88bbaa', border: 'rgba(80,160,130,0.5)' },
+        { id: 'td-wrong-btn', text: '違うよ',         color: '#cc6666', border: 'rgba(180,80,80,0.5)',   delay: '0.45s' },
+        { id: 'td-menu-btn',  text: 'メニュー見せて', color: '#88bbaa', border: 'rgba(80,160,130,0.5)', delay: '0.55s' },
     ].forEach(c => {
         const b = document.createElement('button');
         b.id = c.id;
         b.textContent = c.text;
         b.style.cssText = [
-            'padding:8px 20px',
+            'padding:9px 22px',
             'border-radius:50px',
             'font-size:0.8rem',
             'cursor:pointer',
             'background:rgba(10,10,20,0.8)',
             `border:1px solid ${c.border}`,
             `color:${c.color}`,
+            `animation:tdFadeIn 0.4s ease ${c.delay} both`,
         ].join(';');
         ctrlRow.appendChild(b);
     });
@@ -451,23 +448,33 @@ function _tdHandleWrong() {
     const mp3 = _wrongCount === 1 ? 'sophie_counter_wrong1.mp3' : 'sophie_counter_wrong2.mp3';
     _playTdVoice(`./voices_mp3/${mp3}`);
     const area  = document.getElementById('tsundere-random-area');
-    const btns  = area.querySelectorAll('button[data-td-id]');
-    btns.forEach(b => { b.style.animation = 'sophieButtonOut 0.3s ease forwards'; });
-    const prev  = (area.dataset.picked || '').split(',');
-    setTimeout(() => _tdShowRandom(prev), 380);
+    // 全ボタンを同時にフェードアウト
+    [...area.querySelectorAll('button')].forEach((b, i) => {
+        b.style.animation = `sophieButtonOut 0.3s ease ${i * 0.03}s forwards`;
+    });
+    const prev = (area.dataset.picked || '').split(',');
+    // フェードアウト後エリア全消去（空白の時間を作る）
+    setTimeout(() => { area.innerHTML = ''; area.style.display = 'none'; }, 400);
+    // ナレーション分3秒待って次を出す
+    setTimeout(() => _tdShowRandom(prev), 3000);
 }
 
 function _tdOshioki() {
-    _playTdVoice('./voices_mp3/sophie_counter_oshioki.mp3');
+    const voiceAudio = new Audio('./voices_mp3/sophie_counter_oshioki.mp3');
+    voiceAudio.play().catch(() => {});
+
     const area = document.getElementById('tsundere-random-area');
     const all  = [...area.querySelectorAll('button')];
     all.forEach((b, i) => {
         setTimeout(() => { b.style.animation = 'sophieButtonOut 0.25s ease forwards'; }, i * 120);
     });
-    setTimeout(() => {
-        _tdClearArea();
-        _wrongCount = 0;
-        // BGMダッキング
+    setTimeout(() => { _tdClearArea(); _wrongCount = 0; }, all.length * 120 + 350);
+
+    // 音声終了後にYouTube再生（フォールバック8秒）
+    let ytStarted = false;
+    const startYt = () => {
+        if (ytStarted) return;
+        ytStarted = true;
         try { window._ytPlayer?.setVolume(20); } catch(e) {}
         const yt  = document.getElementById('yt-wrapper');
         const img = document.getElementById('monitor-img');
@@ -480,18 +487,27 @@ function _tdOshioki() {
             showRootMenu();
         };
         try { window._ytPlayer?.loadVideoById('2vfCbdmKhMw'); } catch(e) {}
-    }, all.length * 120 + 350);
+    };
+    voiceAudio.onended = startYt;
+    voiceAudio.onerror = startYt;
+    setTimeout(startYt, 4000);
+}
+
+function _showClassicButtons(animated = false) {
+    _restoreClassicHandlers();
+    ['btn-music', 'btn-sake', 'btn-news'].forEach((id, i) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.style.setProperty('display', 'block', 'important');
+        if (animated) el.style.animation = `sophieButtonIn 0.4s ease ${i * 0.1}s both`;
+    });
 }
 
 function _tdHandleShowMenu() {
     _playTdVoice('./voices_mp3/sophie_counter_menu.mp3');
     _wrongCount = 0;
     _tdClearArea();
-    _restoreClassicHandlers();
-    ['btn-music', 'btn-sake', 'btn-news'].forEach((id, i) => {
-        const el = document.getElementById(id);
-        if (el) { el.style.removeProperty('display'); el.style.animation = `sophieButtonIn 0.4s ease ${i * 0.1}s both`; }
-    });
+    _showClassicButtons(true);
 }
 
 function _tdClearArea() {
