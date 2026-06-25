@@ -505,6 +505,9 @@ function _tdOshioki() {
             window._ytPlayer?.setVolume(80);
             window._ytPlayer?.playVideo();
         } catch(e) {}
+        // ★お仕置きの歌が流れている間、右メニューはクラシック4ボタン表示
+        _tdClearArea();
+        _showClassicButtons(true);
         const prev = window._djYtEndCallback;
         window._djYtEndCallback = () => {
             window._djYtEndCallback = prev;
