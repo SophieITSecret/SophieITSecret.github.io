@@ -1,4 +1,4 @@
-const CACHE_NAME = 'takeru-v9';
+const CACHE_NAME = 'takeru-v10';
 
 const PRE_CACHE = [
     './',
