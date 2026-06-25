@@ -499,8 +499,10 @@ function _tdOshioki() {
     const startYt = () => {
         if (ytStarted) return;
         ytStarted = true;
+        clearTimeout(fallbackTimer);
         if (img) img.style.display = 'none';
         try {
+            window._ytPlayer?.seekTo(0, true);   // ミュートでプリロード済みなので頭出し
             window._ytPlayer?.unMute();
             window._ytPlayer?.setVolume(80);
             window._ytPlayer?.playVideo();
@@ -528,7 +530,14 @@ function _tdOshioki() {
     };
     voiceAudio.onended = startYt;
     voiceAudio.onerror = startYt;
-    setTimeout(startYt, 4000);
+    // フォールバック: ナレーション音声の実長＋1.2秒（切れ防止）。
+    // メタデータ取得前の保険として一旦15秒。
+    let fallbackTimer = setTimeout(startYt, 15000);
+    voiceAudio.onloadedmetadata = () => {
+        if (!isFinite(voiceAudio.duration) || voiceAudio.duration <= 0) return;
+        clearTimeout(fallbackTimer);
+        fallbackTimer = setTimeout(startYt, voiceAudio.duration * 1000 + 1200);
+    };
 }
 
 function _showClassicButtons(animated = false) {
