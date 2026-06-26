@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>TAKERU 作業台</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #1a1a1a; --bg2: #222; --bg3: #2a2a2a;
+    --border: #333; --accent: #4caf50; --accent2: #81c784;
+    --text: #e8e8e8; --text2: #aaa; --text3: #555;
+    --fact: #4a90d9; --com: #e8a040;
+    --card-w: 520px;
+  }
+  body { background:var(--bg); color:var(--text); font-family:'Noto Sans JP','Yu Gothic',sans-serif; height:100vh; overflow:hidden; display:flex; flex-direction:column; }
+
+  /* ヘッダー */
+  header { background:var(--bg2); border-bottom:1px solid var(--border); padding:8px 16px; display:flex; align-items:center; gap:12px; flex-shrink:0; height:48px; }
+  header h1 { font-size:0.95rem; color:var(--accent); font-weight:700; letter-spacing:.1em; flex-shrink:0; }
+  .btn-load { background:transparent; border:1px solid var(--accent); color:var(--accent); padding:4px 12px; border-radius:4px; cursor:pointer; font-size:0.78rem; white-space:nowrap; }
+  .btn-load:hover { background:rgba(76,175,80,.12); }
+  .btn-save { background:var(--accent); border:none; color:#000; padding:4px 12px; border-radius:4px; cursor:pointer; font-size:0.78rem; font-weight:700; white-space:nowrap; }
+  .btn-save:hover { background:var(--accent2); }
+  .btn-save:disabled { background:var(--text3); cursor:default; }
+  .file-status { font-size:0.75rem; color:var(--text2); flex:1; }
+  input[type=file] { display:none; }
+
+  /* メイン */
+  .main { display:flex; flex:1; overflow:hidden; }
+
+  /* 左ペイン */
+  .pane-list { width:300px; border-right:2px solid var(--border); display:flex; flex-direction:column; flex-shrink:0; }
+  .pane-toolbar { background:var(--bg2); padding:7px 10px; border-bottom:1px solid var(--border); display:flex; gap:8px; align-items:center; flex-shrink:0; }
+  .pane-toolbar select { background:var(--bg3); border:1px solid var(--border); color:var(--text); padding:4px 6px; border-radius:4px; font-size:0.78rem; flex:1; }
+  .card-count { font-size:0.72rem; color:var(--text3); white-space:nowrap; }
+  .list-scroll { flex:1; overflow-y:auto; }
+  .section-header { background:var(--bg3); padding:4px 10px; font-size:0.68rem; color:var(--text3); letter-spacing:.06em; position:sticky; top:0; z-index:10; border-bottom:1px solid var(--border); }
+  .card-item { display:flex; align-items:center; gap:6px; padding:7px 10px; cursor:pointer; border-bottom:1px solid rgba(255,255,255,.04); transition:background .1s; }
+  .card-item:hover { background:rgba(255,255,255,.05); }
+  .card-item.active { background:rgba(76,175,80,.15); border-left:3px solid var(--accent); padding-left:7px; }
+  .badge { font-size:0.58rem; padding:1px 4px; border-radius:2px; font-weight:700; flex-shrink:0; letter-spacing:.04em; }
+  .badge-f { background:rgba(74,144,217,.2); color:var(--fact); border:1px solid var(--fact); }
+  .badge-c { background:rgba(232,160,64,.2); color:var(--com); border:1px solid var(--com); }
+  .item-code { font-size:0.63rem; color:var(--text3); font-family:monospace; flex-shrink:0; }
+  .item-title { font-size:0.8rem; color:var(--text); flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .item-title.wip { color:var(--text3); font-style:italic; }
+
+  /* 右ペイン */
+  .pane-right { flex:1; display:flex; overflow:hidden; }
+
+  /* カードプレビュー */
+  .pane-card { flex:0 0 auto; display:flex; align-items:center; justify-content:center; background:var(--bg); padding:16px; position:relative; }
+
+  .card-shell {
+    width: var(--card-w);
+    background:var(--bg2);
+    border:1px solid var(--border);
+    border-radius:14px;
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
+    box-shadow:0 8px 40px rgba(0,0,0,.5);
+  }
+
+  /* 画像エリア：4:3固定 */
+  .card-img-area {
+    width:100%;
+    aspect-ratio:4/3;
+    background:var(--bg3);
+    position:relative;
+    overflow:hidden;
+    flex-shrink:0;
+  }
+  .card-img-area img { width:100%; height:100%; object-fit:contain; display:block; }
+  .card-img-ph { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:3rem; color:var(--text3); }
+
+  .card-divider { height:2px; background:linear-gradient(to right,var(--accent),transparent); flex-shrink:0; }
+
+  /* テキストエリア */
+  .card-text { padding:14px 16px; display:flex; flex-direction:column; gap:4px; }
+  .card-unit { font-size:0.7rem; color:var(--text3); }
+  .card-section { font-size:0.82rem; color:var(--accent); letter-spacing:.06em; }
+  .card-title-disp { font-size:1.05rem; font-weight:700; color:var(--text); padding-top:6px; padding-bottom:8px; border-bottom:1px solid var(--border); line-height:1.4; }
+  .card-body-disp { font-size:0.88rem; line-height:1.9; color:var(--text); white-space:pre-wrap; padding-top:8px; max-height:280px; overflow-y:auto; }
+  .card-body-disp.wip { color:var(--text3); font-style:italic; }
+
+  /* カードナビ */
+  .card-nav { display:flex; justify-content:center; gap:20px; padding:8px 0 4px; }
+  .btn-nav { background:rgba(76,175,80,.15); border:1px solid var(--accent); color:var(--accent); width:36px; height:36px; border-radius:50%; cursor:pointer; font-size:1rem; display:flex; align-items:center; justify-content:center; }
+  .btn-nav:hover { background:rgba(76,175,80,.3); }
+  .btn-nav:disabled { opacity:.3; cursor:default; }
+  .nav-info { font-size:0.72rem; color:var(--text3); display:flex; align-items:center; }
+
+  /* 編集エリア */
+  .edit-area { flex:1; display:flex; flex-direction:column; padding:16px; gap:10px; overflow-y:auto; border-left:2px solid var(--border); width:360px; min-width:360px; max-width:360px; flex-shrink:0; flex-grow:0; }
+  .edit-label { font-size:0.72rem; color:var(--text2); margin-bottom:3px; }
+  .edit-input { background:var(--bg3); border:1px solid var(--border); color:var(--text); padding:7px 9px; border-radius:4px; font-size:0.82rem; font-family:inherit; width:100%; }
+  .edit-input:focus { outline:none; border-color:var(--accent); }
+  textarea.edit-input { resize:vertical; min-height:320px; line-height:1.75; }
+  .char-count { font-size:0.7rem; text-align:right; margin-top:2px; }
+  .char-ok { color:var(--accent); } .char-over { color:#e57373; }
+  .edit-actions { display:flex; gap:8px; justify-content:flex-end; }
+  .btn-apply { background:var(--accent); border:none; color:#000; padding:7px 20px; border-radius:4px; cursor:pointer; font-size:0.82rem; font-weight:700; }
+  .btn-apply:hover { background:var(--accent2); }
+  .btn-cancel { background:transparent; border:1px solid var(--border); color:var(--text2); padding:7px 14px; border-radius:4px; cursor:pointer; font-size:0.82rem; }
+
+  .empty-state { text-align:center; color:var(--text3); font-size:0.82rem; line-height:2; padding:40px; }
+  .empty-state .icon { font-size:2.5rem; margin-bottom:8px; }
+
+  ::-webkit-scrollbar { width:5px; } ::-webkit-scrollbar-track { background:transparent; } ::-webkit-scrollbar-thumb { background:var(--border); border-radius:3px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>⚔ TAKERU 作業台</h1>
+  <button class="btn-load" onclick="document.getElementById('csvInput').click()">📂 CSVを開く</button>
+  <input type="file" id="csvInput" accept=".csv" onchange="loadCSV(event)">
+  <button class="btn-load" onclick="document.getElementById('imgInput').click()">🖼 画像フォルダ</button>
+  <input type="file" id="imgInput" webkitdirectory multiple onchange="loadImages(event)">
+  <span class="file-status" id="fileStatus">CSV: D:\Sophie\SophieITSecret.github.io\staging\TAKERU\TAKERUcard.csv　／　画像: D:\Sophie\SophieITSecret.github.io\staging\TAKERU\images</span>
+  <button class="btn-save" id="btnSave" onclick="saveCSV()" disabled>💾 CSVを保存</button>
+</header>
+
+<div class="main">
+  <!-- 左ペイン -->
+  <div class="pane-list">
+    <div class="pane-toolbar">
+      <select id="unitSelect" onchange="filterCards()">
+        <option value="">── ユニットを選択 ──</option>
+      </select>
+      <span class="card-count" id="cardCount">0枚</span>
+    </div>
+    <div class="list-scroll" id="listScroll">
+      <div class="empty-state"><div class="icon">📋</div>CSVを読み込むと<br>一覧が表示されます</div>
+    </div>
+  </div>
+
+  <!-- 右ペイン -->
+  <div class="pane-right">
+    <!-- カードプレビュー -->
+    <div class="pane-card" id="paneCard">
+      <div class="empty-state"><div class="icon">👆</div>カードを選択してください</div>
+    </div>
+
+    <!-- 編集エリア -->
+    <div class="edit-area" id="editArea" style="display:none">
+      <div><div class="edit-label">コード</div><input class="edit-input" id="editCode" readonly style="color:var(--text3)"></div>
+      <div><div class="edit-label">タイトル</div><input class="edit-input" id="editTitle" oninput="updatePreview()"></div>
+      <div>
+        <div class="edit-label">本文 <span id="charCount" class="char-count char-ok">0字</span></div>
+        <textarea class="edit-input" id="editBody" oninput="updatePreview();countChars()"></textarea>
+      </div>
+      <div class="edit-actions">
+        <button class="btn-cancel" onclick="cancelEdit()">キャンセル</button>
+        <button class="btn-apply" onclick="applyEdit()">✓ 適用</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let cardData = [], imageMap = {}, selectedIdx = -1, dirty = false, curUnit = '';
+let filteredList = [];
+
+// CSV読み込み
+function loadCSV(e) {
+  const file = e.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    cardData = parseCSV(ev.target.result);
+    buildUnitSelect();
+    document.getElementById('fileStatus').textContent = `✅ ${file.name}（${cardData.length}枚）`;
+    document.getElementById('btnSave').disabled = false;
+    dirty = false;
+  };
+  reader.readAsText(file, 'UTF-8');
+}
+
+function parseCSV(text) {
+  if (text.charCodeAt(0)===0xFEFF) text=text.slice(1);
+  const rows=[]; let cur=[],field='',inQ=false;
+  for (let i=0;i<text.length;i++) {
+    const c=text[i];
+    if (c==='"'){if(inQ&&text[i+1]==='"'){field+='"';i++;}else inQ=!inQ;}
+    else if (c===','&&!inQ){cur.push(field);field='';}
+    else if ((c==='\n'||(c==='\r'&&text[i+1]==='\n'))&&!inQ){if(c==='\r')i++;cur.push(field);field='';if(cur.some(f=>f.trim()))rows.push(cur);cur=[];}
+    else field+=c;
+  }
+  if(field||cur.length){cur.push(field);if(cur.some(f=>f.trim()))rows.push(cur);}
+  const header=rows[0];
+  return rows.slice(1).map(r=>({
+    id:(r[0]||'').trim(), genre:(r[1]||'').trim(), section:(r[2]||'').trim(),
+    title:(r[3]||'').trim(), body:(r[4]||'').trim(), subject:(r[5]||'').trim(),
+    _header:header
+  })).filter(d=>d.id);
+}
+
+// 画像フォルダ
+function loadImages(e) {
+  imageMap={};
+  for(const f of e.target.files){ const n=f.name.replace(/\.[^.]+$/,''); imageMap[n]=URL.createObjectURL(f); }
+  document.getElementById('fileStatus').textContent += `　🖼 ${Object.keys(imageMap).length}枚`;
+  if(selectedIdx>=0) renderCard(selectedIdx);
+}
+
+// ユニット選択
+function buildUnitSelect() {
+  const sel=document.getElementById('unitSelect');
+  const units=[...new Set(cardData.map(d=>d.genre))];
+  sel.innerHTML='<option value="">── ユニットを選択 ──</option>';
+  units.forEach(u=>{ const o=document.createElement('option');o.value=u;o.textContent=u;sel.appendChild(o); });
+  if(units.length){sel.value=units[0];filterCards();}
+}
+
+function filterCards() {
+  curUnit=document.getElementById('unitSelect').value;
+  filteredList=curUnit?cardData.filter(d=>d.genre===curUnit):cardData;
+  document.getElementById('cardCount').textContent=`${filteredList.length}枚`;
+  renderList();
+}
+
+// リスト描画
+function renderList() {
+  const el=document.getElementById('listScroll');
+  if(!filteredList.length){el.innerHTML='<div class="empty-state"><div class="icon">📭</div>カードがありません</div>';return;}
+  let html='',curSec=null;
+  filteredList.forEach((card,i)=>{
+    const gIdx=cardData.indexOf(card);
+    if(card.section!==curSec){curSec=card.section;if(curSec)html+=`<div class="section-header">📂 ${curSec}</div>`;}
+    const isC=isCommentary(card.id);
+    const badge=isC?'<span class="badge badge-c">解説</span>':'<span class="badge badge-f">史実</span>';
+    const wip=card.body.includes('準備中')?' wip':'';
+    const active=gIdx===selectedIdx?' active':'';
+    html+=`<div class="card-item${active}" onclick="showCard(${gIdx})">${badge}<span class="item-code">${card.id}</span><span class="item-title${wip}">${card.title||'（タイトルなし）'}</span></div>`;
+  });
+  el.innerHTML=html;
+}
+
+function isCommentary(id){ return /C\d+$/.test(id)||id.endsWith('C'); }
+
+// カード表示
+function showCard(gIdx) {
+  selectedIdx=gIdx;
+  renderList();
+  renderCard(gIdx);
+  // 編集エリア
+  const card=cardData[gIdx];
+  document.getElementById('editArea').style.display='flex';
+  document.getElementById('editCode').value=card.id;
+  document.getElementById('editTitle').value=card.title;
+  document.getElementById('editBody').value=card.body;
+  countChars();
+  // スクロールして表示
+  setTimeout(()=>{
+    const active=document.querySelector('.card-item.active');
+    if(active) active.scrollIntoView({block:'nearest'});
+  },50);
+}
+
+function renderCard(gIdx) {
+  const card=cardData[gIdx];
+  const imgUrl=imageMap[card.id]||'';
+  const imgHtml=imgUrl?`<img src="${imgUrl}" alt="${card.title}">`:`<div class="card-img-ph">🗂</div>`;
+  const wip=card.body.includes('準備中');
+
+  // ナビ情報
+  const fi=filteredList.indexOf(card);
+  const prevIdx=fi>0?cardData.indexOf(filteredList[fi-1]):-1;
+  const nextIdx=fi<filteredList.length-1?cardData.indexOf(filteredList[fi+1]):-1;
+
+  document.getElementById('paneCard').innerHTML=`
+    <div style="display:flex;flex-direction:column;align-items:center;gap:10px">
+      <div class="card-shell">
+        <div class="card-img-area">${imgHtml}</div>
+        <div class="card-divider"></div>
+        <div class="card-text">
+          <div class="card-unit">${card.genre}</div>
+          ${card.section?`<div class="card-section">${card.section}</div>`:''}
+          <div class="card-title-disp" id="prevTitleDisp">${card.title||'（タイトルなし）'}</div>
+          <div class="card-body-disp${wip?' wip':''}" id="prevBodyDisp">${card.body||''}</div>
+        </div>
+      </div>
+      <div class="card-nav">
+        <button class="btn-nav" onclick="showCard(${prevIdx})" ${prevIdx<0?'disabled':''}>◀</button>
+        <span class="nav-info">${fi+1} / ${filteredList.length}</span>
+        <button class="btn-nav" onclick="showCard(${nextIdx})" ${nextIdx<0?'disabled':''}>▶</button>
+      </div>
+    </div>`;
+}
+
+// キーボード操作
+document.addEventListener('keydown',e=>{
+  if(['INPUT','TEXTAREA'].includes(document.activeElement.tagName)) return;
+  if(e.key==='ArrowRight'||e.key==='ArrowDown'){
+    const fi=filteredList.indexOf(cardData[selectedIdx]);
+    if(fi<filteredList.length-1) showCard(cardData.indexOf(filteredList[fi+1]));
+  } else if(e.key==='ArrowLeft'||e.key==='ArrowUp'){
+    const fi=filteredList.indexOf(cardData[selectedIdx]);
+    if(fi>0) showCard(cardData.indexOf(filteredList[fi-1]));
+  }
+});
+
+// プレビューリアルタイム更新
+function updatePreview() {
+  const t=document.getElementById('prevTitleDisp');
+  const b=document.getElementById('prevBodyDisp');
+  if(t) t.textContent=document.getElementById('editTitle').value;
+  if(b){const v=document.getElementById('editBody').value;b.textContent=v;b.classList.toggle('wip',v.includes('準備中'));}
+}
+
+function countChars(){
+  const len=document.getElementById('editBody').value.length;
+  const el=document.getElementById('charCount');
+  el.textContent=`${len}字`;
+  el.className='char-count '+(len<=400?'char-ok':'char-over');
+}
+
+// 編集適用
+function applyEdit(){
+  if(selectedIdx<0) return;
+  cardData[selectedIdx].title=document.getElementById('editTitle').value;
+  cardData[selectedIdx].body=document.getElementById('editBody').value;
+  dirty=true;
+  renderList();
+  renderCard(selectedIdx);
+}
+function cancelEdit(){ if(selectedIdx>=0) showCard(selectedIdx); }
+
+// CSV保存
+function saveCSV(){
+  if(!cardData.length) return;
+  const header=cardData[0]._header||['コード','ユニット','サブユニット','タイトル','説明',''];
+  const rows=[header,...cardData.map(d=>[d.id,d.genre,d.section,d.title,d.body,d.subject])];
+  const csv=rows.map(row=>row.map(cell=>{const s=String(cell||'');return(s.includes(',')||s.includes('"')||s.includes('\n'))?`"${s.replace(/"/g,'""')}"`:`s`;}).join(',')).join('\r\n');
+  const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='TAKERUcard.csv';a.click();
+  dirty=false;
+}
+
+window.addEventListener('beforeunload',e=>{if(dirty){e.preventDefault();e.returnValue='';}});
+</script>
+</body>
+</html>
