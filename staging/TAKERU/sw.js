@@ -1,4 +1,4 @@
-const CACHE_NAME = 'takeru-v10';
+const CACHE_NAME = 'takeru-v11';
 
 const PRE_CACHE = [
     './',
@@ -52,8 +52,11 @@ self.addEventListener('fetch', e => {
             caches.match(e.request).then(cached => {
                 if (cached) return cached;
                 return fetch(e.request).then(res => {
-                    const clone = res.clone();
-                    caches.open(CACHE_NAME).then(c => c.put(e.request, clone));
+                    // 成功時のみキャッシュ（404などはキャッシュしない＝後で画像を追加したら出る）
+                    if (res.ok) {
+                        const clone = res.clone();
+                        caches.open(CACHE_NAME).then(c => c.put(e.request, clone));
+                    }
                     return res;
                 });
             })

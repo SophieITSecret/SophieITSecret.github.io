@@ -1,7 +1,12 @@
-# 画像データを無視（カード画像・背景画像）
+# 画像データは原則無視（バックアップ・一時ファイルなど。例: editor/image_backup/）
 *.png
 *.jpg
 *.gif
+
+# ただし images/ 内のカード画像はGit管理対象（GitHub Pagesで配信するため）
+!images/*.png
+!images/*.jpg
+!images/*.gif
 
 # PWAアイコンは例外（Git管理対象）
 !icon-192.png
