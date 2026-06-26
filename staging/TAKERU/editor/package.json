@@ -1,0 +1,10 @@
+{
+  "name": "takeru-editor",
+  "version": "1.0.0",
+  "description": "TAKERU 作業台 — カードデータ編集ツール（Node.js版）",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "private": true
+}

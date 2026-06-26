@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>TAKERU 作業台</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <h1>⚔ TAKERU 作業台</h1>
+  <button class="btn-load" onclick="reload()">🔄 再読み込み</button>
+  <span class="file-status" id="fileStatus">読み込み中…</span>
+  <button class="btn-load" id="btnImport" onclick="openImport()" disabled>📥 一括取り込み</button>
+  <button class="btn-save" id="btnSave" onclick="saveCSV()" disabled>💾 CSV を保存</button>
+</header>
+
+<!-- 一括取り込みモーダル -->
+<div id="importModal" class="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h2>📥 本文の一括取り込み</h2>
+      <button class="btn-cancel" onclick="closeImport()">✕ 閉じる</button>
+    </div>
+    <div class="modal-desc">
+      Geminiの出力を貼り付けてください。形式は <code>@コード</code> の行で1枚が始まり、次の行から本文です。<br>
+      取り込んでもファイルは保存されません（プレビューで確認 → 問題なければ「CSVを保存」）。
+    </div>
+    <textarea id="importText" class="import-text" placeholder="@IRUMA01&#10;ようこそ、入間基地ツアーへ。……（本文）……&#10;&#10;@IRUMA02&#10;入間基地は、埼玉県……（本文）……"></textarea>
+    <div id="importPreview" class="import-preview"></div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="parseImport()">🔍 解析して確認</button>
+      <button class="btn-apply" id="btnDoImport" onclick="doImport()" disabled>✓ 取り込む</button>
+    </div>
+  </div>
+</div>
+
+<div class="main">
+  <!-- 左ペイン：一覧 -->
+  <div class="pane-list">
+    <div class="pane-toolbar">
+      <select id="unitSelect" onchange="filterCards()">
+        <option value="">── ユニットを選択 ──</option>
+      </select>
+      <span class="card-count" id="cardCount">0枚</span>
+    </div>
+    <div class="list-scroll" id="listScroll">
+      <div class="empty-state"><div class="icon">📋</div>読み込み中…</div>
+    </div>
+  </div>
+
+  <!-- 中央：カードプレビュー -->
+  <div class="pane-card" id="paneCard">
+    <div class="empty-state"><div class="icon">👆</div>カードを選択してください</div>
+  </div>
+
+  <!-- 右：編集エリア -->
+  <div class="edit-area" id="editArea" style="display:none">
+    <div><div class="edit-label">コード</div><input class="edit-input" id="editCode" readonly style="color:var(--fact);font-family:monospace"></div>
+    <div><div class="edit-label">タイトル</div><input class="edit-input" id="editTitle" oninput="updatePreview()"></div>
+    <div>
+      <div class="edit-label" style="display:flex;justify-content:space-between">本文 <span id="charCount" class="char-count char-ok">0字</span></div>
+      <textarea class="edit-input" id="editBody" oninput="updatePreview();countChars()"></textarea>
+    </div>
+    <div class="edit-actions">
+      <button class="btn-cancel" onclick="cancelEdit()">キャンセル</button>
+      <button class="btn-apply" onclick="applyEdit()">✓ 適用</button>
+    </div>
+
+    <!-- 画像取り込み -->
+    <div class="img-edit-block">
+      <div class="edit-label">画像（960×720に変換して保存）</div>
+      <input type="file" id="imgFile" accept="image/*" style="display:none" onchange="onPickImage(event)">
+      <button class="btn-load" style="width:100%" onclick="document.getElementById('imgFile').click()">🖼 画像を選ぶ</button>
+      <div class="edit-label" style="margin-top:6px; color:var(--text3);">またはコピーした画像を <b style="color:var(--accent2)">Ctrl+V</b> で貼り付け／中央へドロップ</div>
+      <canvas id="imgCanvas" width="960" height="720" style="display:none"></canvas>
+      <div id="imgStage" style="display:none; margin-top:8px;">
+        <img id="imgPreview" class="img-stage-preview">
+        <div class="edit-actions" style="margin-top:6px;">
+          <button class="btn-cancel" onclick="cancelImage()">取消</button>
+          <button class="btn-apply" id="btnSaveImg" onclick="saveImage()">💾 画像を保存</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>

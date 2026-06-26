@@ -1,0 +1,7 @@
+{
+  "csvPath": "D:\\Sophie\\SophieITSecret.github.io\\staging\\TAKERU\\TAKERUcard.csv",
+  "imagesDir": "D:\\Sophie\\SophieITSecret.github.io\\staging\\TAKERU\\images",
+  "voicesDir": "D:\\Sophie\\SophieITSecret.github.io\\staging\\TAKERU\\voices",
+  "voicepeakPath": "",
+  "port": 3000
+}
