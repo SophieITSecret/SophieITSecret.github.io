@@ -62,6 +62,7 @@
       <textarea class="edit-input" id="editBody" oninput="updatePreview();countChars()"></textarea>
     </div>
     <div class="edit-actions">
+      <button class="btn-copy" onclick="copyCardText()" title="コード・タイトル・本文をコピー">📋 コピー</button>
       <button class="btn-cancel" onclick="cancelEdit()">キャンセル</button>
       <button class="btn-apply" onclick="applyEdit()">✓ 適用</button>
     </div>
@@ -75,6 +76,10 @@
       <canvas id="imgCanvas" width="960" height="720" style="display:none"></canvas>
       <div id="imgStage" style="display:none; margin-top:8px;">
         <img id="imgPreview" class="img-stage-preview">
+        <div class="edit-actions" style="margin-top:6px;">
+          <button class="btn-cancel" onclick="cancelImage()">取消</button>
+          <button class="btn-apply" id="btnSaveImg" onclick="saveImage()">💾 画像を保存</button>
+        </div>
         <div class="svg-overlay-block">
           <div class="edit-label">SVGオーバーレイ（空欄なら合成なし）</div>
           <textarea id="svgOverlayInput" class="edit-input svg-overlay-input"
@@ -83,10 +88,6 @@
           <div class="edit-actions" style="margin-top:4px;">
             <button class="btn-cancel" onclick="clearSvg()">クリア</button>
           </div>
-        </div>
-        <div class="edit-actions" style="margin-top:6px;">
-          <button class="btn-cancel" onclick="cancelImage()">取消</button>
-          <button class="btn-apply" id="btnSaveImg" onclick="saveImage()">💾 画像を保存</button>
         </div>
       </div>
     </div>

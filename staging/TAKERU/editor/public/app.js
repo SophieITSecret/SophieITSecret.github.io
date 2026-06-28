@@ -196,6 +196,18 @@ function applyEdit(){
 
 function cancelEdit(){ if(selectedIdx>=0) showCard(selectedIdx); }
 
+function copyCardText(){
+  if(selectedIdx<0) return;
+  const card=cardData[selectedIdx];
+  const text=`**カードコード**：【${card.id}】\n\n**カードタイトル**：【${card.title}】\n\n**解説文**： 【${card.body}】`;
+  navigator.clipboard.writeText(text).then(()=>{
+    const btn=document.querySelector('.btn-copy');
+    const orig=btn.textContent;
+    btn.textContent='✅ コピー済み';
+    setTimeout(()=>btn.textContent=orig,2000);
+  }).catch(()=>alert('コピーに失敗しました'));
+}
+
 // ===== 画像取り込み（960×720へ強制伸縮 → SVG合成 → PNG保存） =====
 let pendingImagePng=null, baseImage=null, svgInputTimer=null;
 

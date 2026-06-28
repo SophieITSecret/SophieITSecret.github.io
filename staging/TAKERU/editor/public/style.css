@@ -73,6 +73,8 @@ textarea.edit-input { resize:vertical; min-height:460px; line-height:1.75; }
 .btn-apply { background:var(--accent); border:none; color:#000; padding:7px 20px; border-radius:4px; cursor:pointer; font-size:0.82rem; font-weight:700; }
 .btn-apply:hover { background:var(--accent2); }
 .btn-cancel { background:transparent; border:1px solid var(--border); color:var(--text2); padding:7px 14px; border-radius:4px; cursor:pointer; font-size:0.82rem; }
+.btn-copy { background:transparent; border:1px solid var(--text3); color:var(--text2); padding:7px 14px; border-radius:4px; cursor:pointer; font-size:0.82rem; margin-right:auto; }
+.btn-copy:hover { border-color:var(--accent2); color:var(--accent2); }
 
 /* 画像取り込み */
 .img-edit-block { border-top:1px solid var(--border); padding-top:12px; margin-top:4px; }
