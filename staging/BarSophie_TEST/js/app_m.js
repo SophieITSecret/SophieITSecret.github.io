@@ -626,10 +626,10 @@ function _showMusicSubmenu() {
                                    align-items:center; justify-content:center; gap:10px;
                                    padding:20px 16px; border-radius:14px; line-height:1.3;">
                         <span style="display:block; width:100%; text-align:center;
-                                     font-size:1.3rem; font-weight:bold;">🎙️ DJソフィーの歌とお酒の物語</span>
+                                     font-size:1.2rem; font-weight:bold;">🎙️ DJソフィーの歌とお酒の物語</span>
                         <span style="display:block; width:100%; text-align:center;
                                      font-size:0.76rem; font-weight:normal; line-height:1.6;
-                                     color:#ffcdd9;">
+                                     color:#ffb3c6;">
                             私がお話をしながら、YouTubeで歌をお届けします。<br>
                             昭和の名曲にまつわる人生や時代のお話も。
                         </span>
@@ -643,7 +643,7 @@ function _showMusicSubmenu() {
                                      font-size:1.3rem; font-weight:bold;">🎵 音楽リクエスト</span>
                         <span style="display:block; width:100%; text-align:center;
                                      font-size:0.76rem; font-weight:normal; line-height:1.6;
-                                     color:#a8eaf4;">
+                                     color:#88d6ea;">
                             昭和の名曲を中心に600曲以上を収録してます。<br>
                             歌手別・ジャンル別でお好みの一曲をどうぞ。
                         </span>
