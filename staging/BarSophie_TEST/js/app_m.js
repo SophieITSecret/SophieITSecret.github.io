@@ -619,28 +619,31 @@ function _showMusicSubmenu() {
                     <img src="./sophie_face.png" style="width:20px;height:20px;border-radius:50%;object-fit:cover;">
                     🎵 DJソフィー／音楽リクエスト
                 </div>
-                <div style="padding:10px; display:flex; flex-direction:column; gap:18px;">
-                    <div>
-                        <button class="act-btn" id="ms-dj"
-                                style="background:#1a1a2e; border:1.5px solid #ff69b4; color:#ff69b4;">
-                            🎙️ DJソフィーの歌とお酒の物語
-                        </button>
-                        <p style="margin:7px 4px 0; font-size:0.72rem; line-height:1.5;
-                                  text-align:center; color:#a8eaf4;">
+                <div style="padding:18px 14px 22px; display:flex; flex-direction:column; gap:26px;">
+                    <button class="act-btn" id="ms-dj"
+                            style="background:#1a1a2e; border:1.5px solid #ff69b4; color:#ff69b4;
+                                   height:auto; min-height:0; display:flex; flex-direction:column;
+                                   align-items:center; justify-content:center; gap:8px;
+                                   padding:20px 16px; border-radius:14px; line-height:1.3;">
+                        <span style="font-size:1.05rem; font-weight:bold;">🎙️ DJソフィーの歌とお酒の物語</span>
+                        <span style="font-size:0.74rem; font-weight:normal; line-height:1.6;
+                                     color:#a8eaf4;">
                             ソフィーがお話をしながら、YouTubeで歌をお届けします。<br>
                             昭和の名曲にまつわる人生や時代のお話も。
-                        </p>
-                    </div>
-                    <div>
-                        <button class="act-btn" id="ms-music" style="background:var(--green);">
-                            🎵 音楽リクエスト
-                        </button>
-                        <p style="margin:7px 4px 0; font-size:0.72rem; line-height:1.5;
-                                  text-align:center; color:#ffcdd9;">
+                        </span>
+                    </button>
+                    <button class="act-btn" id="ms-music"
+                            style="background:var(--green);
+                                   height:auto; min-height:0; display:flex; flex-direction:column;
+                                   align-items:center; justify-content:center; gap:8px;
+                                   padding:20px 16px; border-radius:14px; line-height:1.3;">
+                        <span style="font-size:1.05rem; font-weight:bold;">🎵 音楽リクエスト</span>
+                        <span style="font-size:0.74rem; font-weight:normal; line-height:1.6;
+                                     color:#ffcdd9;">
                             昭和の名曲を中心に600曲以上を収録しています。<br>
                             歌手別・ジャンル別でお好みの一曲をどうぞ。
-                        </p>
-                    </div>
+                        </span>
+                    </button>
                 </div>
             </div>`;
     }
