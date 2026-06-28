@@ -75,6 +75,15 @@
       <canvas id="imgCanvas" width="960" height="720" style="display:none"></canvas>
       <div id="imgStage" style="display:none; margin-top:8px;">
         <img id="imgPreview" class="img-stage-preview">
+        <div class="svg-overlay-block">
+          <div class="edit-label">SVGオーバーレイ（空欄なら合成なし）</div>
+          <textarea id="svgOverlayInput" class="edit-input svg-overlay-input"
+            placeholder="Claudeが生成したSVGコードをここに貼り付けてください&#10;&lt;svg viewBox=&quot;0 0 960 720&quot; xmlns=&quot;http://www.w3.org/2000/svg&quot;&gt;...&lt;/svg&gt;"
+            oninput="onSvgInput()"></textarea>
+          <div class="edit-actions" style="margin-top:4px;">
+            <button class="btn-cancel" onclick="clearSvg()">クリア</button>
+          </div>
+        </div>
         <div class="edit-actions" style="margin-top:6px;">
           <button class="btn-cancel" onclick="cancelImage()">取消</button>
           <button class="btn-apply" id="btnSaveImg" onclick="saveImage()">💾 画像を保存</button>

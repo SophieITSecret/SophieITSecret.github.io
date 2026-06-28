@@ -79,6 +79,10 @@ textarea.edit-input { resize:vertical; min-height:460px; line-height:1.75; }
 .img-stage-preview { width:100%; aspect-ratio:4/3; object-fit:fill; border:1px solid var(--accent); border-radius:4px; display:block; }
 .pane-card.dragover { outline:2px dashed var(--accent); outline-offset:-10px; }
 
+/* SVGオーバーレイ */
+.svg-overlay-block { margin-top:10px; border-top:1px solid var(--border); padding-top:8px; }
+textarea.svg-overlay-input { min-height:120px; font-family:monospace; font-size:0.74rem; line-height:1.5; }
+
 .empty-state { text-align:center; color:var(--text3); font-size:0.82rem; line-height:2; padding:40px; }
 .empty-state .icon { font-size:2.5rem; margin-bottom:8px; }
 ::-webkit-scrollbar { width:5px; } ::-webkit-scrollbar-track { background:transparent; } ::-webkit-scrollbar-thumb { background:var(--border); border-radius:3px; }

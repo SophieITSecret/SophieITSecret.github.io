@@ -196,13 +196,13 @@ function applyEdit(){
 
 function cancelEdit(){ if(selectedIdx>=0) showCard(selectedIdx); }
 
-// ===== 画像取り込み（960×720へ強制伸縮 → PNG保存） =====
-let pendingImagePng=null;
+// ===== 画像取り込み（960×720へ強制伸縮 → SVG合成 → PNG保存） =====
+let pendingImagePng=null, baseImage=null, svgInputTimer=null;
 
 function onPickImage(e){
   const file=e.target.files[0];
   if(file) loadImageFile(file);
-  e.target.value=''; // 同じファイルを選び直せるようにクリア
+  e.target.value='';
 }
 
 function loadImageFile(file){
@@ -210,12 +210,8 @@ function loadImageFile(file){
   if(!file.type.startsWith('image/')){ alert('画像ファイルを選んでください'); return; }
   const img=new Image();
   img.onload=()=>{
-    const cv=document.getElementById('imgCanvas');
-    const ctx=cv.getContext('2d');
-    ctx.clearRect(0,0,960,720);
-    ctx.drawImage(img,0,0,960,720); // アスペクト比を無視して960×720に強制伸縮
-    pendingImagePng=cv.toDataURL('image/png');
-    document.getElementById('imgPreview').src=pendingImagePng;
+    baseImage=img;
+    recomposite();
     document.getElementById('imgStage').style.display='block';
   };
   img.onerror=()=>alert('画像を読み込めませんでした');
@@ -224,8 +220,45 @@ function loadImageFile(file){
   r.readAsDataURL(file);
 }
 
+// PNG＋SVGをcanvasに合成してpendingImagePngを更新
+async function recomposite(){
+  if(!baseImage) return;
+  const cv=document.getElementById('imgCanvas');
+  const ctx=cv.getContext('2d');
+  ctx.clearRect(0,0,960,720);
+  ctx.drawImage(baseImage,0,0,960,720);
+  const svgCode=document.getElementById('svgOverlayInput').value.trim();
+  if(svgCode && svgCode.includes('<svg')){
+    try{
+      const blob=new Blob([svgCode],{type:'image/svg+xml;charset=utf-8'});
+      const url=URL.createObjectURL(blob);
+      const svgImg=new Image();
+      await new Promise((res,rej)=>{ svgImg.onload=res; svgImg.onerror=rej; svgImg.src=url; });
+      ctx.drawImage(svgImg,0,0,960,720);
+      URL.revokeObjectURL(url);
+    }catch(e){
+      // SVGが不正な場合はPNGのみで続行
+    }
+  }
+  pendingImagePng=cv.toDataURL('image/png');
+  document.getElementById('imgPreview').src=pendingImagePng;
+}
+
+// SVG入力600ms後にプレビュー更新（タイピング中の連続再合成を防ぐ）
+function onSvgInput(){
+  clearTimeout(svgInputTimer);
+  svgInputTimer=setTimeout(()=>recomposite(),600);
+}
+
+function clearSvg(){
+  document.getElementById('svgOverlayInput').value='';
+  recomposite();
+}
+
 function cancelImage(){
   pendingImagePng=null;
+  baseImage=null;
+  document.getElementById('svgOverlayInput').value='';
   document.getElementById('imgStage').style.display='none';
 }
 
