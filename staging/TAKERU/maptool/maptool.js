@@ -79,7 +79,7 @@ function init(){
 // ================= ツール切替 =================
 const HINTS={ select:'選択ツール：要素をクリックで選択・ドラッグで移動（Shiftで複数選択／Deleteで削除）',
   paint:'県塗り：色を選んで県をクリック（同色再クリックで消去）', unit:'部隊記号：地図をクリックで配置',
-  arrow:'矢印：クリックで点を追加→ダブルクリックで確定', rect:'矩形：ドラッグで描画',
+  arrow:'矢印：ドラッグで直線／クリックで点追加→ダブルクリック(Enter)で確定', rect:'矩形：ドラッグで描画',
   text:'テキスト：クリックで配置（ダブルクリックで編集）', star:'拠点★：クリックで配置' };
 function setTool(t){
   if(tool==='arrow' && t!=='arrow') cancelArrowDraft();
@@ -261,10 +261,13 @@ function onStageDown(ev){ if(ev.button!==0) return; const p=clientToStage(ev);
     return; }
   if(tool==='unit'||tool==='text'||tool==='star'){ const el=createDefault(tool,rx(p.x),ry(p.y)); addElement(el); selectedIds=[el.id]; setTool('select'); renderAll(); if(tool==='text'||el.type==='text') {} return; }
   if(tool==='rect'){ const el=createDefault('rect',rx(p.x),ry(p.y)); el.width=0; el.height=0; layerElements.push(el); selectedIds=[el.id]; drag={mode:'createRect',el,x0:p.x,y0:p.y}; renderAll(); return; }
-  if(tool==='arrow'){ if(!arrowDraft) arrowDraft={points:[]}; arrowDraft.points.push({x:rx(p.x),y:ry(p.y)}); renderArrowDraft(); return; }
+  if(tool==='arrow'){ if(!arrowDraft) arrowDraft={points:[]}; arrowDraft.points.push({x:rx(p.x),y:ry(p.y)});
+    arrowDraft.down=true; arrowDraft.moved=false; arrowDraft.startSx=p.x; arrowDraft.startSy=p.y; arrowDraft.preview=null; renderArrowDraft(); return; }
 }
 function snap(el){ const s={}; if(el.x!=null)s.x=el.x; if(el.y!=null)s.y=el.y; if(el.points)s.points=el.points.map(p=>({x:p.x,y:p.y})); if(el.label)s.label={offsetX:el.label.offsetX,offsetY:el.label.offsetY}; return s; }
-function onStageMove(ev){ if(!drag) return; const p=clientToStage(ev);
+function onStageMove(ev){
+  if(tool==='arrow' && arrowDraft && arrowDraft.down){ const q=clientToStage(ev); arrowDraft.moved=Math.hypot(q.x-arrowDraft.startSx,q.y-arrowDraft.startSy)>5; arrowDraft.preview={x:rx(q.x),y:ry(q.y)}; renderArrowDraft(); return; }
+  if(!drag) return; const p=clientToStage(ev);
   if(drag.mode==='move'){ const ddx=(p.x-drag.sx)/STAGE_W, ddy=(p.y-drag.sy)/STAGE_H;
     drag.orig.forEach(o=>{ const el=o.el; if(el.points) el.points=o.snap.points.map(pt=>({x:pt.x+ddx,y:pt.y+ddy})); else { el.x=o.snap.x+ddx; el.y=o.snap.y+ddy; } });
     renderLayer(); renderSelection(); }
@@ -275,7 +278,11 @@ function onStageMove(ev){ if(!drag) return; const p=clientToStage(ev);
   else if(drag.mode==='point'){ const el=drag.el; el.points[drag.idx]={x:rx(p.x),y:ry(p.y)}; renderLayer(); renderSelection(); }
   else if(drag.mode==='label'){ const el=drag.el; el.label.offsetX=drag.ox+(p.x-drag.sx)/STAGE_W; el.label.offsetY=drag.oy+(p.y-drag.sy)/STAGE_H; renderLayer(); renderSelection(); }
 }
-function onUp(){ if(drag){ drag=null; renderProps(); autosave(); } }
+function onUp(){
+  if(tool==='arrow' && arrowDraft && arrowDraft.down){ arrowDraft.down=false;
+    if(arrowDraft.moved && arrowDraft.preview){ arrowDraft.points.push(arrowDraft.preview); arrowDraft.preview=null; finishArrow(); }
+    else { arrowDraft.preview=null; renderArrowDraft(); } return; }
+  if(drag){ drag=null; renderProps(); autosave(); } }
 function startResizeUnit(e,el,i){ drag={mode:'resizeUnit',el,corner:i}; }
 function startRotate(e,el){ drag={mode:'rotate',el}; }
 function startResizeRect(e,el,i){ const b=elBBox(el); const opp=[[b.x+b.w,b.y+b.h],[b.x,b.y+b.h],[b.x,b.y],[b.x+b.w,b.y]][i]; drag={mode:'resizeRect',el,fx:opp[0],fy:opp[1]}; }
@@ -284,10 +291,12 @@ function startLabel(e,el){ const p=clientToStage(e); drag={mode:'label',el,sx:p.
 
 // 矢印ドラフト
 function renderArrowDraft(){ let g=$('arrowDraft'); if(g) g.remove(); if(!arrowDraft||!arrowDraft.points.length) return;
-  g=svg('g',{id:'arrowDraft'}); const pts=arrowDraft.points.map(p=>({x:ax(p.x),y:ay(p.y)}));
+  g=svg('g',{id:'arrowDraft'}); let pts=arrowDraft.points.map(p=>({x:ax(p.x),y:ay(p.y)}));
+  if(arrowDraft.preview) pts=pts.concat([{x:ax(arrowDraft.preview.x),y:ay(arrowDraft.preview.y)}]);
   if(pts.length>=2) g.appendChild(svg('path',{d:'M'+pts.map(p=>p.x+','+p.y).join(' L'),fill:'none',stroke:'#E24B4A','stroke-width':3,'stroke-dasharray':'5,4'}));
   pts.forEach(p=>g.appendChild(svg('circle',{cx:p.x,cy:p.y,r:4,fill:'#E24B4A'}))); $('selOverlay').appendChild(g); }
-function finishArrow(){ if(!arrowDraft) return; let pts=arrowDraft.points; if(pts.length>=2){ const a=pts[pts.length-1],b=pts[pts.length-2]; if(Math.hypot(ax(a.x)-ax(b.x),ay(a.y)-ay(b.y))<6) pts=pts.slice(0,-1); }
+function finishArrow(){ if(!arrowDraft) return; let pts=arrowDraft.points.slice();
+  while(pts.length>2){ const a=pts[pts.length-1],b=pts[pts.length-2]; if(Math.hypot(ax(a.x)-ax(b.x),ay(a.y)-ay(b.y))<6) pts.pop(); else break; }
   if(pts.length>=2){ const el=createDefault('arrow',0,0); delete el.x; delete el.y; el.points=pts.map(p=>({x:p.x,y:p.y})); Object.assign(el,{curved:false,lineStyle:'solid',lineWidth:3,color:'#E24B4A',arrowHead:'triangle',arrowPosition:'end',opacity:1}); layerElements.push(el); selectedIds=[el.id]; }
   arrowDraft=null; const d=$('arrowDraft'); if(d)d.remove(); setTool('select'); renderAll(); autosave(); }
 function cancelArrowDraft(){ arrowDraft=null; const d=$('arrowDraft'); if(d)d.remove(); }
@@ -295,6 +304,7 @@ function onDblClick(ev){ if(tool==='arrow'){ ev.preventDefault(); finishArrow();
   const node=ev.target.closest('[data-id]'); if(node){ const el=getEl(node.dataset.id); if(el&&el.type==='text'){ startInlineEdit(el); } } }
 function onKey(e){ if(document.activeElement && ['INPUT','TEXTAREA','SELECT'].includes(document.activeElement.tagName)) return;
   if((e.key==='Delete'||e.key==='Backspace') && selectedIds.length){ e.preventDefault(); deleteSelected(); }
+  else if(e.key==='Enter'){ if(tool==='arrow'&&arrowDraft){ e.preventDefault(); finishArrow(); } }
   else if(e.key==='Escape'){ if(arrowDraft) cancelArrowDraft(); selectedIds=[]; renderAll(); } }
 
 // インラインテキスト編集
