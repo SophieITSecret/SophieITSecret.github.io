@@ -1,0 +1,439 @@
+'use strict';
+// ===== TAKERU 地図ツール フェーズB =====
+// 透明レイヤー上に 部隊記号/矢印/矩形/テキスト/★拠点 を配置・編集する。
+// 既存（県塗り・背景・境界線・凡例・タイトル・出力サイズ・保存）はフェーズAから継続。
+
+// ---------- 定数 ----------
+const SVGNS='http://www.w3.org/2000/svg';
+const STAGE_W=960, STAGE_H=720;
+const SIZES={ S:[960,720], M:[1440,1080], L:[1920,1440] };
+const AUTOSAVE_KEY='takeru_maptool_autosave';
+const SCHEMA_VERSION='2.0';
+const PAINT_COLORS=['#4a7fb5','#5a9e5a','#e08a3c','#e3c34a','#d05050','#8a6db0','#9098a0'];
+const BG_PRESETS=[{c:'#F5F0E8',n:'クリーム'},{c:'#FFFFFF',n:'白'},{c:'#E8F0F5',n:'淡い水色'},{c:'#ECECEC',n:'薄灰'}];
+const BASE_FILL='#EEEEEE';
+const TYPE_LABEL={unit:'部隊記号',arrow:'矢印',rect:'矩形',text:'テキスト',star:'拠点',symbol:'補助記号',polygon:'多角形'};
+const TYPE_ICON={unit:'凸',arrow:'➤',rect:'▭',text:'あ',star:'★'};
+
+// ---------- 状態 ----------
+let tool='select';
+let paintColor='#4a7fb5', opacity=0.8, borderMode='normal';
+let fills={}, legend=[], legendPos='bl', outputSize='S';
+let layerElements=[];          // 配列順=z順（後ろほど前面）
+let selectedIds=[];
+let drag=null, arrowDraft=null, inlineEl=null;
+let uidCounter=0, nameCounter={};
+let restoring=false, autosaveTimer=null;
+
+// ---------- ショートカット ----------
+const $=id=>document.getElementById(id);
+function svg(tag,attrs){ const e=document.createElementNS(SVGNS,tag); if(attrs) for(const k in attrs) e.setAttribute(k,attrs[k]); return e; }
+const ax=r=>r*STAGE_W, ay=r=>r*STAGE_H, rx=x=>x/STAGE_W, ry=y=>y/STAGE_H;
+function pad2(n){return String(n).padStart(2,'0');}
+function pad3(n){return String(n).padStart(3,'0');}
+function uid(){ return 'el_'+pad3(++uidCounter); }
+function autoName(type){ nameCounter[type]=(nameCounter[type]||0)+1; return (TYPE_LABEL[type]||type)+' '+nameCounter[type]; }
+function getEl(id){ return layerElements.find(e=>e.id===id); }
+function contrast(hex){ try{const c=hex.replace('#','');const r=parseInt(c.substr(0,2),16),g=parseInt(c.substr(2,2),16),b=parseInt(c.substr(4,2),16);return (0.299*r+0.587*g+0.114*b)>150?'#000000':'#ffffff';}catch(e){return '#000000';} }
+function nowISO(){ const d=new Date(),o=-d.getTimezoneOffset(),s=o>=0?'+':'-';return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}T${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}${s}${pad2(Math.abs(o)/60|0)}:${pad2(Math.abs(o)%60)}`; }
+function stamp(){ const d=new Date();return `${d.getFullYear()}${pad2(d.getMonth()+1)}${pad2(d.getDate())}_${pad2(d.getHours())}${pad2(d.getMinutes())}${pad2(d.getSeconds())}`; }
+function setActive(sel,attr,val){ document.querySelectorAll(sel+' [data-'+attr+']').forEach(b=>b.classList.toggle('active',b.getAttribute('data-'+attr)===val)); }
+
+const stage=$('stage'), mapSvg=$('mapSvg');
+function clientToStage(ev){ const pt=stage.createSVGPoint(); pt.x=ev.clientX; pt.y=ev.clientY; return pt.matrixTransform(stage.getScreenCTM().inverse()); }
+function stageToClient(x,y){ const m=stage.getScreenCTM(); return {x:m.a*x+m.c*y+m.e, y:m.b*x+m.d*y+m.f}; }
+
+// ================= 初期化 =================
+function init(){
+  // 背景プリセット
+  BG_PRESETS.forEach((p,i)=>{ const d=document.createElement('div'); d.className='sw'+(i===0?' active':''); d.style.background=p.c; d.title=p.n;
+    d.onclick=()=>{ setBg(p.c); document.querySelectorAll('#bgPresets .sw').forEach(s=>s.classList.remove('active')); d.classList.add('active'); $('bgPicker').value=p.c; };
+    $('bgPresets').appendChild(d); });
+  // 県塗りパレット
+  PAINT_COLORS.forEach((c,i)=>{ const d=document.createElement('div'); d.className='sw'+(i===0?' active':''); d.style.background=c; d.dataset.c=c;
+    d.onclick=()=>{ pickPaint(c); $('paintPicker').value=c; }; $('paintSwatches').appendChild(d); });
+  // 県クリック（県塗りツール時のみ）
+  mapSvg.querySelectorAll('.prefecture').forEach(g=>{ g.addEventListener('click',ev=>{ if(tool==='paint'){ ev.stopPropagation(); onPrefClick(g); } }); });
+  // ステージ操作
+  stage.addEventListener('pointerdown',onStageDown);
+  stage.addEventListener('pointermove',onStageMove);
+  window.addEventListener('pointerup',onUp);
+  stage.addEventListener('dblclick',onDblClick);
+  document.addEventListener('keydown',onKey);
+  // インライン編集
+  $('inlineEdit').addEventListener('blur',commitInline);
+  $('inlineEdit').addEventListener('keydown',e=>{ if(e.key==='Escape'){ e.preventDefault(); $('inlineEdit').blur(); } });
+
+  // 復元 or 新規
+  let saved=null; try{ saved=localStorage.getItem(AUTOSAVE_KEY); }catch(e){}
+  if(saved){ let s=null; try{ s=JSON.parse(saved); }catch(e){ s=null; }
+    if(s && (s.version==='2.0'||s.version==='1.0')){
+      const when=(s.savedAt||'').replace('T',' ').slice(0,19);
+      if(confirm('前回の作業を復元しますか？\n（保存日時：'+when+'）\n\n［OK］復元する　／　［キャンセル］新規に始める')){ applyState(s); return; }
+    }
+    try{ localStorage.removeItem(AUTOSAVE_KEY); }catch(e){}
+  }
+  freshStart();
+}
+
+// ================= ツール切替 =================
+const HINTS={ select:'選択ツール：要素をクリックで選択・ドラッグで移動（Shiftで複数選択／Deleteで削除）',
+  paint:'県塗り：色を選んで県をクリック（同色再クリックで消去）', unit:'部隊記号：地図をクリックで配置',
+  arrow:'矢印：クリックで点を追加→ダブルクリックで確定', rect:'矩形：ドラッグで描画',
+  text:'テキスト：クリックで配置（ダブルクリックで編集）', star:'拠点★：クリックで配置' };
+function setTool(t){
+  if(tool==='arrow' && t!=='arrow') cancelArrowDraft();
+  tool=t; setActive('#toolBtns','t',t);
+  $('modeHint').textContent=HINTS[t]||'';
+  stage.style.cursor = (t==='select')?'default':'crosshair';
+}
+
+// ================= 県塗り・背景・境界線（フェーズA継続）=================
+function setBg(c){ $('bg').setAttribute('fill',c); autosave(); }
+function pickPaint(c){ paintColor=c; document.querySelectorAll('#paintSwatches .sw').forEach(s=>s.classList.toggle('active',s.dataset.c===c)); }
+function setOpacity(v){ opacity=v/100; $('opacityVal').textContent=v+'%'; applyFills(); autosave(); }
+function setBorder(level){ borderMode=level; applyFills(); setActive('#borderBtns','b',level); autosave(); }
+function onPrefClick(g){ const code=g.getAttribute('data-code'); if(fills[code]===paintColor) delete fills[code]; else fills[code]=paintColor; applyFills(); autosave(); }
+function applyFills(){
+  mapSvg.querySelectorAll('.prefecture').forEach(g=>{ const code=g.getAttribute('data-code'); const painted=fills[code]; const fcol=painted||BASE_FILL; const fop=painted?opacity:1;
+    g.setAttribute('fill',fcol); g.setAttribute('fill-opacity',fop);
+    if(borderMode==='none'){ g.setAttribute('stroke',fcol); g.setAttribute('stroke-opacity',fop); g.setAttribute('stroke-width','1.2'); }
+    else { g.setAttribute('stroke',borderMode==='light'?'#9aa0a6':'#000000'); g.setAttribute('stroke-opacity','1'); g.setAttribute('stroke-width','1.0'); } });
+}
+
+// ================= 凡例（フェーズA継続）=================
+function addLegend(){ legend.push({color:PAINT_COLORS[legend.length%PAINT_COLORS.length],text:''}); renderLegendList(); renderLegend(); autosave(); }
+function renderLegendList(){ const el=$('legendList'); el.innerHTML='';
+  legend.forEach((lg,i)=>{ const row=document.createElement('div'); row.className='list-item';
+    const sw=document.createElement('input'); sw.type='color'; sw.value=lg.color; sw.className='mini-sw'; sw.oninput=()=>{ lg.color=sw.value; renderLegend(); autosave(); };
+    const tx=document.createElement('input'); tx.type='text'; tx.value=lg.text; tx.placeholder='名前'; tx.oninput=()=>{ lg.text=tx.value; renderLegend(); autosave(); };
+    const del=document.createElement('button'); del.className='del'; del.textContent='✕'; del.onclick=()=>{ legend.splice(i,1); renderLegendList(); renderLegend(); autosave(); };
+    row.append(sw,tx,del); el.appendChild(row); }); }
+function setLegendPos(p){ legendPos=p; setActive('#legendPos','p',p); renderLegend(); autosave(); }
+function renderLegend(){ const layer=$('legendLayer'); layer.innerHTML=''; if(legendPos==='none'||!legend.length) return;
+  const rowH=26,padX=12,padY=10,swSize=18; let maxChars=0; legend.forEach(l=>maxChars=Math.max(maxChars,(l.text||'').length));
+  const boxW=padX*2+swSize+8+Math.max(60,maxChars*16), boxH=padY*2+legend.length*rowH; let bx,by; const M=14;
+  if(legendPos==='tl'){bx=M;by=62;}else if(legendPos==='tr'){bx=960-boxW-M;by=62;}else if(legendPos==='bl'){bx=M;by=720-boxH-M;}
+  else if(legendPos==='br'){bx=960-boxW-M;by=720-boxH-M;}else if(legendPos==='center'){bx=(960-boxW)/2;by=(720-boxH)/2;}
+  const g=svg('g',{transform:`translate(${bx},${by})`});
+  g.appendChild(svg('rect',{width:boxW,height:boxH,rx:6,fill:'#ffffff','fill-opacity':0.88,stroke:'#888','stroke-width':1}));
+  legend.forEach((l,i)=>{ const y=padY+i*rowH; g.appendChild(svg('rect',{x:padX,y,width:swSize,height:swSize,rx:3,fill:l.color,stroke:'#555','stroke-width':0.5}));
+    const t=svg('text',{x:padX+swSize+8,y:y+swSize-3,'font-family':"'Noto Sans JP','Yu Gothic',sans-serif",'font-size':17,fill:'#222'}); t.textContent=l.text||'（名前を入力）'; g.appendChild(t); });
+  layer.appendChild(g); }
+
+// ================= タイトル・出力サイズ（フェーズA継続）=================
+function updateTitle(){ $('title').textContent=$('titleInput').value; autosave(); }
+function setOutputSize(s,silent){ if(!SIZES[s])return; outputSize=s; setActive('#sizeBtns','s',s); $('fnSuffix').textContent='_'+s+'.png'; if(!silent) autosave(); }
+
+// ================= 要素モデル =================
+function defaultLabel(pos){ return {text:'',position:pos||'bottom',offsetX:0,offsetY:0,fontSize:13,color:'#000000',bold:false}; }
+function createDefault(type,x,y){
+  const base={id:uid(),type,name:autoName(type),hidden:false,x,y};
+  if(type==='unit') return Object.assign(base,{width:0.05,height:0.055,rotation:0,fillColor:'#3B8BD4',opacity:1,infantry:true,infantryType:'armor',label:defaultLabel('bottom')});
+  if(type==='rect') return Object.assign(base,{width:0.14,height:0.10,fillColor:$('bg').getAttribute('fill')||'#F5F0E8',fillOpacity:1,borderEnabled:false,borderColor:'#000000',borderWidth:1,borderStyle:'solid'});
+  if(type==='text') return Object.assign(base,{text:'テキスト',fontSize:16,color:'#000000',bold:false,bgEnabled:false,bgColor:'#FFFFFF',bgOpacity:0.8});
+  if(type==='star') return Object.assign(base,{size:16,color:'#D32F2F',label:defaultLabel('right')});
+  return base;
+}
+function addElement(el){ layerElements.push(el); renderAll(); autosave(); }
+function deleteSelected(){ if(!selectedIds.length)return; layerElements=layerElements.filter(e=>!selectedIds.includes(e.id)); selectedIds=[]; renderAll(); autosave(); }
+function selectOnly(id){ selectedIds=[id]; renderAll(); }
+function selectEl(id,additive){ if(additive){ const i=selectedIds.indexOf(id); if(i>=0) selectedIds.splice(i,1); else selectedIds.push(id); } else if(!selectedIds.includes(id)){ selectedIds=[id]; } renderSelection(); renderLayerList(); renderProps(); }
+// z順
+function bringForward(){ selectedIds.forEach(id=>{ const i=layerElements.findIndex(e=>e.id===id); if(i>=0&&i<layerElements.length-1){ const [e]=layerElements.splice(i,1); layerElements.splice(i+1,0,e);} }); renderAll(); autosave(); }
+function sendBackward(){ selectedIds.slice().reverse().forEach(id=>{ const i=layerElements.findIndex(e=>e.id===id); if(i>0){ const [e]=layerElements.splice(i,1); layerElements.splice(i-1,0,e);} }); renderAll(); autosave(); }
+
+// ================= レンダリング =================
+function renderAll(){ renderLayer(); renderSelection(); renderLayerList(); renderProps(); }
+function renderLayer(){
+  const layer=$('layerEls'); layer.innerHTML='';
+  layerElements.forEach(el=>{ if(el.hidden) return; let node=null;
+    if(el.type==='unit') node=buildUnit(el); else if(el.type==='arrow') node=buildArrow(el);
+    else if(el.type==='rect') node=buildRect(el); else if(el.type==='text') node=buildText(el); else if(el.type==='star') node=buildStar(el);
+    if(node){ layer.appendChild(node); if(el.type==='text') sizeTextBg(node,el); } });
+  if(arrowDraft) renderArrowDraft();
+}
+
+// --- テキスト多行 ---
+function mtext(lines,x,y,opt){ const t=svg('text',{x,y,'text-anchor':opt.anchor||'middle','dominant-baseline':opt.baseline||'auto',
+    'font-family':"'Noto Sans JP','Yu Gothic',sans-serif",'font-size':opt.size,'font-weight':opt.bold?'700':'400',fill:opt.color});
+  if(opt.halo){ t.setAttribute('stroke','#ffffff'); t.setAttribute('stroke-width',Math.max(2,opt.size*0.18)); t.setAttribute('paint-order','stroke'); t.setAttribute('stroke-linejoin','round'); }
+  lines.forEach((ln,i)=>{ const ts=svg('tspan',{x,dy:i===0?0:opt.size*1.25}); ts.textContent=ln; t.appendChild(ts); }); return t; }
+function labelLines(s){ return String(s||'').split('\n').slice(0,3); }
+
+// --- 凸型部隊記号 ---
+function unitPath(W,H){ const bw=W/2, protH=H*0.22, top=-H/2, bodyTop=-H/2+protH, bot=H/2, pw=W/3/2;
+  return `M${-bw},${bodyTop} L${-pw},${bodyTop} L${-pw},${top} L${pw},${top} L${pw},${bodyTop} L${bw},${bodyTop} L${bw},${bot} L${-bw},${bot} Z`; }
+function branchSymbol(type,W,H,col){ const cy=H*0.11; const bw=W, bh=H*0.78; const g=svg('g',{}); const s={fill:'none',stroke:col,'stroke-width':Math.max(1.4,W*0.04),'stroke-linecap':'round','stroke-linejoin':'round'};
+  if(type==='armor'){ const e=svg('ellipse',{cx:0,cy,rx:bw*0.30,ry:bh*0.22}); Object.entries(s).forEach(([k,v])=>e.setAttribute(k,v)); g.appendChild(e); }
+  else if(type==='artillery'){ const r=svg('line',{x1:0,y1:cy-bh*0.26,x2:0,y2:cy+bh*0.26}); Object.entries(s).forEach(([k,v])=>r.setAttribute(k,v)); r.setAttribute('stroke-width',Math.max(2,W*0.10)); g.appendChild(r); }
+  else if(type==='cavalry'){ const l=svg('line',{x1:-bw*0.28,y1:cy+bh*0.24,x2:bw*0.28,y2:cy-bh*0.24}); Object.entries(s).forEach(([k,v])=>l.setAttribute(k,v)); g.appendChild(l); }
+  else if(type==='engineer'){ const p=svg('polyline',{points:`${-bw*0.26},${cy+bh*0.20} 0,${cy-bh*0.22} ${bw*0.26},${cy+bh*0.20}`}); Object.entries(s).forEach(([k,v])=>p.setAttribute(k,v)); g.appendChild(p); }
+  else if(type==='airborne'){ const r=bw*0.28; const p=svg('path',{d:`M${-r},${cy+r*0.5} A${r},${r} 0 0 1 ${r},${cy+r*0.5}`}); Object.entries(s).forEach(([k,v])=>p.setAttribute(k,v)); g.appendChild(p); }
+  return g; }
+function buildUnit(el){ const g=svg('g',{class:'el-g movable','data-id':el.id});
+  const cx=ax(el.x),cy=ay(el.y),W=ax(el.width),H=ay(el.height);
+  const inner=svg('g',{transform:`translate(${cx},${cy}) rotate(${el.rotation||0})`});
+  const p=svg('path',{d:unitPath(W,H),fill:el.fillColor,'fill-opacity':el.opacity==null?1:el.opacity,stroke:'#222','stroke-width':1.2,'stroke-linejoin':'round'}); inner.appendChild(p);
+  if(!el.infantry) inner.appendChild(branchSymbol(el.infantryType,W,H,contrast(el.fillColor)));
+  g.appendChild(inner);
+  if(el.label && el.label.text) g.appendChild(buildLabel(el,W/2,H/2));
+  return g; }
+
+// --- ラベル（常に水平）---
+function labelAnchorPos(el,halfW,halfH){ const cx=ax(el.x),cy=ay(el.y),L=el.label,gap=6; let x=cx,y=cy,anchor='middle';
+  if(L.position==='top'){ y=cy-halfH-gap; anchor='middle'; } else if(L.position==='bottom'){ y=cy+halfH+gap+L.fontSize; anchor='middle'; }
+  else if(L.position==='left'){ x=cx-halfW-gap; y=cy+L.fontSize*0.35; anchor='end'; } else if(L.position==='right'){ x=cx+halfW+gap; y=cy+L.fontSize*0.35; anchor='start'; }
+  x+=ax(L.offsetX||0); y+=ay(L.offsetY||0); return {x,y,anchor}; }
+function buildLabel(el,halfW,halfH){ const L=el.label; const pos=labelAnchorPos(el,halfW,halfH);
+  const t=mtext(labelLines(L.text),pos.x,pos.y,{size:L.fontSize,color:L.color,bold:L.bold,anchor:pos.anchor,halo:true});
+  t.setAttribute('class','lbl-text'); t.setAttribute('data-id',el.id); t.setAttribute('data-label','1'); return t; }
+
+// --- 矢印 ---
+function catmullRom(pts){ if(pts.length<3) return 'M'+pts.map(p=>p.x+','+p.y).join(' L');
+  let d='M'+pts[0].x+','+pts[0].y; for(let i=0;i<pts.length-1;i++){ const p0=pts[i-1]||pts[i],p1=pts[i],p2=pts[i+1],p3=pts[i+2]||p2;
+    const c1x=p1.x+(p2.x-p0.x)/6,c1y=p1.y+(p2.y-p0.y)/6,c2x=p2.x-(p3.x-p1.x)/6,c2y=p2.y-(p3.y-p1.y)/6; d+=` C${c1x},${c1y} ${c2x},${c2y} ${p2.x},${p2.y}`; } return d; }
+function dashArray(style,w){ if(style==='dashed') return `${w*3},${w*2}`; if(style==='dotted') return `${Math.max(0.1,w*0.1)},${w*2}`; return ''; }
+function arrowHeadNode(tip,from,kind,w,color){ if(kind==='none')return null; const dx=tip.x-from.x,dy=tip.y-from.y,len=Math.hypot(dx,dy)||1; const ux=dx/len,uy=dy/len; const px=-uy,py=ux; const s=Math.max(8,w*3.2);
+  const bx=tip.x-ux*s, by=tip.y-uy*s; const l={x:bx+px*s*0.55,y:by+py*s*0.55}, r={x:bx-px*s*0.55,y:by-py*s*0.55};
+  if(kind==='open'){ const g=svg('g',{}); [l,r].forEach(pt=>{ const ln=svg('line',{x1:tip.x,y1:tip.y,x2:pt.x,y2:pt.y,stroke:color,'stroke-width':w,'stroke-linecap':'round'}); g.appendChild(ln); }); return g; }
+  return svg('path',{d:`M${tip.x},${tip.y} L${l.x},${l.y} L${r.x},${r.y} Z`,fill:color}); }
+function buildArrow(el){ const g=svg('g',{class:'el-g movable','data-id':el.id}); const pts=el.points.map(p=>({x:ax(p.x),y:ay(p.y)})); if(pts.length<2) return g;
+  const d=el.curved?catmullRom(pts):('M'+pts.map(p=>p.x+','+p.y).join(' L')); const op=el.opacity==null?1:el.opacity;
+  // 当たり判定用の太い透明線
+  g.appendChild(svg('path',{d,fill:'none',stroke:'#000','stroke-opacity':0,'stroke-width':Math.max(el.lineWidth,12),'data-id':el.id}));
+  const line=svg('path',{d,fill:'none',stroke:el.color,'stroke-width':el.lineWidth,'stroke-linecap':'round','stroke-linejoin':'round','stroke-opacity':op}); const da=dashArray(el.lineStyle,el.lineWidth); if(da) line.setAttribute('stroke-dasharray',da); g.appendChild(line);
+  const head=arrowHeadNode(pts[pts.length-1],pts[pts.length-2],el.arrowHead,el.lineWidth,el.color); if(head){ head.setAttribute('opacity',op); g.appendChild(head); }
+  if(el.arrowPosition==='both'){ const h2=arrowHeadNode(pts[0],pts[1],el.arrowHead,el.lineWidth,el.color); if(h2){ h2.setAttribute('opacity',op); g.appendChild(h2);} }
+  return g; }
+
+// --- 矩形 ---
+function buildRect(el){ const r=svg('rect',{class:'el-g movable','data-id':el.id,x:ax(el.x),y:ay(el.y),width:ax(el.width),height:ay(el.height),fill:el.fillColor,'fill-opacity':el.fillOpacity==null?1:el.fillOpacity});
+  if(el.borderEnabled){ r.setAttribute('stroke',el.borderColor); r.setAttribute('stroke-width',el.borderWidth); const da=dashArray(el.borderStyle,el.borderWidth); if(da) r.setAttribute('stroke-dasharray',da); } else r.setAttribute('stroke','none'); return r; }
+
+// --- テキスト ---
+function buildText(el){ const g=svg('g',{class:'el-g movable','data-id':el.id});
+  if(el.bgEnabled) g.appendChild(svg('rect',{class:'txtbg',fill:el.bgColor,'fill-opacity':el.bgOpacity==null?0.8:el.bgOpacity,rx:3}));
+  const t=mtext(labelLines(el.text),ax(el.x),ay(el.y)+el.fontSize,{size:el.fontSize,color:el.color,bold:el.bold,anchor:'start',halo:!el.bgEnabled}); t.setAttribute('data-id',el.id); g.appendChild(t); return g; }
+function sizeTextBg(g,el){ if(!el.bgEnabled) return; const t=g.querySelector('text'), bg=g.querySelector('.txtbg'); if(!t||!bg) return; const b=t.getBBox(); const pad=4;
+  bg.setAttribute('x',b.x-pad); bg.setAttribute('y',b.y-pad); bg.setAttribute('width',b.width+pad*2); bg.setAttribute('height',b.height+pad*2); }
+
+// --- ★拠点 ---
+function starPoints(cx,cy,r){ let p=[]; const inner=r*0.42; for(let i=0;i<10;i++){ const a=-Math.PI/2+i*Math.PI/5,rad=(i%2===0)?r:inner; p.push((cx+rad*Math.cos(a)).toFixed(1)+','+(cy+rad*Math.sin(a)).toFixed(1)); } return p.join(' '); }
+function buildStar(el){ const g=svg('g',{class:'el-g movable','data-id':el.id}); const cx=ax(el.x),cy=ay(el.y);
+  g.appendChild(svg('polygon',{points:starPoints(cx,cy,el.size),fill:el.color,stroke:'#333','stroke-width':1,'data-id':el.id}));
+  if(el.label && el.label.text) g.appendChild(buildLabel(el,el.size,el.size)); return g; }
+
+// ================= 選択オーバーレイ（ハンドル）=================
+function elBBox(el){ // 概算AABB（選択枠・移動用）
+  if(el.type==='unit'||el.type==='rect'){ const W=ax(el.width),H=ay(el.height); return {x:ax(el.x)-(el.type==='unit'?W/2:0),y:ay(el.y)-(el.type==='unit'?H/2:0),w:W,h:H}; }
+  if(el.type==='star'){ const s=el.size; return {x:ax(el.x)-s,y:ay(el.y)-s,w:s*2,h:s*2}; }
+  if(el.type==='text'){ const node=$('layerEls').querySelector('[data-id="'+el.id+'"] text'); if(node){ const b=node.getBBox(); return {x:b.x,y:b.y,w:b.width,h:b.height}; } return {x:ax(el.x),y:ay(el.y),w:60,h:el.fontSize}; }
+  if(el.type==='arrow'){ const xs=el.points.map(p=>ax(p.x)),ys=el.points.map(p=>ay(p.y)); const minx=Math.min(...xs),miny=Math.min(...ys); return {x:minx,y:miny,w:Math.max(...xs)-minx,h:Math.max(...ys)-miny}; }
+  return {x:ax(el.x),y:ay(el.y),w:10,h:10}; }
+function mkHandle(x,y,cls,onDown){ const h=svg('rect',{x:x-5,y:y-5,width:10,height:10,rx:2,fill:'#fff',stroke:'#4caf50','stroke-width':1.5,class:cls}); h.addEventListener('pointerdown',e=>{ e.stopPropagation(); onDown(e); }); return h; }
+function mkCircle(x,y,cls,onDown,fill){ const h=svg('circle',{cx:x,cy:y,r:6,fill:fill||'#fff',stroke:'#4caf50','stroke-width':1.5,class:cls}); h.addEventListener('pointerdown',e=>{ e.stopPropagation(); onDown(e); }); return h; }
+function renderSelection(){ const ov=$('selOverlay'); ov.innerHTML=''; if(tool!=='select'){ return; }
+  selectedIds.forEach(id=>{ const el=getEl(id); if(!el||el.hidden) return;
+    if(el.type==='unit'){ const cx=ax(el.x),cy=ay(el.y),W=ax(el.width),H=ay(el.height),rot=(el.rotation||0)*Math.PI/180;
+      const corners=[[-W/2,-H/2],[W/2,-H/2],[W/2,H/2],[-W/2,H/2]].map(([lx,ly])=>({x:cx+lx*Math.cos(rot)-ly*Math.sin(rot),y:cy+lx*Math.sin(rot)+ly*Math.cos(rot)}));
+      const poly=svg('polygon',{points:corners.map(c=>c.x+','+c.y).join(' '),fill:'none',stroke:'#4caf50','stroke-width':1,'stroke-dasharray':'4,3'}); ov.appendChild(poly);
+      corners.forEach((c,i)=>ov.appendChild(mkHandle(c.x,c.y,'handle',e=>startResizeUnit(e,el,i))));
+      const topMid={x:(corners[0].x+corners[1].x)/2,y:(corners[0].y+corners[1].y)/2}; const rh={x:topMid.x-Math.sin(rot)*28*0+ (topMid.x-cx)*0, y:topMid.y};
+      const rhx=cx+(0)*Math.cos(rot)-(-H/2-26)*Math.sin(rot), rhy=cy+(0)*Math.sin(rot)+(-H/2-26)*Math.cos(rot);
+      ov.appendChild(svg('line',{x1:topMid.x,y1:topMid.y,x2:rhx,y2:rhy,stroke:'#4caf50','stroke-width':1}));
+      ov.appendChild(mkCircle(rhx,rhy,'rot-handle',e=>startRotate(e,el),'#81c784'));
+      if(el.label && el.label.text){ const lp=labelAnchorPos(el,W/2,H/2); ov.appendChild(mkCircle(lp.x,lp.y,'lbl-handle',e=>startLabel(e,el),'#e3c34a')); }
+    } else if(el.type==='rect'){ const b=elBBox(el); ov.appendChild(svg('rect',{x:b.x,y:b.y,width:b.w,height:b.h,fill:'none',stroke:'#4caf50','stroke-width':1,'stroke-dasharray':'4,3'}));
+      [[b.x,b.y],[b.x+b.w,b.y],[b.x+b.w,b.y+b.h],[b.x,b.y+b.h]].forEach((c,i)=>ov.appendChild(mkHandle(c[0],c[1],'handle',e=>startResizeRect(e,el,i))));
+    } else if(el.type==='arrow'){ el.points.forEach((p,i)=>ov.appendChild(mkHandle(ax(p.x),ay(p.y),'pt-handle',e=>startPoint(e,el,i)))); }
+    else { const b=elBBox(el); ov.appendChild(svg('rect',{x:b.x-2,y:b.y-2,width:b.w+4,height:b.h+4,fill:'none',stroke:'#4caf50','stroke-width':1,'stroke-dasharray':'4,3'}));
+      if(el.type==='star' && el.label && el.label.text){ const lp=labelAnchorPos(el,el.size,el.size); ov.appendChild(mkCircle(lp.x,lp.y,'lbl-handle',e=>startLabel(e,el),'#e3c34a')); } }
+  }); }
+
+// ================= 操作（ポインタ）=================
+function onStageDown(ev){ if(ev.button!==0) return; const p=clientToStage(ev);
+  if(tool==='paint') return;
+  if(tool==='select'){ const node=ev.target.closest('[data-id]');
+    if(node){ const id=node.dataset.id; selectEl(id,ev.shiftKey);
+      drag={mode:'move',sx:p.x,sy:p.y,orig:selectedIds.map(i=>({el:getEl(i),snap:snap(getEl(i))})).filter(o=>o.el)}; }
+    else { if(!ev.shiftKey){ selectedIds=[]; renderSelection(); renderLayerList(); renderProps(); } }
+    return; }
+  if(tool==='unit'||tool==='text'||tool==='star'){ const el=createDefault(tool,rx(p.x),ry(p.y)); addElement(el); selectedIds=[el.id]; setTool('select'); renderAll(); if(tool==='text'||el.type==='text') {} return; }
+  if(tool==='rect'){ const el=createDefault('rect',rx(p.x),ry(p.y)); el.width=0; el.height=0; layerElements.push(el); selectedIds=[el.id]; drag={mode:'createRect',el,x0:p.x,y0:p.y}; renderAll(); return; }
+  if(tool==='arrow'){ if(!arrowDraft) arrowDraft={points:[]}; arrowDraft.points.push({x:rx(p.x),y:ry(p.y)}); renderArrowDraft(); return; }
+}
+function snap(el){ const s={}; if(el.x!=null)s.x=el.x; if(el.y!=null)s.y=el.y; if(el.points)s.points=el.points.map(p=>({x:p.x,y:p.y})); if(el.label)s.label={offsetX:el.label.offsetX,offsetY:el.label.offsetY}; return s; }
+function onStageMove(ev){ if(!drag) return; const p=clientToStage(ev);
+  if(drag.mode==='move'){ const ddx=(p.x-drag.sx)/STAGE_W, ddy=(p.y-drag.sy)/STAGE_H;
+    drag.orig.forEach(o=>{ const el=o.el; if(el.points) el.points=o.snap.points.map(pt=>({x:pt.x+ddx,y:pt.y+ddy})); else { el.x=o.snap.x+ddx; el.y=o.snap.y+ddy; } });
+    renderLayer(); renderSelection(); }
+  else if(drag.mode==='createRect'){ const el=drag.el; el.x=rx(Math.min(drag.x0,p.x)); el.y=ry(Math.min(drag.y0,p.y)); el.width=Math.abs(p.x-drag.x0)/STAGE_W; el.height=Math.abs(p.y-drag.y0)/STAGE_H; renderLayer(); renderSelection(); }
+  else if(drag.mode==='resizeUnit'){ const el=drag.el; const rot=(el.rotation||0)*Math.PI/180; const dx=p.x-ax(el.x),dy=p.y-ay(el.y); const lx=dx*Math.cos(-rot)-dy*Math.sin(-rot), ly=dx*Math.sin(-rot)+dy*Math.cos(-rot); el.width=Math.max(12,Math.abs(lx)*2)/STAGE_W; el.height=Math.max(12,Math.abs(ly)*2)/STAGE_H; renderLayer(); renderSelection(); }
+  else if(drag.mode==='rotate'){ const el=drag.el; let a=Math.atan2(p.y-ay(el.y),p.x-ax(el.x))*180/Math.PI+90; if(ev.shiftKey) a=Math.round(a/15)*15; el.rotation=(a%360+360)%360; renderLayer(); renderSelection(); }
+  else if(drag.mode==='resizeRect'){ const el=drag.el; const fx=drag.fx,fy=drag.fy; el.x=rx(Math.min(fx,p.x)); el.y=ry(Math.min(fy,p.y)); el.width=Math.abs(p.x-fx)/STAGE_W; el.height=Math.abs(p.y-fy)/STAGE_H; renderLayer(); renderSelection(); }
+  else if(drag.mode==='point'){ const el=drag.el; el.points[drag.idx]={x:rx(p.x),y:ry(p.y)}; renderLayer(); renderSelection(); }
+  else if(drag.mode==='label'){ const el=drag.el; el.label.offsetX=drag.ox+(p.x-drag.sx)/STAGE_W; el.label.offsetY=drag.oy+(p.y-drag.sy)/STAGE_H; renderLayer(); renderSelection(); }
+}
+function onUp(){ if(drag){ drag=null; renderProps(); autosave(); } }
+function startResizeUnit(e,el,i){ drag={mode:'resizeUnit',el,corner:i}; }
+function startRotate(e,el){ drag={mode:'rotate',el}; }
+function startResizeRect(e,el,i){ const b=elBBox(el); const opp=[[b.x+b.w,b.y+b.h],[b.x,b.y+b.h],[b.x,b.y],[b.x+b.w,b.y]][i]; drag={mode:'resizeRect',el,fx:opp[0],fy:opp[1]}; }
+function startPoint(e,el,i){ drag={mode:'point',el,idx:i}; }
+function startLabel(e,el){ const p=clientToStage(e); drag={mode:'label',el,sx:p.x,sy:p.y,ox:el.label.offsetX||0,oy:el.label.offsetY||0}; }
+
+// 矢印ドラフト
+function renderArrowDraft(){ let g=$('arrowDraft'); if(g) g.remove(); if(!arrowDraft||!arrowDraft.points.length) return;
+  g=svg('g',{id:'arrowDraft'}); const pts=arrowDraft.points.map(p=>({x:ax(p.x),y:ay(p.y)}));
+  if(pts.length>=2) g.appendChild(svg('path',{d:'M'+pts.map(p=>p.x+','+p.y).join(' L'),fill:'none',stroke:'#E24B4A','stroke-width':3,'stroke-dasharray':'5,4'}));
+  pts.forEach(p=>g.appendChild(svg('circle',{cx:p.x,cy:p.y,r:4,fill:'#E24B4A'}))); $('selOverlay').appendChild(g); }
+function finishArrow(){ if(!arrowDraft) return; let pts=arrowDraft.points; if(pts.length>=2){ const a=pts[pts.length-1],b=pts[pts.length-2]; if(Math.hypot(ax(a.x)-ax(b.x),ay(a.y)-ay(b.y))<6) pts=pts.slice(0,-1); }
+  if(pts.length>=2){ const el=createDefault('arrow',0,0); delete el.x; delete el.y; el.points=pts.map(p=>({x:p.x,y:p.y})); Object.assign(el,{curved:false,lineStyle:'solid',lineWidth:3,color:'#E24B4A',arrowHead:'triangle',arrowPosition:'end',opacity:1}); layerElements.push(el); selectedIds=[el.id]; }
+  arrowDraft=null; const d=$('arrowDraft'); if(d)d.remove(); setTool('select'); renderAll(); autosave(); }
+function cancelArrowDraft(){ arrowDraft=null; const d=$('arrowDraft'); if(d)d.remove(); }
+function onDblClick(ev){ if(tool==='arrow'){ ev.preventDefault(); finishArrow(); return; }
+  const node=ev.target.closest('[data-id]'); if(node){ const el=getEl(node.dataset.id); if(el&&el.type==='text'){ startInlineEdit(el); } } }
+function onKey(e){ if(document.activeElement && ['INPUT','TEXTAREA','SELECT'].includes(document.activeElement.tagName)) return;
+  if((e.key==='Delete'||e.key==='Backspace') && selectedIds.length){ e.preventDefault(); deleteSelected(); }
+  else if(e.key==='Escape'){ if(arrowDraft) cancelArrowDraft(); selectedIds=[]; renderAll(); } }
+
+// インラインテキスト編集
+function startInlineEdit(el){ inlineEl=el; const ta=$('inlineEdit'); const sc=stage.getScreenCTM().a; const pos=stageToClient(ax(el.x),ay(el.y));
+  ta.value=el.text; ta.style.left=pos.x+'px'; ta.style.top=pos.y+'px'; ta.style.fontSize=(el.fontSize*sc)+'px'; ta.style.minWidth=(80)+'px'; ta.style.width=Math.max(80,el.text.length*el.fontSize*sc*0.6)+'px'; ta.style.height=(el.fontSize*sc*1.4*Math.max(1,labelLines(el.text).length))+'px';
+  ta.style.color=el.color; ta.style.display='block'; ta.focus(); ta.select(); }
+function commitInline(){ const ta=$('inlineEdit'); if(!inlineEl){ ta.style.display='none'; return; } inlineEl.text=labelLines(ta.value).join('\n'); ta.style.display='none'; const el=inlineEl; inlineEl=null; renderAll(); autosave(); }
+
+// ================= プロパティパネル =================
+function prow(label,node){ const d=document.createElement('div'); d.className='prow'; if(label){ const l=document.createElement('label'); l.textContent=label; d.appendChild(l);} (Array.isArray(node)?node:[node]).forEach(n=>d.appendChild(n)); return d; }
+function inColor(v,on){ const i=document.createElement('input'); i.type='color'; i.value=v||'#000000'; i.className='mini-sw'; i.oninput=()=>{on(i.value);}; return i; }
+function inNum(v,min,max,on){ const i=document.createElement('input'); i.type='number'; i.value=v; if(min!=null)i.min=min; if(max!=null)i.max=max; i.oninput=()=>on(parseFloat(i.value)); return i; }
+function inText(v,on){ const i=document.createElement('input'); i.type='text'; i.value=v||''; i.oninput=()=>on(i.value); return i; }
+function inRange(v,on){ const i=document.createElement('input'); i.type='range'; i.min=0;i.max=100;i.value=Math.round(v*100); i.oninput=()=>on(i.value/100); return i; }
+function inArea(v,on){ const t=document.createElement('textarea'); t.value=v||''; t.oninput=()=>on(t.value); return t; }
+function seg(opts,cur,on){ const d=document.createElement('div'); d.className='seg'; opts.forEach(o=>{ const b=document.createElement('button'); b.textContent=o.l; if(o.v===cur)b.classList.add('on'); b.onclick=()=>on(o.v); d.appendChild(b); }); return d; }
+function chk(label,v,on){ const w=document.createElement('label'); w.style.fontSize='0.74rem'; const i=document.createElement('input'); i.type='checkbox'; i.checked=!!v; i.onchange=()=>on(i.checked); w.appendChild(i); w.appendChild(document.createTextNode(' '+label)); return w; }
+function upd(el,patch){ Object.assign(el,patch); renderLayer(); renderSelection(); autosave(); }
+function updL(el,patch){ Object.assign(el.label,patch); renderLayer(); renderSelection(); autosave(); }
+
+function renderProps(){ const sec=$('propSec'), pp=$('propPanel'); pp.innerHTML='';
+  if(selectedIds.length!==1){ if(selectedIds.length>1){ sec.style.display='block'; const d=document.createElement('div'); d.className='note'; d.textContent=selectedIds.length+'個を選択中（ドラッグで一括移動・Deleteで削除）'; pp.appendChild(d);
+      const del=document.createElement('button'); del.className='btn-sm'; del.textContent='選択を削除'; del.style.marginTop='8px'; del.onclick=deleteSelected; pp.appendChild(del); } else sec.style.display='none'; return; }
+  sec.style.display='block'; const el=getEl(selectedIds[0]); if(!el){ sec.style.display='none'; return; }
+  // 共通：名前
+  pp.appendChild(prow('名前',inText(el.name,v=>{el.name=v;renderLayerList();autosave();})));
+  if(el.type==='unit') propsUnit(pp,el); else if(el.type==='arrow') propsArrow(pp,el); else if(el.type==='rect') propsRect(pp,el); else if(el.type==='text') propsText(pp,el); else if(el.type==='star') propsStar(pp,el);
+  // z順・削除
+  const zr=document.createElement('div'); zr.className='prow'; const fb=document.createElement('button'); fb.className='btn-sm'; fb.textContent='前面へ'; fb.onclick=bringForward; const bb=document.createElement('button'); bb.className='btn-sm'; bb.textContent='背面へ'; bb.onclick=sendBackward; const db=document.createElement('button'); db.className='btn-sm'; db.textContent='削除'; db.style.color='#d05050'; db.onclick=deleteSelected; zr.append(fb,bb,db); pp.appendChild(zr);
+}
+function labelEditor(pp,el){ const L=el.label;
+  pp.appendChild(prow('ラベル',inArea(L.text,v=>updL(el,{text:v}))));
+  pp.appendChild(prow('位置',seg([{l:'上',v:'top'},{l:'下',v:'bottom'},{l:'左',v:'left'},{l:'右',v:'right'}],L.position,v=>updL(el,{position:v,offsetX:0,offsetY:0}))));
+  pp.appendChild(prow('文字',[inColor(L.color,v=>updL(el,{color:v})),inNum(L.fontSize,8,48,v=>updL(el,{fontSize:v})),chk('太字',L.bold,v=>updL(el,{bold:v}))])); }
+function propsUnit(pp,el){
+  pp.appendChild(prow('色',[inColor(el.fillColor,v=>upd(el,{fillColor:v})),document.createTextNode('濃さ'),inRange(el.opacity==null?1:el.opacity,v=>upd(el,{opacity:v}))]));
+  pp.appendChild(prow('回転',inNum(Math.round(el.rotation||0),0,359,v=>upd(el,{rotation:(v%360+360)%360}))));
+  pp.appendChild(prow('兵科',chk('歩兵（記号なし）',el.infantry,v=>upd(el,{infantry:v}))));
+  if(!el.infantry) pp.appendChild(prow('種別',seg([{l:'機甲',v:'armor'},{l:'砲兵',v:'artillery'},{l:'騎兵',v:'cavalry'},{l:'工兵',v:'engineer'},{l:'空挺',v:'airborne'}],el.infantryType,v=>upd(el,{infantryType:v}))));
+  labelEditor(pp,el); }
+function propsArrow(pp,el){
+  pp.appendChild(prow('色',[inColor(el.color,v=>upd(el,{color:v})),document.createTextNode('太さ'),inNum(el.lineWidth,1,20,v=>upd(el,{lineWidth:v}))]));
+  pp.appendChild(prow('線種',seg([{l:'実線',v:'solid'},{l:'破線',v:'dashed'},{l:'点線',v:'dotted'}],el.lineStyle,v=>upd(el,{lineStyle:v}))));
+  pp.appendChild(prow('形状',seg([{l:'折れ線',v:false},{l:'曲線',v:true}],el.curved,v=>upd(el,{curved:v}))));
+  pp.appendChild(prow('矢頭',seg([{l:'三角',v:'triangle'},{l:'開矢',v:'open'},{l:'なし',v:'none'}],el.arrowHead,v=>upd(el,{arrowHead:v}))));
+  pp.appendChild(prow('矢の位置',seg([{l:'終点',v:'end'},{l:'両端',v:'both'}],el.arrowPosition,v=>upd(el,{arrowPosition:v})))); }
+function propsRect(pp,el){
+  pp.appendChild(prow('塗り',[inColor(el.fillColor,v=>upd(el,{fillColor:v})),document.createTextNode('透明度'),inRange(el.fillOpacity==null?1:el.fillOpacity,v=>upd(el,{fillOpacity:v}))]));
+  const bgb=document.createElement('button'); bgb.className='btn-sm'; bgb.textContent='背景色と同色（目隠し）'; bgb.onclick=()=>{ upd(el,{fillColor:$('bg').getAttribute('fill'),fillOpacity:1}); renderProps(); }; pp.appendChild(prow('',bgb));
+  pp.appendChild(prow('枠線',chk('枠線あり',el.borderEnabled,v=>{upd(el,{borderEnabled:v});renderProps();})));
+  if(el.borderEnabled){ pp.appendChild(prow('枠',[inColor(el.borderColor,v=>upd(el,{borderColor:v})),inNum(el.borderWidth,1,10,v=>upd(el,{borderWidth:v}))]));
+    pp.appendChild(prow('枠線種',seg([{l:'実線',v:'solid'},{l:'破線',v:'dashed'},{l:'点線',v:'dotted'}],el.borderStyle,v=>upd(el,{borderStyle:v})))); } }
+function propsText(pp,el){
+  pp.appendChild(prow('文章',inArea(el.text,v=>upd(el,{text:v}))));
+  pp.appendChild(prow('文字',[inColor(el.color,v=>upd(el,{color:v})),inNum(el.fontSize,8,48,v=>upd(el,{fontSize:v})),chk('太字',el.bold,v=>upd(el,{bold:v}))]));
+  pp.appendChild(prow('背景',chk('背景塗りあり',el.bgEnabled,v=>{upd(el,{bgEnabled:v});renderProps();})));
+  if(el.bgEnabled) pp.appendChild(prow('背景色',[inColor(el.bgColor,v=>upd(el,{bgColor:v})),document.createTextNode('透明度'),inRange(el.bgOpacity==null?0.8:el.bgOpacity,v=>upd(el,{bgOpacity:v}))])); }
+function propsStar(pp,el){
+  pp.appendChild(prow('色',[inColor(el.color,v=>upd(el,{color:v})),document.createTextNode('大きさ'),inNum(el.size,6,48,v=>upd(el,{size:v}))]));
+  labelEditor(pp,el); }
+
+// ================= レイヤー一覧 =================
+function renderLayerList(){ const list=$('layerList'); list.innerHTML='';
+  if(!layerElements.length){ const d=document.createElement('div'); d.className='note'; d.textContent='まだ要素がありません。ツールを選んで地図に配置してください。'; list.appendChild(d); return; }
+  // 前面（配列末尾）を上に表示
+  layerElements.slice().reverse().forEach(el=>{ const item=document.createElement('div'); item.className='layer-item'+(selectedIds.includes(el.id)?' sel':'')+(el.hidden?' hidden-el':''); item.draggable=true; item.dataset.id=el.id;
+    const vis=document.createElement('button'); vis.className='lbtn'; vis.textContent=el.hidden?'🚫':'👁'; vis.title='表示/非表示'; vis.onclick=e=>{ e.stopPropagation(); el.hidden=!el.hidden; renderAll(); autosave(); };
+    const ic=document.createElement('span'); ic.className='licon'; ic.textContent=TYPE_ICON[el.type]||'•';
+    const nm=document.createElement('span'); nm.className='lname'; nm.textContent=el.name;
+    const up=document.createElement('button'); up.className='lbtn'; up.textContent='▲'; up.title='前面へ'; up.onclick=e=>{ e.stopPropagation(); selectedIds=[el.id]; bringForward(); };
+    const dn=document.createElement('button'); dn.className='lbtn'; dn.textContent='▼'; dn.title='背面へ'; dn.onclick=e=>{ e.stopPropagation(); selectedIds=[el.id]; sendBackward(); };
+    const del=document.createElement('button'); del.className='lbtn'; del.textContent='✕'; del.title='削除'; del.style.color='#d05050'; del.onclick=e=>{ e.stopPropagation(); selectedIds=[el.id]; deleteSelected(); };
+    item.append(vis,ic,nm,up,dn,del);
+    item.onclick=()=>{ if(tool!=='select') setTool('select'); selectedIds=[el.id]; renderAll(); };
+    // ドラッグ&ドロップで並べ替え
+    item.addEventListener('dragstart',e=>{ e.dataTransfer.setData('text/plain',el.id); });
+    item.addEventListener('dragover',e=>{ e.preventDefault(); item.classList.add('drag-over'); });
+    item.addEventListener('dragleave',()=>item.classList.remove('drag-over'));
+    item.addEventListener('drop',e=>{ e.preventDefault(); item.classList.remove('drag-over'); const srcId=e.dataTransfer.getData('text/plain'); reorderDrop(srcId,el.id); });
+    list.appendChild(item); }); }
+function reorderDrop(srcId,dstId){ if(srcId===dstId) return; const si=layerElements.findIndex(e=>e.id===srcId); if(si<0) return; const [moved]=layerElements.splice(si,1); let di=layerElements.findIndex(e=>e.id===dstId);
+  // リストは前面が上。dstの「前面側」に置く＝配列上はdstの直後（+1）
+  layerElements.splice(di+1,0,moved); renderAll(); autosave(); }
+
+// ================= PNG出力 =================
+function exportPNG(){ selectedIds=[]; cancelArrowDraft(); renderSelection();
+  const [W,H]=SIZES[outputSize]; const xml=new XMLSerializer().serializeToString(stage); const svgStr='<?xml version="1.0" encoding="UTF-8"?>\n'+xml;
+  const blob=new Blob([svgStr],{type:'image/svg+xml;charset=utf-8'}); const url=URL.createObjectURL(blob); const img=new Image();
+  img.onload=()=>{ const cv=document.createElement('canvas'); cv.width=W; cv.height=H; cv.getContext('2d').drawImage(img,0,0,W,H); URL.revokeObjectURL(url);
+    cv.toBlob(b=>{ const a=document.createElement('a'); let fn=($('fileName').value||'map').trim().replace(/\.png$/i,''); a.href=URL.createObjectURL(b); a.download=fn+'_'+outputSize+'.png'; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),1000); },'image/png'); };
+  img.onerror=()=>alert('PNG変換に失敗しました。'); img.src=url; }
+
+// ================= 保存 / 読み込み / 自動保存 =================
+function serializeState(){ const prefs=[]; mapSvg.querySelectorAll('.prefecture').forEach(g=>{ const code=g.getAttribute('data-code'); if(fills[code]){ const t=g.querySelector('title'); prefs.push({id:code,name:(t?t.textContent:'').split('/')[0].trim(),color:fills[code],opacity}); } });
+  return { version:SCHEMA_VERSION, savedAt:nowISO(), title:$('titleInput').value, backgroundColor:$('bg').getAttribute('fill'), borderMode, opacity, legendPos, outputSize, prefectures:prefs, legend:legend.map((l,i)=>({id:'leg_'+pad3(i+1),color:l.color,label:l.text})), layerElements:layerElements }; }
+
+function migrateStar(s){ return { id:s.id||uid(), type:'star', name:autoName('star'), hidden:false, x:+s.x||0, y:+s.y||0, size:+s.size||16, color:s.color||'#D32F2F',
+  label:{ text:(typeof s.label==='string')?s.label:((s.label&&s.label.text)||''), position:'right', offsetX:0, offsetY:0, fontSize:13, color:'#000000', bold:false } }; }
+function normEl(el){ if(!el||!el.type) return null; if(!el.id) el.id=uid(); if(!el.name) el.name=autoName(el.type); if(el.hidden==null) el.hidden=false;
+  if((el.type==='unit'||el.type==='star') && !el.label) el.label=defaultLabel(el.type==='star'?'right':'bottom');
+  if(el.label){ const L=el.label; if(L.offsetX==null)L.offsetX=0; if(L.offsetY==null)L.offsetY=0; if(L.fontSize==null)L.fontSize=13; if(!L.color)L.color='#000000'; if(!L.position)L.position='bottom'; }
+  return el; }
+
+function applyState(s){ restoring=true;
+  $('titleInput').value=s.title||''; $('title').textContent=s.title||'';
+  const bg=s.backgroundColor||'#F5F0E8'; $('bg').setAttribute('fill',bg); $('bgPicker').value=bg;
+  document.querySelectorAll('#bgPresets .sw').forEach((d,i)=>d.classList.toggle('active',(BG_PRESETS[i]&&BG_PRESETS[i].c.toUpperCase())===bg.toUpperCase()));
+  opacity=(typeof s.opacity==='number')?s.opacity:0.8; $('opacity').value=Math.round(opacity*100); $('opacityVal').textContent=Math.round(opacity*100)+'%';
+  borderMode=s.borderMode||'normal'; setActive('#borderBtns','b',borderMode);
+  fills={}; (s.prefectures||[]).forEach(p=>{ if(p&&p.id) fills[p.id]=p.color||'#4a7fb5'; }); applyFills();
+  legend=(s.legend||[]).map(l=>({color:l.color||'#4a7fb5',text:l.label||''})); renderLegendList();
+  legendPos=s.legendPos||'bl'; setActive('#legendPos','p',legendPos); renderLegend();
+  setOutputSize(SIZES[s.outputSize]?s.outputSize:'S',true);
+  // 要素（v1→v2移行）
+  uidCounter=0; nameCounter={};
+  if(s.version==='1.0'){ layerElements=(s.stars||[]).map(migrateStar); }
+  else { layerElements=(s.layerElements||[]).map(normEl).filter(Boolean); }
+  // uidCounter を既存IDの最大に合わせる
+  layerElements.forEach(e=>{ const m=/el_(\d+)/.exec(e.id||''); if(m) uidCounter=Math.max(uidCounter,+m[1]); });
+  selectedIds=[]; setTool('select'); renderAll(); restoring=false; }
+
+function autosave(){ if(restoring) return; clearTimeout(autosaveTimer); autosaveTimer=setTimeout(()=>{ try{ localStorage.setItem(AUTOSAVE_KEY,JSON.stringify(serializeState())); }catch(e){} },500); }
+function saveWork(){ const def='mapwork_'+stamp()+'.json'; let name=prompt('作業ファイル名を入力してください：',def); if(name===null) return; name=name.trim()||def; if(!/\.json$/i.test(name)) name+='.json';
+  const blob=new Blob([JSON.stringify(serializeState(),null,2)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),1000); }
+function loadWork(){ if(!confirm('現在の作業が破棄されます。よろしいですか？')) return; $('loadFile').click(); }
+function onLoadFile(ev){ const file=ev.target.files[0]; ev.target.value=''; if(!file) return; const r=new FileReader();
+  r.onload=()=>{ let s; try{ s=JSON.parse(r.result); }catch(e){ alert('ファイルを読み込めませんでした（JSONの形式が不正です）。現在の状態は維持されます。'); return; }
+    if(!s || (s.version!=='1.0' && s.version!=='2.0')){ alert('このファイルは未対応のバージョンです（version: '+((s&&s.version)||'不明')+'）。現在の状態は維持されます。'); return; }
+    applyState(s); try{ localStorage.setItem(AUTOSAVE_KEY,JSON.stringify(serializeState())); }catch(e){} };
+  r.onerror=()=>alert('ファイルを読み込めませんでした。'); r.readAsText(file); }
+
+function resetAll(){ if(!confirm('塗り・レイヤー要素・凡例・タイトルをすべて消去します。よろしいですか？')) return; restoring=true;
+  fills={}; layerElements=[]; selectedIds=[]; legend=[]; legendPos='bl'; uidCounter=0; nameCounter={}; applyFills();
+  $('titleInput').value=''; $('title').textContent=''; setActive('#legendPos','p','bl'); legend.push({color:PAINT_COLORS[0],text:''}); renderLegendList(); renderLegend();
+  setOutputSize('S',true); setTool('select'); renderAll(); restoring=false; try{ localStorage.removeItem(AUTOSAVE_KEY); }catch(e){} }
+
+function freshStart(){ restoring=true; fills={}; layerElements=[]; selectedIds=[]; legend=[]; legendPos='bl'; outputSize='S'; uidCounter=0; nameCounter={};
+  applyFills(); legend.push({color:PAINT_COLORS[0],text:''}); renderLegendList(); renderLegend(); setActive('#legendPos','p','bl'); setOutputSize('S',true); setTool('select'); renderAll(); restoring=false; }
+
+window.addEventListener('beforeunload',()=>{ try{ localStorage.setItem(AUTOSAVE_KEY,JSON.stringify(serializeState())); }catch(e){} });
+
+init();
