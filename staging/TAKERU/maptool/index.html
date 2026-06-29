@@ -597,7 +597,8 @@ function starPoints(cx,cy,r){
   }
   return pts.join(' ');
 }
-function renderMarkers(){
+function renderMarkers(){ renderMarkerLayer(); renderMarkerList(); }
+function renderMarkerLayer(){
   const layer=document.getElementById('markerLayer');
   layer.innerHTML='';
   markers.forEach((mk,i)=>{
@@ -627,18 +628,17 @@ function renderMarkers(){
       const p=clientToStage(ev);
       dragIdx=i; selMarker=i;
       dragDX=p.x-mk.x; dragDY=p.y-mk.y;
-      renderMarkers(); renderMarkerList();
+      renderMarkers();
     });
     layer.appendChild(g);
   });
-  renderMarkerList();
 }
 function onPointerMove(ev){
   if(dragIdx<0) return;
   const p=clientToStage(ev);
   markers[dragIdx].x=Math.round(p.x-dragDX);
   markers[dragIdx].y=Math.round(p.y-dragDY);
-  renderMarkers(); autosave();
+  renderMarkerLayer(); autosave();   // ドラッグ中は一覧を作り直さない（入力欄のフォーカス保持）
 }
 function renderMarkerList(){
   const el=document.getElementById('markerList');
@@ -647,9 +647,9 @@ function renderMarkerList(){
   markers.forEach((mk,i)=>{
     const row=document.createElement('div'); row.className='list-item';
     const sw=document.createElement('input'); sw.type='color'; sw.value=mk.color; sw.className='mini-sw';
-    sw.oninput=()=>{ mk.color=sw.value; renderMarkers(); autosave(); };
+    sw.oninput=()=>{ mk.color=sw.value; renderMarkerLayer(); autosave(); };
     const tx=document.createElement('input'); tx.type='text'; tx.value=mk.label; tx.placeholder='ラベル文字';
-    tx.oninput=()=>{ mk.label=tx.value; renderMarkers(); autosave(); };
+    tx.oninput=()=>{ mk.label=tx.value; renderMarkerLayer(); autosave(); };
     const del=document.createElement('button'); del.className='del'; del.textContent='✕';
     del.onclick=()=>{ markers.splice(i,1); selMarker=-1; renderMarkers(); autosave(); };
     row.append(sw,tx,del);
