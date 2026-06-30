@@ -15,6 +15,16 @@
       {
         "mp3": "dj_008_02.mp3"
       }
+    ],
+    "drinks": [
+      {
+        "name": "ジョニーウォーカー ブラックラベル 12年",
+        "amazon_url": "https://amzn.to/440CrO7?tag=itsophie-22"
+      },
+      {
+        "name": "オールドパー 12年",
+        "amazon_url": "https://amzn.to/4g9jEY9?tag=itsophie-22"
+      }
     ]
   },
   {
@@ -32,6 +42,20 @@
       },
       {
         "mp3": "dj_007_02.mp3"
+      }
+    ],
+    "drinks": [
+      {
+        "name": "シーバスリーガル12年",
+        "amazon_url": "https://amzn.to/4eBhOhA?tag=itsophie-22"
+      },
+      {
+        "name": "レミーマルタン VSOP",
+        "amazon_url": "https://amzn.to/4oTNaU2?tag=itsophie-22"
+      },
+      {
+        "name": "サントリー ウイスキー ローヤル",
+        "amazon_url": "https://amzn.to/4uYwJXT?tag=itsophie-22"
       }
     ]
   },
@@ -83,6 +107,20 @@
       {
         "mp3": "dj_005_02.mp3"
       }
+    ],
+    "drinks": [
+      {
+        "name": "サントリー ウイスキー レッド",
+        "amazon_url": "https://amzn.to/4fbKXjt?tag=itsophie-22"
+      },
+      {
+        "name": "越乃寒梅 白ラベル",
+        "amazon_url": "https://amzn.to/3Rc05nV?tag=itsophie-22"
+      },
+      {
+        "name": "三芳菊 特別純米",
+        "amazon_url": "https://amzn.to/4oTp77A?tag=itsophie-22"
+      }
     ]
   },
   {
@@ -100,6 +138,12 @@
       },
       {
         "mp3": "dj_004_02.mp3"
+      }
+    ],
+    "drinks": [
+      {
+        "name": "サントリー オールド",
+        "amazon_url": "https://amzn.to/4wg1Lvr?tag=itsophie-22"
       }
     ]
   },
@@ -119,6 +163,12 @@
       {
         "mp3": "dj_003_02.mp3"
       }
+    ],
+    "drinks": [
+      {
+        "name": "サントリー ウイスキー トリス",
+        "amazon_url": "https://amzn.to/4eCBJg3?tag=itsophie-22"
+      }
     ]
   },
   {
@@ -133,6 +183,15 @@
       {
         "mp3": "dj_002_01.mp3",
         "youtube_id": "w0ht7Wkkc3s"
+      },
+      {
+        "mp3": "dj_002_02.mp3"
+      }
+    ],
+    "drinks": [
+      {
+        "name": "中華牌 桂花陳酒",
+        "amazon_url": "https://amzn.to/4aq0yt9?tag=itsophie-22"
       }
     ]
   },
@@ -151,6 +210,12 @@
       },
       {
         "mp3": "dj_001_02.mp3"
+      }
+    ],
+    "drinks": [
+      {
+        "name": "サントリー ウイスキー ホワイト",
+        "amazon_url": "https://amzn.to/4gOeBwu?tag=itsophie-22"
       }
     ]
   }
