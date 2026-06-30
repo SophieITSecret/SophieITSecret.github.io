@@ -11,6 +11,47 @@
     <meta name="theme-color" content="#0d0d1a">
     <title>TAKERU｜MSアカデミー</title>
     <link rel="stylesheet" href="style.css">
+    <style>
+        #sw-update-toast {
+            position: fixed;
+            bottom: 28px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #F5F0E8;
+            color: #2a2a1a;
+            border-radius: 10px;
+            padding: 16px 22px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.45);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            z-index: 9999;
+            font-size: 14px;
+            min-width: 250px;
+            text-align: center;
+            font-family: inherit;
+        }
+        .sw-toast-btns { display: flex; gap: 12px; }
+        #sw-btn-update {
+            background: #4a3728;
+            color: #F5F0E8;
+            border: none;
+            border-radius: 6px;
+            padding: 8px 20px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        #sw-btn-later {
+            background: transparent;
+            color: #4a3728;
+            border: 1px solid #8a7060;
+            border-radius: 6px;
+            padding: 8px 20px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+    </style>
 </head>
 <body class="dark-mode">
 
@@ -77,11 +118,54 @@
 
     <button id="btn-settings">⚙</button>
     <div class="ver">TAKERU v2.3</div>
+
+    <div id="sw-update-toast" style="display:none;">
+        <span>新しいバージョンがあります</span>
+        <div class="sw-toast-btns">
+            <button id="sw-btn-update">更新する</button>
+            <button id="sw-btn-later">後で</button>
+        </div>
+    </div>
+
     <script src="app.js"></script>
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js');
+                let waitingWorker = null;
+
+                function showUpdateToast(waiting) {
+                    waitingWorker = waiting;
+                    document.getElementById('sw-update-toast').style.display = 'flex';
+                }
+
+                navigator.serviceWorker.register('./sw.js').then(reg => {
+                    // 前回「後で」を押した場合など、既に waiting SW がある場合
+                    if (reg.waiting && navigator.serviceWorker.controller) {
+                        showUpdateToast(reg.waiting);
+                    }
+
+                    reg.addEventListener('updatefound', () => {
+                        const newWorker = reg.installing;
+                        newWorker.addEventListener('statechange', () => {
+                            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                showUpdateToast(newWorker);
+                            }
+                        });
+                    });
+                });
+
+                // 新SWが制御を引き継いだらリロード
+                navigator.serviceWorker.addEventListener('controllerchange', () => {
+                    location.reload();
+                });
+
+                document.getElementById('sw-btn-update').addEventListener('click', () => {
+                    if (waitingWorker) waitingWorker.postMessage('SKIP_WAITING');
+                });
+
+                document.getElementById('sw-btn-later').addEventListener('click', () => {
+                    document.getElementById('sw-update-toast').style.display = 'none';
+                });
             });
         }
     </script>

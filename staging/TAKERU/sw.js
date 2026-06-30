@@ -17,8 +17,12 @@ self.addEventListener('install', e => {
     e.waitUntil(
         caches.open(CACHE_NAME)
             .then(cache => cache.addAll(PRE_CACHE))
-            .then(() => self.skipWaiting())
+        // skipWaiting はユーザー確認後に message 経由で実行
     );
+});
+
+self.addEventListener('message', e => {
+    if (e.data === 'SKIP_WAITING') self.skipWaiting();
 });
 
 self.addEventListener('activate', e => {
