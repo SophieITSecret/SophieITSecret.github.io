@@ -152,10 +152,18 @@
                             }
                         });
                     });
+
+                    // PWAが前面に戻った時に更新チェック（完全終了しなくても検知できる）
+                    document.addEventListener('visibilitychange', () => {
+                        if (document.visibilityState === 'visible') reg.update().catch(() => {});
+                    });
                 });
 
-                // 新SWが制御を引き継いだらリロード
+                // 新SWが制御を引き継いだらリロード（ループ防止ガード付き）
+                let refreshing = false;
                 navigator.serviceWorker.addEventListener('controllerchange', () => {
+                    if (refreshing) return;
+                    refreshing = true;
                     location.reload();
                 });
 
