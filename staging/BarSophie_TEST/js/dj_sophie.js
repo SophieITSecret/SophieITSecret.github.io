@@ -485,7 +485,7 @@ function _startFlow(episode) {
         }
         const seg = segments[idx];
         if (isMulti) _updateSubtitle(episode, idx);
-        if (idx > 0) _showSophieMonitor();
+        if (idx > 0) { _showSophieMonitor(); _showDrinks(episode); }
 
         if (!seg.youtube_id) {
             _playAfterAudio(seg.mp3, onAllDone, _preAudioMap[seg.mp3]);
@@ -519,6 +519,54 @@ function _updateSubtitle(episode, idx) {
     } else {
         el.innerHTML = pos;
     }
+}
+
+// ---- お酒紹介リンク（後半パートで表示）----
+function _showDrinks(episode) {
+    const drinks = episode && episode.drinks;
+    if (!Array.isArray(drinks) || drinks.length === 0) return;
+    const lv = document.getElementById('list-view');
+    if (!lv) return;
+    if (document.getElementById('dj-drinks')) return; // 既に表示済み
+
+    const panel = document.createElement('div');
+    panel.id = 'dj-drinks';
+    panel.style.cssText = [
+        'margin:12px 12px 4px', 'padding:8px 10px 4px',
+        'border-top:1px solid #2a2a2a',
+        'opacity:0', 'transition:opacity 0.6s ease',
+    ].join(';');
+
+    const label = document.createElement('div');
+    label.textContent = '🥃 今夜のお酒';
+    label.style.cssText = 'color:#c8a060; font-size:0.68rem; margin-bottom:7px; letter-spacing:0.06em;';
+    panel.appendChild(label);
+
+    const list = document.createElement('div');
+    list.style.cssText = 'display:flex; flex-direction:column; gap:6px;';
+    drinks.forEach(d => {
+        if (!d || !d.name || !d.amazon_url) return; // URLなしは表示しない
+        const a = document.createElement('a');
+        a.href = d.amazon_url;
+        a.target = '_blank';
+        a.rel = 'noopener noreferrer';
+        a.textContent = `🍶 ${d.name}`;
+        a.style.cssText = [
+            'display:block', 'text-decoration:none',
+            'background:#1a1a1a', 'border:1px solid #3a3a2a',
+            'color:#e0c890', 'border-radius:8px',
+            'padding:9px 12px', 'font-size:0.82rem',
+            '-webkit-tap-highlight-color:transparent',
+        ].join(';');
+        list.appendChild(a);
+    });
+    if (!list.children.length) return;
+    panel.appendChild(list);
+    lv.appendChild(panel);
+    requestAnimationFrame(() => { panel.style.opacity = '1'; });
+}
+function _hideDrinks() {
+    document.getElementById('dj-drinks')?.remove();
 }
 
 // ---- 横画面レイアウト ----
@@ -689,6 +737,7 @@ export function djClose(onBack) {
 
     document.getElementById('dj-thumb')?.remove();
     document.getElementById('dj-modal')?.remove();
+    _hideDrinks();
 
     const yt = document.getElementById('yt-wrapper');
     if (yt) yt.style.display = 'none';

@@ -51,6 +51,20 @@
       {
         "mp3": "dj_006_02.mp3"
       }
+    ],
+    "drinks": [
+      {
+        "name": "アーリー タイムズ",
+        "amazon_url": "https://amzn.to/4fbT8MJ?tag=itsophie-22"
+      },
+      {
+        "name": "I.W.ハーパー",
+        "amazon_url": "https://amzn.to/4eBdBKO?tag=itsophie-22"
+      },
+      {
+        "name": "メーカーズマーク",
+        "amazon_url": "https://amzn.to/4whISbs?tag=itsophie-22"
+      }
     ]
   },
   {

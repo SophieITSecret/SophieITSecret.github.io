@@ -70,6 +70,8 @@ function _stopNarration() {
     window._lastSophieVoiceAudio = null;
   }
   try { window.speechSynthesis.cancel(); } catch (e) {}
+  // ユーザーが操作した＝アクティブなので、アイドル時の「お店の使い方」カウションを解除
+  if (window._cancelGuestCaution) window._cancelGuestCaution();
 }
 function _playNarration(src) {
   _stopNarration();
@@ -171,13 +173,26 @@ function setup() {
             if (ytPlayerReady && ytPlayer) {
                 try { ytPlayer.mute(); ytPlayer.loadVideoById('2vfCbdmKhMw'); setTimeout(() => { ytPlayer.pauseVideo(); ytPlayer.unMute(); }, 1000); } catch (e) { }
             }
-            playVoice("./voices_mp3/greeting.mp3", "いらっしゃいませ。");
+            // ★ラウンジ挨拶の分岐（会員 / ゲスト初回 / ゲスト再来店）
+            let _lngSrc, _lngTxt;
+            if (window.currentUser) {
+                _lngSrc = "./voices_mp3/greeting.mp3";
+                _lngTxt = "いらっしゃいませ。お待ちしておりました。いつものお席へどうぞ。";
+            } else if (localStorage.getItem('sophie_visited') === 'true') {
+                _lngSrc = "./voices_mp3/sophie_lounge_return.mp3";
+                _lngTxt = "いらっしゃいませ。BARソフィーへ、またおいでいただけましたね。";
+            } else {
+                _lngSrc = "./voices_mp3/sophie_lounge_first.mp3";
+                _lngTxt = "はじめまして、ようこそBARソフィーへ！";
+            }
+            playVoice(_lngSrc, _lngTxt);
         }, 1000);
     };
 
     document.getElementById('btn-to-bar').onclick = () => {
         document.getElementById('chat-mode').style.display = 'none';
         document.getElementById('main-ui').style.display = 'flex';
+        _stopNarration();
         window.speechSynthesis.cancel();
         talkAudio.pause();
         showRootMenu();
