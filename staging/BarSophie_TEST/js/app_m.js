@@ -63,6 +63,23 @@ function playSophieVoice(screen) {
 
 window.playSophieVoice = playSophieVoice;
 
+// ★ナレーション共通制御：ユーザーアクションが入ったら前のセリフを必ず止める
+function _stopNarration() {
+  if (window._lastSophieVoiceAudio) {
+    try { window._lastSophieVoiceAudio.pause(); } catch (e) {}
+    window._lastSophieVoiceAudio = null;
+  }
+  try { window.speechSynthesis.cancel(); } catch (e) {}
+}
+function _playNarration(src) {
+  _stopNarration();
+  const a = new Audio(src);
+  window._lastSophieVoiceAudio = a;
+  a.play().catch(() => {});
+  return a;
+}
+window._stopNarration = _stopNarration;
+
 let talkAudio;
 let ytPlayer = null;
 let ytPlayerReady = false;
@@ -168,8 +185,9 @@ function setup() {
         if (!isGuest) playSophieVoice('counter');
     };
 
-    document.getElementById('btn-music').onclick = _showMusicSubmenu;
+    document.getElementById('btn-music').onclick = () => _showMusicSubmenu('above');
     document.getElementById('btn-sake').onclick = () => {
+        _stopNarration();
         nav.updateNav("notice");
         utils.setListView(`
             <div style="padding:12px; display:flex; flex-direction:column; gap:8px;">
@@ -183,6 +201,7 @@ function setup() {
     // ★以下2行を追加
     document.getElementById('btn-news').onclick = () => showNewsMarket();
     document.getElementById('btn-notice').onclick = () => {
+        _stopNarration();
         const ice = new Audio('./voices_mp3/ice.mp3');
         ice.onended = () => { import('./favorite.js').then(f => { f.openNotice(); renderConsole('standard'); }); };
         ice.play().catch(() => { import('./favorite.js').then(f => { f.openNotice(); renderConsole('standard'); }); });
@@ -428,7 +447,7 @@ function _tdShowRandom(exclude = []) {
 
     // 操作ボタン行（小さめピル）— 長方形グロー防止のためtdFadeIn使用
     const ctrlRow = document.createElement('div');
-    ctrlRow.style.cssText = 'display:flex; gap:12px; justify-content:center; margin-top:72px;';
+    ctrlRow.style.cssText = 'display:flex; gap:26px; justify-content:center; margin-top:72px;';
     [
         { id: 'td-wrong-btn', text: '違うよ',         color: '#cc6666', border: 'rgba(180,80,80,0.5)',   delay: '0.45s' },
         { id: 'td-menu-btn',  text: 'メニュー見せて', color: '#88bbaa', border: 'rgba(80,160,130,0.5)', delay: '0.55s' },
@@ -484,7 +503,9 @@ function _tdOshioki() {
         window._ytPlayer?.loadVideoById('2vfCbdmKhMw');
     } catch(e) {}
 
+    _stopNarration();
     const voiceAudio = new Audio('./voices_mp3/sophie_counter_oshioki.mp3');
+    window._lastSophieVoiceAudio = voiceAudio;
     voiceAudio.play().catch(() => {});
 
     const area = document.getElementById('tsundere-random-area');
@@ -564,8 +585,7 @@ function _tdClearArea() {
 }
 
 function _tdGuestPrompt() {
-    const a = new Audio('./voices_mp3/guest_login_01.mp3');
-    a.play().catch(() => {});
+    _playNarration('./voices_mp3/guest_login_01.mp3');
     const area = document.getElementById('tsundere-random-area');
     if (!area || document.getElementById('td-login-btn')) return;
     const btn = document.createElement('button');
@@ -591,6 +611,7 @@ function _restoreClassicHandlers() {
     const btnNotice = document.getElementById('btn-notice');
     if (btnNotice) {
         btnNotice.onclick = () => {
+            _stopNarration();
             const ice = new Audio('./voices_mp3/ice.mp3');
             ice.onended = () => { import('./favorite.js').then(f => { f.openNotice(); renderConsole('standard'); }); };
             ice.play().catch(() => { import('./favorite.js').then(f => { f.openNotice(); renderConsole('standard'); }); });
@@ -599,11 +620,10 @@ function _restoreClassicHandlers() {
 }
 
 function _playTdVoice(src) {
-    const a = new Audio(src);
-    a.play().catch(() => {});
+    _playNarration(src);
 }
 
-function _showMusicSubmenu() {
+function _showMusicSubmenu(from = 'above') {
     const lv = document.getElementById('list-view');
     const nm = document.getElementById('nav-main');
     if (nm) nm.style.display = 'none';
@@ -654,8 +674,14 @@ function _showMusicSubmenu() {
     nav.updateNav('notice');
     renderConsole('standard');
 
+    // ★案内ナレーション：上位から来た時はintro、下から戻った時はback
+    _playNarration(from === 'back'
+        ? './voices_mp3/sophie_music_back.mp3'
+        : './voices_mp3/sophie_music_intro.mp3');
+
     document.getElementById('ms-dj').onclick = () => {
-        djSophie.showDJList(showRootMenu);
+        _playNarration('./voices_mp3/sophie_dj_intro.mp3');
+        djSophie.showDJList(() => _showMusicSubmenu('back'));
     };
     document.getElementById('ms-music').onclick = () => {
         if (music.openMusic) music.openMusic();
@@ -755,10 +781,13 @@ function handleBack() {
         });
         return;
     }
-    if (nav.state === 'dj') { showRootMenu(); return; }
+    // DJリストの戻る → 1つ上（音楽サブメニュー）
+    if (nav.state === 'dj') { _showMusicSubmenu('back'); return; }
     if (["shop", "notice"].includes(nav.state)) { showRootMenu(); return; }
     if (liquor.handleLiquorBack && liquor.handleLiquorBack()) return;
     if (music.handleBack && music.handleBack()) return;
+    // 音楽リスト最上層（アーティスト一覧）の戻る → 1つ上（音楽サブメニュー）
+    if (nav.state === 'art') { _showMusicSubmenu('back'); return; }
     showRootMenu();
 }
 
@@ -776,6 +805,7 @@ function setupNextButton() {
 
 // ★ 画面ごとのSボタン動作
 function handleSButton() {
+    _stopNarration();
     const ice = new Audio('./voices_mp3/ice.mp3');
     ice.onended = () => showSophieMenu();
     ice.play().catch(() => showSophieMenu());
