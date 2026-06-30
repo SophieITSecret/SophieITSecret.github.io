@@ -623,7 +623,7 @@ function _showMusicSubmenu() {
                     <button class="act-btn" id="ms-dj"
                             style="background:#2f2a55; border:1.5px solid #4dd0e1; color:#ff69b4;
                                    height:auto; min-height:0; display:flex; flex-direction:column;
-                                   align-items:center; justify-content:center; gap:26px;
+                                   align-items:center; justify-content:center; gap:40px;
                                    padding:20px 16px; border-radius:14px; line-height:1.3;">
                         <span style="display:block; width:100%; text-align:center;
                                      font-size:1.2rem; font-weight:bold;">🎙️ DJソフィーの歌とお酒の物語</span>
@@ -637,13 +637,13 @@ function _showMusicSubmenu() {
                     <button class="act-btn" id="ms-music"
                             style="background:var(--green);
                                    height:auto; min-height:0; display:flex; flex-direction:column;
-                                   align-items:center; justify-content:center; gap:26px;
+                                   align-items:center; justify-content:center; gap:40px;
                                    padding:20px 16px; border-radius:14px; line-height:1.3;">
                         <span style="display:block; width:100%; text-align:center;
                                      font-size:1.3rem; font-weight:bold;">🎵 音楽リクエスト</span>
                         <span style="display:block; width:100%; text-align:center;
                                      font-size:0.76rem; font-weight:normal; line-height:1.6;
-                                     color:#5cc4de;">
+                                     color:#16265f;">
                             昭和の名曲を中心に600曲以上を収録してます。<br>
                             歌手別・ジャンル別でお好みの一曲をどうぞ。
                         </span>

@@ -552,7 +552,7 @@
         </div>
     </div>
 
-    <script type="module" src="js/app_m.js?v=27"></script>
+    <script type="module" src="js/app_m.js?v=30"></script>
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
@@ -574,6 +574,13 @@
                   showUpdateToast(newWorker);
                 }
               });
+            });
+
+            // ★アプリが再び前面に出た時に更新チェック（完全終了しなくても検知できる）
+            document.addEventListener('visibilitychange', () => {
+              if (document.visibilityState === 'visible') {
+                reg.update().catch(() => {});
+              }
             });
           }).catch(err => console.log('SW registration failed:', err));
 
