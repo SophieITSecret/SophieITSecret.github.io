@@ -108,6 +108,25 @@
   .empty-state .icon { font-size:2.5rem; margin-bottom:8px; }
 
   ::-webkit-scrollbar { width:5px; } ::-webkit-scrollbar-track { background:transparent; } ::-webkit-scrollbar-thumb { background:var(--border); border-radius:3px; }
+
+  /* 音声パネル */
+  .voice-panel { background:var(--bg3); border:1px solid var(--border); border-radius:6px; padding:12px; display:flex; flex-direction:column; gap:8px; margin-top:4px; }
+  .voice-title { font-size:0.78rem; color:var(--accent2); font-weight:700; letter-spacing:.05em; }
+  .voice-section-label { font-size:0.68rem; color:var(--text3); margin-top:2px; margin-bottom:0; letter-spacing:.05em; }
+  .voice-slider-row { display:flex; align-items:center; gap:6px; }
+  .voice-slider-row .v-lbl { font-size:0.7rem; color:var(--text2); width:44px; flex-shrink:0; }
+  .voice-slider-row input[type=range] { flex:1; accent-color:var(--accent); height:18px; cursor:pointer; }
+  .v-num-inp { width:48px; background:var(--bg2); border:1px solid var(--border); color:var(--text); border-radius:3px; font-size:0.72rem; padding:2px 4px; text-align:right; font-family:inherit; }
+  .voice-btns { display:flex; gap:6px; margin-top:4px; }
+  .btn-voice { flex:1; background:transparent; border:1px solid var(--accent); color:var(--accent); padding:7px 2px; border-radius:4px; cursor:pointer; font-size:0.75rem; font-family:inherit; }
+  .btn-voice:hover { background:rgba(76,175,80,.15); }
+  .btn-voice:disabled { opacity:.35; cursor:default; border-color:var(--text3); color:var(--text3); }
+  .btn-voice-confirm { flex:1; background:transparent; border:1px solid #4a90d9; color:#4a90d9; padding:7px 2px; border-radius:4px; cursor:pointer; font-size:0.75rem; font-family:inherit; }
+  .btn-voice-confirm:hover { background:rgba(74,144,217,.15); }
+  .voice-status-row { display:flex; align-items:center; gap:6px; font-size:0.73rem; margin-top:2px; }
+  .dot-exists { color:#4caf50; font-size:0.9rem; }
+  .dot-none { color:#666; font-size:0.9rem; }
+  .voice-note { font-size:0.65rem; color:var(--text3); line-height:1.5; }
 </style>
 </head>
 <body>
@@ -153,6 +172,64 @@
       <div class="edit-actions">
         <button class="btn-cancel" onclick="cancelEdit()">キャンセル</button>
         <button class="btn-apply" onclick="applyEdit()">✓ 適用</button>
+      </div>
+
+      <!-- 音声パネル -->
+      <div class="voice-panel">
+        <div class="voice-title">🎙 音声生成</div>
+
+        <div>
+          <div class="edit-label" style="margin-bottom:3px">ナレーター</div>
+          <select id="narratorSelect" class="edit-input" style="height:32px;padding:4px 8px" onchange="onNarratorChange()"></select>
+          <input id="narratorInput" class="edit-input" value="Japanese Female 1" style="display:none" oninput="saveVoiceSettings()">
+        </div>
+
+        <div class="voice-section-label">▸ 基本設定</div>
+        <div class="voice-slider-row">
+          <span class="v-lbl">スピード</span>
+          <input type="range" id="vpSpeed" min="50" max="200" value="100" oninput="syncNum('vpSpeed','vpSpeedN');saveVoiceSettings()">
+          <input type="number" id="vpSpeedN" class="v-num-inp" value="100" min="50" max="200" oninput="syncRange('vpSpeedN','vpSpeed');saveVoiceSettings()">
+        </div>
+        <div class="voice-slider-row">
+          <span class="v-lbl">ピッチ</span>
+          <input type="range" id="vpPitch" min="0" max="100" value="50" oninput="syncNum('vpPitch','vpPitchN');saveVoiceSettings()">
+          <input type="number" id="vpPitchN" class="v-num-inp" value="50" min="0" max="100" oninput="syncRange('vpPitchN','vpPitch');saveVoiceSettings()">
+        </div>
+
+        <div class="voice-section-label">▸ 感情</div>
+        <div class="voice-slider-row">
+          <span class="v-lbl">喜び</span>
+          <input type="range" id="emHappy" min="0" max="100" value="40" oninput="syncNum('emHappy','emHappyN');saveVoiceSettings()">
+          <input type="number" id="emHappyN" class="v-num-inp" value="40" min="0" max="100" oninput="syncRange('emHappyN','emHappy');saveVoiceSettings()">
+        </div>
+        <div class="voice-slider-row">
+          <span class="v-lbl">楽しさ</span>
+          <input type="range" id="emFun" min="0" max="100" value="30" oninput="syncNum('emFun','emFunN');saveVoiceSettings()">
+          <input type="number" id="emFunN" class="v-num-inp" value="30" min="0" max="100" oninput="syncRange('emFunN','emFun');saveVoiceSettings()">
+        </div>
+        <div class="voice-slider-row">
+          <span class="v-lbl">悲しみ</span>
+          <input type="range" id="emSad" min="0" max="100" value="0" oninput="syncNum('emSad','emSadN');saveVoiceSettings()">
+          <input type="number" id="emSadN" class="v-num-inp" value="0" min="0" max="100" oninput="syncRange('emSadN','emSad');saveVoiceSettings()">
+        </div>
+        <div class="voice-slider-row">
+          <span class="v-lbl">怒り</span>
+          <input type="range" id="emAngry" min="0" max="100" value="0" oninput="syncNum('emAngry','emAngryN');saveVoiceSettings()">
+          <input type="number" id="emAngryN" class="v-num-inp" value="0" min="0" max="100" oninput="syncRange('emAngryN','emAngry');saveVoiceSettings()">
+        </div>
+
+        <div class="voice-btns">
+          <button id="btnRecord" class="btn-voice" onclick="recordVoice()">🎙 録音</button>
+          <button id="btnPlay" class="btn-voice" onclick="playVoice()">▶ 再生</button>
+          <button id="btnConfirm" class="btn-voice-confirm" onclick="confirmVoice()">✅ 確定</button>
+        </div>
+
+        <div class="voice-status-row">
+          <span id="voiceDot" class="dot-none">○</span>
+          <span id="voiceStatusText">--</span>
+        </div>
+        <div class="voice-note">※ 編集窓のテキストで録音します</div>
+        <div class="voice-note">※ 確定すると編集窓を元の本文に戻します</div>
       </div>
     </div>
   </div>
@@ -255,6 +332,8 @@ function showCard(gIdx) {
     const active=document.querySelector('.card-item.active');
     if(active) active.scrollIntoView({block:'nearest'});
   },50);
+  // 音声ステータス更新
+  checkVoiceStatus(card.id);
 }
 
 function renderCard(gIdx) {
@@ -338,6 +417,179 @@ function saveCSV(){
 }
 
 window.addEventListener('beforeunload',e=>{if(dirty){e.preventDefault();e.returnValue='';}});
+
+// ==================== 音声パネル ====================
+const SERVER = 'http://localhost:5000';
+const VOICE_KEY = 'takeru_voice_settings';
+const VOICE_DEFAULTS = { speed:100, pitch:50, happy:40, fun:30, sad:0, angry:0 };
+let currentAudio = null;
+
+// localStorage 読み書き
+function loadVS(){ try{ return JSON.parse(localStorage.getItem(VOICE_KEY))||{}; }catch{ return {}; } }
+function saveVoiceSettings(){
+  const narrator = getNarrator();
+  const s = loadVS();
+  s.lastNarrator = narrator;
+  s.perNarrator  = s.perNarrator || {};
+  s.perNarrator[narrator] = getVoiceParams();
+  localStorage.setItem(VOICE_KEY, JSON.stringify(s));
+}
+
+// スライダー ↔ 数値同期
+function syncNum(rId, nId){ document.getElementById(nId).value = document.getElementById(rId).value; }
+function syncRange(nId, rId){ document.getElementById(rId).value = document.getElementById(nId).value; }
+
+// 現在のパラメータ取得
+function getVoiceParams(){
+  const g = id => +document.getElementById(id).value;
+  return { speed:g('vpSpeed'), pitch:g('vpPitch'),
+           happy:g('emHappy'), fun:g('emFun'), sad:g('emSad'), angry:g('emAngry') };
+}
+
+// パラメータをUIに反映
+function applyVoiceParams(p){
+  const v = {...VOICE_DEFAULTS, ...p};
+  [['vpSpeed','vpSpeedN',v.speed],['vpPitch','vpPitchN',v.pitch],
+   ['emHappy','emHappyN',v.happy],['emFun','emFunN',v.fun],
+   ['emSad','emSadN',v.sad],['emAngry','emAngryN',v.angry]
+  ].forEach(([rId, nId, val])=>{
+    document.getElementById(rId).value = val;
+    document.getElementById(nId).value = val;
+  });
+}
+
+// 感情文字列を組み立て
+function buildEmotion(){
+  const p = getVoiceParams();
+  const parts = [];
+  if(p.happy>0) parts.push(`happy=${p.happy}`);
+  if(p.fun>0)   parts.push(`fun=${p.fun}`);
+  if(p.sad>0)   parts.push(`sad=${p.sad}`);
+  if(p.angry>0) parts.push(`angry=${p.angry}`);
+  return parts.join(',') || 'happy=0';
+}
+
+// 選択中のナレーター名
+function getNarrator(){
+  const sel = document.getElementById('narratorSelect');
+  const inp = document.getElementById('narratorInput');
+  return (sel.style.display!=='none' ? sel.value : inp.value) || 'Japanese Female 1';
+}
+
+// ナレーター変更時：そのナレーターの保存設定を読み込む
+function onNarratorChange(){
+  const narrator = getNarrator();
+  const s = loadVS();
+  applyVoiceParams(s.perNarrator?.[narrator] || VOICE_DEFAULTS);
+  saveVoiceSettings();
+}
+
+// 起動時：サーバーに接続してナレーター一覧を取得
+async function initVoicePanel(){
+  try{
+    const res  = await fetch(`${SERVER}/narrators`, {signal: AbortSignal.timeout(3000)});
+    const json = await res.json();
+    if(json.ok && json.narrators.length){
+      const sel = document.getElementById('narratorSelect');
+      sel.innerHTML = json.narrators.map(n=>`<option value="${n}">${n}</option>`).join('');
+      const s = loadVS();
+      if(s.lastNarrator && json.narrators.includes(s.lastNarrator)) sel.value = s.lastNarrator;
+      applyVoiceParams(s.perNarrator?.[sel.value] || VOICE_DEFAULTS);
+      sel.style.display = '';
+      document.getElementById('narratorInput').style.display = 'none';
+    } else {
+      fallbackNarratorInput();
+    }
+  } catch {
+    fallbackNarratorInput();
+  }
+}
+
+function fallbackNarratorInput(){
+  document.getElementById('narratorSelect').style.display = 'none';
+  const inp = document.getElementById('narratorInput');
+  inp.style.display = '';
+  const s = loadVS();
+  if(s.lastNarrator) inp.value = s.lastNarrator;
+  applyVoiceParams(s.perNarrator?.[inp.value] || VOICE_DEFAULTS);
+}
+
+// MP3 存在確認
+async function checkVoiceStatus(code){
+  const dot  = document.getElementById('voiceDot');
+  const text = document.getElementById('voiceStatusText');
+  if(!code){ dot.textContent='○'; dot.className='dot-none'; text.textContent='--'; return; }
+  try{
+    const res  = await fetch(`${SERVER}/status/${code}`, {signal: AbortSignal.timeout(2000)});
+    const json = await res.json();
+    if(json.exists){
+      dot.textContent='●'; dot.className='dot-exists'; text.textContent='MP3あり';
+    } else {
+      dot.textContent='○'; dot.className='dot-none'; text.textContent='未生成';
+    }
+  } catch {
+    dot.textContent='?'; dot.className='dot-none'; text.textContent='サーバー未起動';
+  }
+}
+
+// 録音
+async function recordVoice(){
+  if(selectedIdx<0) return;
+  const code = cardData[selectedIdx].id;
+  const text = document.getElementById('editBody').value.trim();
+  if(!text){ alert('本文が空です'); return; }
+  const btn = document.getElementById('btnRecord');
+  btn.disabled = true; btn.textContent = '⏳ 生成中...';
+  try{
+    const res = await fetch(`${SERVER}/generate`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        code, text,
+        narrator: getNarrator(),
+        emotion:  buildEmotion(),
+        speed:    getVoiceParams().speed,
+        pitch:    getVoiceParams().pitch
+      })
+    });
+    const json = await res.json();
+    if(json.ok){ showVoiceMsg('✅ '+json.message); checkVoiceStatus(code); }
+    else        alert('生成エラー:\n'+json.error);
+  } catch {
+    alert('サーバーに接続できません。\n「TAKERU音声サーバー起動.bat」を先に実行してください。');
+  } finally {
+    btn.disabled = false; btn.textContent = '🎙 録音';
+  }
+}
+
+// 再生
+function playVoice(){
+  if(selectedIdx<0) return;
+  const code = cardData[selectedIdx].id;
+  if(currentAudio){ currentAudio.pause(); currentAudio=null; }
+  currentAudio = new Audio(`${SERVER}/audio/${code}`);
+  currentAudio.onerror = () => alert('音声ファイルがありません。\nまず「🎙 録音」を実行してください。');
+  currentAudio.play();
+}
+
+// 確定（編集窓を元の本文に戻す）
+function confirmVoice(){
+  if(selectedIdx<0) return;
+  document.getElementById('editBody').value = cardData[selectedIdx].body;
+  updatePreview(); countChars();
+  showVoiceMsg('✅ 確定しました（本文を元に戻しました）');
+}
+
+let voiceMsgTimer = null;
+function showVoiceMsg(msg){
+  document.getElementById('voiceStatusText').textContent = msg;
+  clearTimeout(voiceMsgTimer);
+  voiceMsgTimer = setTimeout(()=>{
+    if(selectedIdx>=0) checkVoiceStatus(cardData[selectedIdx].id);
+  }, 3000);
+}
+
+// 起動
+initVoicePanel();
 </script>
 </body>
 </html>

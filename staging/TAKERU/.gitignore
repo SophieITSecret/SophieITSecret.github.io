@@ -17,3 +17,11 @@
 *.mp3
 *.wav
 *.m4a
+
+# 音声生成一時・バックアップフォルダ
+voices_temp/
+voices_backup/
+
+# Python キャッシュ
+__pycache__/
+*.pyc
