@@ -196,6 +196,11 @@ button{ font-family:inherit; cursor:pointer; }
         <button class="mode-btn" data-m="asia_pacific" onclick="switchMap('asia_pacific')" style="font-size:0.72rem;padding:5px 4px">アジア太平洋</button>
         <button class="mode-btn" data-m="europe" onclick="switchMap('europe')" style="font-size:0.72rem;padding:5px 4px">欧州・中東</button>
         <button class="mode-btn" data-m="north_america" onclick="switchMap('north_america')" style="font-size:0.72rem;padding:5px 4px">北米</button>
+        <div class="note" style="width:100%;margin:2px 0 0">── 詳細版（拡大向け）──</div>
+        <button class="mode-btn" data-m="world_hd" onclick="switchMap('world_hd')" style="font-size:0.72rem;padding:5px 4px">🌍 世界HD</button>
+        <button class="mode-btn" data-m="asia_pacific_hd" onclick="switchMap('asia_pacific_hd')" style="font-size:0.72rem;padding:5px 4px">アジアHD</button>
+        <button class="mode-btn" data-m="europe_hd" onclick="switchMap('europe_hd')" style="font-size:0.72rem;padding:5px 4px">欧州HD</button>
+        <button class="mode-btn" data-m="north_america_hd" onclick="switchMap('north_america_hd')" style="font-size:0.72rem;padding:5px 4px">北米HD</button>
       </div>
       <button class="btn-sm" style="width:100%;margin-top:6px" onclick="document.getElementById('customSvgFile').click()">📁 カスタムSVGを読み込む</button>
       <input type="file" id="customSvgFile" accept=".svg,image/svg+xml" style="display:none" onchange="onCustomSvg(event)">
@@ -361,6 +366,10 @@ button{ font-family:inherit; cursor:pointer; }
 <script src="maps/asia_pacific.js"></script>
 <script src="maps/europe.js"></script>
 <script src="maps/north_america.js"></script>
+<script src="maps/world_hd.js"></script>
+<script src="maps/asia_pacific_hd.js"></script>
+<script src="maps/europe_hd.js"></script>
+<script src="maps/north_america_hd.js"></script>
 <script src="maptool.js"></script>
 </body>
 </html>

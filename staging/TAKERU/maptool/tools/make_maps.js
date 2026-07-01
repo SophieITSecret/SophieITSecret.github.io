@@ -102,34 +102,73 @@ function featureInBounds(feature, bounds) {
 }
 
 // ===== 地図設定 =====
+// src: '110m' = 概観用（軽量）、'50m' = 拡大用（詳細）
 const MAPS = [
+  // ── 110m 概観版 ──
   {
     id: 'world',
     name: '世界（国別）',
     outFile: 'world.js',
     W: 2000, H: 1000,
-    bounds: { minLon: -180, maxLon: 180, minLat: -90, maxLat: 90 }
+    bounds: { minLon: -180, maxLon: 180, minLat: -90, maxLat: 90 },
+    src: '110m'
   },
   {
     id: 'asia_pacific',
     name: 'アジア太平洋',
     outFile: 'asia_pacific.js',
     W: 1200, H: 900,
-    bounds: { minLon: 60, maxLon: 180, minLat: -15, maxLat: 75 }
+    bounds: { minLon: 60, maxLon: 180, minLat: -15, maxLat: 75 },
+    src: '110m'
   },
   {
     id: 'europe',
     name: 'ヨーロッパ・中東・北アフリカ',
     outFile: 'europe.js',
     W: 1000, H: 1000,
-    bounds: { minLon: -25, maxLon: 55, minLat: 22, maxLat: 72 }
+    bounds: { minLon: -25, maxLon: 55, minLat: 22, maxLat: 72 },
+    src: '110m'
   },
   {
     id: 'north_america',
     name: '北アメリカ',
     outFile: 'north_america.js',
     W: 1200, H: 900,
-    bounds: { minLon: -170, maxLon: -50, minLat: 10, maxLat: 85 }
+    bounds: { minLon: -170, maxLon: -50, minLat: 10, maxLat: 85 },
+    src: '110m'
+  },
+  // ── 50m 詳細版（拡大向け） ──
+  {
+    id: 'world_hd',
+    name: '世界（詳細）',
+    outFile: 'world_hd.js',
+    W: 4000, H: 2000,
+    bounds: { minLon: -180, maxLon: 180, minLat: -90, maxLat: 90 },
+    src: '50m'
+  },
+  {
+    id: 'asia_pacific_hd',
+    name: 'アジア太平洋（詳細）',
+    outFile: 'asia_pacific_hd.js',
+    W: 2400, H: 1800,
+    bounds: { minLon: 60, maxLon: 180, minLat: -15, maxLat: 75 },
+    src: '50m'
+  },
+  {
+    id: 'europe_hd',
+    name: 'ヨーロッパ・中東・北アフリカ（詳細）',
+    outFile: 'europe_hd.js',
+    W: 2000, H: 2000,
+    bounds: { minLon: -25, maxLon: 55, minLat: 22, maxLat: 72 },
+    src: '50m'
+  },
+  {
+    id: 'north_america_hd',
+    name: '北アメリカ（詳細）',
+    outFile: 'north_america_hd.js',
+    W: 2400, H: 1800,
+    bounds: { minLon: -170, maxLon: -50, minLat: 10, maxLat: 85 },
+    src: '50m'
   },
 ];
 
@@ -155,10 +194,11 @@ async function main() {
   // 各地図を生成
   for (const mapDef of MAPS) {
     console.log(`[${mapDef.name}] 変換中...`);
-    // 世界地図は110m、地域地図はバウンズ内のみ50m（=110mのフィルタリング版）
-    const geo = (mapDef.id === 'world') ? geo110 : {
+    const base = (mapDef.src === '50m') ? geo50 : geo110;
+    const isWorld = mapDef.bounds.minLon === -180 && mapDef.bounds.maxLon === 180;
+    const geo = isWorld ? base : {
       type: 'FeatureCollection',
-      features: geo110.features.filter(f => featureInBounds(f, mapDef.bounds))
+      features: base.features.filter(f => featureInBounds(f, mapDef.bounds))
     };
     const svgPaths = convertToSvg(geo, mapDef.W, mapDef.H, mapDef.bounds);
     const viewBox = `0 0 ${mapDef.W} ${mapDef.H}`;
