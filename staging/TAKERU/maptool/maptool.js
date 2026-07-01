@@ -632,7 +632,7 @@ function buildSymbol(el){ const g=svg('g',{class:'el-g movable','data-id':el.id}
 function propsSymbol(pp,el){
   pp.appendChild(prow('種別',seg([{l:'艦隊',v:'ship'},{l:'航空',v:'aircraft'},{l:'基地',v:'base'},{l:'都市',v:'city'},{l:'戦闘',v:'battle'}],el.symbolType,v=>upd(el,{symbolType:v}))));
   pp.appendChild(prow('色',[inColor(el.color,v=>upd(el,{color:v})),document.createTextNode('大きさ'),inNum(el.size||24,8,80,v=>upd(el,{size:v}))]));
-  if(el.symbolType==='ship') pp.appendChild(prow('回転',inNum(Math.round(el.rotation||0),0,359,v=>upd(el,{rotation:(v%360+360)%360}))));
+  pp.appendChild(prow('回転',inNum(Math.round(el.rotation||0),0,359,v=>upd(el,{rotation:(v%360+360)%360}))));
   labelEditor(pp,el); }
 
 // ================= グループ =================
