@@ -240,7 +240,19 @@ async function main() {
         d.split(' M').map((seg, i) => `<path d="${i === 0 ? seg : 'M' + seg}"/>`).join('')
       }</g>`);
     });
-    const svgContent = `<g class="prefectures">\n${paths.join('\n')}\n</g>`;
+    // 琵琶湖を追加 (Natural Earth 50m lakes / ne_id:1159115641)
+    let lakeGroup = '';
+    try {
+      const urlLakes = 'https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_50m_lakes.geojson';
+      const geoLakes = JSON.parse(await download(urlLakes));
+      const biwa = (geoLakes.features || []).find(f => (f.properties || {}).ne_id === 1159115641);
+      if (biwa) {
+        const ld = geometryToPath(biwa.geometry, JW, JH, JAPAN_BOUNDS);
+        lakeGroup = `\n<g class="lakes" fill="#C8DCE8" stroke="#8fb4cc" stroke-width="1">\n<path class="lake" data-name="琵琶湖" d="${ld}"/>\n</g>`;
+      }
+    } catch (e) { console.warn('  湖データ取得失敗（スキップ）:', e.message); }
+
+    const svgContent = `<g class="prefectures">\n${paths.join('\n')}\n</g>${lakeGroup}`;
     const js = `window.MAPS = window.MAPS || {};\nwindow.MAPS['japan_hd'] = {\n  name: '日本（都道府県・詳細）',\n  viewBox: '0 0 ${JW} ${JH}',\n  regions: 'prefecture',\n  svg: \`${svgContent}\`\n};\n`;
     const outFile = path.join(OUT_DIR, 'japan_hd.js');
     fs.writeFileSync(outFile, js, 'utf8');
