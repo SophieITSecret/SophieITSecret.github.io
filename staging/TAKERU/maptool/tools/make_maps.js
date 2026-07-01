@@ -34,25 +34,39 @@ function lonLatToXY(lon, lat, W, H, bounds) {
   return [x, y];
 }
 
-function ringToPath(ring, W, H, bounds) {
+// ===== 投影 (メルカトル) =====
+function mercY(latDeg) {
+  const r = latDeg * Math.PI / 180;
+  return Math.log(Math.tan(Math.PI / 4 + r / 2));
+}
+function lonLatToXYMercator(lon, lat, W, H, bounds) {
+  const { minLon, maxLon, minLat, maxLat } = bounds;
+  const x = (lon - minLon) / (maxLon - minLon) * W;
+  const yTop = mercY(maxLat), yBot = mercY(minLat);
+  const y = (yTop - mercY(lat)) / (yTop - yBot) * H;
+  return [x, y];
+}
+
+function ringToPath(ring, W, H, bounds, proj) {
   if (ring.length < 3) return '';
-  const pts = ring.map(([lon, lat]) => lonLatToXY(lon, lat, W, H, bounds));
+  const fn = proj === 'mercator' ? lonLatToXYMercator : lonLatToXY;
+  const pts = ring.map(([lon, lat]) => fn(lon, lat, W, H, bounds));
   return 'M' + pts.map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' L') + ' Z';
 }
 
-function geometryToPath(geometry, W, H, bounds) {
+function geometryToPath(geometry, W, H, bounds, proj) {
   if (!geometry) return '';
   const rings = [];
   if (geometry.type === 'Polygon') {
-    geometry.coordinates.forEach(ring => rings.push(ringToPath(ring, W, H, bounds)));
+    geometry.coordinates.forEach(ring => rings.push(ringToPath(ring, W, H, bounds, proj)));
   } else if (geometry.type === 'MultiPolygon') {
-    geometry.coordinates.forEach(poly => poly.forEach(ring => rings.push(ringToPath(ring, W, H, bounds))));
+    geometry.coordinates.forEach(poly => poly.forEach(ring => rings.push(ringToPath(ring, W, H, bounds, proj))));
   }
   return rings.filter(Boolean).join(' ');
 }
 
 // ===== GeoJSON → SVG paths =====
-function convertToSvg(geojson, W, H, bounds) {
+function convertToSvg(geojson, W, H, bounds, proj) {
   const features = geojson.features || [];
   const paths = [];
   let skipped = 0;
@@ -67,7 +81,7 @@ function convertToSvg(geojson, W, H, bounds) {
     const name = (props.ADMIN || props.NAME || '').replace(/"/g, '&quot;');
     const nameJa = (props.NAME_JA || '').replace(/"/g, '&quot;');
 
-    const d = geometryToPath(f.geometry, W, H, bounds);
+    const d = geometryToPath(f.geometry, W, H, bounds, proj);
     if (!d) { skipped++; return; }
 
     const nameAttr = nameJa ? ` data-name-ja="${nameJa}"` : '';
@@ -200,7 +214,7 @@ async function main() {
       type: 'FeatureCollection',
       features: base.features.filter(f => featureInBounds(f, mapDef.bounds))
     };
-    const svgPaths = convertToSvg(geo, mapDef.W, mapDef.H, mapDef.bounds);
+    const svgPaths = convertToSvg(geo, mapDef.W, mapDef.H, mapDef.bounds, mapDef.proj);
     const viewBox = `0 0 ${mapDef.W} ${mapDef.H}`;
     writeMapJs(mapDef.id, mapDef.name, viewBox, svgPaths, path.join(OUT_DIR, mapDef.outFile));
   }
@@ -209,7 +223,7 @@ async function main() {
   console.log('[日本（都道府県・詳細）] 変換中...');
   const urlJapan = 'https://raw.githubusercontent.com/dataofjapan/land/master/japan.geojson';
   const JAPAN_BOUNDS = { minLon: 120, maxLon: 156, minLat: 23, maxLat: 47 };
-  const JW = 2000, JH = 2000;
+  const JW = 2000, JH = 2200; // メルカトル投影では縦が伸びるため高さを調整
   try {
     const geoJapan = JSON.parse(await download(urlJapan));
     const paths = [];
@@ -219,7 +233,7 @@ async function main() {
       const code = (props.id || '').toString().padStart(2, '0');
       const name = (props.nam_ja || props.nam || '').replace(/"/g, '&quot;');
       if (!code || code === '00') return;
-      const d = geometryToPath(f.geometry, JW, JH, JAPAN_BOUNDS);
+      const d = geometryToPath(f.geometry, JW, JH, JAPAN_BOUNDS, 'mercator');
       if (!d) return;
       paths.push(`<g class="prefecture" data-code="${code}" data-name="${name}">${
         d.split(' M').map((seg, i) => `<path d="${i === 0 ? seg : 'M' + seg}"/>`).join('')
