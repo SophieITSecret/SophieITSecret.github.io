@@ -127,7 +127,6 @@ function applyFills(){
   mapSvg.querySelectorAll('.prefecture,.region').forEach(g=>{
     const rid=getRegionId(g); const painted=rid?fills[rid]:null; const fcol=painted||BASE_FILL; const fop=painted?opacity:1;
     g.setAttribute('fill',fcol); g.setAttribute('fill-opacity',fop);
-    g.setAttribute('vector-effect','non-scaling-stroke');
     if(borderMode==='none'){ g.setAttribute('stroke',fcol); g.setAttribute('stroke-opacity',fop); g.setAttribute('stroke-width',borderWidth); }
     else { g.setAttribute('stroke',borderMode==='light'?'#9aa0a6':'#000000'); g.setAttribute('stroke-opacity','1'); g.setAttribute('stroke-width',borderWidth); } });
 }
