@@ -31,6 +31,7 @@ let drag=null, arrowDraft=null, inlineEl=null;
 let uidCounter=0, nameCounter={};
 let restoring=false, autosaveTimer=null;
 let userPalette=[], library=[], nudgeTimer=null;
+let zoom=1.0;
 // アンドゥ/リドゥ（最大3段階）
 let undoStack=[], redoStack=[], txBefore=null;
 const HIST_MAX=3;
@@ -55,6 +56,7 @@ function stageToClient(x,y){ const m=stage.getScreenCTM(); return {x:m.a*x+m.c*y
 
 // ================= 初期化 =================
 function init(){
+  applyZoom();
   // 背景プリセット
   BG_PRESETS.forEach((p,i)=>{ const d=document.createElement('div'); d.className='sw'+(i===0?' active':''); d.style.background=p.c; d.title=p.n;
     d.onclick=()=>{ setBg(p.c); document.querySelectorAll('#bgPresets .sw').forEach(s=>s.classList.remove('active')); d.classList.add('active'); $('bgPicker').value=p.c; };
@@ -743,5 +745,13 @@ function importLibrary(ev){ const file=ev.target.files[0]; ev.target.value=''; i
     (data.items||[]).forEach(item=>{ if(!library.find(l=>l.id===item.id)){ library.push(item); added++; } });
     saveLibraryToStorage(); renderLibrary(); showToast(added+'件の部品を読み込みました（重複スキップ）'); }catch(e){ alert('ライブラリファイルの読み込みに失敗しました。'); } };
   r.readAsText(file); }
+
+// ================= ズーム =================
+function applyZoom(){
+  stage.style.width =(STAGE_W*zoom)+'px';
+  stage.style.height=(STAGE_H*zoom)+'px';
+  const sl=$('zoomSlider'); if(sl) sl.value=Math.round(zoom*100);
+  const dp=$('zoomDisp');  if(dp) dp.textContent=Math.round(zoom*100)+'%'; }
+function setZoom(z){ zoom=Math.max(0.3,Math.min(2.0,parseFloat(z))); applyZoom(); }
 
 init();
