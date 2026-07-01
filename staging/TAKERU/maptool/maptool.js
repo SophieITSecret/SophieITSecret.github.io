@@ -10,7 +10,7 @@ const SIZES={ S:[960,720], M:[1440,1080], L:[1920,1440] };
 const AUTOSAVE_KEY='takeru_maptool_autosave';
 const PALETTE_KEY='takeru_maptool_palette';
 const LIBRARY_KEY='takeru_maptool_library';
-const SCHEMA_VERSION='2.2';
+const SCHEMA_VERSION='2.3';
 const PAINT_COLORS=['#4a7fb5','#5a9e5a','#e08a3c','#e3c34a','#d05050','#8a6db0','#9098a0'];
 const BG_PRESETS=[{c:'#F5F0E8',n:'クリーム'},{c:'#FFFFFF',n:'白'},{c:'#E8F0F5',n:'淡い水色'},{c:'#ECECEC',n:'薄灰'}];
 const DEFAULT_PALETTE=['#E24B4A','#3B8BD4','#2D5A27','#000000'];
@@ -25,7 +25,7 @@ let paintColor='#4a7fb5', opacity=0.8, borderMode='normal';
 let fills={}, legend=[], legendPos='bl', outputSize='S';
 let layerElements=[];          // 配列順=z順（後ろほど前面）
 let backgrounds=[];            // 下絵（地図の下）。配列末尾ほど前面
-let mapVisible=true;           // 日本地図SVGの表示
+let mapVisible=true;           // 地図SVGの表示
 let selectedIds=[];
 let drag=null, arrowDraft=null, inlineEl=null;
 let uidCounter=0, nameCounter={};
@@ -35,6 +35,11 @@ let zoom=1.0, activeSymbolType='ship';
 // アンドゥ/リドゥ（最大3段階）
 let undoStack=[], redoStack=[], txBefore=null;
 const HIST_MAX=3;
+// 地図マルチ対応
+let currentMapId='japan';
+let mapFillsAll={};            // { mapId: { regionId: color } }
+let mapPanZoom={ tx:0, ty:0, scale:1 };
+let mapPanDrag=null;
 
 // ---------- ショートカット ----------
 const $=id=>document.getElementById(id);
@@ -61,11 +66,15 @@ function init(){
   BG_PRESETS.forEach((p,i)=>{ const d=document.createElement('div'); d.className='sw'+(i===0?' active':''); d.style.background=p.c; d.title=p.n;
     d.onclick=()=>{ setBg(p.c); document.querySelectorAll('#bgPresets .sw').forEach(s=>s.classList.remove('active')); d.classList.add('active'); $('bgPicker').value=p.c; };
     $('bgPresets').appendChild(d); });
-  // 県塗りパレット
+  // 塗りパレット
   PAINT_COLORS.forEach((c,i)=>{ const d=document.createElement('div'); d.className='sw'+(i===0?' active':''); d.style.background=c; d.dataset.c=c;
     d.onclick=()=>{ pickPaint(c); $('paintPicker').value=c; }; $('paintSwatches').appendChild(d); });
-  // 県クリック（県塗りツール時のみ）
-  mapSvg.querySelectorAll('.prefecture').forEach(g=>{ g.addEventListener('click',ev=>{ if(tool==='paint'){ ev.stopPropagation(); onPrefClick(g); } }); });
+  // mapSvg: 右クリックドラッグでパン、スクロールでズーム
+  mapSvg.addEventListener('contextmenu',e=>e.preventDefault());
+  mapSvg.addEventListener('mousedown',onMapMouseDown);
+  mapSvg.addEventListener('wheel',onMapWheel,{passive:false});
+  window.addEventListener('mousemove',onMapMouseMove);
+  window.addEventListener('mouseup',e=>{ if(e.button===2) mapPanDrag=null; });
   // ステージ操作
   stage.addEventListener('pointerdown',onStageDown);
   stage.addEventListener('pointermove',onStageMove);
@@ -82,7 +91,7 @@ function init(){
   // 復元 or 新規
   let saved=null; try{ saved=localStorage.getItem(AUTOSAVE_KEY); }catch(e){}
   if(saved){ let s=null; try{ s=JSON.parse(saved); }catch(e){ s=null; }
-    if(s && (s.version==='2.0'||s.version==='2.1'||s.version==='2.2'||s.version==='1.0')){
+    if(s && (s.version==='2.0'||s.version==='2.1'||s.version==='2.2'||s.version==='2.3'||s.version==='1.0')){
       const when=(s.savedAt||'').replace('T',' ').slice(0,19);
       if(confirm('前回の作業を復元しますか？\n（保存日時：'+when+'）\n\n［OK］復元する　／　［キャンセル］新規に始める')){ applyState(s); return; }
     }
@@ -94,7 +103,7 @@ function init(){
 
 // ================= ツール切替 =================
 const HINTS={ select:'選択ツール：要素をクリックで選択・ドラッグで移動（Shiftで複数選択／Deleteで削除）',
-  paint:'県塗り：色を選んで県をクリック（同色再クリックで消去）', unit:'部隊記号：地図をクリックで配置',
+  paint:'地域塗り：色を選んで地域をクリック（同色再クリックで消去）　右ドラッグ：地図を移動　スクロール：拡縮', unit:'部隊記号：地図をクリックで配置',
   arrow:'矢印：ドラッグで直線／クリックで点追加→ダブルクリック(Enter)で確定', rect:'矩形：ドラッグで描画',
   text:'テキスト：クリックで配置（ダブルクリックで編集）', star:'拠点★：クリックで配置',
   symbol:'補助記号：地図をクリックで配置（艦隊・航空・基地・都市・戦闘）' };
@@ -106,17 +115,99 @@ function setTool(t){
   const ss=$('symbolTypeSec'); if(ss) ss.style.display=t==='symbol'?'block':'none';
 }
 
-// ================= 県塗り・背景・境界線（フェーズA継続）=================
+// ================= 地域塗り・背景・境界線 =================
 function setBg(c){ $('bg').setAttribute('fill',c); autosave(); }
 function pickPaint(c){ paintColor=c; document.querySelectorAll('#paintSwatches .sw').forEach(s=>s.classList.toggle('active',s.dataset.c===c)); }
 function setOpacity(v){ opacity=v/100; $('opacityVal').textContent=v+'%'; applyFills(); autosave(); }
 function setBorder(level){ borderMode=level; applyFills(); setActive('#borderBtns','b',level); autosave(); }
-function onPrefClick(g){ pushUndo(); const code=g.getAttribute('data-code'); if(fills[code]===paintColor) delete fills[code]; else fills[code]=paintColor; applyFills(); autosave(); }
+function getRegionId(el){ return el.dataset.code || el.id || ''; }
+function onRegionClick(el){ pushUndo(); const rid=getRegionId(el); if(!rid) return; if(fills[rid]===paintColor) delete fills[rid]; else fills[rid]=paintColor; applyFills(); autosave(); }
 function applyFills(){
-  mapSvg.querySelectorAll('.prefecture').forEach(g=>{ const code=g.getAttribute('data-code'); const painted=fills[code]; const fcol=painted||BASE_FILL; const fop=painted?opacity:1;
+  mapSvg.querySelectorAll('.prefecture,.region').forEach(g=>{
+    const rid=getRegionId(g); const painted=rid?fills[rid]:null; const fcol=painted||BASE_FILL; const fop=painted?opacity:1;
     g.setAttribute('fill',fcol); g.setAttribute('fill-opacity',fop);
     if(borderMode==='none'){ g.setAttribute('stroke',fcol); g.setAttribute('stroke-opacity',fop); g.setAttribute('stroke-width','1.2'); }
     else { g.setAttribute('stroke',borderMode==='light'?'#9aa0a6':'#000000'); g.setAttribute('stroke-opacity','1'); g.setAttribute('stroke-width','1.0'); } });
+}
+
+// ================= 地図ロード / パン・ズーム =================
+function switchMap(mapId){
+  // 現在の fills を保存
+  mapFillsAll[currentMapId]={...fills};
+  loadMap(mapId);
+}
+function loadMap(mapId){
+  const data=window.MAPS&&window.MAPS[mapId];
+  if(!data){ showToast('地図データがありません: maps/'+mapId+'.js'); return; }
+  currentMapId=mapId;
+  fills={...(mapFillsAll[mapId]||{})};
+  mapSvg.setAttribute('viewBox',data.viewBox||'0 0 1000 1000');
+  mapSvg.innerHTML=`<g id="mapTransformGroup" transform="translate(0,0) scale(1)">${data.svg}</g>`;
+  // クリックイベントをバインド
+  mapSvg.querySelectorAll('.prefecture,.region').forEach(el=>{
+    el.addEventListener('click',ev=>{ if(tool==='paint'){ ev.stopPropagation(); onRegionClick(el); } }); });
+  resetMapView();
+  applyFills();
+  setActive('#mapBtns','m',mapId);
+  autosave();
+}
+function onCustomSvg(ev){
+  const file=ev.target.files[0]; ev.target.value=''; if(!file) return;
+  const r=new FileReader();
+  r.onload=()=>{
+    const parser=new DOMParser();
+    const doc=parser.parseFromString(r.result,'image/svg+xml');
+    const svgEl=doc.querySelector('svg');
+    if(!svgEl){ showToast('有効なSVGではありません'); return; }
+    const viewBox=svgEl.getAttribute('viewBox')||'0 0 1000 1000';
+    const inner=svgEl.innerHTML;
+    const mapId='custom_'+file.name.replace(/\.[^.]+$/,'').replace(/[^a-zA-Z0-9_]/g,'_');
+    window.MAPS=window.MAPS||{};
+    window.MAPS[mapId]={ name:file.name, viewBox, svg:inner };
+    // ボタン追加
+    let btn=document.querySelector('#mapBtns [data-m="'+mapId+'"]');
+    if(!btn){ btn=document.createElement('button'); btn.className='mode-btn'; btn.dataset.m=mapId;
+      btn.style.cssText='font-size:0.72rem;padding:5px 4px'; btn.textContent='📁 '+file.name.replace(/\.svg$/i,'');
+      btn.onclick=()=>switchMap(mapId); $('mapBtns').appendChild(btn); }
+    switchMap(mapId);
+    showToast('カスタムSVGを読み込みました: '+file.name);
+  };
+  r.readAsText(file);
+}
+function resetMapView(){ mapPanZoom={tx:0,ty:0,scale:1}; applyMapTransform(); }
+function applyMapTransform(){
+  const g=mapSvg.querySelector('#mapTransformGroup'); if(!g) return;
+  const {tx,ty,scale}=mapPanZoom;
+  g.setAttribute('transform',`translate(${tx.toFixed(1)},${ty.toFixed(1)}) scale(${scale.toFixed(4)})`);
+  const lbl=$('mapZoomLabel'); if(lbl) lbl.textContent=Math.round(scale*100)+'%';
+}
+function onMapMouseDown(e){
+  if(e.button!==2) return;
+  e.preventDefault(); e.stopPropagation();
+  const pt=mapSvg.createSVGPoint(); pt.x=e.clientX; pt.y=e.clientY;
+  const ctm=mapSvg.getScreenCTM().inverse();
+  const vb=pt.matrixTransform(ctm);
+  mapPanDrag={ctm, startVb:vb, startTx:mapPanZoom.tx, startTy:mapPanZoom.ty};
+}
+function onMapMouseMove(e){
+  if(!mapPanDrag) return;
+  const pt=mapSvg.createSVGPoint(); pt.x=e.clientX; pt.y=e.clientY;
+  const vb=pt.matrixTransform(mapPanDrag.ctm);
+  mapPanZoom.tx=mapPanDrag.startTx+(vb.x-mapPanDrag.startVb.x);
+  mapPanZoom.ty=mapPanDrag.startTy+(vb.y-mapPanDrag.startVb.y);
+  applyMapTransform();
+}
+function onMapWheel(e){
+  e.preventDefault();
+  const f=e.deltaY<0?1.15:0.87;
+  const newScale=Math.max(0.15,Math.min(12,mapPanZoom.scale*f));
+  const ratio=newScale/mapPanZoom.scale;
+  const pt=mapSvg.createSVGPoint(); pt.x=e.clientX; pt.y=e.clientY;
+  const vb=pt.matrixTransform(mapSvg.getScreenCTM().inverse());
+  mapPanZoom.tx=vb.x-(vb.x-mapPanZoom.tx)*ratio;
+  mapPanZoom.ty=vb.y-(vb.y-mapPanZoom.ty)*ratio;
+  mapPanZoom.scale=newScale;
+  applyMapTransform();
 }
 
 // ================= 凡例（フェーズA継続）=================
@@ -487,8 +578,10 @@ function reorderDrop(srcId,dstId){ if(srcId===dstId) return; const si=layerEleme
   layerElements.splice(di+1,0,moved); renderAll(); autosave(); }
 
 // ================= アンドゥ / リドゥ =================
-function snapState(){ return JSON.stringify({ layerElements, backgrounds, fills, mapVisible }); }
-function applySnap(s){ const o=JSON.parse(s); layerElements=o.layerElements||[]; backgrounds=o.backgrounds||[]; fills=o.fills||{}; mapVisible=o.mapVisible!==false; }
+function snapState(){ return JSON.stringify({ layerElements, backgrounds, fills, mapVisible, currentMapId, mapFillsAll }); }
+function applySnap(s){ const o=JSON.parse(s); layerElements=o.layerElements||[]; backgrounds=o.backgrounds||[]; fills=o.fills||{}; mapVisible=o.mapVisible!==false;
+  if(o.currentMapId && o.currentMapId!==currentMapId){ currentMapId=o.currentMapId; mapFillsAll=o.mapFillsAll||{}; loadMap(currentMapId); }
+  else { mapFillsAll=o.mapFillsAll||{}; } }
 function pushSnap(s){ undoStack.push(s); if(undoStack.length>HIST_MAX) undoStack.shift(); redoStack=[]; updateHistButtons(); }
 function pushUndo(){ pushSnap(snapState()); }                 // 離散操作の直前に呼ぶ
 function record(fn){ const b=snapState(); fn(); if(snapState()!==b) pushSnap(b); }   // 変化があった時だけ積む
@@ -497,7 +590,7 @@ function txCommit(){ if(txBefore!==null){ if(snapState()!==txBefore) pushSnap(tx
 function updateHistButtons(){ const u=$('btnUndo'),r=$('btnRedo'); if(u)u.disabled=!undoStack.length; if(r)r.disabled=!redoStack.length; }
 function undo(){ if(!undoStack.length) return; redoStack.push(snapState()); if(redoStack.length>HIST_MAX) redoStack.shift(); applySnap(undoStack.pop()); afterHist(); }
 function redo(){ if(!redoStack.length) return; undoStack.push(snapState()); if(undoStack.length>HIST_MAX) undoStack.shift(); applySnap(redoStack.pop()); afterHist(); }
-function afterHist(){ selectedIds=[]; applyMapVisibility(); applyFills(); $('mapVisChk').checked=mapVisible; renderAll(); updateHistButtons(); autosave(); }
+function afterHist(){ selectedIds=[]; applyMapVisibility(); applyFills(); $('mapVisChk').checked=mapVisible; renderAll(); updateHistButtons(); autosave(); applyMapTransform(); }
 
 // ================= 複製（Ctrl+D） =================
 function duplicate(){ if(!selectedIds.length) return; pushUndo();
@@ -509,7 +602,7 @@ function duplicate(){ if(!selectedIds.length) return; pushUndo();
 
 // ================= 下絵（背景画像）=================
 function applyMapVisibility(){ mapSvg.style.display=mapVisible?'':'none'; }
-function toggleMap(v){ pushUndo(); mapVisible=v; applyMapVisibility(); autosave(); }
+function toggleMap(v){ mapVisible=v; applyMapVisibility(); autosave(); }
 function onBgFile(ev){ const file=ev.target.files[0]; ev.target.value=''; if(!file) return;
   const r=new FileReader();
   r.onload=()=>{
@@ -556,8 +649,13 @@ function exportPNG(){ selectedIds=[]; cancelArrowDraft(); renderSelection();
   img.onerror=()=>alert('PNG変換に失敗しました。'); img.src=url; }
 
 // ================= 保存 / 読み込み / 自動保存 =================
-function serializeState(){ const prefs=[]; mapSvg.querySelectorAll('.prefecture').forEach(g=>{ const code=g.getAttribute('data-code'); if(fills[code]){ const t=g.querySelector('title'); prefs.push({id:code,name:(t?t.textContent:'').split('/')[0].trim(),color:fills[code],opacity}); } });
-  return { version:SCHEMA_VERSION, savedAt:nowISO(), title:$('titleInput').value, backgroundColor:$('bg').getAttribute('fill'), borderMode, opacity, legendPos, outputSize, mapVisible, prefectures:prefs, legend:legend.map((l,i)=>({id:'leg_'+pad3(i+1),color:l.color,label:l.text})), backgrounds:backgrounds, layerElements:layerElements }; }
+function serializeState(){
+  const allFills={...mapFillsAll,[currentMapId]:{...fills}};
+  return { version:SCHEMA_VERSION, savedAt:nowISO(), title:$('titleInput').value, backgroundColor:$('bg').getAttribute('fill'),
+    borderMode, opacity, legendPos, outputSize, mapVisible,
+    currentMapId, mapFillsAll:allFills, mapPanZoom,
+    prefectures:[], legend:legend.map((l,i)=>({id:'leg_'+pad3(i+1),color:l.color,label:l.text})),
+    backgrounds:backgrounds, layerElements:layerElements }; }
 
 function migrateStar(s){ return { id:s.id||uid(), type:'star', name:autoName('star'), hidden:false, x:+s.x||0, y:+s.y||0, size:+s.size||16, color:s.color||'#D32F2F',
   label:{ text:(typeof s.label==='string')?s.label:((s.label&&s.label.text)||''), position:'right', offsetX:0, offsetY:0, fontSize:13, color:'#000000', bold:false } }; }
@@ -572,7 +670,11 @@ function applyState(s){ restoring=true;
   document.querySelectorAll('#bgPresets .sw').forEach((d,i)=>d.classList.toggle('active',(BG_PRESETS[i]&&BG_PRESETS[i].c.toUpperCase())===bg.toUpperCase()));
   opacity=(typeof s.opacity==='number')?s.opacity:0.8; $('opacity').value=Math.round(opacity*100); $('opacityVal').textContent=Math.round(opacity*100)+'%';
   borderMode=s.borderMode||'normal'; setActive('#borderBtns','b',borderMode);
-  fills={}; (s.prefectures||[]).forEach(p=>{ if(p&&p.id) fills[p.id]=p.color||'#4a7fb5'; }); applyFills();
+  // v2.3: mapFillsAll / v2.2以前: prefectures (Japan only)
+  if(s.mapFillsAll){ mapFillsAll={...s.mapFillsAll}; }
+  else { mapFillsAll={}; const legacyFills={}; (s.prefectures||[]).forEach(p=>{ if(p&&p.id) legacyFills[p.id]=p.color; }); mapFillsAll['japan']=legacyFills; }
+  currentMapId=s.currentMapId||'japan';
+  fills={...(mapFillsAll[currentMapId]||{})};
   legend=(s.legend||[]).map(l=>({color:l.color||'#4a7fb5',text:l.label||''})); renderLegendList();
   legendPos=s.legendPos||'bl'; setActive('#legendPos','p',legendPos); renderLegend();
   setOutputSize(SIZES[s.outputSize]?s.outputSize:'S',true);
@@ -580,13 +682,19 @@ function applyState(s){ restoring=true;
   uidCounter=0; nameCounter={};
   if(s.version==='1.0'){ layerElements=(s.stars||[]).map(migrateStar); }
   else { layerElements=(s.layerElements||[]).map(normEl).filter(Boolean); }
-  // 下絵・地図表示（v2.1。旧版は backgrounds:[], mapVisible:true）
+  // 下絵・地図表示
   backgrounds=(s.backgrounds||[]).map(normBg).filter(Boolean);
-  mapVisible = s.mapVisible!==false; $('mapVisChk').checked=mapVisible; applyMapVisibility();
+  mapVisible=s.mapVisible!==false; $('mapVisChk').checked=mapVisible; applyMapVisibility();
   // uidCounter を既存IDの最大に合わせる
   [...layerElements,...backgrounds].forEach(e=>{ const m=/el_(\d+)/.exec(e.id||''); if(m) uidCounter=Math.max(uidCounter,+m[1]); });
   undoStack=[]; redoStack=[]; txBefore=null; updateHistButtons();
-  selectedIds=[]; setTool('select'); renderAll(); restoring=false; }
+  selectedIds=[]; setTool('select');
+  // 地図ロード（restoring=trueのまま行う）
+  loadMap(currentMapId);
+  // loadMap が resetMapView を呼ぶので、保存値を上書きで復元
+  mapPanZoom=s.mapPanZoom||{tx:0,ty:0,scale:1};
+  applyMapTransform();
+  renderAll(); restoring=false; }
 function normBg(b){ if(!b||!b.src) return null; return { id:b.id||uid(), type:'image', src:b.src, x:+b.x||0, y:+b.y||0, width:b.width==null?1:+b.width, height:b.height==null?1:+b.height, opacity:b.opacity==null?1:+b.opacity, visible:b.visible!==false, includeInExport:b.includeInExport!==false, name:b.name||'下絵' }; }
 
 function autosave(){ if(restoring) return; clearTimeout(autosaveTimer); autosaveTimer=setTimeout(()=>{ try{ localStorage.setItem(AUTOSAVE_KEY,JSON.stringify(serializeState())); }catch(e){} },500); }
@@ -595,19 +703,19 @@ function saveWork(){ const def='mapwork_'+stamp()+'.json'; let name=prompt('作�
 function loadWork(){ if(!confirm('現在の作業が破棄されます。よろしいですか？')) return; $('loadFile').click(); }
 function onLoadFile(ev){ const file=ev.target.files[0]; ev.target.value=''; if(!file) return; const r=new FileReader();
   r.onload=()=>{ let s; try{ s=JSON.parse(r.result); }catch(e){ alert('ファイルを読み込めませんでした（JSONの形式が不正です）。現在の状態は維持されます。'); return; }
-    if(!s || (s.version!=='1.0' && s.version!=='2.0' && s.version!=='2.1' && s.version!=='2.2')){ alert('このファイルは未対応のバージョンです（version: '+((s&&s.version)||'不明')+'）。現在の状態は維持されます。'); return; }
+    if(!s || !['1.0','2.0','2.1','2.2','2.3'].includes(s.version)){ alert('このファイルは未対応のバージョンです（version: '+((s&&s.version)||'不明')+'）。現在の状態は維持されます。'); return; }
     applyState(s); try{ localStorage.setItem(AUTOSAVE_KEY,JSON.stringify(serializeState())); }catch(e){} };
   r.onerror=()=>alert('ファイルを読み込めませんでした。'); r.readAsText(file); }
 
 function resetAll(){ if(!confirm('塗り・レイヤー要素・下絵・凡例・タイトルをすべて消去します。よろしいですか？')) return; restoring=true;
-  fills={}; layerElements=[]; backgrounds=[]; mapVisible=true; selectedIds=[]; legend=[]; legendPos='bl'; uidCounter=0; nameCounter={};
-  undoStack=[]; redoStack=[]; txBefore=null; updateHistButtons(); applyFills(); applyMapVisibility(); $('mapVisChk').checked=true;
+  fills={}; mapFillsAll={}; layerElements=[]; backgrounds=[]; mapVisible=true; selectedIds=[]; legend=[]; legendPos='bl'; uidCounter=0; nameCounter={};
+  undoStack=[]; redoStack=[]; txBefore=null; updateHistButtons(); applyMapVisibility(); $('mapVisChk').checked=true;
   $('titleInput').value=''; $('title').textContent=''; setActive('#legendPos','p','bl'); legend.push({color:PAINT_COLORS[0],text:''}); renderLegendList(); renderLegend();
-  setOutputSize('S',true); setTool('select'); renderAll(); restoring=false; try{ localStorage.removeItem(AUTOSAVE_KEY); }catch(e){} }
+  setOutputSize('S',true); setTool('select'); loadMap(currentMapId); renderAll(); restoring=false; try{ localStorage.removeItem(AUTOSAVE_KEY); }catch(e){} }
 
-function freshStart(){ restoring=true; fills={}; layerElements=[]; backgrounds=[]; mapVisible=true; selectedIds=[]; legend=[]; legendPos='bl'; outputSize='S'; uidCounter=0; nameCounter={};
-  undoStack=[]; redoStack=[]; txBefore=null; updateHistButtons(); applyFills(); applyMapVisibility();
-  legend.push({color:PAINT_COLORS[0],text:''}); renderLegendList(); renderLegend(); setActive('#legendPos','p','bl'); setOutputSize('S',true); setTool('select'); renderAll(); restoring=false; }
+function freshStart(){ restoring=true; fills={}; mapFillsAll={}; layerElements=[]; backgrounds=[]; mapVisible=true; selectedIds=[]; legend=[]; legendPos='bl'; outputSize='S'; uidCounter=0; nameCounter={}; currentMapId='japan'; mapPanZoom={tx:0,ty:0,scale:1};
+  undoStack=[]; redoStack=[]; txBefore=null; updateHistButtons(); applyMapVisibility();
+  legend.push({color:PAINT_COLORS[0],text:''}); renderLegendList(); renderLegend(); setActive('#legendPos','p','bl'); setOutputSize('S',true); setTool('select'); loadMap('japan'); renderAll(); restoring=false; }
 
 window.addEventListener('beforeunload',()=>{ try{ localStorage.setItem(AUTOSAVE_KEY,JSON.stringify(serializeState())); }catch(e){} });
 
