@@ -246,6 +246,12 @@ button{ font-family:inherit; cursor:pointer; }
         <button class="mode-btn" data-b="light" onclick="setBorder('light')">薄い</button>
         <button class="mode-btn" data-b="none" onclick="setBorder('none')">なし</button>
       </div>
+      <div class="row" style="margin-top:8px">
+        <label class="lbl">線幅</label>
+        <input type="range" id="borderWidthRange" min="0.2" max="6" step="0.1" value="1.0"
+               style="flex:1" oninput="setBorderWidth(this.value)">
+        <span id="borderWidthVal" style="font-size:0.72rem;color:var(--text2);min-width:28px;text-align:right">1.0</span>
+      </div>
     </div>
 
     <!-- 塗り -->

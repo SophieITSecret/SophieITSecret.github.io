@@ -21,7 +21,7 @@ const TYPE_ICON={unit:'凸',arrow:'➤',rect:'▭',text:'あ',star:'★',symbol:
 
 // ---------- 状態 ----------
 let tool='select';
-let paintColor='#4a7fb5', opacity=0.8, borderMode='normal';
+let paintColor='#4a7fb5', opacity=0.8, borderMode='normal', borderWidth=1.0;
 let fills={}, legend=[], legendPos='bl', outputSize='S';
 let layerElements=[];          // 配列順=z順（後ろほど前面）
 let backgrounds=[];            // 下絵（地図の下）。配列末尾ほど前面
@@ -120,14 +120,16 @@ function setBg(c){ $('bg').setAttribute('fill',c); autosave(); }
 function pickPaint(c){ paintColor=c; document.querySelectorAll('#paintSwatches .sw').forEach(s=>s.classList.toggle('active',s.dataset.c===c)); }
 function setOpacity(v){ opacity=v/100; $('opacityVal').textContent=v+'%'; applyFills(); autosave(); }
 function setBorder(level){ borderMode=level; applyFills(); setActive('#borderBtns','b',level); autosave(); }
+function setBorderWidth(v){ borderWidth=parseFloat(v); const el=$('borderWidthVal'); if(el) el.textContent=parseFloat(v).toFixed(1); applyFills(); autosave(); }
 function getRegionId(el){ return el.dataset.code || el.id || ''; }
 function onRegionClick(el){ pushUndo(); const rid=getRegionId(el); if(!rid) return; if(fills[rid]===paintColor) delete fills[rid]; else fills[rid]=paintColor; applyFills(); autosave(); }
 function applyFills(){
   mapSvg.querySelectorAll('.prefecture,.region').forEach(g=>{
     const rid=getRegionId(g); const painted=rid?fills[rid]:null; const fcol=painted||BASE_FILL; const fop=painted?opacity:1;
     g.setAttribute('fill',fcol); g.setAttribute('fill-opacity',fop);
-    if(borderMode==='none'){ g.setAttribute('stroke',fcol); g.setAttribute('stroke-opacity',fop); g.setAttribute('stroke-width','1.2'); }
-    else { g.setAttribute('stroke',borderMode==='light'?'#9aa0a6':'#000000'); g.setAttribute('stroke-opacity','1'); g.setAttribute('stroke-width','1.0'); } });
+    g.setAttribute('vector-effect','non-scaling-stroke');
+    if(borderMode==='none'){ g.setAttribute('stroke',fcol); g.setAttribute('stroke-opacity',fop); g.setAttribute('stroke-width',borderWidth); }
+    else { g.setAttribute('stroke',borderMode==='light'?'#9aa0a6':'#000000'); g.setAttribute('stroke-opacity','1'); g.setAttribute('stroke-width',borderWidth); } });
 }
 
 // ================= 地図ロード / パン・ズーム =================
@@ -654,7 +656,7 @@ function exportPNG(){ selectedIds=[]; cancelArrowDraft(); renderSelection();
 function serializeState(){
   const allFills={...mapFillsAll,[currentMapId]:{...fills}};
   return { version:SCHEMA_VERSION, savedAt:nowISO(), title:$('titleInput').value, backgroundColor:$('bg').getAttribute('fill'),
-    borderMode, opacity, legendPos, outputSize, mapVisible,
+    borderMode, borderWidth, opacity, legendPos, outputSize, mapVisible,
     currentMapId, mapFillsAll:allFills, mapPanZoom,
     prefectures:[], legend:legend.map((l,i)=>({id:'leg_'+pad3(i+1),color:l.color,label:l.text})),
     backgrounds:backgrounds, layerElements:layerElements }; }
@@ -672,6 +674,8 @@ function applyState(s){ restoring=true;
   document.querySelectorAll('#bgPresets .sw').forEach((d,i)=>d.classList.toggle('active',(BG_PRESETS[i]&&BG_PRESETS[i].c.toUpperCase())===bg.toUpperCase()));
   opacity=(typeof s.opacity==='number')?s.opacity:0.8; $('opacity').value=Math.round(opacity*100); $('opacityVal').textContent=Math.round(opacity*100)+'%';
   borderMode=s.borderMode||'normal'; setActive('#borderBtns','b',borderMode);
+  borderWidth=(typeof s.borderWidth==='number')?s.borderWidth:1.0;
+  const bwEl=$('borderWidthRange'); if(bwEl){ bwEl.value=borderWidth; $('borderWidthVal').textContent=borderWidth.toFixed(1); }
   // v2.3: mapFillsAll / v2.2以前: prefectures (Japan only)
   if(s.mapFillsAll){ mapFillsAll={...s.mapFillsAll}; }
   else { mapFillsAll={}; const legacyFills={}; (s.prefectures||[]).forEach(p=>{ if(p&&p.id) legacyFills[p.id]=p.color; }); mapFillsAll['japan']=legacyFills; }
@@ -710,12 +714,13 @@ function onLoadFile(ev){ const file=ev.target.files[0]; ev.target.value=''; if(!
   r.onerror=()=>alert('ファイルを読み込めませんでした。'); r.readAsText(file); }
 
 function resetAll(){ if(!confirm('塗り・レイヤー要素・下絵・凡例・タイトルをすべて消去します。よろしいですか？')) return; restoring=true;
-  fills={}; mapFillsAll={}; layerElements=[]; backgrounds=[]; mapVisible=true; selectedIds=[]; legend=[]; legendPos='bl'; uidCounter=0; nameCounter={};
+  fills={}; mapFillsAll={}; layerElements=[]; backgrounds=[]; mapVisible=true; selectedIds=[]; legend=[]; legendPos='bl'; uidCounter=0; nameCounter={}; borderWidth=1.0;
+  const bwEl=$('borderWidthRange'); if(bwEl){ bwEl.value=1.0; $('borderWidthVal').textContent='1.0'; }
   undoStack=[]; redoStack=[]; txBefore=null; updateHistButtons(); applyMapVisibility(); $('mapVisChk').checked=true;
   $('titleInput').value=''; $('title').textContent=''; setActive('#legendPos','p','bl'); legend.push({color:PAINT_COLORS[0],text:''}); renderLegendList(); renderLegend();
   setOutputSize('S',true); setTool('select'); loadMap(currentMapId); renderAll(); restoring=false; try{ localStorage.removeItem(AUTOSAVE_KEY); }catch(e){} }
 
-function freshStart(){ restoring=true; fills={}; mapFillsAll={}; layerElements=[]; backgrounds=[]; mapVisible=true; selectedIds=[]; legend=[]; legendPos='bl'; outputSize='S'; uidCounter=0; nameCounter={}; currentMapId='japan'; mapPanZoom={tx:0,ty:0,scale:1};
+function freshStart(){ restoring=true; fills={}; mapFillsAll={}; layerElements=[]; backgrounds=[]; mapVisible=true; selectedIds=[]; legend=[]; legendPos='bl'; outputSize='S'; uidCounter=0; nameCounter={}; currentMapId='japan'; mapPanZoom={tx:0,ty:0,scale:1}; borderWidth=1.0;
   undoStack=[]; redoStack=[]; txBefore=null; updateHistButtons(); applyMapVisibility();
   legend.push({color:PAINT_COLORS[0],text:''}); renderLegendList(); renderLegend(); setActive('#legendPos','p','bl'); setOutputSize('S',true); setTool('select'); loadMap('japan'); renderAll(); restoring=false; }
 
