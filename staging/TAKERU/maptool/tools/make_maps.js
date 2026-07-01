@@ -243,7 +243,7 @@ async function main() {
     // 琵琶湖を追加 (Natural Earth 50m lakes / ne_id:1159115641)
     let lakeGroup = '';
     try {
-      const urlLakes = 'https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_50m_lakes.geojson';
+      const urlLakes = 'https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_10m_lakes.geojson';
       const geoLakes = JSON.parse(await download(urlLakes));
       const biwa = (geoLakes.features || []).find(f => (f.properties || {}).ne_id === 1159115641);
       if (biwa) {
