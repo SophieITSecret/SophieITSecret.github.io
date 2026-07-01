@@ -101,6 +101,25 @@ button{ font-family:inherit; cursor:pointer; }
 .el-g{ cursor:default; }
 .el-g.movable{ cursor:move; }
 
+/* ユーザーパレット */
+.user-palette{ display:flex; flex-wrap:wrap; gap:4px; }
+.user-sw{ width:28px; height:28px; border-radius:4px; cursor:pointer; border:2px solid transparent; }
+.user-sw:hover{ border-color:var(--accent2); }
+.user-sw.empty{ border:2px dashed var(--border); background:transparent; cursor:default; }
+/* ライブラリ */
+#libPanel{ display:flex; flex-direction:column; gap:4px; max-height:280px; overflow-y:auto; }
+.lib-item{ display:flex; align-items:center; gap:8px; padding:6px; border:1px solid var(--border); border-radius:4px; background:var(--bg3); cursor:pointer; }
+.lib-item:hover{ border-color:var(--accent2); }
+.lib-thumb{ width:40px; height:40px; flex-shrink:0; overflow:visible; }
+.lib-name{ font-size:0.74rem; color:var(--text); flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.lib-del{ background:transparent; border:none; color:#d05050; font-size:0.85rem; padding:0 4px; cursor:pointer; flex-shrink:0; }
+/* 整列ボタン */
+.align-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:3px; margin-top:6px; }
+.align-grid button{ font-size:0.66rem; padding:4px 2px; border:1px solid var(--border); background:var(--bg3); color:var(--text2); border-radius:3px; cursor:pointer; }
+.align-grid button:hover{ border-color:var(--accent2); color:var(--accent2); }
+.align-grid button:disabled{ opacity:.35; cursor:default; }
+/* トースト */
+#toastMsg{ position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:#2a2a2a; color:#e8e8e8; border:1px solid #555; padding:10px 20px; border-radius:8px; font-size:0.8rem; z-index:9999; display:none; pointer-events:none; white-space:nowrap; }
 /* インラインテキスト編集 */
 #inlineEdit{ position:absolute; z-index:50; display:none; background:#fff; color:#111;
   border:2px solid var(--accent); border-radius:3px; font-family:'Noto Sans JP','Yu Gothic',sans-serif;
@@ -128,6 +147,7 @@ button{ font-family:inherit; cursor:pointer; }
         <button class="tool-btn" data-t="rect" onclick="setTool('rect')">▭ 矩形</button>
         <button class="tool-btn" data-t="text" onclick="setTool('text')">あ テキスト</button>
         <button class="tool-btn" data-t="star" onclick="setTool('star')">★ 拠点</button>
+        <button class="tool-btn" data-t="symbol" onclick="setTool('symbol')">⚓ 記号</button>
       </div>
     </div>
 
@@ -152,6 +172,18 @@ button{ font-family:inherit; cursor:pointer; }
         <input type="checkbox" id="mapVisChk" checked onchange="toggleMap(this.checked)"> 日本地図を表示する
       </label>
       <div class="note" style="margin-top:6px">画像は地図の下に敷かれます。選択すると位置・サイズ・透明度を調整できます。</div>
+    </div>
+
+    <!-- カラーパレット -->
+    <div class="sec">
+      <h2>カラーパレット（よく使う色）</h2>
+      <div class="user-palette" id="userPalette"></div>
+      <div class="row" style="margin-top:6px">
+        <label class="lbl">色</label>
+        <input type="color" id="palettePickerAdd" value="#E24B4A">
+        <button class="btn-sm" onclick="addPaletteColor()">＋ 登録</button>
+      </div>
+      <div class="note" style="margin-top:4px">クリック→選択要素の色に適用。右クリックで削除。</div>
     </div>
 
     <!-- 背景色 -->
@@ -222,6 +254,18 @@ button{ font-family:inherit; cursor:pointer; }
         <button class="mode-btn" data-s="M" onclick="setOutputSize('M')">中<br>1440×1080</button>
         <button class="mode-btn" data-s="L" onclick="setOutputSize('L')">大<br>1920×1440</button>
       </div>
+    </div>
+
+    <!-- 部品ライブラリ -->
+    <div class="sec">
+      <h2>部品ライブラリ</h2>
+      <div class="row" style="gap:4px;flex-wrap:nowrap">
+        <button class="btn-sm" style="flex:1" onclick="saveToLibrary()">＋ 選択を保存</button>
+        <button class="btn-sm" onclick="exportLibrary()">⬇ 書出</button>
+        <button class="btn-sm" onclick="document.getElementById('libImportFile').click()">⬆ 読込</button>
+      </div>
+      <input type="file" id="libImportFile" accept=".json,application/json" style="display:none" onchange="importLibrary(event)">
+      <div id="libPanel" style="margin-top:6px"></div>
     </div>
 
     <!-- 出力・作業ファイル -->
@@ -479,6 +523,7 @@ button{ font-family:inherit; cursor:pointer; }
   </div>
 </div>
 
+<div id="toastMsg"></div>
 <textarea id="inlineEdit" spellcheck="false"></textarea>
 <script src="maptool.js"></script>
 </body>
