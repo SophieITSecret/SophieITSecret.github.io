@@ -120,15 +120,15 @@ function setBg(c){ $('bg').setAttribute('fill',c); autosave(); }
 function pickPaint(c){ paintColor=c; document.querySelectorAll('#paintSwatches .sw').forEach(s=>s.classList.toggle('active',s.dataset.c===c)); }
 function setOpacity(v){ opacity=v/100; $('opacityVal').textContent=v+'%'; applyFills(); autosave(); }
 function setBorder(level){ borderMode=level; applyFills(); setActive('#borderBtns','b',level); autosave(); }
-function setBorderWidth(v){ borderWidth=parseFloat(v); const el=$('borderWidthVal'); if(el) el.textContent=parseFloat(v).toFixed(1); applyFills(); autosave(); }
+function setBorderWidth(v){ borderWidth=parseFloat(v); const el=$('borderWidthVal'); if(el) el.textContent=parseFloat(v).toFixed(1); applyMapTransform(); applyFills(); autosave(); }
 function getRegionId(el){ return el.dataset.code || el.id || ''; }
 function onRegionClick(el){ pushUndo(); const rid=getRegionId(el); if(!rid) return; if(fills[rid]===paintColor) delete fills[rid]; else fills[rid]=paintColor; applyFills(); autosave(); }
 function applyFills(){
   mapSvg.querySelectorAll('.prefecture,.region').forEach(g=>{
     const rid=getRegionId(g); const painted=rid?fills[rid]:null; const fcol=painted||BASE_FILL; const fop=painted?opacity:1;
     g.setAttribute('fill',fcol); g.setAttribute('fill-opacity',fop);
-    if(borderMode==='none'){ g.setAttribute('stroke',fcol); g.setAttribute('stroke-opacity',fop); g.setAttribute('stroke-width',borderWidth); }
-    else { g.setAttribute('stroke',borderMode==='light'?'#9aa0a6':'#000000'); g.setAttribute('stroke-opacity','1'); g.setAttribute('stroke-width',borderWidth); } });
+    if(borderMode==='none'){ g.setAttribute('stroke',fcol); g.setAttribute('stroke-opacity',fop); }
+    else { g.setAttribute('stroke',borderMode==='light'?'#9aa0a6':'#000000'); g.setAttribute('stroke-opacity','1'); } });
 }
 
 // ================= 地図ロード / パン・ズーム =================
@@ -182,6 +182,7 @@ function applyMapTransform(){
   const g=mapSvg.querySelector('#mapTransformGroup'); if(!g) return;
   const {tx,ty,scale}=mapPanZoom;
   g.setAttribute('transform',`translate(${tx.toFixed(1)},${ty.toFixed(1)}) scale(${scale.toFixed(4)})`);
+  g.setAttribute('stroke-width',(borderWidth/scale).toFixed(4));
   const lbl=$('mapZoomLabel'); if(lbl) lbl.textContent=Math.round(scale*100)+'%';
 }
 function onMapMouseDown(e){
