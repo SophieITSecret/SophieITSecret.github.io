@@ -223,7 +223,8 @@ async function main() {
   console.log('[日本（都道府県・詳細）] 変換中...');
   const urlJapan = 'https://raw.githubusercontent.com/dataofjapan/land/master/japan.geojson';
   const JAPAN_BOUNDS = { minLon: 120, maxLon: 156, minLat: 23, maxLat: 47 };
-  const JW = 2000, JH = 2200; // メルカトル投影では縦が伸びるため高さを調整
+  // W:H = (lon範囲/lat範囲) × cos(中心緯度35°) = (36/24)×0.819 ≈ 1.23
+  const JW = 2000, JH = 1630;
   try {
     const geoJapan = JSON.parse(await download(urlJapan));
     const paths = [];
@@ -233,7 +234,7 @@ async function main() {
       const code = (props.id || '').toString().padStart(2, '0');
       const name = (props.nam_ja || props.nam || '').replace(/"/g, '&quot;');
       if (!code || code === '00') return;
-      const d = geometryToPath(f.geometry, JW, JH, JAPAN_BOUNDS, 'mercator');
+      const d = geometryToPath(f.geometry, JW, JH, JAPAN_BOUNDS);
       if (!d) return;
       paths.push(`<g class="prefecture" data-code="${code}" data-name="${name}">${
         d.split(' M').map((seg, i) => `<path d="${i === 0 ? seg : 'M' + seg}"/>`).join('')
