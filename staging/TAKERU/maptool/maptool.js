@@ -141,8 +141,10 @@ function loadMap(mapId){
   if(!data){ showToast('地図データがありません: maps/'+mapId+'.js'); return; }
   currentMapId=mapId;
   fills={...(mapFillsAll[mapId]||{})};
+  const vb=(data.viewBox||'0 0 1000 1000').trim().split(/\s+/);
+  const ocW=vb[2]||1000, ocH=vb[3]||1000;
   mapSvg.setAttribute('viewBox',data.viewBox||'0 0 1000 1000');
-  mapSvg.innerHTML=`<g id="mapTransformGroup" transform="translate(0,0) scale(1)">${data.svg}</g>`;
+  mapSvg.innerHTML=`<rect width="${ocW}" height="${ocH}" fill="#C8DCE8"/><g id="mapTransformGroup" transform="translate(0,0) scale(1)">${data.svg}</g>`;
   // クリックイベントをバインド
   mapSvg.querySelectorAll('.prefecture,.region').forEach(el=>{
     el.addEventListener('click',ev=>{ if(tool==='paint'){ ev.stopPropagation(); onRegionClick(el); } }); });

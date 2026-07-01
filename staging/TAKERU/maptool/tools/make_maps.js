@@ -119,10 +119,10 @@ const MAPS = [
   },
   {
     id: 'europe',
-    name: 'ヨーロッパ',
+    name: 'ヨーロッパ・中東・北アフリカ',
     outFile: 'europe.js',
-    W: 1000, H: 800,
-    bounds: { minLon: -25, maxLon: 50, minLat: 33, maxLat: 72 }
+    W: 1000, H: 1000,
+    bounds: { minLon: -25, maxLon: 55, minLat: 22, maxLat: 72 }
   },
   {
     id: 'north_america',

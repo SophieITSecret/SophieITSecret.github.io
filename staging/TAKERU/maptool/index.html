@@ -192,7 +192,7 @@ button{ font-family:inherit; cursor:pointer; }
         <button class="mode-btn active" data-m="japan" onclick="switchMap('japan')" style="font-size:0.72rem;padding:5px 4px">🗾 日本</button>
         <button class="mode-btn" data-m="world" onclick="switchMap('world')" style="font-size:0.72rem;padding:5px 4px">🌍 世界</button>
         <button class="mode-btn" data-m="asia_pacific" onclick="switchMap('asia_pacific')" style="font-size:0.72rem;padding:5px 4px">アジア太平洋</button>
-        <button class="mode-btn" data-m="europe" onclick="switchMap('europe')" style="font-size:0.72rem;padding:5px 4px">欧州</button>
+        <button class="mode-btn" data-m="europe" onclick="switchMap('europe')" style="font-size:0.72rem;padding:5px 4px">欧州・中東</button>
         <button class="mode-btn" data-m="north_america" onclick="switchMap('north_america')" style="font-size:0.72rem;padding:5px 4px">北米</button>
       </div>
       <button class="btn-sm" style="width:100%;margin-top:6px" onclick="document.getElementById('customSvgFile').click()">📁 カスタムSVGを読み込む</button>
@@ -334,7 +334,7 @@ button{ font-family:inherit; cursor:pointer; }
       <!-- 地図レイヤー（JS から動的に読み込み） -->
       <!-- 日本地図データ出典: Japanese Prefectures by Geolonia (https://github.com/geolonia/japanese-prefectures) MITライセンス -->
       <!-- 世界地図データ出典: Natural Earth (https://www.naturalearthdata.com/) Public Domain -->
-      <svg id="mapSvg" x="155" y="68" width="650" height="650" viewBox="0 0 1000 1000" xmlns="http://www.w3.org/2000/svg">
+      <svg id="mapSvg" x="155" y="68" width="650" height="650" viewBox="0 0 1000 1000">
       </svg>
       <g id="legendLayer"></g>
       <text id="title" x="480" y="44" text-anchor="middle"
