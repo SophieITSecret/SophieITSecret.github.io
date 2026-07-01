@@ -35,7 +35,7 @@
 </div>
 
 <div class="main">
-  <!-- 左ペイン：一覧 -->
+  <!-- 列1：カード一覧 -->
   <div class="pane-list">
     <div class="pane-toolbar">
       <select id="unitSelect" onchange="filterCards()">
@@ -48,12 +48,12 @@
     </div>
   </div>
 
-  <!-- 中央：カードプレビュー -->
+  <!-- 列2：カードプレビュー -->
   <div class="pane-card" id="paneCard">
     <div class="empty-state"><div class="icon">👆</div>カードを選択してください</div>
   </div>
 
-  <!-- 右：編集エリア -->
+  <!-- 列3：編集エリア -->
   <div class="edit-area" id="editArea" style="display:none">
     <div><div class="edit-label">コード</div><input class="edit-input" id="editCode" readonly style="color:var(--fact);font-family:monospace"></div>
     <div><div class="edit-label">タイトル</div><input class="edit-input" id="editTitle" oninput="updatePreview()"></div>
@@ -65,59 +65,6 @@
       <button class="btn-copy" onclick="copyCardText()" title="コード・タイトル・本文をコピー">📋 コピー</button>
       <button class="btn-cancel" onclick="cancelEdit()">キャンセル</button>
       <button class="btn-apply" onclick="applyEdit()">✓ 適用</button>
-    </div>
-
-    <!-- 音声パネル -->
-    <div class="voice-panel">
-      <div class="voice-title">🎙 音声生成</div>
-      <div>
-        <div class="edit-label" style="margin-bottom:3px">ナレーター</div>
-        <select id="narratorSelect" class="edit-input" style="height:32px;padding:4px 8px" onchange="onNarratorChange()"></select>
-        <input id="narratorInput" class="edit-input" value="Japanese Female 1" style="display:none" oninput="saveVoiceSettings()">
-      </div>
-      <div class="voice-section-label">▸ 基本設定</div>
-      <div class="voice-slider-row">
-        <span class="v-lbl">スピード</span>
-        <input type="range" id="vpSpeed" min="50" max="200" value="100" oninput="syncNum('vpSpeed','vpSpeedN');saveVoiceSettings()">
-        <input type="number" id="vpSpeedN" class="v-num-inp" value="100" min="50" max="200" oninput="syncRange('vpSpeedN','vpSpeed');saveVoiceSettings()">
-      </div>
-      <div class="voice-slider-row">
-        <span class="v-lbl">ピッチ</span>
-        <input type="range" id="vpPitch" min="0" max="100" value="50" oninput="syncNum('vpPitch','vpPitchN');saveVoiceSettings()">
-        <input type="number" id="vpPitchN" class="v-num-inp" value="50" min="0" max="100" oninput="syncRange('vpPitchN','vpPitch');saveVoiceSettings()">
-      </div>
-      <div class="voice-section-label">▸ 感情</div>
-      <div class="voice-slider-row">
-        <span class="v-lbl">喜び</span>
-        <input type="range" id="emHappy" min="0" max="100" value="40" oninput="syncNum('emHappy','emHappyN');saveVoiceSettings()">
-        <input type="number" id="emHappyN" class="v-num-inp" value="40" min="0" max="100" oninput="syncRange('emHappyN','emHappy');saveVoiceSettings()">
-      </div>
-      <div class="voice-slider-row">
-        <span class="v-lbl">楽しさ</span>
-        <input type="range" id="emFun" min="0" max="100" value="30" oninput="syncNum('emFun','emFunN');saveVoiceSettings()">
-        <input type="number" id="emFunN" class="v-num-inp" value="30" min="0" max="100" oninput="syncRange('emFunN','emFun');saveVoiceSettings()">
-      </div>
-      <div class="voice-slider-row">
-        <span class="v-lbl">悲しみ</span>
-        <input type="range" id="emSad" min="0" max="100" value="0" oninput="syncNum('emSad','emSadN');saveVoiceSettings()">
-        <input type="number" id="emSadN" class="v-num-inp" value="0" min="0" max="100" oninput="syncRange('emSadN','emSad');saveVoiceSettings()">
-      </div>
-      <div class="voice-slider-row">
-        <span class="v-lbl">怒り</span>
-        <input type="range" id="emAngry" min="0" max="100" value="0" oninput="syncNum('emAngry','emAngryN');saveVoiceSettings()">
-        <input type="number" id="emAngryN" class="v-num-inp" value="0" min="0" max="100" oninput="syncRange('emAngryN','emAngry');saveVoiceSettings()">
-      </div>
-      <div class="voice-btns">
-        <button id="btnRecord" class="btn-voice" onclick="recordVoice()">🎙 録音</button>
-        <button id="btnPlay" class="btn-voice" onclick="playVoice()">▶ 再生</button>
-        <button id="btnConfirm" class="btn-voice-confirm" onclick="confirmVoice()">✅ 確定</button>
-      </div>
-      <div class="voice-status-row">
-        <span id="voiceDot" class="dot-none">○</span>
-        <span id="voiceStatusText">--</span>
-      </div>
-      <div class="voice-note">※ 編集窓のテキストで録音します</div>
-      <div class="voice-note">※ 確定すると編集窓を元の本文に戻します</div>
     </div>
 
     <!-- 画像取り込み -->
@@ -144,6 +91,71 @@
         </div>
       </div>
     </div>
+  </div>
+
+  <!-- 列4：音声パネル -->
+  <div class="voice-area" id="voiceArea" style="display:none">
+    <div class="voice-area-title">🎙 音声生成</div>
+
+    <!-- キャラクタースロット -->
+    <div class="char-slots">
+      <button class="btn-slot active" id="slot0Btn" onclick="switchSlot(0)">スロット1</button>
+      <button class="btn-slot" id="slot1Btn" onclick="switchSlot(1)">スロット2</button>
+      <button class="btn-slot" id="slot2Btn" onclick="switchSlot(2)">スロット3</button>
+    </div>
+
+    <!-- ナレーター -->
+    <div>
+      <div class="edit-label" style="margin-bottom:3px">ナレーター</div>
+      <select id="narratorSelect" class="edit-input" style="height:32px;padding:4px 8px" onchange="onNarratorChange()"></select>
+      <input id="narratorInput" class="edit-input" value="Japanese Female 1" style="display:none" oninput="saveVoiceSettings()">
+    </div>
+
+    <div class="voice-section-label">▸ 基本設定</div>
+    <div class="voice-slider-row">
+      <span class="v-lbl">スピード</span>
+      <input type="range" id="vpSpeed" min="50" max="200" value="100" oninput="syncNum('vpSpeed','vpSpeedN');saveVoiceSettings()">
+      <input type="number" id="vpSpeedN" class="v-num-inp" value="100" min="50" max="200" oninput="syncRange('vpSpeedN','vpSpeed');saveVoiceSettings()">
+    </div>
+    <div class="voice-slider-row">
+      <span class="v-lbl">ピッチ</span>
+      <input type="range" id="vpPitch" min="0" max="100" value="50" oninput="syncNum('vpPitch','vpPitchN');saveVoiceSettings()">
+      <input type="number" id="vpPitchN" class="v-num-inp" value="50" min="0" max="100" oninput="syncRange('vpPitchN','vpPitch');saveVoiceSettings()">
+    </div>
+
+    <div class="voice-section-label">▸ 感情</div>
+    <div class="voice-slider-row">
+      <span class="v-lbl">喜び</span>
+      <input type="range" id="emHappy" min="0" max="100" value="40" oninput="syncNum('emHappy','emHappyN');saveVoiceSettings()">
+      <input type="number" id="emHappyN" class="v-num-inp" value="40" min="0" max="100" oninput="syncRange('emHappyN','emHappy');saveVoiceSettings()">
+    </div>
+    <div class="voice-slider-row">
+      <span class="v-lbl">楽しさ</span>
+      <input type="range" id="emFun" min="0" max="100" value="30" oninput="syncNum('emFun','emFunN');saveVoiceSettings()">
+      <input type="number" id="emFunN" class="v-num-inp" value="30" min="0" max="100" oninput="syncRange('emFunN','emFun');saveVoiceSettings()">
+    </div>
+    <div class="voice-slider-row">
+      <span class="v-lbl">悲しみ</span>
+      <input type="range" id="emSad" min="0" max="100" value="0" oninput="syncNum('emSad','emSadN');saveVoiceSettings()">
+      <input type="number" id="emSadN" class="v-num-inp" value="0" min="0" max="100" oninput="syncRange('emSadN','emSad');saveVoiceSettings()">
+    </div>
+    <div class="voice-slider-row">
+      <span class="v-lbl">怒り</span>
+      <input type="range" id="emAngry" min="0" max="100" value="0" oninput="syncNum('emAngry','emAngryN');saveVoiceSettings()">
+      <input type="number" id="emAngryN" class="v-num-inp" value="0" min="0" max="100" oninput="syncRange('emAngryN','emAngry');saveVoiceSettings()">
+    </div>
+
+    <div class="voice-btns">
+      <button id="btnRecord" class="btn-voice" onclick="recordVoice()">🎙 録音</button>
+      <button id="btnPlay" class="btn-voice" onclick="playVoice()">▶ 再生</button>
+      <button id="btnConfirm" class="btn-voice-confirm" onclick="confirmVoice()">✅ 確定</button>
+    </div>
+    <div class="voice-status-row">
+      <span id="voiceDot" class="dot-none">○</span>
+      <span id="voiceStatusText">--</span>
+    </div>
+    <div class="voice-note">※ 編集窓のテキストで録音します</div>
+    <div class="voice-note">※ 確定すると編集窓を元の本文に戻します</div>
   </div>
 </div>
 

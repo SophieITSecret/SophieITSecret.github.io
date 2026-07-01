@@ -179,6 +179,19 @@ function spawnP(cmd, args, opts) {
   });
 }
 
+// VOICEPEAK 呼び出し（クラッシュ時リトライ付き）
+async function spawnVP(args, opts, retries = 3) {
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      return await spawnP(args[0], args.slice(1), opts);
+    } catch (e) {
+      if (attempt === retries) throw e;
+      console.warn(`  [VP retry ${attempt}/${retries}] ${e.message}`);
+      await new Promise(r => setTimeout(r, 5000));
+    }
+  }
+}
+
 // WAVs（複数可）→ MP3（ffmpeg で結合＋変換を一括処理）
 function wavsToMp3(wavFiles, mp3Path, tempDir, code) {
   if (wavFiles.length === 1) {
@@ -233,7 +246,8 @@ function postVoiceGenerate(req, res) {
       const narrator = (d.narrator || 'Japanese Female 1').trim();
       const emotion  = (d.emotion  || 'happy=40,fun=30');
       const speed    = String(d.speed || 100);
-      const pitch    = String(d.pitch || 50);
+      // スライダー 0-100(中央50) → VOICEPEAK -300〜300(中央0) に変換
+      const pitch    = String(Math.round((Number(d.pitch ?? 50) - 50) * 6));
 
       if (!code || !text) return sendJSON(res, 400, { ok: false, error: 'code と text は必須です' });
 
@@ -256,13 +270,13 @@ function postVoiceGenerate(req, res) {
         const wavFile = path.join(tempDir, `${code}_${i}.wav`);
         fs.writeFileSync(txtFile, sentences[i], 'utf8');
 
-        await spawnP(vpPath,
-          ['-t', txtFile, '-n', narrator, '-e', emotion, '--speed', speed, '--pitch', pitch, '-o', wavFile],
+        await spawnVP(
+          [vpPath, '-t', txtFile, '-n', narrator, '-e', emotion, '--speed', speed, '--pitch', pitch, '-o', wavFile],
           { cwd: vpDir });
 
         chunkWavs.push(wavFile);
         console.log(`  [${i + 1}/${sentences.length}] 完了`);
-        if (i < sentences.length - 1) await new Promise(r => setTimeout(r, 3000));
+        if (i < sentences.length - 1) await new Promise(r => setTimeout(r, 5000));
       }
 
       // WAV 結合 → MP3（ffmpeg 一括）

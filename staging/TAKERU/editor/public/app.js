@@ -120,6 +120,7 @@ function showCard(gIdx) {
   renderCard(gIdx);
   const card=cardData[gIdx];
   document.getElementById('editArea').style.display='flex';
+  document.getElementById('voiceArea').style.display='flex';
   document.getElementById('editCode').value=card.id;
   document.getElementById('editTitle').value=card.title;
   document.getElementById('editBody').value=card.body;
@@ -402,72 +403,132 @@ window.addEventListener('beforeunload',e=>{if(dirty){e.preventDefault();e.return
 
 // ==================== 音声パネル ====================
 const VOICE_KEY = 'takeru_voice_settings';
-const VOICE_DEFAULTS = { speed:100, pitch:50, happy:40, fun:30, sad:0, angry:0 };
+const VOICE_VER = 2;
+const SLOT_DEFAULTS = [
+  { narrator:'Japanese Male 2',   speed:100, pitch:50, happy:40, fun:30, sad:0, angry:0 },
+  { narrator:'Japanese Female 3', speed:100, pitch:50, happy:40, fun:30, sad:0, angry:0 },
+  { narrator:'Japanese Female 1', speed:100, pitch:50, happy:40, fun:30, sad:0, angry:0 },
+];
+let activeSlot = 0;
 let currentAudio = null;
+let voiceMsgTimer = null;
 
+// ---- スロット管理 ----
 function loadVS(){ try{ return JSON.parse(localStorage.getItem(VOICE_KEY))||{}; }catch{ return {}; } }
-function saveVoiceSettings(){
-  const narrator=getNarrator(), s=loadVS();
-  s.lastNarrator=narrator; s.perNarrator=s.perNarrator||{};
-  s.perNarrator[narrator]=getVoiceParams();
-  localStorage.setItem(VOICE_KEY,JSON.stringify(s));
+
+function ensureSlots(vs){
+  if(!Array.isArray(vs.slots) || vs.slots.length < 3 || vs.ver !== VOICE_VER){
+    vs.slots = [0,1,2].map(i => ({...SLOT_DEFAULTS[i]}));
+    vs.ver = VOICE_VER;
+  }
+  return vs.slots;
 }
+
+function saveVoiceSettings(){
+  const vs=loadVS();
+  const slots=ensureSlots(vs);
+  slots[activeSlot] = { narrator:getNarrator(), ...getSliderParams() };
+  vs.slots=slots; vs.activeSlot=activeSlot;
+  localStorage.setItem(VOICE_KEY, JSON.stringify(vs));
+  updateSlotButtons(slots);
+}
+
+function switchSlot(idx){
+  saveVoiceSettings();
+  activeSlot=idx;
+  const vs=loadVS();
+  const slots=ensureSlots(vs);
+  applySlot(slots[activeSlot]);
+  updateSlotButtons(slots);
+}
+
+function applySlot(slot){
+  const s={...SLOT_DEFAULTS[activeSlot],...slot};
+  const sel=document.getElementById('narratorSelect'), inp=document.getElementById('narratorInput');
+  if(sel.style.display!=='none'){ sel.value=s.narrator; if(sel.value!==s.narrator) sel.value=sel.options[0]?.value||''; }
+  else { inp.value=s.narrator; }
+  [['vpSpeed','vpSpeedN',s.speed],['vpPitch','vpPitchN',s.pitch],
+   ['emHappy','emHappyN',s.happy],['emFun','emFunN',s.fun],
+   ['emSad','emSadN',s.sad],['emAngry','emAngryN',s.angry]
+  ].forEach(([r,n,v])=>{ document.getElementById(r).value=v; document.getElementById(n).value=v; });
+}
+
+function updateSlotButtons(slots){
+  for(let i=0;i<3;i++){
+    const btn=document.getElementById(`slot${i}Btn`);
+    if(!btn) continue;
+    const raw=slots[i]?.narrator||'';
+    const name=raw?friendlyNarrator(raw):`スロット${i+1}`;
+    btn.textContent=name;
+    btn.title=raw||`スロット${i+1}`;
+    btn.className='btn-slot'+(i===activeSlot?' active':'');
+  }
+}
+
+// ---- UI ユーティリティ ----
+function friendlyNarrator(n){
+  if(n==='Japanese Female Child') return '女の子';
+  return n.replace('Japanese Female','女性').replace('Japanese Male','男性').replace(/\s+/g,'');
+}
+
 function syncNum(rId,nId){ document.getElementById(nId).value=document.getElementById(rId).value; }
 function syncRange(nId,rId){ document.getElementById(rId).value=document.getElementById(nId).value; }
-function getVoiceParams(){
+
+function getSliderParams(){
   const g=id=>+document.getElementById(id).value;
   return {speed:g('vpSpeed'),pitch:g('vpPitch'),happy:g('emHappy'),fun:g('emFun'),sad:g('emSad'),angry:g('emAngry')};
 }
-function applyVoiceParams(p){
-  const v={...VOICE_DEFAULTS,...p};
-  [['vpSpeed','vpSpeedN',v.speed],['vpPitch','vpPitchN',v.pitch],
-   ['emHappy','emHappyN',v.happy],['emFun','emFunN',v.fun],
-   ['emSad','emSadN',v.sad],['emAngry','emAngryN',v.angry]
-  ].forEach(([rId,nId,val])=>{ document.getElementById(rId).value=val; document.getElementById(nId).value=val; });
-}
+
 function buildEmotion(){
-  const p=getVoiceParams(), parts=[];
+  const p=getSliderParams(), parts=[];
   if(p.happy>0) parts.push(`happy=${p.happy}`);
   if(p.fun>0)   parts.push(`fun=${p.fun}`);
   if(p.sad>0)   parts.push(`sad=${p.sad}`);
   if(p.angry>0) parts.push(`angry=${p.angry}`);
   return parts.join(',')||'happy=0';
 }
+
 function getNarrator(){
   const sel=document.getElementById('narratorSelect'), inp=document.getElementById('narratorInput');
-  return (sel.style.display!=='none'?sel.value:inp.value)||'Japanese Female 1';
+  return (sel.style.display!=='none'?sel.value:inp.value)||SLOT_DEFAULTS.narrator;
 }
-function onNarratorChange(){
-  const s=loadVS(); applyVoiceParams(s.perNarrator?.[getNarrator()]||VOICE_DEFAULTS); saveVoiceSettings();
-}
+
+function onNarratorChange(){ saveVoiceSettings(); }
+
+// ---- 初期化 ----
 async function initVoicePanel(){
+  const vs=loadVS();
+  activeSlot=vs.activeSlot||0;
+  const slots=ensureSlots(vs);
   try{
     const res=await fetch('/api/voice/narrators',{signal:AbortSignal.timeout(3000)});
     const json=await res.json();
     if(json.ok&&json.narrators.length){
       const sel=document.getElementById('narratorSelect');
-      sel.innerHTML=json.narrators.map(n=>`<option value="${n}">${n}</option>`).join('');
-      const s=loadVS();
-      if(s.lastNarrator&&json.narrators.includes(s.lastNarrator)) sel.value=s.lastNarrator;
-      applyVoiceParams(s.perNarrator?.[sel.value]||VOICE_DEFAULTS);
-    } else { fallbackNarratorInput(); }
-  } catch { fallbackNarratorInput(); }
+      sel.innerHTML=json.narrators.map(n=>`<option value="${n}">${friendlyNarrator(n)}</option>`).join('');
+      applySlot(slots[activeSlot]);
+    } else { fallbackNarratorInput(slots); }
+  } catch { fallbackNarratorInput(slots); }
+  updateSlotButtons(slots);
 }
-function fallbackNarratorInput(){
+
+function fallbackNarratorInput(slots){
   document.getElementById('narratorSelect').style.display='none';
   const inp=document.getElementById('narratorInput'); inp.style.display='';
-  const s=loadVS(); if(s.lastNarrator) inp.value=s.lastNarrator;
-  applyVoiceParams(s.perNarrator?.[inp.value]||VOICE_DEFAULTS);
+  applySlot(slots?.[activeSlot]||SLOT_DEFAULTS[activeSlot]);
 }
+
+// ---- 録音 / 再生 / 確定 ----
 async function checkVoiceStatus(code){
-  const dot=document.getElementById('voiceDot'), text=document.getElementById('voiceStatusText');
-  if(!code){ dot.textContent='○'; dot.className='dot-none'; text.textContent='--'; return; }
+  const dot=document.getElementById('voiceDot'), txt=document.getElementById('voiceStatusText');
+  if(!code){ dot.textContent='○'; dot.className='dot-none'; txt.textContent='--'; return; }
   try{
     const json=await(await fetch(`/api/voice/status/${code}`,{signal:AbortSignal.timeout(2000)})).json();
-    if(json.exists){ dot.textContent='●'; dot.className='dot-exists'; text.textContent='MP3あり'; }
-    else { dot.textContent='○'; dot.className='dot-none'; text.textContent='未生成'; }
-  } catch { dot.textContent='?'; dot.className='dot-none'; text.textContent='サーバー未接続'; }
+    if(json.exists){ dot.textContent='●'; dot.className='dot-exists'; txt.textContent='MP3あり'; }
+    else { dot.textContent='○'; dot.className='dot-none'; txt.textContent='未生成'; }
+  } catch { dot.textContent='?'; dot.className='dot-none'; txt.textContent='サーバー未接続'; }
 }
+
 async function recordVoice(){
   if(selectedIdx<0) return;
   const code=cardData[selectedIdx].id, text=document.getElementById('editBody').value.trim();
@@ -475,16 +536,17 @@ async function recordVoice(){
   const btn=document.getElementById('btnRecord');
   btn.disabled=true; btn.textContent='⏳ 生成中...';
   try{
-    const p=getVoiceParams();
+    const p=getSliderParams();
     const json=await(await fetch('/api/voice/generate',{
       method:'POST', headers:{'Content-Type':'application/json'},
       body:JSON.stringify({code,text,narrator:getNarrator(),emotion:buildEmotion(),speed:p.speed,pitch:p.pitch})
     })).json();
     if(json.ok){ showVoiceMsg('✅ '+json.message); checkVoiceStatus(code); }
     else alert('生成エラー:\n'+json.error);
-  } catch(e) { alert('生成に失敗しました:\n'+e.message); }
-  finally { btn.disabled=false; btn.textContent='🎙 録音'; }
+  } catch(e){ alert('生成に失敗しました:\n'+e.message); }
+  finally{ btn.disabled=false; btn.textContent='🎙 録音'; }
 }
+
 function playVoice(){
   if(selectedIdx<0) return;
   if(currentAudio){ currentAudio.pause(); currentAudio=null; }
@@ -492,17 +554,19 @@ function playVoice(){
   currentAudio.onerror=()=>alert('音声ファイルがありません。\nまず「🎙 録音」を実行してください。');
   currentAudio.play();
 }
+
 function confirmVoice(){
   if(selectedIdx<0) return;
   document.getElementById('editBody').value=cardData[selectedIdx].body;
   updatePreview(); countChars(); showVoiceMsg('✅ 確定しました（本文を元に戻しました）');
 }
-let voiceMsgTimer=null;
+
 function showVoiceMsg(msg){
   document.getElementById('voiceStatusText').textContent=msg;
   clearTimeout(voiceMsgTimer);
   voiceMsgTimer=setTimeout(()=>{ if(selectedIdx>=0) checkVoiceStatus(cardData[selectedIdx].id); },3000);
 }
+
 initVoicePanel();
 
 // 起動
