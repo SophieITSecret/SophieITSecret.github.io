@@ -60,8 +60,9 @@ function convertToSvg(geojson, W, H, bounds) {
   features.forEach(f => {
     if (!f.geometry) { skipped++; return; }
     const props = f.properties || {};
-    // ISO_A2 がない国（南極等）はスキップ
-    const id = (props.ISO_A2 || '').trim();
+    // ISO_A2 がない国（南極等）はスキップ。-99 のとき ISO_A2_EH にフォールバック（France, Norway 等）
+    let id = (props.ISO_A2 || '').trim();
+    if (!id || id === '-99') id = (props.ISO_A2_EH || '').trim();
     if (!id || id === '-99') { skipped++; return; }
     const name = (props.ADMIN || props.NAME || '').replace(/"/g, '&quot;');
     const nameJa = (props.NAME_JA || '').replace(/"/g, '&quot;');
