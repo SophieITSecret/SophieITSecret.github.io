@@ -205,6 +205,36 @@ async function main() {
     writeMapJs(mapDef.id, mapDef.name, viewBox, svgPaths, path.join(OUT_DIR, mapDef.outFile));
   }
 
+  // ===== Japan HD（都道府県 GeoJSON from Geolonia） =====
+  console.log('[日本（都道府県・詳細）] 変換中...');
+  const urlJapan = 'https://raw.githubusercontent.com/dataofjapan/land/master/japan.geojson';
+  const JAPAN_BOUNDS = { minLon: 120, maxLon: 156, minLat: 23, maxLat: 47 };
+  const JW = 2000, JH = 2000;
+  try {
+    const geoJapan = JSON.parse(await download(urlJapan));
+    const paths = [];
+    (geoJapan.features || []).forEach(f => {
+      if (!f.geometry) return;
+      const props = f.properties || {};
+      const code = (props.id || '').toString().padStart(2, '0');
+      const name = (props.nam_ja || props.nam || '').replace(/"/g, '&quot;');
+      if (!code || code === '00') return;
+      const d = geometryToPath(f.geometry, JW, JH, JAPAN_BOUNDS);
+      if (!d) return;
+      paths.push(`<g class="prefecture" data-code="${code}" data-name="${name}">${
+        d.split(' M').map((seg, i) => `<path d="${i === 0 ? seg : 'M' + seg}"/>`).join('')
+      }</g>`);
+    });
+    const svgContent = `<g class="prefectures">\n${paths.join('\n')}\n</g>`;
+    const js = `window.MAPS = window.MAPS || {};\nwindow.MAPS['japan_hd'] = {\n  name: '日本（都道府県・詳細）',\n  viewBox: '0 0 ${JW} ${JH}',\n  regions: 'prefecture',\n  svg: \`${svgContent}\`\n};\n`;
+    const outFile = path.join(OUT_DIR, 'japan_hd.js');
+    fs.writeFileSync(outFile, js, 'utf8');
+    const kb = (fs.statSync(outFile).size / 1024).toFixed(1);
+    console.log(`  → japan_hd.js (${kb} KB)`);
+  } catch (e) {
+    console.warn('  Japan HD 生成失敗:', e.message);
+  }
+
   console.log('\n完了！ index.html を更新して地図が表示されます。');
 }
 
