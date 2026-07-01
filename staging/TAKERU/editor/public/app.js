@@ -125,6 +125,7 @@ function showCard(gIdx) {
   document.getElementById('editBody').value=card.body;
   countChars();
   setTimeout(()=>{const a=document.querySelector('.card-item.active');if(a)a.scrollIntoView({block:'nearest'});},50);
+  checkVoiceStatus(card.id);
 }
 
 function renderCard(gIdx) {
@@ -398,6 +399,111 @@ async function saveCSV(){
 }
 
 window.addEventListener('beforeunload',e=>{if(dirty){e.preventDefault();e.returnValue='';}});
+
+// ==================== 音声パネル ====================
+const VOICE_KEY = 'takeru_voice_settings';
+const VOICE_DEFAULTS = { speed:100, pitch:50, happy:40, fun:30, sad:0, angry:0 };
+let currentAudio = null;
+
+function loadVS(){ try{ return JSON.parse(localStorage.getItem(VOICE_KEY))||{}; }catch{ return {}; } }
+function saveVoiceSettings(){
+  const narrator=getNarrator(), s=loadVS();
+  s.lastNarrator=narrator; s.perNarrator=s.perNarrator||{};
+  s.perNarrator[narrator]=getVoiceParams();
+  localStorage.setItem(VOICE_KEY,JSON.stringify(s));
+}
+function syncNum(rId,nId){ document.getElementById(nId).value=document.getElementById(rId).value; }
+function syncRange(nId,rId){ document.getElementById(rId).value=document.getElementById(nId).value; }
+function getVoiceParams(){
+  const g=id=>+document.getElementById(id).value;
+  return {speed:g('vpSpeed'),pitch:g('vpPitch'),happy:g('emHappy'),fun:g('emFun'),sad:g('emSad'),angry:g('emAngry')};
+}
+function applyVoiceParams(p){
+  const v={...VOICE_DEFAULTS,...p};
+  [['vpSpeed','vpSpeedN',v.speed],['vpPitch','vpPitchN',v.pitch],
+   ['emHappy','emHappyN',v.happy],['emFun','emFunN',v.fun],
+   ['emSad','emSadN',v.sad],['emAngry','emAngryN',v.angry]
+  ].forEach(([rId,nId,val])=>{ document.getElementById(rId).value=val; document.getElementById(nId).value=val; });
+}
+function buildEmotion(){
+  const p=getVoiceParams(), parts=[];
+  if(p.happy>0) parts.push(`happy=${p.happy}`);
+  if(p.fun>0)   parts.push(`fun=${p.fun}`);
+  if(p.sad>0)   parts.push(`sad=${p.sad}`);
+  if(p.angry>0) parts.push(`angry=${p.angry}`);
+  return parts.join(',')||'happy=0';
+}
+function getNarrator(){
+  const sel=document.getElementById('narratorSelect'), inp=document.getElementById('narratorInput');
+  return (sel.style.display!=='none'?sel.value:inp.value)||'Japanese Female 1';
+}
+function onNarratorChange(){
+  const s=loadVS(); applyVoiceParams(s.perNarrator?.[getNarrator()]||VOICE_DEFAULTS); saveVoiceSettings();
+}
+async function initVoicePanel(){
+  try{
+    const res=await fetch('/api/voice/narrators',{signal:AbortSignal.timeout(3000)});
+    const json=await res.json();
+    if(json.ok&&json.narrators.length){
+      const sel=document.getElementById('narratorSelect');
+      sel.innerHTML=json.narrators.map(n=>`<option value="${n}">${n}</option>`).join('');
+      const s=loadVS();
+      if(s.lastNarrator&&json.narrators.includes(s.lastNarrator)) sel.value=s.lastNarrator;
+      applyVoiceParams(s.perNarrator?.[sel.value]||VOICE_DEFAULTS);
+    } else { fallbackNarratorInput(); }
+  } catch { fallbackNarratorInput(); }
+}
+function fallbackNarratorInput(){
+  document.getElementById('narratorSelect').style.display='none';
+  const inp=document.getElementById('narratorInput'); inp.style.display='';
+  const s=loadVS(); if(s.lastNarrator) inp.value=s.lastNarrator;
+  applyVoiceParams(s.perNarrator?.[inp.value]||VOICE_DEFAULTS);
+}
+async function checkVoiceStatus(code){
+  const dot=document.getElementById('voiceDot'), text=document.getElementById('voiceStatusText');
+  if(!code){ dot.textContent='○'; dot.className='dot-none'; text.textContent='--'; return; }
+  try{
+    const json=await(await fetch(`/api/voice/status/${code}`,{signal:AbortSignal.timeout(2000)})).json();
+    if(json.exists){ dot.textContent='●'; dot.className='dot-exists'; text.textContent='MP3あり'; }
+    else { dot.textContent='○'; dot.className='dot-none'; text.textContent='未生成'; }
+  } catch { dot.textContent='?'; dot.className='dot-none'; text.textContent='サーバー未接続'; }
+}
+async function recordVoice(){
+  if(selectedIdx<0) return;
+  const code=cardData[selectedIdx].id, text=document.getElementById('editBody').value.trim();
+  if(!text){ alert('本文が空です'); return; }
+  const btn=document.getElementById('btnRecord');
+  btn.disabled=true; btn.textContent='⏳ 生成中...';
+  try{
+    const p=getVoiceParams();
+    const json=await(await fetch('/api/voice/generate',{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({code,text,narrator:getNarrator(),emotion:buildEmotion(),speed:p.speed,pitch:p.pitch})
+    })).json();
+    if(json.ok){ showVoiceMsg('✅ '+json.message); checkVoiceStatus(code); }
+    else alert('生成エラー:\n'+json.error);
+  } catch(e) { alert('生成に失敗しました:\n'+e.message); }
+  finally { btn.disabled=false; btn.textContent='🎙 録音'; }
+}
+function playVoice(){
+  if(selectedIdx<0) return;
+  if(currentAudio){ currentAudio.pause(); currentAudio=null; }
+  currentAudio=new Audio(`/api/voice/audio/${cardData[selectedIdx].id}`);
+  currentAudio.onerror=()=>alert('音声ファイルがありません。\nまず「🎙 録音」を実行してください。');
+  currentAudio.play();
+}
+function confirmVoice(){
+  if(selectedIdx<0) return;
+  document.getElementById('editBody').value=cardData[selectedIdx].body;
+  updatePreview(); countChars(); showVoiceMsg('✅ 確定しました（本文を元に戻しました）');
+}
+let voiceMsgTimer=null;
+function showVoiceMsg(msg){
+  document.getElementById('voiceStatusText').textContent=msg;
+  clearTimeout(voiceMsgTimer);
+  voiceMsgTimer=setTimeout(()=>{ if(selectedIdx>=0) checkVoiceStatus(cardData[selectedIdx].id); },3000);
+}
+initVoicePanel();
 
 // 起動
 init();

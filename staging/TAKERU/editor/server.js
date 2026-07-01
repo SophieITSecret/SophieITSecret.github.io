@@ -5,7 +5,8 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
-const { exec } = require('child_process');
+const os = require('os');
+const { exec, spawn } = require('child_process');
 
 // ---- 設定読み込み ----
 const CONFIG_PATH = path.join(__dirname, 'config.json');
@@ -151,9 +152,131 @@ function postImageSave(req, res) {
 function postImageProcess(req, res) {
   sendJSON(res, 501, { ok: false, error: '未実装（フェーズ2で対応予定）' });
 }
-// POST /api/voice/generate — VOICEPEAK連携（フェーズ2）
+
+// ============================================================
+// VOICE API — VOICEPEAK連携（フェーズ2）
+// ============================================================
+
+function getVpConfig() {
+  const vpPath = config.voicepeakPath || 'C:\\Program Files\\VOICEPEAK\\voicepeak.exe';
+  const vpDir  = path.dirname(vpPath);
+  const voicesDir = config.voicesDir || path.join(path.dirname(config.csvPath), 'voices');
+  const backupDir = path.join(path.dirname(voicesDir), 'voices_backup');
+  const tempDir   = path.join(os.tmpdir(), 'takeru_voice_temp');
+  [voicesDir, backupDir, tempDir].forEach(d => { try { fs.mkdirSync(d, { recursive: true }); } catch {} });
+  return { vpPath, vpDir, voicesDir, backupDir, tempDir };
+}
+
+// 子プロセス実行（Promise）
+function spawnP(cmd, args, opts) {
+  return new Promise((resolve, reject) => {
+    const p = spawn(cmd, args, { ...opts, windowsHide: true });
+    let out = '', err = '';
+    p.stdout && p.stdout.on('data', d => out += d);
+    p.stderr && p.stderr.on('data', d => err += d);
+    p.on('close', code => code === 0 ? resolve(out) : reject(new Error(err || `exit ${code}`)));
+    p.on('error', reject);
+  });
+}
+
+// WAVs（複数可）→ MP3（ffmpeg で結合＋変換を一括処理）
+function wavsToMp3(wavFiles, mp3Path, tempDir, code) {
+  if (wavFiles.length === 1) {
+    return spawnP('ffmpeg', ['-y', '-i', wavFiles[0], '-ar', '44100', '-ac', '1', '-b:a', '96k', mp3Path]);
+  }
+  // concat demuxer 用リストファイル
+  const listFile = path.join(tempDir, `${code}_list.txt`);
+  const lines = wavFiles.map(f => `file '${f.replace(/\\/g, '/').replace(/'/g, "\\'")}'`).join('\n');
+  fs.writeFileSync(listFile, lines, 'utf8');
+  return spawnP('ffmpeg', ['-y', '-f', 'concat', '-safe', '0', '-i', listFile,
+    '-ar', '44100', '-ac', '1', '-b:a', '96k', mp3Path])
+    .finally(() => { try { fs.unlinkSync(listFile); } catch {} });
+}
+
+// GET /api/voice/narrators
+function getVoiceNarrators(req, res) {
+  const { vpPath, vpDir } = getVpConfig();
+  spawnP(vpPath, ['--list-narrator'], { cwd: vpDir })
+    .then(out => {
+      const narrators = out.trim().split(/\r?\n/).map(n => n.trim()).filter(Boolean);
+      sendJSON(res, 200, { ok: true, narrators });
+    })
+    .catch(e => sendJSON(res, 200, { ok: false, error: e.message }));
+}
+
+// GET /api/voice/status/:code
+function getVoiceStatus(req, res, code) {
+  const { voicesDir } = getVpConfig();
+  sendJSON(res, 200, { exists: fs.existsSync(path.join(voicesDir, code + '.mp3')) });
+}
+
+// GET /api/voice/audio/:code
+function getVoiceAudio(req, res, code) {
+  const { voicesDir } = getVpConfig();
+  const mp3 = path.join(voicesDir, code + '.mp3');
+  if (!fs.existsSync(mp3)) { res.writeHead(404); return res.end('not found'); }
+  const stat = fs.statSync(mp3);
+  res.writeHead(200, { 'Content-Type': 'audio/mpeg', 'Content-Length': stat.size });
+  fs.createReadStream(mp3).pipe(res);
+}
+
+// POST /api/voice/generate
 function postVoiceGenerate(req, res) {
-  sendJSON(res, 501, { ok: false, error: '未実装（フェーズ2で対応予定）' });
+  let chunks = [];
+  req.on('data', c => chunks.push(c));
+  req.on('end', async () => {
+    let chunkWavs = [];
+    try {
+      const d        = JSON.parse(Buffer.concat(chunks).toString('utf8'));
+      const code     = (d.code     || '').trim();
+      const text     = (d.text     || '').trim();
+      const narrator = (d.narrator || 'Japanese Female 1').trim();
+      const emotion  = (d.emotion  || 'happy=40,fun=30');
+      const speed    = String(d.speed || 100);
+      const pitch    = String(d.pitch || 50);
+
+      if (!code || !text) return sendJSON(res, 400, { ok: false, error: 'code と text は必須です' });
+
+      const { vpPath, vpDir, voicesDir, backupDir, tempDir } = getVpConfig();
+      const mp3Path = path.join(voicesDir, code + '.mp3');
+
+      // 既存MP3 → バックアップ
+      if (fs.existsSync(mp3Path)) {
+        fs.copyFileSync(mp3Path, path.join(backupDir, `${code}_${timestamp()}.mp3`));
+      }
+
+      // 「。」で分割
+      const sentences = text.split('。').map(s => s.trim()).filter(Boolean).map(s => s + '。');
+      if (!sentences.length) return sendJSON(res, 400, { ok: false, error: 'テキストが空です' });
+
+      console.log(`[voice] ${code}  ${sentences.length}文 narrator=${narrator}`);
+
+      for (let i = 0; i < sentences.length; i++) {
+        const txtFile = path.join(tempDir, `${code}_${i}.txt`);
+        const wavFile = path.join(tempDir, `${code}_${i}.wav`);
+        fs.writeFileSync(txtFile, sentences[i], 'utf8');
+
+        await spawnP(vpPath,
+          ['-t', txtFile, '-n', narrator, '-e', emotion, '--speed', speed, '--pitch', pitch, '-o', wavFile],
+          { cwd: vpDir });
+
+        chunkWavs.push(wavFile);
+        console.log(`  [${i + 1}/${sentences.length}] 完了`);
+        if (i < sentences.length - 1) await new Promise(r => setTimeout(r, 3000));
+      }
+
+      // WAV 結合 → MP3（ffmpeg 一括）
+      await wavsToMp3(chunkWavs, mp3Path, tempDir, code);
+      console.log(`  ✅ ${code}.mp3 完成`);
+      sendJSON(res, 200, { ok: true, message: `${code}.mp3 を生成しました` });
+
+    } catch (e) {
+      console.error('  ❌', e.message);
+      sendJSON(res, 500, { ok: false, error: e.message });
+    } finally {
+      chunkWavs.forEach(f => { try { fs.unlinkSync(f); } catch {} });
+    }
+  });
 }
 
 // ============================================================
@@ -187,6 +310,11 @@ const server = http.createServer((req, res) => {
   if (pathname.startsWith('/api/images/') && method === 'GET')
     return getImageFile(req, res, pathname.slice('/api/images/'.length));
   if (pathname === '/api/images/process' && method === 'POST') return postImageProcess(req, res);
+  if (pathname === '/api/voice/narrators' && method === 'GET') return getVoiceNarrators(req, res);
+  if (pathname.startsWith('/api/voice/status/') && method === 'GET')
+    return getVoiceStatus(req, res, pathname.slice('/api/voice/status/'.length));
+  if (pathname.startsWith('/api/voice/audio/') && method === 'GET')
+    return getVoiceAudio(req, res, pathname.slice('/api/voice/audio/'.length));
   if (pathname === '/api/voice/generate' && method === 'POST') return postVoiceGenerate(req, res);
 
   // 静的

@@ -462,7 +462,7 @@ function saveCSV(){
 window.addEventListener('beforeunload',e=>{if(dirty){e.preventDefault();e.returnValue='';}});
 
 // ==================== 音声パネル ====================
-const SERVER = 'http://localhost:5000';
+const SERVER = '';
 const VOICE_KEY = 'takeru_voice_settings';
 const VOICE_DEFAULTS = { speed:100, pitch:50, happy:40, fun:30, sad:0, angry:0 };
 let currentAudio = null;
@@ -504,7 +504,7 @@ function onNarratorChange(){
 }
 async function initVoicePanel(){
   try{
-    const res=await fetch(`${SERVER}/narrators`,{signal:AbortSignal.timeout(3000)});
+    const res=await fetch(`${SERVER}/api/voice/narrators`,{signal:AbortSignal.timeout(3000)});
     const json=await res.json();
     if(json.ok&&json.narrators.length){
       const sel=document.getElementById('narratorSelect');
@@ -525,7 +525,7 @@ async function checkVoiceStatus(code){
   const dot=document.getElementById('voiceDot'), text=document.getElementById('voiceStatusText');
   if(!code){ dot.textContent='○'; dot.className='dot-none'; text.textContent='--'; return; }
   try{
-    const json=await(await fetch(`${SERVER}/status/${code}`,{signal:AbortSignal.timeout(2000)})).json();
+    const json=await(await fetch(`${SERVER}/api/voice/status/${code}`,{signal:AbortSignal.timeout(2000)})).json();
     if(json.exists){ dot.textContent='●'; dot.className='dot-exists'; text.textContent='MP3あり'; }
     else { dot.textContent='○'; dot.className='dot-none'; text.textContent='未生成'; }
   } catch { dot.textContent='?'; dot.className='dot-none'; text.textContent='サーバー未起動'; }
@@ -538,19 +538,19 @@ async function recordVoice(){
   btn.disabled=true; btn.textContent='⏳ 生成中...';
   try{
     const p=getVoiceParams();
-    const json=await(await fetch(`${SERVER}/generate`,{
+    const json=await(await fetch(`${SERVER}/api/voice/generate`,{
       method:'POST', headers:{'Content-Type':'application/json'},
       body:JSON.stringify({code,text,narrator:getNarrator(),emotion:buildEmotion(),speed:p.speed,pitch:p.pitch})
     })).json();
     if(json.ok){ showVoiceMsg('✅ '+json.message); checkVoiceStatus(code); }
     else alert('生成エラー:\n'+json.error);
-  } catch { alert('サーバーに接続できません。\n「TAKERU音声サーバー起動.bat」を先に実行してください。'); }
+  } catch { alert('サーバーに接続できません。\n「TAKERU作業台起動.bat」で Node.js サーバーを先に起動してください。'); }
   finally { btn.disabled=false; btn.textContent='🎙 録音'; }
 }
 function playVoice(){
   if(selectedIdx<0) return;
   if(currentAudio){ currentAudio.pause(); currentAudio=null; }
-  currentAudio=new Audio(`${SERVER}/audio/${cardData[selectedIdx].id}`);
+  currentAudio=new Audio(`${SERVER}/api/voice/audio/${cardData[selectedIdx].id}`);
   currentAudio.onerror=()=>alert('音声ファイルがありません。\nまず「🎙 録音」を実行してください。');
   currentAudio.play();
 }

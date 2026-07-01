@@ -13,14 +13,16 @@
 !icon-512.png
 !takeru-touch-icon.png
 
-# 音声データを無視
-*.mp3
+# 音声データを無視（一時・バックアップのみ）
 *.wav
 *.m4a
 
-# 音声生成一時・バックアップフォルダ
-voices_temp/
+# voices/ 内のMP3はGit管理対象（GitHub Pagesで配信するため）
+# ただし voices_backup/ は除外
 voices_backup/
+
+# 一時WAVファイル（OS tmpdir配下のため通常不要だが念のため）
+voices_temp/
 
 # Python キャッシュ
 __pycache__/
