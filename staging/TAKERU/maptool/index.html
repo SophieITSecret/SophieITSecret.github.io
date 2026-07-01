@@ -57,6 +57,7 @@ button{ font-family:inherit; cursor:pointer; }
 /* ステージ */
 .stage-wrap{ flex:1; background:#111; padding:18px; overflow:auto; }
 #stage{ display:block; background:#000; box-shadow:0 8px 40px rgba(0,0,0,.6); }
+#mapSvg{ background:#C8DCE8; }
 .prefecture, .region{ cursor:pointer; }
 .prefecture:hover, .region:hover{ opacity:.85; }
 .marker-g{ cursor:move; }
@@ -334,7 +335,7 @@ button{ font-family:inherit; cursor:pointer; }
       <!-- 地図レイヤー（JS から動的に読み込み） -->
       <!-- 日本地図データ出典: Japanese Prefectures by Geolonia (https://github.com/geolonia/japanese-prefectures) MITライセンス -->
       <!-- 世界地図データ出典: Natural Earth (https://www.naturalearthdata.com/) Public Domain -->
-      <svg id="mapSvg" x="155" y="68" width="650" height="650" viewBox="0 0 1000 1000">
+      <svg id="mapSvg" x="0" y="0" width="960" height="720" viewBox="0 0 1000 1000">
       </svg>
       <g id="legendLayer"></g>
       <text id="title" x="480" y="44" text-anchor="middle"
