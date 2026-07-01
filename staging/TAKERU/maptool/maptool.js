@@ -31,7 +31,7 @@ let drag=null, arrowDraft=null, inlineEl=null;
 let uidCounter=0, nameCounter={};
 let restoring=false, autosaveTimer=null;
 let userPalette=[], library=[], nudgeTimer=null;
-let zoom=1.0;
+let zoom=1.0, activeSymbolType='ship';
 // アンドゥ/リドゥ（最大3段階）
 let undoStack=[], redoStack=[], txBefore=null;
 const HIST_MAX=3;
@@ -103,6 +103,7 @@ function setTool(t){
   tool=t; setActive('#toolBtns','t',t);
   $('modeHint').textContent=HINTS[t]||'';
   stage.style.cursor = (t==='select')?'default':'crosshair';
+  const ss=$('symbolTypeSec'); if(ss) ss.style.display=t==='symbol'?'block':'none';
 }
 
 // ================= 県塗り・背景・境界線（フェーズA継続）=================
@@ -150,7 +151,7 @@ function createDefault(type,x,y){
   if(type==='rect') return Object.assign(base,{width:0.14,height:0.10,fillColor:$('bg').getAttribute('fill')||'#F5F0E8',fillOpacity:1,borderEnabled:false,borderColor:'#000000',borderWidth:1,borderStyle:'solid'});
   if(type==='text') return Object.assign(base,{text:'テキスト',fontSize:16,color:'#000000',bold:false,bgEnabled:false,bgColor:'#FFFFFF',bgOpacity:0.8});
   if(type==='star') return Object.assign(base,{size:16,color:'#D32F2F',label:defaultLabel('right')});
-  if(type==='symbol') return Object.assign(base,{symbolType:'ship',size:24,rotation:0,color:'#3B8BD4',opacity:1,label:defaultLabel('bottom')});
+  if(type==='symbol') return Object.assign(base,{symbolType:activeSymbolType,size:24,rotation:0,color:'#3B8BD4',opacity:1,label:defaultLabel('bottom')});
   return base;
 }
 function addElement(el){ pushUndo(); layerElements.push(el); renderAll(); autosave(); }
@@ -615,10 +616,12 @@ function buildSymbol(el){ const g=svg('g',{class:'el-g movable','data-id':el.id}
   const cx=ax(el.x),cy=ay(el.y),S=el.size||24,col=el.color||'#000',sw=Math.max(2,S*0.12);
   const inner=svg('g',{transform:`translate(${cx},${cy}) rotate(${el.rotation||0})`});
   if(el.symbolType==='ship'){ const W=S*1.5,H=S*0.65; inner.appendChild(svg('path',{d:`M${-W/2},${-H/2} L${W*0.3},${-H/2} L${W/2},0 L${W*0.3},${H/2} L${-W/2},${H/2} Z`,fill:col,stroke:'#222','stroke-width':1})); }
-  else if(el.symbolType==='aircraft'){ const bod=S*0.6,ws=S*0.8,ts=S*0.3,sw2=Math.max(1.5,S*0.09);
-    inner.appendChild(svg('rect',{x:-sw2/2,y:-bod/2,width:sw2,height:bod,fill:col,rx:sw2/2}));
-    inner.appendChild(svg('polygon',{points:`${-ws},${-sw2*0.5} ${ws},${-sw2*0.5} ${ws*0.2},${sw2*1.5} ${-ws*0.2},${sw2*1.5}`,fill:col}));
-    inner.appendChild(svg('polygon',{points:`${-ts},${bod/2-sw2} ${ts},${bod/2-sw2} ${ts*0.4},${bod/2+sw2*0.5} ${-ts*0.4},${bod/2+sw2*0.5}`,fill:col})); }
+  else if(el.symbolType==='aircraft'){ const R=S/2;
+    inner.appendChild(svg('ellipse',{cx:0,cy:0,rx:R*0.13,ry:R*0.95,fill:col}));
+    inner.appendChild(svg('polygon',{points:`${-R*0.13},${-R*0.15} ${-R*0.95},${R*0.35} ${-R*0.13},${R*0.3}`,fill:col}));
+    inner.appendChild(svg('polygon',{points:`${R*0.13},${-R*0.15} ${R*0.95},${R*0.35} ${R*0.13},${R*0.3}`,fill:col}));
+    inner.appendChild(svg('polygon',{points:`${-R*0.13},${R*0.6} ${-R*0.38},${R*0.95} ${-R*0.13},${R*0.85}`,fill:col}));
+    inner.appendChild(svg('polygon',{points:`${R*0.13},${R*0.6} ${R*0.38},${R*0.95} ${R*0.13},${R*0.85}`,fill:col})); }
   else if(el.symbolType==='base'){ inner.appendChild(svg('rect',{x:-S/2,y:-S/2,width:S,height:S,fill:col,stroke:'#222','stroke-width':1})); }
   else if(el.symbolType==='city'){ inner.appendChild(svg('circle',{cx:0,cy:0,r:S/2,fill:'none',stroke:col,'stroke-width':sw})); inner.appendChild(svg('circle',{cx:0,cy:0,r:S/4,fill:'none',stroke:col,'stroke-width':sw})); }
   else if(el.symbolType==='battle'){ const h=S/2; inner.appendChild(svg('line',{x1:-h,y1:-h,x2:h,y2:h,stroke:col,'stroke-width':sw*1.5,'stroke-linecap':'round'})); inner.appendChild(svg('line',{x1:h,y1:-h,x2:-h,y2:h,stroke:col,'stroke-width':sw*1.5,'stroke-linecap':'round'})); }
@@ -721,6 +724,7 @@ function buildLibThumb(el){ const g=svg('g',{});
       else if(el.symbolType==='base'){g.appendChild(svg('rect',{x:-S/2,y:-S/2,width:S,height:S,fill:c}));}
       else if(el.symbolType==='city'){g.appendChild(svg('circle',{cx:0,cy:0,r:S/2,fill:'none',stroke:c,'stroke-width':'2'}));g.appendChild(svg('circle',{cx:0,cy:0,r:S/4,fill:'none',stroke:c,'stroke-width':'2'}));}
       else if(el.symbolType==='battle'){const h=S/2;g.appendChild(svg('line',{x1:-h,y1:-h,x2:h,y2:h,stroke:c,'stroke-width':'3','stroke-linecap':'round'}));g.appendChild(svg('line',{x1:h,y1:-h,x2:-h,y2:h,stroke:c,'stroke-width':'3','stroke-linecap':'round'}));}
+      else if(el.symbolType==='aircraft'){const R=S/2;g.appendChild(svg('ellipse',{cx:0,cy:0,rx:R*0.13,ry:R*0.95,fill:c}));g.appendChild(svg('polygon',{points:`${-R*0.13},${-R*0.15} ${-R*0.95},${R*0.35} ${-R*0.13},${R*0.3}`,fill:c}));g.appendChild(svg('polygon',{points:`${R*0.13},${-R*0.15} ${R*0.95},${R*0.35} ${R*0.13},${R*0.3}`,fill:c}));g.appendChild(svg('polygon',{points:`${-R*0.13},${R*0.6} ${-R*0.38},${R*0.95} ${-R*0.13},${R*0.85}`,fill:c}));g.appendChild(svg('polygon',{points:`${R*0.13},${R*0.6} ${R*0.38},${R*0.95} ${R*0.13},${R*0.85}`,fill:c}));}
       else{g.appendChild(svg('rect',{x:-S,y:-S*0.4,width:S*2,height:S*0.8,fill:c}));} }
     else if(el.type==='arrow'){ g.appendChild(svg('line',{x1:-14,y1:5,x2:14,y2:-5,stroke:el.color||'#E24B4A','stroke-width':'2.5','stroke-linecap':'round'})); }
     else{ g.appendChild(svg('rect',{x:-12,y:-7,width:24,height:14,fill:col,rx:'2'})); }

@@ -160,6 +160,17 @@ button{ font-family:inherit; cursor:pointer; }
         <button class="tool-btn" data-t="star" onclick="setTool('star')">★ 拠点</button>
         <button class="tool-btn" data-t="symbol" onclick="setTool('symbol')">⚓ 記号</button>
       </div>
+      <div id="symbolTypeSec" style="display:none;margin-top:10px">
+        <label class="lbl" style="display:block;margin-bottom:4px">記号の種類</label>
+        <select id="symbolTypeSelect" onchange="activeSymbolType=this.value"
+                style="width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:4px;font-size:0.8rem;padding:5px 8px;font-family:inherit">
+          <option value="ship">🚢 艦隊（艦船）</option>
+          <option value="aircraft">✈ 航空（飛行機）</option>
+          <option value="base">■ 基地</option>
+          <option value="city">◎ 都市</option>
+          <option value="battle">✕ 戦闘</option>
+        </select>
+      </div>
     </div>
 
     <!-- 選択中の要素プロパティ -->
