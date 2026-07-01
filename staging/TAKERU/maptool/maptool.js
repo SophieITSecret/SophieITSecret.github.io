@@ -182,7 +182,7 @@ function applyMapTransform(){
   const g=mapSvg.querySelector('#mapTransformGroup'); if(!g) return;
   const {tx,ty,scale}=mapPanZoom;
   g.setAttribute('transform',`translate(${tx.toFixed(1)},${ty.toFixed(1)}) scale(${scale.toFixed(4)})`);
-  g.setAttribute('stroke-width',(borderWidth/scale).toFixed(4));
+  g.style.strokeWidth=(borderWidth/scale).toFixed(4);
   const lbl=$('mapZoomLabel'); if(lbl) lbl.textContent=Math.round(scale*100)+'%';
 }
 function onMapMouseDown(e){
