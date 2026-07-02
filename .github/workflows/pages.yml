@@ -19,11 +19,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Prepare site (BarSophie除外)
+      - name: Prepare site (不要ファイル除外)
         run: |
           mkdir -p _deploy
           rsync -a --exclude='staging/BarSophie' \
                    --exclude='staging/BarSophie_TEST' \
+                   --exclude='staging/TAKERU/editor' \
+                   --exclude='_config.yml' \
                    --exclude='.git' \
                    --exclude='.github' \
                    --exclude='_deploy' \
