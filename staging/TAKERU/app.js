@@ -46,6 +46,9 @@ window.addEventListener('DOMContentLoaded', async () => {
     setupPullToRefresh();
 
     document.getElementById('btn-enter').onclick = () => {
+        // iOS音声解除：ユーザージェスチャー内で空再生してAudioContextをアンロック
+        voice.src = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=';
+        voice.play().then(() => { voice.pause(); voice.src = ''; }).catch(() => { voice.src = ''; });
         entryScreen.style.display = 'none';
         mainUI.style.display = 'flex';
         showTopMenu();
@@ -618,6 +621,13 @@ function setupButtons() {
 
     // 音声ボタン：ON/OFFトグル
     btnVoice.onclick = () => {
+        hideVoiceWarning();
+        // MP3失敗中に再押し → TTS開始（トグルではなくフォールバック）
+        if (mp3Failed && navState === 'card') {
+            mp3Failed = false;
+            startTTS(curSection[curIndex].body);
+            return;
+        }
         autoRead = !autoRead;
         updateControlButtons();
         if (autoRead && navState === 'card') {
@@ -677,20 +687,27 @@ function playVoiceDirect() {
     voice.play()
         .then(() => {
             mp3Started = true;
+            hideVoiceWarning();  // 再生成功したら警告を消す
         })
         .catch(() => {
-            // MP3再生失敗→警告表示
             mp3Failed = true;
-            showVoiceWarning();
+            if (autoRead) {
+                startTTS(card.body);  // autoReadがONなら即TTS（警告なし）
+            } else {
+                showVoiceWarning();
+            }
         });
 
     setTimeout(() => {
         if (!mp3Started && !mp3Failed) {
-            // 500ms経っても始まらない→警告表示
             voice.pause();
             voice.src = '';
             mp3Failed = true;
-            showVoiceWarning();
+            if (autoRead) {
+                startTTS(card.body);
+            } else {
+                showVoiceWarning();
+            }
         }
     }, 500);
 }
