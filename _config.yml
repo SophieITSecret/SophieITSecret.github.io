@@ -1,0 +1,3 @@
+exclude:
+  - staging/BarSophie
+  - staging/BarSophie_TEST
