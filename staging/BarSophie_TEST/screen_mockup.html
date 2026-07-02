@@ -270,7 +270,7 @@ h1 { color: #f0b56e; font-size: 1.3rem; margin-bottom: 4px; }
 <body>
 
 <h1>🍸 BARソフィー スマホ画面モックアップ</h1>
-<div class="subtitle">BarSophie_TEST — 2026-06-15　portrait: モニター上 / ナビ下 の縦積みレイアウト</div>
+<div class="subtitle">BarSophie_TEST — 2026-07-01改訂　portrait: モニター上 / ナビ下 の縦積みレイアウト　｜　追加：ラウンジ分岐・ツンデレ動的メニュー(1-C)・音楽サブメニュー(S0)・DJお酒リンク</div>
 
 <!-- ============================================================
      SECTION 1: 起動フロー
@@ -311,8 +311,13 @@ h1 { color: #f0b56e; font-size: 1.3rem; margin-bottom: 4px; }
       </div>
       <div class="phone-label">② ラウンジ（チャット画面）<br><span>BarSophieWelcom_q85.jpg</span></div>
       <div class="phone-annot">
-        <div class="ann"><span class="ann-bun">文</span><span class="ann-text-bun">「いらっしゃいませ。」</span></div>
-        <div class="ann"><span class="ann-talk">Ｔ</span><span class="ann-text-talk">「いらっしゃいませ。お待ちしておりました。いつものお席へどうぞ」</span></div>
+        <div class="ann"><span class="ann-talk">会員</span><span class="ann-text-talk">「いらっしゃいませ。お待ちしておりました。いつものお席へどうぞ」</span></div>
+        <div class="ann"><span class="ann-bun">📁</span><span class="ann-text-bun">greeting.mp3</span></div>
+        <div class="ann"><span class="ann-talk">初回</span><span class="ann-text-talk">「はじめまして、ようこそBARソフィーへ！」</span></div>
+        <div class="ann"><span class="ann-bun">📁</span><span class="ann-text-bun">sophie_lounge_first.mp3</span></div>
+        <div class="ann"><span class="ann-talk">再来</span><span class="ann-text-talk">「いらっしゃいませ。BARソフィーへ、またおいでいただけましたね。」</span></div>
+        <div class="ann"><span class="ann-bun">📁</span><span class="ann-text-bun">sophie_lounge_return.mp3</span></div>
+        <div class="ann"><span class="ann-bun">◆</span><span class="ann-text-bun">判定：会員=currentUser／初回=sophie_visited null／再来='true'（更新はしない）</span></div>
       </div>
     </div>
 
@@ -342,10 +347,8 @@ h1 { color: #f0b56e; font-size: 1.3rem; margin-bottom: 4px; }
                     お店の使い方
                   </button>
                 </div>
-                <button class="p-act apk" style="width:92%;">ソフィーと話す</button>
-                <button class="p-act ag" style="width:92%;">🎵 音楽リクエスト</button>
-                <button class="p-act" style="width:92%; background:linear-gradient(135deg,#8e44ad 50%,#2980b9 100%); color:#fff; border:none;">🍸 お酒の話/探す</button>
-                <button class="p-act ac" style="width:92%;">📰 NEWS</button>
+                <!-- ツンデレ既定：ソフィーと話す のみ表示 -->
+                <button class="p-act" style="width:66%; margin-top:8px; border-radius:50px; padding:8px; background:linear-gradient(135deg,rgba(0,70,100,0.35),rgba(120,0,70,0.35)); border:1px solid #26c6da; color:#f4d0f0;">🗨 ソフィーと話す</button>
               </div>
             </div>
             <div class="p-disclaimer">Amazonアソシエイト参加 / 一部コンテンツはAI生成</div>
@@ -363,7 +366,7 @@ h1 { color: #f0b56e; font-size: 1.3rem; margin-bottom: 4px; }
         </div>
       </div>
       <div class="phone-code">C</div>
-      <div class="phone-label">③ メイン画面（ルートメニュー）<br><span>today-row：🌙今日のアドバイス(pill)＋お店の使い方(pill)（ログイン済のみ）</span></div>
+      <div class="phone-label">③ メイン画面（ルートメニュー・ツンデレ既定）<br><span>既定は「ソフィーと話す」1つ→タップで展開（1-C）。クラシック/音楽中は4ボタン。⚙管理者トグルで切替</span></div>
       <div class="phone-annot">
         <div class="ann"><span class="ann-talk">Ｔ</span><span class="ann-text-talk">即時（着席グリーティング）</span></div>
         <div class="ann"><span class="ann-talk">NC</span><span class="ann-text-talk">「よくおいでいただきました。ぜひ今夜は楽しんでくださいね」</span></div>
@@ -372,6 +375,112 @@ h1 { color: #f0b56e; font-size: 1.3rem; margin-bottom: 4px; }
         <div class="ann"><span class="ann-talk">Ｔ</span><span class="ann-text-talk">挨拶終了+3秒（または着席10秒後・会員のみ）</span></div>
         <div class="ann"><span class="ann-talk" style="color:#27ae60;">↓</span><span class="ann-text-talk" style="color:#ffb3c1;">「大丈夫ですか？使い方ボタン押していただければわたくしがご案内します。」</span></div>
         <div class="ann"><span class="ann-bun">📁</span><span class="ann-text-bun">member_caution_01.mp3</span></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ============================================================
+     SECTION 1-C: カウンター ツンデレ動的メニュー
+  ============================================================ -->
+<div class="section">
+  <div class="section-title">1-C. カウンター ツンデレ動的メニュー（「ソフィーと話す」タップ後）</div>
+  <div class="phones">
+
+    <!-- ① 展開後：ランダム2択 + 違うよ/メニュー見せて -->
+    <div class="phone-wrap">
+      <div class="phone">
+        <div class="phone-screen">
+          <div class="p-monitor-wrap"><img src="./front_sophie.jpeg" alt="ソフィー"></div>
+          <div class="p-r-side">
+            <div class="p-label-bar"><span class="p-user-name">Makimura</span></div>
+            <div class="p-scroll">
+              <div class="p-nav" style="padding-top:18px;">
+                <div style="display:flex; gap:14px; margin-bottom:46px;">
+                  <button class="p-act" style="min-width:52px; border-radius:50px; background:linear-gradient(135deg,rgba(0,70,110,0.75),rgba(100,0,80,0.75)); border:1px solid #26c6da; color:#f4d8ff; box-shadow:0 0 8px rgba(38,198,218,0.5);">歌</button>
+                  <button class="p-act" style="min-width:52px; border-radius:50px; background:linear-gradient(135deg,rgba(0,70,110,0.75),rgba(100,0,80,0.75)); border:1px solid #26c6da; color:#f4d8ff; box-shadow:0 0 8px rgba(38,198,218,0.5);">お酒</button>
+                </div>
+                <div style="display:flex; gap:18px;">
+                  <button class="p-act" style="padding:4px 12px; border-radius:50px; background:rgba(10,10,20,0.8); border:1px solid rgba(180,80,80,0.5); color:#cc6666; font-size:6.5px;">違うよ</button>
+                  <button class="p-act" style="padding:4px 12px; border-radius:50px; background:rgba(10,10,20,0.8); border:1px solid rgba(80,160,130,0.5); color:#88bbaa; font-size:6.5px;">メニュー見せて</button>
+                </div>
+              </div>
+            </div>
+            <div class="p-console"><div class="p-btn-grid"><div class="p-c-btn">SHOP</div><div class="p-c-btn">ノート</div><div class="p-c-btn">⏹️</div><div class="p-c-btn wide">▶</div><div class="p-c-btn">⏭</div></div><div class="p-sophie-box"><img src="./sophie_shake.png"></div></div>
+          </div>
+        </div>
+      </div>
+      <div class="phone-label">① 展開後：ランダム2択＋操作ボタン</div>
+      <div class="phone-annot">
+        <div class="ann"><span class="ann-talk">Ｔ</span><span class="ann-text-talk">「今夜は、このどちらかでいかがですか？」</span></div>
+        <div class="ann"><span class="ann-bun">📁</span><span class="ann-text-bun">sophie_counter_offer.mp3</span></div>
+        <div class="ann"><span class="ann-bun">◆</span><span class="ann-text-bun">候補：歌30/お酒20/NEWS15/この日15🔑/占い10🔑/お店5🔑/勝負5</span></div>
+      </div>
+    </div>
+
+    <div class="arrow-right">→</div>
+
+    <!-- ② 違うよ×3 → お仕置き -->
+    <div class="phone-wrap">
+      <div class="phone">
+        <div class="phone-screen">
+          <div class="p-monitor-wrap" style="border-bottom-color:#ff69b4;">
+            <div style="width:100%; height:100%; background:#0a0a12; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px;">
+              <div style="color:#ff4d4d; font-size:16px;">▶</div>
+              <div style="color:#888; font-size:6px;">YouTube 自動再生</div>
+            </div>
+          </div>
+          <div class="p-r-side">
+            <div class="p-label-bar"><span class="p-user-name">Makimura</span></div>
+            <div class="p-scroll">
+              <div class="p-nav">
+                <button class="p-act apk" style="width:92%;">🗨 ソフィーと話す</button>
+                <button class="p-act ag" style="width:92%;">🎵 DJソフィー／音楽リクエスト</button>
+                <button class="p-act" style="width:92%; background:linear-gradient(135deg,#8e44ad 50%,#2980b9 100%); color:#fff; border:none;">🍸 お酒を探す／お酒の話</button>
+                <button class="p-act ac" style="width:92%;">📰 NEWS</button>
+              </div>
+            </div>
+            <div class="p-console"><div class="p-btn-grid"><div class="p-c-btn">SHOP</div><div class="p-c-btn">ノート</div><div class="p-c-btn">⏹️</div><div class="p-c-btn wide">▶</div><div class="p-c-btn">⏭</div></div><div class="p-sophie-box"><img src="./sophie_shake.png"></div></div>
+          </div>
+        </div>
+      </div>
+      <div class="phone-label">② 違うよ×3 → お仕置き（YouTube自動再生＋右は4ボタン化）</div>
+      <div class="phone-annot">
+        <div class="ann"><span class="ann-talk">①</span><span class="ann-text-talk">「あら、違いましたか。では、こちらはいかがですか？」</span></div>
+        <div class="ann"><span class="ann-bun">📁</span><span class="ann-text-bun">sophie_counter_wrong1.mp3</span></div>
+        <div class="ann"><span class="ann-talk">②</span><span class="ann-text-talk">「あら、またはずれですか。ではこちらはいかがでしょう。」</span></div>
+        <div class="ann"><span class="ann-bun">📁</span><span class="ann-text-bun">sophie_counter_wrong2.mp3</span></div>
+        <div class="ann"><span class="ann-talk">③</span><span class="ann-text-talk">「まあ、きっと、わたくしをからかっていらっしゃるんでしょう。では、これでもお聴きになってください。」</span></div>
+        <div class="ann"><span class="ann-bun">📁</span><span class="ann-text-bun">sophie_counter_oshioki.mp3 ／ YouTube 2vfCbdmKhMw</span></div>
+      </div>
+    </div>
+
+    <div class="arrow-right">→</div>
+
+    <!-- ③ メニュー見せて → クラシック4ボタン -->
+    <div class="phone-wrap">
+      <div class="phone">
+        <div class="phone-screen">
+          <div class="p-monitor-wrap"><img src="./front_sophie.jpeg" alt="ソフィー"></div>
+          <div class="p-r-side">
+            <div class="p-label-bar"><span class="p-user-name">Makimura</span></div>
+            <div class="p-scroll">
+              <div class="p-nav">
+                <button class="p-act apk" style="width:92%;">🗨 ソフィーと話す</button>
+                <button class="p-act ag" style="width:92%;">🎵 DJソフィー／音楽リクエスト</button>
+                <button class="p-act" style="width:92%; background:linear-gradient(135deg,#8e44ad 50%,#2980b9 100%); color:#fff; border:none;">🍸 お酒を探す／お酒の話</button>
+                <button class="p-act ac" style="width:92%;">📰 NEWS</button>
+              </div>
+            </div>
+            <div class="p-console"><div class="p-btn-grid"><div class="p-c-btn">SHOP</div><div class="p-c-btn">ノート</div><div class="p-c-btn">⏹️</div><div class="p-c-btn wide">▶</div><div class="p-c-btn">⏭</div></div><div class="p-sophie-box"><img src="./sophie_shake.png"></div></div>
+          </div>
+        </div>
+      </div>
+      <div class="phone-label">③ メニュー見せて → クラシック4ボタン</div>
+      <div class="phone-annot">
+        <div class="ann"><span class="ann-talk">Ｔ</span><span class="ann-text-talk">「お客様もせっかちですね。では、今夜のメニューをどうぞ。」</span></div>
+        <div class="ann"><span class="ann-bun">📁</span><span class="ann-text-bun">sophie_counter_menu.mp3</span></div>
       </div>
     </div>
 
@@ -569,8 +678,44 @@ h1 { color: #f0b56e; font-size: 1.3rem; margin-bottom: 4px; }
      SECTION 2: 音楽リクエスト
   ============================================================ -->
 <div class="section">
-  <div class="section-title">2. 音楽リクエスト（music.js）</div>
+  <div class="section-title">2. 音楽メニュー：DJソフィー／音楽リクエスト（music.js・dj_sophie.js）</div>
   <div class="phones">
+
+    <!-- S0 音楽サブメニュー -->
+    <div class="phone-wrap">
+      <div class="phone">
+        <div class="phone-screen">
+          <div class="p-monitor-wrap"><img src="./front_sophie.jpeg" alt="ソフィー"></div>
+          <div class="p-r-side">
+            <div class="p-label-bar"><div class="p-login-btn">Gログイン</div></div>
+            <div class="p-scroll">
+              <div class="p-shdr"><img src="./sophie_face.png">🎵 DJソフィー／音楽リクエスト</div>
+              <div style="padding:10px 8px; display:flex; flex-direction:column; gap:12px;">
+                <button style="background:#2f2a55; border:1px solid #4dd0e1; color:#ff69b4; border-radius:8px; padding:9px 6px; display:flex; flex-direction:column; align-items:center; gap:5px;">
+                  <span style="font-size:8px; font-weight:bold;">🎙️ DJソフィーの歌とお酒の物語</span>
+                  <span style="font-size:6px; font-weight:normal; color:#ff8fab; line-height:1.5;">私がお話をしながら、YouTubeで歌をお届けします。昭和の名曲にまつわる人生や時代のお話も。</span>
+                </button>
+                <button style="background:#27ae60; border:none; color:#fff; border-radius:8px; padding:9px 6px; display:flex; flex-direction:column; align-items:center; gap:5px;">
+                  <span style="font-size:8px; font-weight:bold;">🎵 音楽リクエスト</span>
+                  <span style="font-size:6px; font-weight:normal; color:#16265f; line-height:1.5;">昭和の名曲を中心に600曲以上を収録してます。歌手別・ジャンル別でどうぞ。</span>
+                </button>
+              </div>
+            </div>
+            <div class="p-console"><div class="p-btn-grid"><div class="p-c-btn">◀ 戻る</div><div class="p-c-btn gb">S</div><div class="p-c-btn">⏹️</div><div class="p-c-btn wide">▶</div><div class="p-c-btn">⏭</div></div><div class="p-sophie-box"><img src="./sophie_shake.png"></div></div>
+          </div>
+        </div>
+      </div>
+      <div class="phone-code">S0</div>
+      <div class="phone-label">音楽メニュー（DJソフィー／音楽リクエスト）<br><span>「音楽」ボタン or ツンデレ「歌」から</span></div>
+      <div class="phone-annot">
+        <div class="ann"><span class="ann-talk">Ｔ</span><span class="ann-text-talk">上位から：「さぁ音楽コーナーです…」</span></div>
+        <div class="ann"><span class="ann-bun">📁</span><span class="ann-text-bun">sophie_music_intro.mp3</span></div>
+        <div class="ann"><span class="ann-talk">Ｔ</span><span class="ann-text-talk">下から戻り：「おしゃべりや音楽、お楽しみいただけましたか？」</span></div>
+        <div class="ann"><span class="ann-bun">📁</span><span class="ann-text-bun">sophie_music_back.mp3</span></div>
+      </div>
+    </div>
+
+    <div class="arrow-right">→</div>
 
     <!-- S1 歌手リスト -->
     <div class="phone-wrap">
@@ -661,6 +806,41 @@ h1 { color: #f0b56e; font-size: 1.3rem; margin-bottom: 4px; }
         <div class="ann"><span class="ann-talk">20%</span><span class="ann-text-talk">「さあ、どうしましょう？」</span></div>
         <div class="ann"><span class="ann-talk">20%</span><span class="ann-text-talk">「いい曲ばかりで、迷いますね」</span></div>
         <div class="ann"><span class="ann-talk">10%</span><span class="ann-text-talk">「今日の気分はどれですか？」</span></div>
+      </div>
+    </div>
+
+    <div class="arrow-right">→</div>
+
+    <!-- DJ プレイヤー（お酒リンク付き）＝S0のDJ分岐 -->
+    <div class="phone-wrap">
+      <div class="phone">
+        <div class="phone-screen">
+          <div class="p-monitor-wrap"><div style="width:100%;height:100%;background:#0a0a12;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;"><div style="color:#ff4d4d;font-size:15px;">▶</div><div style="color:#888;font-size:6px;">YouTube 歌 / スライド</div></div></div>
+          <div class="p-r-side">
+            <div class="p-label-bar"><div class="p-login-btn">Gログイン</div></div>
+            <div class="p-scroll">
+              <div style="padding:6px 10px 4px;">
+                <div style="color:#f0b56e; font-size:7.5px; font-weight:bold; line-height:1.4;">昭和の歌謡史・50年代　勝手にしやがれ</div>
+                <div style="color:#888; font-size:6px; margin-top:2px;">#006　2026-…</div>
+              </div>
+              <!-- お酒リンク（控えめ・下寄せ・後半パートでフェードイン） -->
+              <div style="margin:40px 16px 4px;">
+                <div style="color:#7a6f58; font-size:6px; letter-spacing:2px; text-align:center; margin-bottom:4px;">今夜のお酒</div>
+                <a style="display:block; text-align:center; color:#a89468; font-size:7px; padding:6px; border-top:1px solid rgba(255,255,255,0.06); text-decoration:none;">🍷 アーリータイムズ</a>
+                <a style="display:block; text-align:center; color:#a89468; font-size:7px; padding:6px; border-top:1px solid rgba(255,255,255,0.06); text-decoration:none;">🍷 I.W.ハーパー</a>
+                <a style="display:block; text-align:center; color:#a89468; font-size:7px; padding:6px; border-top:1px solid rgba(255,255,255,0.06); text-decoration:none;">🍷 メーカーズマーク</a>
+              </div>
+            </div>
+            <div class="p-console"><div class="p-btn-grid"><div class="p-c-btn">閉じる</div><div class="p-c-btn">⏭</div><div class="p-c-btn">⏹️</div><div class="p-c-btn wide">▶</div></div><div class="p-sophie-box"><img src="./sophie_shake.png"></div></div>
+          </div>
+        </div>
+      </div>
+      <div class="phone-code">DJ</div>
+      <div class="phone-label">DJプレイヤー（お酒リンク付き）<br><span>後半パート（segments 2番目以降）で drinks を控えめに表示</span></div>
+      <div class="phone-annot">
+        <div class="ann"><span class="ann-talk">Ｔ</span><span class="ann-text-talk">入室時：「私のDJ楽しんでくださいね。連続再生をオンに…」</span></div>
+        <div class="ann"><span class="ann-bun">📁</span><span class="ann-text-bun">sophie_dj_intro.mp3</span></div>
+        <div class="ann"><span class="ann-bun">◆</span><span class="ann-text-bun">お酒名タップでAmazon（新規タブ）。drinks省略時は非表示。終了/切替/一覧復帰で消える。</span></div>
       </div>
     </div>
 

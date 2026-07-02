@@ -54,12 +54,13 @@ C　カウンター（ルートメニュー）
 - ⚙ 管理者トグル（role=admin）でモード切替
 
 **ツンデレ動的メニュー**
-        　　<span style="color:#4a9eff">「ソフィーと話す」タップ</span>　→　<span style="color:#e8607a">Ｔ</span>　<span style="color:#27ae60">sophie_counter_offer.mp3</span>　→ 3秒後、ランダム2ボタン＋「違うよ」「メニュー見せて」
+        　　<span style="color:#4a9eff">「ソフィーと話す」タップ</span>　→　<span style="color:#e8607a">Ｔ　「今夜は、このどちらかでいかがですか？」</span>　<span style="color:#27ae60">sophie_counter_offer.mp3</span>　→ 3秒後、ランダム2ボタン＋「違うよ」「メニュー見せて」
         　　ランダム候補（出現確率）：歌30% / お酒20% / NEWS15% / この日15%🔑 / 占い10%🔑 / お店5%🔑 / 勝負5%
         　　├─ <span style="color:#4a9eff">各ボタン</span>　→ 対応画面（歌→S0／お酒→X／NEWS→W／この日→K1／占い→F1／お店→R1／勝負→J1）
-        　　├─ <span style="color:#4a9eff">違うよ</span>　→　<span style="color:#e8607a">Ｔ</span>　<span style="color:#27ae60">sophie_counter_wrong1.mp3 / wrong2.mp3</span>　→ 3秒後シャッフル
-        　　│       └─ 3回目 → **お仕置き**　<span style="color:#e8607a">Ｔ</span>　<span style="color:#27ae60">sophie_counter_oshioki.mp3</span>　→ YouTube自動再生（2vfCbdmKhMw）＋右メニュー4ボタン化 → 終了で C
-        　　└─ <span style="color:#4a9eff">メニュー見せて</span>　→　<span style="color:#e8607a">Ｔ</span>　<span style="color:#27ae60">sophie_counter_menu.mp3</span>　→ クラシック4ボタン表示
+        　　├─ <span style="color:#4a9eff">違うよ①</span>　→　<span style="color:#e8607a">Ｔ　「あら、違いましたか。では、こちらはいかがですか？」</span>　<span style="color:#27ae60">sophie_counter_wrong1.mp3</span>　→ 3秒後シャッフル
+        　　├─ <span style="color:#4a9eff">違うよ②</span>　→　<span style="color:#e8607a">Ｔ　「あら、またはずれですか。ではこちらはいかがでしょう。」</span>　<span style="color:#27ae60">sophie_counter_wrong2.mp3</span>　→ 3秒後シャッフル
+        　　│       └─ <span style="color:#4a9eff">違うよ③</span> → **お仕置き**　<span style="color:#e8607a">Ｔ　「まあ、きっと、わたくしをからかっていらっしゃるんでしょう。では、これでもお聴きになってください。」</span>　<span style="color:#27ae60">sophie_counter_oshioki.mp3</span>　→ YouTube自動再生（2vfCbdmKhMw）＋右メニュー4ボタン化 → 終了で C
+        　　└─ <span style="color:#4a9eff">メニュー見せて</span>　→　<span style="color:#e8607a">Ｔ　「お客様もせっかちですね。では、今夜のメニューをどうぞ。」</span>　<span style="color:#27ae60">sophie_counter_menu.mp3</span>　→ クラシック4ボタン表示
 
 **クラシック4ボタン**（下記 O／S0／X／W に対応。各操作で前のナレーションは即停止）
 │

@@ -532,30 +532,30 @@ function _showDrinks(episode) {
     const panel = document.createElement('div');
     panel.id = 'dj-drinks';
     panel.style.cssText = [
-        'margin:12px 12px 4px', 'padding:8px 10px 4px',
-        'border-top:1px solid #2a2a2a',
-        'opacity:0', 'transition:opacity 0.6s ease',
+        'margin:56px 18px 6px', 'padding:0',              // 画面下寄り・控えめ
+        'opacity:0', 'transform:translateY(6px)',
+        'transition:opacity 0.9s ease, transform 0.9s ease',
     ].join(';');
 
     const label = document.createElement('div');
-    label.textContent = '🥃 今夜のお酒';
-    label.style.cssText = 'color:#c8a060; font-size:0.68rem; margin-bottom:7px; letter-spacing:0.06em;';
+    label.textContent = '今夜のお酒';
+    label.style.cssText = 'color:#7a6f58; font-size:0.6rem; margin-bottom:5px; letter-spacing:0.2em; text-align:center;';
     panel.appendChild(label);
 
     const list = document.createElement('div');
-    list.style.cssText = 'display:flex; flex-direction:column; gap:6px;';
+    list.style.cssText = 'display:flex; flex-direction:column;';
     drinks.forEach(d => {
         if (!d || !d.name || !d.amazon_url) return; // URLなしは表示しない
         const a = document.createElement('a');
         a.href = d.amazon_url;
         a.target = '_blank';
         a.rel = 'noopener noreferrer';
-        a.textContent = `🍶 ${d.name}`;
+        a.textContent = `🍷 ${d.name}`;
         a.style.cssText = [
-            'display:block', 'text-decoration:none',
-            'background:#1a1a1a', 'border:1px solid #3a3a2a',
-            'color:#e0c890', 'border-radius:8px',
-            'padding:9px 12px', 'font-size:0.82rem',
+            'display:block', 'text-align:center', 'text-decoration:none',
+            'color:#a89468', 'font-size:0.76rem',
+            'padding:8px 10px',
+            'border-top:1px solid rgba(255,255,255,0.05)',
             '-webkit-tap-highlight-color:transparent',
         ].join(';');
         list.appendChild(a);
@@ -563,7 +563,10 @@ function _showDrinks(episode) {
     if (!list.children.length) return;
     panel.appendChild(list);
     lv.appendChild(panel);
-    requestAnimationFrame(() => { panel.style.opacity = '1'; });
+    requestAnimationFrame(() => {
+        panel.style.opacity = '1';
+        panel.style.transform = 'translateY(0)';
+    });
 }
 function _hideDrinks() {
     document.getElementById('dj-drinks')?.remove();
