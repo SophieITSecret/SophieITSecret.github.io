@@ -195,7 +195,6 @@ function showTopMenu() {
         else if (btn.dataset.action === 'links') showLinkGenreMenu();
         else showPlaceholder(btn.innerText);
     };
-    updateToggleBtn('メニュー');
 }
 
 // ==========================================
@@ -255,10 +254,10 @@ function showGenreMenu() {
             <div class="top-btn btn-jukou banner-btn banner-small">📚 受　講</div>
             <div class="grade-btn btn-grade3 banner-btn banner-small">${subjectBanner}</div>
         </div>
-        <div class="menu-label">▶ 科目・ジャンルを選ぶ</div>
+        <div class="menu-label">科目・ジャンルを選ぶ</div>
     `;
     genres.forEach(g => {
-        html += `<div class="menu-item" data-genre="${g}">📁 ${g}</div>`;
+        html += `<div class="menu-item" data-genre="${g}"><span class="item-dot">●</span> ${g}</div>`;
     });
     menuContent.innerHTML = html;
     menuContent.onclick = (e) => {
@@ -278,10 +277,10 @@ function showSectionMenu(genre) {
     curGenre = genre;
     showMenuView();
     const sections = [...new Set(cardData.filter(d => d.genre === genre).map(d => d.section))];
-    let html = `<div class="menu-label">◀ ${genre}</div>`;
+    let html = `<div class="menu-label">${genre}</div>`;
     sections.forEach(s => {
         const count = cardData.filter(d => d.section === s).length;
-        html += `<div class="menu-item" data-section="${s}">🏷️ ${s} <span style="margin-left:auto;font-size:0.85em">${count}枚</span></div>`;
+        html += `<div class="menu-item" data-section="${s}"><span class="item-dot">●</span> ${s} <span style="margin-left:auto;font-size:0.85em">${count}枚</span></div>`;
     });
     menuContent.innerHTML = html;
     menuContent.onclick = (e) => {
@@ -298,9 +297,9 @@ function showCardList(section) {
     curSection = cardData.filter(d => d.section === section);
     curIndex = 0;
     showMenuView();
-    let html = `<div class="menu-label">◀ ${section}</div>`;
+    let html = `<div class="menu-label">${section}</div>`;
     curSection.forEach((card, i) => {
-        html += `<div class="menu-item" data-idx="${i}">${i + 1}. ${card.title}</div>`;
+        html += `<div class="menu-item" data-idx="${i}"><span class="item-dot">●</span> ${card.title}</div>`;
     });
     menuContent.innerHTML = html;
     menuContent.onclick = (e) => {
@@ -320,12 +319,12 @@ function showSectionedCardList(genre) {
     const genreCards = cardData.filter(d => d.genre === genre);
     const sections = [...new Set(genreCards.map(d => d.section))];
 
-    let html = `<div class="menu-label">◀ ${genre}</div>`;
+    let html = `<div class="menu-label">${genre}</div>`;
     sections.forEach(s => {
         const sCards = genreCards.filter(d => d.section === s);
         html += `<div class="section-header">${s}</div>`;
         sCards.forEach((card, i) => {
-            html += `<div class="menu-item" data-section="${s}" data-section-idx="${i}">${i + 1}. ${card.title}</div>`;
+            html += `<div class="menu-item" data-section="${s}" data-section-idx="${i}"><span class="item-dot">●</span> ${card.title}</div>`;
         });
     });
 
@@ -345,17 +344,18 @@ function showSectionedCardList(genre) {
 function showFlatCardList(genre) {
     navState = 'cardlist';
     isMenuVisible = true;
+    const isReturn = curGenre === genre && curSection.length > 0;
     curGenre = genre;
     curSection = cardData.filter(d => d.genre === genre);
-    curIndex = 0;
+    if (!isReturn) curIndex = 0;
     showMenuView();
 
-    let html = `<div class="menu-label">◀ ${genre}</div>`;
+    let html = `<div class="menu-label">${genre}</div>`;
     curSection.forEach((card, i) => {
         const type = /F\d+$/.test(card.id) ? 'fact' : /C\d+$/.test(card.id) ? 'com' : null;
         const badge = type ? `<span class="card-badge badge-${type}">${type === 'fact' ? '史実' : '解説'}</span> ` : '';
         const title = card.title.replace(/^→/, '').trim();
-        html += `<div class="menu-item" data-idx="${i}">${badge}${i + 1}. ${title}</div>`;
+        html += `<div class="menu-item" data-idx="${i}"><span class="item-dot">●</span> ${badge}${title}</div>`;
     });
     menuContent.innerHTML = html;
     menuContent.onclick = (e) => {
@@ -521,17 +521,29 @@ function showMenuView() {
     menuView.style.display = 'flex';
     menuView.style.flexDirection = 'column';
     isMenuVisible = true;
-    updateToggleBtn('テキスト');
+    updateControlButtons();
 }
 
 function showTextView() {
     menuView.style.display = 'none';
     textView.style.display = 'block';
     isMenuVisible = false;
-    updateToggleBtn('メニュー');
+    updateControlButtons();
 }
 
-function updateToggleBtn(label) { btnToggle.innerText = label; }
+// ◀/CARD と音声ON/OFF の表示を状態に合わせて更新
+function updateControlButtons() {
+    if (isMenuVisible) {
+        btnBack.textContent = 'CARD';
+        btnBack.classList.add('btn-card-mode');
+        btnBack.disabled = curSection.length === 0;
+    } else {
+        btnBack.textContent = '◀';
+        btnBack.classList.remove('btn-card-mode');
+        btnBack.disabled = false;
+    }
+    btnVoice.classList.toggle('voice-on', autoRead);
+}
 
 function clearCard() {
     cardProgress.innerText = '';
@@ -547,31 +559,25 @@ function clearCard() {
 // ==========================================
 function setupButtons() {
 
+    // ▶：カード送り／メニューから次のカードへ（セクション超え対応）
     btnNext.onclick = () => {
-        if (navState === 'card' && curIndex < curSection.length - 1) {
-            showCard(curIndex + 1);
+        if (isMenuVisible) {
+            if (curSection.length) {
+                if (curIndex < curSection.length - 1) showCard(curIndex + 1);
+                else advanceToNextSection();
+            }
         } else if (navState === 'card') {
-            showSectionComplete();
+            if (curIndex < curSection.length - 1) showCard(curIndex + 1);
+            else advanceToNextSection();
         }
     };
 
+    // ◀／CARD：カード戻し（カード画面）/ 最後のカードへ戻る（メニュー画面）
     btnBack.onclick = () => {
-        if (!isMenuVisible) {
-            if (navState === 'card' && curIndex > 0) {
-                showCard(curIndex - 1);
-            } else {
-                if (curSection[0]?.section) showSectionedCardList(curGenre);
-                else showFlatCardList(curGenre);
-            }
+        if (isMenuVisible) {
+            if (curSection.length) showCard(curIndex);
         } else {
-            if (navState === 'cardlist') showGenreMenu();
-            else if (navState === 'sectionedlist') showGenreMenu();
-            else if (navState === 'section') showGenreMenu();
-            else if (navState === 'genre') showGradeMenu();
-            else if (navState === 'subject') showTopMenu();
-            else if (navState === 'linklist') showLinkGenreMenu();
-            else if (navState === 'linkgenre') showTopMenu();
-            else showTopMenu();
+            if (navState === 'card' && curIndex > 0) showCard(curIndex - 1);
         }
     };
 
@@ -580,44 +586,62 @@ function setupButtons() {
         showTopMenu();
     };
 
+    // ▲：上位メニューへ1層ずつ移動
     btnToggle.onclick = () => {
-        if (!isMenuVisible) {
-            if (curSection.length && navState === 'card') {
-                if (curSection[0]?.section) {
-                    showSectionedCardList(curGenre);
-                } else {
-                    showFlatCardList(curGenre);
-                    setTimeout(() => {
-                        document.querySelectorAll('#menu-content .menu-item').forEach((el, i) => {
-                            el.classList.toggle('active-item', i === curIndex);
-                        });
-                    }, 50);
-                }
-            } else showMenuView();
-        } else {
-            if (curSection.length && (navState === 'card' || navState === 'cardlist' || navState === 'sectionedlist')) {
-                navState = 'card';
-                isMenuVisible = false;
-                showCard(curIndex);
-            } else showTextView();
+        switch (navState) {
+            case 'card':
+            case 'complete':
+                if (curSection.length) {
+                    if (curSection[0]?.section) showSectionedCardList(curGenre);
+                    else showFlatCardList(curGenre);
+                } else showGenreMenu();
+                break;
+            case 'cardlist':
+            case 'sectionedlist':
+            case 'section':
+                showGenreMenu();
+                break;
+            case 'genre':
+                showGradeMenu();
+                break;
+            case 'subject':
+                showTopMenu();
+                break;
+            case 'linklist':
+                showLinkGenreMenu();
+                break;
+            default:
+                showTopMenu();
+                break;
         }
     };
 
-    // 読上ボタン：MP3失敗済みなら即TTS、そうでなければMP3試行
+    // 音声ボタン：ON/OFFトグル
     btnVoice.onclick = () => {
-        if (navState !== 'card') return;
-
-        if (mp3Failed) {
-            // 2回目以降：TTSで読み上げ
-            hideVoiceWarning();
-            mp3Failed = false;
-            startTTS(curSection[curIndex].body);
-        } else {
-            // 1回目：MP3試行
-            autoRead = false;
+        autoRead = !autoRead;
+        updateControlButtons();
+        if (autoRead && navState === 'card') {
             playVoiceDirect();
+        } else if (!autoRead) {
+            stopVoice();
         }
     };
+}
+
+// セクション内の全カードを読み終えたら次のセクションへ進む
+function advanceToNextSection() {
+    const sectionName = curSection[0]?.section;
+    if (sectionName && curGenre) {
+        const genreCards = cardData.filter(d => d.genre === curGenre);
+        const sections = [...new Set(genreCards.map(d => d.section))];
+        const si = sections.indexOf(sectionName);
+        if (si >= 0 && si < sections.length - 1) {
+            curSection = genreCards.filter(d => d.section === sections[si + 1]);
+            showCard(0);
+            return;
+        }
+    }
+    showSectionComplete();
 }
 
 // ==========================================
@@ -629,8 +653,8 @@ function showSectionComplete() {
     isMenuVisible = false;
     showTextView();
     cardProgress.innerText = curSection[0]?.section || curGenre;
-    cardTitle.innerText = '✅ セクション完了';
-    cardBody.innerText = `全${curSection.length}枚を読み終えました。\n\n「🏠」でトップメニューへ戻れます。`;
+    cardTitle.innerText = '✅ 完了';
+    cardBody.innerText = `全${curSection.length}枚を読み終えました。\n\n▲ で上位メニューに戻れます。`;
     cardImage.style.display = 'none';
     imagePlaceholder.style.display = 'flex';
 }
@@ -672,14 +696,14 @@ function playVoiceDirect() {
 }
 
 function showVoiceWarning() {
-    let overlay = document.getElementById('voice-warning');
-    if (!overlay) {
-        overlay = document.createElement('div');
-        overlay.id = 'voice-warning';
-        overlay.innerHTML = '🔇 音声データがありません<br><span style="font-size:0.8em">もう一度押すとシステム音声で読み上げます</span>';
-        overlay.onclick = () => hideVoiceWarning();
-        document.getElementById('main-ui').appendChild(overlay);
-    }
+    const overlay = document.getElementById('voice-warning');
+    if (!overlay) return;
+    overlay.onclick = () => {
+        hideVoiceWarning();
+        if (curSection.length && navState === 'card') startTTS(curSection[curIndex].body);
+    };
+    const textEl = document.getElementById('voice-warning-text');
+    if (textEl) textEl.innerHTML = '🔇 音声データなし &nbsp;<span>▶ タップでシステム音声</span>';
     overlay.style.display = 'flex';
 }
 
