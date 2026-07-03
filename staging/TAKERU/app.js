@@ -13,7 +13,8 @@ let curLinkGenre = '';
 let autoRead = false;
 let isMenuVisible = false;
 let linkFullscreen = false;
-let mp3Failed = false; // MP3失敗フラグ（次押しでTTS）
+let mp3Failed = false;
+let _mp3LoadTimer = null;
 
 const voice = new Audio();
 
@@ -679,37 +680,37 @@ function playVoiceDirect() {
     stopVoice();
     mp3Failed = false;
 
-    const mp3Path = `voices/${card.id}.mp3`;
-    let mp3Started = false;
+    // canplayを待ってから再生（キャッシュなし時のiOS play()失敗を防ぐ）
+    const tryPlay = () => {
+        if (mp3Failed) return;
+        voice.oncanplay = null;
+        voice.onerror = null;
+        clearTimeout(_mp3LoadTimer);
+        voice.play()
+            .then(() => hideVoiceWarning())
+            .catch(() => {
+                mp3Failed = true;
+                if (autoRead) startTTS(card.body);
+                else showVoiceWarning();
+            });
+    };
 
-    voice.src = mp3Path;
+    const failPlay = () => {
+        if (mp3Failed) return;
+        voice.oncanplay = null;
+        voice.onerror = null;
+        clearTimeout(_mp3LoadTimer);
+        mp3Failed = true;
+        if (autoRead) startTTS(card.body);
+        else showVoiceWarning();
+    };
+
+    voice.oncanplay = tryPlay;
+    voice.onerror = failPlay;
     voice.volume = 1.0;
-    voice.play()
-        .then(() => {
-            mp3Started = true;
-            hideVoiceWarning();  // 再生成功したら警告を消す
-        })
-        .catch(() => {
-            mp3Failed = true;
-            if (autoRead) {
-                startTTS(card.body);  // autoReadがONなら即TTS（警告なし）
-            } else {
-                showVoiceWarning();
-            }
-        });
-
-    setTimeout(() => {
-        if (!mp3Started && !mp3Failed) {
-            voice.pause();
-            voice.src = '';
-            mp3Failed = true;
-            if (autoRead) {
-                startTTS(card.body);
-            } else {
-                showVoiceWarning();
-            }
-        }
-    }, 500);
+    voice.src = `voices/${card.id}.mp3`;
+    voice.load();
+    _mp3LoadTimer = setTimeout(failPlay, 8000);
 }
 
 function showVoiceWarning() {
@@ -740,6 +741,9 @@ function startTTS(text) {
 }
 
 function stopVoice() {
+    clearTimeout(_mp3LoadTimer);
+    voice.oncanplay = null;
+    voice.onerror = null;
     voice.pause();
     voice.currentTime = 0;
     voice.src = '';
