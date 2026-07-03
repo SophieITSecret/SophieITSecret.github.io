@@ -710,7 +710,7 @@ function playVoiceDirect() {
     voice.volume = 1.0;
     voice.src = `voices/${card.id}.mp3`;
     voice.load();
-    _mp3LoadTimer = setTimeout(failPlay, 8000);
+    _mp3LoadTimer = setTimeout(failPlay, 3000);
 }
 
 function showVoiceWarning() {
