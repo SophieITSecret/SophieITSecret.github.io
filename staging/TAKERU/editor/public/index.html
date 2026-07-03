@@ -58,8 +58,15 @@
     <div><div class="edit-label">コード</div><input class="edit-input" id="editCode" readonly style="color:var(--fact);font-family:monospace"></div>
     <div><div class="edit-label">タイトル</div><input class="edit-input" id="editTitle" oninput="updatePreview()"></div>
     <div>
-      <div class="edit-label" style="display:flex;justify-content:space-between">本文 <span id="charCount" class="char-count char-ok">0字</span></div>
+      <div class="edit-label" style="display:flex;justify-content:space-between;align-items:center">
+        <span id="bodyTabLabel">本文</span>
+        <span style="display:flex;align-items:center;gap:6px">
+          <button id="btnReadScript" class="btn-readscript" onclick="toggleReadScript()">📝 読み修正</button>
+          <span id="charCount" class="char-count char-ok">0字</span>
+        </span>
+      </div>
       <textarea class="edit-input" id="editBody" oninput="updatePreview();countChars()"></textarea>
+      <textarea class="edit-input" id="editReadScript" style="display:none" oninput="onReadScriptInput()" placeholder="読み上げ用テキスト（本文と異なる読みを入力）"></textarea>
     </div>
     <div class="edit-actions">
       <button class="btn-copy" onclick="copyCardText()" title="コード・タイトル・本文をコピー">📋 コピー</button>
@@ -154,8 +161,7 @@
       <span id="voiceDot" class="dot-none">○</span>
       <span id="voiceStatusText">--</span>
     </div>
-    <div class="voice-note">※ 編集窓のテキストで録音します</div>
-    <div class="voice-note">※ 確定すると編集窓を元の本文に戻します</div>
+    <div class="voice-note">※ 「読み修正」中はその原稿で、それ以外は本文で録音します</div>
   </div>
 </div>
 

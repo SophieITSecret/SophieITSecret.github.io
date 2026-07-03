@@ -15,6 +15,7 @@ let isMenuVisible = false;
 let linkFullscreen = false;
 let mp3Failed = false;
 let _mp3LoadTimer = null;
+let mp3Set = null;
 
 const voice = new Audio();
 
@@ -39,8 +40,7 @@ const imageArea = document.getElementById('image-area');
 const dividerLine = document.getElementById('divider-line');
 
 window.addEventListener('DOMContentLoaded', async () => {
-    await loadCSV();
-    await loadLinkCSV();
+    await Promise.all([loadCSV(), loadLinkCSV(), loadMp3List()]);
     setupButtons();
     setupSettings();
     loadSavedSettings();
@@ -74,6 +74,18 @@ async function loadCSV() {
         })).filter(d => d.id);
     } catch (e) {
         console.error('CSVロード失敗:', e);
+    }
+}
+
+// ==========================================
+// MP3リスト読み込み
+// ==========================================
+async function loadMp3List() {
+    try {
+        const res = await fetch('voices/mp3list.json');
+        if (res.ok) mp3Set = new Set(await res.json());
+    } catch (e) {
+        // 失敗時はnull維持→通常のonerrorフローにフォールバック
     }
 }
 
@@ -679,6 +691,12 @@ function playVoiceDirect() {
     const card = curSection[curIndex];
     stopVoice();
     mp3Failed = false;
+
+    // mp3が存在しないカードは即TTS
+    if (mp3Set && !mp3Set.has(card.id)) {
+        startTTS(card.body);
+        return;
+    }
 
     // canplayを待ってから再生（キャッシュなし時のiOS play()失敗を防ぐ）
     const tryPlay = () => {

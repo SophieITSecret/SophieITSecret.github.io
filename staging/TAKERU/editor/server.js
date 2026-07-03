@@ -10,6 +10,7 @@ const { exec, spawn } = require('child_process');
 
 // ---- 設定読み込み ----
 const CONFIG_PATH = path.join(__dirname, 'config.json');
+const READING_SCRIPTS_PATH = path.join(__dirname, 'reading_scripts.json');
 let config;
 try {
   config = JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf8'));
@@ -147,6 +148,54 @@ function postImageSave(req, res) {
   });
 }
 
+// GET /api/reading-scripts — 読み上げ原稿一覧を返す
+function getReadingScripts(req, res) {
+  try {
+    const data = fs.existsSync(READING_SCRIPTS_PATH)
+      ? JSON.parse(fs.readFileSync(READING_SCRIPTS_PATH, 'utf8'))
+      : {};
+    sendJSON(res, 200, data);
+  } catch (e) {
+    sendJSON(res, 500, { ok: false, error: e.message });
+  }
+}
+
+// POST /api/reading-scripts — 1件保存・削除（{ id, text } を受け取る。textが空なら削除）
+function postReadingScript(req, res) {
+  let chunks = [];
+  req.on('data', c => chunks.push(c));
+  req.on('end', () => {
+    try {
+      const { id, text } = JSON.parse(Buffer.concat(chunks).toString('utf8'));
+      if (!id) return sendJSON(res, 400, { ok: false, error: 'id は必須です' });
+      let scripts = {};
+      if (fs.existsSync(READING_SCRIPTS_PATH)) {
+        try { scripts = JSON.parse(fs.readFileSync(READING_SCRIPTS_PATH, 'utf8')); } catch {}
+      }
+      if (text && text.trim()) scripts[id] = text.trim();
+      else delete scripts[id];
+      fs.writeFileSync(READING_SCRIPTS_PATH, JSON.stringify(scripts, null, 2), 'utf8');
+      sendJSON(res, 200, { ok: true });
+    } catch (e) {
+      sendJSON(res, 500, { ok: false, error: e.message });
+    }
+  });
+}
+
+// mp3list.json を voices ディレクトリから再生成
+function updateMp3List(voicesDir) {
+  try {
+    const ids = fs.readdirSync(voicesDir)
+      .filter(f => f.toLowerCase().endsWith('.mp3'))
+      .map(f => path.basename(f, '.mp3'))
+      .sort();
+    fs.writeFileSync(path.join(voicesDir, 'mp3list.json'), JSON.stringify(ids) + '\n', 'utf8');
+    console.log(`  [mp3list] ${ids.length}件更新`);
+  } catch (e) {
+    console.warn('[mp3list] 更新失敗:', e.message);
+  }
+}
+
 // ---- 将来の拡張用スタブ ----
 // POST /api/images/process — 画像加工（フェーズ2・別用途用に予約）
 function postImageProcess(req, res) {
@@ -282,6 +331,7 @@ function postVoiceGenerate(req, res) {
       // WAV 結合 → MP3（ffmpeg 一括）
       await wavsToMp3(chunkWavs, mp3Path, tempDir, code);
       console.log(`  ✅ ${code}.mp3 完成`);
+      updateMp3List(voicesDir);
       sendJSON(res, 200, { ok: true, message: `${code}.mp3 を生成しました` });
 
     } catch (e) {
@@ -330,6 +380,8 @@ const server = http.createServer((req, res) => {
   if (pathname.startsWith('/api/voice/audio/') && method === 'GET')
     return getVoiceAudio(req, res, pathname.slice('/api/voice/audio/'.length));
   if (pathname === '/api/voice/generate' && method === 'POST') return postVoiceGenerate(req, res);
+  if (pathname === '/api/reading-scripts' && method === 'GET')  return getReadingScripts(req, res);
+  if (pathname === '/api/reading-scripts' && method === 'POST') return postReadingScript(req, res);
 
   // 静的
   if (method === 'GET') return serveStatic(req, res, pathname);

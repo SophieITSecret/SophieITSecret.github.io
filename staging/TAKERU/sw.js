@@ -1,6 +1,6 @@
 // ★デプロイ(push)のたびに SW_VERSION と CACHE_NAME の番号を一緒に上げる
-const SW_VERSION = 'v17';
-const CACHE_NAME = 'takeru-v17';
+const SW_VERSION = 'v18';
+const CACHE_NAME = 'takeru-v18';
 
 const PRE_CACHE = [
     './',
@@ -38,8 +38,8 @@ self.addEventListener('activate', e => {
 self.addEventListener('fetch', e => {
     const url = new URL(e.request.url);
 
-    // CSVは常にネットワーク優先（更新を反映するため）、失敗時はキャッシュ
-    if (url.pathname.endsWith('.csv')) {
+    // CSV・mp3list.jsonは常にネットワーク優先（更新を反映するため）、失敗時はキャッシュ
+    if (url.pathname.endsWith('.csv') || url.pathname.endsWith('mp3list.json')) {
         e.respondWith(
             fetch(e.request)
                 .then(res => {

@@ -103,6 +103,10 @@
   .dot-exists { color:#4caf50; }
   .dot-none { color:#666; }
   .voice-note { font-size:0.65rem; color:var(--text3); line-height:1.5; }
+  .btn-readscript { background:transparent; border:1px solid var(--com); color:var(--com); padding:2px 8px; border-radius:3px; cursor:pointer; font-size:0.68rem; font-family:inherit; white-space:nowrap; }
+  .btn-readscript:hover { background:rgba(232,160,64,.15); }
+  .btn-readscript.rs-active { background:rgba(232,160,64,.2); }
+  .rs-label { color:var(--com); }
 </style>
 </head>
 <body>
@@ -161,8 +165,15 @@
     <div><div class="edit-label">コード</div><input class="edit-input" id="editCode" readonly style="color:var(--text3)"></div>
     <div><div class="edit-label">タイトル</div><input class="edit-input" id="editTitle" oninput="updatePreview()"></div>
     <div>
-      <div class="edit-label" style="display:flex;justify-content:space-between">本文 <span id="charCount" class="char-count char-ok">0字</span></div>
+      <div class="edit-label" style="display:flex;justify-content:space-between;align-items:center">
+        <span id="bodyTabLabel">本文</span>
+        <span style="display:flex;align-items:center;gap:6px">
+          <button id="btnReadScript" class="btn-readscript" onclick="toggleReadScript()">📝 読み修正</button>
+          <span id="charCount" class="char-count char-ok">0字</span>
+        </span>
+      </div>
       <textarea class="edit-input" id="editBody" oninput="updatePreview();countChars()"></textarea>
+      <textarea class="edit-input" id="editReadScript" style="display:none" oninput="onReadScriptInput()" placeholder="読み上げ用テキスト（本文と異なる読みを入力）"></textarea>
     </div>
     <div class="edit-actions">
       <button class="btn-cancel" onclick="cancelEdit()">キャンセル</button>
@@ -223,14 +234,14 @@
         <span id="voiceDot" class="dot-none">○</span>
         <span id="voiceStatusText">--</span>
       </div>
-      <div class="voice-note">※ 編集窓のテキストで録音します</div>
-      <div class="voice-note">※ 確定すると編集窓を元の本文に戻します</div>
+      <div class="voice-note">※ 「読み修正」中はその原稿で、それ以外は本文で録音します</div>
     </div>
   </div>
 </div>
 
 <script>
 let cardData=[], imageMap={}, selectedIdx=-1, dirty=false, curUnit='', filteredList=[];
+let readingScripts={}, showingReadScript=false, _readScriptSaveTimer=null;
 
 function loadCSV(e) {
   const file=e.target.files[0]; if(!file) return;
@@ -319,6 +330,12 @@ function renderList() {
 function isCommentary(id){return /C\d+$/.test(id)||id.endsWith('C');}
 
 function showCard(gIdx) {
+  // 読み修正モード中なら保存してリセット
+  if (showingReadScript) {
+    clearTimeout(_readScriptSaveTimer);
+    saveReadingScript();
+    _exitReadScriptMode();
+  }
   selectedIdx=gIdx;
   renderList();
   renderCard(gIdx);
@@ -532,8 +549,11 @@ async function checkVoiceStatus(code){
 }
 async function recordVoice(){
   if(selectedIdx<0) return;
-  const code=cardData[selectedIdx].id, text=document.getElementById('editBody').value.trim();
-  if(!text){ alert('本文が空です'); return; }
+  const code=cardData[selectedIdx].id;
+  const text = showingReadScript
+    ? document.getElementById('editReadScript').value.trim()
+    : document.getElementById('editBody').value.trim();
+  if(!text){ alert('テキストが空です'); return; }
   const btn=document.getElementById('btnRecord');
   btn.disabled=true; btn.textContent='⏳ 生成中...';
   try{
@@ -566,6 +586,61 @@ function showVoiceMsg(msg){
   voiceMsgTimer=setTimeout(()=>{ if(selectedIdx>=0) checkVoiceStatus(cardData[selectedIdx].id); },3000);
 }
 initVoicePanel();
+loadReadingScripts();
+
+// ==================== 読み上げ原稿 ====================
+async function loadReadingScripts(){
+  try{
+    const res=await fetch(`${SERVER}/api/reading-scripts`,{signal:AbortSignal.timeout(2000)});
+    if(res.ok) readingScripts=await res.json();
+  } catch{ /* サーバー未起動時は空 */ }
+}
+
+function toggleReadScript(){
+  if(!showingReadScript){
+    if(selectedIdx<0) return;
+    const id=cardData[selectedIdx].id;
+    const rsArea=document.getElementById('editReadScript');
+    rsArea.value = readingScripts[id] || document.getElementById('editBody').value;
+    document.getElementById('editBody').style.display='none';
+    rsArea.style.display='';
+    document.getElementById('bodyTabLabel').innerHTML='<span class="rs-label">読み上げ原稿</span>';
+    document.getElementById('btnReadScript').textContent='← 本文に戻す';
+    document.getElementById('btnReadScript').classList.add('rs-active');
+    showingReadScript=true;
+  } else {
+    clearTimeout(_readScriptSaveTimer);
+    saveReadingScript();
+    _exitReadScriptMode();
+  }
+}
+
+function _exitReadScriptMode(){
+  showingReadScript=false;
+  document.getElementById('editReadScript').style.display='none';
+  document.getElementById('editBody').style.display='';
+  document.getElementById('bodyTabLabel').textContent='本文';
+  document.getElementById('btnReadScript').textContent='📝 読み修正';
+  document.getElementById('btnReadScript').classList.remove('rs-active');
+}
+
+function onReadScriptInput(){
+  clearTimeout(_readScriptSaveTimer);
+  _readScriptSaveTimer=setTimeout(saveReadingScript, 800);
+}
+
+async function saveReadingScript(){
+  if(selectedIdx<0) return;
+  const id=cardData[selectedIdx].id;
+  const text=document.getElementById('editReadScript').value.trim();
+  if(text) readingScripts[id]=text; else delete readingScripts[id];
+  try{
+    await fetch(`${SERVER}/api/reading-scripts`,{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({id, text})
+    });
+  } catch{ /* オフライン時は無視 */ }
+}
 </script>
 </body>
 </html>

@@ -1,4 +1,5 @@
 let cardData=[], imageMap={}, selectedIdx=-1, dirty=false, curUnit='', filteredList=[];
+let readingScripts={}, showingReadScript=false, _readScriptSaveTimer=null;
 
 // ===== 初期化：サーバーからCSVと画像一覧を自動読み込み =====
 async function init() {
@@ -106,6 +107,11 @@ function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'
 function isCommentary(id){return /C\d+$/.test(id)||id.endsWith('C');}
 
 function showCard(gIdx) {
+  if(showingReadScript){
+    clearTimeout(_readScriptSaveTimer);
+    saveReadingScript();
+    _exitReadScriptMode();
+  }
   selectedIdx=gIdx;
   const card0=cardData[gIdx];
   // 矢印で別ユニットのカードに入ったら、左の一覧フィルターも追従させて表示を一致させる
@@ -531,8 +537,11 @@ async function checkVoiceStatus(code){
 
 async function recordVoice(){
   if(selectedIdx<0) return;
-  const code=cardData[selectedIdx].id, text=document.getElementById('editBody').value.trim();
-  if(!text){ alert('本文が空です'); return; }
+  const code=cardData[selectedIdx].id;
+  const text = showingReadScript
+    ? document.getElementById('editReadScript').value.trim()
+    : document.getElementById('editBody').value.trim();
+  if(!text){ alert('テキストが空です'); return; }
   const btn=document.getElementById('btnRecord');
   btn.disabled=true; btn.textContent='⏳ 生成中...';
   try{
@@ -568,6 +577,61 @@ function showVoiceMsg(msg){
 }
 
 initVoicePanel();
+loadReadingScripts();
 
 // 起動
 init();
+
+// ==================== 読み上げ原稿 ====================
+async function loadReadingScripts(){
+  try{
+    const res=await fetch('/api/reading-scripts',{signal:AbortSignal.timeout(2000)});
+    if(res.ok) readingScripts=await res.json();
+  } catch{}
+}
+
+function toggleReadScript(){
+  if(!showingReadScript){
+    if(selectedIdx<0) return;
+    const id=cardData[selectedIdx].id;
+    const rsArea=document.getElementById('editReadScript');
+    rsArea.value=readingScripts[id]||document.getElementById('editBody').value;
+    document.getElementById('editBody').style.display='none';
+    rsArea.style.display='';
+    document.getElementById('bodyTabLabel').innerHTML='<span class="rs-label">読み上げ原稿</span>';
+    document.getElementById('btnReadScript').textContent='← 本文に戻す';
+    document.getElementById('btnReadScript').classList.add('rs-active');
+    showingReadScript=true;
+  } else {
+    clearTimeout(_readScriptSaveTimer);
+    saveReadingScript();
+    _exitReadScriptMode();
+  }
+}
+
+function _exitReadScriptMode(){
+  showingReadScript=false;
+  document.getElementById('editReadScript').style.display='none';
+  document.getElementById('editBody').style.display='';
+  document.getElementById('bodyTabLabel').textContent='本文';
+  document.getElementById('btnReadScript').textContent='📝 読み修正';
+  document.getElementById('btnReadScript').classList.remove('rs-active');
+}
+
+function onReadScriptInput(){
+  clearTimeout(_readScriptSaveTimer);
+  _readScriptSaveTimer=setTimeout(saveReadingScript, 800);
+}
+
+async function saveReadingScript(){
+  if(selectedIdx<0) return;
+  const id=cardData[selectedIdx].id;
+  const text=document.getElementById('editReadScript').value.trim();
+  if(text) readingScripts[id]=text; else delete readingScripts[id];
+  try{
+    await fetch('/api/reading-scripts',{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({id, text})
+    });
+  } catch{}
+}
