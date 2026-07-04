@@ -10,6 +10,8 @@
   <h1>⚔ TAKERU 作業台</h1>
   <button class="btn-load" onclick="reload()">🔄 再読み込み</button>
   <span class="file-status" id="fileStatus">読み込み中…</span>
+  <button class="btn-load" id="btnProgress" onclick="openProgress()" disabled>📊 進捗</button>
+  <button class="btn-load" onclick="openMemo()">📝 メモ</button>
   <button class="btn-load" id="btnImport" onclick="openImport()" disabled>📥 一括取り込み</button>
   <button class="btn-save" id="btnSave" onclick="saveCSV()" disabled>💾 CSV を保存</button>
 </header>
@@ -32,6 +34,56 @@
       <button class="btn-apply" id="btnDoImport" onclick="doImport()" disabled>✓ 取り込む</button>
     </div>
   </div>
+</div>
+
+<!-- メモ -->
+<div id="memoModal" class="modal-overlay">
+  <div class="modal-box memo-modal-box">
+    <div class="modal-head">
+      <h2>📝 プロンプトメモ</h2>
+      <button class="btn-cancel" onclick="closeMemo()">✕ 閉じる</button>
+    </div>
+    <div class="memo-main">
+      <div class="memo-list-pane">
+        <div id="memoList" class="memo-list"></div>
+        <button class="btn-memo-new" onclick="newPrompt()">＋ 新規</button>
+      </div>
+      <div class="memo-editor-pane">
+        <input id="memoName" class="edit-input memo-name-input" placeholder="テンプレート名" oninput="onMemoEdit()">
+        <textarea id="memoBody" class="edit-input memo-body" placeholder="プロンプトをここに入力…" oninput="onMemoEdit()"></textarea>
+        <div class="memo-actions">
+          <button class="btn-cancel" onclick="deletePrompt()">🗑 削除</button>
+          <button class="btn-save-memo" onclick="savePrompts()">💾 保存</button>
+          <button class="btn-save-memo" onclick="saveAsPrompt()">📄 別名保存</button>
+          <button class="btn-apply" onclick="copyPrompt()">📋 コピー</button>
+          <span id="memoStatus" class="memo-status"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 進捗ボード -->
+<div id="progressModal" class="modal-overlay">
+  <div class="modal-box progress-modal-box">
+    <div class="modal-head">
+      <h2>📊 進捗ボード</h2>
+      <button class="btn-cancel" onclick="closeProgress()">✕ 閉じる</button>
+    </div>
+    <div id="progressTabs" class="progress-tabs"></div>
+    <div id="progressBody" class="progress-body"></div>
+  </div>
+</div>
+
+<div id="bodyPopup" class="body-popup" onclick="closeBodyPopup()"></div>
+
+<!-- ユニット詳細パネル（独立ウィンドウ） -->
+<div id="unitDetailPanel" class="unit-detail-panel" style="display:none">
+  <div class="unit-detail-head">
+    <span id="unitDetailTitle" class="unit-detail-title"></span>
+    <button class="btn-cancel" onclick="closeUnitDetail()">✕</button>
+  </div>
+  <div id="unitDetailList" class="unit-detail-list"></div>
 </div>
 
 <div class="main">

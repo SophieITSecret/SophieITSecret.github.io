@@ -20,13 +20,15 @@ async function init() {
       }).catch(()=>{}),
       fetch('/api/voice/list').then(r=>r.ok?r.json():null).then(j=>{
         if(j?.ids) mp3Ids=new Set(j.ids);
-      }).catch(()=>{})
+      }).catch(()=>{}),
+      loadPrompts()
     ]);
 
     buildUnitSelect();
     status.textContent=`✅ TAKERUcard.csv（${cardData.length}枚）　🖼 ${Object.keys(imageMap).length}枚`;
     document.getElementById('btnSave').disabled=false;
     document.getElementById('btnImport').disabled=false;
+    document.getElementById('btnProgress').disabled=false;
     dirty=false;
   } catch(err) {
     status.textContent='⚠ '+err.message;
@@ -469,7 +471,20 @@ let currentAudio = null;
 let voiceMsgTimer = null;
 
 // ---- スロット管理 ----
-function loadVS(){ try{ return JSON.parse(localStorage.getItem(VOICE_KEY))||{}; }catch{ return {}; } }
+let _vsCache = null;
+
+function loadVS(){ return _vsCache || (()=>{ try{ return JSON.parse(localStorage.getItem(VOICE_KEY))||{}; }catch{ return {}; } })(); }
+
+async function loadVSFromServer(){
+  try{
+    const r = await fetch('/api/voice-settings', { signal: AbortSignal.timeout(2000) });
+    if(r.ok){
+      _vsCache = await r.json();
+      localStorage.setItem(VOICE_KEY, JSON.stringify(_vsCache));
+    }
+  } catch {}
+  if(!_vsCache) _vsCache = (()=>{ try{ return JSON.parse(localStorage.getItem(VOICE_KEY))||{}; }catch{ return {}; } })();
+}
 
 function ensureSlots(vs){
   if(!Array.isArray(vs.slots) || vs.slots.length < 3 || vs.ver !== VOICE_VER){
@@ -484,7 +499,9 @@ function saveVoiceSettings(){
   const slots=ensureSlots(vs);
   slots[activeSlot] = { narrator:getNarrator(), ...getSliderParams() };
   vs.slots=slots; vs.activeSlot=activeSlot;
+  _vsCache = vs;
   localStorage.setItem(VOICE_KEY, JSON.stringify(vs));
+  fetch('/api/voice-settings', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(vs) }).catch(()=>{});
   updateSlotButtons(slots);
 }
 
@@ -552,6 +569,7 @@ function onNarratorChange(){ saveVoiceSettings(); }
 
 // ---- 初期化 ----
 async function initVoicePanel(){
+  await loadVSFromServer();
   const vs=loadVS();
   activeSlot=vs.activeSlot||0;
   const slots=ensureSlots(vs);
@@ -630,6 +648,332 @@ loadReadingScripts();
 
 // 起動
 init();
+
+// ==================== メモ ====================
+let promptData = [], selectedPromptIdx = -1, _memoSaveTimer = null;
+let _memoDrag = null, _memoDragInit = false;
+
+async function loadPrompts() {
+  try {
+    const res = await fetch('/api/prompts', { signal: AbortSignal.timeout(2000) });
+    if (res.ok) promptData = await res.json();
+  } catch {}
+}
+
+function _initMemoDrag() {
+  if (_memoDragInit) return;
+  _memoDragInit = true;
+  const box = document.querySelector('.memo-modal-box');
+  box.querySelector('.modal-head').addEventListener('mousedown', e => {
+    if (e.target.tagName === 'BUTTON') return;
+    const r = box.getBoundingClientRect();
+    box.style.position = 'fixed';
+    box.style.left = r.left + 'px';
+    box.style.top  = r.top  + 'px';
+    box.style.transform = 'none';
+    _memoDrag = { sx: e.clientX, sy: e.clientY, ol: r.left, ot: r.top };
+    e.preventDefault();
+  });
+  document.addEventListener('mousemove', e => {
+    if (!_memoDrag) return;
+    box.style.left = (_memoDrag.ol + e.clientX - _memoDrag.sx) + 'px';
+    box.style.top  = (_memoDrag.ot + e.clientY - _memoDrag.sy) + 'px';
+  });
+  document.addEventListener('mouseup', () => { _memoDrag = null; });
+}
+
+function openMemo() {
+  document.getElementById('memoModal').style.display = 'flex';
+  _initMemoDrag();
+  renderMemoList();
+  if (promptData.length > 0 && selectedPromptIdx < 0) selectPrompt(0);
+}
+
+function closeMemo() {
+  document.getElementById('memoModal').style.display = 'none';
+}
+
+function renderMemoList() {
+  const el = document.getElementById('memoList');
+  if (!promptData.length) {
+    el.innerHTML = '<div style="padding:14px;font-size:0.75rem;color:var(--text3)">テンプレートがありません</div>';
+    return;
+  }
+  el.innerHTML = promptData.map((p, i) =>
+    `<div class="memo-item${i === selectedPromptIdx ? ' active' : ''}" onclick="selectPrompt(${i})">${esc(p.name || '（名前なし）')}</div>`
+  ).join('');
+}
+
+function selectPrompt(idx) {
+  selectedPromptIdx = idx;
+  const p = promptData[idx];
+  document.getElementById('memoName').value = p.name || '';
+  document.getElementById('memoBody').value = p.body || '';
+  document.getElementById('memoStatus').textContent = '';
+  renderMemoList();
+}
+
+function newPrompt() {
+  const p = { id: Date.now().toString(), name: '新しいテンプレート', body: '' };
+  promptData.push(p);
+  selectedPromptIdx = promptData.length - 1;
+  renderMemoList();
+  document.getElementById('memoName').value = p.name;
+  document.getElementById('memoBody').value = '';
+  document.getElementById('memoName').focus();
+  document.getElementById('memoName').select();
+  savePrompts();
+}
+
+function deletePrompt() {
+  if (selectedPromptIdx < 0 || !promptData.length) return;
+  if (!confirm(`「${promptData[selectedPromptIdx].name}」を削除しますか？`)) return;
+  promptData.splice(selectedPromptIdx, 1);
+  selectedPromptIdx = Math.min(selectedPromptIdx, promptData.length - 1);
+  if (promptData.length === 0) {
+    selectedPromptIdx = -1;
+    document.getElementById('memoName').value = '';
+    document.getElementById('memoBody').value = '';
+  } else {
+    selectPrompt(selectedPromptIdx);
+  }
+  savePrompts();
+}
+
+function onMemoEdit() {
+  if (selectedPromptIdx < 0) return;
+  promptData[selectedPromptIdx].name = document.getElementById('memoName').value;
+  promptData[selectedPromptIdx].body = document.getElementById('memoBody').value;
+  renderMemoList();
+  document.getElementById('memoStatus').textContent = '● 未保存';
+}
+
+function saveAsPrompt() {
+  const name = document.getElementById('memoName').value.trim() || '新しいテンプレート';
+  const body = document.getElementById('memoBody').value;
+  const p = { id: Date.now().toString(), name, body };
+  promptData.push(p);
+  selectedPromptIdx = promptData.length - 1;
+  renderMemoList();
+  savePrompts();
+}
+
+async function savePrompts() {
+  try {
+    await fetch('/api/prompts', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(promptData)
+    });
+    const s = document.getElementById('memoStatus');
+    s.textContent = '✓ 保存済み';
+    setTimeout(() => { s.textContent = ''; }, 2000);
+  } catch {}
+}
+
+async function copyPrompt() {
+  const text = document.getElementById('memoBody').value;
+  if (!text) return;
+  await navigator.clipboard.writeText(text);
+  const btn = document.querySelector('#memoModal .btn-apply');
+  const orig = btn.textContent;
+  btn.textContent = '✅ コピー済み';
+  setTimeout(() => { btn.textContent = orig; }, 2000);
+}
+
+// ==================== 進捗ボード ====================
+let progressTab = '';
+
+function openProgress() {
+  // subject一覧を収集（CSV登場順）
+  const subjects = [];
+  for(const c of cardData){
+    if(c.subject && !subjects.includes(c.subject)) subjects.push(c.subject);
+  }
+  if(!subjects.length) return;
+
+  // タブ描画
+  const tabsEl = document.getElementById('progressTabs');
+  tabsEl.innerHTML = subjects.map(s =>
+    `<button class="progress-tab${s===progressTab?' active':''}" onclick="switchProgressTab('${esc(s)}')">${esc(s)}</button>`
+  ).join('');
+
+  if(!progressTab || !subjects.includes(progressTab)) progressTab = subjects[0];
+  renderProgressBody();
+  document.getElementById('progressModal').style.display = 'flex';
+}
+
+function closeProgress() {
+  document.getElementById('progressModal').style.display = 'none';
+}
+
+function switchProgressTab(subj) {
+  progressTab = subj;
+  document.querySelectorAll('.progress-tab').forEach(b => {
+    b.classList.toggle('active', b.textContent === subj);
+  });
+  renderProgressBody();
+}
+
+function renderProgressBody() {
+  const body = document.getElementById('progressBody');
+
+  // 選択subjectのユニット一覧（登場順）
+  const units = [];
+  for(const c of cardData){
+    if(c.subject === progressTab && c.genre && !units.includes(c.genre)) units.push(c.genre);
+  }
+
+  let html = '';
+  for(const unit of units){
+    const cards = cardData.filter(c => c.subject === progressTab && c.genre === unit);
+    const total = cards.length;
+    const nTtl  = cards.filter(c => c.title && c.title.trim()).length;
+    const nBody = cards.filter(c => c.body && !c.body.includes('準備中') && c.body.trim()).length;
+    const nImg  = cards.filter(c => !!imageMap[c.id]).length;
+    const nMp3  = cards.filter(c => mp3Ids.has(c.id)).length;
+
+    const tiles = cards.map(c => {
+      const gIdx = cardData.indexOf(c);
+      const hT = !!(c.title && c.title.trim());
+      const hB = !!(c.body && !c.body.includes('準備中') && c.body.trim());
+      const hI = !!imageMap[c.id];
+      const hM = mp3Ids.has(c.id);
+      return `<div class="ptile" onclick="pickProgressCard(${gIdx})" title="${esc(c.title||c.id)}">
+        <span class="ptile-code">${esc(c.id)}</span>
+        <span class="ptile-dots">
+          <span class="sdot ${hT?'sdot-title':'sdot-off'}">題</span>
+          <span class="sdot ${hB?'sdot-body':'sdot-off'}">文</span>
+          <span class="sdot ${hI?'sdot-img':'sdot-off'}">画</span>
+          <span class="sdot ${hM?'sdot-mp3':'sdot-off'}">音</span>
+        </span>
+      </div>`;
+    }).join('');
+
+    html += `<div class="progress-unit">
+      <div class="progress-unit-head">
+        <span class="progress-unit-name" onclick="openUnitDetail('${esc(unit).replace(/'/g,"&#39;")}')" style="cursor:pointer;text-decoration:underline dotted">${esc(unit)}</span>
+        <span class="progress-unit-stats">
+          <span class="pus-ttl">題 ${nTtl}/${total}</span>
+          <span class="pus-body">文 ${nBody}/${total}</span>
+          <span class="pus-img">画 ${nImg}/${total}</span>
+          <span class="pus-mp3">音 ${nMp3}/${total}</span>
+        </span>
+      </div>
+      <div class="progress-tiles">${tiles}</div>
+    </div>`;
+  }
+  body.innerHTML = html;
+}
+
+let _udAudio = null;
+
+function openUnitDetail(unit) {
+  stopUdAudio();
+  closeBodyPopup();
+  const listEl = document.getElementById('unitDetailList');
+  document.getElementById('unitDetailTitle').textContent = unit;
+
+  const cards = cardData.filter(c => c.subject === progressTab && c.genre === unit);
+  listEl.innerHTML = cards.map(c => {
+    const gIdx = cardData.indexOf(c);
+    const imgSrc = imageMap[c.id];
+    const thumbHtml = imgSrc
+      ? `<img class="unit-card-thumb" src="${imgSrc}" alt="" onclick="pickProgressCard(${gIdx})">`
+      : `<div class="unit-card-thumb-ph" onclick="pickProgressCard(${gIdx})">🗂</div>`;
+    const hasMp3 = mp3Ids.has(c.id);
+    const hasBody = !!(c.body && !c.body.includes('準備中') && c.body.trim());
+    const audioBtn = hasMp3
+      ? `<button class="btn-ud" id="aud-${c.id}" onclick="playUdAudio('${c.id}')">▶ 音声</button>`
+      : '';
+    const bodyBtn = hasBody
+      ? `<button class="btn-ud" onclick="showBodyPopup(event,'${c.id}')">文 本文</button>`
+      : '';
+    return `<div class="unit-card-row">
+      ${thumbHtml}
+      <div class="unit-card-info">
+        <span class="unit-card-code">${esc(c.id)}</span>
+        <span class="unit-card-title" onclick="pickProgressCard(${gIdx})">${esc(c.title || '（タイトルなし）')}</span>
+        <div class="unit-card-btns">${audioBtn}${bodyBtn}</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  // 進捗ボードの右隣に配置
+  const modalBox = document.querySelector('.progress-modal-box');
+  const r = modalBox.getBoundingClientRect();
+  const panel = document.getElementById('unitDetailPanel');
+  panel.style.left = (r.right + 12) + 'px';
+  panel.style.top  = r.top + 'px';
+  panel.style.height = r.height + 'px';
+  panel.style.display = 'flex';
+}
+
+function closeUnitDetail() {
+  stopUdAudio();
+  closeBodyPopup();
+  document.getElementById('unitDetailPanel').style.display = 'none';
+}
+
+function playUdAudio(id) {
+  const btn = document.getElementById('aud-' + id);
+  if(_udAudio) {
+    _udAudio.pause();
+    const prevId = _udAudio._id;
+    _udAudio = null;
+    const prevBtn = document.getElementById('aud-' + prevId);
+    if(prevBtn){ prevBtn.textContent='▶ 音声'; prevBtn.classList.remove('playing'); }
+    if(prevId === id) return; // 同じボタンなら停止だけ
+  }
+  const audio = new Audio(`/api/voice/audio/${id}`);
+  audio._id = id;
+  audio.onerror = () => { if(btn){btn.textContent='▶ 音声';btn.classList.remove('playing');} _udAudio=null; };
+  audio.onended = () => { if(btn){btn.textContent='▶ 音声';btn.classList.remove('playing');} _udAudio=null; };
+  audio.play();
+  _udAudio = audio;
+  if(btn){ btn.textContent='■ 停止'; btn.classList.add('playing'); }
+}
+
+function stopUdAudio() {
+  if(_udAudio){ _udAudio.pause(); _udAudio=null; }
+}
+
+function showBodyPopup(e, id) {
+  const card = cardData.find(c => c.id === id);
+  if(!card) return;
+  const popup = document.getElementById('bodyPopup');
+  popup.textContent = card.body;
+  const btn = e.currentTarget;
+  const rect = btn.getBoundingClientRect();
+  const top = Math.min(rect.bottom + 6, window.innerHeight - 300);
+  const left = Math.max(10, Math.min(rect.left - 180, window.innerWidth - 380));
+  popup.style.top = top + 'px';
+  popup.style.left = left + 'px';
+  popup.style.display = 'block';
+  e.stopPropagation();
+}
+
+function closeBodyPopup() {
+  document.getElementById('bodyPopup').style.display = 'none';
+}
+
+// ポップアップ外クリックで閉じる
+document.addEventListener('click', e => {
+  const popup = document.getElementById('bodyPopup');
+  if(popup && popup.style.display !== 'none' && !popup.contains(e.target)) closeBodyPopup();
+});
+
+function pickProgressCard(gIdx) {
+  closeProgress();
+  // ユニットフィルターを合わせてカードを開く
+  const card = cardData[gIdx];
+  curUnit = card.genre;
+  const sel = document.getElementById('unitSelect');
+  if(sel) sel.value = card.genre;
+  filteredList = cardData.filter(d => d.genre === curUnit);
+  document.getElementById('cardCount').textContent = `${filteredList.length}枚`;
+  updateUnitNavBtns();
+  showCard(gIdx);
+}
 
 // ==================== 読み上げ原稿 ====================
 async function loadReadingScripts(){

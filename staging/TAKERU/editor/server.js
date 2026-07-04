@@ -11,6 +11,8 @@ const { exec, spawn } = require('child_process');
 // ---- 設定読み込み ----
 const CONFIG_PATH = path.join(__dirname, 'config.json');
 const READING_SCRIPTS_PATH = path.join(__dirname, 'reading_scripts.json');
+const PROMPTS_PATH = path.join(__dirname, 'prompts.json');
+const VOICE_SETTINGS_PATH = path.join(__dirname, 'voice_settings.json');
 let config;
 try {
   config = JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf8'));
@@ -144,6 +146,61 @@ function postImageSave(req, res) {
       sendJSON(res, 200, { ok: true, file: safeId + '.png', backup: backupName });
     } catch (e) {
       sendJSON(res, 500, { ok: false, error: '画像の保存に失敗しました: ' + e.message });
+    }
+  });
+}
+
+// GET /api/prompts — プロンプト一覧を返す
+function getPrompts(req, res) {
+  try {
+    const data = fs.existsSync(PROMPTS_PATH)
+      ? JSON.parse(fs.readFileSync(PROMPTS_PATH, 'utf8'))
+      : [];
+    sendJSON(res, 200, data);
+  } catch (e) {
+    sendJSON(res, 500, { ok: false, error: e.message });
+  }
+}
+
+// POST /api/prompts — 全件保存
+function postPrompts(req, res) {
+  let chunks = [];
+  req.on('data', c => chunks.push(c));
+  req.on('end', () => {
+    try {
+      const data = JSON.parse(Buffer.concat(chunks).toString('utf8'));
+      if (!Array.isArray(data)) return sendJSON(res, 400, { ok: false, error: 'array expected' });
+      fs.writeFileSync(PROMPTS_PATH, JSON.stringify(data, null, 2), 'utf8');
+      sendJSON(res, 200, { ok: true });
+    } catch (e) {
+      sendJSON(res, 500, { ok: false, error: e.message });
+    }
+  });
+}
+
+// GET /api/voice-settings
+function getVoiceSettings(req, res) {
+  try {
+    const data = fs.existsSync(VOICE_SETTINGS_PATH)
+      ? JSON.parse(fs.readFileSync(VOICE_SETTINGS_PATH, 'utf8'))
+      : {};
+    sendJSON(res, 200, data);
+  } catch (e) {
+    sendJSON(res, 500, { ok: false, error: e.message });
+  }
+}
+
+// POST /api/voice-settings
+function postVoiceSettings(req, res) {
+  let chunks = [];
+  req.on('data', c => chunks.push(c));
+  req.on('end', () => {
+    try {
+      const data = JSON.parse(Buffer.concat(chunks).toString('utf8'));
+      fs.writeFileSync(VOICE_SETTINGS_PATH, JSON.stringify(data, null, 2), 'utf8');
+      sendJSON(res, 200, { ok: true });
+    } catch (e) {
+      sendJSON(res, 500, { ok: false, error: e.message });
     }
   });
 }
@@ -394,6 +451,10 @@ const server = http.createServer((req, res) => {
   if (pathname.startsWith('/api/voice/audio/') && method === 'GET')
     return getVoiceAudio(req, res, pathname.slice('/api/voice/audio/'.length));
   if (pathname === '/api/voice/generate' && method === 'POST') return postVoiceGenerate(req, res);
+  if (pathname === '/api/prompts' && method === 'GET')  return getPrompts(req, res);
+  if (pathname === '/api/prompts' && method === 'POST') return postPrompts(req, res);
+  if (pathname === '/api/voice-settings' && method === 'GET')  return getVoiceSettings(req, res);
+  if (pathname === '/api/voice-settings' && method === 'POST') return postVoiceSettings(req, res);
   if (pathname === '/api/reading-scripts' && method === 'GET')  return getReadingScripts(req, res);
   if (pathname === '/api/reading-scripts' && method === 'POST') return postReadingScript(req, res);
 

@@ -128,6 +128,64 @@ textarea.svg-overlay-input { min-height:120px; font-family:monospace; font-size:
 .sdot-mp3  { background:rgba(232,160,64,.55); color:#fff3e0; }
 .sdot-off  { background:rgba(255,255,255,.06); color:#404040; }
 
+/* メモ */
+#memoModal .modal-box { width:1280px; max-width:96vw; height:90vh; }
+.memo-modal-box .modal-head { cursor:move; user-select:none; }
+.memo-main { display:flex; flex:1; gap:0; overflow:hidden; }
+.memo-list-pane { width:200px; min-width:200px; border-right:2px solid var(--border); display:flex; flex-direction:column; flex-shrink:0; }
+.memo-list { flex:1; overflow-y:auto; }
+.memo-item { padding:10px 14px; cursor:pointer; border-bottom:1px solid rgba(255,255,255,.04); font-size:0.82rem; color:var(--text2); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.memo-item:hover { background:rgba(255,255,255,.06); color:var(--text); }
+.memo-item.active { background:rgba(76,175,80,.15); color:var(--accent); border-left:3px solid var(--accent); padding-left:11px; }
+.btn-memo-new { margin:10px; background:transparent; border:1px solid var(--accent); color:var(--accent); padding:6px; border-radius:4px; cursor:pointer; font-size:0.8rem; font-family:inherit; }
+.btn-memo-new:hover { background:rgba(76,175,80,.12); }
+.memo-editor-pane { flex:1; display:flex; flex-direction:column; gap:10px; padding:0 0 0 16px; overflow:hidden; }
+.memo-name-input { flex-shrink:0; font-size:0.88rem; }
+.memo-body { flex:1; font-family:'Consolas','Courier New',monospace; font-size:0.85rem; line-height:1.75; resize:none; min-height:0; }
+.memo-actions { display:flex; align-items:center; gap:8px; flex-shrink:0; }
+.btn-save-memo { background:rgba(74,144,217,.2); border:1px solid rgba(74,144,217,.5); color:#90caf9; padding:5px 12px; border-radius:4px; cursor:pointer; font-size:0.82rem; font-family:inherit; }
+.btn-save-memo:hover { background:rgba(74,144,217,.35); }
+.memo-status { font-size:0.75rem; color:var(--accent); margin-left:4px; }
+
+/* 進捗ボード */
+#progressModal { justify-content:flex-start; padding-left:60px; }
+.progress-modal-box { width:960px; max-width:98vw; height:88vh; display:flex; flex-direction:column; }
+.progress-tabs { display:flex; gap:6px; padding:0 0 12px 0; flex-shrink:0; border-bottom:1px solid var(--border); }
+.progress-tab { background:transparent; border:1px solid var(--border); color:var(--text2); padding:5px 16px; border-radius:4px; cursor:pointer; font-size:0.82rem; font-family:inherit; }
+.progress-tab:hover { border-color:var(--accent); color:var(--accent); }
+.progress-tab.active { background:rgba(76,175,80,.15); border-color:var(--accent); color:var(--accent); font-weight:700; }
+.progress-body { flex:1; min-width:0; overflow-y:auto; padding-top:14px; display:flex; flex-direction:column; gap:16px; padding-right:8px; }
+.unit-detail-panel { position:fixed; width:390px; z-index:101; background:var(--bg2); border:1px solid var(--border); border-radius:10px; box-shadow:0 8px 32px rgba(0,0,0,.7); display:flex; flex-direction:column; }
+.unit-detail-head { display:flex; justify-content:space-between; align-items:center; padding:10px 14px; border-bottom:1px solid var(--border); flex-shrink:0; gap:8px; }
+.unit-detail-title { font-size:0.82rem; color:var(--accent2); font-weight:700; flex:1; }
+.unit-detail-list { flex:1; overflow-y:auto; }
+.unit-card-row { display:flex; align-items:center; gap:10px; padding:9px 12px; border-bottom:1px solid rgba(255,255,255,.05); }
+.unit-card-thumb { width:96px; height:72px; object-fit:contain; background:var(--bg3); border-radius:2px; flex-shrink:0; display:block; cursor:pointer; }
+.unit-card-thumb-ph { width:96px; height:72px; background:var(--bg3); border-radius:2px; flex-shrink:0; display:flex; align-items:center; justify-content:center; color:var(--text3); font-size:1.4rem; cursor:pointer; }
+.unit-card-info { display:flex; flex-direction:column; gap:4px; min-width:0; flex:1; }
+.unit-card-code { font-size:0.6rem; color:var(--text3); font-family:monospace; }
+.unit-card-title { font-size:0.8rem; color:var(--text); line-height:1.4; cursor:pointer; }
+.unit-card-title:hover { color:var(--accent2); }
+.unit-card-btns { display:flex; gap:5px; margin-top:2px; }
+.btn-ud { background:transparent; border:1px solid var(--border); color:var(--text2); padding:2px 7px; border-radius:3px; cursor:pointer; font-size:0.7rem; font-family:inherit; }
+.btn-ud:hover { border-color:var(--accent); color:var(--accent); }
+.btn-ud.playing { border-color:#e8a040; color:#e8a040; }
+
+/* 本文ポップアップ */
+.body-popup { position:fixed; background:var(--bg2); border:1px solid var(--border); border-radius:6px; padding:14px 16px; width:360px; max-height:280px; overflow-y:auto; z-index:300; box-shadow:0 6px 24px rgba(0,0,0,.6); font-size:0.9rem; line-height:1.85; color:var(--text); white-space:pre-wrap; display:none; }
+.progress-unit { display:flex; flex-direction:column; gap:6px; }
+.progress-unit-head { display:flex; align-items:center; gap:14px; padding:4px 0; border-bottom:1px solid var(--border); }
+.progress-unit-name { font-size:0.85rem; color:var(--accent2); font-weight:700; flex:1; }
+.progress-unit-stats { display:flex; gap:10px; font-size:0.72rem; }
+.pus-ttl { color:#ce93d8; } .pus-body { color:#81c784; } .pus-img { color:#6ab0f5; } .pus-mp3 { color:#e8a040; }
+.progress-tiles { display:grid; grid-template-columns:repeat(10, 1fr); gap:7px; padding-top:4px; }
+.ptile { display:flex; flex-direction:column; align-items:center; gap:3px; padding:6px 4px; border:1px solid var(--border); border-radius:3px; cursor:pointer; min-width:0; transition:background .1s; }
+.ptile:hover { background:rgba(76,175,80,.12); border-color:var(--accent); }
+.ptile-code { font-size:0.54rem; color:var(--text2); font-family:monospace; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; width:100%; text-align:center; }
+.ptile-dots { display:flex; gap:2px; }
+.ptile .sdot { font-size:0.48rem; padding:1px 2px; }
+.sdot-title { background:rgba(186,104,200,.55); color:#f3e5f5; }
+
 .btn-readscript { background:transparent; border:1px solid var(--com); color:var(--com); padding:2px 8px; border-radius:3px; cursor:pointer; font-size:0.68rem; font-family:inherit; white-space:nowrap; }
 .btn-readscript:hover { background:rgba(232,160,64,.15); }
 .btn-readscript.rs-active { background:rgba(232,160,64,.2); }
