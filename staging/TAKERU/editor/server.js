@@ -266,6 +266,19 @@ function getVoiceNarrators(req, res) {
     .catch(e => sendJSON(res, 200, { ok: false, error: e.message }));
 }
 
+// GET /api/voice/list — voicesDirにあるMP3のIDリストを返す
+function getVoiceList(req, res) {
+  const { voicesDir } = getVpConfig();
+  try {
+    const ids = fs.readdirSync(voicesDir)
+      .filter(f => f.toLowerCase().endsWith('.mp3'))
+      .map(f => path.basename(f, '.mp3'));
+    sendJSON(res, 200, { ok: true, ids });
+  } catch {
+    sendJSON(res, 200, { ok: true, ids: [] });
+  }
+}
+
 // GET /api/voice/status/:code
 function getVoiceStatus(req, res, code) {
   const { voicesDir } = getVpConfig();
@@ -375,6 +388,7 @@ const server = http.createServer((req, res) => {
     return getImageFile(req, res, pathname.slice('/api/images/'.length));
   if (pathname === '/api/images/process' && method === 'POST') return postImageProcess(req, res);
   if (pathname === '/api/voice/narrators' && method === 'GET') return getVoiceNarrators(req, res);
+  if (pathname === '/api/voice/list' && method === 'GET') return getVoiceList(req, res);
   if (pathname.startsWith('/api/voice/status/') && method === 'GET')
     return getVoiceStatus(req, res, pathname.slice('/api/voice/status/'.length));
   if (pathname.startsWith('/api/voice/audio/') && method === 'GET')

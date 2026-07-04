@@ -38,9 +38,11 @@
   <!-- 列1：カード一覧 -->
   <div class="pane-list">
     <div class="pane-toolbar">
+      <button class="btn-unit-nav" id="btnPrevUnit" onclick="prevUnit()" disabled title="前のユニット">◀</button>
       <select id="unitSelect" onchange="filterCards()">
         <option value="">── ユニットを選択 ──</option>
       </select>
+      <button class="btn-unit-nav" id="btnNextUnit" onclick="nextUnit()" disabled title="次のユニット">▶</button>
       <span class="card-count" id="cardCount">0枚</span>
     </div>
     <div class="list-scroll" id="listScroll">

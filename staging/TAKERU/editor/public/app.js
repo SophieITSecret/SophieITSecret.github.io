@@ -1,5 +1,6 @@
 let cardData=[], imageMap={}, selectedIdx=-1, dirty=false, curUnit='', filteredList=[];
 let readingScripts={}, showingReadScript=false, _readScriptSaveTimer=null;
+let mp3Ids=new Set();
 
 // ===== 初期化：サーバーからCSVと画像一覧を自動読み込み =====
 async function init() {
@@ -10,15 +11,17 @@ async function init() {
     const text=await res.text();
     cardData=parseCSV(text);
 
-    // 画像一覧
+    // 画像一覧・MP3一覧を並行取得
     imageMap={};
-    try {
-      const imgRes=await fetch('/api/images');
-      if(imgRes.ok){
-        const map=await imgRes.json();
-        for(const [id,file] of Object.entries(map)) imageMap[id]='/api/images/'+encodeURIComponent(file);
-      }
-    } catch(_){}
+    mp3Ids=new Set();
+    await Promise.all([
+      fetch('/api/images').then(r=>r.ok?r.json():null).then(map=>{
+        if(map) for(const [id,file] of Object.entries(map)) imageMap[id]='/api/images/'+encodeURIComponent(file);
+      }).catch(()=>{}),
+      fetch('/api/voice/list').then(r=>r.ok?r.json():null).then(j=>{
+        if(j?.ids) mp3Ids=new Set(j.ids);
+      }).catch(()=>{})
+    ]);
 
     buildUnitSelect();
     status.textContent=`✅ TAKERUcard.csv（${cardData.length}枚）　🖼 ${Object.keys(imageMap).length}枚`;
@@ -60,17 +63,61 @@ function parseCSV(text) {
 
 function buildUnitSelect() {
   const sel=document.getElementById('unitSelect');
-  const units=[...new Set(cardData.map(d=>d.genre))];
+
+  // CSV登場順を保ちながら subject → [genre,...] のグループを作る
+  const subjectOrder=[], subjectMap=new Map();
+  for(const c of cardData){
+    if(!c.genre) continue;
+    if(!subjectMap.has(c.subject)){
+      subjectMap.set(c.subject,[]);
+      subjectOrder.push(c.subject);
+    }
+    if(!subjectMap.get(c.subject).includes(c.genre))
+      subjectMap.get(c.subject).push(c.genre);
+  }
+
   sel.innerHTML='<option value="">── ユニットを選択 ──</option>';
-  units.forEach(u=>{const o=document.createElement('option');o.value=u;o.textContent=u;sel.appendChild(o);});
-  if(units.length){sel.value=units[0];filterCards();}
+  for(const subj of subjectOrder){
+    const genres=subjectMap.get(subj);
+    if(subj){
+      const grp=document.createElement('optgroup');
+      grp.label=subj;
+      genres.forEach(g=>{const o=document.createElement('option');o.value=g;o.textContent=g;grp.appendChild(o);});
+      sel.appendChild(grp);
+    } else {
+      genres.forEach(g=>{const o=document.createElement('option');o.value=g;o.textContent=g;sel.appendChild(o);});
+    }
+  }
+
+  const firstGenre=cardData.find(c=>c.genre)?.genre||'';
+  if(firstGenre){sel.value=firstGenre;filterCards();}
 }
 
 function filterCards() {
   curUnit=document.getElementById('unitSelect').value;
   filteredList=curUnit?cardData.filter(d=>d.genre===curUnit):cardData;
   document.getElementById('cardCount').textContent=`${filteredList.length}枚`;
+  updateUnitNavBtns();
   renderList();
+}
+
+function updateUnitNavBtns() {
+  const units=[...new Set(cardData.map(d=>d.genre))];
+  const idx=units.indexOf(curUnit);
+  document.getElementById('btnPrevUnit').disabled=idx<=0;
+  document.getElementById('btnNextUnit').disabled=idx<0||idx>=units.length-1;
+}
+
+function prevUnit() {
+  const units=[...new Set(cardData.map(d=>d.genre))];
+  const idx=units.indexOf(curUnit);
+  if(idx>0){ document.getElementById('unitSelect').value=units[idx-1]; filterCards(); }
+}
+
+function nextUnit() {
+  const units=[...new Set(cardData.map(d=>d.genre))];
+  const idx=units.indexOf(curUnit);
+  if(idx>=0&&idx<units.length-1){ document.getElementById('unitSelect').value=units[idx+1]; filterCards(); }
 }
 
 function renderList() {
@@ -91,13 +138,14 @@ function renderList() {
       if(curSec) html+=`<div class="section-header">📂 ${esc(curSec)}</div>`;
     }
     const isC=isCommentary(card.id);
-    // 軍事と戦略以外にはバッジを出す
     const showBadge = card.subject && !card.subject.includes('軍事と戦略');
     const badge=showBadge?(isC?'<span class="badge badge-c">解説</span>':''):'';
     const hasBody=card.body&&!card.body.includes('準備中')&&card.body.trim()!=='';
-    const wipDot=!hasBody?'<span class="item-wip">●</span>':'';
+    const hasImg=!!imageMap[card.id];
+    const hasMp3=mp3Ids.has(card.id);
+    const dots=`<span class="status-dots"><span class="sdot ${hasBody?'sdot-body':'sdot-off'}" title="本文">文</span><span class="sdot ${hasImg?'sdot-img':'sdot-off'}" title="画像">画</span><span class="sdot ${hasMp3?'sdot-mp3':'sdot-off'}" title="MP3">音</span></span>`;
     const active=gIdx===selectedIdx?' active':'';
-    html+=`<div class="card-item${active}" onclick="showCard(${gIdx})">${badge}<span class="item-code">${esc(card.id)}</span><span class="item-title">${esc(card.title)||'（タイトルなし）'}</span>${wipDot}</div>`;
+    html+=`<div class="card-item${active}" onclick="showCard(${gIdx})">${badge}<span class="item-code">${esc(card.id)}</span><span class="item-title">${esc(card.title)||'（タイトルなし）'}</span>${dots}</div>`;
   });
   el.innerHTML=html;
 }
@@ -121,6 +169,7 @@ function showCard(gIdx) {
     if(sel) sel.value=card0.genre;
     filteredList=cardData.filter(d=>d.genre===curUnit);
     document.getElementById('cardCount').textContent=`${filteredList.length}枚`;
+    updateUnitNavBtns();
   }
   renderList();
   renderCard(gIdx);
@@ -550,7 +599,7 @@ async function recordVoice(){
       method:'POST', headers:{'Content-Type':'application/json'},
       body:JSON.stringify({code,text,narrator:getNarrator(),emotion:buildEmotion(),speed:p.speed,pitch:p.pitch})
     })).json();
-    if(json.ok){ showVoiceMsg('✅ '+json.message); checkVoiceStatus(code); }
+    if(json.ok){ mp3Ids.add(code); renderList(); showVoiceMsg('✅ '+json.message); checkVoiceStatus(code); }
     else alert('生成エラー:\n'+json.error);
   } catch(e){ alert('生成に失敗しました:\n'+e.message); }
   finally{ btn.disabled=false; btn.textContent='🎙 録音'; }

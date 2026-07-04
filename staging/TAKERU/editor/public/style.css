@@ -115,6 +115,19 @@ textarea.svg-overlay-input { min-height:120px; font-family:monospace; font-size:
 .dot-exists { color:#4caf50; }
 .dot-none { color:#666; }
 .voice-note { font-size:0.65rem; color:var(--text3); line-height:1.5; }
+/* ユニットナビ */
+.btn-unit-nav { background:transparent; border:1px solid var(--border); color:var(--text2); width:24px; height:28px; border-radius:3px; cursor:pointer; font-size:0.75rem; flex-shrink:0; display:flex; align-items:center; justify-content:center; padding:0; }
+.btn-unit-nav:hover:not(:disabled) { border-color:var(--accent); color:var(--accent); }
+.btn-unit-nav:disabled { opacity:.25; cursor:default; }
+
+/* ステータスランプ */
+.status-dots { display:flex; gap:2px; flex-shrink:0; margin-left:auto; }
+.sdot { font-size:0.52rem; padding:1px 3px; border-radius:2px; font-weight:700; letter-spacing:0; }
+.sdot-body { background:rgba(76,175,80,.55); color:#e8f5e9; }
+.sdot-img  { background:rgba(74,144,217,.55); color:#e3f2fd; }
+.sdot-mp3  { background:rgba(232,160,64,.55); color:#fff3e0; }
+.sdot-off  { background:rgba(255,255,255,.06); color:#404040; }
+
 .btn-readscript { background:transparent; border:1px solid var(--com); color:var(--com); padding:2px 8px; border-radius:3px; cursor:pointer; font-size:0.68rem; font-family:inherit; white-space:nowrap; }
 .btn-readscript:hover { background:rgba(232,160,64,.15); }
 .btn-readscript.rs-active { background:rgba(232,160,64,.2); }
