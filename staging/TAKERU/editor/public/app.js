@@ -29,6 +29,7 @@ async function init() {
     document.getElementById('btnSave').disabled=false;
     document.getElementById('btnImport').disabled=false;
     document.getElementById('btnProgress').disabled=false;
+    document.getElementById('btnBatchRecord').disabled=false;
     dirty=false;
   } catch(err) {
     status.textContent='⚠ '+err.message;
@@ -157,6 +158,7 @@ function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'
 function isCommentary(id){return /C\d+$/.test(id)||id.endsWith('C');}
 
 function showCard(gIdx) {
+  stopVoice();
   if(showingReadScript){
     clearTimeout(_readScriptSaveTimer);
     saveReadingScript();
@@ -184,6 +186,7 @@ function showCard(gIdx) {
   countChars();
   setTimeout(()=>{const a=document.querySelector('.card-item.active');if(a)a.scrollIntoView({block:'nearest'});},50);
   checkVoiceStatus(card.id);
+  _updateReadScriptBtn(card.id);
 }
 
 function renderCard(gIdx) {
@@ -602,6 +605,8 @@ async function checkVoiceStatus(code){
   } catch { dot.textContent='?'; dot.className='dot-none'; txt.textContent='サーバー未接続'; }
 }
 
+let _recordAbort = null;
+
 async function recordVoice(){
   if(selectedIdx<0) return;
   const code=cardData[selectedIdx].id;
@@ -610,25 +615,192 @@ async function recordVoice(){
     : document.getElementById('editBody').value.trim();
   if(!text){ alert('テキストが空です'); return; }
   const btn=document.getElementById('btnRecord');
+  const btnAbort=document.getElementById('btnRecordAbort');
+  _recordAbort = new AbortController();
   btn.disabled=true; btn.textContent='⏳ 生成中...';
+  if(btnAbort) btnAbort.style.display='';
   try{
     const p=getSliderParams();
     const json=await(await fetch('/api/voice/generate',{
       method:'POST', headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({code,text,narrator:getNarrator(),emotion:buildEmotion(),speed:p.speed,pitch:p.pitch})
+      body:JSON.stringify({code,text,narrator:getNarrator(),emotion:buildEmotion(),speed:p.speed,pitch:p.pitch}),
+      signal:_recordAbort.signal
     })).json();
     if(json.ok){ mp3Ids.add(code); renderList(); showVoiceMsg('✅ '+json.message); checkVoiceStatus(code); }
-    else alert('生成エラー:\n'+json.error);
-  } catch(e){ alert('生成に失敗しました:\n'+e.message); }
-  finally{ btn.disabled=false; btn.textContent='🎙 録音'; }
+    else showVoiceMsg('⚠ '+json.error);
+  } catch(e){
+    if(e.name==='AbortError') showVoiceMsg('🚫 録音を中止しました');
+    else showVoiceMsg('⚠ '+e.message);
+  } finally{
+    btn.disabled=false; btn.textContent='🎙 録音';
+    if(btnAbort) btnAbort.style.display='none';
+    _recordAbort=null;
+  }
 }
 
-function playVoice(){
+function abortRecord(){
+  if(_recordAbort){ _recordAbort.abort(); }
+}
+
+function fmtTime(s){
+  const m=Math.floor(s/60), sec=Math.floor(s%60);
+  return `${m}:${sec.toString().padStart(2,'0')}`;
+}
+
+function _resetSeek(){
+  document.getElementById('playSeekRow').style.display='none';
+  document.getElementById('playSlider').value=0;
+  document.getElementById('playTimeCur').textContent='0:00';
+  document.getElementById('btnPlay').textContent='▶ 再生';
+}
+
+function togglePlay(){
   if(selectedIdx<0) return;
-  if(currentAudio){ currentAudio.pause(); currentAudio=null; }
+  // 再生中 → 一時停止
+  if(currentAudio && !currentAudio.paused){
+    currentAudio.pause();
+    document.getElementById('btnPlay').textContent='▶ 再生';
+    return;
+  }
+  // 一時停止中 → 再開
+  if(currentAudio && currentAudio.paused){
+    currentAudio.play();
+    document.getElementById('btnPlay').textContent='⏸ 停止';
+    return;
+  }
+  // 新規再生
   currentAudio=new Audio(`/api/voice/audio/${cardData[selectedIdx].id}`);
-  currentAudio.onerror=()=>alert('音声ファイルがありません。\nまず「🎙 録音」を実行してください。');
+  currentAudio.onerror=()=>{ alert('音声ファイルがありません。\nまず「🎙 録音」を実行してください。'); currentAudio=null; _resetSeek(); };
+  const slider=document.getElementById('playSlider');
+  const cur=document.getElementById('playTimeCur');
+  const dur=document.getElementById('playTimeDur');
+  const row=document.getElementById('playSeekRow');
+  currentAudio.addEventListener('loadedmetadata',()=>{
+    slider.max=currentAudio.duration;
+    dur.textContent=fmtTime(currentAudio.duration);
+    row.style.display='flex';
+  });
+  currentAudio.addEventListener('timeupdate',()=>{
+    slider.value=currentAudio.currentTime;
+    cur.textContent=fmtTime(currentAudio.currentTime);
+  });
+  currentAudio.addEventListener('ended',()=>{ currentAudio=null; _resetSeek(); });
   currentAudio.play();
+  document.getElementById('btnPlay').textContent='⏸ 停止';
+}
+
+function stopVoice(){
+  if(currentAudio){ currentAudio.pause(); currentAudio=null; }
+  _resetSeek();
+}
+
+function seekVoice(val){
+  if(currentAudio) currentAudio.currentTime=+val;
+}
+
+// ---- 一括録音 ----
+let _batchCancel = false;
+
+function recordUnitBatch() {
+  if (!curUnit) { alert('ユニットを選択してください'); return; }
+  const cards = filteredList.filter(c => (c.body||'').trim());
+  if (!cards.length) { alert('本文のあるカードがありません'); return; }
+  _renderBatchList(cards);
+  document.getElementById('batchModal').style.display = 'flex';
+}
+
+function _renderBatchList(cards) {
+  const el = document.getElementById('batchList');
+  el.innerHTML = cards.map(c => {
+    const hasMp3 = mp3Ids.has(c.id);
+    const dot = hasMp3
+      ? '<span class="bdot bdot-mp3">音</span>'
+      : '<span class="bdot bdot-off">音</span>';
+    return `<label class="batch-item">
+      <input type="checkbox" class="batch-cb" data-id="${c.id}" ${hasMp3?'':'checked'} onchange="_updateBatchCount()">
+      <span class="batch-code">${esc(c.id)}</span>
+      ${dot}
+      <span class="batch-title">${esc(c.title||'')}</span>
+    </label>`;
+  }).join('');
+  _updateBatchCount();
+}
+
+function _updateBatchCount() {
+  const n = document.querySelectorAll('.batch-cb:checked').length;
+  document.getElementById('batchCheckCount').textContent = `${n}枚選択`;
+  document.getElementById('btnStartBatch').disabled = n === 0;
+}
+
+function batchCheckAll(v) {
+  document.querySelectorAll('.batch-cb').forEach(cb => cb.checked = v);
+  _updateBatchCount();
+}
+
+function batchCheckUngenerated() {
+  document.querySelectorAll('.batch-cb').forEach(cb => {
+    cb.checked = !mp3Ids.has(cb.dataset.id);
+  });
+  _updateBatchCount();
+}
+
+async function startBatch() {
+  const ids = [...document.querySelectorAll('.batch-cb:checked')].map(cb => cb.dataset.id);
+  if (!ids.length) return;
+
+  // モーダルを閉じてフローティングバーを表示
+  closeBatchModal();
+  const floating = document.getElementById('batchFloating');
+  const floatCard = document.getElementById('batchFloatCard');
+  const floatFill = document.getElementById('batchFloatFill');
+  const floatFrac = document.getElementById('batchFloatFrac');
+  floating.style.display = 'flex';
+
+  _batchCancel = false;
+  let done = 0, failed = 0;
+  const total = ids.length;
+
+  for (const id of ids) {
+    if (_batchCancel) break;
+    floatFrac.textContent = `${done}/${total}`;
+    floatFill.style.width = `${Math.round(done / total * 100)}%`;
+    const card = cardData.find(c => c.id === id);
+    floatCard.textContent = `🎙 ${id}`;
+    if (!card) { done++; continue; }
+    const text = (readingScripts[id] || card.body || '').trim();
+    if (!text) { done++; continue; }
+    try {
+      const p = getSliderParams();
+      const json = await (await fetch('/api/voice/generate', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: id, text, narrator: getNarrator(), emotion: buildEmotion(), speed: p.speed, pitch: p.pitch })
+      })).json();
+      if (json.ok) mp3Ids.add(id);
+      else failed++;
+    } catch { failed++; }
+    done++;
+  }
+
+  renderList();
+  floatFill.style.width = '100%';
+  floatFrac.textContent = `${done}/${total}`;
+  floatCard.textContent = _batchCancel ? '⏹ 中断' : '✅ 完了';
+  setTimeout(() => { floating.style.display = 'none'; }, 3000);
+
+  const btn = document.getElementById('btnBatchRecord');
+  btn.textContent = '🎙 一括';
+  btn.onclick = recordUnitBatch;
+}
+
+function closeBatchModal() {
+  document.getElementById('batchModal').style.display = 'none';
+  // 次回のために選択画面に戻す
+  document.getElementById('batchList').style.display = '';
+  document.getElementById('batchProgress').style.display = 'none';
+  document.querySelector('.batch-toolbar').style.display = '';
+  document.getElementById('btnStartBatch').style.display = '';
+  document.getElementById('btnBatchCancel').textContent = 'キャンセル';
+  document.getElementById('btnBatchCancel').onclick = closeBatchModal;
 }
 
 function confirmVoice(){
@@ -648,6 +820,22 @@ loadReadingScripts();
 
 // 起動
 init();
+
+// ==================== 全画面 ====================
+document.addEventListener('click', function _autoFS() {
+  document.documentElement.requestFullscreen().catch(() => {});
+  document.removeEventListener('click', _autoFS);
+}, { once: true });
+
+document.addEventListener('fullscreenchange', () => {
+  const btn = document.getElementById('btnFullscreen');
+  if (btn) btn.textContent = document.fullscreenElement ? '⛶ 全画面解除' : '⛶ 全画面';
+});
+
+function toggleFullscreen() {
+  if (document.fullscreenElement) document.exitFullscreen();
+  else document.documentElement.requestFullscreen().catch(() => {});
+}
 
 // ==================== メモ ====================
 let promptData = [], selectedPromptIdx = -1, _memoSaveTimer = null;
@@ -838,7 +1026,8 @@ function renderProgressBody() {
       const hB = !!(c.body && !c.body.includes('準備中') && c.body.trim());
       const hI = !!imageMap[c.id];
       const hM = mp3Ids.has(c.id);
-      return `<div class="ptile" onclick="pickProgressCard(${gIdx})" title="${esc(c.title||c.id)}">
+      const complete = hT && hB && hI && hM;
+      return `<div class="ptile${complete?' ptile-complete':''}" onclick="pickProgressCard(${gIdx})" title="${esc(c.title||c.id)}">
         <span class="ptile-code">${esc(c.id)}</span>
         <span class="ptile-dots">
           <span class="sdot ${hT?'sdot-title':'sdot-off'}">題</span>
@@ -983,6 +1172,13 @@ async function loadReadingScripts(){
   } catch{}
 }
 
+function _updateReadScriptBtn(id){
+  const btn=document.getElementById('btnReadScript');
+  const hasScript=!!(readingScripts[id]||'').trim();
+  btn.classList.toggle('rs-has-script', hasScript);
+  btn.title=hasScript?'読み上げ原稿あり':'読み上げ原稿なし';
+}
+
 function toggleReadScript(){
   if(!showingReadScript){
     if(selectedIdx<0) return;
@@ -1021,6 +1217,7 @@ async function saveReadingScript(){
   const id=cardData[selectedIdx].id;
   const text=document.getElementById('editReadScript').value.trim();
   if(text) readingScripts[id]=text; else delete readingScripts[id];
+  _updateReadScriptBtn(id);
   try{
     await fetch('/api/reading-scripts',{
       method:'POST', headers:{'Content-Type':'application/json'},

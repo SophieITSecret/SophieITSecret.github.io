@@ -7,27 +7,27 @@
       "happy": 40,
       "fun": 30,
       "sad": 0,
-      "angry": 14
+      "angry": 10
+    },
+    {
+      "narrator": "Japanese Female 3",
+      "speed": 90,
+      "pitch": 52,
+      "happy": 40,
+      "fun": 45,
+      "sad": 10,
+      "angry": 5
     },
     {
       "narrator": "Japanese Female 3",
       "speed": 91,
-      "pitch": 51,
+      "pitch": 52,
       "happy": 40,
-      "fun": 40,
+      "fun": 45,
       "sad": 10,
-      "angry": 0
-    },
-    {
-      "narrator": "Japanese Female 1",
-      "speed": 100,
-      "pitch": 50,
-      "happy": 40,
-      "fun": 30,
-      "sad": 0,
-      "angry": 0
+      "angry": 5
     }
   ],
   "ver": 2,
-  "activeSlot": 1
+  "activeSlot": 0
 }

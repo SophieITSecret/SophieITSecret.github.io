@@ -274,9 +274,10 @@ function getVpConfig() {
 }
 
 // 子プロセス実行（Promise）
-function spawnP(cmd, args, opts) {
+function spawnP(cmd, args, opts, onProc) {
   return new Promise((resolve, reject) => {
     const p = spawn(cmd, args, { ...opts, windowsHide: true });
+    if (onProc) onProc(p);
     let out = '', err = '';
     p.stdout && p.stdout.on('data', d => out += d);
     p.stderr && p.stderr.on('data', d => err += d);
@@ -286,12 +287,13 @@ function spawnP(cmd, args, opts) {
 }
 
 // VOICEPEAK 呼び出し（クラッシュ時リトライ付き）
-async function spawnVP(args, opts, retries = 3) {
+async function spawnVP(args, opts, retries = 3, cancelRef) {
   for (let attempt = 1; attempt <= retries; attempt++) {
+    if (cancelRef && cancelRef.cancelled) throw new Error('aborted');
     try {
-      return await spawnP(args[0], args.slice(1), opts);
+      return await spawnP(args[0], args.slice(1), opts, proc => { if (cancelRef) cancelRef.proc = proc; });
     } catch (e) {
-      if (attempt === retries) throw e;
+      if (e.message === 'aborted' || attempt === retries) throw e;
       console.warn(`  [VP retry ${attempt}/${retries}] ${e.message}`);
       await new Promise(r => setTimeout(r, 5000));
     }
@@ -299,16 +301,17 @@ async function spawnVP(args, opts, retries = 3) {
 }
 
 // WAVs（複数可）→ MP3（ffmpeg で結合＋変換を一括処理）
-function wavsToMp3(wavFiles, mp3Path, tempDir, code) {
+function wavsToMp3(wavFiles, mp3Path, tempDir, reqId) {
+  const af = 'afade=t=in:st=0:d=0.08';
   if (wavFiles.length === 1) {
-    return spawnP('ffmpeg', ['-y', '-i', wavFiles[0], '-ar', '44100', '-ac', '1', '-b:a', '96k', mp3Path]);
+    return spawnP('ffmpeg', ['-y', '-i', wavFiles[0], '-af', af, '-ar', '44100', '-ac', '1', '-b:a', '96k', mp3Path]);
   }
   // concat demuxer 用リストファイル
-  const listFile = path.join(tempDir, `${code}_list.txt`);
+  const listFile = path.join(tempDir, `${reqId}_list.txt`);
   const lines = wavFiles.map(f => `file '${f.replace(/\\/g, '/').replace(/'/g, "\\'")}'`).join('\n');
   fs.writeFileSync(listFile, lines, 'utf8');
   return spawnP('ffmpeg', ['-y', '-f', 'concat', '-safe', '0', '-i', listFile,
-    '-ar', '44100', '-ac', '1', '-b:a', '96k', mp3Path])
+    '-af', af, '-ar', '44100', '-ac', '1', '-b:a', '96k', mp3Path])
     .finally(() => { try { fs.unlinkSync(listFile); } catch {} });
 }
 
@@ -355,6 +358,14 @@ function getVoiceAudio(req, res, code) {
 // POST /api/voice/generate
 function postVoiceGenerate(req, res) {
   let chunks = [];
+  const cancelRef = { cancelled: false, proc: null };
+  req.socket.on('close', () => {
+    if (!res.writableEnded) {
+      cancelRef.cancelled = true;
+      if (cancelRef.proc) { try { cancelRef.proc.kill('SIGTERM'); } catch {} }
+      console.log('  [中止] クライアントが切断しました');
+    }
+  });
   req.on('data', c => chunks.push(c));
   req.on('end', async () => {
     let chunkWavs = [];
@@ -382,16 +393,18 @@ function postVoiceGenerate(req, res) {
       const sentences = text.split('。').map(s => s.trim()).filter(Boolean).map(s => s + '。');
       if (!sentences.length) return sendJSON(res, 400, { ok: false, error: 'テキストが空です' });
 
+      // リクエストごとにユニークなプレフィックスを生成（同一カードの並行処理に備える）
+      const reqId = `${code}_${Date.now().toString(36)}`;
       console.log(`[voice] ${code}  ${sentences.length}文 narrator=${narrator}`);
 
       for (let i = 0; i < sentences.length; i++) {
-        const txtFile = path.join(tempDir, `${code}_${i}.txt`);
-        const wavFile = path.join(tempDir, `${code}_${i}.wav`);
+        const txtFile = path.join(tempDir, `${reqId}_${i}.txt`);
+        const wavFile = path.join(tempDir, `${reqId}_${i}.wav`);
         fs.writeFileSync(txtFile, sentences[i], 'utf8');
 
         await spawnVP(
           [vpPath, '-t', txtFile, '-n', narrator, '-e', emotion, '--speed', speed, '--pitch', pitch, '-o', wavFile],
-          { cwd: vpDir });
+          { cwd: vpDir }, 3, cancelRef);
 
         chunkWavs.push(wavFile);
         console.log(`  [${i + 1}/${sentences.length}] 完了`);
@@ -399,7 +412,7 @@ function postVoiceGenerate(req, res) {
       }
 
       // WAV 結合 → MP3（ffmpeg 一括）
-      await wavsToMp3(chunkWavs, mp3Path, tempDir, code);
+      await wavsToMp3(chunkWavs, mp3Path, tempDir, reqId);
       console.log(`  ✅ ${code}.mp3 完成`);
       updateMp3List(voicesDir);
       sendJSON(res, 200, { ok: true, message: `${code}.mp3 を生成しました` });
@@ -467,6 +480,28 @@ const server = http.createServer((req, res) => {
 
 const URL_LOCAL = 'http://localhost:' + PORT;
 
+function openAppBrowser(url) {
+  if (process.platform === 'win32') {
+    const chromeCandidates = [
+      process.env.LOCALAPPDATA + '\\Google\\Chrome\\Application\\chrome.exe',
+      'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+      'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
+    ];
+    const chromePath = chromeCandidates.find(p => { try { return fs.existsSync(p); } catch { return false; } });
+    if (chromePath) {
+      spawn(chromePath, [`--app=${url}`, '--window-size=1600,1000'], { detached: true, stdio: 'ignore' }).unref();
+      console.log('  Chromeアプリモードで起動しました');
+      return;
+    }
+    console.log('  Chrome未検出 → 通常ブラウザで開きます');
+    exec('start "" "' + url + '"');
+  } else if (process.platform === 'darwin') {
+    exec(`open -a "Google Chrome" --args --app="${url}" --window-size=1600,1000 2>/dev/null || open "${url}"`);
+  } else {
+    exec(`google-chrome --app="${url}" --window-size=1600,1000 2>/dev/null || xdg-open "${url}"`);
+  }
+}
+
 server.listen(PORT, () => {
   console.log('==================================================');
   console.log('  TAKERU 作業台 が起動しました');
@@ -475,10 +510,8 @@ server.listen(PORT, () => {
   console.log('  画像: ' + config.imagesDir);
   console.log('  終了するにはこの黒い窓を閉じてください');
   console.log('==================================================');
-  // サーバー起動完了後にブラウザを開く（タイミング競合を防ぐ）
-  if (process.platform === 'win32') exec('start "" "' + URL_LOCAL + '"');
-  else if (process.platform === 'darwin') exec('open "' + URL_LOCAL + '"');
-  else exec('xdg-open "' + URL_LOCAL + '"');
+  // サーバー起動完了後にChromeアプリモードで開く
+  openAppBrowser(URL_LOCAL);
 });
 
 server.on('error', (e) => {

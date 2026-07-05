@@ -13,6 +13,7 @@
   <button class="btn-load" id="btnProgress" onclick="openProgress()" disabled>📊 進捗</button>
   <button class="btn-load" onclick="openMemo()">📝 メモ</button>
   <button class="btn-load" id="btnImport" onclick="openImport()" disabled>📥 一括取り込み</button>
+  <button class="btn-load" id="btnFullscreen" onclick="toggleFullscreen()">⛶ 全画面</button>
   <button class="btn-save" id="btnSave" onclick="saveCSV()" disabled>💾 CSV を保存</button>
 </header>
 
@@ -63,6 +64,42 @@
   </div>
 </div>
 
+<!-- 一括録音 カード選択 -->
+<div id="batchModal" class="modal-overlay">
+  <div class="modal-box batch-modal-box">
+    <div class="modal-head">
+      <h2>🎙 一括録音 — カード選択</h2>
+      <button class="btn-cancel" onclick="closeBatchModal()">✕ 閉じる</button>
+    </div>
+    <div class="batch-toolbar">
+      <button class="btn-batch-sel" onclick="batchCheckAll(true)">全選択</button>
+      <button class="btn-batch-sel" onclick="batchCheckAll(false)">全解除</button>
+      <button class="btn-batch-sel" onclick="batchCheckUngenerated()">未生成のみ</button>
+      <span id="batchCheckCount" class="batch-count">0枚選択</span>
+    </div>
+    <div id="batchList" class="batch-list"></div>
+    <div id="batchProgress" class="batch-progress" style="display:none">
+      <div class="batch-prog-label">
+        <span id="batchProgCard">準備中…</span>
+        <span id="batchProgFrac">0 / 0</span>
+      </div>
+      <div class="batch-prog-bar"><div id="batchProgFill" class="batch-prog-fill" style="width:0%"></div></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" id="btnBatchCancel" onclick="closeBatchModal()">キャンセル</button>
+      <button class="btn-apply" id="btnStartBatch" onclick="startBatch()">🎙 録音開始</button>
+    </div>
+  </div>
+</div>
+
+<!-- 一括録音フローティングバー -->
+<div id="batchFloating" class="batch-floating" style="display:none">
+  <span id="batchFloatCard" class="batch-float-card">準備中…</span>
+  <div class="batch-float-bar"><div id="batchFloatFill" class="batch-prog-fill" style="width:0%"></div></div>
+  <span id="batchFloatFrac" class="batch-float-frac">0/0</span>
+  <button class="batch-float-stop" onclick="_batchCancel=true" title="中断">⏹</button>
+</div>
+
 <!-- 進捗ボード -->
 <div id="progressModal" class="modal-overlay">
   <div class="modal-box progress-modal-box">
@@ -95,6 +132,7 @@
         <option value="">── ユニットを選択 ──</option>
       </select>
       <button class="btn-unit-nav" id="btnNextUnit" onclick="nextUnit()" disabled title="次のユニット">▶</button>
+      <button class="btn-batch-rec" id="btnBatchRecord" onclick="recordUnitBatch()" disabled title="ユニット内の未生成カードを一括録音">🎙 一括</button>
       <span class="card-count" id="cardCount">0枚</span>
     </div>
     <div class="list-scroll" id="listScroll">
@@ -208,8 +246,15 @@
 
     <div class="voice-btns">
       <button id="btnRecord" class="btn-voice" onclick="recordVoice()">🎙 録音</button>
-      <button id="btnPlay" class="btn-voice" onclick="playVoice()">▶ 再生</button>
+      <button id="btnRecordAbort" class="btn-voice-abort" onclick="abortRecord()" style="display:none">🚫 中止</button>
+      <button id="btnPlay" class="btn-voice" onclick="togglePlay()">▶ 再生</button>
+      <button id="btnStop" class="btn-voice" onclick="stopVoice()" title="停止して先頭へ">⏹</button>
       <button id="btnConfirm" class="btn-voice-confirm" onclick="confirmVoice()">✅ 確定</button>
+    </div>
+    <div class="play-seek-row" id="playSeekRow" style="display:none">
+      <span id="playTimeCur" class="play-time">0:00</span>
+      <input type="range" id="playSlider" class="play-slider" min="0" max="100" value="0" step="0.1" oninput="seekVoice(this.value)">
+      <span id="playTimeDur" class="play-time">0:00</span>
     </div>
     <div class="voice-status-row">
       <span id="voiceDot" class="dot-none">○</span>
