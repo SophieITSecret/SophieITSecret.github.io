@@ -25,8 +25,11 @@
       <button class="btn-cancel" onclick="closeImport()">✕ 閉じる</button>
     </div>
     <div class="modal-desc">
-      Geminiの出力を貼り付けてください。形式は <code>@コード</code> の行で1枚が始まり、次の行から本文です。<br>
-      取り込んでもファイルは保存されません（プレビューで確認 → 問題なければ「CSVを保存」）。
+      ClaudeやGeminiの出力を貼り付けてください。<strong>形式：<code>@カードID</code> の行で始まり、次の行から本文。</strong>空行で区切っても続けて書いてもOKです。<br>
+      取り込んでもファイルは保存されません（プレビューで確認 → 問題なければ「CSVを保存」）。<br>
+      <span style="color:var(--com);font-size:0.78rem">Claudeへの依頼例：「以下のカードIDの本文を作成してください。<br>
+      IRUMA01, IRUMA02, IRUMA03…（IDリスト）<br>
+      出力形式：@カードID の行の次に本文を書いてください。」</span>
     </div>
     <textarea id="importText" class="import-text" placeholder="@IRUMA01&#10;ようこそ、入間基地ツアーへ。……（本文）……&#10;&#10;@IRUMA02&#10;入間基地は、埼玉県……（本文）……"></textarea>
     <div id="importPreview" class="import-preview"></div>
@@ -157,7 +160,7 @@
           <span id="charCount" class="char-count char-ok">0字</span>
         </span>
       </div>
-      <textarea class="edit-input" id="editBody" oninput="updatePreview();countChars()"></textarea>
+      <textarea class="edit-input" id="editBody" oninput="updatePreview();countChars();editDirty=true"></textarea>
       <textarea class="edit-input" id="editReadScript" style="display:none" oninput="onReadScriptInput()" placeholder="読み上げ用テキスト（本文と異なる読みを入力）"></textarea>
     </div>
     <div class="edit-actions">

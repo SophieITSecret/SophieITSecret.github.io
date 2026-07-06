@@ -1,4 +1,5 @@
 let cardData=[], imageMap={}, selectedIdx=-1, dirty=false, curUnit='', filteredList=[];
+let editDirty=false;
 let readingScripts={}, showingReadScript=false, _readScriptSaveTimer=null;
 let mp3Ids=new Set();
 
@@ -158,6 +159,8 @@ function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'
 function isCommentary(id){return /C\d+$/.test(id)||id.endsWith('C');}
 
 function showCard(gIdx) {
+  if(editDirty && !confirm('本文が未適用です。移動すると変更が失われます。\n移動しますか？')) return;
+  editDirty=false;
   stopVoice();
   if(showingReadScript){
     clearTimeout(_readScriptSaveTimer);
@@ -200,21 +203,21 @@ function renderCard(gIdx) {
   const prevGIdx=gIdx>0?gIdx-1:-1;
   const nextGIdx=gIdx<cardData.length-1?gIdx+1:-1;
   document.getElementById('paneCard').innerHTML=`
-    <div style="display:flex;flex-direction:column;align-items:center;gap:12px">
-      <div class="card-shell">
-        <div class="card-img-area">${imgHtml}</div>
-        <div class="card-divider"></div>
-        <div class="card-text">
-          <div class="card-unit">${esc(card.genre)}</div>
-          ${card.section?`<div class="card-section">${esc(card.section)}</div>`:''}
+    <div class="card-shell">
+      <div class="card-img-area">${imgHtml}</div>
+      <div class="card-divider"></div>
+      <div class="card-text">
+        <div class="card-unit">${esc(card.genre)}</div>
+        ${card.section?`<div class="card-section">${esc(card.section)}</div>`:''}
+        <div class="card-title-row">
           <div class="card-title-disp" id="prevTitle">${esc(card.title)||'（タイトルなし）'}</div>
-          <div class="card-body-disp${hasBody?'':' wip'}" id="prevBody">${bodyHtml}</div>
+          <div class="card-nav">
+            <button class="btn-nav" onclick="showCard(${prevGIdx})" ${prevGIdx<0?'disabled':''}>◀</button>
+            <span class="nav-info">${fi+1}/${filteredList.length}</span>
+            <button class="btn-nav" onclick="showCard(${nextGIdx})" ${nextGIdx<0?'disabled':''}>▶</button>
+          </div>
         </div>
-      </div>
-      <div class="card-nav">
-        <button class="btn-nav" onclick="showCard(${prevGIdx})" ${prevGIdx<0?'disabled':''}>◀</button>
-        <span class="nav-info">${fi+1} / ${filteredList.length}</span>
-        <button class="btn-nav" onclick="showCard(${nextGIdx})" ${nextGIdx<0?'disabled':''}>▶</button>
+        <div class="card-body-disp${hasBody?'':' wip'}" id="prevBody">${bodyHtml}</div>
       </div>
     </div>`;
 }
@@ -251,12 +254,12 @@ function applyEdit(){
   if(selectedIdx<0) return;
   cardData[selectedIdx].title=document.getElementById('editTitle').value;
   cardData[selectedIdx].body=document.getElementById('editBody').value;
-  dirty=true;
+  dirty=true; editDirty=false;
   renderList();
   renderCard(selectedIdx);
 }
 
-function cancelEdit(){ if(selectedIdx>=0) showCard(selectedIdx); }
+function cancelEdit(){ editDirty=false; if(selectedIdx>=0) showCard(selectedIdx); }
 
 function copyCardText(){
   if(selectedIdx<0) return;

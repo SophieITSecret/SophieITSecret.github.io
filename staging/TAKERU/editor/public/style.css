@@ -52,14 +52,15 @@ header h1 { font-size:0.95rem; color:var(--accent); font-weight:700; letter-spac
 .card-text { padding:14px 18px; display:flex; flex-direction:column; gap:4px; }
 .card-unit { font-size:0.7rem; color:var(--text3); }
 .card-section { font-size:0.82rem; color:var(--accent); letter-spacing:.06em; }
-.card-title-disp { font-size:1.05rem; font-weight:700; color:var(--text); padding-top:6px; padding-bottom:8px; border-bottom:1px solid var(--border); line-height:1.4; }
+.card-title-row { display:flex; align-items:center; justify-content:space-between; gap:8px; padding-top:6px; padding-bottom:8px; border-bottom:1px solid var(--border); }
+.card-title-disp { font-size:1.05rem; font-weight:700; color:var(--text); line-height:1.4; flex:1; }
 .card-body-disp { font-size:0.88rem; line-height:1.9; color:var(--text); white-space:pre-wrap; padding-top:8px; max-height:400px; overflow-y:auto; }
 .card-body-disp.wip { color:var(--text3); font-style:italic; font-size:0.8rem; }
-.card-nav { display:flex; justify-content:center; gap:20px; padding:10px 0 6px; }
-.btn-nav { background:rgba(76,175,80,.15); border:1px solid var(--accent); color:var(--accent); width:38px; height:38px; border-radius:50%; cursor:pointer; font-size:1rem; display:flex; align-items:center; justify-content:center; }
+.card-nav { display:flex; align-items:center; gap:6px; flex-shrink:0; }
+.btn-nav { background:rgba(76,175,80,.15); border:1px solid var(--accent); color:var(--accent); width:26px; height:26px; border-radius:50%; cursor:pointer; font-size:0.8rem; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
 .btn-nav:hover { background:rgba(76,175,80,.3); }
 .btn-nav:disabled { opacity:.3; cursor:default; }
-.nav-info { font-size:0.72rem; color:var(--text3); display:flex; align-items:center; }
+.nav-info { font-size:0.68rem; color:var(--text3); white-space:nowrap; }
 
 /* 右 編集エリア */
 .edit-area { width:460px; min-width:460px; max-width:460px; display:flex; flex-direction:column; padding:20px 16px; gap:12px; overflow-y:auto; flex-shrink:0; }
