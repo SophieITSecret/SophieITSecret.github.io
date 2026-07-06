@@ -681,6 +681,7 @@ function togglePlay(){
     row.style.display='flex';
   });
   currentAudio.addEventListener('timeupdate',()=>{
+    if(_seeking) return;
     slider.value=currentAudio.currentTime;
     cur.textContent=fmtTime(currentAudio.currentTime);
   });
@@ -694,8 +695,14 @@ function stopVoice(){
   _resetSeek();
 }
 
+let _seeking = false;
+function seekStart(){ _seeking = true; }
+function seekEnd(val){
+  _seeking = false;
+  if(currentAudio){ currentAudio.currentTime=+val; }
+}
 function seekVoice(val){
-  if(currentAudio) currentAudio.currentTime=+val;
+  document.getElementById('playTimeCur').textContent=fmtTime(+val);
 }
 
 // ---- 一括録音 ----

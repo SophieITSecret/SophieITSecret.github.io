@@ -253,7 +253,7 @@
     </div>
     <div class="play-seek-row" id="playSeekRow" style="display:none">
       <span id="playTimeCur" class="play-time">0:00</span>
-      <input type="range" id="playSlider" class="play-slider" min="0" max="100" value="0" step="0.1" oninput="seekVoice(this.value)">
+      <input type="range" id="playSlider" class="play-slider" min="0" max="100" value="0" step="0.1" oninput="seekVoice(this.value)" onmousedown="seekStart()" onmouseup="seekEnd(this.value)" ontouchstart="seekStart()" ontouchend="seekEnd(this.value)">
       <span id="playTimeDur" class="play-time">0:00</span>
     </div>
     <div class="voice-status-row">

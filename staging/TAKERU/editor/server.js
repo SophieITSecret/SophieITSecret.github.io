@@ -350,9 +350,27 @@ function getVoiceAudio(req, res, code) {
   const { voicesDir } = getVpConfig();
   const mp3 = path.join(voicesDir, code + '.mp3');
   if (!fs.existsSync(mp3)) { res.writeHead(404); return res.end('not found'); }
-  const stat = fs.statSync(mp3);
-  res.writeHead(200, { 'Content-Type': 'audio/mpeg', 'Content-Length': stat.size });
-  fs.createReadStream(mp3).pipe(res);
+  const total = fs.statSync(mp3).size;
+  const range = req.headers.range;
+  if (range) {
+    const [s, e] = range.replace(/bytes=/, '').split('-');
+    const start = parseInt(s, 10);
+    const end = e ? parseInt(e, 10) : total - 1;
+    res.writeHead(206, {
+      'Content-Type': 'audio/mpeg',
+      'Content-Range': `bytes ${start}-${end}/${total}`,
+      'Accept-Ranges': 'bytes',
+      'Content-Length': end - start + 1
+    });
+    fs.createReadStream(mp3, { start, end }).pipe(res);
+  } else {
+    res.writeHead(200, {
+      'Content-Type': 'audio/mpeg',
+      'Content-Length': total,
+      'Accept-Ranges': 'bytes'
+    });
+    fs.createReadStream(mp3).pipe(res);
+  }
 }
 
 // POST /api/voice/generate
