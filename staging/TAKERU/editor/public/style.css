@@ -42,7 +42,7 @@ header h1 { font-size:0.95rem; color:var(--accent); font-weight:700; letter-spac
 .item-wip { font-size:0.7rem; color:var(--text3); flex-shrink:0; }
 
 /* 中央 カードプレビュー */
-.pane-card { flex:1; display:flex; align-items:center; justify-content:center; background:var(--bg); padding:24px 20px; border-right:3px solid var(--border); }
+.pane-card { flex:1; display:flex; align-items:flex-start; justify-content:center; background:var(--bg); padding:40px 20px 24px; border-right:3px solid var(--border); }
 
 .card-shell { width:520px; background:var(--bg2); border:1px solid var(--border); border-radius:14px; display:flex; flex-direction:column; overflow:hidden; box-shadow:0 8px 40px rgba(0,0,0,.5); }
 .card-img-area { width:100%; aspect-ratio:4/3; background:var(--bg3); position:relative; overflow:hidden; flex-shrink:0; }
@@ -57,17 +57,17 @@ header h1 { font-size:0.95rem; color:var(--accent); font-weight:700; letter-spac
 .card-body-disp { font-size:0.88rem; line-height:1.9; color:var(--text); white-space:pre-wrap; padding-top:8px; max-height:400px; overflow-y:auto; }
 .card-body-disp.wip { color:var(--text3); font-style:italic; font-size:0.8rem; }
 .card-nav { display:flex; align-items:center; gap:6px; flex-shrink:0; }
-.btn-nav { background:rgba(76,175,80,.15); border:1px solid var(--accent); color:var(--accent); width:26px; height:26px; border-radius:50%; cursor:pointer; font-size:0.8rem; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.btn-nav { background:rgba(76,175,80,.15); border:1px solid var(--accent); color:var(--accent); width:34px; height:34px; border-radius:50%; cursor:pointer; font-size:1rem; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
 .btn-nav:hover { background:rgba(76,175,80,.3); }
 .btn-nav:disabled { opacity:.3; cursor:default; }
 .nav-info { font-size:0.68rem; color:var(--text3); white-space:nowrap; }
 
 /* 右 編集エリア */
-.edit-area { width:460px; min-width:460px; max-width:460px; display:flex; flex-direction:column; padding:20px 16px; gap:12px; overflow-y:auto; flex-shrink:0; }
+.edit-area { width:460px; min-width:460px; max-width:460px; display:flex; flex-direction:column; padding:14px 16px; gap:8px; overflow-y:auto; flex-shrink:0; }
 .edit-label { font-size:0.72rem; color:var(--text2); margin-bottom:3px; }
 .edit-input { background:var(--bg3); border:1px solid var(--border); color:var(--text); padding:7px 10px; border-radius:4px; font-size:0.82rem; font-family:inherit; width:100%; }
 .edit-input:focus { outline:none; border-color:var(--accent); }
-textarea.edit-input { resize:vertical; min-height:368px; line-height:1.75; }
+textarea.edit-input { resize:vertical; min-height:310px; line-height:1.75; }
 .char-count { font-size:0.7rem; text-align:right; margin-top:2px; }
 .char-ok { color:var(--accent); } .char-over { color:#e57373; }
 .edit-actions { display:flex; gap:8px; justify-content:flex-end; }
@@ -78,7 +78,7 @@ textarea.edit-input { resize:vertical; min-height:368px; line-height:1.75; }
 .btn-copy:hover { border-color:var(--accent2); color:var(--accent2); }
 
 /* 画像取り込み */
-.img-edit-block { border-top:1px solid var(--border); padding-top:12px; margin-top:4px; }
+.img-edit-block { border-top:1px solid var(--border); padding-top:8px; margin-top:0; }
 .img-stage-preview { width:100%; aspect-ratio:4/3; object-fit:fill; border:1px solid var(--accent); border-radius:4px; display:block; }
 .pane-card.dragover { outline:2px dashed var(--accent); outline-offset:-10px; }
 
