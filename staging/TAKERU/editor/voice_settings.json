@@ -14,7 +14,7 @@
       "speed": 90,
       "pitch": 52,
       "happy": 40,
-      "fun": 45,
+      "fun": 20,
       "sad": 10,
       "angry": 5
     },
@@ -29,5 +29,5 @@
     }
   ],
   "ver": 2,
-  "activeSlot": 0
+  "activeSlot": 1
 }
