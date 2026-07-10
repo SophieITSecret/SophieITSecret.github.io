@@ -4,7 +4,7 @@
       "narrator": "Japanese Male 2",
       "speed": 91,
       "pitch": 51,
-      "happy": 40,
+      "happy": 31,
       "fun": 30,
       "sad": 0,
       "angry": 10
@@ -29,5 +29,5 @@
     }
   ],
   "ver": 2,
-  "activeSlot": 1
+  "activeSlot": 0
 }
