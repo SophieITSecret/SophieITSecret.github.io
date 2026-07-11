@@ -11,6 +11,7 @@ let curGenre = '';
 let curSubject = '3級';
 let curLinkGenre = '';
 let autoRead = false;
+let autoAdvance = false;
 let isMenuVisible = false;
 let linkFullscreen = false;
 let mp3Failed = false;
@@ -575,8 +576,18 @@ function clearCard() {
 // ==========================================
 function setupButtons() {
 
-    // ▶：カード送り／メニューから次のカードへ（セクション超え対応）
+    // ▶：カード送り。音声ON中にダブルクリックで連続再生モードのON/OFF
+    let _nextLastClick = 0;
     btnNext.onclick = () => {
+        const now = Date.now();
+        if (autoRead && now - _nextLastClick < 300) {
+            _nextLastClick = 0;
+            autoAdvance = !autoAdvance;
+            updateAutoAdvBtn();
+            if (autoAdvance && navState === 'card') playVoiceDirect();
+            return;
+        }
+        _nextLastClick = now;
         if (isMenuVisible) {
             if (curSection.length) {
                 if (curIndex < curSection.length - 1) showCard(curIndex + 1);
@@ -588,12 +599,13 @@ function setupButtons() {
         }
     };
 
-    // ◀／CARD：カード戻し（カード画面）/ 最後のカードへ戻る（メニュー画面）
+    // ◀／CARD：カード戻し（カード画面）/ 最後のカードへ戻る（メニュー・完了画面）
     btnBack.onclick = () => {
         if (isMenuVisible) {
             if (curSection.length) showCard(curIndex);
         } else {
             if (navState === 'card' && curIndex > 0) showCard(curIndex - 1);
+            else if (navState === 'complete') showCard(curSection.length - 1);
         }
     };
 
@@ -642,6 +654,7 @@ function setupButtons() {
             return;
         }
         autoRead = !autoRead;
+        if (!autoRead) { autoAdvance = false; updateAutoAdvBtn(); }
         updateControlButtons();
         if (autoRead && navState === 'card') {
             playVoiceDirect();
@@ -672,14 +685,30 @@ function advanceToNextSection() {
 // ==========================================
 function showSectionComplete() {
     stopVoice();
+    autoAdvance = false;
+    updateAutoAdvBtn();
     navState = 'complete';
     isMenuVisible = false;
     showTextView();
-    cardProgress.innerText = curSection[0]?.section || curGenre;
+    const unitName = curGenre || curSection[0]?.section || '';
+    const unitTotal = curGenre ? cardData.filter(d => d.genre === curGenre).length : curSection.length;
+    cardProgress.innerText = unitName;
     cardTitle.innerText = '✅ 完了';
-    cardBody.innerText = `全${curSection.length}枚を読み終えました。\n\n▲ で上位メニューに戻れます。`;
+    cardBody.innerText = `${unitName}の全${unitTotal}枚を読み終えました。\n\n◀ で最後のカードに戻れます。\n▲ で上位メニューに戻れます。`;
     cardImage.style.display = 'none';
     imagePlaceholder.style.display = 'flex';
+}
+
+// 連続再生：次のカードへ自動送り
+function doNextCard() {
+    if (navState !== 'card') return;
+    if (curIndex < curSection.length - 1) showCard(curIndex + 1);
+    else { autoAdvance = false; updateAutoAdvBtn(); advanceToNextSection(); }
+}
+
+function updateAutoAdvBtn() {
+    btnNext.classList.toggle('btn-auto-adv', autoAdvance);
+    btnNext.title = autoAdvance ? '連続再生中（ダブルクリックで停止）' : '';
 }
 
 // ==========================================
@@ -725,6 +754,7 @@ function playVoiceDirect() {
 
     voice.oncanplay = tryPlay;
     voice.onerror = failPlay;
+    voice.onended = () => { if (autoAdvance && navState === 'card') setTimeout(doNextCard, 700); };
     voice.volume = 1.0;
     voice.src = `voices/${card.id}.mp3`;
     voice.load();
@@ -754,7 +784,7 @@ function startTTS(text) {
     uttr.lang = 'ja-JP';
     uttr.rate = 1.0;
     uttr.volume = 1.0;
-    uttr.onend = () => {};
+    uttr.onend = () => { if (autoAdvance && navState === 'card') setTimeout(doNextCard, 700); };
     window.speechSynthesis.speak(uttr);
 }
 
@@ -762,6 +792,7 @@ function stopVoice() {
     clearTimeout(_mp3LoadTimer);
     voice.oncanplay = null;
     voice.onerror = null;
+    voice.onended = null;
     voice.pause();
     voice.currentTime = 0;
     voice.src = '';
