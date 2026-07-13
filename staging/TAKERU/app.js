@@ -273,12 +273,14 @@ function showGenreMenu() {
         </div>
         <div class="menu-label">科目・ジャンルを選ぶ</div>
     `;
+    let genreHtml = '';
     genres.forEach(g => {
-        html += `<div class="menu-item" data-genre="${g}"><span class="item-dot">●</span> ${g}</div>`;
+        genreHtml += `<button class="genre-btn" data-genre="${g}">${g}</button>`;
     });
+    html += `<div class="genre-list-wrap">${genreHtml}</div>`;
     menuContent.innerHTML = html;
     menuContent.onclick = (e) => {
-        const item = e.target.closest('.menu-item');
+        const item = e.target.closest('.genre-btn');
         if (!item) return;
         const genre = item.dataset.genre;
         if (!genre) return;
@@ -576,18 +578,34 @@ function clearCard() {
 // ==========================================
 function setupButtons() {
 
-    // ▶：カード送り。音声ON中にダブルクリックで連続再生モードのON/OFF
-    let _nextLastClick = 0;
-    btnNext.onclick = () => {
-        const now = Date.now();
-        if (autoRead && now - _nextLastClick < 300) {
-            _nextLastClick = 0;
+    // ▶：カード送り。音声ON中に長押し（700ms）で連続再生モードのON/OFF
+    let _longPressTimer = null;
+    let _longPressTriggered = false;
+
+    const _startLongPress = () => {
+        if (!autoRead) return;
+        clearTimeout(_longPressTimer);
+        _longPressTriggered = false;
+        _longPressTimer = setTimeout(() => {
+            _longPressTriggered = true;
             autoAdvance = !autoAdvance;
             updateAutoAdvBtn();
             if (autoAdvance && navState === 'card') playVoiceDirect();
-            return;
-        }
-        _nextLastClick = now;
+            if (navigator.vibrate) navigator.vibrate(40);
+        }, 700);
+    };
+    const _cancelLongPress = () => clearTimeout(_longPressTimer);
+
+    btnNext.addEventListener('touchstart',  _startLongPress,  { passive: true });
+    btnNext.addEventListener('touchend',    _cancelLongPress, { passive: true });
+    btnNext.addEventListener('touchcancel', _cancelLongPress, { passive: true });
+    btnNext.addEventListener('touchmove',   _cancelLongPress, { passive: true });
+    btnNext.addEventListener('mousedown', (e) => { if (e.button === 0) _startLongPress(); });
+    btnNext.addEventListener('mouseup',   _cancelLongPress);
+    btnNext.addEventListener('mouseleave', _cancelLongPress);
+
+    btnNext.onclick = () => {
+        if (_longPressTriggered) { _longPressTriggered = false; return; }
         if (isMenuVisible) {
             if (curSection.length) {
                 if (curIndex < curSection.length - 1) showCard(curIndex + 1);
