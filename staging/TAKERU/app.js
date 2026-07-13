@@ -173,6 +173,18 @@ function exitLinkFullscreen() {
     dividerLine.style.display = '';
 }
 
+// メニュー画面（第一・第二階層）では画像エリアを非表示
+function enterMenuFull() {
+    imageArea.style.display = 'none';
+    dividerLine.style.display = 'none';
+}
+function exitMenuFull() {
+    if (!linkFullscreen) {
+        imageArea.style.display = '';
+        dividerLine.style.display = '';
+    }
+}
+
 // ==========================================
 // トップメニュー
 // ==========================================
@@ -182,6 +194,7 @@ function showTopMenu() {
     stopVoice();
     clearCard();
     exitLinkFullscreen();
+    exitMenuFull();
     showMenuView();
     btnSettings.style.display = 'block';
 
@@ -221,6 +234,7 @@ function showGradeMenu() {
     navState = 'subject';
     isMenuVisible = true;
     btnSettings.style.display = 'none';
+    exitMenuFull();
     showMenuView();
 
     menuContent.innerHTML = `
@@ -263,6 +277,7 @@ function showGradeMenu() {
 function showGenreMenu() {
     navState = 'genre';
     isMenuVisible = true;
+    enterMenuFull();
     showMenuView();
     const genres = [...new Set(cardData.filter(d => d.subject === curSubject).map(d => d.genre))];
     const subjectBanner = curSubject.replace('3級-', '３級　').replace('2級-', '２級　').replace('1級-', '１級　');
@@ -294,6 +309,7 @@ function showSectionMenu(genre) {
     navState = 'section';
     isMenuVisible = true;
     curGenre = genre;
+    enterMenuFull();
     showMenuView();
     const sections = [...new Set(cardData.filter(d => d.genre === genre).map(d => d.section))];
     let html = `<div class="menu-label">${genre}</div>`;
@@ -315,6 +331,7 @@ function showCardList(section) {
     isMenuVisible = true;
     curSection = cardData.filter(d => d.section === section);
     curIndex = 0;
+    enterMenuFull();
     showMenuView();
     let html = `<div class="menu-label">${section}</div>`;
     curSection.forEach((card, i) => {
@@ -333,6 +350,7 @@ function showSectionedCardList(genre) {
     navState = 'sectionedlist';
     isMenuVisible = true;
     curGenre = genre;
+    enterMenuFull();
     showMenuView();
 
     const genreCards = cardData.filter(d => d.genre === genre);
@@ -367,6 +385,7 @@ function showFlatCardList(genre) {
     curGenre = genre;
     curSection = cardData.filter(d => d.genre === genre);
     if (!isReturn) curIndex = 0;
+    enterMenuFull();
     showMenuView();
 
     let html = `<div class="menu-label">${genre}</div>`;
@@ -392,8 +411,9 @@ function showCard(idx) {
 
     navState = 'card';
     isMenuVisible = false;
-    mp3Failed = false; // カード切替でフラグリセット
+    mp3Failed = false;
     hideVoiceWarning();
+    exitMenuFull();
     showTextView();
 
     const cardType = /\dF\d+$/.test(card.id) ? 'fact' : /\dC\d+$/.test(card.id) ? 'com' : null;
