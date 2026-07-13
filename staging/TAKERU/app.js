@@ -371,7 +371,7 @@ function showFlatCardList(genre) {
 
     let html = `<div class="menu-label">${genre}</div>`;
     curSection.forEach((card, i) => {
-        const type = /F\d+$/.test(card.id) ? 'fact' : /C\d+$/.test(card.id) ? 'com' : null;
+        const type = /\dF\d+$/.test(card.id) ? 'fact' : /\dC\d+$/.test(card.id) ? 'com' : null;
         const badge = type ? `<span class="card-badge badge-${type}">${type === 'fact' ? '史実' : '解説'}</span> ` : '';
         const title = card.title.replace(/^→/, '').trim();
         html += `<div class="menu-item" data-idx="${i}"><span class="item-dot">●</span> ${badge}${title}</div>`;
@@ -396,7 +396,7 @@ function showCard(idx) {
     hideVoiceWarning();
     showTextView();
 
-    const cardType = /F\d+$/.test(card.id) ? 'fact' : /C\d+$/.test(card.id) ? 'com' : null;
+    const cardType = /\dF\d+$/.test(card.id) ? 'fact' : /\dC\d+$/.test(card.id) ? 'com' : null;
     const typeBadge = cardType ? ` <span class="card-badge badge-${cardType}">${cardType === 'fact' ? '史実' : '解説'}</span>` : '';
     if (card.section) {
         cardProgress.innerHTML =
