@@ -162,8 +162,7 @@ function openLink(item) {
 // ==========================================
 function enterLinkFullscreen() {
     linkFullscreen = true;
-    imageArea.style.display = 'none';
-    dividerLine.style.display = 'none';
+    showMenuBanner();
     btnSettings.style.display = 'none';
 }
 
@@ -185,9 +184,8 @@ function exitMenuFull() {
         imageArea.classList.remove('menu-banner');
     }
 }
-// グレード・ジャンル選択ではコンパクトバナーを表示
+// メニュー・一覧画面でコンパクトバナーを表示
 function showMenuBanner() {
-    if (linkFullscreen) return;
     imageArea.classList.add('menu-banner');
     imageArea.style.display = '';
     dividerLine.style.display = '';
@@ -324,7 +322,7 @@ function showSectionMenu(genre) {
     navState = 'section';
     isMenuVisible = true;
     curGenre = genre;
-    enterMenuFull();
+    showMenuBanner();
     showMenuView();
     const sections = [...new Set(cardData.filter(d => d.genre === genre).map(d => d.section))];
     let html = `<div class="menu-label">${genre}</div>`;
@@ -346,7 +344,7 @@ function showCardList(section) {
     isMenuVisible = true;
     curSection = cardData.filter(d => d.section === section);
     curIndex = 0;
-    enterMenuFull();
+    showMenuBanner();
     showMenuView();
     let html = `<div class="menu-label">${section}</div>`;
     curSection.forEach((card, i) => {
@@ -365,7 +363,7 @@ function showSectionedCardList(genre) {
     navState = 'sectionedlist';
     isMenuVisible = true;
     curGenre = genre;
-    enterMenuFull();
+    showMenuBanner();
     showMenuView();
 
     const genreCards = cardData.filter(d => d.genre === genre);
@@ -400,7 +398,7 @@ function showFlatCardList(genre) {
     curGenre = genre;
     curSection = cardData.filter(d => d.genre === genre);
     if (!isReturn) curIndex = 0;
-    enterMenuFull();
+    showMenuBanner();
     showMenuView();
 
     let html = `<div class="menu-label">${genre}</div>`;
@@ -560,11 +558,10 @@ function showPlaceholder(name) {
     navState = 'placeholder';
     isMenuVisible = false;
     showTextView();
+    showMenuBanner();
     cardProgress.innerText = '';
     cardTitle.innerText = name;
     cardBody.innerText = 'このメニューは準備中です。\n\nお楽しみに！';
-    cardImage.style.display = 'none';
-    imagePlaceholder.style.display = 'flex';
 }
 
 // ==========================================
