@@ -126,6 +126,16 @@ body {
     overflow: hidden;
     max-height: 42dvh;
 }
+/* メニュー階層のコンパクトバナーモード */
+#image-area.menu-banner {
+    aspect-ratio: unset;
+    height: 14dvh;
+    max-height: 14dvh;
+}
+#image-area.menu-banner #card-image {
+    object-fit: cover;
+    object-position: center top;
+}
 
 #card-image {
     width: 100%;

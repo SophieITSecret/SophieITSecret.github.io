@@ -173,7 +173,7 @@ function exitLinkFullscreen() {
     dividerLine.style.display = '';
 }
 
-// メニュー画面（第一・第二階層）では画像エリアを非表示
+// メニュー画面（カード一覧以降）では画像エリアを非表示
 function enterMenuFull() {
     imageArea.style.display = 'none';
     dividerLine.style.display = 'none';
@@ -182,7 +182,22 @@ function exitMenuFull() {
     if (!linkFullscreen) {
         imageArea.style.display = '';
         dividerLine.style.display = '';
+        imageArea.classList.remove('menu-banner');
     }
+}
+// グレード・ジャンル選択ではコンパクトバナーを表示
+function showMenuBanner() {
+    if (linkFullscreen) return;
+    imageArea.classList.add('menu-banner');
+    imageArea.style.display = '';
+    dividerLine.style.display = '';
+    cardImage.src = 'images/takeru-menu.jpg';
+    cardImage.style.display = 'block';
+    imagePlaceholder.style.display = 'none';
+    cardImage.onerror = () => {
+        cardImage.style.display = 'none';
+        imagePlaceholder.style.display = 'flex';
+    };
 }
 
 // ==========================================
@@ -234,7 +249,7 @@ function showGradeMenu() {
     navState = 'subject';
     isMenuVisible = true;
     btnSettings.style.display = 'none';
-    exitMenuFull();
+    showMenuBanner();
     showMenuView();
 
     menuContent.innerHTML = `
@@ -277,7 +292,7 @@ function showGradeMenu() {
 function showGenreMenu() {
     navState = 'genre';
     isMenuVisible = true;
-    enterMenuFull();
+    showMenuBanner();
     showMenuView();
     const genres = [...new Set(cardData.filter(d => d.subject === curSubject).map(d => d.genre))];
     const subjectBanner = curSubject.replace('3級-', '３級　').replace('2級-', '２級　').replace('1級-', '１級　');
