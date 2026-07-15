@@ -185,8 +185,7 @@ function showCard(gIdx) {
   document.getElementById('voiceArea').style.display='flex';
   document.getElementById('editCode').value=card.id;
   document.getElementById('editTitle').value=card.title;
-  const isWip = !card.body || card.body.includes('準備中') || card.body.trim() === '';
-  document.getElementById('editBody').value = isWip ? '' : card.body;
+  document.getElementById('editBody').value=card.body;
   countChars();
   setTimeout(()=>{const a=document.querySelector('.card-item.active');if(a)a.scrollIntoView({block:'nearest'});},50);
   checkVoiceStatus(card.id);
@@ -197,7 +196,7 @@ function renderCard(gIdx) {
   const card=cardData[gIdx];
   const imgUrl=imageMap[card.id]||'';
   const imgHtml=imgUrl?`<img src="${imgUrl}" alt="">`:'<div class="card-img-ph">🗂</div>';
-  const hasBody=card.body&&!card.body.includes('準備中')&&card.body.trim()!=='';
+  const hasBody=card.body&&card.body.trim()!=='';
   const bodyHtml=hasBody?esc(card.body):'（本文未作成）';
   const fi=filteredList.indexOf(card);
   // ◀▶ボタンも矢印キーと同じく全カード通し送り
@@ -238,7 +237,7 @@ function updatePreview() {
   if(t) t.textContent=document.getElementById('editTitle').value;
   if(b){
     const v=document.getElementById('editBody').value;
-    const hasBody=v&&!v.includes('準備中')&&v.trim()!=='';
+    const hasBody=v&&v.trim()!=='';
     b.textContent=hasBody?v:'（本文未作成）';
     b.className='card-body-disp'+(hasBody?'':' wip');
   }
