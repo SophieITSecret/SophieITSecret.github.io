@@ -299,7 +299,7 @@ function showGenreMenu() {
             <div class="top-btn btn-jukou banner-btn banner-small">📚 受　講</div>
             <div class="grade-btn btn-grade3 banner-btn banner-small">${subjectBanner}</div>
         </div>
-        <div class="menu-label">科目・ジャンルを選ぶ</div>
+        <div class="menu-label">テーマ一覧</div>
     `;
     let genreHtml = '';
     genres.forEach(g => {

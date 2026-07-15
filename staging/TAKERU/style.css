@@ -321,7 +321,7 @@ body {
 .sub-panel-wrap {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 10px;
     padding: 0 4px;
 }
 
@@ -332,14 +332,16 @@ body {
     gap: 8px;
 }
 
-/* 2枚看板内のボタン：高さを低めに、flex均等 */
+/* 2枚看板内のボタン：高さ・flex比率 */
 .banner-small {
-    flex: 1;
-    height: 40px !important;
+    height: 48px !important;
     font-size: 0.85rem !important;
     min-height: unset !important;
     padding: 0 8px !important;
 }
+/* 受講(1):科目名(3) の幅比率 */
+.double-banner-wrap > :first-child { flex: 1 !important; }
+.double-banner-wrap > :last-child  { flex: 3 !important; }
 
 /* ==================== 級選択パネル ==================== */
 .grade-btn {
@@ -384,12 +386,12 @@ body {
 .subject-row {
     display: flex;
     gap: 5px;
-    margin-top: 3px;
+    margin-top: 6px;
 }
 
 .subject-btn {
     flex: 1;
-    height: 44px;
+    height: 80px;
     border-radius: 6px;
     font-family: 'Noto Sans JP', sans-serif;
     font-size: 0.78rem;
@@ -421,7 +423,7 @@ body {
 }
 .genre-btn {
     width: 100%;
-    min-height: 54px;
+    min-height: 40px;
     border-radius: 8px;
     background: linear-gradient(135deg, #162338, #1c3260);
     border: 1px solid rgba(90,160,230,0.55);
