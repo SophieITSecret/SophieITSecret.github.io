@@ -299,7 +299,7 @@ function showGenreMenu() {
             <div class="top-btn btn-jukou banner-btn banner-small">📚 受　講</div>
             <div class="grade-btn btn-grade3 banner-btn banner-small">${subjectBanner}</div>
         </div>
-        <div class="menu-label">テーマ一覧</div>
+        <div class="genre-panel-label label-section">テーマ一覧</div>
     `;
     let genreHtml = '';
     genres.forEach(g => {
@@ -369,7 +369,7 @@ function showSectionedCardList(genre) {
     const genreCards = cardData.filter(d => d.genre === genre);
     const sections = [...new Set(genreCards.map(d => d.section))];
 
-    let html = `<div class="menu-label">${genre}</div>`;
+    let html = `<div class="genre-panel-label label-genre-header">${genre}</div>`;
     sections.forEach(s => {
         const sCards = genreCards.filter(d => d.section === s);
         html += `<div class="section-header">${s}</div>`;
@@ -401,7 +401,7 @@ function showFlatCardList(genre) {
     showMenuBanner();
     showMenuView();
 
-    let html = `<div class="menu-label">${genre}</div>`;
+    let html = `<div class="genre-panel-label label-genre-header">${genre}</div>`;
     curSection.forEach((card, i) => {
         const type = /\dF\d+$/.test(card.id) ? 'fact' : /\dC\d+$/.test(card.id) ? 'com' : null;
         const badge = type ? `<span class="card-badge badge-${type}">${type === 'fact' ? '史実' : '解説'}</span> ` : '';

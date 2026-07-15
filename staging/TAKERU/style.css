@@ -323,6 +323,7 @@ body {
     flex-direction: column;
     gap: 10px;
     padding: 0 4px;
+    margin-top: 12px;
 }
 
 /* ==================== 2枚看板（2層目用） ==================== */
@@ -370,18 +371,17 @@ body {
 /* ==================== 受講メニュー・グリッドレイアウト ==================== */
 .grade-label {
     font-family: 'Noto Sans JP', sans-serif;
-    font-size: 0.78rem;
+    font-size: 0.85rem;
     font-weight: bold;
     letter-spacing: 0.08em;
     padding: 7px 8px;
     border-radius: 4px;
     margin-top: 5px;
-    opacity: 0.72;
     text-align: center;
 }
-.grade-label-1 { color: #ef9a9a; border: 1px solid #7f0000; background: rgba(127,0,0,0.15); }
-.grade-label-2 { color: #9fa8da; border: 1px solid #1a237e; background: rgba(26,35,126,0.15); }
-.grade-label-3 { color: #a5d6a7; border: 1px solid #1b5e20; background: rgba(27,94,32,0.15); }
+.grade-label-1 { color: #ff9a9a; border: 1px solid #c62828; background: rgba(198,40,40,0.25); }
+.grade-label-2 { color: #b0bdf8; border: 1px solid #3949ab; background: rgba(57,73,171,0.25); }
+.grade-label-3 { color: #b5f0b8; border: 1px solid #2e7d32; background: rgba(46,125,50,0.25); }
 
 .subject-row {
     display: flex;
@@ -414,12 +414,45 @@ body {
     cursor: default;
 }
 
+/* ==================== ジャンルパネル見出し（テーマ一覧・カード一覧ヘッダー） ==================== */
+.genre-panel-label {
+    background: linear-gradient(135deg, #162338, #1c3260);
+    border: 1px solid rgba(90,160,230,0.55);
+    color: #bdd4f5;
+    font-size: 1rem;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    box-sizing: border-box;
+    pointer-events: none;
+}
+/* テーマ一覧ラベル：ジャンルボタンと同列の高さ・角丸 */
+.genre-panel-label.label-section {
+    min-height: 34px;
+    border-radius: 8px;
+    margin: 4px 8% 0;
+    font-size: 0.9rem;
+}
+/* カード一覧上部の現在ジャンル表示 */
+.genre-panel-label.label-genre-header {
+    min-height: 40px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+.light-mode .genre-panel-label {
+    background: linear-gradient(135deg, #deeaf8, #c8dbf2);
+    border-color: rgba(50,110,200,0.45);
+    color: #1a3a72;
+}
+
 /* ==================== ジャンル選択ボタン（第一階層） ==================== */
 .genre-list-wrap {
     padding: 10px 8%;
     display: flex;
     flex-direction: column;
-    gap: 9px;
+    gap: 6px;
 }
 .genre-btn {
     width: 100%;
