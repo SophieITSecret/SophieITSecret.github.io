@@ -437,19 +437,12 @@ body {
     border-color: #4caf50;
     color: #fff;
 }
-/* カード一覧上部の現在ジャンル表示（genre-btn と同デザイン） */
+/* カード一覧上部の現在ジャンル表示：前画面で押した genre-btn がそのまま見出しに */
 .genre-panel-label.label-genre-header {
     min-height: 40px;
-    position: sticky;
-    top: 0;
-    z-index: 10;
-}
-.genre-panel-label.label-genre-header::after {
-    content: '▶';
-    font-size: 0.65rem;
-    opacity: 0.6;
-    margin-left: auto;
-    flex-shrink: 0;
+    border-radius: 8px;
+    margin: 8px 8% 4px;
+    width: auto;
 }
 /* カード一覧ヘッダー上のミニ2枚看板 */
 .banner-xs-wrap { padding: 6px 12px 0; }
@@ -556,7 +549,7 @@ body {
     color: var(--label-color);
     border-bottom: 1px solid var(--border);
     position: sticky;
-    top: 40px;
+    top: 0;
     z-index: 9;
 }
 
