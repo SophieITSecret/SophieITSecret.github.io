@@ -144,7 +144,7 @@ function renderList() {
     const isC=isCommentary(card.id);
     const showBadge = card.subject && !card.subject.includes('軍事と戦略');
     const badge=showBadge?(isC?'<span class="badge badge-c">解説</span>':''):'';
-    const hasBody=card.body&&!card.body.includes('準備中')&&card.body.trim()!=='';
+    const hasBody=hasRealBody(card.body);
     const hasImg=!!imageMap[card.id];
     const hasMp3=mp3Ids.has(card.id);
     const dots=`<span class="status-dots"><span class="sdot ${hasBody?'sdot-body':'sdot-off'}" title="本文">文</span><span class="sdot ${hasImg?'sdot-img':'sdot-off'}" title="画像">画</span><span class="sdot ${hasMp3?'sdot-mp3':'sdot-off'}" title="MP3">音</span></span>`;
@@ -157,6 +157,15 @@ function renderList() {
 function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 
 function isCommentary(id){return /C\d+$/.test(id)||id.endsWith('C');}
+
+// 本文が「未作成」か。プレースホルダ丸ごと1文だけの場合に限り未作成とみなす。
+// includes判定にすると、プレースホルダを消さずに書き足した本文を
+// まるごと未作成扱いしてしまうため完全一致で見る。
+const WIP_PLACEHOLDER='（準備中）このカードは現在作成中です。';
+function hasRealBody(s){
+  const t=String(s==null?'':s).trim();
+  return t!=='' && t!==WIP_PLACEHOLDER;
+}
 
 function showCard(gIdx) {
   if(editDirty && !confirm('本文が未適用です。移動すると変更が失われます。\n移動しますか？')) return;
@@ -196,7 +205,7 @@ function renderCard(gIdx) {
   const card=cardData[gIdx];
   const imgUrl=imageMap[card.id]||'';
   const imgHtml=imgUrl?`<img src="${imgUrl}" alt="">`:'<div class="card-img-ph">🗂</div>';
-  const hasBody=card.body&&card.body.trim()!=='';
+  const hasBody=hasRealBody(card.body);
   const bodyHtml=hasBody?esc(card.body):'（本文未作成）';
   const fi=filteredList.indexOf(card);
   // ◀▶ボタンも矢印キーと同じく全カード通し送り
@@ -237,7 +246,7 @@ function updatePreview() {
   if(t) t.textContent=document.getElementById('editTitle').value;
   if(b){
     const v=document.getElementById('editBody').value;
-    const hasBody=v&&v.trim()!=='';
+    const hasBody=hasRealBody(v);
     b.textContent=hasBody?v:'（本文未作成）';
     b.className='card-body-disp'+(hasBody?'':' wip');
   }
@@ -1027,14 +1036,14 @@ function renderProgressBody() {
     const cards = cardData.filter(c => c.subject === progressTab && c.genre === unit);
     const total = cards.length;
     const nTtl  = cards.filter(c => c.title && c.title.trim()).length;
-    const nBody = cards.filter(c => c.body && !c.body.includes('準備中') && c.body.trim()).length;
+    const nBody = cards.filter(c => hasRealBody(c.body)).length;
     const nImg  = cards.filter(c => !!imageMap[c.id]).length;
     const nMp3  = cards.filter(c => mp3Ids.has(c.id)).length;
 
     const tiles = cards.map(c => {
       const gIdx = cardData.indexOf(c);
       const hT = !!(c.title && c.title.trim());
-      const hB = !!(c.body && !c.body.includes('準備中') && c.body.trim());
+      const hB = hasRealBody(c.body);
       const hI = !!imageMap[c.id];
       const hM = mp3Ids.has(c.id);
       const complete = hT && hB && hI && hM;
@@ -1081,7 +1090,7 @@ function openUnitDetail(unit) {
       ? `<img class="unit-card-thumb" src="${imgSrc}" alt="" onclick="pickProgressCard(${gIdx})">`
       : `<div class="unit-card-thumb-ph" onclick="pickProgressCard(${gIdx})">🗂</div>`;
     const hasMp3 = mp3Ids.has(c.id);
-    const hasBody = !!(c.body && !c.body.includes('準備中') && c.body.trim());
+    const hasBody = hasRealBody(c.body);
     const audioBtn = hasMp3
       ? `<button class="btn-ud" id="aud-${c.id}" onclick="playUdAudio('${c.id}')">▶ 音声</button>`
       : '';
