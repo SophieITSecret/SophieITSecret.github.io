@@ -185,7 +185,8 @@ function showCard(gIdx) {
   document.getElementById('voiceArea').style.display='flex';
   document.getElementById('editCode').value=card.id;
   document.getElementById('editTitle').value=card.title;
-  document.getElementById('editBody').value=card.body;
+  const isWip = !card.body || card.body.includes('準備中') || card.body.trim() === '';
+  document.getElementById('editBody').value = isWip ? '' : card.body;
   countChars();
   setTimeout(()=>{const a=document.querySelector('.card-item.active');if(a)a.scrollIntoView({block:'nearest'});},50);
   checkVoiceStatus(card.id);
@@ -442,6 +443,7 @@ function doImport(){
 // ===== 保存：サーバーに直接上書き（バックアップ自動作成） =====
 async function saveCSV(){
   if(!cardData.length) return;
+  if(editDirty && selectedIdx >= 0) applyEdit();
   const hdr=cardData[0]._header||['コード','ユニット','サブユニット','タイトル','説明',''];
   const rows=[hdr,...cardData.map(d=>[d.id,d.genre,d.section,d.title,d.body,d.subject])];
   const csv=rows.map(r=>r.map(c=>{const s=String(c||'');return(s.includes(',')||s.includes('"')||s.includes('\n')||s.includes('\r'))?`"${s.replace(/"/g,'""')}"`:s;}).join(',')).join('\r\n');

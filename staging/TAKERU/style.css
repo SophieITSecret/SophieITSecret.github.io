@@ -427,19 +427,38 @@ body {
     box-sizing: border-box;
     pointer-events: none;
 }
-/* テーマ一覧ラベル：ジャンルボタンと同列の高さ・角丸 */
+/* テーマ一覧ラベル：緑（受講と同色系） */
 .genre-panel-label.label-section {
     min-height: 34px;
     border-radius: 8px;
     margin: 4px 8% 0;
     font-size: 0.9rem;
+    background: linear-gradient(135deg, #1a3a1a, #2e7d32);
+    border-color: #4caf50;
+    color: #fff;
 }
-/* カード一覧上部の現在ジャンル表示 */
+/* カード一覧上部の現在ジャンル表示（genre-btn と同デザイン） */
 .genre-panel-label.label-genre-header {
     min-height: 40px;
     position: sticky;
     top: 0;
     z-index: 10;
+}
+.genre-panel-label.label-genre-header::after {
+    content: '▶';
+    font-size: 0.65rem;
+    opacity: 0.6;
+    margin-left: auto;
+    flex-shrink: 0;
+}
+/* カード一覧ヘッダー上のミニ2枚看板 */
+.banner-xs-wrap { padding: 6px 12px 0; }
+.banner-xs {
+    flex: 1;
+    height: 32px !important;
+    font-size: 0.78rem !important;
+    min-height: unset !important;
+    padding: 0 8px !important;
 }
 .light-mode .genre-panel-label {
     background: linear-gradient(135deg, #deeaf8, #c8dbf2);
@@ -537,7 +556,7 @@ body {
     color: var(--label-color);
     border-bottom: 1px solid var(--border);
     position: sticky;
-    top: 28px;
+    top: 40px;
     z-index: 9;
 }
 
@@ -653,9 +672,21 @@ body {
 
 /* ▲ 上層メニューへ */
 .btn-up {
-    font-size: 1.2rem;
+    font-size: 1.1rem;
     font-weight: bold;
     color: var(--text2);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1px;
+}
+.btn-up .btn-sub-label {
+    font-size: 0.48rem;
+    font-family: 'Oswald', sans-serif;
+    letter-spacing: 0.06em;
+    opacity: 0.75;
+    font-weight: normal;
 }
 
 /* ◀ ▶ 矢印ボタン共通 */

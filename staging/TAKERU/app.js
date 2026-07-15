@@ -368,8 +368,15 @@ function showSectionedCardList(genre) {
 
     const genreCards = cardData.filter(d => d.genre === genre);
     const sections = [...new Set(genreCards.map(d => d.section))];
+    const subjectBannerS = curSubject.replace('3級-', '３級　').replace('2級-', '２級　').replace('1級-', '１級　');
 
-    let html = `<div class="genre-panel-label label-genre-header">${genre}</div>`;
+    let html = `
+        <div class="double-banner-wrap banner-xs-wrap">
+            <div class="top-btn btn-jukou banner-btn banner-xs">📚 受　講</div>
+            <div class="grade-btn btn-grade3 banner-btn banner-xs">${subjectBannerS}</div>
+        </div>
+        <div class="genre-panel-label label-genre-header">${genre}</div>
+    `;
     sections.forEach(s => {
         const sCards = genreCards.filter(d => d.section === s);
         html += `<div class="section-header">${s}</div>`;
@@ -401,7 +408,14 @@ function showFlatCardList(genre) {
     showMenuBanner();
     showMenuView();
 
-    let html = `<div class="genre-panel-label label-genre-header">${genre}</div>`;
+    const subjectBannerF = curSubject.replace('3級-', '３級　').replace('2級-', '２級　').replace('1級-', '１級　');
+    let html = `
+        <div class="double-banner-wrap banner-xs-wrap">
+            <div class="top-btn btn-jukou banner-btn banner-xs">📚 受　講</div>
+            <div class="grade-btn btn-grade3 banner-btn banner-xs">${subjectBannerF}</div>
+        </div>
+        <div class="genre-panel-label label-genre-header">${genre}</div>
+    `;
     curSection.forEach((card, i) => {
         const type = /\dF\d+$/.test(card.id) ? 'fact' : /\dC\d+$/.test(card.id) ? 'com' : null;
         const badge = type ? `<span class="card-badge badge-${type}">${type === 'fact' ? '史実' : '解説'}</span> ` : '';
@@ -653,9 +667,21 @@ function setupButtons() {
     btnBack.onclick = () => {
         if (isMenuVisible) {
             if (curSection.length) showCard(curIndex);
-        } else {
-            if (navState === 'card' && curIndex > 0) showCard(curIndex - 1);
-            else if (navState === 'complete') showCard(curSection.length - 1);
+        } else if (navState === 'card') {
+            if (curIndex > 0) {
+                showCard(curIndex - 1);
+            } else if (curGenre) {
+                // 先頭カードで◀→前サブユニットの最終カードへ
+                const allGenre = cardData.filter(d => d.genre === curGenre);
+                const posInGenre = allGenre.indexOf(curSection[0]);
+                if (posInGenre > 0) {
+                    const prevCard = allGenre[posInGenre - 1];
+                    curSection = cardData.filter(d => d.genre === curGenre && d.section === prevCard.section);
+                    showCard(curSection.length - 1);
+                }
+            }
+        } else if (navState === 'complete') {
+            showCard(curSection.length - 1);
         }
     };
 
