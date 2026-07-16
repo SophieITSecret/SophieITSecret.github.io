@@ -15,7 +15,7 @@ body.dark-mode {
     --border: #2a3048;
     --label-bg: #1a2a1a;
     --label-color: #4caf50;
-    --divider: #4caf50;
+    --divider: #4a90d9;   /* 画像下の区切り線：試しに青 */
     --settings-bg: rgba(10,12,16,0.97);
     --placeholder-color: #2a3048;
     --link-field-bg: #0f1520;
@@ -31,7 +31,7 @@ body.light-mode {
     --border: #b8c8b8;
     --label-bg: #2e7d32;
     --label-color: #ffffff;
-    --divider: #2e7d32;
+    --divider: #1565c0;   /* 画像下の区切り線：試しに青（ライトモード）*/
     --settings-bg: rgba(245,245,240,0.97);
     --placeholder-color: #c8d8c8;
     --link-field-bg: #eaeeea;
@@ -158,7 +158,7 @@ body {
     height: 3px;
     background: var(--divider);
     flex-shrink: 0;
-    box-shadow: 0 0 8px rgba(76,175,80,0.4);
+    box-shadow: 0 0 8px rgba(74,144,217,0.4);   /* グローも青に */
 }
 
 #content-area {
