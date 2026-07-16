@@ -123,6 +123,12 @@ textarea.svg-overlay-input { min-height:120px; font-family:monospace; font-size:
 .play-time { font-size:0.7rem; color:var(--text3); font-family:monospace; min-width:2.8em; }
 /* ユニットナビ */
 .btn-unit-nav { background:transparent; border:1px solid var(--border); color:var(--text2); width:24px; height:28px; border-radius:3px; cursor:pointer; font-size:0.75rem; flex-shrink:0; display:flex; align-items:center; justify-content:center; padding:0; }
+.btn-rename { background:transparent; border:1px solid var(--border); color:var(--text2); width:26px; height:28px; border-radius:3px; cursor:pointer; font-size:0.7rem; flex-shrink:0; padding:0; }
+.btn-rename:hover:not(:disabled) { border-color:var(--accent); background:rgba(76,175,80,.12); }
+.btn-rename:disabled { opacity:.3; cursor:default; }
+.rn-lbl { font-size:0.78rem; color:var(--text2); min-width:76px; flex-shrink:0; }
+#renameNew { width:100%; }
+
 .btn-batch-rec { background:transparent; border:1px solid rgba(232,160,64,.6); color:rgba(232,160,64,.9); padding:3px 7px; border-radius:3px; cursor:pointer; font-size:0.72rem; font-family:inherit; flex-shrink:0; }
 .btn-batch-rec:hover { background:rgba(232,160,64,.15); }
 .btn-batch-rec:disabled { opacity:.35; cursor:default; }

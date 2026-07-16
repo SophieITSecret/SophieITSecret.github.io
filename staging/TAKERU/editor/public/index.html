@@ -68,6 +68,54 @@
   </div>
 </div>
 
+<!-- ユニット名・サブユニット名の変更 -->
+<div id="renameModal" class="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h2>✏️ 名前の変更</h2>
+      <button class="btn-cancel" onclick="closeRename()">✕ 閉じる</button>
+    </div>
+    <div class="modal-desc">
+      ユニット名・サブユニット名を、該当するカードすべてまとめて変更します。<br>
+      変更してもファイルは保存されません（一覧で確認 → 問題なければ「CSVを保存」）。
+    </div>
+
+    <div class="exp-block">
+      <div class="exp-label">変更するもの</div>
+      <label class="exp-radio"><input type="radio" name="rnKind" value="unit" checked onchange="onRenameKindChange()">
+        <span>ユニット名</span>
+      </label>
+      <label class="exp-radio"><input type="radio" name="rnKind" value="section" onchange="onRenameKindChange()">
+        <span>サブユニット名</span>
+      </label>
+    </div>
+
+    <div class="exp-block">
+      <div class="exp-label">対象</div>
+      <label class="exp-radio">
+        <span class="rn-lbl">ユニット</span>
+        <select id="renameUnit" class="exp-select" onchange="onRenameUnitChange()"></select>
+      </label>
+      <label class="exp-radio" id="renameSecRow">
+        <span class="rn-lbl">サブユニット</span>
+        <select id="renameSection" class="exp-select" onchange="updateRenameInfo()"></select>
+      </label>
+    </div>
+
+    <div class="exp-block">
+      <div class="exp-label">新しい名前</div>
+      <input id="renameNew" class="edit-input" oninput="updateRenameInfo()" placeholder="新しい名前を入力">
+    </div>
+
+    <div id="renameInfo" class="exp-info"></div>
+
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeRename()">キャンセル</button>
+      <button class="btn-apply" id="btnDoRename" onclick="doRename()">✏️ 変更する</button>
+    </div>
+  </div>
+</div>
+
 <!-- レビュー用 書き出し -->
 <div id="exportModal" class="modal-overlay">
   <div class="modal-box export-modal-box">
@@ -202,6 +250,7 @@
         <option value="">── ユニットを選択 ──</option>
       </select>
       <button class="btn-unit-nav" id="btnNextUnit" onclick="nextUnit()" disabled title="次のユニット">▶</button>
+      <button class="btn-rename" id="btnRename" onclick="openRename()" disabled title="ユニット名・サブユニット名を変更">✏️</button>
       <button class="btn-batch-rec" id="btnBatchRecord" onclick="recordUnitBatch()" disabled title="ユニット内の未生成カードを一括録音">🎙 一括</button>
       <span class="card-count" id="cardCount">0枚</span>
     </div>

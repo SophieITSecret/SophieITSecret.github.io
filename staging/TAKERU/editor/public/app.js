@@ -30,6 +30,7 @@ async function init() {
     document.getElementById('btnSave').disabled=false;
     document.getElementById('btnImport').disabled=false;
     document.getElementById('btnExport').disabled=false;
+    document.getElementById('btnRename').disabled=false;
     document.getElementById('btnProgress').disabled=false;
     document.getElementById('btnBatchRecord').disabled=false;
     dirty=false;
@@ -455,6 +456,132 @@ function doImport(){
   filterCards();
   if(selectedIdx>=0) showCard(selectedIdx);
   alert(`${n}枚の本文を取り込みました。\nプレビューで確認し、問題なければ「CSVを保存」してください。`);
+}
+
+// ==========================================
+// ユニット名・サブユニット名の変更
+//
+// サブユニット名はユニットをまたいで重複しうる（例：「概論」が
+// 「日本周辺の軍事情勢」と「世界の軍事情勢」の両方に存在する）。
+// 名前だけで置換すると別ユニットまで巻き込むため、サブユニットの
+// 変更は必ず「ユニット×サブユニット」の両方で絞り込む。
+// ==========================================
+function openRename(){
+  if(!cardData.length) return;
+  const units=[];
+  for(const c of cardData){ if(c.genre && !units.includes(c.genre)) units.push(c.genre); }
+  const uSel=document.getElementById('renameUnit');
+  uSel.innerHTML=units.map(u=>`<option value="${esc(u)}">${esc(u)}</option>`).join('');
+  if(curUnit && units.includes(curUnit)) uSel.value=curUnit;
+  document.querySelector('input[name="rnKind"][value="unit"]').checked=true;
+  onRenameKindChange();
+  document.getElementById('renameModal').style.display='flex';
+}
+function closeRename(){ document.getElementById('renameModal').style.display='none'; }
+
+function _rnKind(){ return document.querySelector('input[name="rnKind"]:checked').value; }
+
+function onRenameKindChange(){
+  const isSec=_rnKind()==='section';
+  document.getElementById('renameSecRow').style.display=isSec?'':'none';
+  onRenameUnitChange();
+}
+
+// 選択中ユニットに属するサブユニットだけを候補に出す
+function onRenameUnitChange(){
+  const unit=document.getElementById('renameUnit').value;
+  const secs=[];
+  for(const c of cardData){
+    if(c.genre===unit && c.section && !secs.includes(c.section)) secs.push(c.section);
+  }
+  const sSel=document.getElementById('renameSection');
+  sSel.innerHTML=secs.length
+    ? secs.map(s=>`<option value="${esc(s)}">${esc(s)}</option>`).join('')
+    : '<option value="">（このユニットにサブユニットはありません）</option>';
+  sSel.disabled=!secs.length;
+  _rnFillCurrentName();
+  updateRenameInfo();
+}
+
+// 新しい名前の初期値に現在の名前を入れておく（部分的な手直しがしやすい）
+function _rnFillCurrentName(){
+  const box=document.getElementById('renameNew');
+  box.value=_rnKind()==='unit'
+    ? document.getElementById('renameUnit').value
+    : document.getElementById('renameSection').value;
+}
+
+function _rnTargets(){
+  const unit=document.getElementById('renameUnit').value;
+  if(_rnKind()==='unit') return { old:unit, cards:cardData.filter(c=>c.genre===unit) };
+  const sec=document.getElementById('renameSection').value;
+  // ユニットとサブユニットの両方で絞る（同名サブユニットの巻き込み防止）
+  return { old:sec, cards:cardData.filter(c=>c.genre===unit && c.section===sec) };
+}
+
+function updateRenameInfo(){
+  const el=document.getElementById('renameInfo');
+  const btn=document.getElementById('btnDoRename');
+  const kind=_rnKind(), isSec=kind==='section';
+  const unit=document.getElementById('renameUnit').value;
+  const { old, cards }=_rnTargets();
+  const now=document.getElementById('renameNew').value.trim();
+
+  if(isSec && !document.getElementById('renameSection').value){
+    el.innerHTML='<span class="exp-warn">このユニットにはサブユニットがありません。</span>';
+    btn.disabled=true; return;
+  }
+  if(!now){ el.innerHTML='<span class="exp-hint">新しい名前を入力してください。</span>'; btn.disabled=true; return; }
+  if(now===old){ el.innerHTML='<span class="exp-hint">現在の名前と同じです。</span>'; btn.disabled=true; return; }
+  if(now.includes(',')||now.includes('"')){
+    el.innerHTML='<span class="exp-warn">⚠ 名前に , や " は使えません。</span>'; btn.disabled=true; return;
+  }
+  btn.disabled=false;
+
+  let html=`<strong>${cards.length}枚</strong> のカードの`+(isSec?'サブユニット名':'ユニット名')+
+    `を<br>「${esc(old)}」→ <strong>「${esc(now)}」</strong> に変更します`;
+
+  // 既存の名前に変えると2つが統合される。事故になりやすいので明示する
+  const existing = kind==='unit'
+    ? cardData.some(c=>c.genre===now)
+    : cardData.some(c=>c.genre===unit && c.section===now);
+  if(existing){
+    const n = kind==='unit'
+      ? cardData.filter(c=>c.genre===now).length
+      : cardData.filter(c=>c.genre===unit && c.section===now).length;
+    html+=`<br><span class="exp-warn">⚠ 「${esc(now)}」は既に存在します（${n}枚）。`+
+      `変更すると2つが<strong>統合</strong>され、合計${cards.length+n}枚が同じ名前になります。</span>`;
+  }
+  if(isSec){
+    const others=[...new Set(cardData.filter(c=>c.section===old && c.genre!==unit).map(c=>c.genre))];
+    if(others.length){
+      html+=`<br><span class="exp-hint">「${esc(old)}」は ${others.map(esc).join('・')} にもありますが、`+
+        `そちらは変更されません（このユニット内だけが対象）。</span>`;
+    }
+  }
+  el.innerHTML=html;
+}
+
+function doRename(){
+  const kind=_rnKind();
+  const unit=document.getElementById('renameUnit').value;
+  const now=document.getElementById('renameNew').value.trim();
+  const { old, cards }=_rnTargets();
+  if(!now || now===old || !cards.length) return;
+
+  for(const c of cards){ if(kind==='unit') c.genre=now; else c.section=now; }
+  dirty=true;
+  closeRename();
+
+  // ユニット名が変わるとセレクトの中身も変わるため作り直し、選択を維持する
+  buildUnitSelect();
+  const sel=document.getElementById('unitSelect');
+  sel.value = kind==='unit' ? now : unit;
+  filterCards();
+  if(selectedIdx>=0) showCard(selectedIdx);
+
+  document.getElementById('fileStatus').textContent=
+    `✏️ ${cards.length}枚を「${now}」に変更しました（未保存 — 「CSVを保存」で確定）`;
 }
 
 // ==========================================
