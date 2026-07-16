@@ -287,13 +287,22 @@ function showGradeMenu() {
 // ジャンル→セクション→カード
 // 受講2層目：「受講」＋「3級 戦士の視点」の2枚看板
 // ==========================================
+
+// 看板の科目表示。"3級-軍事と戦略" → "軍事と戦略　３級"（科目名を先、級を後ろに）
+function formatSubjectBanner(subject) {
+    const m = /^(\d)級-(.+)$/.exec(subject);
+    if (!m) return subject;
+    const grade = { '1': '１級', '2': '２級', '3': '３級' }[m[1]] || (m[1] + '級');
+    return `${m[2]}　${grade}`;
+}
+
 function showGenreMenu() {
     navState = 'genre';
     isMenuVisible = true;
     showMenuBanner();
     showMenuView();
     const genres = [...new Set(cardData.filter(d => d.subject === curSubject).map(d => d.genre))];
-    const subjectBanner = curSubject.replace('3級-', '３級　').replace('2級-', '２級　').replace('1級-', '１級　');
+    const subjectBanner = formatSubjectBanner(curSubject);
     let html = `
         <div class="sticky-head">
             <div class="double-banner-wrap">
@@ -370,7 +379,7 @@ function showSectionedCardList(genre) {
 
     const genreCards = cardData.filter(d => d.genre === genre);
     const sections = [...new Set(genreCards.map(d => d.section))];
-    const subjectBannerS = curSubject.replace('3級-', '３級　').replace('2級-', '２級　').replace('1級-', '１級　');
+    const subjectBannerS = formatSubjectBanner(curSubject);
 
     let html = `
         <div class="sticky-head">
@@ -412,7 +421,7 @@ function showFlatCardList(genre) {
     showMenuBanner();
     showMenuView();
 
-    const subjectBannerF = curSubject.replace('3級-', '３級　').replace('2級-', '２級　').replace('1級-', '１級　');
+    const subjectBannerF = formatSubjectBanner(curSubject);
     let html = `
         <div class="sticky-head">
             <div class="double-banner-wrap banner-xs-wrap">
