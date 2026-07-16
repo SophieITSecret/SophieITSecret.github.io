@@ -457,12 +457,12 @@ function showCard(idx) {
     cardBody.innerText = card.body;
     textView.scrollTop = 0;
 
-    const imgPath = `images/${card.id}.png`;
-    cardImage.src = imgPath;
+    // カード画像は.jpgに統一済み。.pngは旧データ用のフォールバックとして残す
+    cardImage.src = `images/${card.id}.jpg`;
     cardImage.style.display = 'block';
     imagePlaceholder.style.display = 'none';
     cardImage.onerror = () => {
-        cardImage.src = `images/${card.id}.jpg`;
+        cardImage.src = `images/${card.id}.png`;
         cardImage.onerror = () => {
             cardImage.style.display = 'none';
             imagePlaceholder.style.display = 'flex';

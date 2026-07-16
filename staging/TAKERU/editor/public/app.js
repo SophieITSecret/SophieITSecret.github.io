@@ -283,8 +283,13 @@ function copyCardText(){
   }).catch(()=>alert('コピーに失敗しました'));
 }
 
-// ===== 画像取り込み（960×720へ強制伸縮 → SVG合成 → PNG保存） =====
-let pendingImagePng=null, baseImage=null, svgInputTimer=null;
+// ===== 画像取り込み（960×720へ強制伸縮 → SVG合成 → JPEG保存） =====
+// JPEG品質。PNGで保存していた頃はカード画像1枚が約1.5MBあり、
+// 118枚で141MBに達していた（sw.jsが端末にキャッシュするため実害が大きい）。
+// 960x720は「寸法」の指定でしかなく、PNGは可逆圧縮なので細密な絵は縮まない。
+// q90なら目視で劣化が分からないまま約1/7に収まる（実測14%）。
+const IMG_JPEG_QUALITY=0.9;
+let pendingImageData=null, baseImage=null, svgInputTimer=null;
 
 function onPickImage(e){
   const file=e.target.files[0];
@@ -307,12 +312,15 @@ function loadImageFile(file){
   r.readAsDataURL(file);
 }
 
-// PNG＋SVGをcanvasに合成してpendingImagePngを更新
+// 元画像＋SVGをcanvasに合成して pendingImageData を更新
 async function recomposite(){
   if(!baseImage) return;
   const cv=document.getElementById('imgCanvas');
   const ctx=cv.getContext('2d');
   ctx.clearRect(0,0,960,720);
+  // JPEGは透過を持てない。白地を敷かないと透明部分が黒く潰れる
+  ctx.fillStyle='#fff';
+  ctx.fillRect(0,0,960,720);
   ctx.drawImage(baseImage,0,0,960,720);
   const svgCode=document.getElementById('svgOverlayInput').value.trim();
   if(svgCode && svgCode.includes('<svg')){
@@ -327,8 +335,8 @@ async function recomposite(){
       // SVGが不正な場合はPNGのみで続行
     }
   }
-  pendingImagePng=cv.toDataURL('image/png');
-  document.getElementById('imgPreview').src=pendingImagePng;
+  pendingImageData=cv.toDataURL('image/jpeg', IMG_JPEG_QUALITY);
+  document.getElementById('imgPreview').src=pendingImageData;
 }
 
 // SVG入力600ms後にプレビュー更新（タイピング中の連続再合成を防ぐ）
@@ -343,20 +351,20 @@ function clearSvg(){
 }
 
 function cancelImage(){
-  pendingImagePng=null;
+  pendingImageData=null;
   baseImage=null;
   document.getElementById('svgOverlayInput').value='';
   document.getElementById('imgStage').style.display='none';
 }
 
 async function saveImage(){
-  if(selectedIdx<0||!pendingImagePng) return;
+  if(selectedIdx<0||!pendingImageData) return;
   const card=cardData[selectedIdx];
   if(imageMap[card.id] && !confirm(card.id+' の画像を差し替えます。よろしいですか？\n（元の画像は image_backup フォルダに退避されます）')) return;
   const btn=document.getElementById('btnSaveImg');
   btn.disabled=true; btn.textContent='保存中…';
   try{
-    const res=await fetch('/api/images/save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:card.id,dataUrl:pendingImagePng})});
+    const res=await fetch('/api/images/save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:card.id,dataUrl:pendingImageData})});
     const j=await res.json();
     if(!res.ok||!j.ok) throw new Error(j.error||'保存に失敗しました');
     imageMap[card.id]='/api/images/'+encodeURIComponent(j.file)+'?t='+Date.now(); // キャッシュ回避

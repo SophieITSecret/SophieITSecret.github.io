@@ -114,8 +114,10 @@ function getImageFile(req, res, filename) {
   });
 }
 
-// POST /api/images/save — 960x720に変換済みのPNGを保存
-// （ブラウザのcanvasで強制伸縮済み。既存画像はバックアップしてから差し替え）
+// POST /api/images/save — 960x720に変換済みのJPEGを保存
+// （ブラウザのcanvasで強制伸縮・JPEG化済み。既存画像はバックアップしてから差し替え）
+// 以前はPNGで保存していたが、1枚約1.5MB・118枚で141MBに膨らんでいた。
+// sw.jsが端末にキャッシュするため実害が大きく、JPEGへ統一した。
 const IMG_BACKUP_DIR = path.join(__dirname, 'image_backup');
 function postImageSave(req, res) {
   let chunks = [];
@@ -125,12 +127,12 @@ function postImageSave(req, res) {
       const { id, dataUrl } = JSON.parse(Buffer.concat(chunks).toString('utf8'));
       if (!id || !dataUrl) return sendJSON(res, 400, { ok: false, error: 'idまたは画像データがありません' });
       const safeId = path.basename(String(id)); // パストラバーサル防止
-      const m = /^data:image\/png;base64,(.+)$/.exec(dataUrl);
-      if (!m) return sendJSON(res, 400, { ok: false, error: 'PNG形式の画像ではありません' });
+      const m = /^data:image\/jpeg;base64,(.+)$/.exec(dataUrl);
+      if (!m) return sendJSON(res, 400, { ok: false, error: 'JPEG形式の画像ではありません' });
       const buf = Buffer.from(m[1], 'base64');
       if (!fs.existsSync(config.imagesDir)) fs.mkdirSync(config.imagesDir, { recursive: true });
 
-      // 既存の同名画像（拡張子違いを含む）をバックアップ。.png以外の旧拡張子は退避後に削除して.pngへ統一
+      // 既存の同名画像（拡張子違いを含む）をバックアップ。.jpg以外の旧拡張子は退避後に削除して.jpgへ統一
       let backupName = null;
       const files = fs.readdirSync(config.imagesDir);
       for (const f of files) {
@@ -139,11 +141,11 @@ function postImageSave(req, res) {
           if (!fs.existsSync(IMG_BACKUP_DIR)) fs.mkdirSync(IMG_BACKUP_DIR, { recursive: true });
           backupName = `${safeId}_${timestamp()}${path.extname(f)}`;
           fs.copyFileSync(path.join(config.imagesDir, f), path.join(IMG_BACKUP_DIR, backupName));
-          if (ext !== '.png') fs.unlinkSync(path.join(config.imagesDir, f));
+          if (ext !== '.jpg') fs.unlinkSync(path.join(config.imagesDir, f));
         }
       }
-      fs.writeFileSync(path.join(config.imagesDir, safeId + '.png'), buf);
-      sendJSON(res, 200, { ok: true, file: safeId + '.png', backup: backupName });
+      fs.writeFileSync(path.join(config.imagesDir, safeId + '.jpg'), buf);
+      sendJSON(res, 200, { ok: true, file: safeId + '.jpg', backup: backupName });
     } catch (e) {
       sendJSON(res, 500, { ok: false, error: '画像の保存に失敗しました: ' + e.message });
     }
