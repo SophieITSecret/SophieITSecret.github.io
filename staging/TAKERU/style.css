@@ -15,7 +15,7 @@ body.dark-mode {
     --border: #2a3048;
     --label-bg: #1a2a1a;
     --label-color: #4caf50;
-    --divider: #4a90d9;   /* 画像下の区切り線：試しに青 */
+    --divider: #1976d2;   /* 画像下の区切り線：やや濃い青 */
     --settings-bg: rgba(10,12,16,0.97);
     --placeholder-color: #2a3048;
     --link-field-bg: #0f1520;
@@ -50,7 +50,9 @@ body {
     display: flex;
     flex-direction: column;
     padding-top: env(safe-area-inset-top);
-    padding-bottom: 0;
+    /* 下のホームバー分だけ持ち上げてコントローラーを安定させる（縦画面）。
+       ここが0だとホームバーに重なったり、環境で浮き沈みして見える。 */
+    padding-bottom: env(safe-area-inset-bottom);
     transition: background 0.3s, color 0.3s;
 }
 
@@ -158,7 +160,7 @@ body {
     height: 3px;
     background: var(--divider);
     flex-shrink: 0;
-    box-shadow: 0 0 8px rgba(74,144,217,0.4);   /* グローも青に */
+    box-shadow: 0 0 8px rgba(25,118,210,0.45);   /* グローもやや濃い青に */
 }
 
 #content-area {
@@ -303,7 +305,7 @@ body {
 
 /* ==================== サブメニュー共通構造（看板＋子パネル） ==================== */
 .sub-menu-wrap {
-    padding: 8px 12px;
+    padding: 24px 12px 8px;   /* 受講パネルと画像の間を3倍（8→24px）に */
     display: flex;
     flex-direction: column;
     gap: 6px;
@@ -328,17 +330,23 @@ body {
     margin-top: 12px;
 }
 
-/* ==================== 2枚看板（2層目用） ==================== */
-/* 左右8%で下のジャンルボタン(.genre-list-wrap)と同じ幅に揃える。
-   gapを1/3に。スクロールしても見出しが上に残るよう sticky 固定。 */
-.double-banner-wrap {
-    padding: 10px 8% 0;
-    display: flex;
-    gap: 3px;
+/* 上部見出し帯：看板と見出しを1枚の不透明ブロックにまとめて固定する。
+   個々の要素を別々に sticky にすると、間の隙間や左右の余白が透けて
+   下のメニューが見えてしまうため、まとめて背景を敷いた帯ごと固定する。 */
+.sticky-head {
     position: sticky;
     top: 0;
     z-index: 12;
     background: var(--bg);
+    padding-bottom: 6px;
+}
+
+/* ==================== 2枚看板（2層目用） ==================== */
+/* 左右8%で下のジャンルボタン(.genre-list-wrap)と同じ幅に揃える。gapを1/3に。 */
+.double-banner-wrap {
+    padding: 10px 8% 0;
+    display: flex;
+    gap: 3px;
 }
 /* カード一覧の2枚看板もテーマ一覧と同じ形（第一画面に合わせる） */
 .banner-xs-wrap { padding: 10px 8% 0; }
@@ -443,7 +451,7 @@ body {
     box-sizing: border-box;
     pointer-events: none;
 }
-/* テーマ一覧ラベル：緑（受講と同色系）。2枚看板(58px)の下に sticky で固定 */
+/* テーマ一覧ラベル：緑（受講と同色系）。固定は親の .sticky-head が担う */
 .genre-panel-label.label-section {
     min-height: 34px;
     border-radius: 8px;
@@ -452,19 +460,13 @@ body {
     background: linear-gradient(135deg, #1a3a1a, #2e7d32);
     border-color: #4caf50;
     color: #fff;
-    position: sticky;
-    top: 58px;
-    z-index: 11;
 }
 /* カード一覧上部の現在ジャンル表示：前画面で押した genre-btn がそのまま見出しに */
 .genre-panel-label.label-genre-header {
     min-height: 40px;
     border-radius: 8px;
-    margin: 8px 8% 4px;
+    margin: 8px 8% 0;
     width: auto;
-    position: sticky;
-    top: 58px;
-    z-index: 11;
 }
 .light-mode .genre-panel-label {
     background: linear-gradient(135deg, #deeaf8, #c8dbf2);
@@ -562,7 +564,7 @@ body {
     color: var(--label-color);
     border-bottom: 1px solid var(--border);
     position: sticky;
-    top: 110px;                      /* 2枚看板(58) + ジャンル見出し(52) の下に貼り付く */
+    top: 112px;                      /* sticky-head（看板58+見出し48+余白6）の下に貼り付く */
     z-index: 9;
 }
 
@@ -685,11 +687,11 @@ body {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 0;
-    line-height: 1;   /* ▲とMENUの隙間を詰める */
+    gap: 2px;         /* ▲とMENUの間にわずかに隙間 */
+    line-height: 1.05;
 }
 .btn-up .btn-sub-label {
-    font-size: 0.66rem;   /* MENUをふた回り大きく（0.48→0.66rem）*/
+    font-size: 0.78rem;   /* MENUをさらに一回り大きく（0.66→0.78rem）*/
     font-family: 'Oswald', sans-serif;
     letter-spacing: 0.06em;
     opacity: 0.75;

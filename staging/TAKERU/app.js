@@ -295,11 +295,13 @@ function showGenreMenu() {
     const genres = [...new Set(cardData.filter(d => d.subject === curSubject).map(d => d.genre))];
     const subjectBanner = curSubject.replace('3級-', '３級　').replace('2級-', '２級　').replace('1級-', '１級　');
     let html = `
-        <div class="double-banner-wrap">
-            <div class="top-btn btn-jukou banner-btn banner-small">📚 受　講</div>
-            <div class="grade-btn btn-grade3 banner-btn banner-small">${subjectBanner}</div>
+        <div class="sticky-head">
+            <div class="double-banner-wrap">
+                <div class="top-btn btn-jukou banner-btn banner-small">📚 受　講</div>
+                <div class="grade-btn btn-grade3 banner-btn banner-small">${subjectBanner}</div>
+            </div>
+            <div class="genre-panel-label label-section">テーマ一覧</div>
         </div>
-        <div class="genre-panel-label label-section">テーマ一覧</div>
     `;
     let genreHtml = '';
     genres.forEach(g => {
@@ -371,11 +373,13 @@ function showSectionedCardList(genre) {
     const subjectBannerS = curSubject.replace('3級-', '３級　').replace('2級-', '２級　').replace('1級-', '１級　');
 
     let html = `
-        <div class="double-banner-wrap banner-xs-wrap">
-            <div class="top-btn btn-jukou banner-btn banner-xs">📚 受　講</div>
-            <div class="grade-btn btn-grade3 banner-btn banner-xs">${subjectBannerS}</div>
+        <div class="sticky-head">
+            <div class="double-banner-wrap banner-xs-wrap">
+                <div class="top-btn btn-jukou banner-btn banner-xs">📚 受　講</div>
+                <div class="grade-btn btn-grade3 banner-btn banner-xs">${subjectBannerS}</div>
+            </div>
+            <div class="genre-panel-label label-genre-header">${genre}</div>
         </div>
-        <div class="genre-panel-label label-genre-header">${genre}</div>
     `;
     sections.forEach(s => {
         const sCards = genreCards.filter(d => d.section === s);
@@ -410,12 +414,13 @@ function showFlatCardList(genre) {
 
     const subjectBannerF = curSubject.replace('3級-', '３級　').replace('2級-', '２級　').replace('1級-', '１級　');
     let html = `
-        <div class="double-banner-wrap banner-xs-wrap">
-            <div class="top-btn btn-jukou banner-btn banner-xs">📚 受　講</div>
-            <div class="grade-btn btn-grade3 banner-btn banner-xs">${subjectBannerF}</div>
-        </div>
-        <div class="genre-panel-label label-genre-header">${genre}</div>
-    `;
+        <div class="sticky-head">
+            <div class="double-banner-wrap banner-xs-wrap">
+                <div class="top-btn btn-jukou banner-btn banner-xs">📚 受　講</div>
+                <div class="grade-btn btn-grade3 banner-btn banner-xs">${subjectBannerF}</div>
+            </div>
+            <div class="genre-panel-label label-genre-header">${genre}</div>
+        </div>`;
     curSection.forEach((card, i) => {
         const type = /\dF\d+$/.test(card.id) ? 'fact' : /\dC\d+$/.test(card.id) ? 'com' : null;
         const badge = type ? `<span class="card-badge badge-${type}">${type === 'fact' ? '史実' : '解説'}</span> ` : '';
