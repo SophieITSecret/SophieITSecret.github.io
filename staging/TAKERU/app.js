@@ -691,34 +691,7 @@ function setupButtons() {
     };
 
     // ▲：上位メニューへ1層ずつ移動
-    btnToggle.onclick = () => {
-        switch (navState) {
-            case 'card':
-            case 'complete':
-                if (curSection.length) {
-                    if (curSection[0]?.section) showSectionedCardList(curGenre);
-                    else showFlatCardList(curGenre);
-                } else showGenreMenu();
-                break;
-            case 'cardlist':
-            case 'sectionedlist':
-            case 'section':
-                showGenreMenu();
-                break;
-            case 'genre':
-                showGradeMenu();
-                break;
-            case 'subject':
-                showTopMenu();
-                break;
-            case 'linklist':
-                showLinkGenreMenu();
-                break;
-            default:
-                showTopMenu();
-                break;
-        }
-    };
+    btnToggle.onclick = goUpOneLevel;
 
     // 音声ボタン：ON/OFFトグル
     btnVoice.onclick = () => {
@@ -922,6 +895,36 @@ function loadSavedSettings() {
 // ==========================================
 // プルダウンで更新（PWA対応）
 // ==========================================
+// ▲ボタンと下方向スワイプで共用：現在の階層から1つ上のメニューへ
+function goUpOneLevel() {
+    switch (navState) {
+        case 'card':
+        case 'complete':
+            if (curSection.length) {
+                if (curSection[0]?.section) showSectionedCardList(curGenre);
+                else showFlatCardList(curGenre);
+            } else showGenreMenu();
+            break;
+        case 'cardlist':
+        case 'sectionedlist':
+        case 'section':
+            showGenreMenu();
+            break;
+        case 'genre':
+            showGradeMenu();
+            break;
+        case 'subject':
+            showTopMenu();
+            break;
+        case 'linklist':
+            showLinkGenreMenu();
+            break;
+        default:
+            showTopMenu();
+            break;
+    }
+}
+
 function setupPullToRefresh() {
     let startY = 0;
     let pulling = false;
@@ -939,6 +942,11 @@ function setupPullToRefresh() {
     }, { passive: true });
 
     document.addEventListener('touchend', () => {
-        if (pulling) { pulling = false; location.reload(); }
+        if (!pulling) return;
+        pulling = false;
+        // トップメニューでの下スワイプだけオープニングへ戻す。
+        // それ以外の画面では1つ上のメニューへ上がるだけにする。
+        if (navState === 'top') location.reload();
+        else goUpOneLevel();
     });
 }

@@ -185,10 +185,10 @@ body {
 }
 
 .prog-unit {
-    font-size: 0.62rem;
-    color: var(--text2);
+    font-size: 0.75rem;   /* サブユニット名と同じ大きさに（0.62→0.75rem）*/
+    color: #4a90d9;       /* ユニット名を青に */
     letter-spacing: 0.05em;
-    line-height: 1.1;
+    line-height: 1.1;     /* 行間は従来のまま */
     margin-bottom: 1px;
 }
 
@@ -261,11 +261,13 @@ body {
 
 /* ==================== トップメニューボタン ==================== */
 .top-menu-wrap {
-    padding: 14px 10%;
+    padding: 28px 10% 14px;   /* 上を倍（14→28px）に */
     display: flex;
     flex-direction: column;
     gap: 9px;
 }
+/* 「受講」の下だけ間隔を6割増（gap 9px + 5px ≈ 1.6倍） */
+.top-menu-wrap .btn-jukou { margin-bottom: 5px; }
 
 /* 最終行：受験案内＋使い方の横並び */
 .top-btn-row {
@@ -327,14 +329,23 @@ body {
 }
 
 /* ==================== 2枚看板（2層目用） ==================== */
+/* 左右8%で下のジャンルボタン(.genre-list-wrap)と同じ幅に揃える。
+   gapを1/3に。スクロールしても見出しが上に残るよう sticky 固定。 */
 .double-banner-wrap {
-    padding: 10px 12px 0 12px;
+    padding: 10px 8% 0;
     display: flex;
-    gap: 8px;
+    gap: 3px;
+    position: sticky;
+    top: 0;
+    z-index: 12;
+    background: var(--bg);
 }
+/* カード一覧の2枚看板もテーマ一覧と同じ形（第一画面に合わせる） */
+.banner-xs-wrap { padding: 10px 8% 0; }
 
 /* 2枚看板内のボタン：高さ・flex比率 */
-.banner-small {
+.banner-small,
+.banner-xs {
     height: 48px !important;
     font-size: 0.85rem !important;
     min-height: unset !important;
@@ -343,6 +354,11 @@ body {
 /* 受講(1):科目名(3) の幅比率 */
 .double-banner-wrap > :first-child { flex: 1 !important; }
 .double-banner-wrap > :last-child  { flex: 3 !important; }
+/* 受講看板だけ縁取りを太く・緑寄りの黄緑に */
+.banner-btn.btn-jukou {
+    border-width: 2px !important;
+    border-color: #8bc34a !important;
+}
 
 /* ==================== 級選択パネル ==================== */
 .grade-btn {
@@ -427,7 +443,7 @@ body {
     box-sizing: border-box;
     pointer-events: none;
 }
-/* テーマ一覧ラベル：緑（受講と同色系） */
+/* テーマ一覧ラベル：緑（受講と同色系）。2枚看板(58px)の下に sticky で固定 */
 .genre-panel-label.label-section {
     min-height: 34px;
     border-radius: 8px;
@@ -436,6 +452,9 @@ body {
     background: linear-gradient(135deg, #1a3a1a, #2e7d32);
     border-color: #4caf50;
     color: #fff;
+    position: sticky;
+    top: 58px;
+    z-index: 11;
 }
 /* カード一覧上部の現在ジャンル表示：前画面で押した genre-btn がそのまま見出しに */
 .genre-panel-label.label-genre-header {
@@ -443,15 +462,9 @@ body {
     border-radius: 8px;
     margin: 8px 8% 4px;
     width: auto;
-}
-/* カード一覧ヘッダー上のミニ2枚看板 */
-.banner-xs-wrap { padding: 6px 12px 0; }
-.banner-xs {
-    flex: 1;
-    height: 32px !important;
-    font-size: 0.78rem !important;
-    min-height: unset !important;
-    padding: 0 8px !important;
+    position: sticky;
+    top: 58px;
+    z-index: 11;
 }
 .light-mode .genre-panel-label {
     background: linear-gradient(135deg, #deeaf8, #c8dbf2);
@@ -541,15 +554,15 @@ body {
 
 /* ==================== リンク一覧 ==================== */
 .section-header {
-    padding: 5px 14px;
-    font-size: 0.75rem;
+    padding: 6px 14px;
+    font-size: 0.9rem;               /* サブユニット名を一回り大きく（0.75→0.9rem）*/
     font-family: 'Oswald', sans-serif;
     letter-spacing: 0.08em;
     background: var(--label-bg);
     color: var(--label-color);
     border-bottom: 1px solid var(--border);
     position: sticky;
-    top: 0;
+    top: 110px;                      /* 2枚看板(58) + ジャンル見出し(52) の下に貼り付く */
     z-index: 9;
 }
 
@@ -672,10 +685,11 @@ body {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 1px;
+    gap: 0;
+    line-height: 1;   /* ▲とMENUの隙間を詰める */
 }
 .btn-up .btn-sub-label {
-    font-size: 0.48rem;
+    font-size: 0.66rem;   /* MENUをふた回り大きく（0.48→0.66rem）*/
     font-family: 'Oswald', sans-serif;
     letter-spacing: 0.06em;
     opacity: 0.75;
