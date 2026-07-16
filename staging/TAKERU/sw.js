@@ -1,6 +1,6 @@
 // ★デプロイ(push)のたびに SW_VERSION と CACHE_NAME の番号を一緒に上げる
-const SW_VERSION = 'v21';
-const CACHE_NAME = 'takeru-v21';
+const SW_VERSION = 'v22';
+const CACHE_NAME = 'takeru-v22';
 
 const PRE_CACHE = [
     './',
@@ -25,6 +25,8 @@ self.addEventListener('install', e => {
 
 self.addEventListener('message', e => {
     if (e.data === 'SKIP_WAITING') self.skipWaiting();
+    // 設定画面が「現在のバージョン」を問い合わせてきたら返す
+    else if (e.data === 'GET_VERSION' && e.ports[0]) e.ports[0].postMessage(SW_VERSION);
 });
 
 self.addEventListener('activate', e => {

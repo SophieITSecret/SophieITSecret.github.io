@@ -112,6 +112,14 @@
                     <button class="toggle-btn" id="btn-font-l">大</button>
                 </div>
             </div>
+            <div class="settings-item settings-update">
+                <span>アプリの更新</span>
+                <div class="update-controls">
+                    <button id="btn-force-update" class="update-btn">🔄 最新に更新</button>
+                    <div id="update-status" class="update-status">現在：確認中…</div>
+                    <button id="btn-hard-reset" class="reset-link">それでも直らないとき：強制リセット</button>
+                </div>
+            </div>
             <button id="btn-settings-close">閉じる</button>
         </div>
     </div>
@@ -173,6 +181,69 @@
 
                 document.getElementById('sw-btn-later').addEventListener('click', () => {
                     document.getElementById('sw-update-toast').style.display = 'none';
+                });
+
+                // ===== 設定画面：手動更新まわり =====
+                const statusEl = document.getElementById('update-status');
+
+                // 現在動いているSWにバージョンを問い合わせて表示
+                function showCurrentVersion() {
+                    const sw = navigator.serviceWorker.controller;
+                    if (!sw) { statusEl.textContent = '現在：初回読み込み中'; return; }
+                    const ch = new MessageChannel();
+                    let done = false;
+                    ch.port1.onmessage = (e) => { done = true; statusEl.textContent = '現在のバージョン：' + e.data; };
+                    sw.postMessage('GET_VERSION', [ch.port2]);
+                    setTimeout(() => { if (!done) statusEl.textContent = '現在のバージョン：確認できません'; }, 1200);
+                }
+                showCurrentVersion();
+                // 設定を開くたびに最新表示へ更新
+                document.getElementById('btn-settings').addEventListener('click', showCurrentVersion);
+
+                // インストール中のSWが「待機」状態になるまで待つ（最大5秒）
+                function waitForWaiting(reg) {
+                    return new Promise((resolve) => {
+                        if (reg.waiting) return resolve(reg.waiting);
+                        const sw = reg.installing;
+                        if (!sw) return resolve(null);
+                        const t = setTimeout(() => resolve(reg.waiting || null), 5000);
+                        sw.addEventListener('statechange', () => {
+                            if (sw.state === 'installed') { clearTimeout(t); resolve(reg.waiting || sw); }
+                        });
+                    });
+                }
+
+                // 「🔄 最新に更新」：新版があれば適用、無ければ最新である旨を表示
+                document.getElementById('btn-force-update').addEventListener('click', async () => {
+                    statusEl.textContent = '更新を確認中…';
+                    try {
+                        const reg = await navigator.serviceWorker.getRegistration();
+                        if (!reg) { location.reload(); return; }
+                        await reg.update();
+                        const waiting = await waitForWaiting(reg);
+                        if (waiting) {
+                            statusEl.textContent = '新しいバージョンを適用します…';
+                            waiting.postMessage('SKIP_WAITING'); // controllerchange でリロード
+                        } else {
+                            statusEl.textContent = '✓ すでに最新です';
+                            showCurrentVersion();
+                        }
+                    } catch (e) {
+                        location.reload();
+                    }
+                });
+
+                // 「強制リセット」：SW登録とキャッシュを完全に消して取り直す（最終手段）
+                document.getElementById('btn-hard-reset').addEventListener('click', async () => {
+                    if (!confirm('アプリを一度まっさらにして読み込み直します。\n（学習の進み具合や設定は消えません）\nよろしいですか？')) return;
+                    statusEl.textContent = 'キャッシュを消しています…';
+                    try {
+                        const reg = await navigator.serviceWorker.getRegistration();
+                        if (reg) await reg.unregister();
+                        const keys = await caches.keys();
+                        await Promise.all(keys.map(k => caches.delete(k)));
+                    } catch (e) { /* 失敗してもリロードは実行 */ }
+                    location.reload();
                 });
             });
         }
