@@ -29,6 +29,7 @@ async function init() {
     status.textContent=`✅ TAKERUcard.csv（${cardData.length}枚）　🖼 ${Object.keys(imageMap).length}枚`;
     document.getElementById('btnSave').disabled=false;
     document.getElementById('btnImport').disabled=false;
+    document.getElementById('btnExport').disabled=false;
     document.getElementById('btnProgress').disabled=false;
     document.getElementById('btnBatchRecord').disabled=false;
     dirty=false;
@@ -446,6 +447,269 @@ function doImport(){
   filterCards();
   if(selectedIdx>=0) showCard(selectedIdx);
   alert(`${n}枚の本文を取り込みました。\nプレビューで確認し、問題なければ「CSVを保存」してください。`);
+}
+
+// ==========================================
+// レビュー用 書き出し（MD / 自己完結HTML）
+// MD  … AIに貼って内容チェックしてもらう用
+// HTML… 画像をdata URIで埋め込んだ1枚もの。
+//        ブラウザで開いて Ctrl+P → PDF、Wordでもそのまま開ける。
+//        pandoc等の外部ツールに依存させないための選択。
+// ==========================================
+function openExport(){
+  if(!cardData.length) return;
+
+  const units=[];
+  for(const c of cardData){ if(c.genre && !units.includes(c.genre)) units.push(c.genre); }
+  const uSel=document.getElementById('exportUnit');
+  uSel.innerHTML=units.map(u=>`<option value="${esc(u)}">${esc(u)}</option>`).join('');
+  if(curUnit && units.includes(curUnit)) uSel.value=curUnit;
+
+  const subjects=[];
+  for(const c of cardData){ if(c.subject && !subjects.includes(c.subject)) subjects.push(c.subject); }
+  const sSel=document.getElementById('exportSubject');
+  sSel.innerHTML=subjects.map(s=>`<option value="${esc(s)}">${esc(s)}</option>`).join('');
+  const curSubj=selectedIdx>=0?cardData[selectedIdx].subject:'';
+  if(curSubj && subjects.includes(curSubj)) sSel.value=curSubj;
+
+  onExportScopeChange();
+  document.getElementById('exportModal').style.display='flex';
+}
+function closeExport(){ document.getElementById('exportModal').style.display='none'; }
+
+function _expScope(){ return document.querySelector('input[name="expScope"]:checked').value; }
+function _expFmt(){ return document.querySelector('input[name="expFmt"]:checked').value; }
+
+function onExportScopeChange(){
+  const s=_expScope();
+  document.getElementById('exportUnit').disabled = s!=='unit';
+  document.getElementById('exportSubject').disabled = s!=='subject';
+  const card=selectedIdx>=0?cardData[selectedIdx]:null;
+  document.getElementById('exportCardName').textContent =
+    card ? `${card.id}　${card.title||'（タイトルなし）'}` : '（カード未選択）';
+  updateExportInfo();
+}
+
+function getExportCards(){
+  const s=_expScope();
+  if(s==='card') return selectedIdx>=0?[cardData[selectedIdx]]:[];
+  if(s==='unit'){
+    const u=document.getElementById('exportUnit').value;
+    return cardData.filter(c=>c.genre===u);
+  }
+  const sub=document.getElementById('exportSubject').value;
+  return cardData.filter(c=>c.subject===sub);
+}
+
+function getExportTitle(){
+  const s=_expScope();
+  if(s==='card') return selectedIdx>=0?cardData[selectedIdx].id:'card';
+  if(s==='unit') return document.getElementById('exportUnit').value;
+  return document.getElementById('exportSubject').value;
+}
+
+function updateExportInfo(){
+  const cards=getExportCards();
+  const el=document.getElementById('exportInfo');
+  const btn=document.getElementById('btnDoExport');
+
+  if(!cards.length){
+    el.innerHTML='<span class="exp-warn">⚠ 書き出す対象がありません。'+
+      (_expScope()==='card'?'左の一覧からカードを選んでください。':'')+'</span>';
+    btn.disabled=true;
+    return;
+  }
+  btn.disabled=false;
+
+  const nBody=cards.filter(c=>hasRealBody(c.body)).length;
+  const nImg=cards.filter(c=>imageMap[c.id]).length;
+  const fmt=_expFmt();
+  const withImg=document.getElementById('exportWithImg').checked;
+
+  const files=[];
+  if(fmt==='both'||fmt==='md')   files.push('.md');
+  if(fmt==='both'||fmt==='html') files.push('.html');
+
+  let html=`<strong>${cards.length}枚</strong> を書き出します`+
+    `（本文あり ${nBody}枚／画像あり ${nImg}枚）<br>`+
+    `ファイル：<strong>${files.join('　+　')}</strong>`;
+
+  if(nBody<cards.length){
+    html+=`<br><span class="exp-warn">⚠ 本文未作成が ${cards.length-nBody}枚 含まれます（「（本文未作成）」と出力されます）</span>`;
+  }
+  if((fmt==='both'||fmt==='html') && withImg && nImg>0){
+    // 目安（960x720のPNGをJPEG化すると1枚あたり概ね0.2MB）
+    const mb=(nImg*0.2).toFixed(1);
+    html+=`<br><span class="exp-hint">画像${nImg}枚をJPEG化して埋め込みます（HTMLは ${mb}MB 前後の見込み）</span>`;
+  }
+  el.innerHTML=html;
+}
+
+function _sanitizeFile(s){ return String(s).replace(/[\\/:*?"<>|]/g,'_').trim(); }
+
+function _mb(n){ return n<1024*1024 ? Math.round(n/1024)+'KB' : (n/1024/1024).toFixed(1)+'MB'; }
+
+function _stamp(){
+  const d=new Date();
+  const p=n=>String(n).padStart(2,'0');
+  return `${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}`;
+}
+
+function downloadFile(name, content, mime){
+  const blob=new Blob([content],{type:mime});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url; a.download=name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1500);
+}
+
+// 埋め込み用に縮小＋JPEG化する。
+// 元のカード画像は1枚あたり約1.5MBのPNGで、data URIにすると約2MBに膨らむ。
+// 16枚のユニットをそのまま埋めると30MB超となりメール添付できないため、
+// レビューに十分な画質を保ったままJPEGへ変換して1/10程度に落とす。
+async function imgToDataUrl(url, maxW=960, quality=0.82){
+  try{
+    const res=await fetch(url);
+    if(!res.ok) return null;
+    const blob=await res.blob();
+    const bmp=await createImageBitmap(blob);
+    const scale=Math.min(1, maxW/bmp.width);
+    const w=Math.round(bmp.width*scale), h=Math.round(bmp.height*scale);
+    const cv=document.createElement('canvas');
+    cv.width=w; cv.height=h;
+    const cx=cv.getContext('2d');
+    cx.fillStyle='#fff'; cx.fillRect(0,0,w,h);  // JPEGは透過を持てないので白地を敷く
+    cx.drawImage(bmp,0,0,w,h);
+    if(bmp.close) bmp.close();
+    return cv.toDataURL('image/jpeg', quality);
+  }catch{ return null; }
+}
+
+function buildExportMD(cards, title){
+  const now=new Date().toLocaleString('ja-JP');
+  let md=`# ${title}\n\n`;
+  md+=`TAKERU カード原稿　／　全 ${cards.length} 枚　／　書き出し：${now}\n\n`;
+  md+=`---\n\n`;
+  let curSec=null;
+  for(const c of cards){
+    if(c.section!==curSec){
+      curSec=c.section;
+      if(curSec) md+=`## ${curSec}\n\n`;
+    }
+    md+=`### ${c.id}　${c.title||'（タイトルなし）'}\n\n`;
+    const body=hasRealBody(c.body)?c.body.trim():'（本文未作成）';
+    md+=body+'\n\n';
+    const meta=[`${body.length}字`];
+    meta.push(imageMap[c.id]?'画像あり':'画像なし');
+    meta.push(mp3Ids.has(c.id)?'音声あり':'音声なし');
+    md+=`\`${meta.join(' / ')}\`\n\n---\n\n`;
+  }
+  return md;
+}
+
+async function buildExportHTML(cards, title, withImg){
+  const now=new Date().toLocaleString('ja-JP');
+  const imgs={};
+  if(withImg){
+    for(const c of cards){
+      if(imageMap[c.id]) imgs[c.id]=await imgToDataUrl(imageMap[c.id]);
+    }
+  }
+  let body='';
+  let curSec=null;
+  for(const c of cards){
+    if(c.section!==curSec){
+      curSec=c.section;
+      if(curSec) body+=`<h2 class="sec">${esc(curSec)}</h2>\n`;
+    }
+    const has=hasRealBody(c.body);
+    const text=has?c.body.trim():'（本文未作成）';
+    const d=imgs[c.id];
+    const imgHtml=d?`<div class="cimg"><img src="${d}" alt="${esc(c.id)}"></div>`
+                  :(imageMap[c.id]?'<div class="cimg noimg">［画像あり・埋め込みなし］</div>':'<div class="cimg noimg">［画像なし］</div>');
+    const meta=[`${text.length}字`, imageMap[c.id]?'画像あり':'画像なし', mp3Ids.has(c.id)?'音声あり':'音声なし'];
+    body+=`<article class="card">
+  <div class="chead"><span class="cid">${esc(c.id)}</span><h3>${esc(c.title)||'（タイトルなし）'}</h3></div>
+  ${imgHtml}
+  <div class="cbody${has?'':' wip'}">${esc(text)}</div>
+  <div class="cmeta">${meta.map(esc).join('　/　')}</div>
+</article>\n`;
+  }
+
+  return `<!DOCTYPE html>
+<html lang="ja"><head><meta charset="UTF-8">
+<title>${esc(title)}</title>
+<style>
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:'Noto Sans JP','Yu Gothic',sans-serif; background:#f4f4f4; color:#1a1a1a;
+         line-height:1.9; padding:28px 16px; }
+  .wrap { max-width:760px; margin:0 auto; }
+  header.doc { border-bottom:3px solid #2e7d32; padding-bottom:12px; margin-bottom:8px; }
+  header.doc h1 { font-size:1.5rem; color:#1b5e20; }
+  header.doc .sub { font-size:0.8rem; color:#666; margin-top:6px; }
+  h2.sec { font-size:1rem; color:#1b5e20; background:#e4efe4; border-left:5px solid #2e7d32;
+           padding:7px 12px; margin:26px 0 12px; border-radius:0 4px 4px 0; }
+  .card { background:#fff; border:1px solid #ddd; border-radius:8px; padding:18px 20px;
+          margin-bottom:16px; page-break-inside:avoid; break-inside:avoid; }
+  .chead { display:flex; align-items:baseline; gap:10px; border-bottom:1px solid #eee;
+           padding-bottom:8px; margin-bottom:12px; }
+  .cid { font-family:Consolas,monospace; font-size:0.75rem; color:#fff; background:#2e7d32;
+         padding:2px 8px; border-radius:3px; flex-shrink:0; }
+  .chead h3 { font-size:1.05rem; }
+  .cimg { margin-bottom:12px; }
+  .cimg img { width:100%; border-radius:5px; display:block; border:1px solid #e5e5e5; }
+  .cimg.noimg { font-size:0.75rem; color:#aaa; background:#fafafa; border:1px dashed #ddd;
+                border-radius:5px; padding:16px; text-align:center; }
+  .cbody { white-space:pre-wrap; font-size:0.95rem; }
+  .cbody.wip { color:#b00; font-style:italic; }
+  .cmeta { margin-top:12px; padding-top:8px; border-top:1px dotted #ddd;
+           font-size:0.7rem; color:#999; text-align:right; }
+  @media print {
+    body { background:#fff; padding:0; }
+    .card { border:1px solid #ccc; }
+    header.doc { border-bottom-color:#333; }
+  }
+</style></head>
+<body><div class="wrap">
+<header class="doc">
+  <h1>${esc(title)}</h1>
+  <div class="sub">TAKERU カード原稿　／　全 ${cards.length} 枚　／　書き出し：${esc(now)}</div>
+</header>
+${body}</div></body></html>`;
+}
+
+async function doExport(){
+  const cards=getExportCards();
+  if(!cards.length) return;
+  const title=getExportTitle();
+  const fmt=_expFmt();
+  const withImg=document.getElementById('exportWithImg').checked;
+  const btn=document.getElementById('btnDoExport');
+  const orig=btn.textContent;
+  btn.disabled=true; btn.textContent='書き出し中…';
+
+  try{
+    const base=`TAKERU_${_sanitizeFile(title)}_${_stamp()}`;
+    const done=[];
+    if(fmt==='both'||fmt==='md'){
+      const md=buildExportMD(cards,title);
+      downloadFile(base+'.md', md, 'text/markdown;charset=utf-8');
+      done.push(`.md ${_mb(md.length)}`);
+    }
+    if(fmt==='both'||fmt==='html'){
+      const html=await buildExportHTML(cards,title,withImg);
+      downloadFile(base+'.html', html, 'text/html;charset=utf-8');
+      done.push(`.html ${_mb(html.length)}`);
+    }
+    closeExport();
+    document.getElementById('fileStatus').textContent=
+      `📤 ${cards.length}枚を書き出しました（${base}　${done.join('／')}）`;
+  }catch(err){
+    alert('書き出しに失敗しました: '+err.message);
+  }finally{
+    btn.disabled=false; btn.textContent=orig;
+  }
 }
 
 // ===== 保存：サーバーに直接上書き（バックアップ自動作成） =====

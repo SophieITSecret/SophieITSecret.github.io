@@ -13,6 +13,7 @@
   <button class="btn-load" id="btnProgress" onclick="openProgress()" disabled>📊 進捗</button>
   <button class="btn-load" onclick="openMemo()">📝 メモ</button>
   <button class="btn-load" id="btnImport" onclick="openImport()" disabled>📥 一括取り込み</button>
+  <button class="btn-load" id="btnExport" onclick="openExport()" disabled>📤 書き出し</button>
   <button class="btn-load" id="btnFullscreen" onclick="toggleFullscreen()">⛶ 全画面</button>
   <button class="btn-save" id="btnSave" onclick="saveCSV()" disabled>💾 CSV を保存</button>
 </header>
@@ -63,6 +64,61 @@
           <span id="memoStatus" class="memo-status"></span>
         </div>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- レビュー用 書き出し -->
+<div id="exportModal" class="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h2>📤 レビュー用に書き出し</h2>
+      <button class="btn-cancel" onclick="closeExport()">✕ 閉じる</button>
+    </div>
+    <div class="modal-desc">
+      原稿と画像を、人やAIに見てもらう形に書き出します。ファイルは<strong>ダウンロードフォルダ</strong>に保存されます。
+    </div>
+
+    <div class="exp-block">
+      <div class="exp-label">書き出す範囲</div>
+      <label class="exp-radio"><input type="radio" name="expScope" value="unit" checked onchange="onExportScopeChange()">
+        <span>ユニット単位</span>
+        <select id="exportUnit" class="exp-select" onchange="updateExportInfo()"></select>
+      </label>
+      <label class="exp-radio"><input type="radio" name="expScope" value="subject" onchange="onExportScopeChange()">
+        <span>科目・級ごと</span>
+        <select id="exportSubject" class="exp-select" onchange="updateExportInfo()"></select>
+      </label>
+      <label class="exp-radio"><input type="radio" name="expScope" value="card" onchange="onExportScopeChange()">
+        <span>選択中のカード1枚</span>
+        <span id="exportCardName" class="exp-cardname">—</span>
+      </label>
+    </div>
+
+    <div class="exp-block">
+      <div class="exp-label">形式</div>
+      <label class="exp-radio"><input type="radio" name="expFmt" value="both" checked onchange="updateExportInfo()">
+        <span><strong>両方</strong>　<span class="exp-hint">MD＝AIレビュー用／HTML＝人に見せる・PDF化用</span></span>
+      </label>
+      <label class="exp-radio"><input type="radio" name="expFmt" value="md" onchange="updateExportInfo()">
+        <span>MD だけ　<span class="exp-hint">ClaudeやChatGPTに貼る用</span></span>
+      </label>
+      <label class="exp-radio"><input type="radio" name="expFmt" value="html" onchange="updateExportInfo()">
+        <span>HTML だけ　<span class="exp-hint">ブラウザで開いて Ctrl+P → PDF／Wordでも開けます</span></span>
+      </label>
+    </div>
+
+    <div class="exp-block">
+      <label class="exp-radio"><input type="checkbox" id="exportWithImg" checked onchange="updateExportInfo()">
+        <span>HTMLに画像を埋め込む　<span class="exp-hint">1ファイルで完結（メール添付OK）。JPEG化して軽くします</span></span>
+      </label>
+    </div>
+
+    <div id="exportInfo" class="exp-info"></div>
+
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeExport()">キャンセル</button>
+      <button class="btn-apply" id="btnDoExport" onclick="doExport()">📤 書き出す</button>
     </div>
   </div>
 </div>
