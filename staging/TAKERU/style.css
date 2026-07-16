@@ -665,6 +665,11 @@ body {
     color: var(--text2);
     border-radius: 4px;
     font-family: 'Noto Sans JP', sans-serif;
+    /* 長押ししたときにボタンの文字（▶など）が選択されて青くなったり、
+       コピーメニューが出るのを抑止する（連続再生の長押しを邪魔しない）*/
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
     font-size: 0.75rem;
     cursor: pointer;
     transition: all 0.15s;

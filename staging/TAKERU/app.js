@@ -632,9 +632,12 @@ function setupButtons() {
     // ▶：カード送り。音声ON中に長押し（700ms）で連続再生モードのON/OFF
     let _longPressTimer = null;
     let _longPressTriggered = false;
+    let _touchStartX = 0, _touchStartY = 0;
 
-    const _startLongPress = () => {
+    const _startLongPress = (e) => {
         if (!autoRead) return;
+        const t = e && e.touches && e.touches[0];
+        if (t) { _touchStartX = t.clientX; _touchStartY = t.clientY; }
         clearTimeout(_longPressTimer);
         _longPressTriggered = false;
         _longPressTimer = setTimeout(() => {
@@ -646,11 +649,20 @@ function setupButtons() {
         }, 700);
     };
     const _cancelLongPress = () => clearTimeout(_longPressTimer);
+    // 指のわずかな揺れでは中止せず、はっきり動いた（スクロール）ときだけ中止する。
+    // 従来は touchmove で即中止していたため、長押しがたびたび不発になっていた。
+    const _onTouchMove = (e) => {
+        const t = e && e.touches && e.touches[0];
+        if (!t) return;
+        if (Math.abs(t.clientX - _touchStartX) > 14 || Math.abs(t.clientY - _touchStartY) > 14) {
+            _cancelLongPress();
+        }
+    };
 
     btnNext.addEventListener('touchstart',  _startLongPress,  { passive: true });
     btnNext.addEventListener('touchend',    _cancelLongPress, { passive: true });
     btnNext.addEventListener('touchcancel', _cancelLongPress, { passive: true });
-    btnNext.addEventListener('touchmove',   _cancelLongPress, { passive: true });
+    btnNext.addEventListener('touchmove',   _onTouchMove,     { passive: true });
     btnNext.addEventListener('mousedown', (e) => { if (e.button === 0) _startLongPress(); });
     btnNext.addEventListener('mouseup',   _cancelLongPress);
     btnNext.addEventListener('mouseleave', _cancelLongPress);
@@ -762,7 +774,7 @@ function doNextCard() {
 
 function updateAutoAdvBtn() {
     btnNext.classList.toggle('btn-auto-adv', autoAdvance);
-    btnNext.title = autoAdvance ? '連続再生中（ダブルクリックで停止）' : '';
+    btnNext.title = autoAdvance ? '連続再生中（長押しで停止）' : '';
 }
 
 // ==========================================
