@@ -2,6 +2,21 @@
 // TAKERU MSアカデミー app.js v2.9
 // ==========================================
 
+// iOSのホーム画面アプリ(standalone)では、起動直後だけ 100dvh が誤って
+// 計算され、最初のタップで直る（下の隙間が大きく→触ると縮む）バグがある。
+// 実際の可視高さ window.innerHeight を測って body の高さに反映し、
+// 起動時点から安定させる。CSSは 100dvh をフォールバックに残す。
+function setAppHeight() {
+    document.documentElement.style.setProperty('--app-height', window.innerHeight + 'px');
+}
+setAppHeight();
+window.addEventListener('resize', setAppHeight);
+window.addEventListener('orientationchange', () => setTimeout(setAppHeight, 120));
+window.addEventListener('pageshow', setAppHeight);       // 背面から復帰したとき
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') setAppHeight();
+});
+
 let cardData = [];
 let linkData = [];
 let curSection = [];

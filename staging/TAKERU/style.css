@@ -44,7 +44,8 @@ body {
     background: var(--bg);
     color: var(--text);
     font-family: 'Noto Sans JP', sans-serif;
-    height: 100dvh;
+    height: 100dvh;                       /* 初回描画用フォールバック */
+    height: var(--app-height, 100dvh);    /* JSが実測値で上書き（iOS起動時の浮き対策）*/
     width: 100vw;
     overflow: hidden;
     display: flex;
