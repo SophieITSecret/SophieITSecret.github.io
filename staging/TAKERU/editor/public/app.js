@@ -691,8 +691,10 @@ async function buildExportHTML(cards, title, withImg){
     const has=hasRealBody(c.body);
     const text=has?c.body.trim():'（本文未作成）';
     const d=imgs[c.id];
+    // 画像が無いのは「不要」ではなく「未作成」なので、レビュアーに作業中と伝わる文言にする
     const imgHtml=d?`<div class="cimg"><img src="${d}" alt="${esc(c.id)}"></div>`
-                  :(imageMap[c.id]?'<div class="cimg noimg">［画像あり・埋め込みなし］</div>':'<div class="cimg noimg">［画像なし］</div>');
+                  :(imageMap[c.id]?'<div class="cimg noimg">［画像あり・このファイルには未収録］</div>'
+                                  :'<div class="cimg noimg pending">［画像はこれから］</div>');
     const meta=[`${text.length}字`, imageMap[c.id]?'画像あり':'画像なし', mp3Ids.has(c.id)?'音声あり':'音声なし'];
     body+=`<article class="card">
   <div class="chead"><span class="cid">${esc(c.id)}</span><h3>${esc(c.title)||'（タイトルなし）'}</h3></div>
@@ -726,6 +728,7 @@ async function buildExportHTML(cards, title, withImg){
   .cimg img { width:100%; border-radius:5px; display:block; border:1px solid #e5e5e5; }
   .cimg.noimg { font-size:0.75rem; color:#aaa; background:#fafafa; border:1px dashed #ddd;
                 border-radius:5px; padding:16px; text-align:center; }
+  .cimg.noimg.pending { color:#a97514; background:#fdf7e8; border-color:#e5cf94; }
   .cbody { white-space:pre-wrap; font-size:0.95rem; }
   .cbody.wip { color:#b00; font-style:italic; }
   .cmeta { margin-top:12px; padding-top:8px; border-top:1px dotted #ddd;
