@@ -2,17 +2,24 @@
 // TAKERU MSアカデミー app.js v2.9
 // ==========================================
 
-// iOSのホーム画面アプリ(standalone)では、起動直後だけ 100dvh が誤って
-// 計算され、最初のタップで直る（下の隙間が大きく→触ると縮む）バグがある。
-// 実際の可視高さ window.innerHeight を測って body の高さに反映し、
-// 起動時点から安定させる。CSSは 100dvh をフォールバックに残す。
+// iOSのホーム画面アプリ(standalone)では、起動直後だけ画面高さが誤って
+// 小さく報告され、コントローラー下に大きな隙間が残る（横回転で測り直すと直る）。
+// 実際の可視高さを body に反映して安定させる。visualViewport が最も正確。
+// 起動直後は値が確定しないため、落ち着くまで数回測り直す。
 function setAppHeight() {
-    document.documentElement.style.setProperty('--app-height', window.innerHeight + 'px');
+    const h = (window.visualViewport && window.visualViewport.height) || window.innerHeight;
+    document.documentElement.style.setProperty('--app-height', h + 'px');
 }
 setAppHeight();
+// 起動直後は innerHeight が確定しない。settleするまで段階的に測り直す。
+window.addEventListener('load', setAppHeight);
+[60, 150, 300, 600, 1000].forEach(t => setTimeout(setAppHeight, t));
 window.addEventListener('resize', setAppHeight);
-window.addEventListener('orientationchange', () => setTimeout(setAppHeight, 120));
+window.addEventListener('orientationchange', () => setTimeout(setAppHeight, 150));
 window.addEventListener('pageshow', setAppHeight);       // 背面から復帰したとき
+if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', setAppHeight);
+}
 document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') setAppHeight();
 });
