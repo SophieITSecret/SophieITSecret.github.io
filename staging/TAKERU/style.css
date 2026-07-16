@@ -15,7 +15,7 @@ body.dark-mode {
     --border: #2a3048;
     --label-bg: #1a2a1a;
     --label-color: #4caf50;
-    --divider: #1976d2;   /* 画像下の区切り線：やや濃い青 */
+    --divider: #1565c0;   /* 画像下の区切り線：さらに濃い青 */
     --settings-bg: rgba(10,12,16,0.97);
     --placeholder-color: #2a3048;
     --link-field-bg: #0f1520;
@@ -50,9 +50,9 @@ body {
     display: flex;
     flex-direction: column;
     padding-top: env(safe-area-inset-top);
-    /* 下のホームバー分だけ持ち上げてコントローラーを安定させる（縦画面）。
-       ここが0だとホームバーに重なったり、環境で浮き沈みして見える。 */
-    padding-bottom: env(safe-area-inset-bottom);
+    /* 下の隙間はホームバー安全領域の半分（コントローラー帯の約1/3）に。
+       0だとホームバーに重なり、全量だと浮きすぎる。縦画面のみ。 */
+    padding-bottom: calc(env(safe-area-inset-bottom) * 0.5);
     transition: background 0.3s, color 0.3s;
 }
 
@@ -160,7 +160,7 @@ body {
     height: 3px;
     background: var(--divider);
     flex-shrink: 0;
-    box-shadow: 0 0 8px rgba(25,118,210,0.45);   /* グローもやや濃い青に */
+    box-shadow: 0 0 8px rgba(21,101,192,0.45);   /* グローもさらに濃い青に */
 }
 
 #content-area {
@@ -556,8 +556,9 @@ body {
 
 /* ==================== リンク一覧 ==================== */
 .section-header {
-    padding: 6px 14px;
-    font-size: 0.9rem;               /* サブユニット名を一回り大きく（0.75→0.9rem）*/
+    padding: 3px 14px;               /* 行の高さを約15%減（上下6→3px。文字はそのまま）*/
+    font-size: 0.9rem;
+    line-height: 1.2;
     font-family: 'Oswald', sans-serif;
     letter-spacing: 0.08em;
     background: var(--label-bg);
