@@ -232,7 +232,14 @@ textarea.svg-overlay-input { min-height:120px; font-family:monospace; font-size:
 
 /* モーダル（一括取り込み） */
 /* 書き出しモーダル */
-.exp-block { border:1px solid var(--border); border-radius:6px; padding:10px 12px; display:flex; flex-direction:column; gap:7px; }
+.export-modal-box { height:88vh; }
+.exp-block { border:1px solid var(--border); border-radius:6px; padding:10px 12px; display:flex; flex-direction:column; gap:7px; flex-shrink:0; }
+.exp-list-block { flex:1; min-height:0; padding-top:0; }
+.exp-list-block .batch-toolbar { border-bottom:1px solid var(--border); }
+.exp-list-block .exp-label { margin-right:4px; }
+.exp-list { min-height:0; }
+.exp-list .batch-item.exp-wip .batch-title { color:var(--text3); font-style:italic; }
+.exp-sec { font-size:0.68rem; color:var(--accent); letter-spacing:.06em; padding:7px 4px 3px; border-bottom:1px solid rgba(255,255,255,.06); }
 .exp-label { font-size:0.72rem; color:var(--accent); letter-spacing:.08em; font-weight:700; }
 .exp-radio { display:flex; align-items:center; gap:8px; font-size:0.82rem; cursor:pointer; }
 .exp-radio input { cursor:pointer; flex-shrink:0; }

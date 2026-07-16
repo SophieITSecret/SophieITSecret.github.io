@@ -70,7 +70,7 @@
 
 <!-- レビュー用 書き出し -->
 <div id="exportModal" class="modal-overlay">
-  <div class="modal-box">
+  <div class="modal-box export-modal-box">
     <div class="modal-head">
       <h2>📤 レビュー用に書き出し</h2>
       <button class="btn-cancel" onclick="closeExport()">✕ 閉じる</button>
@@ -83,11 +83,11 @@
       <div class="exp-label">書き出す範囲</div>
       <label class="exp-radio"><input type="radio" name="expScope" value="unit" checked onchange="onExportScopeChange()">
         <span>ユニット単位</span>
-        <select id="exportUnit" class="exp-select" onchange="updateExportInfo()"></select>
+        <select id="exportUnit" class="exp-select" onchange="renderExportList()"></select>
       </label>
       <label class="exp-radio"><input type="radio" name="expScope" value="subject" onchange="onExportScopeChange()">
         <span>科目・級ごと</span>
-        <select id="exportSubject" class="exp-select" onchange="updateExportInfo()"></select>
+        <select id="exportSubject" class="exp-select" onchange="renderExportList()"></select>
       </label>
       <label class="exp-radio"><input type="radio" name="expScope" value="card" onchange="onExportScopeChange()">
         <span>選択中のカード1枚</span>
@@ -112,6 +112,17 @@
       <label class="exp-radio"><input type="checkbox" id="exportWithImg" checked onchange="updateExportInfo()">
         <span>HTMLに画像を埋め込む　<span class="exp-hint">1ファイルで完結（メール添付OK）。JPEG化して軽くします</span></span>
       </label>
+    </div>
+
+    <div class="exp-block exp-list-block">
+      <div class="batch-toolbar">
+        <span class="exp-label">書き出すカード</span>
+        <button class="btn-batch-sel" onclick="expCheckAll(true)">全選択</button>
+        <button class="btn-batch-sel" onclick="expCheckAll(false)">全解除</button>
+        <button class="btn-batch-sel" onclick="expCheckWritten()">未作成を外す</button>
+        <span id="exportCheckCount" class="batch-count">0枚</span>
+      </div>
+      <div id="exportList" class="batch-list exp-list"></div>
     </div>
 
     <div id="exportInfo" class="exp-info"></div>

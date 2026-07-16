@@ -487,10 +487,11 @@ function onExportScopeChange(){
   const card=selectedIdx>=0?cardData[selectedIdx]:null;
   document.getElementById('exportCardName').textContent =
     card ? `${card.id}　${card.title||'（タイトルなし）'}` : '（カード未選択）';
-  updateExportInfo();
+  renderExportList();
 }
 
-function getExportCards(){
+// 範囲で絞り込んだ候補（チェックを外す前の全件）
+function getScopeCards(){
   const s=_expScope();
   if(s==='card') return selectedIdx>=0?[cardData[selectedIdx]]:[];
   if(s==='unit'){
@@ -501,6 +502,59 @@ function getExportCards(){
   return cardData.filter(c=>c.subject===sub);
 }
 
+// 実際に書き出す対象（チェックが入っているものだけ）
+function getExportCards(){
+  const checked=new Set([...document.querySelectorAll('.exp-cb:checked')].map(cb=>cb.dataset.id));
+  return getScopeCards().filter(c=>checked.has(c.id));
+}
+
+// 範囲を変えるたびに一覧を作り直す。未作成カードも既定では入れておく
+// （「ここはこれから書く」という全体構成を見せたい場合があるため）。
+function renderExportList(){
+  const cards=getScopeCards();
+  const el=document.getElementById('exportList');
+  if(!cards.length){
+    el.innerHTML='<div class="empty-state" style="padding:20px;font-size:0.8rem">対象がありません</div>';
+    updateExportInfo();
+    return;
+  }
+  let html='', curSec=null;
+  for(const c of cards){
+    if(c.section!==curSec){
+      curSec=c.section;
+      if(curSec) html+=`<div class="exp-sec">📂 ${esc(curSec)}</div>`;
+    }
+    const hasBody=hasRealBody(c.body), hasImg=!!imageMap[c.id], hasMp3=mp3Ids.has(c.id);
+    html+=`<label class="batch-item${hasBody?'':' exp-wip'}">
+      <input type="checkbox" class="exp-cb" data-id="${esc(c.id)}" checked onchange="updateExportInfo()">
+      <span class="batch-code">${esc(c.id)}</span>
+      <span class="batch-title">${esc(c.title||'（タイトルなし）')}</span>
+      <span class="status-dots">
+        <span class="sdot ${hasBody?'sdot-body':'sdot-off'}">文</span>
+        <span class="sdot ${hasImg?'sdot-img':'sdot-off'}">画</span>
+        <span class="sdot ${hasMp3?'sdot-mp3':'sdot-off'}">音</span>
+      </span>
+    </label>`;
+  }
+  el.innerHTML=html;
+  updateExportInfo();
+}
+
+function expCheckAll(v){
+  document.querySelectorAll('.exp-cb').forEach(cb=>cb.checked=v);
+  updateExportInfo();
+}
+
+// 本文が書けているものだけ残す
+function expCheckWritten(){
+  const byId={};
+  for(const c of getScopeCards()) byId[c.id]=c;
+  document.querySelectorAll('.exp-cb').forEach(cb=>{
+    cb.checked=hasRealBody(byId[cb.dataset.id]?.body);
+  });
+  updateExportInfo();
+}
+
 function getExportTitle(){
   const s=_expScope();
   if(s==='card') return selectedIdx>=0?cardData[selectedIdx].id:'card';
@@ -509,13 +563,22 @@ function getExportTitle(){
 }
 
 function updateExportInfo(){
+  const scoped=getScopeCards();
   const cards=getExportCards();
   const el=document.getElementById('exportInfo');
   const btn=document.getElementById('btnDoExport');
 
-  if(!cards.length){
+  document.getElementById('exportCheckCount').textContent =
+    scoped.length ? `${cards.length} / ${scoped.length}枚` : '0枚';
+
+  if(!scoped.length){
     el.innerHTML='<span class="exp-warn">⚠ 書き出す対象がありません。'+
       (_expScope()==='card'?'左の一覧からカードを選んでください。':'')+'</span>';
+    btn.disabled=true;
+    return;
+  }
+  if(!cards.length){
+    el.innerHTML='<span class="exp-warn">⚠ カードが1枚も選ばれていません。</span>';
     btn.disabled=true;
     return;
   }
@@ -530,8 +593,10 @@ function updateExportInfo(){
   if(fmt==='both'||fmt==='md')   files.push('.md');
   if(fmt==='both'||fmt==='html') files.push('.html');
 
+  const nOff=scoped.length-cards.length;
   let html=`<strong>${cards.length}枚</strong> を書き出します`+
-    `（本文あり ${nBody}枚／画像あり ${nImg}枚）<br>`+
+    `（本文あり ${nBody}枚／画像あり ${nImg}枚`+
+    (nOff?`／<span class="exp-warn">${nOff}枚を除外</span>`:'')+`）<br>`+
     `ファイル：<strong>${files.join('　+　')}</strong>`;
 
   if(nBody<cards.length){
