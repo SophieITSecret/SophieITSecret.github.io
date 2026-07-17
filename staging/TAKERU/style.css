@@ -1006,9 +1006,9 @@ body.font-large #card-body { font-size: 1.05rem; }
 
     /* 図表：紙面の幅を使い切れるところまで広げる。
        4:3なので、幅880pxいっぱいに出すには高さ660pxが要る。
-       画面が低いときは本文が潰れないよう 58lvh で頭打ちにする。
-       （もっと大きくしたいならこの 58lvh を上げる） */
-    #image-area { max-height: min(58lvh, 660px); }
+       画面が低いときは本文が潰れないよう 54lvh で頭打ちにする。
+       （図表を大きくしたいなら上げる／本文を確保したいなら下げる） */
+    #image-area { max-height: min(54lvh, 660px); }
 
     /* 本文：読みやすい幅と大きさに */
     #text-view { padding: 18px 34px 22px; }
