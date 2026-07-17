@@ -116,6 +116,55 @@
   </div>
 </div>
 
+<!-- 音声設定の比較サンプル -->
+<div id="compareModal" class="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h2>🔬 設定を比較</h2>
+      <button class="btn-cancel" onclick="closeCompare()">✕ 閉じる</button>
+    </div>
+    <div class="modal-desc">
+      他の設定は今のまま固定し、選んだ1つのパラメータを <b>中心－差分 ／ 中心 ／ 中心＋差分</b> の3つで生成します。
+      聴き比べて良かったものを「これに決める」で採用し、差分を小さくして繰り返すと最適値に近づけます。
+    </div>
+
+    <div class="exp-block">
+      <div class="exp-label">サンプル文（短め推奨）</div>
+      <input id="cmpText" class="edit-input" value="自衛隊は、国の平和と独立を守るために活動しています。">
+    </div>
+
+    <div class="exp-block">
+      <div class="exp-label">動かすパラメータ</div>
+      <label class="exp-radio">
+        <span class="rn-lbl">対象</span>
+        <select id="cmpParam" class="exp-select" onchange="onCmpParamChange()">
+          <option value="speed">スピード</option>
+          <option value="pitch">ピッチ</option>
+          <option value="happy">喜び</option>
+          <option value="fun">楽しさ</option>
+          <option value="sad">悲しみ</option>
+          <option value="angry">怒り</option>
+        </select>
+      </label>
+      <label class="exp-radio">
+        <span class="rn-lbl">中心</span>
+        <input id="cmpCenter" type="number" class="v-num-inp" oninput="updateCmpInfo()">
+        <span class="rn-lbl" style="min-width:auto">差分 ±</span>
+        <input id="cmpDelta" type="number" class="v-num-inp" value="5" oninput="updateCmpInfo()">
+      </label>
+    </div>
+
+    <div id="cmpInfo" class="exp-info"></div>
+
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeCompare()">キャンセル</button>
+      <button class="btn-apply" id="btnDoCompare" onclick="doCompare()">🔬 3つ生成</button>
+    </div>
+
+    <div id="cmpResults" class="cmp-results" style="display:none"></div>
+  </div>
+</div>
+
 <!-- レビュー用 書き出し -->
 <div id="exportModal" class="modal-overlay">
   <div class="modal-box export-modal-box">
@@ -369,6 +418,9 @@
       <button id="btnPlay" class="btn-voice" onclick="togglePlay()">▶ 再生</button>
       <button id="btnStop" class="btn-voice" onclick="stopVoice()" title="停止して先頭へ">⏹</button>
       <button id="btnConfirm" class="btn-voice-confirm" onclick="confirmVoice()">✅ 確定</button>
+    </div>
+    <div class="voice-btns">
+      <button id="btnCompare" class="btn-voice" onclick="openCompare()" title="1つのパラメータを中心±差分で3つ生成して聴き比べる">🔬 設定を比較</button>
     </div>
     <div class="play-seek-row" id="playSeekRow" style="display:none">
       <span id="playTimeCur" class="play-time">0:00</span>

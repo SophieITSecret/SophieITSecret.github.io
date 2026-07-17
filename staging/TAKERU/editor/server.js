@@ -413,6 +413,86 @@ function splitForVP(text, limit) {
   return out;
 }
 
+// 比較サンプル：1つのパラメータを 中心-差分 / 中心 / 中心+差分 の3値で生成する。
+// 他は固定。短いサンプル文なので分割不要。結果は temp に置いて配信する。
+const COMPARE_DIR = path.join(os.tmpdir(), 'takeru_voice_compare');
+try { fs.mkdirSync(COMPARE_DIR, { recursive: true }); } catch {}
+
+function postVoiceCompare(req, res) {
+  let chunks = [];
+  const cancelRef = { cancelled: false, proc: null };
+  req.socket.on('close', () => {
+    if (!res.writableEnded) { cancelRef.cancelled = true; if (cancelRef.proc) { try { cancelRef.proc.kill('SIGTERM'); } catch {} } }
+  });
+  req.on('data', c => chunks.push(c));
+  req.on('end', async () => {
+    const wavs = [];
+    try {
+      const d = JSON.parse(Buffer.concat(chunks).toString('utf8'));
+      const text     = (d.text || '').trim();
+      const narrator = (d.narrator || 'Japanese Female 1').trim();
+      const param    = d.param;                    // 'speed'|'pitch'|'happy'|'fun'|'sad'|'angry'
+      const center   = Number(d.center);
+      const delta    = Number(d.delta);
+      const base     = d.base || {};               // 固定する他パラメータ {speed,pitch,happy,fun,sad,angry}
+      if (!text) return sendJSON(res, 400, { ok: false, error: 'サンプル文が空です' });
+      if (!['speed','pitch','happy','fun','sad','angry'].includes(param))
+        return sendJSON(res, 400, { ok: false, error: 'パラメータ指定が不正です' });
+
+      // 各パラメータの下限・上限（UIのスライダーに合わせる）
+      const range = { speed:[50,200], pitch:[0,100], happy:[0,100], fun:[0,100], sad:[0,100], angry:[0,100] }[param];
+      const clamp = v => Math.max(range[0], Math.min(range[1], Math.round(v)));
+      const values = [clamp(center - delta), clamp(center), clamp(center + delta)];
+
+      const { vpPath, vpDir, tempDir } = getVpConfig();
+      const reqId = `cmp_${Date.now().toString(36)}`;
+      const outValues = [];
+
+      for (let i = 0; i < values.length; i++) {
+        if (cancelRef.cancelled) return;
+        const v = values[i];
+        // このサンプル用のパラメータを組み立て（paramだけ差し替え、他はbase）
+        const p = { speed:100, pitch:50, happy:0, fun:0, sad:0, angry:0, ...base, [param]: v };
+        const emParts = [];
+        if (p.happy>0) emParts.push(`happy=${p.happy}`);
+        if (p.fun>0)   emParts.push(`fun=${p.fun}`);
+        if (p.sad>0)   emParts.push(`sad=${p.sad}`);
+        if (p.angry>0) emParts.push(`angry=${p.angry}`);
+        const emotion = emParts.join(',') || 'happy=0';
+        const vpPitch = String(Math.round((Number(p.pitch) - 50) * 6));  // 0-100中央50 → -300〜300
+
+        const txtFile = path.join(tempDir, `${reqId}_${i}.txt`);
+        const wavFile = path.join(tempDir, `${reqId}_${i}.wav`);
+        fs.writeFileSync(txtFile, text, 'utf8');
+        await spawnVP([vpPath, '-t', txtFile, '-n', narrator, '-e', emotion,
+          '--speed', String(p.speed), '--pitch', vpPitch, '-o', wavFile], { cwd: vpDir }, 3, cancelRef);
+        wavs.push(wavFile);
+        try { fs.unlinkSync(txtFile); } catch {}
+
+        const mp3Path = path.join(COMPARE_DIR, `${i}.mp3`);
+        await wavsToMp3([wavFile], mp3Path, tempDir, `${reqId}_${i}`);
+        outValues.push(v);
+      }
+      sendJSON(res, 200, { ok: true, param, values: outValues });
+    } catch (e) {
+      sendJSON(res, 500, { ok: false, error: e.message });
+    } finally {
+      wavs.forEach(f => { try { fs.unlinkSync(f); } catch {} });
+    }
+  });
+}
+
+// 比較サンプルの音声を返す（0.mp3 / 1.mp3 / 2.mp3）
+function getVoiceCompareAudio(req, res, idx) {
+  const i = String(idx).replace(/\D/g, '');
+  const p = path.join(COMPARE_DIR, `${i}.mp3`);
+  fs.readFile(p, (err, data) => {
+    if (err) { res.writeHead(404); return res.end('not found'); }
+    res.writeHead(200, { 'Content-Type': 'audio/mpeg', 'Cache-Control': 'no-store' });
+    res.end(data);
+  });
+}
+
 function postVoiceGenerate(req, res) {
   let chunks = [];
   const cancelRef = { cancelled: false, proc: null };
@@ -522,6 +602,9 @@ const server = http.createServer((req, res) => {
   if (pathname.startsWith('/api/voice/audio/') && method === 'GET')
     return getVoiceAudio(req, res, pathname.slice('/api/voice/audio/'.length));
   if (pathname === '/api/voice/generate' && method === 'POST') return postVoiceGenerate(req, res);
+  if (pathname === '/api/voice/compare' && method === 'POST') return postVoiceCompare(req, res);
+  if (pathname.startsWith('/api/voice/compare-audio/') && method === 'GET')
+    return getVoiceCompareAudio(req, res, pathname.slice('/api/voice/compare-audio/'.length));
   if (pathname === '/api/prompts' && method === 'GET')  return getPrompts(req, res);
   if (pathname === '/api/prompts' && method === 'POST') return postPrompts(req, res);
   if (pathname === '/api/voice-settings' && method === 'GET')  return getVoiceSettings(req, res);

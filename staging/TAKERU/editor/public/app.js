@@ -1122,6 +1122,93 @@ function abortRecord(){
   if(_recordAbort){ _recordAbort.abort(); }
 }
 
+// ============ 設定の比較サンプル ============
+// 1つのパラメータを 中心±差分 の3値で生成し、その場で聴き比べる。
+const CMP_PARAM_LABEL = { speed:'スピード', pitch:'ピッチ', happy:'喜び', fun:'楽しさ', sad:'悲しみ', angry:'怒り' };
+const CMP_PARAM_RANGE = { speed:[50,200], pitch:[0,100], happy:[0,100], fun:[0,100], sad:[0,100], angry:[0,100] };
+let _cmpAudio = null;
+
+function openCompare(){
+  onCmpParamChange();                       // 中心の初期値を今の設定から拾う
+  document.getElementById('cmpResults').style.display='none';
+  document.getElementById('cmpResults').innerHTML='';
+  document.getElementById('compareModal').style.display='flex';
+}
+function closeCompare(){
+  if(_cmpAudio){ _cmpAudio.pause(); _cmpAudio=null; }
+  document.getElementById('compareModal').style.display='none';
+}
+
+// 対象パラメータを変えたら、中心の初期値を現在のスライダー値にする
+function onCmpParamChange(){
+  const param=document.getElementById('cmpParam').value;
+  const cur=getSliderParams();
+  const map={ speed:cur.speed, pitch:cur.pitch, happy:cur.happy, fun:cur.fun, sad:cur.sad, angry:cur.angry };
+  document.getElementById('cmpCenter').value=map[param];
+  updateCmpInfo();
+}
+
+function updateCmpInfo(){
+  const param=document.getElementById('cmpParam').value;
+  const [lo,hi]=CMP_PARAM_RANGE[param];
+  const center=Math.round(+document.getElementById('cmpCenter').value);
+  const delta=Math.round(+document.getElementById('cmpDelta').value);
+  const clamp=v=>Math.max(lo,Math.min(hi,v));
+  const vals=[clamp(center-delta),clamp(center),clamp(center+delta)];
+  const el=document.getElementById('cmpInfo');
+  el.innerHTML=`「${CMP_PARAM_LABEL[param]}」を <strong>${vals[0]} / ${vals[1]} / ${vals[2]}</strong> の3つで生成します`+
+    (vals[0]===vals[1]||vals[1]===vals[2] ? '<br><span class="exp-warn">⚠ 端に達して同じ値が含まれます（差分を小さく／中心をずらしてください）</span>' : '');
+}
+
+async function doCompare(){
+  const param=document.getElementById('cmpParam').value;
+  const center=Math.round(+document.getElementById('cmpCenter').value);
+  const delta=Math.round(+document.getElementById('cmpDelta').value);
+  const text=document.getElementById('cmpText').value.trim();
+  if(!text){ alert('サンプル文を入れてください'); return; }
+  const btn=document.getElementById('btnDoCompare');
+  const orig=btn.textContent; btn.disabled=true; btn.textContent='⏳ 生成中…（3件）';
+  const results=document.getElementById('cmpResults');
+  results.style.display='block';
+  results.innerHTML='<div class="cmp-wait">VOICEPEAKで3件生成しています。少しお待ちください…</div>';
+  try{
+    const body={ text, narrator:getNarrator(), param, center, delta, base:getSliderParams() };
+    const json=await(await fetch('/api/voice/compare',{ method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) })).json();
+    if(!json.ok){ results.innerHTML='<div class="cmp-wait">⚠ '+json.error+'</div>'; return; }
+    const t=Date.now();
+    const labels=['中心－差分','中心','中心＋差分'];
+    results.innerHTML = json.values.map((v,i)=>`
+      <div class="cmp-row">
+        <span class="cmp-label">${labels[i]}</span>
+        <span class="cmp-val">${CMP_PARAM_LABEL[param]} = <b>${v}</b></span>
+        <button class="btn-voice" onclick="playCmp(${i})">▶ 再生</button>
+        <button class="btn-apply cmp-pick" onclick="pickCmp('${param}',${v})">これに決める</button>
+      </div>`).join('') + '<div class="cmp-hint">気に入ったものを「これに決める」→ その値が本体の設定に入ります。差分を小さくしてまた3つ、で追い込めます。</div>';
+    results._t=t;
+  }catch(e){
+    results.innerHTML='<div class="cmp-wait">⚠ '+e.message+'</div>';
+  }finally{
+    btn.disabled=false; btn.textContent=orig;
+  }
+}
+
+function playCmp(i){
+  if(_cmpAudio){ _cmpAudio.pause(); }
+  _cmpAudio=new Audio(`/api/voice/compare-audio/${i}?t=${Date.now()}`);
+  _cmpAudio.play().catch(()=>alert('再生できませんでした'));
+}
+
+// 選んだ値を本体スライダーに反映（次はここを中心にまた比較できる）
+function pickCmp(param, value){
+  const rangeId={ speed:'vpSpeed', pitch:'vpPitch', happy:'emHappy', fun:'emFun', sad:'emSad', angry:'emAngry' }[param];
+  document.getElementById(rangeId).value=value;
+  document.getElementById(rangeId+'N').value=value;
+  saveVoiceSettings();
+  showVoiceMsg(`✅ ${CMP_PARAM_LABEL[param]} を ${value} に設定しました`);
+  document.getElementById('cmpCenter').value=value;   // 次の比較はこの値を中心に
+  updateCmpInfo();
+}
+
 function fmtTime(s){
   const m=Math.floor(s/60), sec=Math.floor(s%60);
   return `${m}:${sec.toString().padStart(2,'0')}`;

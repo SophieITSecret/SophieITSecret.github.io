@@ -257,6 +257,17 @@ textarea.svg-overlay-input { min-height:120px; font-family:monospace; font-size:
 .exp-info strong { color:var(--accent2); }
 .exp-info .exp-warn { color:var(--com); }
 
+/* 設定の比較サンプル */
+.cmp-results { margin-top:14px; display:flex; flex-direction:column; gap:8px; }
+.cmp-wait { font-size:0.82rem; color:var(--text2); text-align:center; padding:14px; }
+.cmp-row { display:flex; align-items:center; gap:10px; background:var(--bg3); border:1px solid var(--border); border-radius:8px; padding:8px 12px; }
+.cmp-label { font-size:0.72rem; color:var(--text3); min-width:64px; flex-shrink:0; }
+.cmp-val { font-size:0.86rem; flex:1; }
+.cmp-val b { color:var(--accent2); font-size:1.02rem; }
+.cmp-row .btn-voice { flex:none; width:74px; }
+.cmp-pick { flex:none; }
+.cmp-hint { font-size:0.72rem; color:var(--text2); line-height:1.6; padding:4px 2px; }
+
 .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.7); z-index:100; align-items:center; justify-content:center; }
 .modal-box { background:var(--bg2); border:1px solid var(--border); border-radius:10px; width:680px; max-width:92vw; max-height:88vh; display:flex; flex-direction:column; padding:20px; gap:12px; }
 .modal-head { display:flex; justify-content:space-between; align-items:center; }
