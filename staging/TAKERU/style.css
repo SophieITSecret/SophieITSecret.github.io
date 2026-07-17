@@ -1020,7 +1020,6 @@ body.font-large #card-body { font-size: 1.05rem; }
     /* コントローラー：マウス向けに大きく */
     #controls { height: 64px; gap: 6px; padding: 7px 10px 8px; }
     .ctrl-btn { font-size: 0.9rem; cursor: pointer; transition: background .15s, border-color .15s; }
-    .ctrl-btn:hover:not(:disabled) { background: var(--bg2); border-color: var(--accent); color: var(--accent); }
     .btn-up { font-size: 1.3rem; }
     .btn-up .btn-sub-label { font-size: 0.7rem; }
     .btn-arrow { font-size: 1.4rem; }
@@ -1044,12 +1043,10 @@ body.font-large #card-body { font-size: 1.05rem; }
         vertical-align: top;
     }
     .section-header, .genre-panel-label, .sticky-head, .menu-label { width: 100%; }
-    .menu-item:hover { background: var(--bg3); cursor: pointer; }
 
     /* 級・科目パネル */
     .sub-menu-wrap { padding: 30px 8% 12px; }
     .subject-btn { height: 92px; font-size: 0.92rem; }
-    .subject-btn:hover:not(:disabled) { filter: brightness(1.18); }
     .grade-label { font-size: 0.95rem; }
 
     /* 設定の「画面レイアウト」欄はパソコンでだけ出す */
@@ -1082,6 +1079,50 @@ body.font-large #card-body { font-size: 1.05rem; }
     body.pc-wide.menu-mode #content-area { max-width: none; }
     body.pc-wide.menu-mode #divider-line { display: block; }
     body.pc-wide .genre-list-wrap { grid-template-columns: 1fr 1fr 1fr; }
+}
+
+/* ---- hover はマウスがある環境だけ ----
+   タッチ画面（iPad等）では、タップ後に反応が残り続けるため適用しない。 */
+@media (min-width: 900px) and (hover: hover) and (pointer: fine) {
+    .ctrl-btn:hover:not(:disabled) { background: var(--bg2); border-color: var(--accent); color: var(--accent); }
+    .menu-item:hover { background: var(--bg3); cursor: pointer; }
+    .subject-btn:hover:not(:disabled) { filter: brightness(1.18); }
+    .genre-btn:hover, .top-btn:hover { filter: brightness(1.15); }
+}
+
+/* ==================================================================
+   タブレット縦向き（幅600〜899px：iPad mini/無印/Air/Pro11 の縦）
+   パソコン指定（900px以上）から漏れ、スマホ表示が横に伸びて
+   本文が1行56文字ほどになり読みにくかったため、ここで面倒を見る。
+   端末自体が枠なので紙面の枠は付けず、画面いっぱいに使う。
+   ================================================================== */
+@media (min-width: 600px) and (max-width: 899px) {
+    /* 本文は読みやすい幅で中央に（画像・メニューは全幅のまま） */
+    #text-view { padding: 14px 24px 18px; }
+    #card-body, #card-title, #card-progress { max-width: 42em; margin-left: auto; margin-right: auto; }
+    body.font-small  #card-body { font-size: 0.92rem; }
+    body.font-medium #card-body { font-size: 1.02rem; }
+    body.font-large  #card-body { font-size: 1.15rem; }
+    #card-body { line-height: 1.9; }
+    #card-title { font-size: 1.2rem; }
+
+    /* 図表は大きくなりすぎないように */
+    #image-area { max-height: 38dvh; }
+
+    /* 操作は指で押しやすい大きさに */
+    #controls { height: 60px; gap: 5px; }
+    .ctrl-btn { font-size: 0.85rem; }
+    .btn-up { font-size: 1.25rem; }
+    .btn-up .btn-sub-label { font-size: 0.66rem; }
+    .btn-arrow { font-size: 1.3rem; }
+
+    /* メニューは2列に（一覧性を上げる） */
+    .genre-list-wrap { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; padding: 12px 6%; }
+    #menu-content .menu-item { display: inline-flex; width: 50%; vertical-align: top; }
+    .section-header, .genre-panel-label, .sticky-head, .menu-label { width: 100%; }
+    .top-menu-wrap { padding: 26px 16% 16px; }
+    .sub-menu-wrap { padding: 26px 8% 10px; }
+    .subject-btn { height: 86px; }
 }
 
 /* 設定の「画面レイアウト」欄はスマホでは隠す */
