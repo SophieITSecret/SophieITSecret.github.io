@@ -475,11 +475,13 @@ function showCard(idx) {
     cardImage.src = `images/${card.id}.jpg`;
     cardImage.style.display = 'block';
     imagePlaceholder.style.display = 'none';
+    imageArea.classList.add('has-image');   // 拡大できる印（⛶）を出す
     cardImage.onerror = () => {
         cardImage.src = `images/${card.id}.png`;
         cardImage.onerror = () => {
             cardImage.style.display = 'none';
             imagePlaceholder.style.display = 'flex';
+            imageArea.classList.remove('has-image');
         };
     };
 
@@ -712,6 +714,11 @@ function setupButtons() {
         }
     };
 
+    // 図表をタップ／クリックで全画面。もう一度タップで戻る
+    imageArea.addEventListener('click', openImgZoom);
+    document.getElementById('img-zoom').addEventListener('click', closeImgZoom);
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeImgZoom(); });
+
     btnHome.onclick = () => {
         stopVoice();
         showTopMenu();
@@ -874,6 +881,22 @@ function stopVoice() {
     voice.src = '';
     voice.volume = 1.0;
     window.speechSynthesis.cancel();
+}
+
+// ==========================================
+// 図表の全画面表示（カード画面で図表をタップ）
+// 設定を経由せず、その場で大きく見られるようにするための入り口。
+// ==========================================
+function openImgZoom() {
+    if (isMenuVisible) return;                       // メニューのバナーでは効かせない
+    if (cardImage.style.display === 'none') return;  // 画像が無いカードは対象外
+    if (!cardImage.src) return;
+    document.getElementById('img-zoom-img').src = cardImage.src;
+    document.getElementById('img-zoom').style.display = 'flex';
+}
+
+function closeImgZoom() {
+    document.getElementById('img-zoom').style.display = 'none';
 }
 
 // ==========================================
