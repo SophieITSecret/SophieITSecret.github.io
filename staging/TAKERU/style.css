@@ -1109,8 +1109,10 @@ body.font-large #card-body { font-size: 1.05rem; }
     #card-body { line-height: 1.9; }
     #card-title { font-size: 1.2rem; }
 
-    /* 図表は大きくなりすぎないように */
-    #image-area { max-height: 38dvh; }
+    /* 図表：画面の幅いっぱいまで使えるように。4:3なので幅いっぱい＝高さ75vw。
+       iPadは縦に長いので、これでも本文は500px前後残る。
+       画面が低いとき（横長のウィンドウ等）は本文が潰れないよう54dvhで頭打ち。 */
+    #image-area { max-height: min(54dvh, 75vw); }
 
     /* 操作は指で押しやすい大きさに */
     #controls { height: 60px; gap: 5px; }
