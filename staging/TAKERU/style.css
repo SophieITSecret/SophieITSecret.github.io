@@ -1004,8 +1004,11 @@ body.font-large #card-body { font-size: 1.05rem; }
     }
     body.light-mode #main-ui { box-shadow: 0 24px 70px rgba(0,0,0,.18); }
 
-    /* 図表：紙面幅いっぱい、上限は画面の4割 */
-    #image-area { max-height: 40lvh; }
+    /* 図表：紙面の幅を使い切れるところまで広げる。
+       4:3なので、幅880pxいっぱいに出すには高さ660pxが要る。
+       画面が低いときは本文が潰れないよう 58lvh で頭打ちにする。
+       （もっと大きくしたいならこの 58lvh を上げる） */
+    #image-area { max-height: min(58lvh, 660px); }
 
     /* 本文：読みやすい幅と大きさに */
     #text-view { padding: 18px 34px 22px; }
