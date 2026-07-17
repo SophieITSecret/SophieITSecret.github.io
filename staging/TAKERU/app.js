@@ -612,6 +612,7 @@ function showTextView() {
 
 // ◀/CARD と音声ON/OFF の表示を状態に合わせて更新
 function updateControlButtons() {
+    syncMenuMode();   // パソコンのワイド表示で、メニューだけ紙面型に戻すための目印
     if (isMenuVisible) {
         btnBack.textContent = 'CARD';
         btnBack.classList.add('btn-card-mode');
@@ -896,6 +897,21 @@ function setupSettings() {
     document.getElementById('btn-font-s').onclick = () => { setFontSize('small'); localStorage.setItem('takeru-font', 'small'); setActiveToggle('btn-font-s', ['btn-font-s','btn-font-m','btn-font-l']); };
     document.getElementById('btn-font-m').onclick = () => { setFontSize('medium'); localStorage.setItem('takeru-font', 'medium'); setActiveToggle('btn-font-m', ['btn-font-s','btn-font-m','btn-font-l']); };
     document.getElementById('btn-font-l').onclick = () => { setFontSize('large'); localStorage.setItem('takeru-font', 'large'); setActiveToggle('btn-font-l', ['btn-font-s','btn-font-m','btn-font-l']); };
+
+    // パソコンの画面レイアウト（スマホでは設定欄自体を隠しているので影響しない）
+    document.getElementById('btn-pc-tablet').onclick = () => { setPcLayout('tablet'); localStorage.setItem('takeru-pc-layout', 'tablet'); };
+    document.getElementById('btn-pc-wide').onclick   = () => { setPcLayout('wide');   localStorage.setItem('takeru-pc-layout', 'wide'); };
+}
+
+// パソコン向け：'tablet'（A4的な紙面を中央）/ 'wide'（図表を大きく）
+function setPcLayout(mode) {
+    document.body.classList.toggle('pc-wide', mode === 'wide');
+    setActiveToggle(mode === 'wide' ? 'btn-pc-wide' : 'btn-pc-tablet', ['btn-pc-tablet', 'btn-pc-wide']);
+}
+
+// ワイド表示のとき、メニュー画面だけは横並びにせず紙面型に戻す
+function syncMenuMode() {
+    document.body.classList.toggle('menu-mode', isMenuVisible);
 }
 
 function setActiveToggle(activeId, allIds) {
@@ -916,6 +932,7 @@ function loadSavedSettings() {
     }
     setFontSize(font);
     setActiveToggle(`btn-font-${font}`, ['btn-font-s','btn-font-m','btn-font-l']);
+    setPcLayout(localStorage.getItem('takeru-pc-layout') || 'tablet');
 }
 
 // ==========================================

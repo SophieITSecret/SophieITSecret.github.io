@@ -767,8 +767,11 @@ body {
     font-weight: bold;
 }
 
-/* ==================== 横向き対応 ==================== */
-@media (orientation: landscape) {
+/* ==================== 横向き対応（スマホを横に倒したとき専用） ====================
+   max-height を付けて「画面の高さが低い＝スマホ横向き」に限定する。
+   これが無いとパソコン（横長）もここに入ってしまい、画像が巨大化していた。
+   パソコン向けのレイアウトは後段の「パソコン対応」で別途指定する。 */
+@media (orientation: landscape) and (max-height: 600px) {
     body { padding-top: 0; padding-bottom: 0; }
 
     #main-ui {
@@ -964,3 +967,122 @@ body {
 body.font-small #card-body { font-size: 0.82rem; }
 body.font-medium #card-body { font-size: 0.92rem; }
 body.font-large #card-body { font-size: 1.05rem; }
+
+/* ==================================================================
+   パソコン対応（幅900px以上）
+   スマホの指定には一切触れず、広い画面のときだけ上書きする。
+   既定：タブレット／A4のような縦長の紙面を中央に置く
+   切替：body.pc-wide で図表重視のワイド表示
+   ================================================================== */
+@media (min-width: 900px) {
+
+    /* 背景：紙面を浮かせるための下地 */
+    body {
+        padding: 0;
+        background:
+            radial-gradient(1200px 700px at 50% -10%, #14203a 0%, transparent 60%),
+            var(--bg);
+        align-items: center;
+        justify-content: center;
+    }
+    body.light-mode {
+        background:
+            radial-gradient(1200px 700px at 50% -10%, #dfe8dd 0%, transparent 60%),
+            var(--bg);
+    }
+
+    /* ---- 既定：タブレット／A4的な紙面を中央に ---- */
+    #main-ui {
+        width: min(880px, 96vw);
+        height: min(1180px, 100lvh);      /* A4に近い縦長。画面が低ければ画面なり */
+        max-height: 100lvh;
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        overflow: hidden;
+        box-shadow: 0 24px 70px rgba(0,0,0,.5);
+        background: var(--bg2);
+    }
+    body.light-mode #main-ui { box-shadow: 0 24px 70px rgba(0,0,0,.18); }
+
+    /* 図表：紙面幅いっぱい、上限は画面の4割 */
+    #image-area { max-height: 40lvh; }
+
+    /* 本文：読みやすい幅と大きさに */
+    #text-view { padding: 18px 34px 22px; }
+    #card-body { line-height: 1.95; }
+    body.font-small  #card-body { font-size: 0.95rem; }
+    body.font-medium #card-body { font-size: 1.06rem; }
+    body.font-large  #card-body { font-size: 1.2rem; }
+    #card-title { font-size: 1.28rem; }
+    #card-progress { font-size: 0.85rem; }
+    .prog-unit { font-size: 0.85rem; }
+
+    /* コントローラー：マウス向けに大きく */
+    #controls { height: 64px; gap: 6px; padding: 7px 10px 8px; }
+    .ctrl-btn { font-size: 0.9rem; cursor: pointer; transition: background .15s, border-color .15s; }
+    .ctrl-btn:hover:not(:disabled) { background: var(--bg2); border-color: var(--accent); color: var(--accent); }
+    .btn-up { font-size: 1.3rem; }
+    .btn-up .btn-sub-label { font-size: 0.7rem; }
+    .btn-arrow { font-size: 1.4rem; }
+
+    /* ---- メニュー：広い画面では複数列に ---- */
+    .top-menu-wrap { padding: 34px 12% 20px; }
+    .top-btn { height: 58px; font-size: 1.05rem; }
+
+    .genre-list-wrap {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        padding: 14px 6%;
+    }
+    .genre-btn { min-height: 52px; }
+
+    /* カード一覧を2列に。見出し（サブユニット・ジャンル名）は行全体を使う */
+    #menu-content .menu-item {
+        display: inline-flex;
+        width: 50%;
+        vertical-align: top;
+    }
+    .section-header, .genre-panel-label, .sticky-head, .menu-label { width: 100%; }
+    .menu-item:hover { background: var(--bg3); cursor: pointer; }
+
+    /* 級・科目パネル */
+    .sub-menu-wrap { padding: 30px 8% 12px; }
+    .subject-btn { height: 92px; font-size: 0.92rem; }
+    .subject-btn:hover:not(:disabled) { filter: brightness(1.18); }
+    .grade-label { font-size: 0.95rem; }
+
+    /* 設定の「画面レイアウト」欄はパソコンでだけ出す */
+    .settings-layout { display: flex !important; }
+}
+
+/* ---- 切替：ワイド表示（図表を大きく見たいとき） ---- */
+@media (min-width: 900px) {
+    body.pc-wide #main-ui {
+        width: 100vw; height: 100lvh; max-height: 100lvh;
+        border: none; border-radius: 0; box-shadow: none;
+        flex-direction: row; align-items: stretch;
+    }
+    /* 図表を主役に：左に大きく */
+    body.pc-wide #image-area {
+        flex: 1.55;
+        height: auto; max-height: none;
+        aspect-ratio: unset;
+        border-right: 3px solid var(--divider);
+        min-width: 0;
+    }
+    body.pc-wide #image-area.menu-banner { flex: none; width: 100%; height: 14lvh; max-height: 14lvh; }
+    body.pc-wide #divider-line { display: none; }
+    body.pc-wide #content-area { flex: 1; min-width: 0; max-width: 620px; }
+    body.pc-wide #controls { height: 64px; }
+
+    /* メニュー画面はワイドでも紙面型（横並びだと間延びするため） */
+    body.pc-wide.menu-mode #main-ui { flex-direction: column; }
+    body.pc-wide.menu-mode #image-area { flex: none; }
+    body.pc-wide.menu-mode #content-area { max-width: none; }
+    body.pc-wide.menu-mode #divider-line { display: block; }
+    body.pc-wide .genre-list-wrap { grid-template-columns: 1fr 1fr 1fr; }
+}
+
+/* 設定の「画面レイアウト」欄はスマホでは隠す */
+.settings-layout { display: none; }
