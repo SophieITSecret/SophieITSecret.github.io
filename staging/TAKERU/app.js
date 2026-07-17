@@ -390,6 +390,8 @@ function showSectionedCardList(genre) {
             <div class="genre-panel-label label-genre-header">${genre}</div>
         </div>
     `;
+    // 一覧本体は箱で包む（広い画面で「左を埋めてから右へ折り返す」段組にするため）
+    html += '<div class="card-list-body">';
     sections.forEach(s => {
         const sCards = genreCards.filter(d => d.section === s);
         html += `<div class="section-header">${s}</div>`;
@@ -397,6 +399,7 @@ function showSectionedCardList(genre) {
             html += `<div class="menu-item" data-section="${s}" data-section-idx="${i}"><span class="item-dot">●</span> ${card.title}</div>`;
         });
     });
+    html += '</div>';
 
     menuContent.innerHTML = html;
     menuContent.onclick = (e) => {
@@ -430,12 +433,15 @@ function showFlatCardList(genre) {
             </div>
             <div class="genre-panel-label label-genre-header">${genre}</div>
         </div>`;
+    // 一覧本体は箱で包む（広い画面で「左を埋めてから右へ折り返す」段組にするため）
+    html += '<div class="card-list-body">';
     curSection.forEach((card, i) => {
         const type = /\dF\d+$/.test(card.id) ? 'fact' : /\dC\d+$/.test(card.id) ? 'com' : null;
         const badge = type ? `<span class="card-badge badge-${type}">${type === 'fact' ? '史実' : '解説'}</span> ` : '';
         const title = card.title.replace(/^→/, '').trim();
         html += `<div class="menu-item" data-idx="${i}"><span class="item-dot">●</span> ${badge}${title}</div>`;
     });
+    html += '</div>';
     menuContent.innerHTML = html;
     menuContent.onclick = (e) => {
         const item = e.target.closest('.menu-item');

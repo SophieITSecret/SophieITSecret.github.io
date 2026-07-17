@@ -1077,28 +1077,37 @@ body.font-large #card-body { font-size: 1.05rem; }
     .btn-up .btn-sub-label { font-size: 0.7rem; }
     .btn-arrow { font-size: 1.4rem; }
 
-    /* ---- メニュー：広い画面では複数列に ---- */
+    /* ---- メニュー ---- */
     .top-menu-wrap { padding: 34px 12% 20px; }
     .top-btn { height: 58px; font-size: 1.05rem; }
 
-    .genre-list-wrap {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 10px;
-        padding: 14px 6%;
-    }
+    /* サブメニューのバナーは4:1の画像なので、高さを比率に任せて全体を見せる。
+       高さ固定だと下が切れて「MSアカデミー」の文字が消えていた。 */
+    #image-area.menu-banner { aspect-ratio: 4 / 1; height: auto; max-height: none; }
+
+    /* テーマ一覧は1列のまま、ボタンを横に広げる（2列は順番が飛んで追いにくい） */
+    .genre-list-wrap { padding: 12px 5%; gap: 8px; }
     .genre-btn { min-height: 52px; }
 
-    /* カード一覧を2列に。見出し（サブユニット・ジャンル名）は行全体を使う */
-    #menu-content .menu-item {
-        display: inline-flex;
-        width: 50%;
-        vertical-align: top;
+    /* カード一覧は段組。左の列を上から埋め、あふれたら右の列へ折り返す */
+    .card-list-body {
+        columns: 2;
+        column-gap: 22px;
+        padding: 4px 5% 10px;
     }
-    .section-header, .genre-panel-label, .sticky-head, .menu-label { width: 100%; }
+    .card-list-body .menu-item { break-inside: avoid; }
+    .card-list-body .section-header {
+        break-after: avoid;      /* 見出しだけが列末に取り残されないように */
+        break-inside: avoid;
+        position: static;        /* 段組内では貼り付き（sticky）が効かないため解除 */
+    }
 
-    /* 級・科目パネル */
-    .sub-menu-wrap { padding: 30px 8% 12px; }
+    /* 級・科目パネル：上に寄って下が空くので、縦方向の中央に置く */
+    .sub-menu-wrap {
+        padding: 20px 8%;
+        min-height: 100%;
+        justify-content: center;
+    }
     .subject-btn { height: 92px; font-size: 0.92rem; }
     .grade-label { font-size: 0.95rem; }
 
@@ -1171,12 +1180,27 @@ body.font-large #card-body { font-size: 1.05rem; }
     .btn-up .btn-sub-label { font-size: 0.66rem; }
     .btn-arrow { font-size: 1.3rem; }
 
-    /* メニューは2列に（一覧性を上げる） */
-    .genre-list-wrap { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; padding: 12px 6%; }
-    #menu-content .menu-item { display: inline-flex; width: 50%; vertical-align: top; }
-    .section-header, .genre-panel-label, .sticky-head, .menu-label { width: 100%; }
-    .top-menu-wrap { padding: 26px 16% 16px; }
-    .sub-menu-wrap { padding: 26px 8% 10px; }
+    /* サブメニューのバナーは4:1の画像。高さを比率に任せて全体を見せる */
+    #image-area.menu-banner { aspect-ratio: 4 / 1; height: auto; max-height: none; }
+
+    /* テーマ一覧は1列のまま、ボタンを横に広げる */
+    .genre-list-wrap { padding: 12px 5%; gap: 8px; }
+
+    /* カード一覧は段組。左の列を上から埋め、あふれたら右の列へ */
+    .card-list-body {
+        columns: 2;
+        column-gap: 20px;
+        padding: 4px 5% 10px;
+    }
+    .card-list-body .menu-item { break-inside: avoid; }
+    .card-list-body .section-header { break-after: avoid; break-inside: avoid; position: static; }
+
+    /* トップ：ボタンが小さいと画像に対して頭でっかちに見えるため大きくする */
+    .top-menu-wrap { padding: 24px 10% 16px; }
+    .top-btn { height: 62px; font-size: 1.05rem; }
+
+    /* 級・科目パネル：縦方向の中央に置く */
+    .sub-menu-wrap { padding: 18px 8%; min-height: 100%; justify-content: center; }
     .subject-btn { height: 86px; }
 }
 
