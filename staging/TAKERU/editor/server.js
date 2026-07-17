@@ -376,6 +376,43 @@ function getVoiceAudio(req, res, code) {
 }
 
 // POST /api/voice/generate
+// VOICEPEAK用にテキストを分割する。
+//  1) まず「。」で文に分ける（句点は各文の末尾に残す）
+//  2) limit字を超える文は「、」でさらに分割（読点は前側の末尾に残す）
+//  3) それでも超える断片は、最後の保険として limit字ごとに機械的に切る
+// これで句点のない長文（例：服務の宣誓 163字）でも上限内に収まる。
+function splitForVP(text, limit) {
+  const out = [];
+  const pushChunked = (s) => {
+    // どうしても limit を超える場合だけ、字数で強制分割
+    while (s.length > limit) { out.push(s.slice(0, limit)); s = s.slice(limit); }
+    if (s) out.push(s);
+  };
+  for (let sentence of text.split('。')) {
+    sentence = sentence.trim();
+    if (!sentence) continue;
+    sentence += '。';
+    if (sentence.length <= limit) { out.push(sentence); continue; }
+    // 長すぎる文を「、」で分割。読点は前側に付けて自然な区切りにする
+    let buf = '';
+    for (const part of sentence.split('、')) {
+      const piece = part + '、';
+      if ((buf + piece).length > limit) {
+        if (buf) pushChunked(buf);
+        buf = piece;
+      } else {
+        buf += piece;
+      }
+    }
+    if (buf) {
+      // 末尾の余分な「、」は取り、元の「。」を保つ
+      buf = buf.replace(/、$/, '');
+      pushChunked(buf);
+    }
+  }
+  return out;
+}
+
 function postVoiceGenerate(req, res) {
   let chunks = [];
   const cancelRef = { cancelled: false, proc: null };
@@ -409,8 +446,9 @@ function postVoiceGenerate(req, res) {
         fs.copyFileSync(mp3Path, path.join(backupDir, `${code}_${timestamp()}.mp3`));
       }
 
-      // 「。」で分割
-      const sentences = text.split('。').map(s => s.trim()).filter(Boolean).map(s => s + '。');
+      // 「。」で分割。VOICEPEAKは1回あたり約140字までなので、超える文は
+      // さらに「、」で分けてから渡す（服務の宣誓など句点のない長文への対応）。
+      const sentences = splitForVP(text, 140);
       if (!sentences.length) return sendJSON(res, 400, { ok: false, error: 'テキストが空です' });
 
       // リクエストごとにユニークなプレフィックスを生成（同一カードの並行処理に備える）
