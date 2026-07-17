@@ -502,8 +502,10 @@ body:not(.menu-mode) #image-area.has-image::after {
     align-items: center;
     padding: 0 20px;
     box-sizing: border-box;
-    pointer-events: none;
+    pointer-events: none;   /* 見出し自体は押せない */
 }
+/* ただし中の ◀▶ ボタンはクリックできるように戻す */
+.genre-nav-btn { pointer-events: auto; }
 /* テーマ一覧ラベル：緑（受講と同色系）。固定は親の .sticky-head が担う */
 .genre-panel-label.label-section {
     min-height: 34px;

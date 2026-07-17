@@ -740,38 +740,36 @@ function setupButtons() {
 }
 
 // 音声ボタン：短タップ＝読み上げON/OFF（緑）、長押し700ms＝連続再生ON/OFF（青く光る）
+// タッチ／マウスを1回に統一する Pointer Events を使う。
+// 旧実装は touch と mouse が二重発火し、長押し後の疑似クリックが短タップに
+// 化けて連続再生が即解除されていた。
 function setupVoiceButton() {
-    let timer = null, longFired = false, sx = 0, sy = 0;
+    let timer = null, longFired = false, moved = false, sx = 0, sy = 0;
 
-    const start = (e) => {
-        const t = e && e.touches && e.touches[0];
-        if (t) { sx = t.clientX; sy = t.clientY; }
+    btnVoice.style.touchAction = 'manipulation';
+
+    btnVoice.addEventListener('pointerdown', (e) => {
+        if (e.button && e.button !== 0) return;     // マウスは左のみ
+        sx = e.clientX; sy = e.clientY;
+        longFired = false; moved = false;
         clearTimeout(timer);
-        longFired = false;
         timer = setTimeout(() => {
             longFired = true;
             voiceLongPress();
             if (navigator.vibrate) navigator.vibrate(40);
         }, 700);
-    };
-    const cancel = () => clearTimeout(timer);
-    const move = (e) => {
-        const t = e && e.touches && e.touches[0];
-        if (t && (Math.abs(t.clientX - sx) > 14 || Math.abs(t.clientY - sy) > 14)) cancel();
-    };
-
-    btnVoice.addEventListener('touchstart',  start,  { passive: true });
-    btnVoice.addEventListener('touchend',    cancel, { passive: true });
-    btnVoice.addEventListener('touchcancel', cancel, { passive: true });
-    btnVoice.addEventListener('touchmove',   move,   { passive: true });
-    btnVoice.addEventListener('mousedown', (e) => { if (e.button === 0) start(); });
-    btnVoice.addEventListener('mouseup',   cancel);
-    btnVoice.addEventListener('mouseleave', cancel);
-
-    btnVoice.onclick = () => {
-        if (longFired) { longFired = false; return; }  // 長押しの後のクリックは無視
-        voiceShortTap();
-    };
+    });
+    btnVoice.addEventListener('pointermove', (e) => {
+        if (Math.abs(e.clientX - sx) > 14 || Math.abs(e.clientY - sy) > 14) {
+            moved = true; clearTimeout(timer);
+        }
+    });
+    btnVoice.addEventListener('pointerup', () => {
+        clearTimeout(timer);
+        if (!longFired && !moved) voiceShortTap();   // 長押し済み／ドラッグは短タップにしない
+    });
+    btnVoice.addEventListener('pointercancel', () => clearTimeout(timer));
+    btnVoice.addEventListener('pointerleave', () => clearTimeout(timer));
 }
 
 // 短タップ：読み上げモードのON/OFF（従来の音声ボタンの動き）
