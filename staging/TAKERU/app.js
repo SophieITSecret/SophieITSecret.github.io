@@ -329,6 +329,33 @@ function showGenreMenu() {
     };
 }
 
+// カード一覧のジャンル見出し。左右に ◀▶ を付け、同じ科目内の
+// 別ユニット（テーマ）へ横移動できるようにする（第1メニューへ戻らずに済む）。
+function siblingGenres() {
+    return [...new Set(cardData.filter(d => d.subject === curSubject).map(d => d.genre))];
+}
+function genreHeaderHtml(genre) {
+    const list = siblingGenres();
+    const i = list.indexOf(genre);
+    const prevDis = i <= 0 ? 'disabled' : '';
+    const nextDis = (i < 0 || i >= list.length - 1) ? 'disabled' : '';
+    return `<div class="genre-panel-label label-genre-header">
+        <button class="genre-nav-btn gnav-prev" ${prevDis} aria-label="前のテーマ">◀</button>
+        <span class="genre-nav-name">${genre}</span>
+        <button class="genre-nav-btn gnav-next" ${nextDis} aria-label="次のテーマ">▶</button>
+    </div>`;
+}
+function gotoGenre(genre) {
+    const hasSections = cardData.filter(d => d.genre === genre).some(d => d.section !== '');
+    if (hasSections) showSectionedCardList(genre);
+    else showFlatCardList(genre);
+}
+function stepGenre(dir) {
+    const list = siblingGenres();
+    const j = list.indexOf(curGenre) + dir;
+    if (j >= 0 && j < list.length) gotoGenre(list[j]);
+}
+
 function showSectionMenu(genre) {
     navState = 'section';
     isMenuVisible = true;
@@ -387,7 +414,7 @@ function showSectionedCardList(genre) {
                 <div class="top-btn btn-jukou banner-btn banner-xs">📚 受　講</div>
                 <div class="grade-btn btn-grade3 banner-btn banner-xs">${subjectBannerS}</div>
             </div>
-            <div class="genre-panel-label label-genre-header">${genre}</div>
+            ${genreHeaderHtml(genre)}
         </div>
     `;
     // 一覧本体は箱で包む（広い画面で「左を埋めてから右へ折り返す」段組にするため）
@@ -403,6 +430,8 @@ function showSectionedCardList(genre) {
 
     menuContent.innerHTML = html;
     menuContent.onclick = (e) => {
+        if (e.target.closest('.gnav-prev')) { stepGenre(-1); return; }
+        if (e.target.closest('.gnav-next')) { stepGenre(1); return; }
         const item = e.target.closest('.menu-item[data-section]');
         if (!item) return;
         const section = item.dataset.section;
@@ -431,7 +460,7 @@ function showFlatCardList(genre) {
                 <div class="top-btn btn-jukou banner-btn banner-xs">📚 受　講</div>
                 <div class="grade-btn btn-grade3 banner-btn banner-xs">${subjectBannerF}</div>
             </div>
-            <div class="genre-panel-label label-genre-header">${genre}</div>
+            ${genreHeaderHtml(genre)}
         </div>`;
     // 一覧本体は箱で包む（広い画面で「左を埋めてから右へ折り返す」段組にするため）
     html += '<div class="card-list-body">';
@@ -444,6 +473,8 @@ function showFlatCardList(genre) {
     html += '</div>';
     menuContent.innerHTML = html;
     menuContent.onclick = (e) => {
+        if (e.target.closest('.gnav-prev')) { stepGenre(-1); return; }
+        if (e.target.closest('.gnav-next')) { stepGenre(1); return; }
         const item = e.target.closest('.menu-item');
         if (!item) return;
         const idx = parseInt(item.dataset.idx);
@@ -630,7 +661,16 @@ function updateControlButtons() {
         btnBack.classList.remove('btn-card-mode');
         btnBack.disabled = false;
     }
-    btnVoice.classList.toggle('voice-on', autoRead);
+    updateVoiceBtn();
+}
+
+// 音声ボタンの見た目：読み上げ中は緑、連続再生中は青く光る
+function updateVoiceBtn() {
+    btnVoice.classList.toggle('voice-on', autoRead && !autoAdvance);
+    btnVoice.classList.toggle('voice-auto', autoAdvance);
+    btnVoice.title = autoAdvance ? '連続再生中（長押しで停止）'
+                   : autoRead    ? '読み上げ中（タップで停止／長押しで連続再生）'
+                   : '';
 }
 
 function clearCard() {
@@ -647,46 +687,8 @@ function clearCard() {
 // ==========================================
 function setupButtons() {
 
-    // ▶：カード送り。音声ON中に長押し（700ms）で連続再生モードのON/OFF
-    let _longPressTimer = null;
-    let _longPressTriggered = false;
-    let _touchStartX = 0, _touchStartY = 0;
-
-    const _startLongPress = (e) => {
-        if (!autoRead) return;
-        const t = e && e.touches && e.touches[0];
-        if (t) { _touchStartX = t.clientX; _touchStartY = t.clientY; }
-        clearTimeout(_longPressTimer);
-        _longPressTriggered = false;
-        _longPressTimer = setTimeout(() => {
-            _longPressTriggered = true;
-            autoAdvance = !autoAdvance;
-            updateAutoAdvBtn();
-            if (autoAdvance && navState === 'card') playVoiceDirect();
-            if (navigator.vibrate) navigator.vibrate(40);
-        }, 700);
-    };
-    const _cancelLongPress = () => clearTimeout(_longPressTimer);
-    // 指のわずかな揺れでは中止せず、はっきり動いた（スクロール）ときだけ中止する。
-    // 従来は touchmove で即中止していたため、長押しがたびたび不発になっていた。
-    const _onTouchMove = (e) => {
-        const t = e && e.touches && e.touches[0];
-        if (!t) return;
-        if (Math.abs(t.clientX - _touchStartX) > 14 || Math.abs(t.clientY - _touchStartY) > 14) {
-            _cancelLongPress();
-        }
-    };
-
-    btnNext.addEventListener('touchstart',  _startLongPress,  { passive: true });
-    btnNext.addEventListener('touchend',    _cancelLongPress, { passive: true });
-    btnNext.addEventListener('touchcancel', _cancelLongPress, { passive: true });
-    btnNext.addEventListener('touchmove',   _onTouchMove,     { passive: true });
-    btnNext.addEventListener('mousedown', (e) => { if (e.button === 0) _startLongPress(); });
-    btnNext.addEventListener('mouseup',   _cancelLongPress);
-    btnNext.addEventListener('mouseleave', _cancelLongPress);
-
+    // ▶：カード送りのみ（連続再生の切替は音声ボタンへ移した）
     btnNext.onclick = () => {
-        if (_longPressTriggered) { _longPressTriggered = false; return; }
         if (isMenuVisible) {
             if (curSection.length) {
                 if (curIndex < curSection.length - 1) showCard(curIndex + 1);
@@ -697,6 +699,9 @@ function setupButtons() {
             else advanceToNextSection();
         }
     };
+
+    // 音声ボタン：チョンと触る＝読み上げON/OFF、長押し（700ms）＝連続再生ON/OFF
+    setupVoiceButton();
 
     // ◀／CARD：カード戻し（カード画面）/ 最後のカードへ戻る（メニュー・完了画面）
     btnBack.onclick = () => {
@@ -732,25 +737,70 @@ function setupButtons() {
 
     // ▲：上位メニューへ1層ずつ移動
     btnToggle.onclick = goUpOneLevel;
+}
 
-    // 音声ボタン：ON/OFFトグル
-    btnVoice.onclick = () => {
-        hideVoiceWarning();
-        // MP3失敗中に再押し → TTS開始（トグルではなくフォールバック）
-        if (mp3Failed && navState === 'card') {
-            mp3Failed = false;
-            startTTS(curSection[curIndex].body);
-            return;
-        }
-        autoRead = !autoRead;
-        if (!autoRead) { autoAdvance = false; updateAutoAdvBtn(); }
-        updateControlButtons();
-        if (autoRead && navState === 'card') {
-            playVoiceDirect();
-        } else if (!autoRead) {
-            stopVoice();
-        }
+// 音声ボタン：短タップ＝読み上げON/OFF（緑）、長押し700ms＝連続再生ON/OFF（青く光る）
+function setupVoiceButton() {
+    let timer = null, longFired = false, sx = 0, sy = 0;
+
+    const start = (e) => {
+        const t = e && e.touches && e.touches[0];
+        if (t) { sx = t.clientX; sy = t.clientY; }
+        clearTimeout(timer);
+        longFired = false;
+        timer = setTimeout(() => {
+            longFired = true;
+            voiceLongPress();
+            if (navigator.vibrate) navigator.vibrate(40);
+        }, 700);
     };
+    const cancel = () => clearTimeout(timer);
+    const move = (e) => {
+        const t = e && e.touches && e.touches[0];
+        if (t && (Math.abs(t.clientX - sx) > 14 || Math.abs(t.clientY - sy) > 14)) cancel();
+    };
+
+    btnVoice.addEventListener('touchstart',  start,  { passive: true });
+    btnVoice.addEventListener('touchend',    cancel, { passive: true });
+    btnVoice.addEventListener('touchcancel', cancel, { passive: true });
+    btnVoice.addEventListener('touchmove',   move,   { passive: true });
+    btnVoice.addEventListener('mousedown', (e) => { if (e.button === 0) start(); });
+    btnVoice.addEventListener('mouseup',   cancel);
+    btnVoice.addEventListener('mouseleave', cancel);
+
+    btnVoice.onclick = () => {
+        if (longFired) { longFired = false; return; }  // 長押しの後のクリックは無視
+        voiceShortTap();
+    };
+}
+
+// 短タップ：読み上げモードのON/OFF（従来の音声ボタンの動き）
+function voiceShortTap() {
+    hideVoiceWarning();
+    // MP3失敗中に再押し → TTS開始（トグルではなくフォールバック）
+    if (mp3Failed && navState === 'card') {
+        mp3Failed = false;
+        startTTS(curSection[curIndex].body);
+        return;
+    }
+    autoRead = !autoRead;
+    if (!autoRead) autoAdvance = false;   // 読み上げを切れば連続再生も切れる
+    updateVoiceBtn();
+    updateControlButtons();
+    if (autoRead && navState === 'card') playVoiceDirect();
+    else if (!autoRead) stopVoice();
+}
+
+// 長押し：連続再生モードのON/OFF
+function voiceLongPress() {
+    hideVoiceWarning();
+    autoAdvance = !autoAdvance;
+    if (autoAdvance) autoRead = true;     // 連続再生は読み上げONが前提
+    else if (!autoRead) autoRead = false;
+    updateVoiceBtn();
+    updateControlButtons();
+    if (autoAdvance && navState === 'card') playVoiceDirect();
+    else if (!autoRead) stopVoice();
 }
 
 // セクション内の全カードを読み終えたら次のセクションへ進む
@@ -775,7 +825,7 @@ function advanceToNextSection() {
 function showSectionComplete() {
     stopVoice();
     autoAdvance = false;
-    updateAutoAdvBtn();
+    updateVoiceBtn();
     navState = 'complete';
     isMenuVisible = false;
     showTextView();
@@ -792,13 +842,9 @@ function showSectionComplete() {
 function doNextCard() {
     if (navState !== 'card') return;
     if (curIndex < curSection.length - 1) showCard(curIndex + 1);
-    else { autoAdvance = false; updateAutoAdvBtn(); advanceToNextSection(); }
+    else { autoAdvance = false; updateVoiceBtn(); advanceToNextSection(); }
 }
 
-function updateAutoAdvBtn() {
-    btnNext.classList.toggle('btn-auto-adv', autoAdvance);
-    btnNext.title = autoAdvance ? '連続再生中（長押しで停止）' : '';
-}
 
 // ==========================================
 // 音声読み上げ（iPhone対応）

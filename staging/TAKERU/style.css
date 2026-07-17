@@ -520,7 +520,28 @@ body:not(.menu-mode) #image-area.has-image::after {
     border-radius: 8px;
     margin: 8px 8% 0;
     width: auto;
+    padding: 0 4px;   /* 端の◀▶ボタン用に左右を詰める */
 }
+/* ジャンル名を中央、◀▶を両端に。押すと同じ科目内の別テーマへ横移動 */
+.genre-nav-name { flex: 1; text-align: center; padding: 0 4px; }
+.genre-nav-btn {
+    flex-shrink: 0;
+    width: 34px;
+    min-height: 30px;
+    align-self: stretch;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(90,160,230,0.4);
+    border-radius: 6px;
+    color: #bdd4f5;
+    font-size: 0.8rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.genre-nav-btn:active { background: rgba(255,255,255,0.16); }
+.genre-nav-btn:disabled { opacity: 0.28; cursor: default; }
+.light-mode .genre-nav-btn { border-color: rgba(50,110,200,0.4); color: #1a3a72; }
 .light-mode .genre-panel-label {
     background: linear-gradient(135deg, #deeaf8, #c8dbf2);
     border-color: rgba(50,110,200,0.45);
@@ -771,10 +792,12 @@ body:not(.menu-mode) #image-area.has-image::after {
 }
 .btn-next:active { background: rgba(76,175,80,0.4); }
 /* 連続再生モード中（青） */
-.btn-next.btn-auto-adv {
+/* 連続再生モード：音声ボタンが青く光る（脈動） */
+#btn-voice.voice-auto {
     background: rgba(74,144,217,0.45);
     border-color: #4a90d9;
     color: #fff;
+    font-weight: bold;
     box-shadow: 0 0 10px rgba(74,144,217,0.5);
     animation: autoAdv-pulse 1.8s ease-in-out infinite;
 }
@@ -1085,8 +1108,8 @@ body.font-large #card-body { font-size: 1.05rem; }
        高さ固定だと下が切れて「MSアカデミー」の文字が消えていた。 */
     #image-area.menu-banner { aspect-ratio: 4 / 1; height: auto; max-height: none; }
 
-    /* テーマ一覧は1列のまま、ボタンを横に広げる（2列は順番が飛んで追いにくい） */
-    .genre-list-wrap { padding: 12px 5%; gap: 8px; }
+    /* テーマ一覧は1列。左右は上の看板・見出しと同じ8%に揃える */
+    .genre-list-wrap { padding: 12px 8%; gap: 8px; }
     .genre-btn { min-height: 52px; }
 
     /* カード一覧は段組。左の列を上から埋め、あふれたら右の列へ折り返す */
@@ -1183,8 +1206,10 @@ body.font-large #card-body { font-size: 1.05rem; }
     /* サブメニューのバナーは4:1の画像。高さを比率に任せて全体を見せる */
     #image-area.menu-banner { aspect-ratio: 4 / 1; height: auto; max-height: none; }
 
-    /* テーマ一覧は1列のまま、ボタンを横に広げる */
-    .genre-list-wrap { padding: 12px 5%; gap: 8px; }
+    /* テーマ一覧は1列。左右は上の看板・見出しと同じ8%に揃える。
+       ボタンは詰まって見えるので背を高くし、間隔も広げる */
+    .genre-list-wrap { padding: 14px 8%; gap: 10px; }
+    .genre-btn { min-height: 64px; font-size: 1.02rem; }
 
     /* カード一覧は段組。左の列を上から埋め、あふれたら右の列へ */
     .card-list-body {
