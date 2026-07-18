@@ -10,6 +10,31 @@
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0d0d1a">
     <title>TAKERU｜MSアカデミー</title>
+    <script>
+        // ホーム画面アイコン・名称を環境で出し分ける。
+        // ファイルは本番/開発とも同一。開発（GitHub等）のときだけGit版へ差し替える。
+        // ※インストール前に走らせる必要があるため head 内・app.js より前に置く。
+        //   判定は app.js の IS_PROD と同一ロジック。
+        (function () {
+            var isProd = (function () {
+                var p = null;
+                try { p = new URLSearchParams(location.search).get('preview'); } catch (e) {}
+                if (p === 'prod') return true;
+                if (p === 'dev') return false;
+                var h = location.hostname;
+                if (h === 'localhost' || h === '127.0.0.1' || h === '') return false;
+                if (h.endsWith('.github.io')) return false;
+                if (/^192\.168\./.test(h) || /^10\./.test(h)) return false;
+                return true;
+            })();
+            if (isProd) return; // 本番はそのまま（綺麗なアイコン・「TAKERU」）
+            var set = function (sel, attr, val) { var el = document.querySelector(sel); if (el) el.setAttribute(attr, val); };
+            set('link[rel="apple-touch-icon"]', 'href', 'takeru-touch-icon-git.png');
+            set('link[rel="manifest"]', 'href', 'manifest-git.json');
+            set('meta[name="apple-mobile-web-app-title"]', 'content', 'TAKERU Git');
+            document.title = 'TAKERU（Git）';
+        })();
+    </script>
     <link rel="stylesheet" href="style.css">
     <style>
         #sw-update-toast {

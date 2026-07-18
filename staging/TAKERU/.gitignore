@@ -12,6 +12,10 @@
 !icon-192.png
 !icon-512.png
 !takeru-touch-icon.png
+# 開発版（Git）識別アイコンも例外
+!icon-192-git.png
+!icon-512-git.png
+!takeru-touch-icon-git.png
 
 # 音声データを無視（一時・バックアップのみ）
 *.wav
