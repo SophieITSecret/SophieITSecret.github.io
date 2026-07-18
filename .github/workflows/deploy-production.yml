@@ -27,7 +27,8 @@ jobs:
       - name: Setup SSH
         run: |
           mkdir -p ~/.ssh
-          printf '%s\n' "${{ secrets.XSERVER_SSH_KEY }}" > ~/.ssh/deploy_key
+          # 秘密鍵は base64（1行）で Secret に格納 → ここで復号。改行崩れを防ぐ。
+          echo "${{ secrets.XSERVER_SSH_KEY }}" | base64 -d > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
           ssh-keyscan -p "${{ secrets.XSERVER_PORT }}" -H "${{ secrets.XSERVER_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null
 
