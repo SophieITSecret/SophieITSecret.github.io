@@ -1,6 +1,37 @@
 // ==========================================
-// TAKERU MSアカデミー app.js v2.9
+// TAKERU MSアカデミー app.js v3.0
 // ==========================================
+
+// ── 環境判定 ────────────────────────────────
+// 方針：開発だと確実に分かるホストだけを開発モードとし、それ以外は
+//       すべて本番モード（安全側）に倒す。想定外URLから入られても
+//       必ず「隠す側」に倒れる。
+const IS_PROD = (function () {
+    let preview = null;
+    try { preview = new URLSearchParams(location.search).get('preview'); } catch (e) { /* noop */ }
+    if (preview === 'prod') return true;    // 本番の見え方を確認する
+    if (preview === 'dev')  return false;   // 強制的に全表示
+
+    const h = location.hostname;
+    if (h === 'localhost' || h === '127.0.0.1' || h === '') return false;
+    if (h.endsWith('.github.io')) return false;
+    if (/^192\.168\./.test(h) || /^10\./.test(h)) return false;   // LAN内の実機テスト
+    return true;                            // 上記以外はすべて本番
+})();
+
+// このカードを表示するか（表示制御の芯はここ一箇所）
+function isCardVisible(card) {
+    if (!IS_PROD) return true;              // 開発：全部見せる
+    return card.published === true;         // 本番：公開フラグのみ
+}
+// 配下に見えるカードが1枚でもあるか（タイル点灯の判定）
+function hasVisibleCards(cards) {
+    return cards.some(isCardVisible);
+}
+// 見えるカードだけに絞る（一覧・カード送りが扱う配列は必ずこれを通す）
+function visibleOf(cards) {
+    return cards.filter(isCardVisible);
+}
 
 let cardData = [];
 let linkData = [];
@@ -71,7 +102,9 @@ async function loadCSV() {
             section: c[2]?.trim() || '',
             title: c[3]?.trim() || '',
             body: c[4]?.trim() || '',
-            subject: c[5]?.trim() || '3級-軍事と戦略'
+            subject: c[5]?.trim() || '3級-軍事と戦略',
+            // 7列目「公開」。値が '1' のときだけ公開。空欄・列なし(旧CSV)は非公開
+            published: c[6]?.trim() === '1'
         })).filter(d => d.id);
     } catch (e) {
         console.error('CSVロード失敗:', e);
@@ -250,6 +283,18 @@ function showGradeMenu() {
     showMenuBanner();
     showMenuView();
 
+    // 3級の各科目：配下に見えるカードがあれば点灯（btn-grade3）、無ければ暗く（btn-coming）
+    const grade3 = [
+        ['3級-軍事と戦略', '軍事と戦略'],
+        ['3級-国家と法律', '国家と法律'],
+        ['3級-戦争の歴史', '戦争の歴史']
+    ];
+    const grade3Html = grade3.map(([subj, label]) =>
+        hasVisibleCards(cardData.filter(d => d.subject === subj))
+            ? `<button class="subject-btn btn-grade3" data-subject="${subj}">${label}</button>`
+            : `<button class="subject-btn btn-coming" disabled>${label}</button>`
+    ).join('');
+
     menuContent.innerHTML = `
         <div class="sub-menu-wrap">
             <div class="top-btn btn-jukou banner-btn">📚 受　講</div>
@@ -267,11 +312,7 @@ function showGradeMenu() {
                     <button class="subject-btn btn-coming" disabled>戦争の歴史</button>
                 </div>
                 <div class="grade-label grade-label-3">３級　戦士の視点</div>
-                <div class="subject-row">
-                    <button class="subject-btn btn-grade3" data-subject="3級-軍事と戦略">軍事と戦略</button>
-                    <button class="subject-btn btn-grade3" data-subject="3級-国家と法律">国家と法律</button>
-                    <button class="subject-btn btn-grade3" data-subject="3級-戦争の歴史">戦争の歴史</button>
-                </div>
+                <div class="subject-row">${grade3Html}</div>
             </div>
         </div>
     `;
@@ -312,9 +353,12 @@ function showGenreMenu() {
             <div class="genre-panel-label label-section">テーマ一覧</div>
         </div>
     `;
+    // 配下に見えるカードがあれば点灯、無ければ暗く（1級/2級と同じ btn-coming）
     let genreHtml = '';
     genres.forEach(g => {
-        genreHtml += `<button class="genre-btn" data-genre="${g}">${g}</button>`;
+        genreHtml += hasVisibleCards(cardData.filter(d => d.genre === g))
+            ? `<button class="genre-btn" data-genre="${g}">${g}</button>`
+            : `<button class="genre-btn btn-coming" disabled>${g}</button>`;
     });
     html += `<div class="genre-list-wrap">${genreHtml}</div>`;
     menuContent.innerHTML = html;
@@ -380,7 +424,7 @@ function showSectionMenu(genre) {
 function showCardList(section) {
     navState = 'cardlist';
     isMenuVisible = true;
-    curSection = cardData.filter(d => d.section === section);
+    curSection = visibleOf(cardData.filter(d => d.section === section));
     curIndex = 0;
     showMenuBanner();
     showMenuView();
@@ -420,7 +464,8 @@ function showSectionedCardList(genre) {
     // 一覧本体は箱で包む（広い画面で「左を埋めてから右へ折り返す」段組にするため）
     html += '<div class="card-list-body">';
     sections.forEach(s => {
-        const sCards = genreCards.filter(d => d.section === s);
+        const sCards = visibleOf(genreCards.filter(d => d.section === s));
+        if (!sCards.length) return;   // 見えるカードのないセクションは見出しごと出さない
         html += `<div class="section-header">${s}</div>`;
         sCards.forEach((card, i) => {
             html += `<div class="menu-item" data-section="${s}" data-section-idx="${i}"><span class="item-dot">●</span> ${card.title}</div>`;
@@ -437,7 +482,8 @@ function showSectionedCardList(genre) {
         const section = item.dataset.section;
         const idx = parseInt(item.dataset.sectionIdx);
         if (section && !isNaN(idx)) {
-            curSection = cardData.filter(d => d.genre === curGenre && d.section === section);
+            // data-section-idx は「見えるカード」内の番号なので、curSection も見えるカードで揃える
+            curSection = visibleOf(cardData.filter(d => d.genre === curGenre && d.section === section));
             showCard(idx);
         }
     };
@@ -448,7 +494,7 @@ function showFlatCardList(genre) {
     isMenuVisible = true;
     const isReturn = curGenre === genre && curSection.length > 0;
     curGenre = genre;
-    curSection = cardData.filter(d => d.genre === genre);
+    curSection = visibleOf(cardData.filter(d => d.genre === genre));
     if (!isReturn) curIndex = 0;
     showMenuBanner();
     showMenuView();
@@ -711,12 +757,13 @@ function setupButtons() {
             if (curIndex > 0) {
                 showCard(curIndex - 1);
             } else if (curGenre) {
-                // 先頭カードで◀→前サブユニットの最終カードへ
-                const allGenre = cardData.filter(d => d.genre === curGenre);
-                const posInGenre = allGenre.indexOf(curSection[0]);
-                if (posInGenre > 0) {
-                    const prevCard = allGenre[posInGenre - 1];
-                    curSection = cardData.filter(d => d.genre === curGenre && d.section === prevCard.section);
+                // 先頭カードで◀→前サブユニットの最終カードへ（見えるセクション/カードのみ）
+                const genreCards = cardData.filter(d => d.genre === curGenre);
+                const sections = [...new Set(genreCards.map(d => d.section))]
+                    .filter(s => hasVisibleCards(genreCards.filter(d => d.section === s)));
+                const si = sections.indexOf(curSection[0]?.section);
+                if (si > 0) {
+                    curSection = visibleOf(genreCards.filter(d => d.section === sections[si - 1]));
                     showCard(curSection.length - 1);
                 }
             }
@@ -806,10 +853,12 @@ function advanceToNextSection() {
     const sectionName = curSection[0]?.section;
     if (sectionName && curGenre) {
         const genreCards = cardData.filter(d => d.genre === curGenre);
-        const sections = [...new Set(genreCards.map(d => d.section))];
+        // 見えるカードを持つセクションだけを順に並べる（空セクションは飛ばす）
+        const sections = [...new Set(genreCards.map(d => d.section))]
+            .filter(s => hasVisibleCards(genreCards.filter(d => d.section === s)));
         const si = sections.indexOf(sectionName);
         if (si >= 0 && si < sections.length - 1) {
-            curSection = genreCards.filter(d => d.section === sections[si + 1]);
+            curSection = visibleOf(genreCards.filter(d => d.section === sections[si + 1]));
             showCard(0);
             return;
         }
@@ -828,7 +877,7 @@ function showSectionComplete() {
     isMenuVisible = false;
     showTextView();
     const unitName = curGenre || curSection[0]?.section || '';
-    const unitTotal = curGenre ? cardData.filter(d => d.genre === curGenre).length : curSection.length;
+    const unitTotal = curGenre ? visibleOf(cardData.filter(d => d.genre === curGenre)).length : curSection.length;
     cardProgress.innerText = unitName;
     cardTitle.innerText = '✅ 完了';
     cardBody.innerText = `${unitName}の全${unitTotal}枚を読み終えました。\n\n◀ で最後のカードに戻れます。\n▲ で上位メニューに戻れます。`;

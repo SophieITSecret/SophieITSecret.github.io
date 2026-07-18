@@ -315,7 +315,10 @@
 
   <!-- 列3：編集エリア -->
   <div class="edit-area" id="editArea" style="display:none">
-    <div><div class="edit-label">コード</div><input class="edit-input" id="editCode" readonly style="color:var(--fact);font-family:monospace"></div>
+    <div style="display:flex;gap:10px;align-items:flex-end">
+      <div style="flex:1"><div class="edit-label">コード</div><input class="edit-input" id="editCode" readonly style="color:var(--fact);font-family:monospace"></div>
+      <label class="pub-toggle" title="本番で表示するか（チェックで公開）"><input type="checkbox" id="editPublished" onchange="onPublishedChange()"><span>🌐 公開</span></label>
+    </div>
     <div><div class="edit-label">タイトル</div><input class="edit-input" id="editTitle" oninput="updatePreview()"></div>
     <div>
       <div class="edit-label" style="display:flex;justify-content:space-between;align-items:center">

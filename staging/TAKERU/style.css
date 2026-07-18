@@ -587,6 +587,16 @@ body:not(.menu-mode) #image-area.has-image::after {
     color: #d8eaff;
 }
 .genre-btn:active { opacity: 0.8; transform: scale(0.98); }
+/* 公開カードのないジャンルの暗色表示（1級/2級と同じ扱い）。
+   .genre-btn の後に置き、同じ暗色トークンで確実に上書きする。 */
+.genre-btn.btn-coming {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    color: var(--text2);
+    opacity: 0.6;
+    cursor: default;
+}
+.genre-btn.btn-coming::after { content: none; }   /* 進める印(▶)は消す */
 .light-mode .genre-btn {
     background: linear-gradient(135deg, #deeaf8, #c8dbf2);
     border-color: rgba(50,110,200,0.45);

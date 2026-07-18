@@ -63,6 +63,7 @@ function parseCSV(text) {
   return rows.slice(1).map(r=>({
     id:(r[0]||'').trim(), genre:(r[1]||'').trim(), section:(r[2]||'').trim(),
     title:(r[3]||'').trim(), body:(r[4]||'').trim(), subject:(r[5]||'').trim(),
+    published:(r[6]||'').trim()==='1',   // 7列目「公開」。空欄・旧CSV(undefined)は非公開
     _header:hdr
   })).filter(d=>d.id);
 }
@@ -149,7 +150,7 @@ function renderList() {
     const hasBody=hasRealBody(card.body);
     const hasImg=!!imageMap[card.id];
     const hasMp3=mp3Ids.has(card.id);
-    const dots=`<span class="status-dots"><span class="sdot ${hasBody?'sdot-body':'sdot-off'}" title="本文">文</span><span class="sdot ${hasImg?'sdot-img':'sdot-off'}" title="画像">画</span><span class="sdot ${hasMp3?'sdot-mp3':'sdot-off'}" title="MP3">音</span></span>`;
+    const dots=`<span class="status-dots"><span class="sdot ${card.published?'sdot-pub':'sdot-off'}" title="公開">公</span><span class="sdot ${hasBody?'sdot-body':'sdot-off'}" title="本文">文</span><span class="sdot ${hasImg?'sdot-img':'sdot-off'}" title="画像">画</span><span class="sdot ${hasMp3?'sdot-mp3':'sdot-off'}" title="MP3">音</span></span>`;
     const active=gIdx===selectedIdx?' active':'';
     html+=`<div class="card-item${active}" onclick="showCard(${gIdx})">${badge}<span class="item-code">${esc(card.id)}</span><span class="item-title">${esc(card.title)||'（タイトルなし）'}</span>${dots}</div>`;
   });
@@ -197,6 +198,7 @@ function showCard(gIdx) {
   document.getElementById('editCode').value=card.id;
   document.getElementById('editTitle').value=card.title;
   document.getElementById('editBody').value=card.body;
+  document.getElementById('editPublished').checked=!!card.published;
   countChars();
   setTimeout(()=>{const a=document.querySelector('.card-item.active');if(a)a.scrollIntoView({block:'nearest'});},50);
   checkVoiceStatus(card.id);
@@ -268,6 +270,14 @@ function applyEdit(){
   dirty=true; editDirty=false;
   renderList();
   renderCard(selectedIdx);
+}
+
+// 公開チェックの切り替え（即座にデータへ反映。確定を待たずCSV保存対象になる）
+function onPublishedChange(){
+  if(selectedIdx<0) return;
+  cardData[selectedIdx].published=document.getElementById('editPublished').checked;
+  dirty=true;
+  renderList();
 }
 
 function cancelEdit(){ editDirty=false; if(selectedIdx>=0) showCard(selectedIdx); }
@@ -919,8 +929,9 @@ async function doExport(){
 async function saveCSV(){
   if(!cardData.length) return;
   if(editDirty && selectedIdx >= 0) applyEdit();
-  const hdr=cardData[0]._header||['コード','ユニット','サブユニット','タイトル','説明',''];
-  const rows=[hdr,...cardData.map(d=>[d.id,d.genre,d.section,d.title,d.body,d.subject])];
+  const hdr=(cardData[0]._header||['コード','ユニット','サブユニット','タイトル','説明','']).slice();
+  hdr[6]='公開';   // 7列目ヘッダを保証（旧6列CSVから読んでも付与される）
+  const rows=[hdr,...cardData.map(d=>[d.id,d.genre,d.section,d.title,d.body,d.subject,d.published?'1':''])];
   const csv=rows.map(r=>r.map(c=>{const s=String(c||'');return(s.includes(',')||s.includes('"')||s.includes('\n')||s.includes('\r'))?`"${s.replace(/"/g,'""')}"`:s;}).join(',')).join('\r\n');
   const btn=document.getElementById('btnSave');
   const orig=btn.textContent;
@@ -1593,6 +1604,7 @@ function renderProgressBody() {
     const nBody = cards.filter(c => hasRealBody(c.body)).length;
     const nImg  = cards.filter(c => !!imageMap[c.id]).length;
     const nMp3  = cards.filter(c => mp3Ids.has(c.id)).length;
+    const nPub  = cards.filter(c => c.published).length;
 
     const tiles = cards.map(c => {
       const gIdx = cardData.indexOf(c);
@@ -1601,9 +1613,10 @@ function renderProgressBody() {
       const hI = !!imageMap[c.id];
       const hM = mp3Ids.has(c.id);
       const complete = hT && hB && hI && hM;
-      return `<div class="ptile${complete?' ptile-complete':''}" onclick="pickProgressCard(${gIdx})" title="${esc(c.title||c.id)}">
+      return `<div class="ptile${complete?' ptile-complete':''}${c.published?' ptile-pub':''}" onclick="pickProgressCard(${gIdx})" title="${esc(c.title||c.id)}">
         <span class="ptile-code">${esc(c.id)}</span>
         <span class="ptile-dots">
+          <span class="sdot ${c.published?'sdot-pub':'sdot-off'}" onclick="togglePub(event,${gIdx})" title="クリックで公開切替">公</span>
           <span class="sdot ${hT?'sdot-title':'sdot-off'}">題</span>
           <span class="sdot ${hB?'sdot-body':'sdot-off'}">文</span>
           <span class="sdot ${hI?'sdot-img':'sdot-off'}">画</span>
@@ -1612,20 +1625,47 @@ function renderProgressBody() {
       </div>`;
     }).join('');
 
+    const allPub = nPub===total && total>0;
     html += `<div class="progress-unit">
       <div class="progress-unit-head">
         <span class="progress-unit-name" onclick="openUnitDetail('${esc(unit).replace(/'/g,"&#39;")}')" style="cursor:pointer;text-decoration:underline dotted">${esc(unit)}</span>
         <span class="progress-unit-stats">
+          <span class="pus-pub">公 ${nPub}/${total}</span>
           <span class="pus-ttl">題 ${nTtl}/${total}</span>
           <span class="pus-body">文 ${nBody}/${total}</span>
           <span class="pus-img">画 ${nImg}/${total}</span>
           <span class="pus-mp3">音 ${nMp3}/${total}</span>
+          <button class="pub-bulk-btn" onclick="bulkPub('${esc(unit).replace(/'/g,"&#39;")}',${allPub?0:1})" title="このユニットをまとめて公開/非公開">${allPub?'全非公開':'全公開'}</button>
         </span>
       </div>
       <div class="progress-tiles">${tiles}</div>
     </div>`;
   }
   body.innerHTML = html;
+}
+
+// 進捗ボード：タイルの「公」を個別にトグル（カードは開かない）
+function togglePub(ev, gIdx){
+  ev.stopPropagation();
+  cardData[gIdx].published = !cardData[gIdx].published;
+  dirty = true;
+  renderProgressBody();
+  renderList();
+  if(gIdx===selectedIdx) document.getElementById('editPublished').checked = cardData[gIdx].published;
+}
+
+// 進捗ボード：ユニット単位で公開を一括ON/OFF
+function bulkPub(unit, on){
+  const targets = cardData.filter(c => c.subject===progressTab && c.genre===unit);
+  if(!targets.length) return;
+  const verb = on ? '公開' : '非公開';
+  if(!confirm(`「${unit}」の ${targets.length}枚 をまとめて${verb}にします。よろしいですか？`)) return;
+  targets.forEach(c => c.published = !!on);
+  dirty = true;
+  renderProgressBody();
+  renderList();
+  if(selectedIdx>=0) document.getElementById('editPublished').checked = !!cardData[selectedIdx].published;
+  document.getElementById('fileStatus').textContent = `🌐 「${unit}」を${verb}にしました（未保存 — 「CSVを保存」で確定）`;
 }
 
 let _udAudio = null;

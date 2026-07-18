@@ -141,7 +141,20 @@ textarea.svg-overlay-input { min-height:120px; font-family:monospace; font-size:
 .sdot-body { background:rgba(76,175,80,.55); color:#e8f5e9; }
 .sdot-img  { background:rgba(74,144,217,.55); color:#e3f2fd; }
 .sdot-mp3  { background:rgba(232,160,64,.55); color:#fff3e0; }
+.sdot-pub  { background:rgba(38,166,154,.6); color:#d6fff8; }
 .sdot-off  { background:rgba(255,255,255,.06); color:#404040; }
+
+/* 編集：公開チェックボックス */
+.pub-toggle { display:flex; align-items:center; gap:5px; cursor:pointer; white-space:nowrap; padding-bottom:2px; font-size:0.82rem; color:var(--text2); user-select:none; }
+.pub-toggle input { width:15px; height:15px; accent-color:#26a69a; cursor:pointer; }
+.pub-toggle input:checked + span { color:#4fc4b6; font-weight:bold; }
+
+/* 進捗ボード：公開まわり */
+.pus-pub { color:#4fc4b6; }
+.ptile-pub { border-color:rgba(38,166,154,.45); }
+.ptile .sdot-pub { cursor:pointer; }
+.pub-bulk-btn { background:transparent; border:1px solid rgba(38,166,154,.6); color:#4fc4b6; font-size:0.66rem; border-radius:3px; padding:1px 7px; cursor:pointer; font-family:inherit; margin-left:4px; }
+.pub-bulk-btn:hover { background:rgba(38,166,154,.15); }
 
 /* メモ */
 #memoModal .modal-box { width:1280px; max-width:96vw; height:90vh; }
