@@ -303,8 +303,10 @@ async function spawnVP(args, opts, retries = 3, cancelRef) {
 }
 
 // WAVs（複数可）→ MP3（ffmpeg で結合＋変換を一括処理）
+// loudnorm で音量を一定基準(EBU R128)にそろえる。ナレーターや感情で声量が
+// 変わっても、カードごとの仕上がり音量が揃う。
 function wavsToMp3(wavFiles, mp3Path, tempDir, reqId) {
-  const af = 'afade=t=in:st=0:d=0.08';
+  const af = 'loudnorm=I=-16:TP=-1.5:LRA=11,afade=t=in:st=0:d=0.08';
   if (wavFiles.length === 1) {
     return spawnP('ffmpeg', ['-y', '-i', wavFiles[0], '-af', af, '-ar', '44100', '-ac', '1', '-b:a', '96k', mp3Path]);
   }
@@ -376,6 +378,37 @@ function getVoiceAudio(req, res, code) {
 }
 
 // POST /api/voice/generate
+// 間マーカー【間】1つあたりの無音（秒）
+const PAUSE_MARK = '【間】';
+const PAUSE_SEC = 0.5;
+
+// テキストを「読み上げ」と「無音」のセグメント列に分解する。
+// 【間】の連続数ぶんだけ無音を積む（【間】2つで1.0秒）。マーカー自体は読ませない。
+function buildSegments(text, limit) {
+  const segs = [];
+  let pending = 0;
+  const flushSpeech = (t) => { for (const s of splitForVP(t, limit)) segs.push({ type: 'speech', text: s }); };
+  // 【間】で区切りつつマーカーも残す
+  for (const part of text.split(new RegExp(`(${PAUSE_MARK})`))) {
+    if (part === PAUSE_MARK) { pending += PAUSE_SEC; continue; }
+    if (!part.trim()) continue;
+    if (pending > 0) { segs.push({ type: 'pause', sec: pending }); pending = 0; }
+    flushSpeech(part);
+  }
+  if (pending > 0) segs.push({ type: 'pause', sec: pending });
+  return segs;
+}
+
+// 指定秒数の無音WAV（結合できるよう標準フォーマットで作る）
+function makeSilence(sec, outPath) {
+  return spawnP('ffmpeg', ['-y', '-f', 'lavfi', '-i', 'anullsrc=r=44100:cl=mono',
+    '-t', String(sec), '-c:a', 'pcm_s16le', outPath]);
+}
+// VOICEPEAKのWAVを標準フォーマット(44100/mono/16bit)へ。無音WAVと結合できるようにするため。
+function toStdWav(inPath, outPath) {
+  return spawnP('ffmpeg', ['-y', '-i', inPath, '-ar', '44100', '-ac', '1', '-c:a', 'pcm_s16le', outPath]);
+}
+
 // VOICEPEAK用にテキストを分割する。
 //  1) まず「。」で文に分ける（句点は各文の末尾に残す）
 //  2) limit字を超える文は「、」でさらに分割（読点は前側の末尾に残す）
@@ -526,30 +559,45 @@ function postVoiceGenerate(req, res) {
         fs.copyFileSync(mp3Path, path.join(backupDir, `${code}_${timestamp()}.mp3`));
       }
 
-      // 「。」で分割。VOICEPEAKは1回あたり約140字までなので、超える文は
-      // さらに「、」で分けてから渡す（服務の宣誓など句点のない長文への対応）。
-      const sentences = splitForVP(text, 140);
-      if (!sentences.length) return sendJSON(res, 400, { ok: false, error: 'テキストが空です' });
+      // テキストを「読み上げ」「無音(【間】)」のセグメント列に。
+      // 読み上げは「。」で分け、VOICEPEAKの上限(約140字)超えは「、」でさらに分割。
+      const segments = buildSegments(text, 140);
+      const speechCount = segments.filter(s => s.type === 'speech').length;
+      if (!speechCount) return sendJSON(res, 400, { ok: false, error: 'テキストが空です' });
 
       // リクエストごとにユニークなプレフィックスを生成（同一カードの並行処理に備える）
       const reqId = `${code}_${Date.now().toString(36)}`;
-      console.log(`[voice] ${code}  ${sentences.length}文 narrator=${narrator}`);
+      const pauseCount = segments.length - speechCount;
+      console.log(`[voice] ${code}  ${speechCount}文` + (pauseCount ? ` ＋間${pauseCount}個` : '') + ` narrator=${narrator}`);
 
-      for (let i = 0; i < sentences.length; i++) {
+      let spoken = 0;
+      for (let i = 0; i < segments.length; i++) {
+        if (cancelRef.cancelled) return;
+        const seg = segments[i];
+        const stdWav = path.join(tempDir, `${reqId}_${i}_std.wav`);
+
+        if (seg.type === 'pause') {
+          await makeSilence(seg.sec, stdWav);            // 【間】→ 無音WAV
+          chunkWavs.push(stdWav);
+          continue;
+        }
+        // 読み上げ：VOICEPEAK → 標準フォーマットへ変換（無音WAVと結合できるように）
         const txtFile = path.join(tempDir, `${reqId}_${i}.txt`);
-        const wavFile = path.join(tempDir, `${reqId}_${i}.wav`);
-        fs.writeFileSync(txtFile, sentences[i], 'utf8');
-
+        const rawWav  = path.join(tempDir, `${reqId}_${i}.wav`);
+        fs.writeFileSync(txtFile, seg.text, 'utf8');
         await spawnVP(
-          [vpPath, '-t', txtFile, '-n', narrator, '-e', emotion, '--speed', speed, '--pitch', pitch, '-o', wavFile],
+          [vpPath, '-t', txtFile, '-n', narrator, '-e', emotion, '--speed', speed, '--pitch', pitch, '-o', rawWav],
           { cwd: vpDir }, 3, cancelRef);
-
-        chunkWavs.push(wavFile);
-        console.log(`  [${i + 1}/${sentences.length}] 完了`);
-        if (i < sentences.length - 1) await new Promise(r => setTimeout(r, 5000));
+        await toStdWav(rawWav, stdWav);
+        chunkWavs.push(stdWav);
+        try { fs.unlinkSync(txtFile); } catch {}
+        try { fs.unlinkSync(rawWav); } catch {}
+        spoken++;
+        console.log(`  [${spoken}/${speechCount}] 完了`);
+        if (spoken < speechCount) await new Promise(r => setTimeout(r, 5000));  // VOICEPEAK連続実行の間隔
       }
 
-      // WAV 結合 → MP3（ffmpeg 一括）
+      // WAV 結合 → MP3（loudnormで音量そろえ）
       await wavsToMp3(chunkWavs, mp3Path, tempDir, reqId);
       console.log(`  ✅ ${code}.mp3 完成`);
       updateMp3List(voicesDir);
