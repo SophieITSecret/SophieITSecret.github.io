@@ -27,3 +27,6 @@ voices_temp/
 # Python キャッシュ
 __pycache__/
 *.pyc
+
+# CSVの自動バックアップ（作業台が作る安全用コピー。ローカルには残すが版管理・本番配信はしない）
+TAKERUcard_backup_*.csv

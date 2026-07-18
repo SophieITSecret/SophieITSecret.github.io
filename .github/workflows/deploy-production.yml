@@ -1,0 +1,58 @@
+name: Deploy TAKERU to production (Xserver)
+
+# 本番（takeru.ms-forum.com）への反映。
+# 開発は push で GitHub Pages（pages.yml）へ、本番は「リリース公開時のみ」ここで反映する。
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "ドライラン（実際には転送しない。初回は必ず true で内容確認）"
+        type: boolean
+        default: true
+
+concurrency:
+  group: takeru-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "${{ secrets.XSERVER_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -p "${{ secrets.XSERVER_PORT }}" -H "${{ secrets.XSERVER_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null
+
+      - name: Deploy staging/TAKERU/ via rsync
+        run: |
+          DRYRUN=""
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.dry_run }}" = "true" ]; then
+            DRYRUN="--dry-run"
+            echo "::notice::ドライラン実行中（実際の転送は行いません）"
+          fi
+
+          rsync -avz --delete $DRYRUN \
+            -e "ssh -i ~/.ssh/deploy_key -p ${{ secrets.XSERVER_PORT }} -o StrictHostKeyChecking=yes" \
+            --exclude='.git/' \
+            --exclude='.github/' \
+            --exclude='editor/' \
+            --exclude='docs/' \
+            --exclude='*.bak' \
+            --exclude='TAKERUcard_backup_*.csv' \
+            --exclude='voices_backup/' \
+            --exclude='voices_temp/' \
+            --exclude='__pycache__/' \
+            --exclude='.DS_Store' \
+            staging/TAKERU/ \
+            "${{ secrets.XSERVER_USER }}@${{ secrets.XSERVER_HOST }}:${{ secrets.XSERVER_PATH }}"
+
+      - name: Done
+        run: echo "::notice::本番反映が完了しました（ドライランの場合は転送なし）"

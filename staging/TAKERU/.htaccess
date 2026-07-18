@@ -1,0 +1,32 @@
+# ============================================================
+# TAKERU 本番環境（takeru.ms-forum.com）用 .htaccess
+# 置き場所: /home/xs302342/ms-forum.com/public_html/takeru/
+#   ※ このファイルは takeru/ ディレクトリ配下だけに効く。
+#     親サイト ms-forum.com 本体の挙動には影響しない。
+# ============================================================
+
+RewriteEngine On
+
+# ------------------------------------------------------------
+# 正規URLを https://takeru.ms-forum.com/ に統一
+#   ・http でのアクセス
+#   ・ms-forum.com/takeru/ 経由（サブドメインでないホスト）
+#   を 301 で takeru サブドメインの https に寄せる。
+#   $1 はこのディレクトリからの相対パスなので、
+#   どちらの入口でも /takeru/ の二重付与は起きない。
+# ------------------------------------------------------------
+RewriteCond %{HTTPS} !=on [OR]
+RewriteCond %{HTTP_HOST} !^takeru\.ms-forum\.com$ [NC]
+RewriteRule ^(.*)$ https://takeru.ms-forum.com/$1 [R=301,L]
+
+# ------------------------------------------------------------
+# 更新がすぐ届いてほしいファイルはキャッシュさせない
+#   Service Worker / CSV は毎回サーバへ確認しに行かせる。
+# ------------------------------------------------------------
+<IfModule mod_headers.c>
+  <FilesMatch "(sw\.js|manifest\.json|.*\.csv)$">
+    Header set Cache-Control "no-cache, no-store, must-revalidate"
+    Header set Pragma "no-cache"
+    Header set Expires "0"
+  </FilesMatch>
+</IfModule>
