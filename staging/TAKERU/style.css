@@ -520,6 +520,13 @@ body:not(.menu-mode) #image-area.has-image::after {
     opacity: 0.65;
     cursor: default;
 }
+/* プレビュー科目（タイトルまで公開）。grade3より抑えた緑、comingよりは明るい。押せる。 */
+.subject-btn.btn-preview {
+    background: linear-gradient(135deg, #123d18, #1a4d20);
+    border-color: #2e7d32;
+    color: #d2e4d2;
+    opacity: 0.88;
+}
 
 /* ==================== ジャンルパネル見出し（テーマ一覧・カード一覧ヘッダー） ==================== */
 .genre-panel-label {

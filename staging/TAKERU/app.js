@@ -39,8 +39,30 @@ function logAccess(type, code) {
     } catch (e) { /* fetch自体が使えない環境でも落とさない */ }
 }
 
+// 科目（級）の状態を判定して保持する。dev/prod共通・データ由来なので見え方が揃う。
+//   'full'    … 公開カードがある（明・通常閲覧）      例）軍事と戦略
+//   'preview' … 未公開だがタイトルはある（中・タイトルまで見せる） 例）国家と法律・戦争の歴史
+//   'coming'  … データが無い（暗・準備中）             例）1級・2級
+let subjectTierMap = {};
+function computeSubjectTiers() {
+    subjectTierMap = {};
+    const by = {};
+    for (const c of cardData) {
+        if (!c.subject) continue;
+        (by[c.subject] = by[c.subject] || []).push(c);
+    }
+    for (const s in by) {
+        const cs = by[s];
+        subjectTierMap[s] = cs.some(c => c.published) ? 'full'
+            : cs.some(c => c.title && c.title.trim()) ? 'preview' : 'coming';
+    }
+}
+function subjectTier(subject) { return subjectTierMap[subject] || 'coming'; }
+
 // このカードを表示するか（表示制御の芯はここ一箇所）
 function isCardVisible(card) {
+    // プレビュー科目（タイトルだけ）は dev/prod ともタイトルを見せる＝閲覧可
+    if (subjectTier(card.subject) === 'preview') return true;
     if (!IS_PROD) return true;              // 開発：全部見せる
     return card.published === true;         // 本番：公開フラグのみ
 }
@@ -129,6 +151,7 @@ async function loadCSV() {
             // 7列目「公開」。値が '1' のときだけ公開。空欄・列なし(旧CSV)は非公開
             published: c[6]?.trim() === '1'
         })).filter(d => d.id);
+        computeSubjectTiers();   // 科目ごとの明るさ（full/preview/coming）を確定
     } catch (e) {
         console.error('CSVロード失敗:', e);
     }
@@ -306,17 +329,19 @@ function showGradeMenu() {
     showMenuBanner();
     showMenuView();
 
-    // 3級の各科目：配下に見えるカードがあれば点灯（btn-grade3）、無ければ暗く（btn-coming）
+    // 3級の各科目を明るさ3段階で。full=明（通常）/ preview=中（タイトルまで）/ coming=暗。
+    // 判定はデータ由来（subjectTier）なので dev/prod で同じ見え方になる。
     const grade3 = [
         ['3級-軍事と戦略', '軍事と戦略'],
         ['3級-国家と法律', '国家と法律'],
         ['3級-戦争の歴史', '戦争の歴史']
     ];
-    const grade3Html = grade3.map(([subj, label]) =>
-        hasVisibleCards(cardData.filter(d => d.subject === subj))
-            ? `<button class="subject-btn btn-grade3" data-subject="${subj}">${label}</button>`
-            : `<button class="subject-btn btn-coming" disabled>${label}</button>`
-    ).join('');
+    const grade3Html = grade3.map(([subj, label]) => {
+        const tier = subjectTier(subj);
+        if (tier === 'full')    return `<button class="subject-btn btn-grade3" data-subject="${subj}">${label}</button>`;
+        if (tier === 'preview') return `<button class="subject-btn btn-preview" data-subject="${subj}">${label}</button>`;
+        return `<button class="subject-btn btn-coming" disabled>${label}</button>`;
+    }).join('');
 
     menuContent.innerHTML = `
         <div class="sub-menu-wrap">
