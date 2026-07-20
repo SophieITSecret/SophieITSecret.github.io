@@ -1,6 +1,6 @@
 // ★デプロイ(push)のたびに SW_VERSION と CACHE_NAME の番号を一緒に上げる
-const SW_VERSION = 'v42';
-const CACHE_NAME = 'takeru-v42';
+const SW_VERSION = 'v43';
+const CACHE_NAME = 'takeru-v43';
 
 const PRE_CACHE = [
     './',
@@ -38,6 +38,10 @@ self.addEventListener('activate', e => {
 });
 
 self.addEventListener('fetch', e => {
+    // GET以外（アクセス計測 log.php へのPOST等）はSWで触らずネットワークへ素通し。
+    // iOSでは POST を respondWith 経由で再fetchすると本文が届かないことがある。
+    if (e.request.method !== 'GET') return;
+
     const url = new URL(e.request.url);
 
     // CSV・mp3list.jsonは常にネットワーク優先（更新を反映するため）、失敗時はキャッシュ
