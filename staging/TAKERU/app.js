@@ -337,9 +337,9 @@ function showGradeMenu() {
     ];
     const grade3Html = grade3.map(([subj, label]) => {
         const tier = subjectTier(subj);
-        // full=明・押せる／preview=中・押せない・右上に「作成中」／coming=暗・押せない
+        // full=明・押せる／preview=中・押せる（中でユニット名まで見せる）／coming=暗・押せない
         if (tier === 'full')    return `<button class="subject-btn btn-grade3" data-subject="${subj}">${label}</button>`;
-        if (tier === 'preview') return `<button class="subject-btn btn-preview" disabled>${label}<span class="wip-tag">作成中</span></button>`;
+        if (tier === 'preview') return `<button class="subject-btn btn-preview" data-subject="${subj}">${label}</button>`;
         return `<button class="subject-btn btn-coming" disabled>${label}</button>`;
     }).join('');
 
@@ -401,12 +401,19 @@ function showGenreMenu() {
             <div class="genre-panel-label label-section">テーマ一覧</div>
         </div>
     `;
-    // 配下に見えるカードがあれば点灯、無ければ暗く（1級/2級と同じ btn-coming）
+    // preview科目（作成中）：ユニット名は見せるが、個別カードはまだ仮なので開かせない。
+    //   各ユニットを「作成中」バッジ付きの押せないタイルにする。
+    // それ以外：配下に見えるカードがあれば点灯、無ければ暗く（btn-coming）。
+    const isPreviewSubject = subjectTier(curSubject) === 'preview';
     let genreHtml = '';
     genres.forEach(g => {
-        genreHtml += hasVisibleCards(cardData.filter(d => d.genre === g))
-            ? `<button class="genre-btn" data-genre="${g}">${g}</button>`
-            : `<button class="genre-btn btn-coming" disabled>${g}</button>`;
+        if (isPreviewSubject) {
+            genreHtml += `<button class="genre-btn btn-preview" disabled>${g}<span class="wip-tag">作成中</span></button>`;
+        } else {
+            genreHtml += hasVisibleCards(cardData.filter(d => d.genre === g))
+                ? `<button class="genre-btn" data-genre="${g}">${g}</button>`
+                : `<button class="genre-btn btn-coming" disabled>${g}</button>`;
+        }
     });
     html += `<div class="genre-list-wrap">${genreHtml}</div>`;
     menuContent.innerHTML = html;

@@ -520,28 +520,12 @@ body:not(.menu-mode) #image-area.has-image::after {
     opacity: 0.65;
     cursor: default;
 }
-/* 作成中の科目。grade3より抑えた緑、comingよりは明るい。押せない（右上に「作成中」）。 */
+/* 作成中の科目ボタン。押せる（中に入るとユニット名まで見せる）。grade3より抑えた緑。 */
 .subject-btn.btn-preview {
     background: linear-gradient(135deg, #123d18, #1a4d20);
     border-color: #2e7d32;
-    color: #9fb98a;          /* タイトル色を少し変える（完成科目の白より落ち着いた色） */
+    color: #d2e4d2;
     opacity: 0.9;
-    cursor: default;
-    position: relative;
-}
-.subject-btn.btn-preview .wip-tag {
-    position: absolute;
-    top: 5px;
-    right: 5px;
-    font-size: 0.5rem;
-    font-weight: normal;
-    letter-spacing: 0.03em;
-    color: #d7e6cf;
-    background: rgba(0,0,0,0.3);
-    border: 1px solid rgba(120,170,110,0.45);
-    border-radius: 3px;
-    padding: 0 4px;
-    line-height: 1.5;
 }
 
 /* ==================== ジャンルパネル見出し（テーマ一覧・カード一覧ヘッダー） ==================== */
@@ -650,6 +634,34 @@ body:not(.menu-mode) #image-area.has-image::after {
     cursor: default;
 }
 .genre-btn.btn-coming::after { content: none; }   /* 進める印(▶)は消す */
+
+/* 作成中のユニット（テーマ）タイル。名前は見せるが押せない。右端に「作成中」バッジ。
+   .genre-btn の hover/coming より後に置き、同特異度でも確実に勝たせる。 */
+.genre-btn.btn-preview {
+    background: linear-gradient(135deg, #17331c, #1e4d26);
+    border: 1px solid #2e7d32;
+    color: #a9c49a;
+    opacity: 0.92;
+    cursor: default;
+}
+.genre-btn.btn-preview:hover {   /* hoverでも変化させない（押せないため） */
+    background: linear-gradient(135deg, #17331c, #1e4d26);
+    border-color: #2e7d32;
+    color: #a9c49a;
+}
+.genre-btn.btn-preview::after { content: none; }   /* 進める印(▶)は出さない */
+.wip-tag {
+    font-size: 0.62rem;
+    font-weight: normal;
+    letter-spacing: 0.04em;
+    color: #d7e6cf;
+    background: rgba(0,0,0,0.28);
+    border: 1px solid rgba(120,170,110,0.5);
+    border-radius: 3px;
+    padding: 1px 6px;
+    flex-shrink: 0;
+}
+
 .light-mode .genre-btn {
     background: linear-gradient(135deg, #deeaf8, #c8dbf2);
     border-color: rgba(50,110,200,0.45);
