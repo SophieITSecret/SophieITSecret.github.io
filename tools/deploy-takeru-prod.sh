@@ -42,7 +42,16 @@ cd "$REPO_ROOT"
 #   上がっていないと、既存端末が古いキャッシュのままになり
 #   新規公開が届かない（更新トーストも出ない）。上げ忘れをここで止める。
 # ------------------------------------------------------------
-NEW_SW=$(git show HEAD:staging/TAKERU/sw.js | grep -oE 'takeru-v[0-9]+' | head -1 | grep -oE '[0-9]+' || true)
+SW_SRC=$(git show HEAD:staging/TAKERU/sw.js)
+# SW_VERSION（設定画面の表示）と CACHE_NAME（キャッシュ世代）のズレを検出する
+SW_DISP=$(printf '%s' "$SW_SRC" | grep -oE "SW_VERSION = 'v[0-9]+'" | grep -oE '[0-9]+' || true)
+SW_CACHE=$(printf '%s' "$SW_SRC" | grep -oE 'takeru-v[0-9]+' | head -1 | grep -oE '[0-9]+' || true)
+if [ -n "$SW_DISP" ] && [ -n "$SW_CACHE" ] && [ "$SW_DISP" != "$SW_CACHE" ]; then
+  echo "ERROR: sw.js の SW_VERSION(v$SW_DISP) と CACHE_NAME(v$SW_CACHE) が食い違っています。" >&2
+  echo "  設定画面が誤ったバージョンを表示します。bash tools/bump-sw.sh で揃えてください。" >&2
+  exit 1
+fi
+NEW_SW="$SW_CACHE"
 LIVE_SW=$(curl -sS --max-time 15 "$PROD_URL/sw.js" 2>/dev/null | grep -oE 'takeru-v[0-9]+' | head -1 | grep -oE '[0-9]+' || true)
 echo "==> sw版数: 今回=v${NEW_SW:-?}  本番=v${LIVE_SW:-?}"
 if [ -n "$NEW_SW" ] && [ -n "$LIVE_SW" ]; then
