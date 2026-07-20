@@ -241,6 +241,40 @@ function postReadingScript(req, res) {
   });
 }
 
+// GET /api/access-stats — 本番サーバーの集計JSONをSSHで取得して返す
+//   本番の logs/ は外部非公開なので、デプロイと同じ鍵でSSH経由で取りに行く。
+//   設定は config.json の prodStats で上書き可。既定はデプロイ先と同じ。
+const PROD = Object.assign({
+  host: 'xs302342.xsrv.jp',
+  user: 'xs302342',
+  port: '10022',
+  keyPath: path.join(os.homedir(), '.ssh', 'takeru_deploy'),
+  remoteDir: '~/ms-forum.com/public_html/takeru/logs',
+}, config.prodStats || {});
+
+async function getAccessStats(req, res) {
+  const SEP = '===TAKERU_SPLIT===';
+  // 2ファイルを1回のSSHでまとめて取得（無ければ空として扱う）
+  const remoteCmd =
+    `cat ${PROD.remoteDir}/daily_summary.json 2>/dev/null; ` +
+    `echo; echo ${SEP}; ` +
+    `cat ${PROD.remoteDir}/card_summary.json 2>/dev/null`;
+  const args = [
+    '-i', PROD.keyPath, '-p', String(PROD.port),
+    '-o', 'StrictHostKeyChecking=no', '-o', 'BatchMode=yes', '-o', 'ConnectTimeout=20',
+    `${PROD.user}@${PROD.host}`, remoteCmd,
+  ];
+  try {
+    const out = await spawnP('ssh', args, {});
+    const [dailyRaw = '', cardRaw = ''] = out.split(SEP);
+    const parse = s => { s = s.trim(); if (!s) return {}; try { const v = JSON.parse(s); return v && typeof v === 'object' ? v : {}; } catch { return {}; } };
+    sendJSON(res, 200, { ok: true, daily: parse(dailyRaw), cards: parse(cardRaw) });
+  } catch (e) {
+    // SSH不通でも作業台自体は落とさない。理由を添えて空で返す。
+    sendJSON(res, 200, { ok: false, error: e.message, daily: {}, cards: {} });
+  }
+}
+
 // mp3list.json を voices ディレクトリから再生成
 function updateMp3List(voicesDir) {
   try {
@@ -659,6 +693,7 @@ const server = http.createServer((req, res) => {
   if (pathname === '/api/voice-settings' && method === 'POST') return postVoiceSettings(req, res);
   if (pathname === '/api/reading-scripts' && method === 'GET')  return getReadingScripts(req, res);
   if (pathname === '/api/reading-scripts' && method === 'POST') return postReadingScript(req, res);
+  if (pathname === '/api/access-stats' && method === 'GET') return getAccessStats(req, res);
 
   // 静的
   if (method === 'GET') return serveStatic(req, res, pathname);

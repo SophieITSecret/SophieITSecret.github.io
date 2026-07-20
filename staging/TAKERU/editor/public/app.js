@@ -1556,7 +1556,52 @@ async function copyPrompt() {
 // ==================== 進捗ボード ====================
 let progressTab = '';
 
+// ===== アクセス計測（本番集計をSSHで取得して表示） =====
+let accessStats = { daily: {}, cards: {}, loaded: false, error: null };
+
+async function loadAccessStats() {
+  const dash = document.getElementById('accessDash');
+  if (dash) dash.innerHTML = '<span class="dash-loading">本番のアクセス集計を取得中…</span>';
+  try {
+    const r = await fetch('/api/access-stats');
+    const j = await r.json();
+    accessStats = { daily: j.daily || {}, cards: j.cards || {}, loaded: true, error: j.ok ? null : (j.error || '取得失敗') };
+  } catch (e) {
+    accessStats = { daily: {}, cards: {}, loaded: true, error: e.message };
+  }
+  renderAccessDash();
+  renderProgressBody();   // タイルの閲覧数を反映
+}
+
+function renderAccessDash() {
+  const dash = document.getElementById('accessDash');
+  if (!dash) return;
+  const daily = accessStats.daily || {};
+  const dates = Object.keys(daily).sort().slice(-7);   // 直近7日
+  const sum = (t) => dates.reduce((a, d) => a + ((daily[d] && daily[d][t]) || 0), 0);
+
+  if (!accessStats.loaded) { dash.innerHTML = ''; return; }
+
+  let note = '';
+  if (accessStats.error) note = `<span class="dash-err">⚠ 本番未接続（${esc(accessStats.error)}）</span>`;
+  else if (!dates.length) note = '<span class="dash-empty">まだ記録がありません（公開後のアクセスから溜まります）</span>';
+
+  // 日付を列にした横並びの表にする
+  const head = dates.map(d => `<th>${d.slice(5)}</th>`).join('');
+  const row = (label, t) => `<tr><th class="dl">${label}</th>${dates.map(d => `<td>${(daily[d] && daily[d][t]) || 0}</td>`).join('')}</tr>`;
+
+  dash.innerHTML = `
+    <div class="dash-head">
+      <span class="dash-title">📈 本番アクセス（直近7日）</span>
+      <span class="dash-tot">トップ計 ${sum('top_view')}／カード計 ${sum('card_view')}／追加 ${sum('pwa_installed')}</span>
+      <button class="dash-refresh" onclick="loadAccessStats()" title="本番から再取得">↻ 更新</button>
+    </div>
+    ${note || `<table class="dash-table"><tr><th></th>${head}</tr>${row('トップ', 'top_view')}${row('カード', 'card_view')}${row('追加', 'pwa_installed')}</table>`}
+  `;
+}
+
 function openProgress() {
+  loadAccessStats();   // 開くたびに本番から最新を取得（非同期・失敗しても表示は続く）
   // subject一覧を収集（CSV登場順）
   const subjects = [];
   for(const c of cardData){
@@ -1605,6 +1650,7 @@ function renderProgressBody() {
     const nImg  = cards.filter(c => !!imageMap[c.id]).length;
     const nMp3  = cards.filter(c => mp3Ids.has(c.id)).length;
     const nPub  = cards.filter(c => c.published).length;
+    const unitViews = cards.reduce((a, c) => a + (accessStats.cards[c.id] || 0), 0);
 
     const tiles = cards.map(c => {
       const gIdx = cardData.indexOf(c);
@@ -1613,8 +1659,10 @@ function renderProgressBody() {
       const hI = !!imageMap[c.id];
       const hM = mp3Ids.has(c.id);
       const complete = hT && hB && hI && hM;
+      const views = accessStats.cards[c.id] || 0;
+      const viewTag = views > 0 ? `<span class="ptile-views" title="本番での累計閲覧数">👁${views}</span>` : '';
       return `<div class="ptile${complete?' ptile-complete':''}${c.published?' ptile-pub':''}" onclick="pickProgressCard(${gIdx})" title="${esc(c.title||c.id)}">
-        <span class="ptile-code">${esc(c.id)}</span>
+        <span class="ptile-code">${esc(c.id)}${viewTag}</span>
         <span class="ptile-dots">
           <span class="sdot ${c.published?'sdot-pub':'sdot-off'}" onclick="togglePub(event,${gIdx})" title="クリックで公開切替">公</span>
           <span class="sdot ${hT?'sdot-title':'sdot-off'}">題</span>
@@ -1635,6 +1683,7 @@ function renderProgressBody() {
           <span class="pus-body">文 ${nBody}/${total}</span>
           <span class="pus-img">画 ${nImg}/${total}</span>
           <span class="pus-mp3">音 ${nMp3}/${total}</span>
+          ${unitViews > 0 ? `<span class="pus-views" title="このユニットの本番累計閲覧数">👁 ${unitViews}</span>` : ''}
           <button class="pub-bulk-btn" onclick="bulkPub('${esc(unit).replace(/'/g,"&#39;")}',${allPub?0:1})" title="このユニットをまとめて公開/非公開">${allPub?'全非公開':'全公開'}</button>
         </span>
       </div>

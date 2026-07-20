@@ -156,6 +156,23 @@ textarea.svg-overlay-input { min-height:120px; font-family:monospace; font-size:
 .pub-bulk-btn { background:transparent; border:1px solid rgba(38,166,154,.6); color:#4fc4b6; font-size:0.66rem; border-radius:3px; padding:1px 7px; cursor:pointer; font-family:inherit; margin-left:4px; }
 .pub-bulk-btn:hover { background:rgba(38,166,154,.15); }
 
+/* アクセス計測（本番の閲覧数） */
+.pus-views { color:#e0a458; }
+.ptile-views { margin-left:4px; color:#e0a458; font-weight:bold; }
+
+.access-dash { margin:0 0 10px; }
+.dash-loading, .dash-empty, .dash-err { font-size:0.74rem; color:var(--text2); }
+.dash-err { color:#e08a58; }
+.dash-head { display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:6px; }
+.dash-title { font-size:0.82rem; font-weight:bold; color:#e0a458; }
+.dash-tot { font-size:0.74rem; color:var(--text2); }
+.dash-refresh { background:transparent; border:1px solid var(--border); color:var(--text2); font-size:0.7rem; border-radius:3px; padding:1px 8px; cursor:pointer; font-family:inherit; }
+.dash-refresh:hover { background:rgba(255,255,255,.06); }
+.dash-table { border-collapse:collapse; font-size:0.72rem; }
+.dash-table th, .dash-table td { padding:2px 8px; text-align:right; border-bottom:1px solid var(--border); }
+.dash-table th.dl { text-align:left; color:var(--text2); font-weight:normal; }
+.dash-table tr:first-child th { color:var(--text2); font-weight:normal; text-align:right; }
+
 /* メモ */
 #memoModal .modal-box { width:1280px; max-width:96vw; height:90vh; }
 .memo-modal-box .modal-head { cursor:move; user-select:none; }
