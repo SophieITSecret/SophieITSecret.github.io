@@ -542,13 +542,15 @@ function showCard(idx) {
 
     const cardType = /\dF\d+$/.test(card.id) ? 'fact' : /\dC\d+$/.test(card.id) ? 'com' : null;
     const typeBadge = cardType ? ` <span class="card-badge badge-${cardType}">${cardType === 'fact' ? '史実' : '解説'}</span>` : '';
+    // カード番号は進捗行の右端に小さく出す（ご意見フォームでカードを特定してもらうため）
+    const codeTag = `<span class="card-code">${card.id}</span>`;
     if (card.section) {
         cardProgress.innerHTML =
             `<div class="prog-unit">${curGenre}</div>` +
-            `<div>${card.section}　${curIndex + 1} / ${curSection.length}${typeBadge}</div>`;
+            `<div class="prog-row"><span>${card.section}　${curIndex + 1} / ${curSection.length}${typeBadge}</span>${codeTag}</div>`;
     } else {
         cardProgress.innerHTML =
-            `<div class="prog-unit">${curGenre}　${curIndex + 1} / ${curSection.length}${typeBadge}</div>`;
+            `<div class="prog-row"><span>${curGenre}　${curIndex + 1} / ${curSection.length}${typeBadge}</span>${codeTag}</div>`;
     }
     cardTitle.innerText = card.title.replace(/^→/, '').trim();
     cardBody.innerText = card.body;

@@ -247,6 +247,25 @@ body:not(.menu-mode) #image-area.has-image::after {
     margin-bottom: 1px;
 }
 
+/* 進捗行：左に「サブユニット　3 / 16」、右端にカード番号 */
+.prog-row {
+    display: flex;
+    align-items: center;
+}
+
+/* カード番号（ASAKA01 等）。ご意見フォームでカードを特定する手がかり。
+   主役ではないので小さく薄く、行は増やさず右端に逃がす。
+   em指定なので PC幅で進捗行が大きくなると一緒に大きくなる。 */
+.card-code {
+    margin-left: auto;
+    padding-left: 8px;
+    font-size: 0.88em;
+    color: var(--text2);
+    opacity: 0.7;
+    letter-spacing: 0.08em;
+    flex-shrink: 0;
+}
+
 #card-title {
     font-family: 'Oswald', sans-serif;
     font-size: 1.05rem;
