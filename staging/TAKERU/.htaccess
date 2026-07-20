@@ -21,10 +21,11 @@ RewriteRule ^(.*)$ https://takeru.ms-forum.com/$1 [R=301,L]
 
 # ------------------------------------------------------------
 # 更新がすぐ届いてほしいファイルはキャッシュさせない
-#   Service Worker / CSV は毎回サーバへ確認しに行かせる。
+#   sw.js / CSV / manifest に加え、アプリ本体（html/js/css）も毎回サーバへ確認。
+#   これをしないと、sw.jsだけ最新でapp.jsが古い、という取り違えが起きる。
 # ------------------------------------------------------------
 <IfModule mod_headers.c>
-  <FilesMatch "(sw\.js|manifest\.json|.*\.csv)$">
+  <FilesMatch "(sw\.js|manifest\.json|.*\.csv|.*\.html|.*\.js|.*\.css)$">
     Header set Cache-Control "no-cache, no-store, must-revalidate"
     Header set Pragma "no-cache"
     Header set Expires "0"

@@ -1,6 +1,6 @@
 // ★デプロイ(push)のたびに SW_VERSION と CACHE_NAME の番号を一緒に上げる
-const SW_VERSION = 'v43';
-const CACHE_NAME = 'takeru-v43';
+const SW_VERSION = 'v44';
+const CACHE_NAME = 'takeru-v44';
 
 const PRE_CACHE = [
     './',
@@ -17,8 +17,16 @@ const PRE_CACHE = [
 
 self.addEventListener('install', e => {
     e.waitUntil(
-        caches.open(CACHE_NAME)
-            .then(cache => cache.addAll(PRE_CACHE))
+        caches.open(CACHE_NAME).then(cache =>
+            // 必ずネットワークの最新を取り込む（cache:'reload'でHTTPキャッシュを迂回）。
+            // これをしないと、sw.jsだけ最新なのにapp.jsは古い、という取り違えが起きる。
+            // 1つ失敗しても他は取り込めるよう個別にput（addAllは全滅する）。
+            Promise.all(PRE_CACHE.map(url =>
+                fetch(new Request(url, { cache: 'reload' }))
+                    .then(res => res.ok ? cache.put(url, res) : null)
+                    .catch(() => null)
+            ))
+        )
         // skipWaiting はユーザー確認後に message 経由で実行
     );
 });
