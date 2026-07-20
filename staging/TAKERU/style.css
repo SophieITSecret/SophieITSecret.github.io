@@ -247,6 +247,17 @@ body:not(.menu-mode) #image-area.has-image::after {
     margin-bottom: 1px;
 }
 
+/* 設定画面の断り書き（アクセス計測について） */
+.settings-note {
+    font-size: 0.7rem;
+    line-height: 1.7;
+    color: var(--text2);
+    opacity: 0.75;
+    margin: 14px 0 4px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+}
+
 /* 進捗行：左に「サブユニット　3 / 16」、右端にカード番号 */
 .prog-row {
     display: flex;

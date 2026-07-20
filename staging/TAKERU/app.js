@@ -6,7 +6,10 @@
 // 方針：開発だと確実に分かるホストだけを開発モードとし、それ以外は
 //       すべて本番モード（安全側）に倒す。想定外URLから入られても
 //       必ず「隠す側」に倒れる。
-const IS_PROD = (function () {
+// 判定の本体は index.html の <head>（window.__IS_PROD）にある。
+// ホーム画面追加より前に必要なため head で先に決めており、ここはそれを受け取る。
+// head が読めなかった場合に備え、同じ規則で計算し直すフォールバックを持つ。
+const IS_PROD = (typeof window.__IS_PROD === 'boolean') ? window.__IS_PROD : (function () {
     let preview = null;
     try { preview = new URLSearchParams(location.search).get('preview'); } catch (e) { /* noop */ }
     if (preview === 'prod') return true;    // 本番の見え方を確認する
@@ -18,6 +21,23 @@ const IS_PROD = (function () {
     if (/^192\.168\./.test(h) || /^10\./.test(h)) return false;   // LAN内の実機テスト
     return true;                            // 上記以外はすべて本番
 })();
+
+// ==========================================
+// アクセス計測（本番のみ）
+//   記録するのは日付・種別・カード番号だけ。個人を特定する情報は送らない。
+//   送信に失敗しても学習を止めないよう、エラーは必ず握りつぶす。
+// ==========================================
+function logAccess(type, code) {
+    if (!IS_PROD) return;                   // 開発の動作確認を数えない
+    try {
+        fetch('./log.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(code ? { type: type, code: code } : { type: type }),
+            keepalive: true                 // 画面を離れる直前でも送り切る
+        }).catch(function () { /* 記録の失敗は無視する */ });
+    } catch (e) { /* fetch自体が使えない環境でも落とさない */ }
+}
 
 // このカードを表示するか（表示制御の芯はここ一箇所）
 function isCardVisible(card) {
@@ -72,6 +92,9 @@ const imageArea = document.getElementById('image-area');
 const dividerLine = document.getElementById('divider-line');
 
 window.addEventListener('DOMContentLoaded', async () => {
+    logAccess('top_view');                  // トップが開かれた
+    window.addEventListener('appinstalled', () => logAccess('pwa_installed'));
+
     await Promise.all([loadCSV(), loadLinkCSV(), loadMp3List()]);
     setupButtons();
     setupSettings();
@@ -534,6 +557,7 @@ function showCard(idx) {
     const card = curSection[curIndex];
 
     navState = 'card';
+    logAccess('card_view', card.id);        // 連続再生での表示も1回として数える
     isMenuVisible = false;
     mp3Failed = false;
     hideVoiceWarning();

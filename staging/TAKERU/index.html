@@ -11,23 +11,27 @@
     <meta name="theme-color" content="#0d0d1a">
     <title>TAKERU｜MSアカデミー</title>
     <script>
+        // ===== 環境判定は「ここ1か所」で行う =====
+        // 結果を window.__IS_PROD に置き、アイコンの出し分け・app.js の表示制御・
+        // アクセス計測の送信が、すべてこの同じ値を見る。
+        // ※ホーム画面追加より前に走らせる必要があるため head 内・app.js より前。
+        // ※既知の開発ホスト以外は本番扱い（安全側。未知のURLでは未公開カードを隠す）。
+        window.__IS_PROD = (function () {
+            var p = null;
+            try { p = new URLSearchParams(location.search).get('preview'); } catch (e) {}
+            if (p === 'prod') return true;
+            if (p === 'dev') return false;
+            var h = location.hostname;
+            if (h === 'localhost' || h === '127.0.0.1' || h === '') return false;
+            if (h.endsWith('.github.io')) return false;
+            if (/^192\.168\./.test(h) || /^10\./.test(h)) return false;
+            return true;
+        })();
+
         // ホーム画面アイコン・名称を環境で出し分ける。
-        // ファイルは本番/開発とも同一。開発（GitHub等）のときだけGit版へ差し替える。
-        // ※インストール前に走らせる必要があるため head 内・app.js より前に置く。
-        //   判定は app.js の IS_PROD と同一ロジック。
+        // ファイルは本番/開発とも同一で、選ぶものだけを切り替える。
         (function () {
-            var isProd = (function () {
-                var p = null;
-                try { p = new URLSearchParams(location.search).get('preview'); } catch (e) {}
-                if (p === 'prod') return true;
-                if (p === 'dev') return false;
-                var h = location.hostname;
-                if (h === 'localhost' || h === '127.0.0.1' || h === '') return false;
-                if (h.endsWith('.github.io')) return false;
-                if (/^192\.168\./.test(h) || /^10\./.test(h)) return false;
-                return true;
-            })();
-            if (isProd) return; // 本番はそのまま（綺麗なアイコン・「TAKERU」）
+            if (window.__IS_PROD) return; // 本番はそのまま（綺麗なアイコン・「TAKERU」）
             var set = function (sel, attr, val) { var el = document.querySelector(sel); if (el) el.setAttribute(attr, val); };
             set('link[rel="apple-touch-icon"]', 'href', 'takeru-touch-icon-git.png');
             set('link[rel="manifest"]', 'href', 'manifest-git.json');
@@ -157,6 +161,10 @@
                     <div id="update-status" class="update-status">現在：確認中…</div>
                     <button id="btn-hard-reset" class="reset-link">それでも直らないとき：強制リセット</button>
                 </div>
+            </div>
+            <div class="settings-note">
+                本アプリは、どのページが何回開かれたかを数えています。<br>
+                個人を特定する情報（氏名・メールアドレス・位置情報など）は取得していません。
             </div>
             <button id="btn-settings-close">閉じる</button>
         </div>
