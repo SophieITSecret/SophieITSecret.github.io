@@ -11,10 +11,10 @@
     },
     {
       "narrator": "Japanese Female 3",
-      "speed": 90,
-      "pitch": 52,
+      "speed": 92,
+      "pitch": 55,
       "happy": 40,
-      "fun": 20,
+      "fun": 30,
       "sad": 10,
       "angry": 5
     },
@@ -29,5 +29,5 @@
     }
   ],
   "ver": 2,
-  "activeSlot": 0
+  "activeSlot": 1
 }
