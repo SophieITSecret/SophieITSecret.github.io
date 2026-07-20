@@ -77,6 +77,15 @@ body {
 }
 
 .entry-emblem { font-size: 4rem; color: var(--accent); animation: pulse 2s ease-in-out infinite; }
+/* スタート画面のタケル＆サクラ。画面高さの42%までに抑え、どの端末でも収める。 */
+.entry-emblem-img {
+    max-height: 42vh;
+    max-width: 72vw;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    filter: drop-shadow(0 6px 20px rgba(0,0,0,0.35));
+}
 @keyframes pulse {
     0%, 100% { opacity: 0.8; transform: scale(1); }
     50% { opacity: 1; transform: scale(1.05); }
