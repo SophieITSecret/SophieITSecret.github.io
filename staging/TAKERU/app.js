@@ -915,7 +915,9 @@ function showSectionComplete() {
 function doNextCard() {
     if (navState !== 'card') return;
     if (curIndex < curSection.length - 1) showCard(curIndex + 1);
-    else { autoAdvance = false; updateVoiceBtn(); advanceToNextSection(); }
+    // サブユニットの最後まで来たら次のサブユニットへ。連続再生は切らずに継続する。
+    // （ユニット全体を読み終えたときだけ showSectionComplete が autoAdvance を止める）
+    else advanceToNextSection();
 }
 
 
