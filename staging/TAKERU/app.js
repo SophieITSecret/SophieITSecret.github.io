@@ -60,9 +60,8 @@ function computeSubjectTiers() {
 function subjectTier(subject) { return subjectTierMap[subject] || 'coming'; }
 
 // このカードを表示するか（表示制御の芯はここ一箇所）
+// ※ preview科目はメニューで「作成中」表示にとどめ、カードは開かせない（下の showGradeMenu 参照）
 function isCardVisible(card) {
-    // プレビュー科目（タイトルだけ）は dev/prod ともタイトルを見せる＝閲覧可
-    if (subjectTier(card.subject) === 'preview') return true;
     if (!IS_PROD) return true;              // 開発：全部見せる
     return card.published === true;         // 本番：公開フラグのみ
 }
@@ -338,8 +337,9 @@ function showGradeMenu() {
     ];
     const grade3Html = grade3.map(([subj, label]) => {
         const tier = subjectTier(subj);
+        // full=明・押せる／preview=中・押せない・右上に「作成中」／coming=暗・押せない
         if (tier === 'full')    return `<button class="subject-btn btn-grade3" data-subject="${subj}">${label}</button>`;
-        if (tier === 'preview') return `<button class="subject-btn btn-preview" data-subject="${subj}">${label}</button>`;
+        if (tier === 'preview') return `<button class="subject-btn btn-preview" disabled>${label}<span class="wip-tag">作成中</span></button>`;
         return `<button class="subject-btn btn-coming" disabled>${label}</button>`;
     }).join('');
 

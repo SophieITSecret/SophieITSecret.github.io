@@ -520,12 +520,28 @@ body:not(.menu-mode) #image-area.has-image::after {
     opacity: 0.65;
     cursor: default;
 }
-/* プレビュー科目（タイトルまで公開）。grade3より抑えた緑、comingよりは明るい。押せる。 */
+/* 作成中の科目。grade3より抑えた緑、comingよりは明るい。押せない（右上に「作成中」）。 */
 .subject-btn.btn-preview {
     background: linear-gradient(135deg, #123d18, #1a4d20);
     border-color: #2e7d32;
-    color: #d2e4d2;
-    opacity: 0.88;
+    color: #9fb98a;          /* タイトル色を少し変える（完成科目の白より落ち着いた色） */
+    opacity: 0.9;
+    cursor: default;
+    position: relative;
+}
+.subject-btn.btn-preview .wip-tag {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    font-size: 0.5rem;
+    font-weight: normal;
+    letter-spacing: 0.03em;
+    color: #d7e6cf;
+    background: rgba(0,0,0,0.3);
+    border: 1px solid rgba(120,170,110,0.45);
+    border-radius: 3px;
+    padding: 0 4px;
+    line-height: 1.5;
 }
 
 /* ==================== ジャンルパネル見出し（テーマ一覧・カード一覧ヘッダー） ==================== */
