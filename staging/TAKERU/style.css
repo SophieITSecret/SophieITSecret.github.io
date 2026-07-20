@@ -79,7 +79,7 @@ body {
 .entry-emblem { font-size: 4rem; color: var(--accent); animation: pulse 2s ease-in-out infinite; }
 /* スタート画面のタケル＆サクラ。画面高さの42%までに抑え、どの端末でも収める。 */
 .entry-emblem-img {
-    max-height: 42vh;
+    max-height: 38vh;
     max-width: 72vw;
     width: auto;
     height: auto;
@@ -156,6 +156,17 @@ body {
     height: 100%;
     object-fit: contain;
     display: none;
+}
+/* 完了画面のタケル＆サクラ。画像枠の中央に小さめに置く（カード図表より控えめ）。 */
+#card-image.complete-mascot {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: auto;
+    height: 72%;
+    max-height: 300px;
+    object-fit: contain;
 }
 
 /* ==================== 図表の全画面表示 ==================== */

@@ -613,6 +613,7 @@ function showCard(idx) {
     textView.scrollTop = 0;
 
     // カード画像は.jpgに統一済み。.pngは旧データ用のフォールバックとして残す
+    cardImage.classList.remove('complete-mascot');   // 完了画面のマスコット指定を解除
     cardImage.src = `images/${card.id}.jpg`;
     cardImage.style.display = 'block';
     imagePlaceholder.style.display = 'none';
@@ -939,8 +940,12 @@ function showSectionComplete() {
     cardProgress.innerText = unitName;
     cardTitle.innerText = '✅ 完了';
     cardBody.innerText = `${unitName}の全${unitTotal}枚を読み終えました。\n\n◀ で最後のカードに戻れます。\n▲ で上位メニューに戻れます。`;
-    cardImage.style.display = 'none';
-    imagePlaceholder.style.display = 'flex';
+    // 完了画面はタケル＆サクラを小さめに（⚔の代わり）。ズーム印は出さない。
+    imageArea.classList.remove('has-image');
+    cardImage.classList.add('complete-mascot');
+    cardImage.src = 'images/mascots.png';
+    cardImage.style.display = 'block';
+    imagePlaceholder.style.display = 'none';
 }
 
 // 連続再生：次のカードへ自動送り
@@ -1048,6 +1053,7 @@ function stopVoice() {
 // ==========================================
 function openImgZoom() {
     if (isMenuVisible) return;                       // メニューのバナーでは効かせない
+    if (navState !== 'card') return;                 // 完了画面のマスコット等はズーム対象外
     if (cardImage.style.display === 'none') return;  // 画像が無いカードは対象外
     if (!cardImage.src) return;
     document.getElementById('img-zoom-img').src = cardImage.src;
