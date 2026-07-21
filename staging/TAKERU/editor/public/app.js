@@ -748,8 +748,9 @@ function updateExportInfo(){
     html+=`<br><span class="exp-warn">⚠ 本文未作成が ${cards.length-nBody}枚 含まれます（「（本文未作成）」と出力されます）</span>`;
   }
   if((fmt==='both'||fmt==='html') && withImg && nImg>0){
-    // 目安（960x720のPNGをJPEG化すると1枚あたり概ね0.2MB）
-    const mb=(nImg*0.2).toFixed(1);
+    // 目安は画像サイズ選択の1枚あたりMB（value の3つ目）から算出
+    const perMB=parseFloat((document.getElementById('exportImgSize').value.split('|')[2])||'0.2');
+    const mb=(nImg*perMB).toFixed(1);
     html+=`<br><span class="exp-hint">画像${nImg}枚をJPEG化して埋め込みます（HTMLは ${mb}MB 前後の見込み）</span>`;
   }
   el.innerHTML=html;
@@ -801,13 +802,17 @@ function buildExportMD(cards, title){
   let md=`# ${title}\n\n`;
   md+=`TAKERU カード原稿　／　全 ${cards.length} 枚　／　書き出し：${now}\n\n`;
   md+=`---\n\n`;
-  let curSec=null;
+  let curGenre=null, curSec=null;
   for(const c of cards){
+    if(c.genre!==curGenre){
+      curGenre=c.genre; curSec=null;
+      md+=`## ${c.genre||'（ユニット未設定）'}\n\n`;
+    }
     if(c.section!==curSec){
       curSec=c.section;
-      if(curSec) md+=`## ${curSec}\n\n`;
+      if(curSec) md+=`### ${curSec}\n\n`;
     }
-    md+=`### ${c.id}　${c.title||'（タイトルなし）'}\n\n`;
+    md+=`#### ${c.id}　${c.title||'（タイトルなし）'}\n\n`;
     const body=hasRealBody(c.body)?c.body.trim():'（本文未作成）';
     md+=body+'\n\n';
     const meta=[`${body.length}字`];
@@ -818,20 +823,25 @@ function buildExportMD(cards, title){
   return md;
 }
 
-async function buildExportHTML(cards, title, withImg){
+async function buildExportHTML(cards, title, withImg, imgMaxW=960, imgQ=0.82){
   const now=new Date().toLocaleString('ja-JP');
   const imgs={};
   if(withImg){
     for(const c of cards){
-      if(imageMap[c.id]) imgs[c.id]=await imgToDataUrl(imageMap[c.id]);
+      if(imageMap[c.id]) imgs[c.id]=await imgToDataUrl(imageMap[c.id], imgMaxW, imgQ);
     }
   }
   let body='';
-  let curSec=null;
+  let curGenre=null, curSec=null;
   for(const c of cards){
+    // ユニット（大見出し）→ サブユニット（中見出し）→ カード の順で構造を出す
+    if(c.genre!==curGenre){
+      curGenre=c.genre; curSec=null;   // ユニットが変わったらサブユニットもリセット
+      body+=`<h2 class="unit">${esc(c.genre)||'（ユニット未設定）'}</h2>\n`;
+    }
     if(c.section!==curSec){
       curSec=c.section;
-      if(curSec) body+=`<h2 class="sec">${esc(curSec)}</h2>\n`;
+      if(curSec) body+=`<h3 class="subsec">📂 ${esc(curSec)}</h3>\n`;
     }
     const has=hasRealBody(c.body);
     const text=has?c.body.trim():'（本文未作成）';
@@ -860,8 +870,12 @@ async function buildExportHTML(cards, title, withImg){
   header.doc { border-bottom:3px solid #2e7d32; padding-bottom:12px; margin-bottom:8px; }
   header.doc h1 { font-size:1.5rem; color:#1b5e20; }
   header.doc .sub { font-size:0.8rem; color:#666; margin-top:6px; }
-  h2.sec { font-size:1rem; color:#1b5e20; background:#e4efe4; border-left:5px solid #2e7d32;
-           padding:7px 12px; margin:26px 0 12px; border-radius:0 4px 4px 0; }
+  h2.unit { font-size:1.3rem; color:#fff; background:#2e7d32; padding:10px 16px;
+            margin:34px 0 6px; border-radius:5px; break-after:avoid; page-break-after:avoid; }
+  h2.unit:first-of-type { margin-top:8px; }
+  h3.subsec { font-size:1rem; color:#1b5e20; background:#e4efe4; border-left:5px solid #2e7d32;
+              padding:7px 12px; margin:20px 0 12px; border-radius:0 4px 4px 0;
+              break-after:avoid; page-break-after:avoid; }
   .card { background:#fff; border:1px solid #ddd; border-radius:8px; padding:18px 20px;
           margin-bottom:16px; page-break-inside:avoid; break-inside:avoid; }
   .chead { display:flex; align-items:baseline; gap:10px; border-bottom:1px solid #eee;
@@ -911,7 +925,8 @@ async function doExport(){
       done.push(`.md ${_mb(md.length)}`);
     }
     if(fmt==='both'||fmt==='html'){
-      const html=await buildExportHTML(cards,title,withImg);
+      const [imgMaxW, imgQ]=document.getElementById('exportImgSize').value.split('|').map(Number);
+      const html=await buildExportHTML(cards,title,withImg,imgMaxW,imgQ);
       downloadFile(base+'.html', html, 'text/html;charset=utf-8');
       done.push(`.html ${_mb(html.length)}`);
     }

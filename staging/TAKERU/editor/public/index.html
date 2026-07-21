@@ -209,6 +209,15 @@
       <label class="exp-radio"><input type="checkbox" id="exportWithImg" checked onchange="updateExportInfo()">
         <span>HTMLに画像を埋め込む　<span class="exp-hint">1ファイルで完結（メール添付OK）。JPEG化して軽くします</span></span>
       </label>
+      <label class="exp-radio" style="margin-top:6px">
+        <span class="exp-label" style="margin:0 8px 0 26px">画像サイズ</span>
+        <select id="exportImgSize" class="exp-select" onchange="updateExportInfo()">
+          <option value="960|0.82|0.20" selected>標準（きれい・960px）</option>
+          <option value="640|0.72|0.09">中（640px・軽い）</option>
+          <option value="440|0.64|0.045">小（440px・最軽量）</option>
+        </select>
+        <span class="exp-hint">全部まとめて出すときは「中」「小」でファイルが小さくなります</span>
+      </label>
     </div>
 
     <div class="exp-block exp-list-block">
