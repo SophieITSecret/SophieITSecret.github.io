@@ -276,6 +276,23 @@ function showMenuBanner() {
     };
 }
 
+// ご案内はメインメニューの大パネル（takeru-top.jpg）を一覧でもカードでも出し続ける。
+// 受講のように「低いバナー→カード図表」へは変えない。
+function showMainPanel() {
+    imageArea.style.display = '';
+    dividerLine.style.display = '';
+    imageArea.classList.remove('menu-banner');   // 低いバナーにしない＝大パネルのまま
+    imageArea.classList.remove('has-image');      // 拡大印は出さない
+    cardImage.classList.remove('complete-mascot');
+    cardImage.src = 'images/takeru-top.jpg';
+    cardImage.style.display = 'block';
+    imagePlaceholder.style.display = 'none';
+    cardImage.onerror = () => {
+        cardImage.style.display = 'none';
+        imagePlaceholder.style.display = 'flex';
+    };
+}
+
 // ==========================================
 // トップメニュー
 // ==========================================
@@ -329,7 +346,7 @@ function showGuideMenu() {
     curSubject = GUIDE_SUBJECT;
     curGenre = '';
     btnSettings.style.display = 'none';
-    showMenuBanner();
+    showMainPanel();          // ご案内はメインメニューの大パネルを継続
     showMenuView();
 
     const units = [...new Set(cardData.filter(d => d.subject === GUIDE_SUBJECT).map(d => d.genre))];
@@ -363,7 +380,7 @@ function showGuideCards(genre) {
     curGenre = genre;
     curSection = visibleOf(cardData.filter(d => d.genre === genre));
     if (!isReturn) curIndex = 0;
-    showMenuBanner();
+    showMainPanel();          // ご案内はメインメニューの大パネルを継続
     showMenuView();
 
     // ご案内の中は、ずっと同じ「アカデミーのご案内」看板で通す（受講のように科目名へ変えない）
@@ -685,20 +702,25 @@ function showCard(idx) {
     cardBody.innerText = card.body;
     textView.scrollTop = 0;
 
-    // カード画像は.jpgに統一済み。.pngは旧データ用のフォールバックとして残す
-    cardImage.classList.remove('complete-mascot');   // 完了画面のマスコット指定を解除
-    cardImage.src = `images/${card.id}.jpg`;
-    cardImage.style.display = 'block';
-    imagePlaceholder.style.display = 'none';
-    imageArea.classList.add('has-image');   // 拡大できる印（⛶）を出す
-    cardImage.onerror = () => {
-        cardImage.src = `images/${card.id}.png`;
+    if (curSubject === GUIDE_SUBJECT) {
+        // ご案内のカードはメインメニューの大パネルを継続（図表は出さない）
+        showMainPanel();
+    } else {
+        // カード画像は.jpgに統一済み。.pngは旧データ用のフォールバックとして残す
+        cardImage.classList.remove('complete-mascot');   // 完了画面のマスコット指定を解除
+        cardImage.src = `images/${card.id}.jpg`;
+        cardImage.style.display = 'block';
+        imagePlaceholder.style.display = 'none';
+        imageArea.classList.add('has-image');   // 拡大できる印（⛶）を出す
         cardImage.onerror = () => {
-            cardImage.style.display = 'none';
-            imagePlaceholder.style.display = 'flex';
-            imageArea.classList.remove('has-image');
+            cardImage.src = `images/${card.id}.png`;
+            cardImage.onerror = () => {
+                cardImage.style.display = 'none';
+                imagePlaceholder.style.display = 'flex';
+                imageArea.classList.remove('has-image');
+            };
         };
-    };
+    }
 
     document.querySelectorAll('#menu-content .menu-item').forEach((el, i) => {
         el.classList.toggle('active-item', i === curIndex);
@@ -1126,7 +1148,7 @@ function stopVoice() {
 // ==========================================
 function openImgZoom() {
     if (isMenuVisible) return;                       // メニューのバナーでは効かせない
-    if (navState !== 'card') return;                 // 完了画面のマスコット等はズーム対象外
+    if (!imageArea.classList.contains('has-image')) return;  // 図表のあるカードだけ拡大（ご案内の大パネル・完了マスコットは対象外）
     if (cardImage.style.display === 'none') return;  // 画像が無いカードは対象外
     if (!cardImage.src) return;
     document.getElementById('img-zoom-img').src = cardImage.src;
