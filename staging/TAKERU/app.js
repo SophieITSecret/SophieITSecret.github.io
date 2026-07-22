@@ -673,6 +673,40 @@ function showFlatCardList(genre) {
     };
 }
 
+// 本文中のリンクを扱う。
+//   ・[表示名](https://…) → 表示名のリンク
+//   ・素の https://… もそのままリンク
+// カード本文は自分たちのCSV（信頼できる）だが、念のためHTMLはエスケープしてから組む。
+function escHtml(s) {
+    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+function bodyToHtml(text) {
+    text = String(text || '');
+    const re = /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)|(https?:\/\/[^\s<]+)/g;
+    let out = '', last = 0, m;
+    while ((m = re.exec(text))) {
+        out += escHtml(text.slice(last, m.index));
+        if (m[2]) {                       // [表示名](URL)
+            out += `<a href="${escHtml(m[2])}" target="_blank" rel="noopener">${escHtml(m[1])}</a>`;
+        } else {                          // 素のURL（末尾の句読点はリンクから外す）
+            let u = m[3], trail = '';
+            const tm = u.match(/[)。、.,!?！？」』]+$/);
+            if (tm) { trail = u.slice(-tm[0].length); u = u.slice(0, -tm[0].length); }
+            out += `<a href="${escHtml(u)}" target="_blank" rel="noopener">${escHtml(u)}</a>` + escHtml(trail);
+        }
+        last = re.lastIndex;
+    }
+    out += escHtml(text.slice(last));
+    return out;
+}
+// 読み上げ用：リンク記法を読みやすい文字に（[表示名](URL)→表示名、素のURLは読まない）
+function bodyToPlain(text) {
+    return String(text || '')
+        .replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '$1')
+        .replace(/https?:\/\/[^\s<]+/g, '');
+}
+
 function showCard(idx) {
     if (!curSection.length) return;
     curIndex = Math.max(0, Math.min(idx, curSection.length - 1));
@@ -699,7 +733,7 @@ function showCard(idx) {
             `<div class="prog-row"><span>${curGenre}　${curIndex + 1} / ${curSection.length}${typeBadge}</span>${codeTag}</div>`;
     }
     cardTitle.innerText = card.title.replace(/^→/, '').trim();
-    cardBody.innerText = card.body;
+    cardBody.innerHTML = bodyToHtml(card.body);   // 本文中のURL・[表示名](URL)をリンク化
     textView.scrollTop = 0;
 
     if (curSubject === GUIDE_SUBJECT) {
@@ -1136,7 +1170,7 @@ function hideVoiceWarning() {
 
 function startTTS(text) {
     window.speechSynthesis.cancel();
-    const uttr = new SpeechSynthesisUtterance(text);
+    const uttr = new SpeechSynthesisUtterance(bodyToPlain(text));   // URL等は読み上げから除く
     uttr.lang = 'ja-JP';
     uttr.rate = 1.0;
     uttr.volume = 1.0;
