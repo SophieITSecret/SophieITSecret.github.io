@@ -1004,6 +1004,20 @@ function voiceLongPress() {
 
 // セクション内の全カードを読み終えたら次のセクションへ進む
 function advanceToNextSection() {
+    // ご案内は各ユニットが数枚しかないので、ユニットを超えて次のユニットの先頭へ進む
+    // （▶送り・連続再生とも）。最後のユニットの末尾でだけ完了。
+    if (curSubject === GUIDE_SUBJECT) {
+        const units = [...new Set(cardData.filter(d => d.subject === GUIDE_SUBJECT).map(d => d.genre))];
+        const ui = units.indexOf(curGenre);
+        if (ui >= 0 && ui < units.length - 1) {
+            curGenre = units[ui + 1];
+            curSection = visibleOf(cardData.filter(d => d.genre === curGenre));
+            showCard(0);
+            return;
+        }
+        showSectionComplete();
+        return;
+    }
     const sectionName = curSection[0]?.section;
     if (sectionName && curGenre) {
         const genreCards = cardData.filter(d => d.genre === curGenre);
