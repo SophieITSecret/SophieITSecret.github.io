@@ -299,8 +299,9 @@ function showTopMenu() {
 
     menuContent.innerHTML = `
         <div class="top-menu-wrap">
+            <button class="top-btn btn-guide" data-action="guide">📖 アカデミーのご案内</button>
             <button class="top-btn btn-jukou" data-action="jukou">📚 受　講</button>
-            <button class="top-btn btn-library" data-action="library">🏛️ 図書館</button>
+            <button class="top-btn btn-freestudy" data-action="freestudy">🔬 自由研究</button>
             <button class="top-btn btn-news" data-action="news">📰 ニュース・お知らせ</button>
             <button class="top-btn btn-links" data-action="links">🔗 リンク集</button>
             <div class="top-btn-row">
@@ -312,9 +313,79 @@ function showTopMenu() {
     menuContent.onclick = (e) => {
         const btn = e.target.closest('.top-btn');
         if (!btn) return;
-        if (btn.dataset.action === 'jukou') showGradeMenu();
+        if (btn.dataset.action === 'guide') showGuideMenu();
+        else if (btn.dataset.action === 'jukou') showGradeMenu();
         else if (btn.dataset.action === 'links') showLinkGenreMenu();
         else showPlaceholder(btn.innerText);
+    };
+}
+
+// アカデミーのご案内（受講と同じ2階層：ユニット→カード。級・科目の選択は挟まない）
+const GUIDE_SUBJECT = '案内';
+
+function showGuideMenu() {
+    navState = 'guide';
+    isMenuVisible = true;
+    curSubject = GUIDE_SUBJECT;
+    curGenre = '';
+    btnSettings.style.display = 'none';
+    showMenuBanner();
+    showMenuView();
+
+    const units = [...new Set(cardData.filter(d => d.subject === GUIDE_SUBJECT).map(d => d.genre))];
+    let html = `
+        <div class="sticky-head">
+            <div class="single-banner-wrap">
+                <div class="top-btn btn-guide banner-btn banner-small">📖 アカデミーのご案内</div>
+            </div>
+            <div class="genre-panel-label label-section">目次</div>
+        </div>
+        <div class="genre-list-wrap">`;
+    units.forEach(u => {
+        html += hasVisibleCards(cardData.filter(d => d.genre === u))
+            ? `<button class="genre-btn" data-genre="${u}">${u}</button>`
+            : `<button class="genre-btn btn-coming" disabled>${u}</button>`;
+    });
+    html += `</div>`;
+    menuContent.innerHTML = html;
+    menuContent.onclick = (e) => {
+        const item = e.target.closest('.genre-btn');
+        if (!item || !item.dataset.genre) return;
+        showGuideCards(item.dataset.genre);
+    };
+}
+
+function showGuideCards(genre) {
+    navState = 'cardlist';
+    isMenuVisible = true;
+    curSubject = GUIDE_SUBJECT;
+    const isReturn = curGenre === genre && curSection.length > 0;
+    curGenre = genre;
+    curSection = visibleOf(cardData.filter(d => d.genre === genre));
+    if (!isReturn) curIndex = 0;
+    showMenuBanner();
+    showMenuView();
+
+    let html = `
+        <div class="sticky-head">
+            <div class="single-banner-wrap banner-xs-wrap">
+                <div class="top-btn btn-guide banner-btn banner-xs">📖 ご案内</div>
+            </div>
+            ${genreHeaderHtml(genre)}
+        </div>
+        <div class="card-list-body">`;
+    curSection.forEach((card, i) => {
+        html += `<div class="menu-item" data-idx="${i}"><span class="item-dot">●</span> ${card.title}</div>`;
+    });
+    html += `</div>`;
+    menuContent.innerHTML = html;
+    menuContent.onclick = (e) => {
+        if (e.target.closest('.gnav-prev')) { stepGenre(-1); return; }
+        if (e.target.closest('.gnav-next')) { stepGenre(1); return; }
+        const item = e.target.closest('.menu-item');
+        if (!item) return;
+        const idx = parseInt(item.dataset.idx);
+        if (!isNaN(idx)) showCard(idx);
     };
 }
 
@@ -445,6 +516,7 @@ function genreHeaderHtml(genre) {
     </div>`;
 }
 function gotoGenre(genre) {
+    if (curSubject === GUIDE_SUBJECT) { showGuideCards(genre); return; }
     const hasSections = cardData.filter(d => d.genre === genre).some(d => d.section !== '');
     if (hasSections) showSectionedCardList(genre);
     else showFlatCardList(genre);
@@ -1128,18 +1200,23 @@ function loadSavedSettings() {
 // ==========================================
 // ▲ボタンと下方向スワイプで共用：現在の階層から1つ上のメニューへ
 function goUpOneLevel() {
+    const guide = curSubject === GUIDE_SUBJECT;
     switch (navState) {
         case 'card':
         case 'complete':
             if (curSection.length) {
-                if (curSection[0]?.section) showSectionedCardList(curGenre);
+                if (guide) showGuideCards(curGenre);
+                else if (curSection[0]?.section) showSectionedCardList(curGenre);
                 else showFlatCardList(curGenre);
-            } else showGenreMenu();
+            } else { guide ? showGuideMenu() : showGenreMenu(); }
             break;
         case 'cardlist':
         case 'sectionedlist':
         case 'section':
-            showGenreMenu();
+            guide ? showGuideMenu() : showGenreMenu();
+            break;
+        case 'guide':          // ご案内のユニット一覧 → トップへ
+            showTopMenu();
             break;
         case 'genre':
             showGradeMenu();
