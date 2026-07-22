@@ -941,6 +941,53 @@ async function doExport(){
 }
 
 // ===== 保存：サーバーに直接上書き（バックアップ自動作成） =====
+// ===== 本番公開（GitHub＋Xserver へ反映） =====
+function doPublish(){
+  // 直前の編集を取り込んでおく（保存忘れ対策の注意も出す）
+  document.getElementById('publishLog').style.display='none';
+  document.getElementById('publishLog').textContent='';
+  document.getElementById('publishDesc').style.display='';
+  document.getElementById('publishFoot').style.display='';
+  const runBtn=document.getElementById('btnPublishRun');
+  runBtn.disabled=false;
+  runBtn.textContent='この内容で公開する';
+  runBtn.onclick=runPublish;   // 前回完了時に closePublish へ差し替えたのを戻す
+  document.getElementById('btnPublishClose').disabled=false;
+  document.getElementById('publishModal').style.display='flex';
+  // 未保存の変更があれば知らせる
+  if(dirty){
+    document.getElementById('publishDesc').innerHTML=
+      '<strong style="color:var(--warn,#c47f17)">⚠ 未保存の変更があります。</strong> 先に「💾 CSV を保存」を押してから公開してください。<br>'+
+      '（このまま公開すると、保存済みの内容だけが反映されます）';
+  }
+}
+function closePublish(){ document.getElementById('publishModal').style.display='none'; }
+
+async function runPublish(){
+  const btn=document.getElementById('btnPublishRun');
+  const closeBtn=document.getElementById('btnPublishClose');
+  const log=document.getElementById('publishLog');
+  btn.disabled=true; closeBtn.disabled=true;
+  btn.textContent='公開中… 数分かかります';
+  log.style.display=''; log.textContent='開発版と本番へ反映しています…\n（完了までこの画面を閉じないでください）\n';
+  try{
+    const res=await fetch('/api/publish',{method:'POST'});
+    const j=await res.json();
+    log.textContent=(j.log||'').trim()||'(出力なし)';
+    if(j.ok){
+      document.getElementById('fileStatus').textContent='🚀 本番公開が完了しました';
+    }
+  }catch(e){
+    log.textContent='通信に失敗しました: '+e.message;
+  }finally{
+    btn.textContent='閉じる';
+    btn.disabled=false; closeBtn.disabled=false;
+    btn.onclick=closePublish;
+    document.getElementById('publishFoot').style.display='';
+    log.scrollTop=log.scrollHeight;
+  }
+}
+
 async function saveCSV(){
   if(!cardData.length) return;
   if(editDirty && selectedIdx >= 0) applyEdit();

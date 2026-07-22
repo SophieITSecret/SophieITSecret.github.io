@@ -275,6 +275,32 @@ async function getAccessStats(req, res) {
   }
 }
 
+// POST /api/publish — 開発版(GitHub)と本番(Xserver)へ反映する
+//   tools/publish-content.sh（コミット→push→本番転送）を Git Bash で実行し、
+//   出力をまとめて返す。長め（本番転送に数分）。
+function findBash() {
+  // Windowsでもフォワードスラッシュで存在確認・起動できる（バックスラッシュのescape事故を回避）
+  const cands = [
+    'C:/Program Files/Git/bin/bash.exe',
+    'C:/Program Files (x86)/Git/bin/bash.exe',
+    (process.env.LOCALAPPDATA || '').replace(/\\/g, '/') + '/Programs/Git/bin/bash.exe',
+  ];
+  for (const p of cands) { try { if (p && fs.existsSync(p)) return p; } catch (e) {} }
+  return 'bash';
+}
+function postPublish(req, res) {
+  // csvPath のあるフォルダ（staging/TAKERU）を足場に、リポジトリ root へ移って実行。
+  // root の算出は bash 側の git rev-parse に任せる（確実）。
+  const cwd = path.dirname(config.csvPath);
+  const cmd = 'cd "$(git rev-parse --show-toplevel)" && bash tools/publish-content.sh';
+  const p = spawn(findBash(), ['-c', cmd], { cwd, windowsHide: true });
+  let log = '';
+  p.stdout.on('data', d => { log += d; });
+  p.stderr.on('data', d => { log += d; });
+  p.on('close', code => sendJSON(res, 200, { ok: code === 0, log }));
+  p.on('error', err => sendJSON(res, 200, { ok: false, log: 'Git Bash の起動に失敗しました: ' + err.message }));
+}
+
 // mp3list.json を voices ディレクトリから再生成
 function updateMp3List(voicesDir) {
   try {
@@ -694,6 +720,7 @@ const server = http.createServer((req, res) => {
   if (pathname === '/api/reading-scripts' && method === 'GET')  return getReadingScripts(req, res);
   if (pathname === '/api/reading-scripts' && method === 'POST') return postReadingScript(req, res);
   if (pathname === '/api/access-stats' && method === 'GET') return getAccessStats(req, res);
+  if (pathname === '/api/publish' && method === 'POST') return postPublish(req, res);
 
   // 静的
   if (method === 'GET') return serveStatic(req, res, pathname);

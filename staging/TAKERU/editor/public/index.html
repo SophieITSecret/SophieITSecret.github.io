@@ -16,7 +16,27 @@
   <button class="btn-load" id="btnExport" onclick="openExport()" disabled>📤 書き出し</button>
   <button class="btn-load" id="btnFullscreen" onclick="toggleFullscreen()">⛶ 全画面</button>
   <button class="btn-save" id="btnSave" onclick="saveCSV()" disabled>💾 CSV を保存</button>
+  <button class="btn-publish" id="btnPublish" onclick="doPublish()" title="開発版(GitHub)と本番(takeru.ms-forum.com)へ反映">🚀 本番公開</button>
 </header>
+
+<!-- 本番公開モーダル -->
+<div id="publishModal" class="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h2>🚀 本番公開</h2>
+      <button class="btn-cancel" id="btnPublishClose" onclick="closePublish()">✕ 閉じる</button>
+    </div>
+    <div class="modal-desc" id="publishDesc">
+      作業台で保存した内容を、<strong>開発版（GitHub）と本番（takeru.ms-forum.com）</strong>の両方へ反映します。<br>
+      ・未公開（公開フラグ空）のカードは本番には出ません。<br>
+      ・数分かかることがあります。終わるまでこの画面を閉じないでください。
+    </div>
+    <pre id="publishLog" class="publish-log" style="display:none"></pre>
+    <div class="modal-foot" id="publishFoot">
+      <button class="btn-apply" id="btnPublishRun" onclick="runPublish()">この内容で公開する</button>
+    </div>
+  </div>
+</div>
 
 <!-- 一括取り込みモーダル -->
 <div id="importModal" class="modal-overlay">

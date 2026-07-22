@@ -15,6 +15,10 @@ header h1 { font-size:0.95rem; color:var(--accent); font-weight:700; letter-spac
 .btn-save { background:var(--accent); border:none; color:#000; padding:4px 14px; border-radius:4px; cursor:pointer; font-size:0.8rem; font-weight:700; white-space:nowrap; }
 .btn-save:hover { background:var(--accent2); }
 .btn-save:disabled { background:var(--text3); cursor:default; }
+.btn-publish { background:linear-gradient(135deg,#b5471f,#e8624a); border:none; color:#fff; padding:4px 14px; border-radius:4px; cursor:pointer; font-size:0.8rem; font-weight:700; white-space:nowrap; }
+.btn-publish:hover { filter:brightness(1.1); }
+.publish-log { background:#0d0d12; color:#cfe0cf; border:1px solid var(--border); border-radius:5px; padding:12px 14px; margin:12px 0; font-family:Consolas,monospace; font-size:0.76rem; line-height:1.6; white-space:pre-wrap; max-height:46vh; overflow:auto; }
+.modal-foot { margin-top:10px; text-align:right; }
 .file-status { font-size:0.75rem; color:var(--text2); flex:1; }
 
 /* メイン */
