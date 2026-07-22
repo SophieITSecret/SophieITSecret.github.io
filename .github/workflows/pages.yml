@@ -25,6 +25,7 @@ jobs:
           rsync -a --exclude='staging/BarSophie' \
                    --exclude='staging/BarSophie_TEST' \
                    --exclude='staging/TAKERU/editor' \
+                   --exclude='tools' \
                    --exclude='_config.yml' \
                    --exclude='.git' \
                    --exclude='.github' \
