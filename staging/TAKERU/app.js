@@ -366,10 +366,11 @@ function showGuideCards(genre) {
     showMenuBanner();
     showMenuView();
 
+    // ご案内の中は、ずっと同じ「アカデミーのご案内」看板で通す（受講のように科目名へ変えない）
     let html = `
         <div class="sticky-head">
-            <div class="single-banner-wrap banner-xs-wrap">
-                <div class="top-btn btn-guide banner-btn banner-xs">📖 ご案内</div>
+            <div class="single-banner-wrap">
+                <div class="top-btn btn-guide banner-btn banner-small">📖 アカデミーのご案内</div>
             </div>
             ${genreHeaderHtml(genre)}
         </div>
