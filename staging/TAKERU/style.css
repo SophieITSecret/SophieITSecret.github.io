@@ -957,7 +957,18 @@ body:not(.menu-mode) #image-area.has-image::after {
    max-height を付けて「画面の高さが低い＝スマホ横向き」に限定する。
    これが無いとパソコン（横長）もここに入ってしまい、画像が巨大化していた。
    パソコン向けのレイアウトは後段の「パソコン対応」で別途指定する。 */
-@media (orientation: landscape) and (max-height: 600px) {
+/* 縦の低い画面（低解像度PCやノートPC。例800×600・1024×768・1366×768）では、
+   画像パネルを画面高さの42%までに抑えてメニューが必ず見えるようにする。
+   スマホ横向きの横並びレイアウトは max-height:none !important で守られるので不干渉。
+   :not(.menu-banner) と併せて特異度でPC/タブレットの54lvh指定に勝たせる。 */
+@media (max-height: 800px) {
+    #image-area:not(.menu-banner) { max-height: 42dvh; }
+}
+
+/* スマホ横向き用の横並びレイアウト。ただし「本当に横に広い」画面だけに限定する。
+   4:3や正方形寄りの低解像度画面（例800×600）だと画像が横幅を食い尽くして
+   メニューが画面外に出てしまうため、min-aspect-ratio で除外する。 */
+@media (orientation: landscape) and (max-height: 600px) and (min-aspect-ratio: 3 / 2) {
     body { padding-top: 0; padding-bottom: 0; }
 
     #main-ui {
