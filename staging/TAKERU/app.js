@@ -927,21 +927,52 @@ function showRegisterInfo() {
     renderRegisterBody();
 }
 
+const REG_BACK = `<div class="reg-back"><button class="reg-backbtn" onclick="showTopMenu()">← メニューに戻る</button></div>`;
+
 function renderRegisterBody() {
     const email = getMemberEmail();
     if (email) {
         cardBody.innerHTML =
             `<div class="reg-text">ご登録ありがとうございます。<br>次のメールアドレスで登録済みです。</div>` +
             `<div class="reg-email">${escHtml(email)}</div>` +
-            `<div class="reg-actions"><button class="reg-logout" onclick="doMemberLogout()">ログアウト</button></div>`;
+            `<div class="reg-actions">` +
+              `<button class="reg-logout" onclick="doMemberLogout()">この端末からログアウト</button>` +
+              `<button class="reg-unreg" onclick="doUnregister()">登録を解除する</button>` +
+            `</div>` +
+            REG_BACK;
         return;
     }
     cardBody.innerHTML =
         `<div class="reg-text">現在このアプリはβ版で登録がなくてもご利用可能です。本番移行時にはメールアドレス登録を基本とし、未登録の場合には機能の制限がかかる予定です。ぜひ今からメールアドレス登録をお済ませください。週1度程度、簡単なお知らせをお送りします。</div>` +
         `<div id="gbtn" class="reg-gbtn"></div>` +
         `<div id="reg-status" class="reg-status"></div>` +
-        `<div class="reg-privacy"><a href="privacy.html" target="_blank" rel="noopener">プライバシー方針</a>（メールアドレスのみ利用します）</div>`;
+        `<div class="reg-privacy"><a href="privacy.html" target="_blank" rel="noopener">プライバシー方針</a>（メールアドレスのみ利用します）</div>` +
+        REG_BACK;
     renderGoogleButton();
+}
+
+// 登録解除（自分でできるように）。ベータ用の軽実装：ログイン中のメールを削除。
+async function doUnregister() {
+    const email = getMemberEmail();
+    if (!email) return;
+    if (!confirm('登録を解除します（お知らせの配信を停止します）。よろしいですか？')) return;
+    try {
+        const res = await fetch('./auth.php', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'unregister', email: email }),
+        });
+        const j = await res.json();
+        if (j.ok) {
+            clearMemberEmail();
+            try { google.accounts.id.disableAutoSelect(); } catch (e) {}
+            cardBody.innerHTML =
+                `<div class="reg-text">登録を解除しました。<br>またのご利用をお待ちしています。</div>` + REG_BACK;
+        } else {
+            alert('解除に失敗しました。時間をおいてお試しください。');
+        }
+    } catch (e) {
+        alert('通信に失敗しました。ネット接続をご確認ください。');
+    }
 }
 
 function renderGoogleButton() {

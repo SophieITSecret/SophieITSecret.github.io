@@ -13,6 +13,34 @@ const CLIENT_ID = '1006540175144-6mp05gm3hci79jvdkj10hlbvqnrvisuf.apps.googleuse
 
 $raw  = file_get_contents('php://input');
 $data = json_decode($raw, true);
+$action = isset($data['action']) ? (string)$data['action'] : '';
+
+// --- 登録解除（自分で配信停止できるように）---
+//   ベータ用の軽実装。指定メールを一覧から削除する。
+//   ※本番では、なりすまし削除を防ぐため Google 再認証を要求する形に締める予定。
+if ($action === 'unregister') {
+    $email = strtolower(trim((string)($data['email'] ?? '')));
+    if ($email === '') {
+        http_response_code(400);
+        echo json_encode(['ok' => false, 'error' => 'no_email']);
+        exit;
+    }
+    $file = __DIR__ . '/logs/members.csv';
+    if (is_file($file)) {
+        $lines = @file($file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+        if (is_array($lines)) {
+            $kept = [];
+            foreach ($lines as $line) {
+                $c = explode(',', $line);
+                if (!(isset($c[1]) && strtolower(trim($c[1])) === $email)) { $kept[] = $line; }
+            }
+            @file_put_contents($file, $kept ? implode("\n", $kept) . "\n" : '', LOCK_EX);
+        }
+    }
+    echo json_encode(['ok' => true]);
+    exit;
+}
+
 $token = isset($data['credential']) ? (string)$data['credential'] : '';
 if ($token === '') {
     http_response_code(400);

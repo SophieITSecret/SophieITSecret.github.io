@@ -339,10 +339,16 @@ body:not(.menu-mode) #image-area.has-image::after {
 .reg-status { text-align: center; font-size: 0.85rem; color: var(--text2); min-height: 1.2em; margin-top: 6px; }
 .reg-privacy { margin-top: 18px; font-size: 0.78rem; color: var(--text2); text-align: center; }
 .reg-privacy a { color: #6db3f2; }
-.reg-actions { margin-top: 22px; text-align: center; }
-.reg-logout { background: transparent; border: 1px solid var(--border); color: var(--text2);
-              padding: 8px 22px; border-radius: 5px; cursor: pointer; font-family: inherit; font-size: 0.85rem; }
+.reg-actions { margin-top: 22px; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+.reg-logout, .reg-unreg { background: transparent; border: 1px solid var(--border); color: var(--text2);
+              padding: 8px 18px; border-radius: 5px; cursor: pointer; font-family: inherit; font-size: 0.85rem; }
+.reg-unreg { border-color: rgba(200,90,90,.5); color: #e08a8a; }
 .reg-loading { font-size: 0.85rem; color: var(--text2); }
+/* 登録画面の「メニューに戻る」 */
+.reg-back { margin-top: 30px; text-align: center; }
+.reg-backbtn { background: var(--accent); border: none; color: #000; font-weight: 700;
+               padding: 10px 26px; border-radius: 6px; cursor: pointer; font-family: inherit; font-size: 0.9rem; }
+.reg-backbtn:active { opacity: 0.85; }
 
 /* 本文中のリンク */
 #card-body a {
