@@ -326,6 +326,7 @@ function showTopMenu() {
                 <button class="top-btn btn-exam" data-action="exam">📝 受験案内</button>
                 <button class="top-btn btn-howto" data-action="register">✉️ 登録案内</button>
             </div>
+            <div class="top-beta">β版（試験公開中）</div>
         </div>
     `;
     menuContent.onclick = (e) => {
