@@ -436,19 +436,19 @@ function showGradeMenu() {
         <div class="sub-menu-wrap">
             <div class="top-btn btn-jukou banner-btn">📚 受　講</div>
             <div class="sub-panel-wrap">
-                <div class="grade-label grade-label-1">１級　将軍の視点</div>
+                <div class="grade-label grade-label-1">１級</div>
                 <div class="subject-row">
                     <button class="subject-btn btn-coming" disabled>軍事と戦略</button>
                     <button class="subject-btn btn-coming" disabled>国家と法律</button>
                     <button class="subject-btn btn-coming" disabled>戦争の歴史</button>
                 </div>
-                <div class="grade-label grade-label-2">２級　指揮官の視点</div>
+                <div class="grade-label grade-label-2">２級</div>
                 <div class="subject-row">
                     <button class="subject-btn btn-coming" disabled>軍事と戦略</button>
                     <button class="subject-btn btn-coming" disabled>国家と法律</button>
                     <button class="subject-btn btn-coming" disabled>戦争の歴史</button>
                 </div>
-                <div class="grade-label grade-label-3">３級　戦士の視点</div>
+                <div class="grade-label grade-label-3">３級</div>
                 <div class="subject-row">${grade3Html}</div>
             </div>
         </div>
