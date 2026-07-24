@@ -6,6 +6,23 @@
     --font-size-body: 0.92rem;
 }
 
+/* スクロールバーを地味に（既定の明るい色がダーク画面で目立つため） */
+* {
+    scrollbar-width: thin;                                   /* Firefox等 */
+    scrollbar-color: rgba(255, 255, 255, 0.14) transparent;
+}
+::-webkit-scrollbar { width: 9px; height: 9px; }            /* Chrome/Edge/Safari */
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.14);
+    border-radius: 5px;
+}
+::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.24); }
+/* ライトモードは逆に暗い半透明で控えめに */
+body.light-mode { scrollbar-color: rgba(0, 0, 0, 0.2) transparent; }
+body.light-mode ::-webkit-scrollbar-thumb { background: rgba(0, 0, 0, 0.2); }
+body.light-mode ::-webkit-scrollbar-thumb:hover { background: rgba(0, 0, 0, 0.32); }
+
 body.dark-mode {
     --bg: #0a0c10;
     --bg2: #111520;
