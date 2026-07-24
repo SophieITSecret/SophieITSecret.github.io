@@ -12,9 +12,15 @@
   a { color:#6db3f2; }
   .date { color:#90a0b0; font-size:0.85rem; }
   .note { color:#90a0b0; font-size:0.82rem; margin-top:40px; border-top:1px solid #26304a; padding-top:14px; }
+  .backlink { display:inline-block; margin-bottom:18px; color:#81c784; text-decoration:none;
+              border:1px solid #2e7d32; border-radius:6px; padding:8px 18px; font-weight:700; }
+  .backlink:active { opacity:.85; }
+  .backwrap-bottom { margin-top:34px; }
 </style>
 </head>
 <body>
+<a href="index.html" class="backlink"
+   onclick="try{if(history.length>1){history.back();return false;}}catch(e){}return true;">← アプリに戻る</a>
 <h1>プライバシー方針</h1>
 <p class="date">MSアカデミー TAKERU（ベータ版）／最終更新：2026-07-24</p>
 
@@ -41,5 +47,9 @@
 <p>登録の解除（お知らせ配信の停止）は、アプリの「登録案内」画面にある<strong>「登録を解除する」ボタン</strong>から、いつでもご自身で行えます。その他のお問い合わせは、当法人までご連絡ください。連絡先：<a href="https://ms-forum.com/">https://ms-forum.com/</a></p>
 
 <p class="note">※本ページはベータ版時点の内容です。正式版に向けて更新する場合があります。</p>
+<div class="backwrap-bottom">
+  <a href="index.html" class="backlink"
+     onclick="try{if(history.length>1){history.back();return false;}}catch(e){}return true;">← アプリに戻る</a>
+</div>
 </body>
 </html>

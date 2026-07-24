@@ -928,6 +928,9 @@ function showRegisterInfo() {
 }
 
 const REG_BACK = `<div class="reg-back"><button class="reg-backbtn" onclick="showTopMenu()">← メニューに戻る</button></div>`;
+// アプリ内では別窓(_blank)で開かない。別窓だとPWAで戻れず詰まるため、同じ窓で開き、
+// privacy.html 側の「アプリに戻る」で戻す。
+const REG_PRIVACY = `<div class="reg-privacy"><a href="privacy.html">プライバシー方針</a>（メールアドレスのみ利用します）</div>`;
 
 function renderRegisterBody() {
     const email = getMemberEmail();
@@ -939,6 +942,7 @@ function renderRegisterBody() {
               `<button class="reg-logout" onclick="doMemberLogout()">この端末からログアウト</button>` +
               `<button class="reg-unreg" onclick="doUnregister()">登録を解除する</button>` +
             `</div>` +
+            REG_PRIVACY +
             REG_BACK;
         return;
     }
@@ -946,7 +950,7 @@ function renderRegisterBody() {
         `<div class="reg-text">現在このアプリはβ版で登録がなくてもご利用可能です。本番移行時にはメールアドレス登録を基本とし、未登録の場合には機能の制限がかかる予定です。ぜひ今からメールアドレス登録をお済ませください。週1度程度、簡単なお知らせをお送りします。</div>` +
         `<div id="gbtn" class="reg-gbtn"></div>` +
         `<div id="reg-status" class="reg-status"></div>` +
-        `<div class="reg-privacy"><a href="privacy.html" target="_blank" rel="noopener">プライバシー方針</a>（メールアドレスのみ利用します）</div>` +
+        REG_PRIVACY +
         REG_BACK;
     renderGoogleButton();
 }
