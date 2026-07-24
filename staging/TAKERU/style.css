@@ -331,6 +331,19 @@ body:not(.menu-mode) #image-area.has-image::after {
     white-space: pre-wrap;
     font-family: 'Noto Sans JP', sans-serif;
 }
+/* 登録案内画面 */
+.reg-text { white-space: normal; font-size: 0.95rem; line-height: 1.9; }
+.reg-email { margin: 14px auto; padding: 10px 14px; max-width: 22em; background: var(--bg3);
+             border-radius: 6px; font-weight: bold; color: var(--accent2); text-align: center; word-break: break-all; }
+.reg-gbtn { margin: 22px 0 8px; display: flex; justify-content: center; }
+.reg-status { text-align: center; font-size: 0.85rem; color: var(--text2); min-height: 1.2em; margin-top: 6px; }
+.reg-privacy { margin-top: 18px; font-size: 0.78rem; color: var(--text2); text-align: center; }
+.reg-privacy a { color: #6db3f2; }
+.reg-actions { margin-top: 22px; text-align: center; }
+.reg-logout { background: transparent; border: 1px solid var(--border); color: var(--text2);
+              padding: 8px 22px; border-radius: 5px; cursor: pointer; font-family: inherit; font-size: 0.85rem; }
+.reg-loading { font-size: 0.85rem; color: var(--text2); }
+
 /* 本文中のリンク */
 #card-body a {
     color: #6db3f2;

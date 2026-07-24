@@ -115,6 +115,7 @@ const dividerLine = document.getElementById('divider-line');
 window.addEventListener('DOMContentLoaded', async () => {
     logAccess('top_view');                  // トップが開かれた
     window.addEventListener('appinstalled', () => logAccess('pwa_installed'));
+    waitForGis();                           // Googleサインインの初期化（読み込み待ち）
 
     await Promise.all([loadCSV(), loadLinkCSV(), loadMp3List()]);
     setupButtons();
@@ -323,7 +324,7 @@ function showTopMenu() {
             <button class="top-btn btn-links" data-action="links">🔗 リンク集</button>
             <div class="top-btn-row">
                 <button class="top-btn btn-exam" data-action="exam">📝 受験案内</button>
-                <button class="top-btn btn-howto" data-action="howto">❓ 使い方</button>
+                <button class="top-btn btn-howto" data-action="register">✉️ 登録案内</button>
             </div>
         </div>
     `;
@@ -333,6 +334,7 @@ function showTopMenu() {
         if (btn.dataset.action === 'guide') showGuideMenu();
         else if (btn.dataset.action === 'jukou') showGradeMenu();
         else if (btn.dataset.action === 'links') showLinkGenreMenu();
+        else if (btn.dataset.action === 'register') showRegisterInfo();
         else showPlaceholder(btn.innerText);
     };
 }
@@ -863,6 +865,109 @@ function showPlaceholder(name) {
     cardProgress.innerText = '';
     cardTitle.innerText = name;
     cardBody.innerText = 'このメニューは準備中です。\n\nお楽しみに！';
+}
+
+// ==========================================
+// 会員登録・Googleサインイン
+// ==========================================
+const GOOGLE_CLIENT_ID = '1006540175144-6mp05gm3hci79jvdkj10hlbvqnrvisuf.apps.googleusercontent.com';
+let gisReady = false;
+
+function initGoogleAuth() {
+    if (!(window.google && google.accounts && google.accounts.id)) return false;
+    google.accounts.id.initialize({
+        client_id: GOOGLE_CLIENT_ID,
+        callback: onGoogleCredential,
+        auto_select: false,
+        cancel_on_tap_outside: true,
+    });
+    gisReady = true;
+    return true;
+}
+function waitForGis() {
+    if (initGoogleAuth()) return;
+    let n = 0;
+    const t = setInterval(() => { if (initGoogleAuth() || ++n > 40) clearInterval(t); }, 150);
+}
+
+// 登録状態は端末に保持（無料ゲート＝厳密な認証は不要。メール記録はサーバーが検証済み）
+function getMemberEmail() { try { return localStorage.getItem('takeru_member_email') || ''; } catch (e) { return ''; } }
+function setMemberEmail(email) { try { localStorage.setItem('takeru_member_email', email); } catch (e) {} }
+function clearMemberEmail() { try { localStorage.removeItem('takeru_member_email'); } catch (e) {} }
+
+async function onGoogleCredential(response) {
+    if (!response || !response.credential) return;
+    const statusEl = document.getElementById('reg-status');
+    if (statusEl) statusEl.textContent = '登録処理中…';
+    try {
+        const res = await fetch('./auth.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ credential: response.credential }),
+        });
+        const j = await res.json();
+        if (j.ok && j.email) {
+            setMemberEmail(j.email);
+            if (navState === 'register') renderRegisterBody();
+        } else if (statusEl) {
+            statusEl.textContent = '登録に失敗しました。少し待ってもう一度お試しください。';
+        }
+    } catch (e) {
+        if (statusEl) statusEl.textContent = '通信に失敗しました。ネット接続をご確認ください。';
+    }
+}
+
+function showRegisterInfo() {
+    navState = 'register';
+    isMenuVisible = false;
+    showTextView();
+    showMenuBanner();
+    cardProgress.innerText = '';
+    cardTitle.innerText = '登録案内';
+    renderRegisterBody();
+}
+
+function renderRegisterBody() {
+    const email = getMemberEmail();
+    if (email) {
+        cardBody.innerHTML =
+            `<div class="reg-text">ご登録ありがとうございます。<br>次のメールアドレスで登録済みです。</div>` +
+            `<div class="reg-email">${escHtml(email)}</div>` +
+            `<div class="reg-actions"><button class="reg-logout" onclick="doMemberLogout()">ログアウト</button></div>`;
+        return;
+    }
+    cardBody.innerHTML =
+        `<div class="reg-text">現在このアプリはβ版で登録がなくてもご利用可能です。本番移行時にはメールアドレス登録を基本とし、未登録の場合には機能の制限がかかる予定です。ぜひ今からメールアドレス登録をお済ませください。週1度程度、簡単なお知らせをお送りします。</div>` +
+        `<div id="gbtn" class="reg-gbtn"></div>` +
+        `<div id="reg-status" class="reg-status"></div>` +
+        `<div class="reg-privacy"><a href="privacy.html" target="_blank" rel="noopener">プライバシー方針</a>（メールアドレスのみ利用します）</div>`;
+    renderGoogleButton();
+}
+
+function renderGoogleButton() {
+    const c = document.getElementById('gbtn');
+    if (!c) return;
+    if (gisReady) {
+        c.innerHTML = '';
+        google.accounts.id.renderButton(c, {
+            type: 'standard', theme: 'filled_blue', size: 'large',
+            text: 'signin_with', shape: 'pill', locale: 'ja',
+        });
+        return;
+    }
+    // GISの読み込み待ち
+    c.innerHTML = '<span class="reg-loading">ログインボタンを準備中…</span>';
+    let n = 0;
+    const t = setInterval(() => {
+        if (gisReady) { clearInterval(t); if (navState === 'register') renderGoogleButton(); }
+        else if (++n > 40) { clearInterval(t); const cc = document.getElementById('gbtn'); if (cc) cc.innerHTML = '<span class="reg-loading">ログインを準備できませんでした。通信環境をご確認ください。</span>'; }
+    }, 150);
+}
+
+function doMemberLogout() {
+    clearMemberEmail();
+    try { google.accounts.id.disableAutoSelect(); } catch (e) {}
+    renderRegisterBody();
 }
 
 // ==========================================
