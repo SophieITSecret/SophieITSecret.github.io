@@ -927,10 +927,34 @@ function showRegisterInfo() {
     renderRegisterBody();
 }
 
+// プライバシー方針をアプリ内画面で表示（ページ移動しない）
+function showPrivacyInfo() {
+    navState = 'privacy';
+    isMenuVisible = false;
+    showTextView();
+    showMenuBanner();
+    cardProgress.innerText = '';
+    cardTitle.innerText = 'プライバシー方針';
+    cardBody.innerHTML = PRIVACY_HTML +
+        `<div class="reg-back"><button class="reg-backbtn" onclick="showRegisterInfo()">← 登録案内に戻る</button></div>`;
+    textView.scrollTop = 0;
+}
+
 const REG_BACK = `<div class="reg-back"><button class="reg-backbtn" onclick="showTopMenu()">← メニューに戻る</button></div>`;
-// アプリ内では別窓(_blank)で開かない。別窓だとPWAで戻れず詰まるため、同じ窓で開き、
-// privacy.html 側の「アプリに戻る」で戻す。
-const REG_PRIVACY = `<div class="reg-privacy"><a href="privacy.html">プライバシー方針</a>（メールアドレスのみ利用します）</div>`;
+// プライバシー方針はアプリ内画面で表示する（別ページへ移動しない＝再読み込みで
+// オープニングに戻る問題を回避。戻るは登録案内へ）。公開用の privacy.html も別途あり。
+const REG_PRIVACY = `<div class="reg-privacy"><a href="#" onclick="showPrivacyInfo();return false;">プライバシー方針</a>（メールアドレスのみ利用します）</div>`;
+
+const PRIVACY_HTML = `
+<div class="reg-priv-doc">
+  <p>MSアカデミー TAKERU（ベータ版）のプライバシー方針です。</p>
+  <p><strong>取得する情報</strong><br>会員登録ではGoogleサインインを利用し、<strong>保存・利用するのはメールアドレスのみ</strong>です。氏名・プロフィール写真は受け取っても保存・利用しません。パスワード、Gmailの内容、連絡先などを取得することはありません。</p>
+  <p><strong>利用目的</strong><br>会員登録の管理と、新しい講座・検定の開始などのお知らせ（週1回程度）の送付にのみ利用します。</p>
+  <p><strong>第三者への提供</strong><br>法令に基づく場合を除き、本人の同意なく第三者に提供しません。</p>
+  <p><strong>アクセスの記録</strong><br>どのページが何回開かれたかを、個人を特定しない形で記録しています（回数の集計のみ）。</p>
+  <p><strong>登録の解除・お問い合わせ</strong><br>登録の解除は、この「登録案内」の「登録を解除する」からいつでも行えます。その他のお問い合わせは <a href="https://ms-forum.com/" target="_blank" rel="noopener">ms-forum.com</a> までご連絡ください。</p>
+  <p class="reg-priv-note">※ベータ版時点の内容です。正式版に向けて更新する場合があります。</p>
+</div>`;
 
 function renderRegisterBody() {
     const email = getMemberEmail();
