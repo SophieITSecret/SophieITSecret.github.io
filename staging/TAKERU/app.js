@@ -381,7 +381,7 @@ function showGuideMenu() {
             : `<button class="genre-btn btn-coming" disabled>${u}</button>`;
     });
     html += `</div>`;
-    html += `<div class="guide-install-wrap">${installLinkHtml('guide-install')}</div>`;
+    html += `<div class="guide-install-wrap">${installLinkHtml('guide')}</div>`;
     menuContent.innerHTML = html;
     menuContent.onclick = (e) => {
         const item = e.target.closest('.genre-btn');
@@ -986,10 +986,15 @@ function installPlatform() {
     if (/Android/.test(ua)) return 'android';
     return 'desktop';
 }
-// トップ／ご案内メニューに差し込む小さなリンク（インストール済みなら空）
-function installLinkHtml(extraClass) {
+// トップ／ご案内メニューに差し込むリンク（インストール済みなら空）
+//   top  … 目立たない小さなリンク（毎回の入口）
+//   guide … 明るいボタン＋「方法（必読）」（最初の案内）
+function installLinkHtml(variant) {
     if (isAppInstalled()) return '';
-    return `<button class="top-install ${extraClass || ''}" onclick="showInstallGuide()">📲 アイコンにして使う</button>`;
+    if (variant === 'guide') {
+        return `<button class="top-install guide-install" onclick="showInstallGuide()">📲 アイコンにして使う方法（必読）</button>`;
+    }
+    return `<button class="top-install" onclick="showInstallGuide()">📲 アイコンにして使う</button>`;
 }
 
 function showInstallGuide() {
@@ -1055,7 +1060,7 @@ function renderInstallGuideBody() {
 
     cardBody.innerHTML = `
       <div class="reg-priv-doc ins-doc">
-        <p>アイコンにすると、次回からブラウザで開き直さず<strong>ワンタップで起動</strong>できます。ストア不要・数十秒で終わります。</p>
+        <p>このアプリをアイコンにしてホーム画面に登録すると、次回からブラウザで開き直さず<strong>ワンタップで起動</strong>できます。</p>
         ${btn}
         ${steps}
         <p class="reg-priv-note">うまくいかない時は、そのままブラウザでご利用いただいても内容は変わりません。設定は必須ではありません。</p>

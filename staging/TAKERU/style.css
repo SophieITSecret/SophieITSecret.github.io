@@ -160,7 +160,19 @@ body {
     cursor: pointer;
 }
 .top-install:active { background: rgba(255,255,255,0.08); }
-.guide-install-wrap { text-align: center; margin: 14px 0 4px; }
+.guide-install-wrap { text-align: center; margin: 18px 0 6px; }
+
+/* ご案内メニューの「方法（必読）」＝明るい色付きボタン */
+.guide-install {
+    border: none;
+    background: linear-gradient(135deg, #2e7d32, #43a047);
+    color: #fff;
+    font-weight: 700;
+    font-size: 0.92rem;
+    padding: 12px 24px;
+    box-shadow: 0 2px 12px rgba(67,160,71,0.4);
+}
+.guide-install:active { opacity: 0.9; background: linear-gradient(135deg, #2e7d32, #43a047); }
 
 /* インストール手順の本文 */
 .ins-note { color: var(--text2); font-size: 0.82rem; margin: 4px 0 12px; }
