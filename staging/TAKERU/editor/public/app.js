@@ -33,6 +33,7 @@ async function init() {
     document.getElementById('btnRename').disabled=false;
     document.getElementById('btnProgress').disabled=false;
     document.getElementById('btnAccess').disabled=false;
+    document.getElementById('btnMembers').disabled=false;
     document.getElementById('btnBatchRecord').disabled=false;
     dirty=false;
   } catch(err) {
@@ -1614,6 +1615,73 @@ async function copyPrompt() {
   const orig = btn.textContent;
   btn.textContent = '✅ コピー済み';
   setTimeout(() => { btn.textContent = orig; }, 2000);
+}
+
+// ==================== 会員（登録メール） ====================
+let membersData = { members: [], loaded: false, error: null };
+
+function openMembers() {
+  document.getElementById('membersModal').style.display = 'flex';
+  renderMembers();
+  loadMembers();
+}
+function closeMembers() {
+  document.getElementById('membersModal').style.display = 'none';
+}
+async function loadMembers() {
+  const body = document.getElementById('membersBody');
+  if (body) body.innerHTML = '<p class="mem-loading">本番から会員一覧を取得中…</p>';
+  try {
+    const r = await fetch('/api/members');
+    const j = await r.json();
+    membersData = { members: j.members || [], loaded: true, error: j.ok ? null : (j.error || '取得失敗') };
+  } catch (e) {
+    membersData = { members: [], loaded: true, error: e.message };
+  }
+  renderMembers();
+}
+function sortedMembers() {
+  const newFirst = document.getElementById('memSortNew') && document.getElementById('memSortNew').checked;
+  const arr = membersData.members.slice();
+  arr.sort((a, b) => (a.date || '').localeCompare(b.date || ''));   // 古い→新しい
+  if (newFirst) arr.reverse();
+  return arr;
+}
+function renderMembers() {
+  const body = document.getElementById('membersBody');
+  const cnt = document.getElementById('memCount');
+  if (!body) return;
+  if (cnt) cnt.textContent = membersData.loaded ? `登録 ${membersData.members.length} 名` : '';
+
+  if (!membersData.loaded) { body.innerHTML = '<p class="mem-loading">読み込み中…</p>'; return; }
+  if (membersData.error)  { body.innerHTML = `<p class="mem-empty">⚠ 本番未接続（${esc(membersData.error)}）</p>`; return; }
+  if (!membersData.members.length) { body.innerHTML = '<p class="mem-empty">まだ登録はありません。</p>'; return; }
+
+  const rows = sortedMembers().map((m, i) => `<tr>
+    <td class="mc-no">${i + 1}</td>
+    <td class="mc-date">${esc(m.date || '')}</td>
+    <td class="mc-email">${esc(m.email || '')}</td>
+  </tr>`).join('');
+  body.innerHTML = `<table class="members-table">
+    <thead><tr><th>#</th><th>登録日時</th><th>メールアドレス</th></tr></thead>
+    <tbody>${rows}</tbody></table>`;
+}
+function copyMemberEmails() {
+  const emails = sortedMembers().map(m => m.email).filter(Boolean).join('\n');
+  if (!emails) { alert('コピーするメールがありません。'); return; }
+  navigator.clipboard.writeText(emails)
+    .then(() => alert(`メールアドレス ${sortedMembers().filter(m=>m.email).length} 件をコピーしました。`))
+    .catch(() => alert('コピーに失敗しました。'));
+}
+function downloadMembersCsv() {
+  if (!membersData.members.length) { alert('保存するデータがありません。'); return; }
+  const lines = ['日付,メール', ...sortedMembers().map(m => `${m.date},${m.email}`)];
+  const blob = new Blob(['﻿' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `TAKERU会員_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(a.href);
 }
 
 // ==================== 進捗ボード ====================

@@ -12,6 +12,7 @@
   <span class="file-status" id="fileStatus">読み込み中…</span>
   <button class="btn-load" id="btnProgress" onclick="openProgress()" disabled>📊 進捗</button>
   <button class="btn-load" id="btnAccess" onclick="openCardRanking()" disabled>👁 閲覧状況</button>
+  <button class="btn-load" id="btnMembers" onclick="openMembers()" disabled>👥 会員</button>
   <button class="btn-load" onclick="openMemo()">📝 メモ</button>
   <button class="btn-load" id="btnImport" onclick="openImport()" disabled>📥 一括取り込み</button>
   <button class="btn-load" id="btnExport" onclick="openExport()" disabled>📤 書き出し</button>
@@ -330,6 +331,25 @@
       <span id="rankTotals" class="rank-totals"></span>
     </div>
     <div id="rankBody" class="rank-body"></div>
+  </div>
+</div>
+
+<!-- 会員（登録メール一覧） -->
+<div id="membersModal" class="modal-overlay">
+  <div class="modal-box members-modal-box">
+    <div class="modal-head">
+      <h2>👥 会員（登録メール）</h2>
+      <button class="btn-cancel" onclick="closeMembers()">✕ 閉じる</button>
+    </div>
+    <div class="mem-toolbar">
+      <span id="memCount" class="mem-count"></span>
+      <button class="dash-refresh" onclick="loadMembers()" title="本番から再取得">↻ 更新</button>
+      <button class="dash-refresh" onclick="copyMemberEmails()" title="メールアドレスだけを改行区切りでコピー">📋 メールをコピー</button>
+      <button class="dash-refresh" onclick="downloadMembersCsv()" title="日付,メール のCSVを保存">⬇ CSV保存</button>
+      <label class="rank-zero"><input type="checkbox" id="memSortNew" checked onchange="renderMembers()"> 新しい順</label>
+    </div>
+    <div id="membersBody" class="members-body"></div>
+    <p class="mem-note">※これは個人情報（メールアドレス）です。取り扱いに注意してください。本番の logs/members.csv をSSHで取得して表示しています（外部には非公開）。</p>
   </div>
 </div>
 

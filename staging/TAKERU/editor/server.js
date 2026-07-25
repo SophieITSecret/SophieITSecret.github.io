@@ -277,6 +277,30 @@ async function getAccessStats(req, res) {
   }
 }
 
+// GET /api/members — 本番の会員メール一覧(logs/members.csv)をSSHで取得
+//   1行 = 「日付, メール」。外部からは403で見えないのでSSHで取りに行く。
+async function getMembers(req, res) {
+  const remoteCmd = `cat ${PROD.remoteDir}/members.csv 2>/dev/null`;
+  const args = [
+    '-i', PROD.keyPath, '-p', String(PROD.port),
+    '-o', 'StrictHostKeyChecking=no', '-o', 'BatchMode=yes', '-o', 'ConnectTimeout=20',
+    `${PROD.user}@${PROD.host}`, remoteCmd,
+  ];
+  try {
+    const out = await spawnP('ssh', args, {});
+    const members = out.split(/\r?\n/).map(l => l.trim()).filter(Boolean).map(line => {
+      const i = line.indexOf(',');
+      return {
+        date: i >= 0 ? line.slice(0, i).trim() : '',
+        email: (i >= 0 ? line.slice(i + 1) : line).trim(),
+      };
+    });
+    sendJSON(res, 200, { ok: true, members });
+  } catch (e) {
+    sendJSON(res, 200, { ok: false, error: e.message, members: [] });
+  }
+}
+
 // POST /api/publish — 開発版(GitHub)と本番(Xserver)へ反映する
 //   tools/publish-content.sh（コミット→push→本番転送）を Git Bash で実行し、
 //   出力をまとめて返す。長め（本番転送に数分）。
@@ -722,6 +746,7 @@ const server = http.createServer((req, res) => {
   if (pathname === '/api/reading-scripts' && method === 'GET')  return getReadingScripts(req, res);
   if (pathname === '/api/reading-scripts' && method === 'POST') return postReadingScript(req, res);
   if (pathname === '/api/access-stats' && method === 'GET') return getAccessStats(req, res);
+  if (pathname === '/api/members' && method === 'GET') return getMembers(req, res);
   if (pathname === '/api/publish' && method === 'POST') return postPublish(req, res);
 
   // 静的
