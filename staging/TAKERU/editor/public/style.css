@@ -311,3 +311,55 @@ textarea.svg-overlay-input { min-height:120px; font-family:monospace; font-size:
 .import-text { flex:1; min-height:320px; background:var(--bg3); border:1px solid var(--border); color:var(--text); padding:12px; border-radius:6px; font-family:inherit; font-size:0.85rem; line-height:1.7; resize:vertical; }
 .import-preview { font-size:0.78rem; color:var(--text2); max-height:120px; overflow-y:auto; }
 .modal-actions { display:flex; gap:8px; justify-content:flex-end; }
+
+/* カード別アクセス一覧（大きな表） */
+.rank-modal-box { width:1180px; max-width:97vw; height:92vh; display:flex; flex-direction:column; }
+.rank-toolbar { display:flex; align-items:center; gap:10px; flex-wrap:wrap; padding:2px 0 4px; }
+.rank-sortlabel { font-size:0.78rem; color:var(--text2); }
+.rank-subject { background:var(--bg3); color:var(--text); border:1px solid var(--border); border-radius:4px; padding:3px 8px; font-family:inherit; font-size:0.8rem; }
+.rank-sortbtn { background:transparent; border:1px solid var(--border); color:var(--text2); font-size:0.76rem; border-radius:4px; padding:3px 12px; cursor:pointer; font-family:inherit; }
+.rank-sortbtn:hover { background:rgba(255,255,255,.06); }
+.rank-sortbtn-on { background:var(--accent); border-color:var(--accent); color:#08140a; font-weight:bold; }
+.rank-viewbtn { background:transparent; border:1px solid var(--border); color:var(--text2); font-size:0.76rem; border-radius:4px; padding:3px 12px; cursor:pointer; font-family:inherit; }
+.rank-viewbtn:hover { background:rgba(255,255,255,.06); }
+.rank-viewbtn-on { background:var(--accent2); border-color:var(--accent2); color:#08140a; font-weight:bold; }
+.rank-zero { font-size:0.76rem; color:var(--text2); display:flex; align-items:center; gap:4px; cursor:pointer; margin-left:4px; }
+.rank-totals { margin-left:auto; font-size:0.78rem; color:var(--text2); }
+.rank-body { flex:1; overflow:auto; border:1px solid var(--border); border-radius:6px; }
+.rank-empty { color:var(--text2); font-size:0.85rem; padding:24px; text-align:center; }
+.rank-table { border-collapse:collapse; width:100%; font-size:0.82rem; }
+.rank-table thead th { position:sticky; top:0; background:var(--bg3); color:var(--text2); font-weight:normal;
+  text-align:left; padding:8px 10px; border-bottom:2px solid var(--border); z-index:1; }
+.rank-table tbody td { padding:6px 10px; border-bottom:1px solid var(--border); white-space:nowrap; }
+.rank-table tbody tr { cursor:pointer; }
+.rank-table tbody tr:hover { background:rgba(255,255,255,.05); }
+.rc-rank { color:var(--text2); text-align:right; width:44px; }
+.rc-views { width:180px; }
+.rank-vwrap { position:relative; display:inline-block; min-width:160px; }
+.rank-bar { position:absolute; left:0; top:2px; bottom:2px; background:rgba(224,164,88,.30); border-radius:3px; }
+.rank-vnum { position:relative; display:inline-block; padding-left:8px; font-variant-numeric:tabular-nums; }
+.rc-code { font-family:'Consolas',monospace; color:var(--accent2); }
+.rc-title { white-space:normal; max-width:420px; }
+.rc-unit, .rc-subject { color:var(--text2); font-size:0.78rem; }
+.rc-pub { font-size:0.74rem; color:var(--text2); }
+.rank-table tr.rank-pub .rc-pub { color:var(--accent); }
+.rank-table tr.rank-unitrow { cursor:default; background:var(--bg3); }
+.rank-table tr.rank-unitrow:hover { background:var(--bg3); }
+.rank-table tr.rank-unitrow td { border-bottom:2px solid var(--border); padding-top:8px; padding-bottom:8px; }
+.ru-name { color:#fff; font-weight:bold; font-size:0.82rem; }
+.ru-cnt { color:var(--text2); font-weight:normal; font-size:0.74rem; }
+.ru-sum { text-align:left; color:#e0a458; font-variant-numeric:tabular-nums; }
+
+/* 日別マトリクス */
+.rank-matrix { min-width:max-content; }
+.rank-matrix th, .rank-matrix td { text-align:center; }
+.rank-matrix .mx-code { position:sticky; left:0; z-index:2; background:var(--bg2); text-align:left;
+  font-family:'Consolas',monospace; color:var(--accent2); box-shadow:1px 0 0 var(--border); }
+.rank-matrix thead .mx-code { z-index:3; background:var(--bg3); color:var(--text2); font-family:inherit; }
+.rank-matrix .mx-title { text-align:left; white-space:nowrap; max-width:260px; overflow:hidden; text-overflow:ellipsis; color:var(--text); }
+.rank-matrix .mx-total { text-align:right; font-variant-numeric:tabular-nums; color:#e0a458; padding-right:12px; }
+.rank-matrix .mx-date { color:var(--text2); font-weight:normal; font-size:0.72rem; white-space:nowrap; }
+.rank-matrix .mx-cell { color:var(--text2); font-variant-numeric:tabular-nums; min-width:38px; }
+.rank-matrix .mx-hit { color:#fff; background:rgba(224,164,88,.18); }
+.rank-matrix tr.rank-unitrow .mx-usum { color:#e0a458; font-weight:bold; background:var(--bg3); }
+.rank-matrix tr.rank-unitrow .mx-code { background:var(--bg3); }

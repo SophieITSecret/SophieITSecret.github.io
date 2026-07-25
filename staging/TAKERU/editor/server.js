@@ -258,7 +258,9 @@ async function getAccessStats(req, res) {
   const remoteCmd =
     `cat ${PROD.remoteDir}/daily_summary.json 2>/dev/null; ` +
     `echo; echo ${SEP}; ` +
-    `cat ${PROD.remoteDir}/card_summary.json 2>/dev/null`;
+    `cat ${PROD.remoteDir}/card_summary.json 2>/dev/null; ` +
+    `echo; echo ${SEP}; ` +
+    `cat ${PROD.remoteDir}/card_daily.json 2>/dev/null`;
   const args = [
     '-i', PROD.keyPath, '-p', String(PROD.port),
     '-o', 'StrictHostKeyChecking=no', '-o', 'BatchMode=yes', '-o', 'ConnectTimeout=20',
@@ -266,12 +268,12 @@ async function getAccessStats(req, res) {
   ];
   try {
     const out = await spawnP('ssh', args, {});
-    const [dailyRaw = '', cardRaw = ''] = out.split(SEP);
+    const [dailyRaw = '', cardRaw = '', cardDailyRaw = ''] = out.split(SEP);
     const parse = s => { s = s.trim(); if (!s) return {}; try { const v = JSON.parse(s); return v && typeof v === 'object' ? v : {}; } catch { return {}; } };
-    sendJSON(res, 200, { ok: true, daily: parse(dailyRaw), cards: parse(cardRaw) });
+    sendJSON(res, 200, { ok: true, daily: parse(dailyRaw), cards: parse(cardRaw), cardDaily: parse(cardDailyRaw) });
   } catch (e) {
     // SSH不通でも作業台自体は落とさない。理由を添えて空で返す。
-    sendJSON(res, 200, { ok: false, error: e.message, daily: {}, cards: {} });
+    sendJSON(res, 200, { ok: false, error: e.message, daily: {}, cards: {}, cardDaily: {} });
   }
 }
 

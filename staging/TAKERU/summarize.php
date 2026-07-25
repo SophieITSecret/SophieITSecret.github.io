@@ -5,6 +5,7 @@
 //
 //   出力: logs/daily_summary.json  日付 => {top_view, pwa_installed, card_view}
 //         logs/card_summary.json   カード番号 => 累計閲覧回数（多い順）
+//         logs/card_daily.json     日付 => {カード番号 => その日の回数}（全期間）
 //
 //   どちらも logs/ の中に置くので外部からは読めない。
 //   作業台へはSSH経由で取得する（公開せずに手元へ落とす）。
@@ -17,8 +18,9 @@ if ($files === false) {
     $files = [];
 }
 
-$daily = [];   // 日付 => 種別ごとの件数
-$cards = [];   // カード番号 => 累計回数
+$daily = [];       // 日付 => 種別ごとの件数
+$cards = [];       // カード番号 => 累計回数
+$cardDaily = [];   // 日付 => { カード番号 => その日の回数 }
 
 foreach ($files as $f) {
     $fh = @fopen($f, 'r');
@@ -47,19 +49,26 @@ foreach ($files as $f) {
         }
         if ($type === 'card_view' && $code !== '') {
             $cards[$code] = (isset($cards[$code]) ? $cards[$code] : 0) + 1;
+            // 日付×カードの内訳（0は持たない疎な形で全期間ぶん残す）
+            if (!isset($cardDaily[$date])) { $cardDaily[$date] = []; }
+            $cardDaily[$date][$code] = (isset($cardDaily[$date][$code]) ? $cardDaily[$date][$code] : 0) + 1;
         }
     }
     fclose($fh);
 }
 
-ksort($daily);    // 日付順
-arsort($cards);   // よく読まれた順
+ksort($daily);      // 日付順
+arsort($cards);     // よく読まれた順
+ksort($cardDaily);  // 日付順
 
 $flags = JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES;
 file_put_contents($dir . '/daily_summary.json', json_encode($daily, $flags));
 file_put_contents($dir . '/card_summary.json',  json_encode($cards, $flags));
+// card_daily.json … { "YYYY-MM-DD": { "CODE": 回数, ... }, ... } 全期間ぶん
+file_put_contents($dir . '/card_daily.json',    json_encode($cardDaily, $flags));
 
 echo 'done ' . date('Y-m-d H:i')
    . '  日数=' . count($daily)
    . '  カード=' . count($cards)
+   . '  日別=' . count($cardDaily)
    . '  ログ=' . count($files) . "本\n";

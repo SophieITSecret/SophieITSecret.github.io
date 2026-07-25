@@ -1619,7 +1619,7 @@ async function copyPrompt() {
 let progressTab = '';
 
 // ===== アクセス計測（本番集計をSSHで取得して表示） =====
-let accessStats = { daily: {}, cards: {}, loaded: false, error: null };
+let accessStats = { daily: {}, cards: {}, cardDaily: {}, loaded: false, error: null };
 
 async function loadAccessStats() {
   const dash = document.getElementById('accessDash');
@@ -1627,12 +1627,13 @@ async function loadAccessStats() {
   try {
     const r = await fetch('/api/access-stats');
     const j = await r.json();
-    accessStats = { daily: j.daily || {}, cards: j.cards || {}, loaded: true, error: j.ok ? null : (j.error || '取得失敗') };
+    accessStats = { daily: j.daily || {}, cards: j.cards || {}, cardDaily: j.cardDaily || {}, loaded: true, error: j.ok ? null : (j.error || '取得失敗') };
   } catch (e) {
-    accessStats = { daily: {}, cards: {}, loaded: true, error: e.message };
+    accessStats = { daily: {}, cards: {}, cardDaily: {}, loaded: true, error: e.message };
   }
   renderAccessDash();
   renderProgressBody();   // タイルの閲覧数を反映
+  if (document.getElementById('rankModal') && document.getElementById('rankModal').style.display === 'flex') renderCardRanking();
 }
 
 function renderAccessDash() {
@@ -1657,9 +1658,153 @@ function renderAccessDash() {
       <span class="dash-title">📈 本番アクセス（直近7日）</span>
       <span class="dash-tot">トップ計 ${sum('top_view')}／カード計 ${sum('card_view')}／追加 ${sum('pwa_installed')}</span>
       <button class="dash-refresh" onclick="loadAccessStats()" title="本番から再取得">↻ 更新</button>
+      <button class="dash-refresh" onclick="openCardRanking()" title="カード別の閲覧数を大きな表で一覧する">📋 カード別一覧</button>
     </div>
     ${note || `<table class="dash-table"><tr><th></th>${head}</tr>${row('トップ', 'top_view')}${row('カード', 'card_view')}${row('追加', 'pwa_installed')}</table>`}
   `;
+}
+
+// ===== カード別アクセス一覧（大きな表） =====
+let rankSort = 'natural';    // 既定はユニット・カードの表示順。ランキングは付加機能。
+let rankView = 'cumulative'; // cumulative=累計一覧／matrix=日別マトリクス
+function openCardRanking() {
+  document.getElementById('rankModal').style.display = 'flex';
+  fillRankSubjects();
+  renderCardRanking();
+}
+function closeCardRanking() {
+  document.getElementById('rankModal').style.display = 'none';
+}
+function setRankSort(k) { rankSort = k; renderCardRanking(); }
+function setRankView(k) { rankView = k; renderCardRanking(); }
+function jumpFromRanking(gIdx) {
+  closeCardRanking();
+  if (gIdx >= 0) pickProgressCard(gIdx);
+}
+// 科目セレクトを（CSV登場順で）用意する。選択は保持。
+function fillRankSubjects() {
+  const sel = document.getElementById('rankSubject');
+  if (!sel) return;
+  const subjects = [];
+  for (const c of cardData) {
+    if (c.subject && !subjects.includes(c.subject)) subjects.push(c.subject);
+  }
+  const prev = sel.value;
+  sel.innerHTML = subjects.map(s => `<option value="${esc(s)}">${esc(s)}</option>`).join('');
+  if (prev && subjects.includes(prev)) sel.value = prev;
+  else if (progressTab && subjects.includes(progressTab)) sel.value = progressTab;
+}
+function renderCardRanking() {
+  const body = document.getElementById('rankBody');
+  if (!body) return;
+  const sel = document.getElementById('rankSubject');
+  const subject = sel ? sel.value : '';
+  const hideZero = document.getElementById('rankHideZero') && document.getElementById('rankHideZero').checked;
+  const views = accessStats.cards || {};
+
+  // 対象科目のカードだけ（CSV登場順＝ユニット・カードの表示順を保つ）
+  let rows = cardData.filter(c => c.subject === subject).map(c => ({ c, v: views[c.id] || 0 }));
+  if (hideZero) rows = rows.filter(r => r.v > 0);
+
+  const totalViews = rows.reduce((a, r) => a + r.v, 0);
+  const viewed = rows.filter(r => r.v > 0).length;
+  const totEl = document.getElementById('rankTotals');
+  if (totEl) totEl.innerHTML = `${esc(subject)}：全 ${rows.length} 枚／閲覧あり ${viewed} 枚／累計 ${totalViews} 回`;
+  document.querySelectorAll('.rank-viewbtn').forEach(b =>
+    b.classList.toggle('rank-viewbtn-on', b.dataset.view === rankView));
+  document.querySelectorAll('.rank-sortbtn').forEach(b =>
+    b.classList.toggle('rank-sortbtn-on', b.dataset.sort === rankSort));
+  // 並びボタンは「累計一覧」のときだけ意味を持つので、マトリクス時は隠す
+  document.querySelectorAll('.rank-sortonly').forEach(el =>
+    el.style.display = (rankView === 'cumulative') ? '' : 'none');
+
+  if (!accessStats.loaded) {
+    body.innerHTML = '<p class="rank-empty">集計未取得です。進捗ボードの「↻ 更新」を押してください。</p>';
+    return;
+  }
+  if (!rows.length) {
+    body.innerHTML = '<p class="rank-empty">表示するカードがありません。</p>';
+    return;
+  }
+  if (rankView === 'matrix') { renderRankMatrix(body, rows); return; }
+
+  // ===== 累計一覧 =====
+  // バーの基準は科目内の最大閲覧数
+  const maxV = rows.reduce((m, r) => Math.max(m, r.v), 0) || 1;
+
+  const cardTr = (r, rankNo) => {
+    const c = r.c;
+    const bar = r.v > 0 ? `<span class="rank-bar" style="width:${Math.round(r.v / maxV * 100)}%"></span>` : '';
+    const gIdx = cardData.indexOf(c);
+    return `<tr class="${c.published ? 'rank-pub' : ''}" onclick="jumpFromRanking(${gIdx})" title="クリックでこのカードを編集画面で開く">
+      <td class="rc-rank">${rankNo || ''}</td>
+      <td class="rc-views"><span class="rank-vwrap">${bar}<span class="rank-vnum">${r.v}</span></span></td>
+      <td class="rc-code">${esc(c.id)}</td>
+      <td class="rc-title">${esc(c.title || '（無題）')}</td>
+      <td class="rc-pub">${c.published ? '公開' : '—'}</td>
+    </tr>`;
+  };
+
+  let bodyRows = '';
+  if (rankSort === 'views') {
+    // 付加機能：科目内を閲覧の多い順に。ユニット見出しは出さず順位を振る。
+    rows.sort((a, b) => b.v - a.v || a.c.id.localeCompare(b.c.id, 'ja', { numeric: true }));
+    bodyRows = rows.map((r, i) => cardTr(r, i + 1)).join('');
+  } else {
+    // 既定：ユニット（genre）ごとに区切り、カードは表示順のまま。
+    let curUnit = null;
+    for (const r of rows) {
+      if (r.c.genre !== curUnit) {
+        curUnit = r.c.genre;
+        const uCards = rows.filter(x => x.c.genre === curUnit);
+        const uSum = uCards.reduce((a, x) => a + x.v, 0);
+        bodyRows += `<tr class="rank-unitrow"><td></td><td class="ru-sum">👁 ${uSum}</td>
+          <td colspan="3" class="ru-name">${esc(curUnit || '（ユニットなし）')}　<span class="ru-cnt">${uCards.length}枚</span></td></tr>`;
+      }
+      bodyRows += cardTr(r, '');
+    }
+  }
+
+  body.innerHTML = `<table class="rank-table">
+    <thead><tr><th>#</th><th>👁 閲覧</th><th>カード</th><th>タイトル</th><th>公開</th></tr></thead>
+    <tbody>${bodyRows}</tbody></table>`;
+}
+
+// 日別マトリクス：行=カード（ユニット順）、列=日付（古い→新しい、全期間）
+function renderRankMatrix(body, rows) {
+  const cd = accessStats.cardDaily || {};
+  const dates = Object.keys(cd).sort();   // 全期間ぶんの日付
+  if (!dates.length) {
+    body.innerHTML = '<p class="rank-empty">まだ日別データがありません（本番のcron集計後に溜まります）。</p>';
+    return;
+  }
+  const cell = (d, id) => (cd[d] && cd[d][id]) || 0;
+  const head = `<tr>
+    <th class="mx-code">カード</th><th class="mx-title">タイトル</th><th class="mx-total">累計</th>
+    ${dates.map(d => `<th class="mx-date">${esc(d.slice(5))}</th>`).join('')}
+  </tr>`;
+
+  let out = '';
+  let curUnit = null;
+  for (const r of rows) {
+    const c = r.c;
+    if (c.genre !== curUnit) {
+      curUnit = c.genre;
+      const uCards = rows.filter(x => x.c.genre === curUnit);
+      out += `<tr class="rank-unitrow">
+        <td class="mx-code ru-name" colspan="3">${esc(curUnit || '（ユニットなし）')}　<span class="ru-cnt">${uCards.length}枚</span></td>
+        ${dates.map(d => { const s = uCards.reduce((a, x) => a + cell(d, x.c.id), 0); return `<td class="mx-cell mx-usum">${s || ''}</td>`; }).join('')}
+      </tr>`;
+    }
+    const gIdx = cardData.indexOf(c);
+    out += `<tr class="${c.published ? 'rank-pub' : ''}" onclick="jumpFromRanking(${gIdx})" title="クリックでこのカードを編集画面で開く">
+      <td class="mx-code rc-code">${esc(c.id)}</td>
+      <td class="mx-title">${esc(c.title || '（無題）')}</td>
+      <td class="mx-total">${r.v || ''}</td>
+      ${dates.map(d => { const n = cell(d, c.id); return `<td class="mx-cell${n ? ' mx-hit' : ''}">${n || ''}</td>`; }).join('')}
+    </tr>`;
+  }
+  body.innerHTML = `<table class="rank-table rank-matrix"><thead>${head}</thead><tbody>${out}</tbody></table>`;
 }
 
 function openProgress() {

@@ -309,6 +309,29 @@
   </div>
 </div>
 
+<!-- カード別アクセス一覧（大きな表） -->
+<div id="rankModal" class="modal-overlay">
+  <div class="modal-box rank-modal-box">
+    <div class="modal-head">
+      <h2>📋 カード別アクセス一覧（本番・累計）</h2>
+      <button class="btn-cancel" onclick="closeCardRanking()">✕ 閉じる</button>
+    </div>
+    <div class="rank-toolbar">
+      <span class="rank-sortlabel">科目：</span>
+      <select id="rankSubject" class="rank-subject" onchange="renderCardRanking()"></select>
+      <span class="rank-sortlabel">表示：</span>
+      <button class="rank-viewbtn" data-view="cumulative" onclick="setRankView('cumulative')">累計一覧</button>
+      <button class="rank-viewbtn" data-view="matrix" onclick="setRankView('matrix')">📅 日別マトリクス</button>
+      <span class="rank-sortlabel rank-sortonly">並び：</span>
+      <button class="rank-sortbtn rank-sortonly" data-sort="natural" onclick="setRankSort('natural')">ユニット順（既定）</button>
+      <button class="rank-sortbtn rank-sortonly" data-sort="views" onclick="setRankSort('views')">👁 閲覧の多い順</button>
+      <label class="rank-zero"><input type="checkbox" id="rankHideZero" onchange="renderCardRanking()"> 閲覧0を隠す</label>
+      <span id="rankTotals" class="rank-totals"></span>
+    </div>
+    <div id="rankBody" class="rank-body"></div>
+  </div>
+</div>
+
 <div id="bodyPopup" class="body-popup" onclick="closeBodyPopup()"></div>
 
 <!-- ユニット詳細パネル（独立ウィンドウ） -->
