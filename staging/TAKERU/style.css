@@ -167,6 +167,7 @@ body {
 .ins-steps { margin: 4px 0 14px 1.2em; padding: 0; }
 .ins-steps li { margin-bottom: 10px; line-height: 1.8; }
 .ins-steps strong { color: var(--accent2); }
+.ins-sub { color: var(--text2); font-size: 0.76rem; line-height: 1.7; margin-top: 4px; }
 .install-now { margin: 18px 0 6px; display: flex; justify-content: center; }
 .install-now button { background: var(--accent); border: none; color: #000; font-weight: 700;
     font-size: 1rem; border-radius: 8px; padding: 14px 28px; cursor: pointer; }

@@ -1013,19 +1013,21 @@ function renderInstallGuideBody() {
     let steps = '';
     if (p === 'iphone') {
         steps = `
-          <p class="ins-note">iPhoneは <strong>Safari</strong> でのみ追加できます（Chrome等では出ません）。</p>
+          <p class="ins-note">iPhoneは <strong>Safari</strong> でのみ追加できます。メールやLINEの中で開いた場合は、いったん<strong>Safariで開き直して</strong>ください。</p>
           <ol class="ins-steps">
             <li>Safariでこのページを開く</li>
-            <li>画面下（機種により上）の<strong>「共有」ボタン</strong>（□に↑）を押す</li>
+            <li>画面下の<strong>「共有」ボタン</strong>（□に↑）を押す
+              <div class="ins-sub">見当たらない時は、アドレスバー横の<strong>「ぁあ」や「⋯」</strong>を押すと、その中に「共有」があります。</div></li>
             <li>メニューを下にスクロールし<strong>「ホーム画面に追加」</strong>を選ぶ</li>
             <li>右上の<strong>「追加」</strong>を押す → 完了</li>
           </ol>`;
     } else if (p === 'ipad') {
         steps = `
-          <p class="ins-note">iPadは <strong>Safari</strong> でのみ追加できます。</p>
+          <p class="ins-note">iPadは <strong>Safari</strong> でのみ追加できます。メールやLINEの中で開いた場合は、いったんSafariで開き直してください。</p>
           <ol class="ins-steps">
             <li>Safariでこのページを開く</li>
-            <li>画面右上（アドレスバー右）の<strong>「共有」ボタン</strong>（□に↑）を押す</li>
+            <li>画面右上（アドレスバー右）の<strong>「共有」ボタン</strong>（□に↑）を押す
+              <div class="ins-sub">見当たらない時は、右上の<strong>「⋯」</strong>メニューの中に「共有」があります。</div></li>
             <li><strong>「ホーム画面に追加」</strong>を選ぶ</li>
             <li>右上の<strong>「追加」</strong>を押す → 完了</li>
           </ol>`;
@@ -1037,16 +1039,18 @@ function renderInstallGuideBody() {
                <li>画面右上の<strong>「⋮」</strong>（点が縦に3つ）を押す</li>
                <li><strong>「アプリをインストール」</strong>または<strong>「ホーム画面に追加」</strong>を選ぶ</li>
                <li>確認画面で<strong>「インストール／追加」</strong>を押す → 完了</li>
-             </ol>`;
+             </ol>
+             <div class="ins-sub">メニューに「◯◯で開く」と出る場合は、すでにインストール済みです。</div>`;
     } else {
         steps = canPrompt
           ? `<p class="ins-note">上のボタンを押すと、そのまま追加できます。</p>`
-          : `<p class="ins-note"><strong>Chrome</strong>または<strong>Edge</strong>でのご利用がおすすめです。</p>
+          : `<p class="ins-note"><strong>Chrome</strong>または<strong>Edge</strong>でご利用ください。</p>
              <ol class="ins-steps">
-               <li>アドレスバー右端の<strong>インストールアイコン</strong>（画面にプラスの付いた印）を押す</li>
-               <li>または右上の<strong>「⋮」/「…」</strong>メニュー →「TAKERUをインストール」を選ぶ</li>
+               <li>アドレスバー右端の<strong>インストールアイコン</strong>（モニターに↓が付いた印）をクリック</li>
+               <li>または右上の<strong>「⋮」/「…」</strong> →「キャスト、保存、共有」→<strong>「TAKERUをインストール」</strong></li>
                <li>確認画面で<strong>「インストール」</strong>を押す → 完了</li>
-             </ol>`;
+             </ol>
+             <div class="ins-sub">メニューに「TAKERUをインストール」が無く<strong>「TAKERU｜MSアカデミーで開く」</strong>と出る場合は、<strong>そのパソコンには既にインストール済み</strong>です。</div>`;
     }
 
     cardBody.innerHTML = `
