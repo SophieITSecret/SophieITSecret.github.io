@@ -112,9 +112,22 @@ const settingsPanel = document.getElementById('settings-panel');
 const imageArea = document.getElementById('image-area');
 const dividerLine = document.getElementById('divider-line');
 
+// ホーム画面追加(PWA)用：Android/PCのA2HSイベントを保持。iOSでは発火しない。
+let deferredInstallPrompt = null;
+
 window.addEventListener('DOMContentLoaded', async () => {
     logAccess('top_view');                  // トップが開かれた
-    window.addEventListener('appinstalled', () => logAccess('pwa_installed'));
+    window.addEventListener('appinstalled', () => {
+        logAccess('pwa_installed');
+        deferredInstallPrompt = null;
+        if (navState === 'install') renderInstallGuideBody();
+    });
+    // Android/PC(Chrome/Edge)：追加候補が出せる時に横取りして「インストール」ボタン化する
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredInstallPrompt = e;
+        if (navState === 'install') renderInstallGuideBody();
+    });
     waitForGis();                           // Googleサインインの初期化（読み込み待ち）
 
     await Promise.all([loadCSV(), loadLinkCSV(), loadMp3List()]);
@@ -327,6 +340,7 @@ function showTopMenu() {
                 <button class="top-btn btn-howto" data-action="register">✉️ 登録案内</button>
             </div>
             <div class="top-beta">β版（試験公開中）</div>
+            ${installLinkHtml()}
         </div>
     `;
     menuContent.onclick = (e) => {
@@ -367,6 +381,7 @@ function showGuideMenu() {
             : `<button class="genre-btn btn-coming" disabled>${u}</button>`;
     });
     html += `</div>`;
+    html += `<div class="guide-install-wrap">${installLinkHtml('guide-install')}</div>`;
     menuContent.innerHTML = html;
     menuContent.onclick = (e) => {
         const item = e.target.closest('.genre-btn');
@@ -956,6 +971,101 @@ const PRIVACY_HTML = `
   <p><strong>登録の解除・お問い合わせ</strong><br>登録の解除は、この「登録案内」の「登録を解除する」からいつでも行えます。その他のお問い合わせは <a href="https://ms-forum.com/" target="_blank" rel="noopener">ms-forum.com</a> までご連絡ください。</p>
   <p class="reg-priv-note">※ベータ版時点の内容です。正式版に向けて更新する場合があります。</p>
 </div>`;
+
+// ========== ホーム画面に追加（PWAインストール案内） ==========
+// すでにアイコン起動（インストール済み）なら案内は不要
+function isAppInstalled() {
+    return (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches)
+        || window.navigator.standalone === true;   // iOS Safari
+}
+// 開いている端末を判定して、その機種の手順だけ出す
+function installPlatform() {
+    const ua = navigator.userAgent || '';
+    if (/iPhone|iPod/.test(ua)) return 'iphone';
+    if (/iPad/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) return 'ipad';
+    if (/Android/.test(ua)) return 'android';
+    return 'desktop';
+}
+// トップ／ご案内メニューに差し込む小さなリンク（インストール済みなら空）
+function installLinkHtml(extraClass) {
+    if (isAppInstalled()) return '';
+    return `<button class="top-install ${extraClass || ''}" onclick="showInstallGuide()">📲 アイコンにして使う</button>`;
+}
+
+function showInstallGuide() {
+    navState = 'install';
+    isMenuVisible = false;
+    showTextView();
+    showMenuBanner();
+    cardProgress.innerText = '';
+    cardTitle.innerText = 'ホーム画面に追加';
+    renderInstallGuideBody();
+    textView.scrollTop = 0;
+}
+
+function renderInstallGuideBody() {
+    const p = installPlatform();
+    const canPrompt = !!deferredInstallPrompt;   // Android/PCで候補が用意できている
+    const btn = canPrompt
+        ? `<div class="install-now"><button onclick="doNativeInstall()">📲 このアプリをインストール</button></div>`
+        : '';
+
+    let steps = '';
+    if (p === 'iphone') {
+        steps = `
+          <p class="ins-note">iPhoneは <strong>Safari</strong> でのみ追加できます（Chrome等では出ません）。</p>
+          <ol class="ins-steps">
+            <li>Safariでこのページを開く</li>
+            <li>画面下（機種により上）の<strong>「共有」ボタン</strong>（□に↑）を押す</li>
+            <li>メニューを下にスクロールし<strong>「ホーム画面に追加」</strong>を選ぶ</li>
+            <li>右上の<strong>「追加」</strong>を押す → 完了</li>
+          </ol>`;
+    } else if (p === 'ipad') {
+        steps = `
+          <p class="ins-note">iPadは <strong>Safari</strong> でのみ追加できます。</p>
+          <ol class="ins-steps">
+            <li>Safariでこのページを開く</li>
+            <li>画面右上（アドレスバー右）の<strong>「共有」ボタン</strong>（□に↑）を押す</li>
+            <li><strong>「ホーム画面に追加」</strong>を選ぶ</li>
+            <li>右上の<strong>「追加」</strong>を押す → 完了</li>
+          </ol>`;
+    } else if (p === 'android') {
+        steps = canPrompt
+          ? `<p class="ins-note">上のボタンを押すと、そのまま追加できます。</p>`
+          : `<p class="ins-note"><strong>Chrome</strong>でのご利用がおすすめです。</p>
+             <ol class="ins-steps">
+               <li>画面右上の<strong>「⋮」</strong>（点が縦に3つ）を押す</li>
+               <li><strong>「アプリをインストール」</strong>または<strong>「ホーム画面に追加」</strong>を選ぶ</li>
+               <li>確認画面で<strong>「インストール／追加」</strong>を押す → 完了</li>
+             </ol>`;
+    } else {
+        steps = canPrompt
+          ? `<p class="ins-note">上のボタンを押すと、そのまま追加できます。</p>`
+          : `<p class="ins-note"><strong>Chrome</strong>または<strong>Edge</strong>でのご利用がおすすめです。</p>
+             <ol class="ins-steps">
+               <li>アドレスバー右端の<strong>インストールアイコン</strong>（画面にプラスの付いた印）を押す</li>
+               <li>または右上の<strong>「⋮」/「…」</strong>メニュー →「TAKERUをインストール」を選ぶ</li>
+               <li>確認画面で<strong>「インストール」</strong>を押す → 完了</li>
+             </ol>`;
+    }
+
+    cardBody.innerHTML = `
+      <div class="reg-priv-doc ins-doc">
+        <p>アイコンにすると、次回からブラウザで開き直さず<strong>ワンタップで起動</strong>できます。ストア不要・数十秒で終わります。</p>
+        ${btn}
+        ${steps}
+        <p class="reg-priv-note">うまくいかない時は、そのままブラウザでご利用いただいても内容は変わりません。設定は必須ではありません。</p>
+      </div>
+      <div class="reg-back"><button class="reg-backbtn" onclick="showTopMenu()">← メニューに戻る</button></div>`;
+}
+
+async function doNativeInstall() {
+    if (!deferredInstallPrompt) return;
+    const e = deferredInstallPrompt;
+    deferredInstallPrompt = null;
+    try { e.prompt(); await e.userChoice; } catch (err) {}
+    renderInstallGuideBody();
+}
 
 function renderRegisterBody() {
     const email = getMemberEmail();

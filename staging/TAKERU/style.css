@@ -146,6 +146,32 @@ body {
     opacity: 0.75;
 }
 
+/* 「アイコンにして使う」小さなリンク（インストール済みなら非表示） */
+.top-install {
+    display: block;
+    margin: 8px auto 0;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text2);
+    font-family: inherit;
+    font-size: 0.8rem;
+    border-radius: 999px;
+    padding: 6px 16px;
+    cursor: pointer;
+}
+.top-install:active { background: rgba(255,255,255,0.08); }
+.guide-install-wrap { text-align: center; margin: 14px 0 4px; }
+
+/* インストール手順の本文 */
+.ins-note { color: var(--text2); font-size: 0.82rem; margin: 4px 0 12px; }
+.ins-steps { margin: 4px 0 14px 1.2em; padding: 0; }
+.ins-steps li { margin-bottom: 10px; line-height: 1.8; }
+.ins-steps strong { color: var(--accent2); }
+.install-now { margin: 18px 0 6px; display: flex; justify-content: center; }
+.install-now button { background: var(--accent); border: none; color: #000; font-weight: 700;
+    font-size: 1rem; border-radius: 8px; padding: 14px 28px; cursor: pointer; }
+.install-now button:active { opacity: 0.85; }
+
 #btn-enter {
     margin-top: 20px;
     padding: 14px 48px;
