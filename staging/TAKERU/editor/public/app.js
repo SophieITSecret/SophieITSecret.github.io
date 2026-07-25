@@ -32,6 +32,7 @@ async function init() {
     document.getElementById('btnExport').disabled=false;
     document.getElementById('btnRename').disabled=false;
     document.getElementById('btnProgress').disabled=false;
+    document.getElementById('btnAccess').disabled=false;
     document.getElementById('btnBatchRecord').disabled=false;
     dirty=false;
   } catch(err) {
@@ -1632,7 +1633,6 @@ async function loadAccessStats() {
     accessStats = { daily: {}, cards: {}, cardDaily: {}, loaded: true, error: e.message };
   }
   renderAccessDash();
-  renderProgressBody();   // タイルの閲覧数を反映
   if (document.getElementById('rankModal') && document.getElementById('rankModal').style.display === 'flex') renderCardRanking();
 }
 
@@ -1658,7 +1658,6 @@ function renderAccessDash() {
       <span class="dash-title">📈 本番アクセス（直近7日）</span>
       <span class="dash-tot">トップ計 ${sum('top_view')}／カード計 ${sum('card_view')}／追加 ${sum('pwa_installed')}</span>
       <button class="dash-refresh" onclick="loadAccessStats()" title="本番から再取得">↻ 更新</button>
-      <button class="dash-refresh" onclick="openCardRanking()" title="カード別の閲覧数を大きな表で一覧する">📋 カード別一覧</button>
     </div>
     ${note || `<table class="dash-table"><tr><th></th>${head}</tr>${row('トップ', 'top_view')}${row('カード', 'card_view')}${row('追加', 'pwa_installed')}</table>`}
   `;
@@ -1671,6 +1670,7 @@ function openCardRanking() {
   document.getElementById('rankModal').style.display = 'flex';
   fillRankSubjects();
   renderCardRanking();
+  loadAccessStats();   // 開くたびに本番から最新を取得（非同期・完了後に再描画）
 }
 function closeCardRanking() {
   document.getElementById('rankModal').style.display = 'none';
@@ -1808,7 +1808,7 @@ function renderRankMatrix(body, rows) {
 }
 
 function openProgress() {
-  loadAccessStats();   // 開くたびに本番から最新を取得（非同期・失敗しても表示は続く）
+  // 進捗ボードは「内容の作り込み度」だけを見る。閲覧状況は「👁 閲覧状況」で分離。
   // subject一覧を収集（CSV登場順）
   const subjects = [];
   for(const c of cardData){
@@ -1857,7 +1857,6 @@ function renderProgressBody() {
     const nImg  = cards.filter(c => !!imageMap[c.id]).length;
     const nMp3  = cards.filter(c => mp3Ids.has(c.id)).length;
     const nPub  = cards.filter(c => c.published).length;
-    const unitViews = cards.reduce((a, c) => a + (accessStats.cards[c.id] || 0), 0);
 
     const tiles = cards.map(c => {
       const gIdx = cardData.indexOf(c);
@@ -1866,10 +1865,8 @@ function renderProgressBody() {
       const hI = !!imageMap[c.id];
       const hM = mp3Ids.has(c.id);
       const complete = hT && hB && hI && hM;
-      const views = accessStats.cards[c.id] || 0;
-      const viewTag = views > 0 ? `<span class="ptile-views" title="本番での累計閲覧数">👁${views}</span>` : '';
       return `<div class="ptile${complete?' ptile-complete':''}${c.published?' ptile-pub':''}" onclick="pickProgressCard(${gIdx})" title="${esc(c.title||c.id)}">
-        <span class="ptile-code">${esc(c.id)}${viewTag}</span>
+        <span class="ptile-code">${esc(c.id)}</span>
         <span class="ptile-dots">
           <span class="sdot ${c.published?'sdot-pub':'sdot-off'}" onclick="togglePub(event,${gIdx})" title="クリックで公開切替">公</span>
           <span class="sdot ${hT?'sdot-title':'sdot-off'}">題</span>
@@ -1890,7 +1887,6 @@ function renderProgressBody() {
           <span class="pus-body">文 ${nBody}/${total}</span>
           <span class="pus-img">画 ${nImg}/${total}</span>
           <span class="pus-mp3">音 ${nMp3}/${total}</span>
-          ${unitViews > 0 ? `<span class="pus-views" title="このユニットの本番累計閲覧数">👁 ${unitViews}</span>` : ''}
           <button class="pub-bulk-btn" onclick="bulkPub('${esc(unit).replace(/'/g,"&#39;")}',${allPub?0:1})" title="このユニットをまとめて公開/非公開">${allPub?'全非公開':'全公開'}</button>
         </span>
       </div>

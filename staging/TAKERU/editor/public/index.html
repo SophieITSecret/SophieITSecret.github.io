@@ -11,6 +11,7 @@
   <button class="btn-load" onclick="reload()">🔄 再読み込み</button>
   <span class="file-status" id="fileStatus">読み込み中…</span>
   <button class="btn-load" id="btnProgress" onclick="openProgress()" disabled>📊 進捗</button>
+  <button class="btn-load" id="btnAccess" onclick="openCardRanking()" disabled>👁 閲覧状況</button>
   <button class="btn-load" onclick="openMemo()">📝 メモ</button>
   <button class="btn-load" id="btnImport" onclick="openImport()" disabled>📥 一括取り込み</button>
   <button class="btn-load" id="btnExport" onclick="openExport()" disabled>📤 書き出し</button>
@@ -303,19 +304,19 @@
       <h2>📊 進捗ボード</h2>
       <button class="btn-cancel" onclick="closeProgress()">✕ 閉じる</button>
     </div>
-    <div id="accessDash" class="access-dash"></div>
     <div id="progressTabs" class="progress-tabs"></div>
     <div id="progressBody" class="progress-body"></div>
   </div>
 </div>
 
-<!-- カード別アクセス一覧（大きな表） -->
+<!-- 閲覧状況（本番アクセス）-->
 <div id="rankModal" class="modal-overlay">
   <div class="modal-box rank-modal-box">
     <div class="modal-head">
-      <h2>📋 カード別アクセス一覧（本番・累計）</h2>
+      <h2>👁 閲覧状況（本番アクセス）</h2>
       <button class="btn-cancel" onclick="closeCardRanking()">✕ 閉じる</button>
     </div>
+    <div id="accessDash" class="access-dash"></div>
     <div class="rank-toolbar">
       <span class="rank-sortlabel">科目：</span>
       <select id="rankSubject" class="rank-subject" onchange="renderCardRanking()"></select>
