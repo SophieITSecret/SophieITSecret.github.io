@@ -76,6 +76,8 @@ function visibleOf(cards) {
 
 let cardData = [];
 let linkData = [];
+let newsData = [];
+let newsTab = 'お知らせ';   // 📰内のタブ：お知らせ／ニュース（ニュースは当面準備中）
 let curSection = [];
 let curIndex = 0;
 let navState = 'top';
@@ -130,7 +132,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     });
     waitForGis();                           // Googleサインインの初期化（読み込み待ち）
 
-    await Promise.all([loadCSV(), loadLinkCSV(), loadMp3List()]);
+    await Promise.all([loadCSV(), loadLinkCSV(), loadMp3List(), loadNewsCSV()]);
     setupButtons();
     setupSettings();
     loadSavedSettings();
@@ -200,6 +202,28 @@ async function loadLinkCSV() {
         })).filter(d => d.id);
     } catch (e) {
         console.error('リンクCSVロード失敗:', e);
+    }
+}
+
+// ==========================================
+// CSVロード（お知らせ・ニュース）
+// ==========================================
+async function loadNewsCSV() {
+    try {
+        const res = await fetch(`news.csv?v=${Date.now()}`);
+        if (!res.ok) return;
+        const text = await res.text();
+        const records = parseCSV(text).slice(1);
+        newsData = records.map(c => ({
+            id: c[0]?.trim() || '',
+            date: c[1]?.trim() || '',
+            type: c[2]?.trim() || 'お知らせ',
+            title: c[3]?.trim() || '',
+            body: c[4] || '',                  // 本文は改行を残すのでtrimしない
+            published: c[5]?.trim() === '1'
+        })).filter(d => d.id);
+    } catch (e) {
+        console.error('お知らせCSVロード失敗:', e);
     }
 }
 
@@ -333,7 +357,7 @@ function showTopMenu() {
             <button class="top-btn btn-guide" data-action="guide">📖 アカデミーのご案内</button>
             <button class="top-btn btn-jukou" data-action="jukou">📚 受　講</button>
             <button class="top-btn btn-freestudy" data-action="freestudy">🔬 自由研究</button>
-            <button class="top-btn btn-news" data-action="news">📰 ニュース・お知らせ</button>
+            <button class="top-btn btn-news" data-action="news">📰 ニュース・お知らせ${hasUnreadNews() ? '<span class="news-badge"></span>' : ''}</button>
             <button class="top-btn btn-links" data-action="links">🔗 リンク集</button>
             <div class="top-btn-row">
                 <button class="top-btn btn-exam" data-action="exam">📝 受験案内</button>
@@ -350,6 +374,7 @@ function showTopMenu() {
         else if (btn.dataset.action === 'jukou') showGradeMenu();
         else if (btn.dataset.action === 'links') showLinkGenreMenu();
         else if (btn.dataset.action === 'register') showRegisterInfo();
+        else if (btn.dataset.action === 'news') showNews();
         else showPlaceholder(btn.innerText);
     };
 }
@@ -881,6 +906,80 @@ function showPlaceholder(name) {
     cardProgress.innerText = '';
     cardTitle.innerText = name;
     cardBody.innerText = 'このメニューは準備中です。\n\nお楽しみに！';
+}
+
+// ==========================================
+// ニュース・お知らせ（中でタブ切替。ニュースは当面「準備中」）
+// ==========================================
+// 表示対象のお知らせ（本番は公開のみ／開発は全部）を新しい順で返す
+function visibleNotices() {
+    return newsData
+        .filter(n => n.type === 'お知らせ' && (IS_PROD ? n.published : true))
+        .sort((a, b) => b.date.localeCompare(a.date) || b.id.localeCompare(a.id, undefined, { numeric: true }));
+}
+function latestNoticeId() { const v = visibleNotices(); return v.length ? v[0].id : ''; }
+function getNewsSeen() { try { return localStorage.getItem('takeru_news_seen') || ''; } catch (e) { return ''; } }
+function markNewsSeen() { try { localStorage.setItem('takeru_news_seen', latestNoticeId()); } catch (e) {} }
+function hasUnreadNews() { const l = latestNoticeId(); return !!l && l !== getNewsSeen(); }
+
+function showNews(tab) {
+    newsTab = tab || newsTab || 'お知らせ';
+    navState = 'news';
+    isMenuVisible = true;
+    enterLinkFullscreen();
+    showMenuView();
+    if (newsTab === 'お知らせ') markNewsSeen();   // 開いたら既読
+
+    const tabRow = `
+        <div class="news-tabs">
+            <button class="news-tab ${newsTab==='お知らせ'?'active':''}" data-tab="お知らせ">お知らせ</button>
+            <button class="news-tab ${newsTab==='ニュース'?'active':''}" data-tab="ニュース">ニュース</button>
+        </div>`;
+
+    let listHtml = '';
+    if (newsTab === 'お知らせ') {
+        const items = visibleNotices();
+        if (!items.length) {
+            listHtml = `<div class="news-empty">まだお知らせはありません。</div>`;
+        } else {
+            listHtml = `<div class="news-list">` + items.map(n =>
+                `<div class="menu-item news-item" data-id="${n.id}">
+                    <span class="news-date">${escHtml(n.date)}</span>
+                    <span class="news-title">${escHtml(n.title)}</span>
+                    <span class="link-arrow">›</span>
+                </div>`).join('') + `</div>`;
+        }
+    } else {
+        listHtml = `<div class="news-coming">ニュースは準備中です。<br>もうしばらくお待ちください。</div>`;
+    }
+
+    menuContent.innerHTML = `
+        <div class="sub-menu-wrap">
+            <div class="top-btn btn-news banner-btn">📰 ニュース・お知らせ</div>
+            ${tabRow}
+            ${listHtml}
+        </div>`;
+
+    menuContent.onclick = (e) => {
+        const tabBtn = e.target.closest('.news-tab');
+        if (tabBtn) { showNews(tabBtn.dataset.tab); return; }
+        const item = e.target.closest('.news-item');
+        if (item) showNewsItem(item.dataset.id);
+    };
+}
+
+function showNewsItem(id) {
+    const n = newsData.find(d => d.id === id);
+    if (!n) return;
+    navState = 'newsitem';
+    isMenuVisible = false;
+    showTextView();
+    showMenuBanner();
+    cardProgress.innerText = n.date || '';
+    cardTitle.innerText = n.title || 'お知らせ';
+    cardBody.innerHTML = bodyToHtml(n.body) +
+        `<div class="reg-back"><button class="reg-backbtn" onclick="showNews('お知らせ')">← お知らせ一覧に戻る</button></div>`;
+    textView.scrollTop = 0;
 }
 
 // ==========================================
@@ -1581,6 +1680,9 @@ function goUpOneLevel() {
             break;
         case 'linklist':
             showLinkGenreMenu();
+            break;
+        case 'newsitem':
+            showNews('お知らせ');
             break;
         default:
             showTopMenu();

@@ -908,6 +908,58 @@ body:not(.menu-mode) #image-area.has-image::after {
 .badge-jp  { background: rgba(76,175,80,0.2); color: var(--accent); border: 1px solid var(--accent); }
 .badge-pdf { background: rgba(244,67,54,0.15); color: #ef9a9a; border: 1px solid #e57373; }
 
+/* ==================== ニュース・お知らせ ==================== */
+.news-tabs {
+    display: flex;
+    gap: 8px;
+    padding: 10px 14px 4px;
+}
+.news-tab {
+    flex: 1;
+    padding: 9px 0;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text2);
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 0.95rem;
+    cursor: pointer;
+}
+.news-tab.active {
+    background: linear-gradient(135deg, #2a2a1a, #f57f17);
+    border-color: #ffc107;
+    color: #fff;
+    font-weight: 700;
+}
+.news-item { justify-content: flex-start; }
+.news-date {
+    font-size: 0.78rem;
+    color: var(--text2);
+    opacity: 0.85;
+    flex-shrink: 0;
+    min-width: 5.6em;
+    font-variant-numeric: tabular-nums;
+}
+.news-title { flex: 1; font-size: 1.0rem; color: var(--text); }
+.news-empty, .news-coming {
+    padding: 40px 20px;
+    text-align: center;
+    color: var(--text2);
+    font-size: 0.92rem;
+    line-height: 1.9;
+}
+/* トップメニューの📰に付く新着の赤い● */
+.news-badge {
+    display: inline-block;
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: #ff5252;
+    margin-left: 8px;
+    vertical-align: middle;
+    box-shadow: 0 0 6px rgba(255,82,82,0.8);
+}
+
 .card-badge {
     display: inline-block;
     font-size: 0.6rem;
