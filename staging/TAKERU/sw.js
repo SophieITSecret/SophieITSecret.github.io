@@ -1,6 +1,6 @@
 // ★デプロイ(push)のたびに SW_VERSION と CACHE_NAME の番号を一緒に上げる
-const SW_VERSION = 'v70';
-const CACHE_NAME = 'takeru-v70';
+const SW_VERSION = 'v71';
+const CACHE_NAME = 'takeru-v71';
 
 const PRE_CACHE = [
     './',
