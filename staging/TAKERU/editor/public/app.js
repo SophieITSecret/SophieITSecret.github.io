@@ -1684,6 +1684,137 @@ function downloadMembersCsv() {
   URL.revokeObjectURL(a.href);
 }
 
+// ==================== お知らせ編集 ====================
+let newsItems = [];        // {id,date,type,title,body,published}
+let newsEditId = null;     // 編集中のID（新規はnull）
+let newsDirty = false;
+
+function openNewsEditor() {
+  document.getElementById('newsModal').style.display = 'flex';
+  loadNewsItems();
+}
+function closeNewsEditor() {
+  if (newsDirty && !confirm('未保存の変更があります。閉じてよいですか？（保存していない内容は失われます）')) return;
+  document.getElementById('newsModal').style.display = 'none';
+}
+async function loadNewsItems() {
+  try {
+    const r = await fetch('/api/news');
+    const j = await r.json();
+    newsItems = j.items || [];
+  } catch (e) {
+    newsItems = [];
+    alert('お知らせの読み込みに失敗しました: ' + e.message);
+  }
+  newsDirty = false;
+  startNewNews();
+  renderNewsEditList();
+  markNewsDirty(false);
+}
+function newsSorted() {
+  return newsItems.slice().sort((a, b) =>
+    (b.date || '').localeCompare(a.date || '') || (b.id || '').localeCompare(a.id || '', undefined, { numeric: true }));
+}
+function renderNewsEditList() {
+  const box = document.getElementById('newsEditList');
+  if (!box) return;
+  if (!newsItems.length) { box.innerHTML = '<p class="news-edit-empty">まだお知らせはありません。「＋ 新規」から追加してください。</p>'; return; }
+  box.innerHTML = newsSorted().map(n => `
+    <div class="news-edit-item ${n.id === newsEditId ? 'editing' : ''}">
+      <div class="nei-main" onclick="editNews('${n.id}')">
+        <span class="nei-badge ${n.published ? 'pub' : 'off'}">${n.published ? '公開' : '下書'}</span>
+        <span class="nei-type ${n.type === 'ニュース' ? 'news' : ''}">${esc(n.type)}</span>
+        <span class="nei-date">${esc(n.date)}</span>
+        <span class="nei-title">${esc(n.title || '（無題）')}</span>
+      </div>
+      <div class="nei-ops">
+        <button title="公開/下書きを切替" onclick="toggleNewsPub('${n.id}')">${n.published ? '👁' : '🚫'}</button>
+        <button title="削除" onclick="deleteNews('${n.id}')">🗑</button>
+      </div>
+    </div>`).join('');
+}
+function startNewNews() {
+  newsEditId = null;
+  const today = new Date().toISOString().slice(0, 10);
+  document.getElementById('nfDate').value = today;
+  document.getElementById('nfType').value = 'お知らせ';
+  document.getElementById('nfTitle').value = '';
+  document.getElementById('nfBody').value = '';
+  document.getElementById('nfPub').checked = false;
+  renderNewsEditList();
+}
+function editNews(id) {
+  const n = newsItems.find(x => x.id === id);
+  if (!n) return;
+  newsEditId = id;
+  document.getElementById('nfDate').value = n.date || new Date().toISOString().slice(0, 10);
+  document.getElementById('nfType').value = n.type || 'お知らせ';
+  document.getElementById('nfTitle').value = n.title || '';
+  document.getElementById('nfBody').value = n.body || '';
+  document.getElementById('nfPub').checked = !!n.published;
+  renderNewsEditList();
+}
+function genNewsId() {
+  let max = 0;
+  for (const n of newsItems) {
+    const m = /(\d+)$/.exec(n.id || '');
+    if (m) max = Math.max(max, parseInt(m[1], 10));
+  }
+  return 'NEWS' + String(max + 1).padStart(3, '0');
+}
+function applyNewsForm() {
+  const date = document.getElementById('nfDate').value.trim();
+  const type = document.getElementById('nfType').value;
+  const title = document.getElementById('nfTitle').value.trim();
+  const body = document.getElementById('nfBody').value;
+  const published = document.getElementById('nfPub').checked;
+  if (!title) { alert('タイトルを入力してください。'); return; }
+  if (!date) { alert('日付を入力してください。'); return; }
+  if (newsEditId) {
+    const n = newsItems.find(x => x.id === newsEditId);
+    if (n) Object.assign(n, { date, type, title, body, published });
+  } else {
+    newsItems.push({ id: genNewsId(), date, type, title, body, published });
+  }
+  markNewsDirty(true);
+  startNewNews();
+}
+function toggleNewsPub(id) {
+  const n = newsItems.find(x => x.id === id);
+  if (!n) return;
+  n.published = !n.published;
+  markNewsDirty(true);
+  renderNewsEditList();
+}
+function deleteNews(id) {
+  const n = newsItems.find(x => x.id === id);
+  if (!n) return;
+  if (!confirm(`「${n.title || n.id}」を削除しますか？`)) return;
+  newsItems = newsItems.filter(x => x.id !== id);
+  if (newsEditId === id) startNewNews();
+  markNewsDirty(true);
+  renderNewsEditList();
+}
+function markNewsDirty(v) {
+  newsDirty = v;
+  const el = document.getElementById('newsDirty');
+  if (el) el.textContent = v ? '未保存の変更があります' : '';
+}
+async function persistNews() {
+  try {
+    const r = await fetch('/api/news', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ items: newsItems }),
+    });
+    const j = await r.json();
+    if (!j.ok) { alert('保存に失敗しました: ' + (j.error || '不明')); return; }
+    markNewsDirty(false);
+    alert('保存しました。' + (j.backup ? '\n（バックアップ: ' + j.backup + '）' : '') + '\n\n本番へ反映するには「🚀 本番公開」を押してください。');
+  } catch (e) {
+    alert('保存に失敗しました: ' + e.message);
+  }
+}
+
 // ==================== 進捗ボード ====================
 let progressTab = '';
 

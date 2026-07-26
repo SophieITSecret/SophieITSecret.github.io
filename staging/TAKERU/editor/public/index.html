@@ -13,6 +13,7 @@
   <button class="btn-load" id="btnProgress" onclick="openProgress()" disabled>📊 進捗</button>
   <button class="btn-load" id="btnAccess" onclick="openCardRanking()" disabled>👁 閲覧状況</button>
   <button class="btn-load" id="btnMembers" onclick="openMembers()" disabled>👥 会員</button>
+  <button class="btn-load" id="btnNews" onclick="openNewsEditor()">📰 お知らせ</button>
   <button class="btn-load" onclick="openMemo()">📝 メモ</button>
   <button class="btn-load" id="btnImport" onclick="openImport()" disabled>📥 一括取り込み</button>
   <button class="btn-load" id="btnExport" onclick="openExport()" disabled>📤 書き出し</button>
@@ -331,6 +332,53 @@
       <span id="rankTotals" class="rank-totals"></span>
     </div>
     <div id="rankBody" class="rank-body"></div>
+  </div>
+</div>
+
+<!-- お知らせ編集 -->
+<div id="newsModal" class="modal-overlay">
+  <div class="modal-box news-modal-box">
+    <div class="modal-head">
+      <h2>📰 お知らせ編集</h2>
+      <button class="btn-cancel" onclick="closeNewsEditor()">✕ 閉じる</button>
+    </div>
+    <div class="news-editor-wrap">
+      <div class="news-list-col">
+        <div class="news-col-head">
+          <span>お知らせ一覧（新しい順）</span>
+          <button class="dash-refresh" onclick="startNewNews()">＋ 新規</button>
+        </div>
+        <div id="newsEditList" class="news-edit-list"></div>
+      </div>
+      <div class="news-form-col">
+        <label class="news-f-label">日付
+          <input type="date" id="nfDate" class="news-f-input">
+        </label>
+        <label class="news-f-label">種別
+          <select id="nfType" class="news-f-input">
+            <option value="お知らせ">お知らせ</option>
+            <option value="ニュース">ニュース（※アプリ側は準備中）</option>
+          </select>
+        </label>
+        <label class="news-f-label">タイトル
+          <input type="text" id="nfTitle" class="news-f-input" maxlength="60" placeholder="例：新ユニットを追加しました">
+        </label>
+        <label class="news-f-label">本文（改行OK・[表示名](URL) でリンク）
+          <textarea id="nfBody" class="news-f-textarea" placeholder="本文を入力"></textarea>
+        </label>
+        <label class="news-f-check"><input type="checkbox" id="nfPub"> 公開する（本番に表示）</label>
+        <div class="news-form-actions">
+          <button class="btn-load" onclick="applyNewsForm()">✓ この内容を反映</button>
+          <button class="dash-refresh" onclick="startNewNews()">クリア</button>
+        </div>
+        <hr class="news-hr">
+        <div class="news-save-row">
+          <button class="btn-save-news" onclick="persistNews()">💾 保存する</button>
+          <span id="newsDirty" class="news-dirty"></span>
+        </div>
+        <p class="mem-note">「反映」でリストに入れ、「保存する」で news.csv に書き込みます（保存時に自動バックアップ）。反映後に本番公開すると利用者に届きます。</p>
+      </div>
+    </div>
   </div>
 </div>
 

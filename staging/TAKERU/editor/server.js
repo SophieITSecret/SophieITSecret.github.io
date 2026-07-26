@@ -87,6 +87,58 @@ function postCsv(req, res) {
   });
 }
 
+// ---- お知らせ（news.csv）----
+//   news.csv は TAKERUcard.csv と同じフォルダに置く。
+function newsPath() { return path.join(path.dirname(config.csvPath), 'news.csv'); }
+function parseCsvText(text) {
+  const recs = []; let cur = [], f = '', q = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (c === '"') { if (q && text[i + 1] === '"') { f += '"'; i++; } else q = !q; }
+    else if (c === ',' && !q) { cur.push(f); f = ''; }
+    else if ((c === '\n' || (c === '\r' && text[i + 1] === '\n')) && !q) { if (c === '\r') i++; cur.push(f); recs.push(cur); cur = []; f = ''; }
+    else f += c;
+  }
+  if (f !== '' || cur.length) { cur.push(f); recs.push(cur); }
+  return recs;
+}
+function csvField(s) { s = String(s == null ? '' : s); return /[",\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; }
+function buildNewsCsv(items) {
+  const lines = [['ID', '日付', '種別', 'タイトル', '本文', '公開'].join(',')];
+  for (const it of items) {
+    lines.push([it.id, it.date, it.type, it.title, it.body, (it.published ? '1' : '')].map(csvField).join(','));
+  }
+  return '﻿' + lines.join('\r\n') + '\r\n';
+}
+// GET /api/news — news.csv を配列で返す
+function getNews(req, res) {
+  fs.readFile(newsPath(), 'utf8', (err, data) => {
+    if (err) { if (err.code === 'ENOENT') return sendJSON(res, 200, { ok: true, items: [] }); return sendJSON(res, 500, { ok: false, error: err.message }); }
+    const recs = parseCsvText(data.replace(/^﻿/, ''));
+    const items = recs.slice(1).filter(r => (r[0] || '').trim()).map(r => ({
+      id: (r[0] || '').trim(), date: (r[1] || '').trim(), type: (r[2] || '').trim() || 'お知らせ',
+      title: (r[3] || '').trim(), body: (r[4] || ''), published: (r[5] || '').trim() === '1',
+    }));
+    sendJSON(res, 200, { ok: true, items });
+  });
+}
+// POST /api/news — 配列を受け取り news.csv を上書き（バックアップ作成）
+function postNews(req, res) {
+  let chunks = [];
+  req.on('data', c => chunks.push(c));
+  req.on('end', () => {
+    try {
+      const { items } = JSON.parse(Buffer.concat(chunks).toString('utf8'));
+      if (!Array.isArray(items)) return sendJSON(res, 400, { ok: false, error: 'items配列が必要です' });
+      const p = newsPath();
+      let backup = null;
+      if (fs.existsSync(p)) { backup = `news_backup_${timestamp()}.csv`; fs.copyFileSync(p, path.join(path.dirname(p), backup)); }
+      fs.writeFileSync(p, buildNewsCsv(items), 'utf8');
+      sendJSON(res, 200, { ok: true, backup });
+    } catch (e) { sendJSON(res, 500, { ok: false, error: e.message }); }
+  });
+}
+
 // GET /api/images — imagesフォルダのファイル一覧を { 拡張子なし名: ファイル名 } で返す
 function getImages(req, res) {
   fs.readdir(config.imagesDir, (err, files) => {
@@ -747,6 +799,8 @@ const server = http.createServer((req, res) => {
   if (pathname === '/api/reading-scripts' && method === 'POST') return postReadingScript(req, res);
   if (pathname === '/api/access-stats' && method === 'GET') return getAccessStats(req, res);
   if (pathname === '/api/members' && method === 'GET') return getMembers(req, res);
+  if (pathname === '/api/news' && method === 'GET') return getNews(req, res);
+  if (pathname === '/api/news' && method === 'POST') return postNews(req, res);
   if (pathname === '/api/publish' && method === 'POST') return postPublish(req, res);
 
   // 静的

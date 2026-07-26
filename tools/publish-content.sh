@@ -19,7 +19,7 @@ echo "============================================"
 echo ""
 
 # 1) 内容ファイルをコミット（変更があれば）
-git add staging/TAKERU/TAKERUcard.csv staging/TAKERU/MSlink.csv \
+git add staging/TAKERU/TAKERUcard.csv staging/TAKERU/MSlink.csv staging/TAKERU/news.csv \
         staging/TAKERU/images staging/TAKERU/voices 2>/dev/null
 
 if git diff --cached --quiet; then

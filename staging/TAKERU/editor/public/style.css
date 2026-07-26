@@ -359,6 +359,39 @@ textarea.svg-overlay-input { min-height:120px; font-family:monospace; font-size:
 .mc-date { color:var(--text2); white-space:nowrap; }
 .mc-email { font-family:'Consolas',monospace; color:var(--text); }
 
+/* お知らせ編集 */
+.news-modal-box { width:980px; max-width:97vw; height:88vh; display:flex; flex-direction:column; }
+.news-editor-wrap { flex:1; display:flex; gap:14px; overflow:hidden; }
+.news-list-col { flex:1.1; display:flex; flex-direction:column; min-width:0; }
+.news-form-col { flex:1; display:flex; flex-direction:column; gap:8px; overflow:auto; }
+.news-col-head { display:flex; align-items:center; justify-content:space-between; font-size:0.82rem; color:var(--text2); padding:2px 2px 6px; }
+.news-edit-list { flex:1; overflow:auto; border:1px solid var(--border); border-radius:6px; }
+.news-edit-empty { color:var(--text2); font-size:0.85rem; padding:24px; text-align:center; }
+.news-edit-item { display:flex; align-items:center; border-bottom:1px solid var(--border); }
+.news-edit-item.editing { background:rgba(76,175,80,.10); }
+.nei-main { flex:1; display:flex; align-items:center; gap:8px; padding:8px 10px; cursor:pointer; min-width:0; }
+.nei-main:hover { background:rgba(255,255,255,.04); }
+.nei-badge { font-size:0.68rem; padding:1px 6px; border-radius:3px; flex-shrink:0; }
+.nei-badge.pub { background:rgba(76,175,80,.2); color:var(--accent); border:1px solid var(--accent); }
+.nei-badge.off { background:rgba(255,255,255,.06); color:var(--text2); border:1px solid var(--border); }
+.nei-type { font-size:0.7rem; color:var(--text2); flex-shrink:0; }
+.nei-type.news { color:#e0a458; }
+.nei-date { font-size:0.74rem; color:var(--text2); flex-shrink:0; font-variant-numeric:tabular-nums; }
+.nei-title { flex:1; font-size:0.9rem; color:var(--text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.nei-ops { display:flex; gap:2px; padding-right:6px; flex-shrink:0; }
+.nei-ops button { background:transparent; border:none; cursor:pointer; font-size:0.95rem; padding:4px 6px; border-radius:4px; }
+.nei-ops button:hover { background:rgba(255,255,255,.08); }
+.news-f-label { display:flex; flex-direction:column; gap:4px; font-size:0.78rem; color:var(--text2); }
+.news-f-input { background:var(--bg3); color:var(--text); border:1px solid var(--border); border-radius:5px; padding:8px 10px; font-family:inherit; font-size:0.9rem; }
+.news-f-textarea { background:var(--bg3); color:var(--text); border:1px solid var(--border); border-radius:5px; padding:10px; font-family:inherit; font-size:0.9rem; line-height:1.7; min-height:150px; resize:vertical; }
+.news-f-check { display:flex; align-items:center; gap:6px; font-size:0.85rem; color:var(--text); }
+.news-form-actions { display:flex; gap:8px; }
+.news-hr { border:none; border-top:1px solid var(--border); margin:6px 0; }
+.news-save-row { display:flex; align-items:center; gap:12px; }
+.btn-save-news { background:var(--accent); border:none; color:#08140a; font-weight:700; font-size:0.95rem; border-radius:6px; padding:10px 22px; cursor:pointer; }
+.btn-save-news:active { opacity:.85; }
+.news-dirty { color:#e0a458; font-size:0.8rem; }
+
 .rank-table tr.rank-unitrow { cursor:default; background:var(--bg3); }
 .rank-table tr.rank-unitrow:hover { background:var(--bg3); }
 .rank-table tr.rank-unitrow td { border-bottom:2px solid var(--border); padding-top:8px; padding-bottom:8px; }
