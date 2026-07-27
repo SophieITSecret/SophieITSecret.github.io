@@ -948,6 +948,44 @@ body:not(.menu-mode) #image-area.has-image::after {
     font-size: 0.92rem;
     line-height: 1.9;
 }
+/* 内蔵ブラウザ（LINE等）で開いたときの外部ブラウザ案内バナー */
+.inapp-banner {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    background: #14261a;
+    border-bottom: 2px solid var(--accent);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+}
+.iab-text { flex: 1; font-size: 0.8rem; line-height: 1.5; color: #e6f0e6; }
+.iab-how { display: block; margin-top: 2px; font-size: 0.72rem; color: #9aa4b2; }
+.iab-actions { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+.iab-btn {
+    background: var(--accent);
+    border: none;
+    color: #08140a;
+    font-weight: 700;
+    font-size: 0.8rem;
+    border-radius: 6px;
+    padding: 9px 13px;
+    cursor: pointer;
+    white-space: nowrap;
+}
+.iab-btn:active { opacity: 0.85; }
+.iab-close {
+    background: transparent;
+    border: none;
+    color: #9aa4b2;
+    font-size: 1.3rem;
+    line-height: 1;
+    cursor: pointer;
+    padding: 2px 8px;
+}
+
 /* トップメニューの📰に付く新着の赤い● */
 .news-badge {
     display: inline-block;

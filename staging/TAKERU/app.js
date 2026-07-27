@@ -131,6 +131,7 @@ window.addEventListener('DOMContentLoaded', async () => {
         if (navState === 'install') renderInstallGuideBody();
     });
     waitForGis();                           // Googleサインインの初期化（読み込み待ち）
+    maybeShowInAppBanner();                  // LINE等の内蔵ブラウザ検知→外部ブラウザ案内
 
     await Promise.all([loadCSV(), loadLinkCSV(), loadMp3List(), loadNewsCSV()]);
     setupButtons();
@@ -1173,6 +1174,56 @@ async function doNativeInstall() {
     deferredInstallPrompt = null;
     try { e.prompt(); await e.userChoice; } catch (err) {}
     renderInstallGuideBody();
+}
+
+// ---- 内蔵ブラウザ（LINE/FB/IG/X）検知 → 外部ブラウザ案内バナー ----
+//   LINE等のアプリ内ブラウザでは「ホーム画面に追加」ができないため、
+//   Safari/Chromeで開き直してもらう案内を出す。
+function detectInAppBrowser() {
+    const ua = navigator.userAgent || '';
+    if (/\bLine\//i.test(ua)) return 'LINE';
+    if (/FBAN|FBAV|FB_IAB/i.test(ua)) return 'Facebook';
+    if (/Instagram/i.test(ua)) return 'Instagram';
+    if (/Twitter/i.test(ua)) return 'X（旧Twitter）';
+    return '';
+}
+function maybeShowInAppBanner() {
+    if (isAppInstalled()) return;                 // アイコン起動なら不要
+    const name = detectInAppBrowser();
+    if (!name) return;
+    try { if (sessionStorage.getItem('takeru_inapp_dismissed')) return; } catch (e) {}
+    const el = document.getElementById('inapp-banner');
+    if (!el) return;
+    const isAndroid = /Android/i.test(navigator.userAgent);
+    const action = isAndroid
+        ? `<button class="iab-btn" onclick="openInChrome()">Chromeで開く</button>`
+        : `<button class="iab-btn" onclick="copyAppUrl()">URLをコピー</button>`;
+    const how = isAndroid
+        ? '右上メニューから「ブラウザで開く／Chromeで開く」でもOK'
+        : '右下メニューから「Safariで開く」、またはコピーしてSafariに貼り付け';
+    el.innerHTML =
+        `<div class="iab-text"><b>${name}内のブラウザで開いています。</b>ホーム画面にアイコンとして追加するには、外部ブラウザで開いてください。<span class="iab-how">（${how}）</span></div>` +
+        `<div class="iab-actions">${action}<button class="iab-close" onclick="dismissInAppBanner()" aria-label="閉じる">×</button></div>`;
+    el.style.display = 'flex';
+}
+function openInChrome() {
+    // Android：intentでChromeを開く
+    location.href = 'intent://takeru.ms-forum.com/#Intent;scheme=https;package=com.android.chrome;end';
+}
+function copyAppUrl() {
+    const url = 'https://takeru.ms-forum.com/';
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(url)
+            .then(() => alert('URLをコピーしました。\nSafariのアドレス欄に貼り付けて開いてください。'))
+            .catch(() => alert('コピーできませんでした。\nアドレス: takeru.ms-forum.com'));
+    } else {
+        alert('アドレス: takeru.ms-forum.com\nSafariで開いてください。');
+    }
+}
+function dismissInAppBanner() {
+    const el = document.getElementById('inapp-banner');
+    if (el) el.style.display = 'none';
+    try { sessionStorage.setItem('takeru_inapp_dismissed', '1'); } catch (e) {}
 }
 
 function renderRegisterBody() {
