@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="TAKERU">
+    <link rel="apple-touch-icon" href="takeru-touch-icon.png">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0d0d1a">
+    <title>TAKERU｜MSアカデミー</title>
+    <script>
+        // ===== 環境判定は「ここ1か所」で行う =====
+        // 結果を window.__IS_PROD に置き、アイコンの出し分け・app.js の表示制御・
+        // アクセス計測の送信が、すべてこの同じ値を見る。
+        // ※ホーム画面追加より前に走らせる必要があるため head 内・app.js より前。
+        // ※既知の開発ホスト以外は本番扱い（安全側。未知のURLでは未公開カードを隠す）。
+        window.__IS_PROD = (function () {
+            var p = null;
+            try { p = new URLSearchParams(location.search).get('preview'); } catch (e) {}
+            if (p === 'prod') return true;
+            if (p === 'dev') return false;
+            var h = location.hostname;
+            if (h === 'localhost' || h === '127.0.0.1' || h === '') return false;
+            if (h.endsWith('.github.io')) return false;
+            if (/^192\.168\./.test(h) || /^10\./.test(h)) return false;
+            return true;
+        })();
+
+        // ホーム画面アイコン・名称を環境で出し分ける。
+        // ファイルは本番/開発とも同一で、選ぶものだけを切り替える。
+        (function () {
+            if (window.__IS_PROD) return; // 本番はそのまま（綺麗なアイコン・「TAKERU」）
+            var set = function (sel, attr, val) { var el = document.querySelector(sel); if (el) el.setAttribute(attr, val); };
+            set('link[rel="apple-touch-icon"]', 'href', 'takeru-touch-icon-git.png');
+            set('link[rel="manifest"]', 'href', 'manifest-git.json');
+            set('meta[name="apple-mobile-web-app-title"]', 'content', 'TAKERU Git');
+            document.title = 'TAKERU（Git）';
+        })();
+    </script>
+    <!-- Googleサインイン（登録・ログイン用） -->
+    <script src="https://accounts.google.com/gsi/client" async></script>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        #sw-update-toast {
+            position: fixed;
+            bottom: 28px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #F5F0E8;
+            color: #2a2a1a;
+            border-radius: 10px;
+            padding: 16px 22px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.45);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            z-index: 9999;
+            font-size: 14px;
+            min-width: 250px;
+            text-align: center;
+            font-family: inherit;
+        }
+        .sw-toast-btns { display: flex; gap: 12px; }
+        #sw-btn-update {
+            background: #4a3728;
+            color: #F5F0E8;
+            border: none;
+            border-radius: 6px;
+            padding: 8px 20px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        #sw-btn-later {
+            background: transparent;
+            color: #4a3728;
+            border: 1px solid #8a7060;
+            border-radius: 6px;
+            padding: 8px 20px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body class="dark-mode">
+
+    <div id="inapp-banner" class="inapp-banner" style="display:none"></div>
+
+    <div id="entry-screen">
+        <img class="entry-emblem-img" src="images/mascots.png" alt="タケルとサクラ">
+
+        <div class="entry-title">TAKERU</div>
+        <div class="entry-sub">
+            <span class="entry-sub-ja">MSアカデミー</span>
+            <span class="entry-sub-en">Military &amp; Strategy</span>
+        </div>
+        <div class="entry-beta">β版（試験公開中）</div>
+        <button id="btn-enter">学習をはじめる</button>
+    </div>
+
+    <div id="main-ui">
+        <div id="image-area">
+            <img id="card-image" src="" alt="">
+            <div id="image-placeholder"><span>⚔</span></div>
+        </div>
+        <div id="divider-line"></div>
+        <div id="content-area">
+            <div id="text-view">
+                <div id="card-progress"></div>
+                <div id="card-title"></div>
+                <div id="card-body"></div>
+            </div>
+            <div id="menu-view" style="display:none;">
+                <div id="menu-content"></div>
+            </div>
+        </div>
+        <div id="controls">
+            <button class="ctrl-btn btn-home" id="btn-home">TOP</button>
+            <button class="ctrl-btn btn-up" id="btn-toggle">▲<span class="btn-sub-label">MENU</span></button>
+            <button class="ctrl-btn btn-arrow" id="btn-back">◀</button>
+            <button class="ctrl-btn btn-arrow btn-next" id="btn-next">▶</button>
+            <button class="ctrl-btn btn-voice-ctrl" id="btn-voice">音声</button>
+        </div>
+    </div>
+
+    <!-- 図表の全画面表示 -->
+    <div id="img-zoom" style="display:none;">
+        <img id="img-zoom-img" src="" alt="">
+        <div class="zoom-hint">タップで戻る</div>
+    </div>
+
+    <!-- 音声ワーニング -->
+    <div id="voice-warning" style="display:none;">
+        <div id="voice-warning-box">
+            <div id="voice-warning-text">🔇 音声データがありません<br><span>タップして閉じる　／　読上ボタンで音声読上</span></div>
+        </div>
+    </div>
+
+    <div id="settings-panel" style="display:none;">
+        <div id="settings-content">
+            <div class="settings-title">⚙ 設定</div>
+            <div class="settings-item">
+                <span>カラーモード</span>
+                <div class="toggle-group">
+                    <button class="toggle-btn active" id="btn-dark">ダーク</button>
+                    <button class="toggle-btn" id="btn-light">ホワイト</button>
+                </div>
+            </div>
+            <div class="settings-item">
+                <span>文字サイズ</span>
+                <div class="toggle-group">
+                    <button class="toggle-btn" id="btn-font-s">小</button>
+                    <button class="toggle-btn active" id="btn-font-m">中</button>
+                    <button class="toggle-btn" id="btn-font-l">大</button>
+                </div>
+            </div>
+            <div class="settings-item settings-layout">
+                <span>画面レイアウト</span>
+                <div class="toggle-group">
+                    <button class="toggle-btn active" id="btn-pc-tablet">タブレット</button>
+                    <button class="toggle-btn" id="btn-pc-wide">ワイド（図表を大きく）</button>
+                </div>
+            </div>
+            <div class="settings-item settings-update">
+                <span>アプリの更新</span>
+                <div class="update-controls">
+                    <button id="btn-force-update" class="update-btn">🔄 最新に更新</button>
+                    <div id="update-status" class="update-status">現在：確認中…</div>
+                    <button id="btn-hard-reset" class="reset-link">それでも直らないとき：強制リセット</button>
+                </div>
+            </div>
+            <div class="settings-note">
+                本アプリは、どのページが何回開かれたかを数えています。<br>
+                個人を特定する情報（氏名・メールアドレス・位置情報など）は取得していません。
+            </div>
+            <button id="btn-settings-close">閉じる</button>
+        </div>
+    </div>
+
+    <button id="btn-settings">⚙</button>
+    <div class="ver">TAKERU v2.3</div>
+
+    <div id="sw-update-toast" style="display:none;">
+        <span>新しいバージョンがあります</span>
+        <div class="sw-toast-btns">
+            <button id="sw-btn-update">更新する</button>
+            <button id="sw-btn-later">後で</button>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                let waitingWorker = null;
+
+                function showUpdateToast(waiting) {
+                    waitingWorker = waiting;
+                    document.getElementById('sw-update-toast').style.display = 'flex';
+                }
+
+                navigator.serviceWorker.register('./sw.js').then(reg => {
+                    // 前回「後で」を押した場合など、既に waiting SW がある場合
+                    if (reg.waiting && navigator.serviceWorker.controller) {
+                        showUpdateToast(reg.waiting);
+                    }
+
+                    reg.addEventListener('updatefound', () => {
+                        const newWorker = reg.installing;
+                        newWorker.addEventListener('statechange', () => {
+                            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                showUpdateToast(newWorker);
+                            }
+                        });
+                    });
+
+                    // PWAが前面に戻った時に更新チェック（完全終了しなくても検知できる）
+                    document.addEventListener('visibilitychange', () => {
+                        if (document.visibilityState === 'visible') reg.update().catch(() => {});
+                    });
+                });
+
+                // 新SWが制御を引き継いだらリロード（ループ防止ガード付き）
+                let refreshing = false;
+                navigator.serviceWorker.addEventListener('controllerchange', () => {
+                    if (refreshing) return;
+                    refreshing = true;
+                    location.reload();
+                });
+
+                document.getElementById('sw-btn-update').addEventListener('click', () => {
+                    if (waitingWorker) waitingWorker.postMessage('SKIP_WAITING');
+                });
+
+                document.getElementById('sw-btn-later').addEventListener('click', () => {
+                    document.getElementById('sw-update-toast').style.display = 'none';
+                });
+
+                // ===== 設定画面：手動更新まわり =====
+                const statusEl = document.getElementById('update-status');
+
+                // 現在動いているSWにバージョンを問い合わせて表示
+                function showCurrentVersion() {
+                    const sw = navigator.serviceWorker.controller;
+                    if (!sw) { statusEl.textContent = '現在：初回読み込み中'; return; }
+                    const ch = new MessageChannel();
+                    let done = false;
+                    ch.port1.onmessage = (e) => { done = true; statusEl.textContent = '現在のバージョン：' + e.data; };
+                    sw.postMessage('GET_VERSION', [ch.port2]);
+                    setTimeout(() => { if (!done) statusEl.textContent = '現在のバージョン：確認できません'; }, 1200);
+                }
+                showCurrentVersion();
+                // 設定を開くたびに最新表示へ更新
+                document.getElementById('btn-settings').addEventListener('click', showCurrentVersion);
+
+                // インストール中のSWが「待機」状態になるまで待つ（最大5秒）
+                function waitForWaiting(reg) {
+                    return new Promise((resolve) => {
+                        if (reg.waiting) return resolve(reg.waiting);
+                        const sw = reg.installing;
+                        if (!sw) return resolve(null);
+                        const t = setTimeout(() => resolve(reg.waiting || null), 5000);
+                        sw.addEventListener('statechange', () => {
+                            if (sw.state === 'installed') { clearTimeout(t); resolve(reg.waiting || sw); }
+                        });
+                    });
+                }
+
+                // 「🔄 最新に更新」：新版があれば適用、無ければ最新である旨を表示
+                document.getElementById('btn-force-update').addEventListener('click', async () => {
+                    statusEl.textContent = '更新を確認中…';
+                    try {
+                        const reg = await navigator.serviceWorker.getRegistration();
+                        if (!reg) { location.reload(); return; }
+                        await reg.update();
+                        const waiting = await waitForWaiting(reg);
+                        if (waiting) {
+                            statusEl.textContent = '新しいバージョンを適用します…';
+                            waiting.postMessage('SKIP_WAITING'); // controllerchange でリロード
+                        } else {
+                            statusEl.textContent = '✓ すでに最新です';
+                            showCurrentVersion();
+                        }
+                    } catch (e) {
+                        location.reload();
+                    }
+                });
+
+                // 「強制リセット」：SW登録とキャッシュを完全に消して取り直す（最終手段）
+                document.getElementById('btn-hard-reset').addEventListener('click', async () => {
+                    if (!confirm('アプリを一度まっさらにして読み込み直します。\n（学習の進み具合や設定は消えません）\nよろしいですか？')) return;
+                    statusEl.textContent = 'キャッシュを消しています…';
+                    try {
+                        const reg = await navigator.serviceWorker.getRegistration();
+                        if (reg) await reg.unregister();
+                        const keys = await caches.keys();
+                        await Promise.all(keys.map(k => caches.delete(k)));
+                    } catch (e) { /* 失敗してもリロードは実行 */ }
+                    location.reload();
+                });
+            });
+        }
+    </script>
+</body>
+</html>
