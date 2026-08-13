@@ -87,7 +87,7 @@ function buildUnitSelect() {
       subjectMap.get(c.subject).push(c.genre);
   }
 
-  sel.innerHTML='<option value="">── ユニットを選択 ──</option>';
+  sel.innerHTML='<option value="">── テーマを選択 ──</option>';
   for(const subj of subjectOrder){
     const genres=subjectMap.get(subj);
     if(subj){
@@ -511,7 +511,7 @@ function onRenameUnitChange(){
   const sSel=document.getElementById('renameSection');
   sSel.innerHTML=secs.length
     ? secs.map(s=>`<option value="${esc(s)}">${esc(s)}</option>`).join('')
-    : '<option value="">（このユニットにサブユニットはありません）</option>';
+    : '<option value="">（このテーマにサブテーマはありません）</option>';
   sSel.disabled=!secs.length;
   _rnFillCurrentName();
   updateRenameInfo();
@@ -542,7 +542,7 @@ function updateRenameInfo(){
   const now=document.getElementById('renameNew').value.trim();
 
   if(isSec && !document.getElementById('renameSection').value){
-    el.innerHTML='<span class="exp-warn">このユニットにはサブユニットがありません。</span>';
+    el.innerHTML='<span class="exp-warn">このテーマにはサブテーマがありません。</span>';
     btn.disabled=true; return;
   }
   if(!now){ el.innerHTML='<span class="exp-hint">新しい名前を入力してください。</span>'; btn.disabled=true; return; }
@@ -552,7 +552,7 @@ function updateRenameInfo(){
   }
   btn.disabled=false;
 
-  let html=`<strong>${cards.length}枚</strong> のカードの`+(isSec?'サブユニット名':'ユニット名')+
+  let html=`<strong>${cards.length}枚</strong> のカードの`+(isSec?'サブテーマ名':'テーマ名')+
     `を<br>「${esc(old)}」→ <strong>「${esc(now)}」</strong> に変更します`;
 
   // 既存の名前に変えると2つが統合される。事故になりやすいので明示する
@@ -570,7 +570,7 @@ function updateRenameInfo(){
     const others=[...new Set(cardData.filter(c=>c.section===old && c.genre!==unit).map(c=>c.genre))];
     if(others.length){
       html+=`<br><span class="exp-hint">「${esc(old)}」は ${others.map(esc).join('・')} にもありますが、`+
-        `そちらは変更されません（このユニット内だけが対象）。</span>`;
+        `そちらは変更されません（このテーマ内だけが対象）。</span>`;
     }
   }
   el.innerHTML=html;
@@ -810,7 +810,13 @@ function buildExportMD(cards, title){
   for(const c of cards){
     if(c.genre!==curGenre){
       curGenre=c.genre; curSec=null;
-      md+=`## ${c.genre||'（ユニット未設定）'}\n\n`;
+      md+=`## ${c.genre||'（テーマ未設定）'}\n\n`;
+      // 著者・テーマ（自由研究のカードだけ入る）。AIに文脈を渡すため見出し直後に置く
+      const info=[];
+      if(c.author) info.push(`著者：${c.author}`);
+      if(c.theme)  info.push(`テーマ：${c.theme.split(/[;；,、]/).map(t=>t.trim()).filter(Boolean).join('・')}`);
+      if(c.subject) info.push(`科目：${c.subject}`);
+      if(info.length) md+=`*${info.join('　／　')}*\n\n`;
     }
     if(c.section!==curSec){
       curSec=c.section;
@@ -838,10 +844,15 @@ async function buildExportHTML(cards, title, withImg, imgMaxW=960, imgQ=0.82){
   let body='';
   let curGenre=null, curSec=null;
   for(const c of cards){
-    // ユニット（大見出し）→ サブユニット（中見出し）→ カード の順で構造を出す
+    // テーマ（大見出し）→ サブテーマ（中見出し）→ カード の順で構造を出す
     if(c.genre!==curGenre){
-      curGenre=c.genre; curSec=null;   // ユニットが変わったらサブユニットもリセット
-      body+=`<h2 class="unit">${esc(c.genre)||'（ユニット未設定）'}</h2>\n`;
+      curGenre=c.genre; curSec=null;   // テーマが変わったらサブテーマもリセット
+      body+=`<h2 class="unit">${esc(c.genre)||'（テーマ未設定）'}</h2>\n`;
+      const info=[];
+      if(c.author) info.push(`著者：${esc(c.author)}`);
+      if(c.theme)  info.push(`テーマ：${esc(c.theme.split(/[;；,、]/).map(t=>t.trim()).filter(Boolean).join('・'))}`);
+      if(c.subject) info.push(`科目：${esc(c.subject)}`);
+      if(info.length) body+=`<div class="unit-meta">${info.join('　／　')}</div>\n`;
     }
     if(c.section!==curSec){
       curSec=c.section;
@@ -877,6 +888,7 @@ async function buildExportHTML(cards, title, withImg, imgMaxW=960, imgQ=0.82){
   h2.unit { font-size:1.3rem; color:#fff; background:#2e7d32; padding:10px 16px;
             margin:34px 0 6px; border-radius:5px; break-after:avoid; page-break-after:avoid; }
   h2.unit:first-of-type { margin-top:8px; }
+  .unit-meta { font-size:0.82rem; color:#5a6a5a; margin:0 0 14px 2px; }
   h3.subsec { font-size:1rem; color:#1b5e20; background:#e4efe4; border-left:5px solid #2e7d32;
               padding:7px 12px; margin:20px 0 12px; border-radius:0 4px 4px 0;
               break-after:avoid; page-break-after:avoid; }
@@ -996,7 +1008,7 @@ async function saveCSV(){
   if(!cardData.length) return;
   if(editDirty && selectedIdx >= 0) applyEdit();
   // 10列（コード〜PDF）を保証。旧CSVから読んでも欠けた列名を補う
-  const HDR=['コード','ユニット','サブユニット','タイトル','説明','科目','公開','著者','テーマ','PDF'];
+  const HDR=['コード','テーマ','サブテーマ','タイトル','説明','科目','公開','著者','研究テーマ','PDF'];
   const hdr=(cardData[0]._header||[]).slice();
   for(let i=0;i<HDR.length;i++) if(!hdr[i]) hdr[i]=HDR[i];
   hdr.length=HDR.length;
@@ -1356,7 +1368,7 @@ function seekVoice(val){
 let _batchCancel = false;
 
 function recordUnitBatch() {
-  if (!curUnit) { alert('ユニットを選択してください'); return; }
+  if (!curUnit) { alert('テーマを選択してください'); return; }
   const cards = filteredList.filter(c => (c.body||'').trim());
   if (!cards.length) { alert('本文のあるカードがありません'); return; }
   _renderBatchList(cards);
@@ -1963,7 +1975,7 @@ function renderCardRanking() {
         const uCards = rows.filter(x => x.c.genre === curUnit);
         const uSum = uCards.reduce((a, x) => a + x.v, 0);
         bodyRows += `<tr class="rank-unitrow"><td></td><td class="ru-sum">👁 ${uSum}</td>
-          <td colspan="3" class="ru-name">${esc(curUnit || '（ユニットなし）')}　<span class="ru-cnt">${uCards.length}枚</span></td></tr>`;
+          <td colspan="3" class="ru-name">${esc(curUnit || '（テーマなし）')}　<span class="ru-cnt">${uCards.length}枚</span></td></tr>`;
       }
       bodyRows += cardTr(r, '');
     }
@@ -1996,7 +2008,7 @@ function renderRankMatrix(body, rows) {
       curUnit = c.genre;
       const uCards = rows.filter(x => x.c.genre === curUnit);
       out += `<tr class="rank-unitrow">
-        <td class="mx-code ru-name" colspan="3">${esc(curUnit || '（ユニットなし）')}　<span class="ru-cnt">${uCards.length}枚</span></td>
+        <td class="mx-code ru-name" colspan="3">${esc(curUnit || '（テーマなし）')}　<span class="ru-cnt">${uCards.length}枚</span></td>
         ${dates.map(d => { const s = uCards.reduce((a, x) => a + cell(d, x.c.id), 0); return `<td class="mx-cell mx-usum">${s || ''}</td>`; }).join('')}
       </tr>`;
     }
@@ -2091,7 +2103,7 @@ function renderProgressBody() {
           <span class="pus-body">文 ${nBody}/${total}</span>
           <span class="pus-img">画 ${nImg}/${total}</span>
           <span class="pus-mp3">音 ${nMp3}/${total}</span>
-          <button class="pub-bulk-btn" onclick="bulkPub('${esc(unit).replace(/'/g,"&#39;")}',${allPub?0:1})" title="このユニットをまとめて公開/非公開">${allPub?'全非公開':'全公開'}</button>
+          <button class="pub-bulk-btn" onclick="bulkPub('${esc(unit).replace(/'/g,"&#39;")}',${allPub?0:1})" title="このテーマをまとめて公開/非公開">${allPub?'全非公開':'全公開'}</button>
         </span>
       </div>
       <div class="progress-tiles">${tiles}</div>

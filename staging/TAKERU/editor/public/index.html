@@ -91,7 +91,7 @@
   </div>
 </div>
 
-<!-- ユニット名・サブユニット名の変更 -->
+<!-- テーマ名・サブテーマ名の変更 -->
 <div id="renameModal" class="modal-overlay">
   <div class="modal-box">
     <div class="modal-head">
@@ -99,28 +99,28 @@
       <button class="btn-cancel" onclick="closeRename()">✕ 閉じる</button>
     </div>
     <div class="modal-desc">
-      ユニット名・サブユニット名を、該当するカードすべてまとめて変更します。<br>
+      テーマ名・サブテーマ名を、該当するカードすべてまとめて変更します。<br>
       変更してもファイルは保存されません（一覧で確認 → 問題なければ「CSVを保存」）。
     </div>
 
     <div class="exp-block">
       <div class="exp-label">変更するもの</div>
       <label class="exp-radio"><input type="radio" name="rnKind" value="unit" checked onchange="onRenameKindChange()">
-        <span>ユニット名</span>
+        <span>テーマ名</span>
       </label>
       <label class="exp-radio"><input type="radio" name="rnKind" value="section" onchange="onRenameKindChange()">
-        <span>サブユニット名</span>
+        <span>サブテーマ名</span>
       </label>
     </div>
 
     <div class="exp-block">
       <div class="exp-label">対象</div>
       <label class="exp-radio">
-        <span class="rn-lbl">ユニット</span>
+        <span class="rn-lbl">テーマ</span>
         <select id="renameUnit" class="exp-select" onchange="onRenameUnitChange()"></select>
       </label>
       <label class="exp-radio" id="renameSecRow">
-        <span class="rn-lbl">サブユニット</span>
+        <span class="rn-lbl">サブテーマ</span>
         <select id="renameSection" class="exp-select" onchange="updateRenameInfo()"></select>
       </label>
     </div>
@@ -202,7 +202,7 @@
     <div class="exp-block">
       <div class="exp-label">書き出す範囲</div>
       <label class="exp-radio"><input type="radio" name="expScope" value="unit" checked onchange="onExportScopeChange()">
-        <span>ユニット単位</span>
+        <span>テーマ単位</span>
         <select id="exportUnit" class="exp-select" onchange="renderExportList()"></select>
       </label>
       <label class="exp-radio"><input type="radio" name="expScope" value="subject" onchange="onExportScopeChange()">
@@ -326,7 +326,7 @@
       <button class="rank-viewbtn" data-view="cumulative" onclick="setRankView('cumulative')">累計一覧</button>
       <button class="rank-viewbtn" data-view="matrix" onclick="setRankView('matrix')">📅 日別マトリクス</button>
       <span class="rank-sortlabel rank-sortonly">並び：</span>
-      <button class="rank-sortbtn rank-sortonly" data-sort="natural" onclick="setRankSort('natural')">ユニット順（既定）</button>
+      <button class="rank-sortbtn rank-sortonly" data-sort="natural" onclick="setRankSort('natural')">テーマ順（既定）</button>
       <button class="rank-sortbtn rank-sortonly" data-sort="views" onclick="setRankSort('views')">👁 閲覧の多い順</button>
       <label class="rank-zero"><input type="checkbox" id="rankHideZero" onchange="renderCardRanking()"> 閲覧0を隠す</label>
       <span id="rankTotals" class="rank-totals"></span>
@@ -361,7 +361,7 @@
           </select>
         </label>
         <label class="news-f-label">タイトル
-          <input type="text" id="nfTitle" class="news-f-input" maxlength="60" placeholder="例：新ユニットを追加しました">
+          <input type="text" id="nfTitle" class="news-f-input" maxlength="60" placeholder="例：新テーマを追加しました">
         </label>
         <label class="news-f-label">本文（改行OK・[表示名](URL) でリンク）
           <textarea id="nfBody" class="news-f-textarea" placeholder="本文を入力"></textarea>
@@ -403,7 +403,7 @@
 
 <div id="bodyPopup" class="body-popup" onclick="closeBodyPopup()"></div>
 
-<!-- ユニット詳細パネル（独立ウィンドウ） -->
+<!-- テーマ詳細パネル（独立ウィンドウ） -->
 <div id="unitDetailPanel" class="unit-detail-panel" style="display:none">
   <div class="unit-detail-head">
     <span id="unitDetailTitle" class="unit-detail-title"></span>
@@ -416,13 +416,13 @@
   <!-- 列1：カード一覧 -->
   <div class="pane-list">
     <div class="pane-toolbar">
-      <button class="btn-unit-nav" id="btnPrevUnit" onclick="prevUnit()" disabled title="前のユニット">◀</button>
+      <button class="btn-unit-nav" id="btnPrevUnit" onclick="prevUnit()" disabled title="前のテーマ">◀</button>
       <select id="unitSelect" onchange="filterCards()">
-        <option value="">── ユニットを選択 ──</option>
+        <option value="">── テーマを選択 ──</option>
       </select>
-      <button class="btn-unit-nav" id="btnNextUnit" onclick="nextUnit()" disabled title="次のユニット">▶</button>
-      <button class="btn-rename" id="btnRename" onclick="openRename()" disabled title="ユニット名・サブユニット名を変更">✏️</button>
-      <button class="btn-batch-rec" id="btnBatchRecord" onclick="recordUnitBatch()" disabled title="ユニット内の未生成カードを一括録音">🎙 一括</button>
+      <button class="btn-unit-nav" id="btnNextUnit" onclick="nextUnit()" disabled title="次のテーマ">▶</button>
+      <button class="btn-rename" id="btnRename" onclick="openRename()" disabled title="テーマ名・サブテーマ名を変更">✏️</button>
+      <button class="btn-batch-rec" id="btnBatchRecord" onclick="recordUnitBatch()" disabled title="テーマ内の未生成カードを一括録音">🎙 一括</button>
       <span class="card-count" id="cardCount">0枚</span>
     </div>
     <div class="list-scroll" id="listScroll">
