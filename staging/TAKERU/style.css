@@ -948,6 +948,38 @@ body:not(.menu-mode) #image-area.has-image::after {
     font-size: 0.92rem;
     line-height: 1.9;
 }
+/* ==================== 自由研究 ==================== */
+.free-tabs { padding: 8px 14px 6px; }
+/* テーマ一覧のボタンに件数を小さく添える */
+.free-theme { position: relative; }
+.free-theme-count {
+    margin-left: 8px;
+    font-size: 0.72rem;
+    color: var(--text2);
+    opacity: 0.85;
+}
+.free-unit-name { flex: 1; }
+.free-unit-author {
+    font-size: 0.75rem;
+    color: var(--text2);
+    opacity: 0.85;
+    flex-shrink: 0;
+    margin-left: 8px;
+}
+/* カード本文末尾のPDFダウンロード */
+.card-pdf { margin-top: 26px; text-align: center; }
+.card-pdf a {
+    display: inline-block;
+    background: rgba(76,175,80,0.12);
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    text-decoration: none;
+    font-size: 0.9rem;
+    border-radius: 6px;
+    padding: 11px 22px;
+}
+.card-pdf a:active { opacity: 0.85; }
+
 /* 内蔵ブラウザ（LINE等）で開いたときの外部ブラウザ案内バナー */
 .inapp-banner {
     position: fixed;

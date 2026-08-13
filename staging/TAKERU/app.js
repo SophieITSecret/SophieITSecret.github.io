@@ -165,7 +165,12 @@ async function loadCSV() {
             body: c[4]?.trim() || '',
             subject: c[5]?.trim() || '3級-軍事と戦略',
             // 7列目「公開」。値が '1' のときだけ公開。空欄・列なし(旧CSV)は非公開
-            published: c[6]?.trim() === '1'
+            published: c[6]?.trim() === '1',
+            // 8〜10列目（自由研究用）。既存カードは空欄のまま
+            author: c[7]?.trim() || '',
+            // テーマは複数可。「歴史;国家戦略」のように ; か 、 で区切る
+            themes: (c[8]?.trim() || '').split(/[;；,、]/).map(s => s.trim()).filter(Boolean),
+            pdf: c[9]?.trim() || ''
         })).filter(d => d.id);
         computeSubjectTiers();   // 科目ごとの明るさ（full/preview/coming）を確定
     } catch (e) {
@@ -376,6 +381,7 @@ function showTopMenu() {
         else if (btn.dataset.action === 'links') showLinkGenreMenu();
         else if (btn.dataset.action === 'register') showRegisterInfo();
         else if (btn.dataset.action === 'news') showNews();
+        else if (btn.dataset.action === 'freestudy') showFreeMenu();
         else showPlaceholder(btn.innerText);
     };
 }
@@ -448,6 +454,209 @@ function showGuideCards(genre) {
         if (!item) return;
         const idx = parseInt(item.dataset.idx);
         if (!isNaN(idx)) showCard(idx);
+    };
+}
+
+// ==========================================
+// 自由研究（著者から探す／テーマから探す の2つの入口）
+//   データは TAKERUcard.csv に同居（科目='自由研究'）。
+//   著者・テーマ・PDF は8〜10列目。テーマは複数可（; 区切り）。
+// ==========================================
+const FREE_SUBJECT = '自由研究';
+let freeTab = 'author';        // author=著者から／theme=テーマから
+let freeTheme = '';            // テーマ絞り込み中のテーマ名
+
+function freeCards() {
+    return cardData.filter(d => d.subject === FREE_SUBJECT);
+}
+// 講座（ユニット）単位でまとめる。表示順はCSVの登場順。
+function freeUnits(filterFn) {
+    const units = [];
+    for (const c of freeCards()) {
+        if (filterFn && !filterFn(c)) continue;
+        if (!units.includes(c.genre)) units.push(c.genre);
+    }
+    return units;
+}
+function unitAuthor(unit) {
+    const c = freeCards().find(d => d.genre === unit);
+    return c ? c.author : '';
+}
+function freeBanner() {
+    return `<div class="top-btn btn-freestudy banner-btn banner-small">🔬 自由研究</div>`;
+}
+// PDF列があるカードに「資料をダウンロード」ボタンを添える（pdf/ フォルダに置く）
+function pdfLinkHtml(card) {
+    if (!card || !card.pdf) return '';
+    const href = /^https?:\/\//.test(card.pdf) ? card.pdf : `pdf/${card.pdf}`;
+    return `<div class="card-pdf"><a href="${escHtml(href)}" target="_blank" rel="noopener" download>📄 資料をダウンロード（PDF）</a></div>`;
+}
+
+function showFreeMenu(tab) {
+    freeTab = tab || freeTab || 'author';
+    navState = 'free';
+    isMenuVisible = true;
+    curSubject = FREE_SUBJECT;
+    curGenre = '';
+    freeTheme = '';
+    btnSettings.style.display = 'none';
+    enterLinkFullscreen();
+    showMenuView();
+
+    const tabs = `
+        <div class="news-tabs free-tabs">
+            <button class="news-tab ${freeTab==='author'?'active':''}" data-ftab="author">著者から</button>
+            <button class="news-tab ${freeTab==='theme'?'active':''}" data-ftab="theme">テーマから</button>
+        </div>`;
+
+    let body = '';
+    if (freeTab === 'author') {
+        // 著者ごとに講座を並べる
+        const authors = [];
+        for (const c of freeCards()) if (c.author && !authors.includes(c.author)) authors.push(c.author);
+        if (!authors.length) {
+            body = `<div class="news-empty">準備中です。</div>`;
+        } else {
+            body = '<div class="card-list-body">';
+            for (const a of authors) {
+                body += `<div class="section-header">${escHtml(a)}${a === 'MSフォーラム' ? '' : ' の自由研究'}</div>`;
+                for (const u of freeUnits(c => c.author === a)) {
+                    const enabled = hasVisibleCards(freeCards().filter(d => d.genre === u));
+                    body += enabled
+                        ? `<div class="menu-item free-unit" data-unit="${escHtml(u)}"><span class="item-dot">●</span> ${escHtml(u)}</div>`
+                        : `<div class="menu-item link-coming">${escHtml(u)}（準備中）</div>`;
+                }
+            }
+            body += '</div>';
+        }
+    } else {
+        // テーマ一覧（そのテーマを含む講座がある分だけ）
+        const themes = [];
+        for (const c of freeCards()) for (const t of c.themes) if (!themes.includes(t)) themes.push(t);
+        if (!themes.length) {
+            body = `<div class="news-empty">準備中です。</div>`;
+        } else {
+            body = '<div class="genre-list-wrap">';
+            for (const t of themes) {
+                const n = freeUnits(c => c.themes.includes(t)).length;
+                body += `<button class="genre-btn free-theme" data-theme="${escHtml(t)}">${escHtml(t)}<span class="free-theme-count">${n}</span></button>`;
+            }
+            body += '</div>';
+        }
+    }
+
+    menuContent.innerHTML = `
+        <div class="sticky-head">
+            <div class="single-banner-wrap">${freeBanner()}</div>
+            ${tabs}
+        </div>
+        ${body}`;
+
+    menuContent.onclick = (e) => {
+        const tb = e.target.closest('.news-tab');
+        if (tb) { showFreeMenu(tb.dataset.ftab); return; }
+        const th = e.target.closest('.free-theme');
+        if (th) { showFreeThemeUnits(th.dataset.theme); return; }
+        const u = e.target.closest('.free-unit');
+        if (u) { showFreeUnit(u.dataset.unit); return; }
+    };
+}
+
+// テーマを選んだあとの講座一覧
+function showFreeThemeUnits(theme) {
+    navState = 'freetheme';
+    isMenuVisible = true;
+    curSubject = FREE_SUBJECT;
+    freeTheme = theme;
+    enterLinkFullscreen();
+    showMenuView();
+
+    const units = freeUnits(c => c.themes.includes(theme));
+    let html = `
+        <div class="sticky-head">
+            <div class="double-banner-wrap">
+                ${freeBanner()}
+                <div class="genre-btn banner-btn banner-small">${escHtml(theme)}</div>
+            </div>
+        </div>
+        <div class="card-list-body">`;
+    for (const u of units) {
+        const author = unitAuthor(u);
+        const enabled = hasVisibleCards(freeCards().filter(d => d.genre === u));
+        html += enabled
+            ? `<div class="menu-item free-unit" data-unit="${escHtml(u)}">
+                 <span class="item-dot">●</span>
+                 <span class="free-unit-name">${escHtml(u)}</span>
+                 <span class="free-unit-author">${escHtml(author)}</span>
+               </div>`
+            : `<div class="menu-item link-coming">${escHtml(u)}（準備中）</div>`;
+    }
+    html += '</div>';
+    menuContent.innerHTML = html;
+    menuContent.onclick = (e) => {
+        const u = e.target.closest('.free-unit');
+        if (u) showFreeUnit(u.dataset.unit);
+    };
+}
+
+// 講座を選んだあと：サブユニットがあれば見出し付き、なければフラットで一覧
+function showFreeUnit(unit) {
+    navState = 'freeunit';
+    isMenuVisible = true;
+    curSubject = FREE_SUBJECT;
+    curGenre = unit;
+    enterLinkFullscreen();
+    showMenuView();
+
+    const cards = freeCards().filter(d => d.genre === unit);
+    const hasSections = cards.some(d => d.section !== '');
+    const author = unitAuthor(unit);
+
+    let html = `
+        <div class="sticky-head">
+            <div class="double-banner-wrap">
+                ${freeBanner()}
+                <div class="genre-btn banner-btn banner-small">${escHtml(author)}</div>
+            </div>
+            <div class="genre-panel-label label-section">${escHtml(unit)}</div>
+        </div>
+        <div class="card-list-body">`;
+
+    if (hasSections) {
+        const sections = [...new Set(cards.map(d => d.section))];
+        for (const s of sections) {
+            const sCards = visibleOf(cards.filter(d => d.section === s));
+            if (!sCards.length) continue;
+            html += `<div class="section-header">${escHtml(s)}</div>`;
+            sCards.forEach((card, i) => {
+                html += `<div class="menu-item" data-section="${escHtml(s)}" data-section-idx="${i}"><span class="item-dot">●</span> ${escHtml(card.title)}</div>`;
+            });
+        }
+    } else {
+        curSection = visibleOf(cards);
+        curSection.forEach((card, i) => {
+            html += `<div class="menu-item" data-idx="${i}"><span class="item-dot">●</span> ${escHtml(card.title)}</div>`;
+        });
+    }
+    html += '</div>';
+    menuContent.innerHTML = html;
+
+    menuContent.onclick = (e) => {
+        const secItem = e.target.closest('.menu-item[data-section]');
+        if (secItem) {
+            const section = secItem.dataset.section;
+            const idx = parseInt(secItem.dataset.sectionIdx);
+            if (section && !isNaN(idx)) {
+                curSection = visibleOf(cardData.filter(d => d.genre === curGenre && d.section === section));
+                showCard(idx);
+            }
+            return;
+        }
+        const item = e.target.closest('.menu-item[data-idx]');
+        if (item) {
+            const idx = parseInt(item.dataset.idx);
+            if (!isNaN(idx)) showCard(idx);
+        }
     };
 }
 
@@ -777,7 +986,8 @@ function showCard(idx) {
             `<div class="prog-row"><span>${curGenre}　${curIndex + 1} / ${curSection.length}${typeBadge}</span>${codeTag}</div>`;
     }
     cardTitle.innerText = card.title.replace(/^→/, '').trim();
-    cardBody.innerHTML = bodyToHtml(card.body);   // 本文中のURL・[表示名](URL)をリンク化
+    // 本文中のURL・[表示名](URL)をリンク化。PDF指定があればダウンロードボタンを添える
+    cardBody.innerHTML = bodyToHtml(card.body) + pdfLinkHtml(card);
     textView.scrollTop = 0;
 
     if (curSubject === GUIDE_SUBJECT) {
@@ -1706,9 +1916,11 @@ function loadSavedSettings() {
 // ▲ボタンと下方向スワイプで共用：現在の階層から1つ上のメニューへ
 function goUpOneLevel() {
     const guide = curSubject === GUIDE_SUBJECT;
+    const free = curSubject === FREE_SUBJECT;
     switch (navState) {
         case 'card':
         case 'complete':
+            if (free) { showFreeUnit(curGenre); break; }
             if (curSection.length) {
                 if (guide) showGuideCards(curGenre);
                 else if (curSection[0]?.section) showSectionedCardList(curGenre);
@@ -1734,6 +1946,15 @@ function goUpOneLevel() {
             break;
         case 'newsitem':
             showNews('お知らせ');
+            break;
+        case 'free':            // 自由研究のトップ → メニューへ
+            showTopMenu();
+            break;
+        case 'freetheme':       // テーマ別の講座一覧 → 自由研究トップへ
+            showFreeMenu('theme');
+            break;
+        case 'freeunit':        // 講座のカード一覧 → 一つ上へ
+            freeTheme ? showFreeThemeUnits(freeTheme) : showFreeMenu('author');
             break;
         default:
             showTopMenu();

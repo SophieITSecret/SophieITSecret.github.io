@@ -66,6 +66,8 @@ function parseCSV(text) {
     id:(r[0]||'').trim(), genre:(r[1]||'').trim(), section:(r[2]||'').trim(),
     title:(r[3]||'').trim(), body:(r[4]||'').trim(), subject:(r[5]||'').trim(),
     published:(r[6]||'').trim()==='1',   // 7列目「公開」。空欄・旧CSV(undefined)は非公開
+    // 8〜10列目（自由研究用）。既存カードは空欄。テーマは複数可（; 区切り）
+    author:(r[7]||'').trim(), theme:(r[8]||'').trim(), pdf:(r[9]||'').trim(),
     _header:hdr
   })).filter(d=>d.id);
 }
@@ -993,9 +995,12 @@ async function runPublish(){
 async function saveCSV(){
   if(!cardData.length) return;
   if(editDirty && selectedIdx >= 0) applyEdit();
-  const hdr=(cardData[0]._header||['コード','ユニット','サブユニット','タイトル','説明','']).slice();
-  hdr[6]='公開';   // 7列目ヘッダを保証（旧6列CSVから読んでも付与される）
-  const rows=[hdr,...cardData.map(d=>[d.id,d.genre,d.section,d.title,d.body,d.subject,d.published?'1':''])];
+  // 10列（コード〜PDF）を保証。旧CSVから読んでも欠けた列名を補う
+  const HDR=['コード','ユニット','サブユニット','タイトル','説明','科目','公開','著者','テーマ','PDF'];
+  const hdr=(cardData[0]._header||[]).slice();
+  for(let i=0;i<HDR.length;i++) if(!hdr[i]) hdr[i]=HDR[i];
+  hdr.length=HDR.length;
+  const rows=[hdr,...cardData.map(d=>[d.id,d.genre,d.section,d.title,d.body,d.subject,d.published?'1':'',d.author||'',d.theme||'',d.pdf||''])];
   const csv=rows.map(r=>r.map(c=>{const s=String(c||'');return(s.includes(',')||s.includes('"')||s.includes('\n')||s.includes('\r'))?`"${s.replace(/"/g,'""')}"`:s;}).join(',')).join('\r\n');
   const btn=document.getElementById('btnSave');
   const orig=btn.textContent;
