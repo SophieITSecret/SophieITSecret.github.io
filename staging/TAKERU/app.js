@@ -626,7 +626,7 @@ function showFreeUnit(unit) {
                 ${freeBanner()}
                 <div class="genre-btn banner-btn banner-small">${escHtml(author)}</div>
             </div>
-            <div class="genre-panel-label label-section">${escHtml(unit)}</div>
+            <div class="genre-panel-label label-section label-theme"><span class="theme-tag">テーマ</span>${escHtml(unit)}</div>
         </div>
         <div class="card-list-body">`;
 

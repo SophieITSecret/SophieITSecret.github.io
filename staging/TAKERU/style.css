@@ -599,6 +599,21 @@ body:not(.menu-mode) #image-area.has-image::after {
 .double-banner-wrap > .btn-freestudy:first-child + * { flex: 2.4 !important; }
 /* 看板は1行で収める（折り返して2行になると48pxの中で窮屈になる） */
 .banner-btn.btn-freestudy { white-space: nowrap; }
+
+/* 自由研究の見出しに付く「テーマ」バッジ。タイトル本体と区別を付ける */
+.theme-tag {
+    flex-shrink: 0;
+    margin-right: 8px;
+    padding: 2px 8px;
+    border: 1px solid rgba(255,255,255,0.7);
+    border-radius: 4px;
+    background: rgba(0,0,0,0.28);
+    color: #fff;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    line-height: 1.5;
+}
 /* 受講看板だけ縁取りを太く・緑寄りの黄緑に */
 .banner-btn.btn-jukou {
     border-width: 2px !important;
@@ -706,6 +721,11 @@ body:not(.menu-mode) #image-area.has-image::after {
     background: linear-gradient(135deg, #1a3a1a, #2e7d32);
     border-color: #4caf50;
     color: #fff;
+}
+/* テーマバッジ付きの見出し（自由研究）は、長いタイトルの折り返しに備えて余白を調整 */
+.genre-panel-label.label-theme {
+    padding: 5px 14px;
+    line-height: 1.5;
 }
 /* カード一覧上部の現在ジャンル表示：前画面で押した genre-btn がそのまま見出しに */
 .genre-panel-label.label-genre-header {
