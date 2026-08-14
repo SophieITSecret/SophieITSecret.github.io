@@ -303,8 +303,15 @@ function exitMenuFull() {
     if (!linkFullscreen) {
         imageArea.style.display = '';
         dividerLine.style.display = '';
-        imageArea.classList.remove('menu-banner');
+        // menu-banner を外すのは「化粧パネル以外の画像に変わるとき」だけ。
+        // クラスだけ外して画像が化粧パネルのままだと object-fit が contain に変わり、
+        // パネルが枠いっぱいでなく内側に小さく表示されてしまう。
+        if (!isMenuBannerImage()) imageArea.classList.remove('menu-banner');
     }
+}
+// いま表示中の画像が「メニューの化粧パネル」かどうか
+function isMenuBannerImage() {
+    return /takeru-menu\.(jpg|png)/.test(cardImage.getAttribute('src') || '');
 }
 // メニュー・一覧画面でコンパクトバナーを表示
 function showMenuBanner() {
@@ -350,6 +357,7 @@ function showTopMenu() {
     showMenuView();
     btnSettings.style.display = 'block';
 
+    imageArea.classList.remove('menu-banner');   // トップは大パネル。低い枠を必ず解除
     cardImage.src = 'images/takeru-top.jpg';
     cardImage.style.display = 'block';
     imagePlaceholder.style.display = 'none';
@@ -996,6 +1004,7 @@ function showCard(idx) {
     } else {
         // カード画像は.jpgに統一済み。.pngは旧データ用のフォールバックとして残す
         cardImage.classList.remove('complete-mascot');   // 完了画面のマスコット指定を解除
+        imageArea.classList.remove('menu-banner');       // 化粧パネル用の低い枠を必ず解除
         cardImage.src = `images/${card.id}.jpg`;
         cardImage.style.display = 'block';
         imagePlaceholder.style.display = 'none';
@@ -1729,6 +1738,7 @@ function showSectionComplete() {
     cardBody.innerText = `${unitName}の全${unitTotal}枚を読み終えました。\n\n◀ で最後のカードに戻れます。\n▲ で上位メニューに戻れます。`;
     // 完了画面はタケル＆サクラを小さめに（⚔の代わり）。ズーム印は出さない。
     imageArea.classList.remove('has-image');
+    imageArea.classList.remove('menu-banner');   // 化粧パネル用の低い枠を必ず解除
     cardImage.classList.add('complete-mascot');
     cardImage.src = 'images/mascots.png';
     cardImage.style.display = 'block';
