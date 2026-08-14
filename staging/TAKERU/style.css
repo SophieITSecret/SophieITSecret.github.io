@@ -731,15 +731,13 @@ body:not(.menu-mode) #image-area.has-image::after {
 .genre-panel-label.theme-start {
     pointer-events: auto;
     cursor: pointer;
-    flex-wrap: wrap;
 }
 .genre-panel-label.theme-start:active { filter: brightness(1.25); }
 .theme-name { flex: 1; min-width: 0; }
 .theme-go {
     flex-shrink: 0;
-    margin-left: 10px;
-    font-size: 0.72rem;
-    font-weight: 700;
+    margin-left: 8px;
+    font-size: 0.8rem;
     color: #ffd740;
     opacity: 0.95;
     white-space: nowrap;
