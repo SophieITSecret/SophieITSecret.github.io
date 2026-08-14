@@ -594,6 +594,11 @@ body:not(.menu-mode) #image-area.has-image::after {
 /* 受講(1):科目名(3) の幅比率 */
 .double-banner-wrap > :first-child { flex: 1 !important; }
 .double-banner-wrap > :last-child  { flex: 3 !important; }
+/* 自由研究は看板名が長い（🔬 自由研究）ので左を広めに。右（著者名/テーマ名）は余裕がある */
+.double-banner-wrap > .btn-freestudy:first-child { flex: 1.6 !important; }
+.double-banner-wrap > .btn-freestudy:first-child + * { flex: 2.4 !important; }
+/* 看板は1行で収める（折り返して2行になると48pxの中で窮屈になる） */
+.banner-btn.btn-freestudy { white-space: nowrap; }
 /* 受講看板だけ縁取りを太く・緑寄りの黄緑に */
 .banner-btn.btn-jukou {
     border-width: 2px !important;

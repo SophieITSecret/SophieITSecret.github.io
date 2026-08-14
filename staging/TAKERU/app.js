@@ -500,7 +500,7 @@ function showFreeMenu(tab) {
     curGenre = '';
     freeTheme = '';
     btnSettings.style.display = 'none';
-    enterLinkFullscreen();
+    showMenuBanner();
     showMenuView();
 
     const tabs = `
@@ -568,7 +568,7 @@ function showFreeThemeUnits(theme) {
     isMenuVisible = true;
     curSubject = FREE_SUBJECT;
     freeTheme = theme;
-    enterLinkFullscreen();
+    showMenuBanner();
     showMenuView();
 
     const units = freeUnits(c => c.themes.includes(theme));
@@ -605,7 +605,7 @@ function showFreeUnit(unit) {
     isMenuVisible = true;
     curSubject = FREE_SUBJECT;
     curGenre = unit;
-    enterLinkFullscreen();
+    showMenuBanner();
     showMenuView();
 
     const cards = freeCards().filter(d => d.genre === unit);
