@@ -603,16 +603,16 @@ body:not(.menu-mode) #image-area.has-image::after {
 /* 自由研究の見出しに付く「テーマ」バッジ。タイトル本体と区別を付ける */
 .theme-tag {
     flex-shrink: 0;
-    margin-right: 8px;
-    padding: 2px 8px;
-    border: 1px solid rgba(255,255,255,0.7);
+    margin-right: 6px;
+    padding: 1px 5px;
+    border: 1px solid rgba(255,214,64,0.75);
     border-radius: 4px;
     background: rgba(0,0,0,0.28);
-    color: #fff;
-    font-size: 0.7rem;
+    color: #ffd740;              /* タイトル（白）と区別が付く黄色 */
+    font-size: 0.66rem;
     font-weight: 700;
-    letter-spacing: 0.08em;
-    line-height: 1.5;
+    letter-spacing: 0;           /* 字間を詰めて幅を稼ぐ */
+    line-height: 1.4;
 }
 /* 受講看板だけ縁取りを太く・緑寄りの黄緑に */
 .banner-btn.btn-jukou {
