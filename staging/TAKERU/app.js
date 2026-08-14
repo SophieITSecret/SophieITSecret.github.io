@@ -626,7 +626,7 @@ function showFreeUnit(unit) {
                 ${freeBanner()}
                 <div class="genre-btn banner-btn banner-small">${escHtml(author)}</div>
             </div>
-            <div class="genre-panel-label label-section label-theme"><span class="theme-tag">テーマ</span>${escHtml(unit)}</div>
+            <div class="genre-panel-label label-section label-theme theme-start" data-start="1"><span class="theme-tag">テーマ</span><span class="theme-name">${escHtml(unit)}</span><span class="theme-go">▶ 第1話へ</span></div>
         </div>
         <div class="card-list-body">`;
 
@@ -650,6 +650,8 @@ function showFreeUnit(unit) {
     menuContent.innerHTML = html;
 
     menuContent.onclick = (e) => {
+        // テーマ名のパネルを押したら第1話から始める
+        if (e.target.closest('.theme-start')) { startFreeUnitFromTop(unit); return; }
         const secItem = e.target.closest('.menu-item[data-section]');
         if (secItem) {
             const section = secItem.dataset.section;
@@ -666,6 +668,18 @@ function showFreeUnit(unit) {
             if (!isNaN(idx)) showCard(idx);
         }
     };
+}
+
+// テーマのパネルから「第1話」を開く。サブテーマがある場合は最初のサブテーマの1枚目。
+function startFreeUnitFromTop(unit) {
+    const cards = freeCards().filter(d => d.genre === unit);
+    const first = visibleOf(cards)[0];
+    if (!first) return;
+    curGenre = unit;
+    curSection = first.section
+        ? visibleOf(cards.filter(d => d.section === first.section))
+        : visibleOf(cards);
+    showCard(0);
 }
 
 // ==========================================
@@ -1551,13 +1565,22 @@ function updateControlButtons() {
     updateVoiceBtn();
 }
 
-// 音声ボタンの見た目：読み上げ中は緑、連続再生中は青く光る
+// 音声ボタンの見た目：待機は「🔊 聴く」、読み上げ中は緑で「停止」、連続再生中は青く光る
 function updateVoiceBtn() {
     btnVoice.classList.toggle('voice-on', autoRead && !autoAdvance);
     btnVoice.classList.toggle('voice-auto', autoAdvance);
+    const label = autoAdvance ? '連続' : autoRead ? '停止' : '聴く';
+    const icon  = autoAdvance ? '🔊' : autoRead ? '⏸' : '🔊';
+    // 長押し（連続再生）の最中にDOMを差し替えるとジェスチャーが切れるため、
+    // 表示が実際に変わるときだけ書き換える
+    const next = `${icon}|${label}`;
+    if (btnVoice.dataset.state !== next) {
+        btnVoice.dataset.state = next;
+        btnVoice.innerHTML = `${icon}<span class="btn-sub-label">${label}</span>`;
+    }
     btnVoice.title = autoAdvance ? '連続再生中（長押しで停止）'
                    : autoRead    ? '読み上げ中（タップで停止／長押しで連続再生）'
-                   : '';
+                   : 'タップで読み上げ／長押しで連続再生';
 }
 
 function clearCard() {

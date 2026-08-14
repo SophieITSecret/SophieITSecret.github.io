@@ -727,6 +727,23 @@ body:not(.menu-mode) #image-area.has-image::after {
     padding: 5px 14px;
     line-height: 1.5;
 }
+/* 押すと第1話が始まる見出し。親の pointer-events:none を打ち消して押せるようにする */
+.genre-panel-label.theme-start {
+    pointer-events: auto;
+    cursor: pointer;
+    flex-wrap: wrap;
+}
+.genre-panel-label.theme-start:active { filter: brightness(1.25); }
+.theme-name { flex: 1; min-width: 0; }
+.theme-go {
+    flex-shrink: 0;
+    margin-left: 10px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #ffd740;
+    opacity: 0.95;
+    white-space: nowrap;
+}
 /* カード一覧上部の現在ジャンル表示：前画面で押した genre-btn がそのまま見出しに */
 .genre-panel-label.label-genre-header {
     min-height: 40px;
@@ -1195,10 +1212,23 @@ body:not(.menu-mode) #image-area.has-image::after {
 }
 
 /* 音声ボタン */
+/* 読み上げボタン。機能に気づかれにくかったので、押す前から色を付けて目立たせる。
+   MENUボタンと同じ「記号＋小さな文字」の縦積みに揃える。 */
 .btn-voice-ctrl {
-    font-size: 0.75rem;
+    flex-direction: column;
+    gap: 1px;
+    font-size: 1.05rem;
+    line-height: 1.05;
     font-family: 'Noto Sans JP', sans-serif;
-    letter-spacing: 0.05em;
+    background: rgba(76,175,80,0.16);
+    border-color: rgba(76,175,80,0.65);
+    color: var(--accent);
+}
+.btn-voice-ctrl .btn-sub-label {
+    font-size: 0.68rem;
+    letter-spacing: 0.06em;
+    opacity: 0.95;
+    font-weight: 700;
 }
 #btn-voice.playing {
     background: rgba(76,175,80,0.2);
