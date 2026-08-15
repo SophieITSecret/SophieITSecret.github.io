@@ -603,8 +603,8 @@ body:not(.menu-mode) #image-area.has-image::after {
 /* 自由研究の見出しに付く「テーマ」バッジ。タイトル本体と区別を付ける */
 .theme-tag {
     flex-shrink: 0;
-    margin-right: 6px;
-    padding: 1px 5px;
+    margin-right: 5px;
+    padding: 1px 4px;
     border: 1px solid rgba(255,214,64,0.75);
     border-radius: 4px;
     background: rgba(0,0,0,0.28);
@@ -724,7 +724,10 @@ body:not(.menu-mode) #image-area.has-image::after {
 }
 /* テーマバッジ付きの見出し（自由研究）は、長いタイトルの折り返しに備えて余白を調整 */
 .genre-panel-label.label-theme {
-    padding: 5px 14px;
+    /* タイトルは講座の顔なので、左右の余白を削って1行に収まる幅を稼ぐ */
+    margin-left: 5%;
+    margin-right: 5%;
+    padding: 5px 9px;
     line-height: 1.5;
 }
 /* 押すと第1話が始まる見出し。親の pointer-events:none を打ち消して押せるようにする */
@@ -733,10 +736,20 @@ body:not(.menu-mode) #image-area.has-image::after {
     cursor: pointer;
 }
 .genre-panel-label.theme-start:active { filter: brightness(1.25); }
-.theme-name { flex: 1; min-width: 0; }
+/* タイトルは1行に収める。狭い端末では文字を少しだけ詰めて折り返しを防ぐ */
+.theme-name {
+    flex: 1;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+@media (max-width: 400px) {
+    .genre-panel-label.label-theme { font-size: 0.84rem; }
+}
 .theme-go {
     flex-shrink: 0;
-    margin-left: 8px;
+    margin-left: 5px;
     font-size: 0.8rem;
     color: #ffd740;
     opacity: 0.95;
