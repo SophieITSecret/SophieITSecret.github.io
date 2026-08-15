@@ -412,3 +412,14 @@ textarea.svg-overlay-input { min-height:120px; font-family:monospace; font-size:
 .rank-matrix .mx-hit { color:#fff; background:rgba(224,164,88,.18); }
 .rank-matrix tr.rank-unitrow .mx-usum { color:#e0a458; font-weight:bold; background:var(--bg3); }
 .rank-matrix tr.rank-unitrow .mx-code { background:var(--bg3); }
+
+/* 「すべての科目」表示のとき、テーマ見出しに科目名を添える */
+.ru-subj {
+  font-size: 0.72rem;
+  color: #7fb3ff;
+  background: rgba(90,160,230,.14);
+  border: 1px solid rgba(90,160,230,.4);
+  border-radius: 3px;
+  padding: 1px 6px;
+  font-weight: normal;
+}

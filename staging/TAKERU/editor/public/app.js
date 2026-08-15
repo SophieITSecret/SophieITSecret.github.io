@@ -1906,9 +1906,11 @@ function fillRankSubjects() {
     if (c.subject && !subjects.includes(c.subject)) subjects.push(c.subject);
   }
   const prev = sel.value;
-  sel.innerHTML = subjects.map(s => `<option value="${esc(s)}">${esc(s)}</option>`).join('');
-  if (prev && subjects.includes(prev)) sel.value = prev;
-  else if (progressTab && subjects.includes(progressTab)) sel.value = progressTab;
+  // 「すべて」を先頭に置く。科目を選び忘れて見落とすのを防ぐため既定もこれ。
+  sel.innerHTML = '<option value="__ALL__">すべての科目</option>'
+    + subjects.map(s => `<option value="${esc(s)}">${esc(s)}</option>`).join('');
+  if (prev && (prev === '__ALL__' || subjects.includes(prev))) sel.value = prev;
+  else sel.value = '__ALL__';
 }
 function renderCardRanking() {
   const body = document.getElementById('rankBody');
@@ -1918,14 +1920,15 @@ function renderCardRanking() {
   const hideZero = document.getElementById('rankHideZero') && document.getElementById('rankHideZero').checked;
   const views = accessStats.cards || {};
 
-  // 対象科目のカードだけ（CSV登場順＝ユニット・カードの表示順を保つ）
-  let rows = cardData.filter(c => c.subject === subject).map(c => ({ c, v: views[c.id] || 0 }));
+  // 対象科目のカードだけ（CSV登場順＝テーマ・カードの表示順を保つ）。__ALL__ は全科目
+  const isAll = (subject === '__ALL__');
+  let rows = cardData.filter(c => isAll || c.subject === subject).map(c => ({ c, v: views[c.id] || 0 }));
   if (hideZero) rows = rows.filter(r => r.v > 0);
 
   const totalViews = rows.reduce((a, r) => a + r.v, 0);
   const viewed = rows.filter(r => r.v > 0).length;
   const totEl = document.getElementById('rankTotals');
-  if (totEl) totEl.innerHTML = `${esc(subject)}：全 ${rows.length} 枚／閲覧あり ${viewed} 枚／累計 ${totalViews} 回`;
+  if (totEl) totEl.innerHTML = `${isAll ? 'すべての科目' : esc(subject)}：全 ${rows.length} 枚／閲覧あり ${viewed} 枚／累計 ${totalViews} 回`;
   document.querySelectorAll('.rank-viewbtn').forEach(b =>
     b.classList.toggle('rank-viewbtn-on', b.dataset.view === rankView));
   document.querySelectorAll('.rank-sortbtn').forEach(b =>
@@ -1974,8 +1977,9 @@ function renderCardRanking() {
         curUnit = r.c.genre;
         const uCards = rows.filter(x => x.c.genre === curUnit);
         const uSum = uCards.reduce((a, x) => a + x.v, 0);
+        const subjTag = isAll ? `<span class="ru-subj">${esc(r.c.subject)}</span>　` : '';
         bodyRows += `<tr class="rank-unitrow"><td></td><td class="ru-sum">👁 ${uSum}</td>
-          <td colspan="3" class="ru-name">${esc(curUnit || '（テーマなし）')}　<span class="ru-cnt">${uCards.length}枚</span></td></tr>`;
+          <td colspan="3" class="ru-name">${subjTag}${esc(curUnit || '（テーマなし）')}　<span class="ru-cnt">${uCards.length}枚</span></td></tr>`;
       }
       bodyRows += cardTr(r, '');
     }
@@ -2007,8 +2011,10 @@ function renderRankMatrix(body, rows) {
     if (c.genre !== curUnit) {
       curUnit = c.genre;
       const uCards = rows.filter(x => x.c.genre === curUnit);
+      const subjTag = (document.getElementById('rankSubject') || {}).value === '__ALL__'
+        ? `<span class="ru-subj">${esc(c.subject)}</span>　` : '';
       out += `<tr class="rank-unitrow">
-        <td class="mx-code ru-name" colspan="3">${esc(curUnit || '（テーマなし）')}　<span class="ru-cnt">${uCards.length}枚</span></td>
+        <td class="mx-code ru-name" colspan="3">${subjTag}${esc(curUnit || '（テーマなし）')}　<span class="ru-cnt">${uCards.length}枚</span></td>
         ${dates.map(d => { const s = uCards.reduce((a, x) => a + cell(d, x.c.id), 0); return `<td class="mx-cell mx-usum">${s || ''}</td>`; }).join('')}
       </tr>`;
     }
