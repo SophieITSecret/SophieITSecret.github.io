@@ -555,7 +555,7 @@ function showFreeMenu(tab) {
 
     menuContent.innerHTML = `
         <div class="sticky-head">
-            <div class="single-banner-wrap">${freeBanner()}</div>
+            <div class="single-banner-wrap free-wrap">${freeBanner()}</div>
             ${tabs}
         </div>
         ${body}`;
@@ -582,7 +582,7 @@ function showFreeThemeUnits(theme) {
     const units = freeUnits(c => c.themes.includes(theme));
     let html = `
         <div class="sticky-head">
-            <div class="double-banner-wrap">
+            <div class="double-banner-wrap free-wrap">
                 ${freeBanner()}
                 <div class="genre-btn banner-btn banner-small">${escHtml(theme)}</div>
             </div>
@@ -622,7 +622,7 @@ function showFreeUnit(unit) {
 
     let html = `
         <div class="sticky-head">
-            <div class="double-banner-wrap">
+            <div class="double-banner-wrap free-wrap">
                 ${freeBanner()}
                 <div class="genre-btn banner-btn banner-small">${escHtml(author)}</div>
             </div>

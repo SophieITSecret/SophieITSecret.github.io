@@ -730,6 +730,10 @@ body:not(.menu-mode) #image-area.has-image::after {
     padding: 5px 9px;
     line-height: 1.5;
 }
+/* 自由研究の看板行は、下のテーマ見出し（5%）と左右を揃えて段差をなくす */
+.single-banner-wrap.free-wrap,
+.double-banner-wrap.free-wrap { padding-left: 5%; padding-right: 5%; }
+
 /* 押すと第1話が始まる見出し。親の pointer-events:none を打ち消して押せるようにする */
 .genre-panel-label.theme-start {
     pointer-events: auto;
@@ -1538,15 +1542,15 @@ body.font-large #card-body { font-size: 1.05rem; }
     .genre-list-wrap { padding: 12px 8%; gap: 8px; }
     .genre-btn { min-height: 52px; }
 
-    /* カード一覧は1列・中央寄せ（映画のエンドロール風）。
+    /* カード一覧は1列。ブロックごと中央に置き、中身は左そろえ（読みやすさ優先）。
        2段組は視線が左右に飛んで読みにくかったため、縦一本の流れに変更。 */
     .card-list-body {
-        max-width: 620px;
+        max-width: 560px;
         margin: 0 auto;
-        padding: 4px 16px 10px;
+        padding: 4px 0 10px;
     }
-    .card-list-body .menu-item { justify-content: center; text-align: center; }
-    .card-list-body .section-header { text-align: center; position: static; }
+    .card-list-body .menu-item { justify-content: flex-start; text-align: left; padding-left: 26px; }
+    .card-list-body .section-header { text-align: left; position: static; padding-left: 20px; }
 
     /* 級・科目パネル：上に寄って下が空くので、縦方向の中央に置く */
     .sub-menu-wrap {
@@ -1634,14 +1638,14 @@ body.font-large #card-body { font-size: 1.05rem; }
     .genre-list-wrap { padding: 14px 8%; gap: 10px; }
     .genre-btn { min-height: 64px; font-size: 1.02rem; }
 
-    /* カード一覧は1列・中央寄せ（映画のエンドロール風） */
+    /* カード一覧は1列。ブロックごと中央に置き、中身は左そろえ */
     .card-list-body {
-        max-width: 720px;
+        max-width: 640px;
         margin: 0 auto;
-        padding: 4px 16px 10px;
+        padding: 4px 0 10px;
     }
-    .card-list-body .menu-item { justify-content: center; text-align: center; }
-    .card-list-body .section-header { text-align: center; position: static; }
+    .card-list-body .menu-item { justify-content: flex-start; text-align: left; padding-left: 26px; }
+    .card-list-body .section-header { text-align: left; position: static; padding-left: 20px; }
 
     /* トップ：ボタンが小さいと画像に対して頭でっかちに見えるため大きくする */
     .top-menu-wrap { padding: 24px 10% 16px; }
