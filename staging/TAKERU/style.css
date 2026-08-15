@@ -1538,18 +1538,15 @@ body.font-large #card-body { font-size: 1.05rem; }
     .genre-list-wrap { padding: 12px 8%; gap: 8px; }
     .genre-btn { min-height: 52px; }
 
-    /* カード一覧は段組。左の列を上から埋め、あふれたら右の列へ折り返す */
+    /* カード一覧は1列・中央寄せ（映画のエンドロール風）。
+       2段組は視線が左右に飛んで読みにくかったため、縦一本の流れに変更。 */
     .card-list-body {
-        columns: 2;
-        column-gap: 22px;
-        padding: 4px 5% 10px;
+        max-width: 620px;
+        margin: 0 auto;
+        padding: 4px 16px 10px;
     }
-    .card-list-body .menu-item { break-inside: avoid; }
-    .card-list-body .section-header {
-        break-after: avoid;      /* 見出しだけが列末に取り残されないように */
-        break-inside: avoid;
-        position: static;        /* 段組内では貼り付き（sticky）が効かないため解除 */
-    }
+    .card-list-body .menu-item { justify-content: center; text-align: center; }
+    .card-list-body .section-header { text-align: center; position: static; }
 
     /* 級・科目パネル：上に寄って下が空くので、縦方向の中央に置く */
     .sub-menu-wrap {
@@ -1637,14 +1634,14 @@ body.font-large #card-body { font-size: 1.05rem; }
     .genre-list-wrap { padding: 14px 8%; gap: 10px; }
     .genre-btn { min-height: 64px; font-size: 1.02rem; }
 
-    /* カード一覧は段組。左の列を上から埋め、あふれたら右の列へ */
+    /* カード一覧は1列・中央寄せ（映画のエンドロール風） */
     .card-list-body {
-        columns: 2;
-        column-gap: 20px;
-        padding: 4px 5% 10px;
+        max-width: 720px;
+        margin: 0 auto;
+        padding: 4px 16px 10px;
     }
-    .card-list-body .menu-item { break-inside: avoid; }
-    .card-list-body .section-header { break-after: avoid; break-inside: avoid; position: static; }
+    .card-list-body .menu-item { justify-content: center; text-align: center; }
+    .card-list-body .section-header { text-align: center; position: static; }
 
     /* トップ：ボタンが小さいと画像に対して頭でっかちに見えるため大きくする */
     .top-menu-wrap { padding: 24px 10% 16px; }
