@@ -729,10 +729,14 @@ body:not(.menu-mode) #image-area.has-image::after {
     margin-right: 5%;
     padding: 5px 9px;
     line-height: 1.5;
+    min-height: 42px;   /* 主役なので看板と同じ高さに */
 }
 /* 自由研究の看板行は、下のテーマ見出し（5%）と左右を揃えて段差をなくす */
 .single-banner-wrap.free-wrap,
 .double-banner-wrap.free-wrap { padding-left: 5%; padding-right: 5%; }
+/* 看板は少し低く、テーマ見出しは高く。主役はテーマ名なので上下幅を揃える
+   （文字の大きさは変えない） */
+.free-wrap .banner-small { height: 42px !important; }
 
 /* 押すと第1話が始まる見出し。親の pointer-events:none を打ち消して押せるようにする */
 .genre-panel-label.theme-start {
@@ -1129,7 +1133,7 @@ body:not(.menu-mode) #image-area.has-image::after {
     background: var(--bg2);
     border-top: 1px solid var(--border);
     display: grid;
-    grid-template-columns: 0.7fr 0.7fr 0.9fr 0.9fr 1.2fr;
+    grid-template-columns: 0.7fr 0.7fr 0.85fr 0.85fr 1.4fr;   /* 右端の「🔊 聴く」を横並びで収める */
     gap: 3px;
     padding: 4px 4px 3px 4px;
     flex-shrink: 0;
@@ -1230,19 +1234,19 @@ body:not(.menu-mode) #image-area.has-image::after {
 /* 読み上げボタン。機能に気づかれにくかったので、押す前から色を付けて目立たせる。
    MENUボタンと同じ「記号＋小さな文字」の縦積みに揃える。 */
 .btn-voice-ctrl {
-    flex-direction: column;
-    gap: 1px;
-    font-size: 1.05rem;
-    line-height: 1.05;
+    flex-direction: row;      /* アイコンと文字を横に並べる */
+    gap: 5px;
+    font-size: 1.0rem;
+    line-height: 1.1;
     font-family: 'Noto Sans JP', sans-serif;
     background: rgba(76,175,80,0.16);
     border-color: rgba(76,175,80,0.65);
     color: var(--accent);
 }
 .btn-voice-ctrl .btn-sub-label {
-    font-size: 0.68rem;
-    letter-spacing: 0.06em;
-    opacity: 0.95;
+    font-size: 0.95rem;       /* 「聴く」をしっかり読める大きさに */
+    letter-spacing: 0.04em;
+    opacity: 1;
     font-weight: 700;
 }
 #btn-voice.playing {
