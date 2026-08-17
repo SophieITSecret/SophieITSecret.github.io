@@ -1048,12 +1048,17 @@ body:not(.menu-mode) #image-area.has-image::after {
     z-index: 9999;
     display: flex;
     align-items: center;
-    gap: 10px;
+    flex-wrap: wrap;          /* 文章が長い・ボタンが2つのときは折り返す */
+    gap: 8px 10px;
     padding: 10px 12px;
     background: #14261a;
     border-bottom: 2px solid var(--accent);
     box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+    max-height: 60vh;
+    overflow-y: auto;
 }
+.inapp-banner .iab-text { min-width: 200px; }
+.inapp-banner .iab-actions { margin-left: auto; }
 .iab-text { flex: 1; font-size: 0.8rem; line-height: 1.5; color: #e6f0e6; }
 .iab-how { display: block; margin-top: 2px; font-size: 0.72rem; color: #9aa4b2; }
 .iab-actions { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
@@ -1069,6 +1074,19 @@ body:not(.menu-mode) #image-area.has-image::after {
     white-space: nowrap;
 }
 .iab-btn:active { opacity: 0.85; }
+/* 「くわしく」は副次的な選択肢なので枠線だけの控えめな見た目に */
+.iab-btn2 {
+    background: transparent;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    font-weight: 700;
+    font-size: 0.78rem;
+    border-radius: 6px;
+    padding: 8px 11px;
+    cursor: pointer;
+    white-space: nowrap;
+}
+.iab-btn2:active { background: rgba(76,175,80,0.15); }
 .iab-close {
     background: transparent;
     border: none;

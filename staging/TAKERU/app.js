@@ -1420,13 +1420,41 @@ function detectInAppBrowser() {
     if (/Twitter/i.test(ua)) return 'X（旧Twitter）';
     return '';
 }
+// iPhone/iPad で Safari 以外のブラウザか。
+//   iOSはどのブラウザも中身はWebKitだが、ホーム画面への追加は Safari でしかできない。
+//   Chrome=CriOS / Edge=EdgiOS / Firefox=FxiOS / Opera=OPT で見分ける。
+function isIosNonSafari() {
+    const ua = navigator.userAgent || '';
+    const isIos = /iPhone|iPod/.test(ua)
+        || /iPad/.test(ua)
+        || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    if (!isIos) return false;
+    return /CriOS|EdgiOS|FxiOS|OPT\//i.test(ua);
+}
 function maybeShowInAppBanner() {
     if (isAppInstalled()) return;                 // アイコン起動なら不要
     const name = detectInAppBrowser();
-    if (!name) return;
+    // アプリ内ブラウザでなくても、iPhoneのChrome等ならホーム画面に追加できないので案内する
+    if (!name && !isIosNonSafari()) return;
     try { if (sessionStorage.getItem('takeru_inapp_dismissed')) return; } catch (e) {}
     const el = document.getElementById('inapp-banner');
     if (!el) return;
+
+    // iOSでSafari以外（Chrome等）。閲覧はできるので、まず安心させてから手順を示す。
+    if (!name && isIosNonSafari()) {
+        el.innerHTML =
+            `<div class="iab-text">現在のブラウザでもTAKERUはご利用いただけます。<br>` +
+            `ホーム画面にアプリとして登録するには<b>Safari</b>から開きます。` +
+            `<span class="iab-how">下のボタンでアドレスをコピーし、Safariに貼り付けて開いてください。</span></div>` +
+            `<div class="iab-actions">` +
+              `<button class="iab-btn" onclick="copyAppUrl()">アドレスをコピー</button>` +
+              `<button class="iab-btn2" onclick="dismissInAppBanner();showInstallGuide()">くわしく</button>` +
+              `<button class="iab-close" onclick="dismissInAppBanner()" aria-label="閉じる">×</button>` +
+            `</div>`;
+        el.style.display = 'flex';
+        return;
+    }
+
     const isAndroid = /Android/i.test(navigator.userAgent);
     const action = isAndroid
         ? `<button class="iab-btn" onclick="openInChrome()">Chromeで開く</button>`
@@ -1447,10 +1475,10 @@ function copyAppUrl() {
     const url = 'https://takeru.ms-forum.com/';
     if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(url)
-            .then(() => alert('URLをコピーしました。\nSafariのアドレス欄に貼り付けて開いてください。'))
-            .catch(() => alert('コピーできませんでした。\nアドレス: takeru.ms-forum.com'));
+            .then(() => alert('アドレスをコピーしました。\n\nSafariを開き、上のアドレス欄に貼り付けて\n「開く」を押してください。'))
+            .catch(() => alert('コピーできませんでした。\nSafariで takeru.ms-forum.com を開いてください。'));
     } else {
-        alert('アドレス: takeru.ms-forum.com\nSafariで開いてください。');
+        alert('Safariで次のアドレスを開いてください。\ntakeru.ms-forum.com');
     }
 }
 function dismissInAppBanner() {
