@@ -191,6 +191,20 @@ body {
 .ins-steps li { margin-bottom: 10px; line-height: 1.8; }
 .ins-steps strong { color: var(--accent2); }
 .ins-sub { color: var(--text2); font-size: 0.76rem; line-height: 1.7; margin-top: 4px; }
+/* 手順の中に置くコピーボタン（Safariへ移るための最初の一歩） */
+.ins-copy { margin: 8px 0 2px; }
+.ins-copy button {
+    background: var(--accent);
+    border: none;
+    color: #08140a;
+    font-family: inherit;
+    font-weight: 700;
+    font-size: 0.92rem;
+    border-radius: 6px;
+    padding: 11px 20px;
+    cursor: pointer;
+}
+.ins-copy button:active { opacity: 0.85; }
 .install-now { margin: 18px 0 6px; display: flex; justify-content: center; }
 .install-now button { background: var(--accent); border: none; color: #000; font-weight: 700;
     font-size: 1rem; border-radius: 8px; padding: 14px 28px; cursor: pointer; }

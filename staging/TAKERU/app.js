@@ -1350,20 +1350,34 @@ function renderInstallGuideBody() {
 
     let steps = '';
     if (p === 'iphone') {
+        // いまSafari以外（Chrome等）で見ている人には、Safariへの移り方から具体的に示す
+        const toSafari = (isIosNonSafari() || detectInAppBrowser())
+          ? `<li>下のボタンで<strong>アドレスをコピー</strong>する
+               <div class="ins-copy"><button onclick="copyAppUrl()">📋 アドレスをコピー</button></div></li>
+             <li><strong>Safari</strong>（羅針盤のアイコン）を開く
+               <div class="ins-sub">ホーム画面やドックにあります。見つからなければ、画面を下へスワイプして「Safari」と検索してください。</div></li>
+             <li>画面上の<strong>アドレス欄を長押し</strong>して<strong>「ペースト」</strong>を選び、<strong>「開く」</strong>を押す</li>`
+          : `<li>Safariでこのページを開く</li>`;
         steps = `
-          <p class="ins-note">iPhoneは <strong>Safari</strong> でのみ追加できます。メールやLINEの中で開いた場合は、いったん<strong>Safariで開き直して</strong>ください。</p>
+          <p class="ins-note">iPhoneは <strong>Safari</strong> でのみ追加できます。メールやLINE、Chromeで開いた場合は、いったん<strong>Safariで開き直して</strong>ください。</p>
           <ol class="ins-steps">
-            <li>Safariでこのページを開く</li>
+            ${toSafari}
             <li>画面下の<strong>「共有」ボタン</strong>（□に↑）を押す
               <div class="ins-sub">見当たらない時は、アドレスバー横の<strong>「ぁあ」や「⋯」</strong>を押すと、その中に「共有」があります。</div></li>
             <li>メニューを下にスクロールし<strong>「ホーム画面に追加」</strong>を選ぶ</li>
             <li>右上の<strong>「追加」</strong>を押す → 完了</li>
           </ol>`;
     } else if (p === 'ipad') {
+        const toSafariPad = (isIosNonSafari() || detectInAppBrowser())
+          ? `<li>下のボタンで<strong>アドレスをコピー</strong>する
+               <div class="ins-copy"><button onclick="copyAppUrl()">📋 アドレスをコピー</button></div></li>
+             <li><strong>Safari</strong>（羅針盤のアイコン）を開く</li>
+             <li>上の<strong>アドレス欄を長押し</strong>して<strong>「ペースト」</strong>を選び、<strong>「開く」</strong>を押す</li>`
+          : `<li>Safariでこのページを開く</li>`;
         steps = `
-          <p class="ins-note">iPadは <strong>Safari</strong> でのみ追加できます。メールやLINEの中で開いた場合は、いったんSafariで開き直してください。</p>
+          <p class="ins-note">iPadは <strong>Safari</strong> でのみ追加できます。メールやLINE、Chromeで開いた場合は、いったんSafariで開き直してください。</p>
           <ol class="ins-steps">
-            <li>Safariでこのページを開く</li>
+            ${toSafariPad}
             <li>画面右上（アドレスバー右）の<strong>「共有」ボタン</strong>（□に↑）を押す
               <div class="ins-sub">見当たらない時は、右上の<strong>「⋯」</strong>メニューの中に「共有」があります。</div></li>
             <li><strong>「ホーム画面に追加」</strong>を選ぶ</li>
@@ -1444,8 +1458,9 @@ function maybeShowInAppBanner() {
     if (!name && isIosNonSafari()) {
         el.innerHTML =
             `<div class="iab-text">現在のブラウザでもTAKERUはご利用いただけます。<br>` +
-            `ホーム画面にアプリとして登録するには<b>Safari</b>から開きます。` +
-            `<span class="iab-how">下のボタンでアドレスをコピーし、Safariに貼り付けて開いてください。</span></div>` +
+            `ホーム画面にアプリとして登録することも出来ます。<br>` +
+            `そのためには<b>Safari</b>から開いてください。` +
+            `<span class="iab-how">下のボタンでアドレスをコピーし、Safariに貼り付けてください。</span></div>` +
             `<div class="iab-actions">` +
               `<button class="iab-btn" onclick="copyAppUrl()">アドレスをコピー</button>` +
               `<button class="iab-btn2" onclick="dismissInAppBanner();showInstallGuide()">くわしく</button>` +
