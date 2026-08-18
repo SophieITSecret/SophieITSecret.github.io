@@ -77,7 +77,7 @@ function visibleOf(cards) {
 let cardData = [];
 let linkData = [];
 let newsData = [];
-let newsTab = 'お知らせ';   // 📰内のタブ：お知らせ／ニュース
+let newsTab = 'ニュース';   // 📰内のタブ：ニュース（既定）／お知らせ
 let newsShowAll = false;    // ニュースを1ヶ月より前まで広げて表示しているか
 let curSection = [];
 let curIndex = 0;
@@ -1167,6 +1167,36 @@ function visibleDigests(all) {
     const recent = items.filter(n => n.date >= lim);
     return recent.length ? recent : items.slice(0, 1);   // 1ヶ月間更新が無くても最新1本は見せる
 }
+// ダイジェスト本文を記事ごとに切り分ける。
+//   「### YYYY-MM-DD 見出し」で始まる行が記事の区切り。以降が要約とリンク。
+//   区切りが無い本文（お知らせ等）は、全体を1件として返す。
+function parseDigest(entry) {
+    const lines = String(entry.body || '').split(/\r?\n/);
+    const out = [];
+    let cur = null;
+    for (const line of lines) {
+        const m = line.match(/^\s*###\s*(\d{4}-\d{2}-\d{2})?\s*(.*)$/);
+        if (m) {
+            if (cur) out.push(cur);
+            cur = { date: m[1] || entry.date, title: (m[2] || '').trim(), body: '', src: entry.id };
+        } else if (cur) {
+            cur.body += line + '\n';
+        }
+    }
+    if (cur) out.push(cur);
+    if (!out.length) return [{ date: entry.date, title: entry.title, body: entry.body, src: entry.id }];
+    out.forEach(a => { a.body = a.body.trim(); });
+    return out;
+}
+// 表示できるダイジェストを、記事単位に開いて新しい順に並べる
+function digestArticles(all) {
+    const list = [];
+    visibleDigests(all).forEach(entry => {
+        parseDigest(entry).forEach((a, i) => { a.idx = i; list.push(a); });
+    });
+    return list.sort((a, b) => String(b.date).localeCompare(String(a.date)));
+}
+
 // 新着の赤●は「お知らせ」「ニュース」どちらの新着でも点ける
 function latestNoticeId() {
     const v = visibleNotices(), d = visibleOfType('ニュース');
@@ -1180,7 +1210,7 @@ function markNewsSeen() { try { localStorage.setItem('takeru_news_seen', latestN
 function hasUnreadNews() { const l = latestNoticeId(); return !!l && l !== getNewsSeen(); }
 
 function showNews(tab) {
-    newsTab = tab || newsTab || 'お知らせ';
+    newsTab = tab || newsTab || 'ニュース';
     navState = 'news';
     isMenuVisible = true;
     enterLinkFullscreen();
@@ -1189,8 +1219,8 @@ function showNews(tab) {
 
     const tabRow = `
         <div class="news-tabs">
-            <button class="news-tab ${newsTab==='お知らせ'?'active':''}" data-tab="お知らせ">お知らせ</button>
             <button class="news-tab ${newsTab==='ニュース'?'active':''}" data-tab="ニュース">ニュース</button>
+            <button class="news-tab ${newsTab==='お知らせ'?'active':''}" data-tab="お知らせ">お知らせ</button>
         </div>`;
 
     const rowHtml = (n) =>
@@ -1207,16 +1237,22 @@ function showNews(tab) {
             ? `<div class="news-list">` + items.map(rowHtml).join('') + `</div>`
             : `<div class="news-empty">まだお知らせはありません。</div>`;
     } else {
-        // ニュース＝週次ダイジェスト。直近1ヶ月を出し、それ以前は「過去のニュース」で開く
-        const all    = visibleOfType('ニュース');
-        const items  = newsShowAll ? all : visibleDigests(false);
+        // ニュース＝週次ダイジェストを記事単位に開いて並べる。押すと要約が出る。
+        const all = visibleOfType('ニュース');
         if (!all.length) {
             listHtml = `<div class="news-coming">ニュースは準備中です。<br>もうしばらくお待ちください。</div>`;
         } else {
-            listHtml = `<div class="news-list">` + items.map(rowHtml).join('') + `</div>`;
-            if (!newsShowAll && all.length > items.length) {
-                listHtml += `<div class="news-more"><button class="news-more-btn">過去のニュースを見る（${all.length - items.length}件）</button></div>`;
+            const arts = digestArticles(newsShowAll);
+            listHtml = `<div class="news-list">` + arts.map(a =>
+                `<div class="menu-item news-item" data-id="${a.src}" data-idx="${a.idx}">
+                    <span class="news-date">${escHtml(a.date)}</span>
+                    <span class="news-title">${escHtml(a.title)}</span>
+                    <span class="link-arrow">›</span>
+                </div>`).join('') + `</div>`;
+            if (!newsShowAll && all.length > visibleDigests(false).length) {
+                listHtml += `<div class="news-more"><button class="news-more-btn">過去のニュースを見る</button></div>`;
             }
+            listHtml += `<div class="news-source-foot">（出所：英ガーディアン紙）</div>`;
         }
     }
 
@@ -1232,22 +1268,29 @@ function showNews(tab) {
         if (tabBtn) { newsShowAll = false; showNews(tabBtn.dataset.tab); return; }
         if (e.target.closest('.news-more-btn')) { newsShowAll = true; showNews('ニュース'); return; }
         const item = e.target.closest('.news-item');
-        if (item) showNewsItem(item.dataset.id);
+        if (item) showNewsItem(item.dataset.id, item.dataset.idx);
     };
 }
 
-function showNewsItem(id) {
+function showNewsItem(id, idx) {
     const n = newsData.find(d => d.id === id);
     if (!n) return;
+    const isDigest = (n.type === 'ニュース');
+    // ダイジェストは本文を記事単位に切って、選ばれた1本だけを出す
+    let date = n.date, title = n.title, body = n.body;
+    if (isDigest) {
+        const arts = parseDigest(n);
+        const a = arts[parseInt(idx, 10)] || arts[0];
+        if (a) { date = a.date; title = a.title; body = a.body; }
+    }
     navState = 'newsitem';
     isMenuVisible = false;
     showTextView();
     showMenuBanner();
-    const isDigest = (n.type === 'ニュース');
-    cardProgress.innerText = n.date || '';
-    cardTitle.innerText = n.title || (isDigest ? 'ニュース' : 'お知らせ');
-    cardBody.innerHTML = bodyToHtml(n.body) +
-        (isDigest ? `<div class="news-source">出典：英ガーディアン紙の報道より。要約はMSアカデミーによるものです。</div>` : '') +
+    cardProgress.innerText = date || '';
+    cardTitle.innerText = title || (isDigest ? 'ニュース' : 'お知らせ');
+    cardBody.innerHTML = bodyToHtml(body) +
+        (isDigest ? `<div class="news-source">（出所：英ガーディアン紙／要約はMSアカデミー）</div>` : '') +
         `<div class="reg-back"><button class="reg-backbtn" onclick="showNews('${isDigest ? 'ニュース' : 'お知らせ'}')">← ${isDigest ? 'ニュース' : 'お知らせ'}一覧に戻る</button></div>`;
     textView.scrollTop = 0;
 }

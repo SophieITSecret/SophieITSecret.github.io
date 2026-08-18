@@ -1016,6 +1016,16 @@ body:not(.menu-mode) #image-area.has-image::after {
     font-variant-numeric: tabular-nums;
 }
 .news-title { flex: 1; font-size: 1.0rem; color: var(--text); }
+
+/* ニュース一覧の末尾に置く出所表記 */
+.news-source-foot {
+    text-align: center;
+    padding: 18px 12px 10px;
+    font-size: 0.74rem;
+    color: var(--text2);
+    opacity: 0.85;
+}
+
 /* 過去のニュースを開くボタン */
 .news-more { text-align: center; padding: 16px 0 8px; }
 .news-more-btn {
