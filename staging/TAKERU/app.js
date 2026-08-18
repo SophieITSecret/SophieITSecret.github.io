@@ -77,7 +77,8 @@ function visibleOf(cards) {
 let cardData = [];
 let linkData = [];
 let newsData = [];
-let newsTab = 'お知らせ';   // 📰内のタブ：お知らせ／ニュース（ニュースは当面準備中）
+let newsTab = 'お知らせ';   // 📰内のタブ：お知らせ／ニュース
+let newsShowAll = false;    // ニュースを1ヶ月より前まで広げて表示しているか
 let curSection = [];
 let curIndex = 0;
 let navState = 'top';
@@ -1147,11 +1148,33 @@ function showPlaceholder(name) {
 // ==========================================
 // 表示対象のお知らせ（本番は公開のみ／開発は全部）を新しい順で返す
 function visibleNotices() {
+    return visibleOfType('お知らせ');
+}
+// 種別（お知らせ／ニュース）ごとに、表示できるものを新しい順で返す
+function visibleOfType(type) {
     return newsData
-        .filter(n => n.type === 'お知らせ' && (IS_PROD ? n.published : true))
+        .filter(n => n.type === type && (IS_PROD ? n.published : true))
         .sort((a, b) => b.date.localeCompare(a.date) || b.id.localeCompare(a.id, undefined, { numeric: true }));
 }
-function latestNoticeId() { const v = visibleNotices(); return v.length ? v[0].id : ''; }
+// ニュース（週次ダイジェスト）は直近1ヶ月ぶんだけ出す。データは消さずに表示だけ絞る。
+var NEWS_SHOW_DAYS = 31;
+function visibleDigests(all) {
+    const items = visibleOfType('ニュース');
+    if (all) return items;
+    const limit = new Date();
+    limit.setDate(limit.getDate() - NEWS_SHOW_DAYS);
+    const lim = limit.toISOString().slice(0, 10);
+    const recent = items.filter(n => n.date >= lim);
+    return recent.length ? recent : items.slice(0, 1);   // 1ヶ月間更新が無くても最新1本は見せる
+}
+// 新着の赤●は「お知らせ」「ニュース」どちらの新着でも点ける
+function latestNoticeId() {
+    const v = visibleNotices(), d = visibleOfType('ニュース');
+    const ids = [];
+    if (v.length) ids.push(v[0].id);
+    if (d.length) ids.push(d[0].id);
+    return ids.sort().join('|');
+}
 function getNewsSeen() { try { return localStorage.getItem('takeru_news_seen') || ''; } catch (e) { return ''; } }
 function markNewsSeen() { try { localStorage.setItem('takeru_news_seen', latestNoticeId()); } catch (e) {} }
 function hasUnreadNews() { const l = latestNoticeId(); return !!l && l !== getNewsSeen(); }
@@ -1162,7 +1185,7 @@ function showNews(tab) {
     isMenuVisible = true;
     enterLinkFullscreen();
     showMenuView();
-    if (newsTab === 'お知らせ') markNewsSeen();   // 開いたら既読
+    markNewsSeen();                              // 開いたら既読（お知らせ・ニュース共通）
 
     const tabRow = `
         <div class="news-tabs">
@@ -1170,21 +1193,31 @@ function showNews(tab) {
             <button class="news-tab ${newsTab==='ニュース'?'active':''}" data-tab="ニュース">ニュース</button>
         </div>`;
 
+    const rowHtml = (n) =>
+        `<div class="menu-item news-item" data-id="${n.id}">
+            <span class="news-date">${escHtml(n.date)}</span>
+            <span class="news-title">${escHtml(n.title)}</span>
+            <span class="link-arrow">›</span>
+        </div>`;
+
     let listHtml = '';
     if (newsTab === 'お知らせ') {
         const items = visibleNotices();
-        if (!items.length) {
-            listHtml = `<div class="news-empty">まだお知らせはありません。</div>`;
-        } else {
-            listHtml = `<div class="news-list">` + items.map(n =>
-                `<div class="menu-item news-item" data-id="${n.id}">
-                    <span class="news-date">${escHtml(n.date)}</span>
-                    <span class="news-title">${escHtml(n.title)}</span>
-                    <span class="link-arrow">›</span>
-                </div>`).join('') + `</div>`;
-        }
+        listHtml = items.length
+            ? `<div class="news-list">` + items.map(rowHtml).join('') + `</div>`
+            : `<div class="news-empty">まだお知らせはありません。</div>`;
     } else {
-        listHtml = `<div class="news-coming">ニュースは準備中です。<br>もうしばらくお待ちください。</div>`;
+        // ニュース＝週次ダイジェスト。直近1ヶ月を出し、それ以前は「過去のニュース」で開く
+        const all    = visibleOfType('ニュース');
+        const items  = newsShowAll ? all : visibleDigests(false);
+        if (!all.length) {
+            listHtml = `<div class="news-coming">ニュースは準備中です。<br>もうしばらくお待ちください。</div>`;
+        } else {
+            listHtml = `<div class="news-list">` + items.map(rowHtml).join('') + `</div>`;
+            if (!newsShowAll && all.length > items.length) {
+                listHtml += `<div class="news-more"><button class="news-more-btn">過去のニュースを見る（${all.length - items.length}件）</button></div>`;
+            }
+        }
     }
 
     menuContent.innerHTML = `
@@ -1196,7 +1229,8 @@ function showNews(tab) {
 
     menuContent.onclick = (e) => {
         const tabBtn = e.target.closest('.news-tab');
-        if (tabBtn) { showNews(tabBtn.dataset.tab); return; }
+        if (tabBtn) { newsShowAll = false; showNews(tabBtn.dataset.tab); return; }
+        if (e.target.closest('.news-more-btn')) { newsShowAll = true; showNews('ニュース'); return; }
         const item = e.target.closest('.news-item');
         if (item) showNewsItem(item.dataset.id);
     };
@@ -1209,10 +1243,12 @@ function showNewsItem(id) {
     isMenuVisible = false;
     showTextView();
     showMenuBanner();
+    const isDigest = (n.type === 'ニュース');
     cardProgress.innerText = n.date || '';
-    cardTitle.innerText = n.title || 'お知らせ';
+    cardTitle.innerText = n.title || (isDigest ? 'ニュース' : 'お知らせ');
     cardBody.innerHTML = bodyToHtml(n.body) +
-        `<div class="reg-back"><button class="reg-backbtn" onclick="showNews('お知らせ')">← お知らせ一覧に戻る</button></div>`;
+        (isDigest ? `<div class="news-source">出典：英ガーディアン紙の報道より。要約はMSアカデミーによるものです。</div>` : '') +
+        `<div class="reg-back"><button class="reg-backbtn" onclick="showNews('${isDigest ? 'ニュース' : 'お知らせ'}')">← ${isDigest ? 'ニュース' : 'お知らせ'}一覧に戻る</button></div>`;
     textView.scrollTop = 0;
 }
 
