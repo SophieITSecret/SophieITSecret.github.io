@@ -1040,7 +1040,11 @@ body:not(.menu-mode) #image-area.has-image::after {
     gap: 10px;
 }
 .nb-label { color: var(--accent2); font-size: 0.82rem; letter-spacing: 0.08em; font-weight: 700; }
-.nb-range { color: var(--text2); font-size: 0.72rem; font-variant-numeric: tabular-nums; }
+.nb-range { color: var(--text2); font-size: 0.72rem; font-variant-numeric: tabular-nums; margin-left: auto; }
+/* 押すと閉じる層の見出し */
+.news-band-btn { cursor: pointer; }
+.news-band-btn:active { background: rgba(255,255,255,0.06); }
+.nb-fold { color: var(--text2); font-size: 0.68rem; opacity: 0.8; flex-shrink: 0; margin-left: 12px; }
 /* 3ヶ月は別建てなので、上に区切りを置いて他のボタンと分ける */
 .news-more-sep { margin-top: 6px; border-color: var(--accent2); color: var(--accent2); }
 

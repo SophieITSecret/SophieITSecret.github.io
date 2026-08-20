@@ -1294,8 +1294,16 @@ function showNews(tab) {
                     <span class="news-title">${escHtml(a.title)}</span>
                     <span class="link-arrow">›</span>
                 </div>`;
-            const bandHead = (t, r) =>
-                `<div class="news-band"><span class="nb-label">${escHtml(t)}</span><span class="nb-range">${escHtml(r)}</span></div>`;
+            //   層の見出しはそのまま開閉スイッチになる（押すとその層から下を閉じる）。
+            //   今週は常に開いた状態なので閉じない。
+            const bandHead = (t, r, closeTo) =>
+                (closeTo === undefined)
+                  ? `<div class="news-band"><span class="nb-label">${escHtml(t)}</span><span class="nb-range">${escHtml(r)}</span></div>`
+                  : `<div class="news-band news-band-btn" data-level="${closeTo}" role="button">
+                        <span class="nb-label">${escHtml(t)}</span>
+                        <span class="nb-range">${escHtml(r)}</span>
+                        <span class="nb-fold">▲ 閉じる</span>
+                     </div>`;
 
             listHtml = '';
             if (newsLevel === 9) {
@@ -1307,7 +1315,7 @@ function showNews(tab) {
                 for (let i = 0; i < L.bands.length; i++) {
                     if (i <= newsLevel) {
                         if (!L.bands[i].length) continue;
-                        listHtml += bandHead(L.labels[i].label, L.labels[i].range);
+                        listHtml += bandHead(L.labels[i].label, L.labels[i].range, i > 0 ? i - 1 : undefined);
                         listHtml += `<div class="news-list">` + L.bands[i].map(artHtml).join('') + `</div>`;
                     } else if (L.bands[i].length) {
                         listHtml += `<div class="news-more"><button class="news-more-btn" data-level="${i}">${L.labels[i].btn}（${L.bands[i].length}件）</button></div>`;
@@ -1331,8 +1339,8 @@ function showNews(tab) {
     menuContent.onclick = (e) => {
         const tabBtn = e.target.closest('.news-tab');
         if (tabBtn) { newsLevel = 0; showNews(tabBtn.dataset.tab); return; }
-        const more = e.target.closest('.news-more-btn');
-        if (more) { newsLevel = parseInt(more.dataset.level, 10) || 0; showNews('ニュース'); return; }
+        const lv = e.target.closest('.news-more-btn, .news-band-btn');
+        if (lv) { newsLevel = parseInt(lv.dataset.level, 10) || 0; showNews('ニュース'); return; }
         const item = e.target.closest('.news-item');
         if (item) showNewsItem(item.dataset.id, item.dataset.idx);
     };
