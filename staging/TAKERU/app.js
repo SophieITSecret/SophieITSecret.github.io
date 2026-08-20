@@ -1156,16 +1156,17 @@ function visibleOfType(type) {
         .filter(n => n.type === type && (IS_PROD ? n.published : true))
         .sort((a, b) => b.date.localeCompare(a.date) || b.id.localeCompare(a.id, undefined, { numeric: true }));
 }
-// ニュース（週次ダイジェスト）は直近1ヶ月ぶんだけ出す。データは消さずに表示だけ絞る。
+// ニュースは直近1ヶ月ぶんだけ出す。データは消さずに表示だけ絞る。
+//   絞り込みは「記事1本ずつの日付」で行う。ダイジェストの登録日で絞ると、
+//   過去をまとめた束（例：3ヶ月ぶん）が丸ごと通ってしまうため。
 var NEWS_SHOW_DAYS = 31;
-function visibleDigests(all) {
-    const items = visibleOfType('ニュース');
-    if (all) return items;
+function newsCutoffDate() {
     const limit = new Date();
     limit.setDate(limit.getDate() - NEWS_SHOW_DAYS);
-    const lim = limit.toISOString().slice(0, 10);
-    const recent = items.filter(n => n.date >= lim);
-    return recent.length ? recent : items.slice(0, 1);   // 1ヶ月間更新が無くても最新1本は見せる
+    return limit.toISOString().slice(0, 10);
+}
+function visibleDigests(all) {
+    return visibleOfType('ニュース');
 }
 // ダイジェスト本文を記事ごとに切り分ける。
 //   「### YYYY-MM-DD 見出し」で始まる行が記事の区切り。以降が要約とリンク。
@@ -1191,10 +1192,14 @@ function parseDigest(entry) {
 // 表示できるダイジェストを、記事単位に開いて新しい順に並べる
 function digestArticles(all) {
     const list = [];
-    visibleDigests(all).forEach(entry => {
+    visibleOfType('ニュース').forEach(entry => {
         parseDigest(entry).forEach((a, i) => { a.idx = i; list.push(a); });
     });
-    return list.sort((a, b) => String(b.date).localeCompare(String(a.date)));
+    list.sort((a, b) => String(b.date).localeCompare(String(a.date)));
+    if (all) return list;
+    const lim = newsCutoffDate();
+    const recent = list.filter(a => String(a.date) >= lim);
+    return recent.length ? recent : list.slice(0, 7);   // 1ヶ月更新が無くても最新は見せる
 }
 
 // 新着の赤●は「お知らせ」「ニュース」どちらの新着でも点ける
@@ -1249,8 +1254,9 @@ function showNews(tab) {
                     <span class="news-title">${escHtml(a.title)}</span>
                     <span class="link-arrow">›</span>
                 </div>`).join('') + `</div>`;
-            if (!newsShowAll && all.length > visibleDigests(false).length) {
-                listHtml += `<div class="news-more"><button class="news-more-btn">過去のニュースを見る</button></div>`;
+            const older = digestArticles(true).length - digestArticles(false).length;
+            if (!newsShowAll && older > 0) {
+                listHtml += `<div class="news-more"><button class="news-more-btn">過去のニュースを見る（${older}件）</button></div>`;
             }
             listHtml += `<div class="news-source-foot">（出所：英ガーディアン紙）</div>`;
         }
