@@ -1012,7 +1012,7 @@ body:not(.menu-mode) #image-area.has-image::after {
     color: var(--text2);
     opacity: 0.85;
     flex-shrink: 0;
-    min-width: 5.6em;
+    min-width: 3.4em;
     font-variant-numeric: tabular-nums;
 }
 .news-title { flex: 1; font-size: 1.0rem; color: var(--text); }
@@ -1027,17 +1027,22 @@ body:not(.menu-mode) #image-area.has-image::after {
 }
 
 
-/* 時間の層の見出し（先週／1ヶ月前まで／3ヶ月前まで） */
+/* 時間の層の見出し（今週／先週／1ヶ月前まで／3ヶ月のまとめ）。右に期間を添える */
 .news-band {
     margin: 6px 0 0;
     padding: 7px 16px;
     background: var(--bg3);
     border-top: 1px solid var(--border);
     border-bottom: 1px solid var(--border);
-    color: var(--accent2);
-    font-size: 0.78rem;
-    letter-spacing: 0.08em;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
 }
+.nb-label { color: var(--accent2); font-size: 0.82rem; letter-spacing: 0.08em; font-weight: 700; }
+.nb-range { color: var(--text2); font-size: 0.72rem; font-variant-numeric: tabular-nums; }
+/* 3ヶ月は別建てなので、上に区切りを置いて他のボタンと分ける */
+.news-more-sep { margin-top: 6px; border-color: var(--accent2); color: var(--accent2); }
 
 /* さらに過去の層を開くボタン */
 .news-more { text-align: center; padding: 16px 0 8px; }
