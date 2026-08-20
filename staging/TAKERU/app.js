@@ -78,7 +78,7 @@ let cardData = [];
 let linkData = [];
 let newsData = [];
 let newsTab = 'ニュース';   // 📰内のタブ：ニュース（既定）／お知らせ
-let newsShowAll = false;    // ニュースを1ヶ月より前まで広げて表示しているか
+let newsLevel = 0;          // ニュースをどの層まで開いているか（0=今週 … 3=3ヶ月前まで）
 let curSection = [];
 let curIndex = 0;
 let navState = 'top';
@@ -1159,15 +1159,7 @@ function visibleOfType(type) {
 // ニュースは直近1ヶ月ぶんだけ出す。データは消さずに表示だけ絞る。
 //   絞り込みは「記事1本ずつの日付」で行う。ダイジェストの登録日で絞ると、
 //   過去をまとめた束（例：3ヶ月ぶん）が丸ごと通ってしまうため。
-var NEWS_SHOW_DAYS = 31;
-function newsCutoffDate() {
-    const limit = new Date();
-    limit.setDate(limit.getDate() - NEWS_SHOW_DAYS);
-    return limit.toISOString().slice(0, 10);
-}
-function visibleDigests(all) {
-    return visibleOfType('ニュース');
-}
+
 // ダイジェスト本文を記事ごとに切り分ける。
 //   「### YYYY-MM-DD 見出し」で始まる行が記事の区切り。以降が要約とリンク。
 //   区切りが無い本文（お知らせ等）は、全体を1件として返す。
@@ -1190,16 +1182,42 @@ function parseDigest(entry) {
     return out;
 }
 // 表示できるダイジェストを、記事単位に開いて新しい順に並べる
-function digestArticles(all) {
+function digestArticles() {
     const list = [];
     visibleOfType('ニュース').forEach(entry => {
         parseDigest(entry).forEach((a, i) => { a.idx = i; list.push(a); });
     });
-    list.sort((a, b) => String(b.date).localeCompare(String(a.date)));
-    if (all) return list;
-    const lim = newsCutoffDate();
-    const recent = list.filter(a => String(a.date) >= lim);
-    return recent.length ? recent : list.slice(0, 7);   // 1ヶ月更新が無くても最新は見せる
+    return list.sort((a, b) => String(b.date).localeCompare(String(a.date)));
+}
+
+// 「時間軸で畳む」表示：近いものは開いた状態、遠いものはボタンで開く。
+//   層の境目は「最新記事の日付」を起点にする。今日を起点にすると、
+//   更新が滞ったときに最新週が空になってしまうため。
+var NEWS_LAYERS = [
+    { key: 0, days:   7, label: '今週' },
+    { key: 1, days:  14, label: '先週', btn: '先週を見る' },
+    { key: 2, days:  31, label: '1ヶ月前まで', btn: '1ヶ月前までを見る' },
+    { key: 3, days:  93, label: '3ヶ月前まで', btn: '3ヶ月前までを見る' }
+];
+function daysAgoFrom_(baseStr, n) {
+    const d = new Date(baseStr + 'T00:00:00');
+    d.setDate(d.getDate() - n + 1);
+    return d.toISOString().slice(0, 10);
+}
+// 記事を層ごとに仕分ける。返り値は層と同じ並びの配列。
+function digestByLayer() {
+    const list = digestArticles();
+    const bands = NEWS_LAYERS.map(() => []);
+    if (!list.length) return bands;
+    const base = list[0].date;                       // 最新記事の日付が起点
+    const edges = NEWS_LAYERS.map(l => daysAgoFrom_(base, l.days));
+    list.forEach(a => {
+        for (let i = 0; i < edges.length; i++) {
+            if (String(a.date) >= edges[i]) { bands[i].push(a); return; }
+        }
+        bands[bands.length - 1].push(a);             // 3ヶ月より古いものは最後の層に含める
+    });
+    return bands;
 }
 
 // 新着の赤●は「お知らせ」「ニュース」どちらの新着でも点ける
@@ -1242,21 +1260,27 @@ function showNews(tab) {
             ? `<div class="news-list">` + items.map(rowHtml).join('') + `</div>`
             : `<div class="news-empty">まだお知らせはありません。</div>`;
     } else {
-        // ニュース＝週次ダイジェストを記事単位に開いて並べる。押すと要約が出る。
-        const all = visibleOfType('ニュース');
-        if (!all.length) {
+        // ニュース＝記事を時間の層に畳んで見せる。近い層は開いた状態、遠い層はボタンで開く。
+        if (!visibleOfType('ニュース').length) {
             listHtml = `<div class="news-coming">ニュースは準備中です。<br>もうしばらくお待ちください。</div>`;
         } else {
-            const arts = digestArticles(newsShowAll);
-            listHtml = `<div class="news-list">` + arts.map(a =>
+            const bands = digestByLayer();
+            const artHtml = (a) =>
                 `<div class="menu-item news-item" data-id="${a.src}" data-idx="${a.idx}">
                     <span class="news-date">${escHtml(a.date)}</span>
                     <span class="news-title">${escHtml(a.title)}</span>
                     <span class="link-arrow">›</span>
-                </div>`).join('') + `</div>`;
-            const older = digestArticles(true).length - digestArticles(false).length;
-            if (!newsShowAll && older > 0) {
-                listHtml += `<div class="news-more"><button class="news-more-btn">過去のニュースを見る（${older}件）</button></div>`;
+                </div>`;
+            listHtml = '';
+            for (let i = 0; i < bands.length; i++) {
+                if (i <= newsLevel) {
+                    if (!bands[i].length) continue;
+                    if (i > 0) listHtml += `<div class="news-band">${NEWS_LAYERS[i].label}</div>`;
+                    listHtml += `<div class="news-list">` + bands[i].map(artHtml).join('') + `</div>`;
+                } else if (bands[i].length) {
+                    // まだ開いていない層はボタンで示す（押すとその層まで広がる）
+                    listHtml += `<div class="news-more"><button class="news-more-btn" data-level="${i}">${NEWS_LAYERS[i].btn}（${bands[i].length}件）</button></div>`;
+                }
             }
             listHtml += `<div class="news-source-foot">（出所：英ガーディアン紙）</div>`;
         }
@@ -1271,8 +1295,9 @@ function showNews(tab) {
 
     menuContent.onclick = (e) => {
         const tabBtn = e.target.closest('.news-tab');
-        if (tabBtn) { newsShowAll = false; showNews(tabBtn.dataset.tab); return; }
-        if (e.target.closest('.news-more-btn')) { newsShowAll = true; showNews('ニュース'); return; }
+        if (tabBtn) { newsLevel = 0; showNews(tabBtn.dataset.tab); return; }
+        const more = e.target.closest('.news-more-btn');
+        if (more) { newsLevel = parseInt(more.dataset.level, 10) || 0; showNews('ニュース'); return; }
         const item = e.target.closest('.news-item');
         if (item) showNewsItem(item.dataset.id, item.dataset.idx);
     };

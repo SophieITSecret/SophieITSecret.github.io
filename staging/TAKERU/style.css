@@ -1026,7 +1026,20 @@ body:not(.menu-mode) #image-area.has-image::after {
     opacity: 0.85;
 }
 
-/* 過去のニュースを開くボタン */
+
+/* 時間の層の見出し（先週／1ヶ月前まで／3ヶ月前まで） */
+.news-band {
+    margin: 6px 0 0;
+    padding: 7px 16px;
+    background: var(--bg3);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    color: var(--accent2);
+    font-size: 0.78rem;
+    letter-spacing: 0.08em;
+}
+
+/* さらに過去の層を開くボタン */
 .news-more { text-align: center; padding: 16px 0 8px; }
 .news-more-btn {
     background: transparent;
