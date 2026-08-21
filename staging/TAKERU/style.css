@@ -214,12 +214,13 @@ body {
     margin-top: 20px;
     /* 「学習」は身構えさせるので「スタート」に。角丸を端の半円まで回して
        やわらかい印象にする（左右の余白は文字が短くなったぶん厚めに） */
-    padding: 14px 62px;
+    padding: 16px 66px;
     background: transparent;
     border: 2px solid var(--accent);
     color: var(--accent);
     font-family: 'Noto Sans JP', sans-serif;
-    font-size: 1.05rem;
+    font-size: 1.45rem;      /* 入口の一言なので、遠慮せず大きく */
+    font-weight: 700;
     border-radius: 999px;
     cursor: pointer;
     letter-spacing: 0.15em;
