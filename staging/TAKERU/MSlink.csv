@@ -132,11 +132,30 @@
 869,地図・地形・データ,5. 統計・データ,Our World in Data（戦争と平和の統計）,https://ourworldindata.org/war-and-peace,1
 870,地図・地形・データ,5. 統計・データ,UCDP 武力紛争データベース,https://ucdp.uu.se/,1
 871,地図・地形・データ,5. 統計・データ,世界銀行 各国データ,https://data.worldbank.org/,1
-611,ニュース・情勢,1. 日本の安全保障,準備中,,0
-621,ニュース・情勢,2. 世界の情勢,準備中,,0
-631,ニュース・情勢,3. 軍事専門ニュース,準備中,,0
-641,ニュース・情勢,4. 地域別ニュース,準備中,,0
-651,ニュース・情勢,5. 注目テーマ,準備中,,0
+872,ニュース・情勢,1. 日本の安全保障,朝雲デジタル（防衛省・自衛隊の専門紙）,https://www.asagumo-news.com/,0
+873,ニュース・情勢,1. 日本の安全保障,Jディフェンスニュース,https://j-defense.ikaros.jp/,0
+874,ニュース・情勢,1. 日本の安全保障,防衛省 報道発表,https://www.mod.go.jp/j/press/news/index.html,0
+875,ニュース・情勢,1. 日本の安全保障,統合幕僚監部 報道発表（周辺の動向）,https://www.mod.go.jp/js/press/index.html,0
+876,ニュース・情勢,1. 日本の安全保障,外務省 報道発表,https://www.mofa.go.jp/mofaj/press/release/index.html,0
+877,ニュース・情勢,2. 世界の情勢,The Guardian World（TAKERUニュースの出典）,https://www.theguardian.com/world,1
+878,ニュース・情勢,2. 世界の情勢,BBC World,https://www.bbc.com/news/world,1
+879,ニュース・情勢,2. 世界の情勢,AFPBB News（日本語の国際ニュース）,https://www.afpbb.com/,0
+880,ニュース・情勢,2. 世界の情勢,AP News World,https://apnews.com/hub/world-news,1
+881,ニュース・情勢,2. 世界の情勢,NHK 国際ニュース,https://www3.nhk.or.jp/news/cat6.html,0
+882,ニュース・情勢,3. 軍事専門ニュース,Defense News,https://www.defensenews.com/,1
+883,ニュース・情勢,3. 軍事専門ニュース,Breaking Defense,https://breakingdefense.com/,1
+884,ニュース・情勢,3. 軍事専門ニュース,War on the Rocks（専門家の論考）,https://warontherocks.com/,1
+885,ニュース・情勢,3. 軍事専門ニュース,Janes（軍事情報の老舗）,https://www.janes.com/,1
+886,ニュース・情勢,3. 軍事専門ニュース,USNI News（米海軍協会）,https://news.usni.org/,1
+887,ニュース・情勢,4. 地域別ニュース,South China Morning Post（中国・アジア）,https://www.scmp.com/,1
+888,ニュース・情勢,4. 地域別ニュース,The Diplomat（アジア太平洋）,https://thediplomat.com/,1
+889,ニュース・情勢,4. 地域別ニュース,Kyiv Independent（ウクライナ）,https://kyivindependent.com/,1
+890,ニュース・情勢,4. 地域別ニュース,Al Jazeera（中東）,https://www.aljazeera.com/,1
+891,ニュース・情勢,4. 地域別ニュース,Times of Israel（イスラエル）,https://www.timesofisrael.com/,1
+892,ニュース・情勢,5. 注目テーマ,防衛研究所 NIDSコメンタリー（時事の論評）,https://www.nids.mod.go.jp/publication/commentary/comme_index.html,0
+893,ニュース・情勢,5. 注目テーマ,CSIS 分析・論考,https://www.csis.org/analysis,1
+894,ニュース・情勢,5. 注目テーマ,Foreign Affairs,https://www.foreignaffairs.com/,1
+895,ニュース・情勢,5. 注目テーマ,Council on Foreign Relations 世界の紛争を追う,https://www.cfr.org/global-conflict-tracker,1
 711,歴史・教養,1. 日本の戦史,準備中,,0
 721,歴史・教養,2. 世界の戦史,準備中,,0
 731,歴史・教養,3. 近現代戦争,準備中,,0
