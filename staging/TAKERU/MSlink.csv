@@ -87,13 +87,32 @@
 815,世界の軍事,6. 国際研究機関,RAND Corporation,https://www.rand.org/,1
 816,世界の軍事,6. 国際研究機関,Brookings Institution,https://www.brookings.edu/,3
 818,世界の軍事,6. 国際研究機関,日本国際問題研究所（JIIA）,https://www.jiia.or.jp/jpn/,0
-411,戦略・戦争,1. 戦争の基礎,準備中,,0
-421,戦略・戦争,2. 戦略とは何か,準備中,,0
-431,戦略・戦争,3. 作戦と戦術,準備中,,0
-441,戦略・戦争,4. 兵站・補給,準備中,,0
-451,戦略・戦争,5. 現代戦,準備中,,0
-461,戦略・戦争,6. 非正規戦・ハイブリッド戦,準備中,,0
-471,戦略・戦争,7. 新領域（サイバー・宇宙）,準備中,,0
+823,戦略・戦争,1. 戦争の基礎,防衛白書 わが国の安全保障・防衛政策,https://www.mod.go.jp/j/policy/agenda/guideline/index.html,0
+824,戦略・戦争,1. 戦争の基礎,はじめての防衛白書（入門編）,https://www.mod.go.jp/j/kids/wp/index.html,0
+825,戦略・戦争,1. 戦争の基礎,防衛省 防衛白書（各年版）,https://www.mod.go.jp/j/press/wp/index.html,0
+826,戦略・戦争,1. 戦争の基礎,戦争（ウィキペディア）,https://ja.wikipedia.org/wiki/%E6%88%A6%E4%BA%89,0
+827,戦略・戦争,2. 戦略とは何か,国家安全保障戦略（内閣官房）,https://www.cas.go.jp/jp/siryou/221216anzenhoshou.html,0
+828,戦略・戦争,2. 戦略とは何か,孫子（ウィキペディア）,https://ja.wikipedia.org/wiki/%E5%AD%AB%E5%AD%90_(%E6%9B%B8%E7%89%A9),0
+829,戦略・戦争,2. 戦略とは何か,戦争論・クラウゼヴィッツ（ウィキペディア）,https://ja.wikipedia.org/wiki/%E6%88%A6%E4%BA%89%E8%AB%96,0
+830,戦略・戦争,2. 戦略とは何か,軍事戦略（ウィキペディア）,https://ja.wikipedia.org/wiki/%E8%BB%8D%E4%BA%8B%E6%88%A6%E7%95%A5,0
+831,戦略・戦争,2. 戦略とは何か,防衛研究所 NIDSコメンタリー,https://www.nids.mod.go.jp/publication/commentary/comme_index.html,0
+832,戦略・戦争,3. 作戦と戦術,戦術（ウィキペディア）,https://ja.wikipedia.org/wiki/%E6%88%A6%E8%A1%93,0
+833,戦略・戦争,3. 作戦と戦術,作戦術（ウィキペディア）,https://ja.wikipedia.org/wiki/%E4%BD%9C%E6%88%A6%E8%A1%93,0
+834,戦略・戦争,3. 作戦と戦術,防衛研究所 刊行物（論考・レポート）,https://www.nids.mod.go.jp/publication/,0
+835,戦略・戦争,3. 作戦と戦術,米陸軍 教範・ドクトリン（Army Publishing）,https://armypubs.army.mil/,4
+836,戦略・戦争,4. 兵站・補給,兵站（ウィキペディア）,https://ja.wikipedia.org/wiki/%E5%85%B5%E7%AB%99,0
+837,戦略・戦争,4. 兵站・補給,防衛省 装備品等の調達・後方支援,https://www.mod.go.jp/atla/souhon.html,0
+838,戦略・戦争,5. 現代戦,防衛白書 わが国を取り巻く安全保障環境,https://www.mod.go.jp/j/surround/index.html,0
+839,戦略・戦争,5. 現代戦,防衛研究所 東アジア戦略概観,https://www.nids.mod.go.jp/publication/east-asian/index.html,0
+840,戦略・戦争,5. 現代戦,ロシアのウクライナ侵攻（ウィキペディア）,https://ja.wikipedia.org/wiki/%E3%83%AD%E3%82%B7%E3%82%A2%E3%81%AE%E3%82%A6%E3%82%AF%E3%83%A9%E3%82%A4%E3%83%8A%E4%BE%B5%E6%94%BB,0
+841,戦略・戦争,6. 非正規戦・ハイブリッド戦,ハイブリッド戦争（ウィキペディア）,https://ja.wikipedia.org/wiki/%E3%83%8F%E3%82%A4%E3%83%96%E3%83%AA%E3%83%83%E3%83%89%E6%88%A6%E4%BA%89,0
+842,戦略・戦争,6. 非正規戦・ハイブリッド戦,非正規戦争（ウィキペディア）,https://ja.wikipedia.org/wiki/%E9%9D%9E%E6%AD%A3%E8%A6%8F%E6%88%A6%E4%BA%89,0
+843,戦略・戦争,6. 非正規戦・ハイブリッド戦,NATO 対ハイブリッド脅威,https://www.nato.int/cps/en/natohq/topics_156338.htm,1
+844,戦略・戦争,6. 非正規戦・ハイブリッド戦,情報戦・認知戦（防衛研究所の論考）,https://www.nids.mod.go.jp/publication/commentary/comme_index.html,0
+845,戦略・戦争,7. 新領域（サイバー・宇宙）,防衛白書 サイバー領域での対応,https://www.mod.go.jp/j/press/wp/wp2024/html/n310405000.html,0
+846,戦略・戦争,7. 新領域（サイバー・宇宙）,内閣サイバーセキュリティセンター（NISC）,https://www.nisc.go.jp/,0
+847,戦略・戦争,7. 新領域（サイバー・宇宙）,航空自衛隊 宇宙領域の取組,https://www.mod.go.jp/asdf/space/,0
+848,戦略・戦争,7. 新領域（サイバー・宇宙）,内閣府 宇宙開発戦略推進事務局,https://www8.cao.go.jp/space/,0
 511,地図・地形・データ,1. 世界地図,準備中,,0
 521,地図・地形・データ,2. 日本地図,準備中,,0
 531,地図・地形・データ,3. 地形・地理,準備中,,0
