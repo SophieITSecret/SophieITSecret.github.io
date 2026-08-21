@@ -227,7 +227,11 @@ async function loadNewsCSV() {
             type: c[2]?.trim() || 'お知らせ',
             title: c[3]?.trim() || '',
             body: c[4] || '',                  // 本文は改行を残すのでtrimしない
-            published: c[5]?.trim() === '1'
+            published: c[5]?.trim() === '1',
+            // 上の層に持ち上げる印。1記事1行なので、印を立てるだけで
+            // 3ヶ月表・年次表の素材になる（同じ記事を作り直さない）
+            monthly: c[6]?.trim() === '1',
+            yearly:  c[7]?.trim() === '1'
         })).filter(d => d.id);
     } catch (e) {
         console.error('お知らせCSVロード失敗:', e);
@@ -1160,39 +1164,13 @@ function visibleOfType(type) {
 //   絞り込みは「記事1本ずつの日付」で行う。ダイジェストの登録日で絞ると、
 //   過去をまとめた束（例：3ヶ月ぶん）が丸ごと通ってしまうため。
 
-// ダイジェスト本文を記事ごとに切り分ける。
-//   「### YYYY-MM-DD 見出し」で始まる行が記事の区切り。以降が要約とリンク。
-//   区切りが無い本文（お知らせ等）は、全体を1件として返す。
-function parseDigest(entry) {
-    const lines = String(entry.body || '').split(/\r?\n/);
-    const out = [];
-    let cur = null;
-    for (const line of lines) {
-        const m = line.match(/^\s*###\s*(\d{4}-\d{2}-\d{2})?\s*(.*)$/);
-        if (m) {
-            if (cur) out.push(cur);
-            cur = { date: m[1] || entry.date, title: (m[2] || '').trim(), body: '', src: entry.id };
-        } else if (cur) {
-            cur.body += line + '\n';
-        }
-    }
-    if (cur) out.push(cur);
-    if (!out.length) return [{ date: entry.date, title: entry.title, body: entry.body, src: entry.id }];
-    out.forEach(a => { a.body = a.body.trim(); });
-    return out;
-}
-// 表示できるダイジェストを、記事単位に開いて新しい順に並べる
+// 記事は1件1行で持つ。表示のときだけ、期間と印で層に振り分ける。
 function digestArticles() {
-    const list = [];
-    visibleOfType('ニュース').forEach(entry => {
-        parseDigest(entry).forEach((a, i) => { a.idx = i; list.push(a); });
-    });
-    return list.sort((a, b) => String(b.date).localeCompare(String(a.date)));
+    return visibleOfType('ニュース')
+        .slice()
+        .sort((a, b) => String(b.date).localeCompare(String(a.date)));
 }
 
-// 「時間軸で畳む」表示：近いものは開いた状態、遠いものはボタンで開く。
-//   層の境目は「最新記事の日付」を起点にする。今日を起点にすると、
-//   更新が滞ったときに最新週が空になってしまうため。
 // 日付の道具。toISOString はUTCに直すため日本時間だと1日ずれる。自前で組む。
 function ymd_(d) {
     const p = n => String(n).padStart(2, '0');
@@ -1214,16 +1192,17 @@ function mmdd_(s) {
 function range_(a, b) { return mmdd_(a) + '〜' + mmdd_(b); }
 
 // 記事を時間の層に仕分ける。
-//   今週・先週は土〜金の週で区切る。1ヶ月はその前の2週間。
-//   3ヶ月はそれより古いぶんで、別画面として扱う（本文が別建ての選抜表のため）。
+//   近い層（今週・先週・1ヶ月前まで）は、その期間の記事をすべて出す。
+//   遠い層（3ヶ月）は「月次重要」の印が付いたものだけに絞る。
+//   ＝「近いものは詳しく、遠いものは絞って」。同じ記事に印を足すだけで上の層ができる。
 function digestByLayer() {
     const list = digestArticles();
-    const empty = { bands: [[], [], []], older: [], labels: [] };
+    const empty = { bands: [[], [], []], older: [], labels: [], olderRange: '' };
     if (!list.length) return empty;
 
     const w0 = weekStart_(list[0].date);          // 最新記事を含む週の土曜
     const w1 = addDays_(w0, -7);                  // 先週の土曜
-    const mStart = addDays_(w0, -21);             // 1ヶ月の層の始まり（さらに2週前）
+    const mStart = addDays_(w0, -21);             // 1ヶ月の層の始まり
 
     const bands = [[], [], []], older = [];
     list.forEach(a => {
@@ -1231,7 +1210,7 @@ function digestByLayer() {
         if (d >= w0)          bands[0].push(a);
         else if (d >= w1)     bands[1].push(a);
         else if (d >= mStart) bands[2].push(a);
-        else                  older.push(a);
+        else if (a.monthly)   older.push(a);       // 1ヶ月より古いものは印のあるものだけ
     });
     const labels = [
         { label: '今週',        range: range_(w0, addDays_(w0, 6)) },
@@ -1289,7 +1268,7 @@ function showNews(tab) {
         } else {
             const L = digestByLayer();
             const artHtml = (a) =>
-                `<div class="menu-item news-item" data-id="${a.src}" data-idx="${a.idx}">
+                `<div class="menu-item news-item" data-id="${a.id}">
                     <span class="news-date">${escHtml(mmdd_(a.date))}</span>
                     <span class="news-title">${escHtml(a.title)}</span>
                     <span class="link-arrow">›</span>
@@ -1342,21 +1321,15 @@ function showNews(tab) {
         const lv = e.target.closest('.news-more-btn, .news-band-btn');
         if (lv) { newsLevel = parseInt(lv.dataset.level, 10) || 0; showNews('ニュース'); return; }
         const item = e.target.closest('.news-item');
-        if (item) showNewsItem(item.dataset.id, item.dataset.idx);
+        if (item) showNewsItem(item.dataset.id);
     };
 }
 
-function showNewsItem(id, idx) {
+function showNewsItem(id) {
     const n = newsData.find(d => d.id === id);
     if (!n) return;
     const isDigest = (n.type === 'ニュース');
-    // ダイジェストは本文を記事単位に切って、選ばれた1本だけを出す
-    let date = n.date, title = n.title, body = n.body;
-    if (isDigest) {
-        const arts = parseDigest(n);
-        const a = arts[parseInt(idx, 10)] || arts[0];
-        if (a) { date = a.date; title = a.title; body = a.body; }
-    }
+    const date = n.date, title = n.title, body = n.body;
     navState = 'newsitem';
     isMenuVisible = false;
     showTextView();

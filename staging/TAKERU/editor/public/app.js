@@ -1745,6 +1745,9 @@ function renderNewsEditList() {
         <span class="nei-title">${esc(n.title || '（無題）')}</span>
       </div>
       <div class="nei-ops">
+        ${n.type === 'ニュース' ? `
+        <button class="nei-flag ${n.monthly ? 'on' : ''}" title="月次重要（3ヶ月表に残す）" onclick="toggleNewsFlag('${n.id}','monthly')">月</button>
+        <button class="nei-flag ${n.yearly ? 'on' : ''}" title="年次重要（年表に残す）" onclick="toggleNewsFlag('${n.id}','yearly')">年</button>` : ''}
         <button title="公開/下書きを切替" onclick="toggleNewsPub('${n.id}')">${n.published ? '👁' : '🚫'}</button>
         <button title="削除" onclick="deleteNews('${n.id}')">🗑</button>
       </div>
@@ -1791,10 +1794,61 @@ function applyNewsForm() {
     const n = newsItems.find(x => x.id === newsEditId);
     if (n) Object.assign(n, { date, type, title, body, published });
   } else {
-    newsItems.push({ id: genNewsId(), date, type, title, body, published });
+    newsItems.push({ id: genNewsId(), date, type, title, body, published, monthly: false, yearly: false });
   }
   markNewsDirty(true);
   startNewNews();
+}
+// ダイジェストをまとめて取り込む。
+//   Cowork君が作った「### YYYY-MM-DD 見出し」形式の本文を貼ると、
+//   1記事1行に分解して一覧に加える。牧村さんの手順は「貼って保存」のまま。
+function importDigest() {
+  const box = document.getElementById('nfBody');
+  const text = box ? box.value : '';
+  if (!text.trim()) { alert('本文の欄にダイジェストを貼ってから押してください。'); return; }
+
+  const blocks = text.split(/(?=^###\s)/m).filter(b => /^###\s/.test(b.trim()));
+  if (!blocks.length) {
+    alert('「### 日付 見出し」で始まる記事が見つかりませんでした。書式を確認してください。');
+    return;
+  }
+  const today = new Date().toISOString().slice(0, 10);
+  const known = new Set(newsItems.map(n => n.date + '\u0001' + n.title));
+  const added = [], skipped = [];
+  for (const b of blocks) {
+    const m = b.match(/^###\s*(\d{4}-\d{2}-\d{2})?\s*(.*)$/m);
+    if (!m) continue;
+    const date = m[1] || today;
+    const title = (m[2] || '').trim();
+    const body = b.split('\n').slice(1).join('\n').trim();
+    if (!title) continue;
+    if (known.has(date + '\u0001' + title)) { skipped.push(title); continue; }   // 二重取り込み防止
+    known.add(date + '\u0001' + title);
+    added.push({ date, type: 'ニュース', title, body, published: true, monthly: false, yearly: false });
+  }
+  if (!added.length) { alert('新しい記事はありませんでした（すべて取り込み済み）。'); return; }
+  if (!confirm(added.length + '本の記事を取り込みます。'
+      + (skipped.length ? '（' + skipped.length + '本は取り込み済みのため飛ばします）' : '')
+      + ' よろしいですか？')) return;
+
+  let max = 0;
+  for (const n of newsItems) { const mm = /(\d+)$/.exec(n.id || ''); if (mm) max = Math.max(max, parseInt(mm[1], 10)); }
+  added.forEach((a, i) => { a.id = 'N' + String(max + i + 1).padStart(4, '0'); newsItems.push(a); });
+
+  if (box) box.value = '';
+  markNewsDirty(true);
+  startNewNews();
+  renderNewsEditList();
+  alert(added.length + '本を取り込みました。内容を確認して「💾 保存する」を押してください。');
+}
+
+// 月次・年次の印を切り替える。印は「上の層に持ち上げる」意味を持つ。
+function toggleNewsFlag(id, key) {
+  const n = newsItems.find(x => x.id === id);
+  if (!n) return;
+  n[key] = !n[key];
+  markNewsDirty(true);
+  renderNewsEditList();
 }
 function toggleNewsPub(id) {
   const n = newsItems.find(x => x.id === id);

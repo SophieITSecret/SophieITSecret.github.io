@@ -423,3 +423,17 @@ textarea.svg-overlay-input { min-height:120px; font-family:monospace; font-size:
   padding: 1px 6px;
   font-weight: normal;
 }
+
+/* 月次・年次の印（3ヶ月表・年表へ持ち上げる目印） */
+.nei-flag {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text3);
+  border-radius: 3px;
+  font-size: 0.68rem;
+  padding: 2px 5px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.nei-flag:hover { border-color: var(--accent2); }
+.nei-flag.on { background: rgba(224,164,88,.22); border-color: #e0a458; color: #e0a458; font-weight: 700; }
