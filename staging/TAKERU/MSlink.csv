@@ -114,7 +114,7 @@
 848,戦略・戦争,7. 新領域（サイバー・宇宙）,内閣府 宇宙開発戦略推進事務局,https://www8.cao.go.jp/space/,0
 851,地図・地形・データ,1. 世界地図,Google マップ,https://www.google.com/maps,0
 852,地図・地形・データ,1. 世界地図,Google Earth（3Dで地球を見る）,https://earth.google.com/web/,0
-853,地図・地形・データ,1. 世界地図,NASA Worldview（衛星画像・当日分も）,https://worldview.earthdata.nasa.gov/,1
+853,地図・地形・データ,1. 世界地図,NASA Worldview（衛星画像・当日分も）,https://worldview.earthdata.nasa.gov/,0
 854,地図・地形・データ,1. 世界地図,OpenStreetMap,https://www.openstreetmap.org/,0
 855,地図・地形・データ,2. 日本地図,地理院地図（国土地理院）,https://maps.gsi.go.jp/,0
 856,地図・地形・データ,2. 日本地図,地理院地図の使い方,https://maps.gsi.go.jp/help/intro/,0
@@ -123,11 +123,11 @@
 859,地図・地形・データ,3. 地形・地理,地理院地図 断面図の作り方（高低差を見る）,https://maps.gsi.go.jp/help/intro/kinolist/4-danmen.html,0
 860,地図・地形・データ,3. 地形・地理,地理院地図 3D表示,https://maps.gsi.go.jp/help/intro/kinolist/2-3d.html,0
 861,地図・地形・データ,3. 地形・地理,地形（ウィキペディア）,https://ja.wikipedia.org/wiki/%E5%9C%B0%E5%BD%A2,0
-862,地図・地形・データ,3. 地形・地理,海上保安庁,https://www.kaiho.mlit.go.jp/,0
-863,地図・地形・データ,4. 距離・位置,Great Circle Mapper（2点間の距離と射程円）,http://www.gcmap.com/,1
-864,地図・地形・データ,4. 距離・位置,Great Circle Map（3Dの地球で最短経路）,https://www.greatcirclemap.com/,1
-865,地図・地形・データ,4. 距離・位置,Flightradar24（航空機のいまを追う）,https://www.flightradar24.com/,1
-866,地図・地形・データ,4. 距離・位置,MarineTraffic（船舶のいまを追う）,https://www.marinetraffic.com/,1
+862,地図・地形・データ,3. 地形・地理,海しる（海の今を地図に重ねて見る）,https://www.msil.go.jp/,0
+863,地図・地形・データ,4. 距離・位置,Great Circle Mapper（2点間の距離と射程円）,http://www.gcmap.com/,0
+864,地図・地形・データ,4. 距離・位置,Great Circle Map（3Dの地球で最短経路）,https://www.greatcirclemap.com/,0
+865,地図・地形・データ,4. 距離・位置,Flightradar24（航空機のいまを追う）,https://www.flightradar24.com/,0
+866,地図・地形・データ,4. 距離・位置,MarineTraffic（船舶のいまを追う）,https://www.marinetraffic.com/,0
 867,地図・地形・データ,4. 距離・位置,排他的経済水域（EEZ）とは,https://ja.wikipedia.org/wiki/%E6%8E%92%E4%BB%96%E7%9A%84%E7%B5%8C%E6%B8%88%E6%B0%B4%E5%9F%9F,0
 869,地図・地形・データ,5. 統計・データ,Our World in Data（戦争と平和の統計）,https://ourworldindata.org/war-and-peace,1
 870,地図・地形・データ,5. 統計・データ,UCDP 武力紛争データベース,https://ucdp.uu.se/,1
