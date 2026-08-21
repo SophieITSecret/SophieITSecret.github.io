@@ -264,6 +264,14 @@ function parseCSV(text) {
 // ==========================================
 // translate.goog URL変換
 // ==========================================
+// パソコンかどうか（スマホ・タブレット以外）。翻訳経路の選択に使う。
+function isDesktop_() {
+    const ua = navigator.userAgent || '';
+    if (/Android|iPhone|iPod|iPad|Mobile/i.test(ua)) return false;
+    if (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1) return false;  // iPad
+    return true;
+}
+
 function toTranslateGoogUrl(url) {
     try {
         const u = new URL(url);
@@ -277,12 +285,16 @@ function toTranslateGoogUrl(url) {
 
 function openLink(item) {
     if (!item.url) return;
-    // 翻訳の中継には2つの経路があり、拒否するサイトが経路ごとに違う。
-    //   1 = 新形式（…translate.goog）。ふつうはこちら
-    //   3 = 旧形式（translate.google.com/translate?u=）。新形式を弾くサイト向け
-    if (item.translate === 1) {
+    // 翻訳の中継をどう通すか。サイトによって通る経路が違うので、リンクごとに指定する。
+    //   1 = 翻訳（…translate.goog）。ふつうはこちら
+    //   3 = 翻訳（旧形式）。新形式を弾くサイト向け（中国国防部・CSTOなど）
+    //   4 = スマホだけ翻訳し、パソコンでは原文を開く。
+    //       米政府サイトなどは、パソコンからの翻訳中継を拒否して
+    //       「Can't translate this page」を返すため、無駄な画面を挟まない。
+    const t = item.translate;
+    if (t === 1 || (t === 4 && !isDesktop_())) {
         window.open(toTranslateGoogUrl(item.url), '_blank');
-    } else if (item.translate === 3) {
+    } else if (t === 3) {
         window.open('https://translate.google.com/translate?sl=auto&tl=ja&u=' + encodeURIComponent(item.url), '_blank');
     } else {
         window.open(item.url, '_blank');
@@ -1114,7 +1126,7 @@ function showLinkList(genre) {
             const isReady = item.url && item.name !== '準備中';
             if (isReady) {
                 let badge = '';
-                if (item.translate === 1 || item.translate === 3) badge = '<span class="link-badge badge-jp">JP</span>';
+                if (item.translate === 1 || item.translate === 3 || item.translate === 4) badge = '<span class="link-badge badge-jp">JP</span>';
                 if (item.translate === 2) badge = '<span class="link-badge badge-pdf">PDF</span>';
                 html += `<div class="menu-item link-item" data-id="${item.id}">
                     <span class="link-name">${item.name}</span>
