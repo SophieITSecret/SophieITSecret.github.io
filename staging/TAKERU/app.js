@@ -1190,6 +1190,13 @@ function mmdd_(s) {
     return m ? (parseInt(m[1], 10) + '/' + m[2]) : String(s);
 }
 function range_(a, b) { return mmdd_(a) + '〜' + mmdd_(b); }
+// 3ヶ月のような広い層は、日付まで出すと細かすぎるので月で示す（例：5月〜7月）
+function monthRange_(a, b) {
+    const ma = String(a).match(/^\d{4}-(\d{2})/), mb = String(b).match(/^\d{4}-(\d{2})/);
+    if (!ma || !mb) return range_(a, b);
+    const x = parseInt(ma[1], 10) + '月', y = parseInt(mb[1], 10) + '月';
+    return (x === y) ? x : (x + '〜' + y);
+}
 
 // 記事を時間の層に仕分ける。
 //   近い層（今週・先週・1ヶ月前まで）は、その期間の記事をすべて出す。
@@ -1218,7 +1225,7 @@ function digestByLayer() {
         { label: '1ヶ月前まで', range: range_(mStart, addDays_(w1, -1)), btn: '1ヶ月前までを見る' }
     ];
     return { bands: bands, older: older, labels: labels,
-             olderRange: older.length ? range_(older[older.length - 1].date, older[0].date) : '' };
+             olderRange: older.length ? monthRange_(older[older.length - 1].date, older[0].date) : '' };
 }
 
 // 新着の赤●は「お知らせ」「ニュース」どちらの新着でも点ける

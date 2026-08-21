@@ -360,16 +360,16 @@ textarea.svg-overlay-input { min-height:120px; font-family:monospace; font-size:
 .mc-email { font-family:'Consolas',monospace; color:var(--text); }
 
 /* お知らせ編集 */
-.news-modal-box { width:980px; max-width:97vw; height:88vh; display:flex; flex-direction:column; }
+.news-modal-box { width:1180px; max-width:97vw; height:88vh; display:flex; flex-direction:column; }
 .news-editor-wrap { flex:1; display:flex; gap:14px; overflow:hidden; }
-.news-list-col { flex:1.1; display:flex; flex-direction:column; min-width:0; }
+.news-list-col { flex:1.4; display:flex; flex-direction:column; min-width:0; }
 .news-form-col { flex:1; display:flex; flex-direction:column; gap:8px; overflow:auto; }
 .news-col-head { display:flex; align-items:center; justify-content:space-between; font-size:0.82rem; color:var(--text2); padding:2px 2px 6px; }
 .news-edit-list { flex:1; overflow:auto; border:1px solid var(--border); border-radius:6px; }
 .news-edit-empty { color:var(--text2); font-size:0.85rem; padding:24px; text-align:center; }
 .news-edit-item { display:flex; align-items:center; border-bottom:1px solid var(--border); }
 .news-edit-item.editing { background:rgba(76,175,80,.10); }
-.nei-main { flex:1; display:flex; align-items:center; gap:8px; padding:8px 10px; cursor:pointer; min-width:0; }
+.nei-main { flex:1; display:flex; align-items:center; gap:6px; padding:8px 8px; cursor:pointer; min-width:0; }
 .nei-main:hover { background:rgba(255,255,255,.04); }
 .nei-badge { font-size:0.68rem; padding:1px 6px; border-radius:3px; flex-shrink:0; }
 .nei-badge.pub { background:rgba(76,175,80,.2); color:var(--accent); border:1px solid var(--accent); }
