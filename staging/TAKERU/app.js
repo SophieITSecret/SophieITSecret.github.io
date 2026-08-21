@@ -1189,7 +1189,14 @@ function mmdd_(s) {
     const m = String(s).match(/^\d{4}-(\d{2})-(\d{2})$/);
     return m ? (parseInt(m[1], 10) + '/' + m[2]) : String(s);
 }
-function range_(a, b) { return mmdd_(a) + '〜' + mmdd_(b); }
+// 週の範囲は曜日まで出す（例：8/8土〜8/14金）。土〜金で区切っていることが伝わる。
+var WDAY_ = ['日', '月', '火', '水', '木', '金', '土'];
+function mmddw_(s) {
+    const m = String(s).match(/^\d{4}-(\d{2})-(\d{2})$/);
+    if (!m) return String(s);
+    return parseInt(m[1], 10) + '/' + parseInt(m[2], 10) + WDAY_[dateOf_(s).getDay()];
+}
+function range_(a, b) { return mmddw_(a) + '〜' + mmddw_(b); }
 // 3ヶ月のような広い層は、日付まで出すと細かすぎるので月で示す（例：5月〜7月）
 function monthRange_(a, b) {
     const ma = String(a).match(/^\d{4}-(\d{2})/), mb = String(b).match(/^\d{4}-(\d{2})/);
