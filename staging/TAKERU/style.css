@@ -1749,3 +1749,16 @@ body.font-large #card-body { font-size: 1.05rem; }
 
 /* 設定の「画面レイアウト」欄はスマホでは隠す */
 .settings-layout { display: none; }
+
+/* 3ヶ月のまとめで月が変わるところの区切り。層の見出しとは別の色にして、
+   層の切り替わりと月の切り替わりを見分けられるようにする */
+.news-month {
+    padding: 5px 16px;
+    background: rgba(90,160,230,0.10);
+    border-top: 1px solid rgba(90,160,230,0.45);
+    border-bottom: 1px solid rgba(90,160,230,0.25);
+    color: #7fb3ff;
+    font-size: 0.76rem;
+    letter-spacing: 0.08em;
+    font-weight: 700;
+}

@@ -105,10 +105,12 @@ function parseCsvText(text) {
 function csvField(s) { s = String(s == null ? '' : s); return /[",\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; }
 function buildNewsCsv(items) {
   // 1記事1行。月次・年次は「上の層へ持ち上げる印」（3ヶ月表・年次表の絞り込みに使う）
-  const lines = [['ID', '日付', '種別', 'タイトル', '本文', '公開', '月次', '年次'].join(',')];
+  // 原URL … 翻訳リンクが将来使えなくなっても読み口を作り直せるよう控えておく（画面には出さない）
+  const lines = [['ID', '日付', '種別', 'タイトル', '本文', '公開', '月次', '年次', '原URL'].join(',')];
   for (const it of items) {
     lines.push([it.id, it.date, it.type, it.title, it.body,
-                (it.published ? '1' : ''), (it.monthly ? '1' : ''), (it.yearly ? '1' : '')]
+                (it.published ? '1' : ''), (it.monthly ? '1' : ''), (it.yearly ? '1' : ''),
+                (it.srcUrl || '')]
                .map(csvField).join(','));
   }
   return '﻿' + lines.join('\r\n') + '\r\n';
@@ -122,6 +124,7 @@ function getNews(req, res) {
       id: (r[0] || '').trim(), date: (r[1] || '').trim(), type: (r[2] || '').trim() || 'お知らせ',
       title: (r[3] || '').trim(), body: (r[4] || ''), published: (r[5] || '').trim() === '1',
       monthly: (r[6] || '').trim() === '1', yearly: (r[7] || '').trim() === '1',
+      srcUrl: (r[8] || '').trim(),
     }));
     sendJSON(res, 200, { ok: true, items });
   });

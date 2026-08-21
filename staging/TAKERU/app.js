@@ -1302,7 +1302,18 @@ function showNews(tab) {
             if (newsLevel === 9) {
                 // 3ヶ月の別画面
                 listHtml += bandHead('3ヶ月のまとめ', L.olderRange);
-                listHtml += `<div class="news-list">` + L.older.map(artHtml).join('') + `</div>`;
+                // 3ヶ月は範囲が広いので、月が変わるところで区切りを入れる
+                let curMonth = '';
+                listHtml += `<div class="news-list">`;
+                L.older.forEach(a => {
+                    const mo = String(a.date).slice(0, 7);
+                    if (mo !== curMonth) {
+                        curMonth = mo;
+                        listHtml += `<div class="news-month">${parseInt(mo.slice(5), 10)}月</div>`;
+                    }
+                    listHtml += artHtml(a);
+                });
+                listHtml += `</div>`;
                 listHtml += `<div class="news-more"><button class="news-more-btn" data-level="0">← 最近のニュースに戻る</button></div>`;
             } else {
                 for (let i = 0; i < L.bands.length; i++) {

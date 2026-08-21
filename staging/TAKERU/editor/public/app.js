@@ -1794,7 +1794,7 @@ function applyNewsForm() {
     const n = newsItems.find(x => x.id === newsEditId);
     if (n) Object.assign(n, { date, type, title, body, published });
   } else {
-    newsItems.push({ id: genNewsId(), date, type, title, body, published, monthly: false, yearly: false });
+    newsItems.push({ id: genNewsId(), date, type, title, body, published, monthly: false, yearly: false, srcUrl: '' });
   }
   markNewsDirty(true);
   startNewNews();
@@ -1820,11 +1820,17 @@ function importDigest() {
     if (!m) continue;
     const date = m[1] || today;
     const title = (m[2] || '').trim();
-    const body = b.split('\n').slice(1).join('\n').trim();
+    let body = b.split('\n').slice(1).join('\n').trim();
     if (!title) continue;
+    // 「原URL: https://…」の行があれば本文から抜いて控えておく。
+    // 翻訳リンクが将来使えなくなったとき、原URLから読み口を作り直せるようにするため。
+    // 画面には出さないので本文からは取り除く。
+    let srcUrl = '';
+    const um = body.match(/^\s*原URL[:：]\s*(\S+)\s*$/m);
+    if (um) { srcUrl = um[1]; body = body.replace(um[0], '').trim(); }
     if (known.has(date + '\u0001' + title)) { skipped.push(title); continue; }   // 二重取り込み防止
     known.add(date + '\u0001' + title);
-    added.push({ date, type: 'ニュース', title, body, published: true, monthly: false, yearly: false });
+    added.push({ date, type: 'ニュース', title, body, published: true, monthly: false, yearly: false, srcUrl });
   }
   if (!added.length) { alert('新しい記事はありませんでした（すべて取り込み済み）。'); return; }
   if (!confirm(added.length + '本の記事を取り込みます。'
