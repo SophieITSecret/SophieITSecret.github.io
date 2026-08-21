@@ -277,8 +277,13 @@ function toTranslateGoogUrl(url) {
 
 function openLink(item) {
     if (!item.url) return;
+    // 翻訳の中継には2つの経路があり、拒否するサイトが経路ごとに違う。
+    //   1 = 新形式（…translate.goog）。ふつうはこちら
+    //   3 = 旧形式（translate.google.com/translate?u=）。新形式を弾くサイト向け
     if (item.translate === 1) {
         window.open(toTranslateGoogUrl(item.url), '_blank');
+    } else if (item.translate === 3) {
+        window.open('https://translate.google.com/translate?sl=auto&tl=ja&u=' + encodeURIComponent(item.url), '_blank');
     } else {
         window.open(item.url, '_blank');
     }
@@ -1109,7 +1114,7 @@ function showLinkList(genre) {
             const isReady = item.url && item.name !== '準備中';
             if (isReady) {
                 let badge = '';
-                if (item.translate === 1) badge = '<span class="link-badge badge-jp">JP</span>';
+                if (item.translate === 1 || item.translate === 3) badge = '<span class="link-badge badge-jp">JP</span>';
                 if (item.translate === 2) badge = '<span class="link-badge badge-pdf">PDF</span>';
                 html += `<div class="menu-item link-item" data-id="${item.id}">
                     <span class="link-name">${item.name}</span>
