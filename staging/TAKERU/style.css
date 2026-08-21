@@ -616,6 +616,10 @@ body:not(.menu-mode) #image-area.has-image::after {
 .double-banner-wrap > .btn-freestudy:first-child + * { flex: 2.4 !important; }
 /* 看板は1行で収める（折り返して2行になると48pxの中で窮屈になる） */
 .banner-btn.btn-freestudy { white-space: nowrap; }
+.banner-btn.btn-links { white-space: nowrap; }
+/* リンク集も看板名が長い（🔗 リンク集）ので左を広めに。右のジャンル名は余裕がある */
+.double-banner-wrap > .btn-links:first-child { flex: 1.5 !important; }
+.double-banner-wrap > .btn-links:first-child + * { flex: 2.5 !important; }
 
 /* 自由研究の見出しに付く「テーマ」バッジ。タイトル本体と区別を付ける */
 .theme-tag {
