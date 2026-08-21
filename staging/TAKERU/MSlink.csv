@@ -63,12 +63,34 @@
 788,日本の防衛・自衛隊,6. 採用・制度,募集種目一覧,https://www.mod.go.jp/gsdf/jieikanbosyu/about/recruit/,0
 789,日本の防衛・自衛隊,6. 採用・制度,予備自衛官等制度,https://www.mod.go.jp/j/profile/reserve/index.html,0
 790,日本の防衛・自衛隊,6. 採用・制度,予備自衛官 募集要項,https://www.mod.go.jp/gsdf/reserve/apply/index.html,0
-311,世界の軍事,1. 主要国（米・中・露など）,準備中,,0
-321,世界の軍事,2. 日本周辺国,準備中,,0
-331,世界の軍事,3. 同盟と国際関係,準備中,,0
-341,世界の軍事,4. 軍事力比較,準備中,,0
-351,世界の軍事,5. 地域別情勢,準備中,,0
-361,世界の軍事,6. 国際研究機関,準備中,,0
+791,世界の軍事,1. 主要国（米・中・露など）,米 国防総省（DoD）,https://www.defense.gov/,1
+792,世界の軍事,1. 主要国（米・中・露など）,米 インド太平洋軍（USINDOPACOM）,https://www.pacom.mil/,1
+793,世界の軍事,1. 主要国（米・中・露など）,中国 国防部（英語版）,http://eng.mod.gov.cn/,1
+794,世界の軍事,1. 主要国（米・中・露など）,ロシア 国防省（英語版）,https://eng.mil.ru/,1
+819,世界の軍事,1. 主要国（米・中・露など）,英 国防省（GOV.UK）,https://www.gov.uk/government/organisations/ministry-of-defence,1
+797,世界の軍事,2. 日本周辺国,防衛省 最近の国際軍事情勢,https://www.mod.go.jp/j/surround/index.html,0
+798,世界の軍事,2. 日本周辺国,防衛研究所 中国安全保障レポート,https://www.nids.mod.go.jp/publication/chinareport/index.html,0
+800,世界の軍事,2. 日本周辺国,台湾 国防部（英語版）,https://www.mnd.gov.tw/english/,1
+801,世界の軍事,2. 日本周辺国,米国防総省 中国軍事力報告（CMPR）,https://www.defense.gov/News/Releases/,1
+820,世界の軍事,2. 日本周辺国,韓国 国防部,https://www.mnd.go.kr/,1
+803,世界の軍事,3. 同盟と国際関係,外務省 各国・地域情勢,https://www.mofa.go.jp/mofaj/area/index.html,0
+821,世界の軍事,3. 同盟と国際関係,防衛省 日米防衛協力,https://www.mod.go.jp/j/approach/anpo/index.html,0
+822,世界の軍事,3. 同盟と国際関係,外務省 日米安全保障体制,https://www.mofa.go.jp/mofaj/area/usa/hosho/index.html,0
+804,世界の軍事,4. 軍事力比較,SIPRI 軍事支出データベース,https://www.sipri.org/databases/milex,1
+805,世界の軍事,4. 軍事力比較,SIPRI 武器移転データベース,https://www.sipri.org/databases/armstransfers,1
+806,世界の軍事,4. 軍事力比較,IISS The Military Balance,https://www.iiss.org/publications/the-military-balance/,1
+807,世界の軍事,4. 軍事力比較,Global Firepower 各国軍事力ランキング,https://www.globalfirepower.com/,1
+808,世界の軍事,4. 軍事力比較,世界の核弾頭データ（長崎大学RECNA）,https://www.recna.nagasaki-u.ac.jp/recna/database/nuclear/warheadsdata,0
+809,世界の軍事,5. 地域別情勢,外務省 海外安全ホームページ,https://www.anzen.mofa.go.jp/,0
+810,世界の軍事,5. 地域別情勢,ACLED 武力紛争の発生データ,https://acleddata.com/,1
+811,世界の軍事,5. 地域別情勢,Crisis Group 世界の紛争ウォッチ,https://www.crisisgroup.org/crisiswatch,1
+812,世界の軍事,5. 地域別情勢,UN Peacekeeping 展開中のPKO,https://peacekeeping.un.org/en/where-we-operate,1
+813,世界の軍事,6. 国際研究機関,IISS 国際戦略研究所,https://www.iiss.org/,1
+814,世界の軍事,6. 国際研究機関,CSIS 戦略国際問題研究所,https://www.csis.org/,1
+815,世界の軍事,6. 国際研究機関,RAND Corporation,https://www.rand.org/,1
+816,世界の軍事,6. 国際研究機関,Brookings Institution,https://www.brookings.edu/,1
+817,世界の軍事,6. 国際研究機関,Chatham House 王立国際問題研究所,https://www.chathamhouse.org/,1
+818,世界の軍事,6. 国際研究機関,日本国際問題研究所（JIIA）,https://www.jiia.or.jp/jpn/,0
 411,戦略・戦争,1. 戦争の基礎,準備中,,0
 421,戦略・戦争,2. 戦略とは何か,準備中,,0
 431,戦略・戦争,3. 作戦と戦術,準備中,,0
