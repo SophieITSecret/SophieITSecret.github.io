@@ -14,14 +14,14 @@
 132,公式機関・1次資料,3. 国際機関（国連など）,国連安全保障理事会,https://main.un.org/securitycouncil/en,1
 133,公式機関・1次資料,3. 国際機関（国連など）,国連広報センター,https://www.unic.or.jp/activities/peace_security/,1
 134,公式機関・1次資料,3. 国際機関（国連など）,外務省・国連外交,https://www.mofa.go.jp/mofaj/gaiko/unsc/index.html,0
-135,公式機関・1次資料,3. 国際機関（国連など）,国際原子力機関（IAEA),https://www.iaea.org/,1
+135,公式機関・1次資料,3. 国際機関（国連など）,国際原子力機関（IAEA),https://www.iaea.org/,0
 136,公式機関・1次資料,3. 国際機関（国連など）,欧州安全保障協力機構（OSCE),https://www.osce.org/,1
 137,公式機関・1次資料,3. 国際機関（国連など）,アフリカ連合・安保理,https://au.int/en/psc,1
 141,公式機関・1次資料,4. 軍事同盟（NATOなど）,北大西洋条約機構（NATO),https://www.nato.int/en,1
-142,公式機関・1次資料,4. 軍事同盟（NATOなど）,CSTO・ロシア中心の軍事同盟,https://en.odkb-csto.org/,1
+142,公式機関・1次資料,4. 軍事同盟（NATOなど）,CSTO・ロシア中心の軍事同盟,https://en.odkb-csto.org/,0
 143,公式機関・1次資料,4. 軍事同盟（NATOなど）,上海協力機構（SCO),https://eng.sectsco.org/,1
 144,公式機関・1次資料,4. 軍事同盟（NATOなど）,イスラム軍事連合（IMCTC）,https://www.imctc.org/en/Pages/default.aspx,1
-145,公式機関・1次資料,4. 軍事同盟（NATOなど）,AUKAS・米英豪パートナーSP,https://www.war.gov/Spotlights/AUKUS/,1
+145,公式機関・1次資料,4. 軍事同盟（NATOなど）,AUKAS・米英豪パートナーSP,https://www.war.gov/Spotlights/AUKUS/,0
 146,公式機関・1次資料,4. 軍事同盟（NATOなど）,FPDA・五カ国防衛取極め,https://www.fivepowerdefencearrangements.org/,1
 151,公式機関・1次資料,5. 国際法・人道法,国連・国際法ポータル,https://www.un.org/en/global-issues/international-law-and-justice,1
 152,公式機関・1次資料,5. 国際法・人道法,国際司法裁判所（ICJ）,https://www.icj-cij.org/home,0
@@ -63,16 +63,15 @@
 788,日本の防衛・自衛隊,6. 採用・制度,募集種目一覧,https://www.mod.go.jp/gsdf/jieikanbosyu/about/recruit/,0
 789,日本の防衛・自衛隊,6. 採用・制度,予備自衛官等制度,https://www.mod.go.jp/j/profile/reserve/index.html,0
 790,日本の防衛・自衛隊,6. 採用・制度,予備自衛官 募集要項,https://www.mod.go.jp/gsdf/reserve/apply/index.html,0
-791,世界の軍事,1. 主要国（米・中・露など）,米 国防総省（DoD）,https://www.defense.gov/,1
-792,世界の軍事,1. 主要国（米・中・露など）,米 インド太平洋軍（USINDOPACOM）,https://www.pacom.mil/,1
-793,世界の軍事,1. 主要国（米・中・露など）,中国 国防部（英語版）,http://eng.mod.gov.cn/,1
-794,世界の軍事,1. 主要国（米・中・露など）,ロシア 国防省（英語版）,https://eng.mil.ru/,1
+791,世界の軍事,1. 主要国（米・中・露など）,米 国防総省（DoD）,https://www.defense.gov/,0
+792,世界の軍事,1. 主要国（米・中・露など）,米 インド太平洋軍（USINDOPACOM）,https://www.pacom.mil/,0
+793,世界の軍事,1. 主要国（米・中・露など）,中国 国防部（英語版）,http://eng.mod.gov.cn/,0
 819,世界の軍事,1. 主要国（米・中・露など）,英 国防省（GOV.UK）,https://www.gov.uk/government/organisations/ministry-of-defence,1
 797,世界の軍事,2. 日本周辺国,防衛省 最近の国際軍事情勢,https://www.mod.go.jp/j/surround/index.html,0
 798,世界の軍事,2. 日本周辺国,防衛研究所 中国安全保障レポート,https://www.nids.mod.go.jp/publication/chinareport/index.html,0
-800,世界の軍事,2. 日本周辺国,台湾 国防部（英語版）,https://www.mnd.gov.tw/english/,1
-801,世界の軍事,2. 日本周辺国,米国防総省 中国軍事力報告（CMPR）,https://www.defense.gov/News/Releases/,1
-820,世界の軍事,2. 日本周辺国,韓国 国防部,https://www.mnd.go.kr/,1
+800,世界の軍事,2. 日本周辺国,台湾 国防部,https://www.mnd.gov.tw/,0
+801,世界の軍事,2. 日本周辺国,米国防総省 中国軍事力報告（CMPR）,https://www.defense.gov/News/Releases/,0
+820,世界の軍事,2. 日本周辺国,韓国 国防部,https://www.mnd.go.kr/,0
 803,世界の軍事,3. 同盟と国際関係,外務省 各国・地域情勢,https://www.mofa.go.jp/mofaj/area/index.html,0
 821,世界の軍事,3. 同盟と国際関係,防衛省 日米防衛協力,https://www.mod.go.jp/j/approach/anpo/index.html,0
 822,世界の軍事,3. 同盟と国際関係,外務省 日米安全保障体制,https://www.mofa.go.jp/mofaj/area/usa/hosho/index.html,0
@@ -80,16 +79,14 @@
 805,世界の軍事,4. 軍事力比較,SIPRI 武器移転データベース,https://www.sipri.org/databases/armstransfers,1
 806,世界の軍事,4. 軍事力比較,IISS The Military Balance,https://www.iiss.org/publications/the-military-balance/,1
 807,世界の軍事,4. 軍事力比較,Global Firepower 各国軍事力ランキング,https://www.globalfirepower.com/,1
-808,世界の軍事,4. 軍事力比較,世界の核弾頭データ（長崎大学RECNA）,https://www.recna.nagasaki-u.ac.jp/recna/database/nuclear/warheadsdata,0
+808,世界の軍事,4. 軍事力比較,世界の核弾頭データ（長崎大学RECNA）,https://www.recna.nagasaki-u.ac.jp/recna/,0
 809,世界の軍事,5. 地域別情勢,外務省 海外安全ホームページ,https://www.anzen.mofa.go.jp/,0
-810,世界の軍事,5. 地域別情勢,ACLED 武力紛争の発生データ,https://acleddata.com/,1
-811,世界の軍事,5. 地域別情勢,Crisis Group 世界の紛争ウォッチ,https://www.crisisgroup.org/crisiswatch,1
+810,世界の軍事,5. 地域別情勢,ACLED 武力紛争の発生データ,https://acleddata.com/,0
 812,世界の軍事,5. 地域別情勢,UN Peacekeeping 展開中のPKO,https://peacekeeping.un.org/en/where-we-operate,1
 813,世界の軍事,6. 国際研究機関,IISS 国際戦略研究所,https://www.iiss.org/,1
 814,世界の軍事,6. 国際研究機関,CSIS 戦略国際問題研究所,https://www.csis.org/,1
 815,世界の軍事,6. 国際研究機関,RAND Corporation,https://www.rand.org/,1
-816,世界の軍事,6. 国際研究機関,Brookings Institution,https://www.brookings.edu/,1
-817,世界の軍事,6. 国際研究機関,Chatham House 王立国際問題研究所,https://www.chathamhouse.org/,1
+816,世界の軍事,6. 国際研究機関,Brookings Institution,https://www.brookings.edu/,0
 818,世界の軍事,6. 国際研究機関,日本国際問題研究所（JIIA）,https://www.jiia.or.jp/jpn/,0
 411,戦略・戦争,1. 戦争の基礎,準備中,,0
 421,戦略・戦争,2. 戦略とは何か,準備中,,0
