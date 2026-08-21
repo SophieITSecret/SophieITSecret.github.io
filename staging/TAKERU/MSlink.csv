@@ -5,7 +5,7 @@
 114,公式機関・1次資料,1. 日本政府（防衛・外交）,防衛省・令和7年度予算の概容,https://www.mod.go.jp/j/budget/yosan_gaiyo/fy2025/yosan_20250402_summary.pdf,0
 115,公式機関・1次資料,1. 日本政府（防衛・外交）,外務省・外交政策,https://www.mofa.go.jp/mofaj/gaiko/index.html,0
 116,公式機関・1次資料,1. 日本政府（防衛・外交）,防衛装備庁,https://www.mod.go.jp/atla/,0
-121,公式機関・1次資料,2. 自衛隊（統合・陸海空）,統合幕僚監部,https://www.mod.go.jp/js/,0
+121,公式機関・1次資料,2. 自衛隊（統合・陸海空）,統合幕僚監部の組織,https://www.mod.go.jp/js/about/organization.html,0
 122,公式機関・1次資料,2. 自衛隊（統合・陸海空）,統合作戦司令部,https://www.mod.go.jp/jjoc/,0
 123,公式機関・1次資料,2. 自衛隊（統合・陸海空）,陸上自衛隊,https://www.mod.go.jp/gsdf/,0
 124,公式機関・1次資料,2. 自衛隊（統合・陸海空）,海上自衛隊,https://www.mod.go.jp/msdf/,0
@@ -37,7 +37,7 @@
 166,公式機関・1次資料,6. 白書・公式報告書,ストックホルム平和研 25要約,https://www.sipri.org/sites/default/files/2025-06/yb25_summary_en.pdf,2
 762,日本の防衛・自衛隊,1. 組織と役割,防衛省・自衛隊 公式サイト,https://www.mod.go.jp/,0
 763,日本の防衛・自衛隊,1. 組織と役割,防衛省の組織（内部部局・幕僚監部）,https://www.mod.go.jp/j/profile/mod_sdf/index.html,0
-764,日本の防衛・自衛隊,1. 組織と役割,統合幕僚監部,https://www.mod.go.jp/js/,0
+764,日本の防衛・自衛隊,1. 組織と役割,統合幕僚監部の組織,https://www.mod.go.jp/js/about/organization.html,0
 765,日本の防衛・自衛隊,1. 組織と役割,陸上自衛隊 公式サイト,https://www.mod.go.jp/gsdf/,0
 766,日本の防衛・自衛隊,1. 組織と役割,海上自衛隊 公式サイト,https://www.mod.go.jp/msdf/,0
 767,日本の防衛・自衛隊,1. 組織と役割,航空自衛隊 公式サイト,https://www.mod.go.jp/asdf/,0
@@ -46,16 +46,15 @@
 770,日本の防衛・自衛隊,2. 駐屯地・基地,航空自衛隊 基地エリア一覧,https://www.mod.go.jp/asdf/base/,0
 771,日本の防衛・自衛隊,2. 駐屯地・基地,防衛省 広報施設のご案内,https://www.mod.go.jp/j/press/exhibition/index.html,0
 772,日本の防衛・自衛隊,2. 駐屯地・基地,陸自調査団 見学できる広報館・資料館,https://rikuzi-chousadan.com/sdfmuseum.html,0
-773,日本の防衛・自衛隊,3. 装備,防衛省 主要装備,https://www.mod.go.jp/j/profile/equipment/index.html,0
+773,日本の防衛・自衛隊,3. 装備,主要装備品の紹介（令和7年版防衛白書）,https://www.clearing.mod.go.jp/hakusho_data/2025/html/nse00200.html,0
 774,日本の防衛・自衛隊,3. 装備,陸上自衛隊 装備,https://www.mod.go.jp/gsdf/equipment/,0
 775,日本の防衛・自衛隊,3. 装備,海上自衛隊 装備品,https://www.mod.go.jp/msdf/equipment/,0
 776,日本の防衛・自衛隊,3. 装備,航空自衛隊 装備,https://www.mod.go.jp/asdf/equipment/,0
 777,日本の防衛・自衛隊,3. 装備,防衛装備庁,https://www.mod.go.jp/atla/,0
-778,日本の防衛・自衛隊,3. 装備,防衛白書 主要装備品の紹介,https://www.clearing.mod.go.jp/hakusho_data/2023/html/nse00500.html,0
 779,日本の防衛・自衛隊,4. 教育・研究機関,防衛研究所（NIDS）,https://www.nids.mod.go.jp/,0
 780,日本の防衛・自衛隊,4. 教育・研究機関,防衛研究所 刊行物・研究成果,https://www.nids.mod.go.jp/publication/index.html,0
 781,日本の防衛・自衛隊,4. 教育・研究機関,防衛大学校,https://www.mod.go.jp/nda/,0
-782,日本の防衛・自衛隊,4. 教育・研究機関,防衛医科大学校,https://www.ndmc.ac.jp/,0
+782,日本の防衛・自衛隊,4. 教育・研究機関,防衛医科大学校,https://www.mod.go.jp/ndmc/,0
 783,日本の防衛・自衛隊,5. 災害派遣・国内活動,防衛省 災害派遣,https://www.mod.go.jp/j/approach/defense/saigai/index.html,0
 784,日本の防衛・自衛隊,5. 災害派遣・国内活動,防衛省 国際平和協力活動,https://www.mod.go.jp/j/approach/kokusai_heiwa/index.html,0
 785,日本の防衛・自衛隊,5. 災害派遣・国内活動,内閣府 防災情報のページ,https://www.bousai.go.jp/,0
