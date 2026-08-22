@@ -1769,3 +1769,47 @@ body.font-large #card-body { font-size: 1.05rem; }
     letter-spacing: 0.08em;
     font-weight: 700;
 }
+
+/* ==================== 調べる道具（リンク集の8つ目） ==================== */
+/* ジャンル一覧で、他と性格が違うことが分かるように色を変える */
+.link-genre-btn.link-genre-tool {
+    background: linear-gradient(135deg, #1a2a3a, #24405e);
+    border-color: #5a9fd4;
+}
+.st-box { padding: 14px 6% 6px; }
+.st-lead { font-size: 0.86rem; color: var(--text2); line-height: 1.7; margin-bottom: 10px; }
+.st-input {
+    width: 100%;
+    background: var(--bg2);
+    border: 2px solid var(--accent);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 1.05rem;
+    padding: 12px 14px;
+    margin-bottom: 12px;
+}
+.st-input:focus { outline: none; border-color: var(--accent2); }
+.st-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.st-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 3px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 11px 12px;
+    cursor: pointer;
+    text-align: left;
+    font-family: 'Noto Sans JP', sans-serif;
+}
+.st-btn:active { background: rgba(76,175,80,0.15); border-color: var(--accent); }
+.st-btn-label { font-size: 0.9rem; color: var(--text); font-weight: 700; }
+.st-btn-note { font-size: 0.7rem; color: var(--text2); line-height: 1.5; }
+.st-site-note { display: block; font-size: 0.72rem; color: var(--text2); margin-top: 2px; line-height: 1.5; }
+.st-site .link-name { line-height: 1.4; }
+/* 狭い画面ではボタンを1列に */
+@media (max-width: 400px) {
+    .st-grid { grid-template-columns: 1fr; }
+}

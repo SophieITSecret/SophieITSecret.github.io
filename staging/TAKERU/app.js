@@ -1066,6 +1066,91 @@ function showCard(idx) {
 // ==========================================
 // リンク集（リンク集ボタンを看板として持ち込み）
 // ==========================================
+// ==========================================
+// 調べる道具（リンク集の8つ目）
+//   他のジャンルと違い、語を入れてボタンを押すとその場で検索結果へ飛ぶ。
+//   検索できるのは「URLに語を埋め込める」サービスだけ。CiNiiやアジ歴は
+//   画面側で検索する作りのためURLでは渡せず、入口を開くだけにしてある。
+// ==========================================
+const SEARCH_TOOLS = [
+    { key: 'wikija', label: '📖 Wikipedia（日本語）', note: '用語や人物の概要をつかむ',
+      url: q => 'https://ja.wikipedia.org/w/index.php?search=' + encodeURIComponent(q) },
+    { key: 'wikien', label: '📘 Wikipedia（英語）', note: '日本語版に無い項目・装備に強い',
+      url: q => 'https://en.wikipedia.org/w/index.php?search=' + encodeURIComponent(q) },
+    { key: 'ndl', label: '📚 国会図書館サーチ', note: '本・雑誌記事・論文をまとめて探す',
+      url: q => 'https://ndlsearch.ndl.go.jp/search?cs=bib&keyword=' + encodeURIComponent(q) },
+    { key: 'scholar', label: '🎓 Google Scholar', note: '学術論文を探す',
+      url: q => 'https://scholar.google.com/scholar?hl=ja&q=' + encodeURIComponent(q) },
+    { key: 'gimg', label: '🖼 画像で探す', note: '装備や地形を写真で確かめる',
+      url: q => 'https://www.google.com/search?tbm=isch&q=' + encodeURIComponent(q) },
+];
+// 語を渡せない（画面側で検索する）サービス。入口だけ開く。
+const SEARCH_SITES = [
+    { label: '📂 アジア歴史資料センター', note: '戦前・戦中の公文書の原本を探す。200万件・3000万画像',
+      url: 'https://www.jacar.archives.go.jp/aj/search' },
+    { label: '📄 CiNii Research', note: '日本の論文・研究データを探す',
+      url: 'https://cir.nii.ac.jp/' },
+    { label: '📜 国会図書館デジタルコレクション', note: '著作権の切れた本や古い資料を、その場で読む',
+      url: 'https://dl.ndl.go.jp/' },
+];
+
+function showSearchTools() {
+    navState = 'searchtool';
+    isMenuVisible = true;
+    curLinkGenre = '';
+    enterLinkFullscreen();
+    showMenuView();
+
+    const saved = (() => { try { return localStorage.getItem('takeru_search_q') || ''; } catch (e) { return ''; } })();
+
+    let html = `
+        <div class="sub-menu-wrap">
+            <div class="double-banner-wrap">
+                <div class="top-btn btn-links banner-btn banner-small">🔗 リンク集</div>
+                <div class="link-genre-btn banner-btn banner-small"><span class="link-genre-name">調べる道具</span></div>
+            </div>
+            <div class="st-box">
+                <div class="st-lead">調べたい言葉を入れて、探す先を選んでください。</div>
+                <input type="search" id="st-input" class="st-input" placeholder="例：制海権、F-35、ホルムズ海峡"
+                       value="${escHtml(saved)}" autocomplete="off" enterkeyhint="search">
+                <div class="st-grid">`;
+    SEARCH_TOOLS.forEach(t => {
+        html += `<button class="st-btn" data-tool="${t.key}">
+                    <span class="st-btn-label">${t.label}</span>
+                    <span class="st-btn-note">${t.note}</span>
+                 </button>`;
+    });
+    html += `   </div>
+            </div>
+            <div class="link-field-header">語を入れずに、そのまま開いて探す</div>`;
+    SEARCH_SITES.forEach((s, i) => {
+        html += `<div class="menu-item link-item st-site" data-site="${i}">
+                    <span class="link-name">${s.label}<span class="st-site-note">${s.note}</span></span>
+                    <span class="link-arrow">↗</span>
+                 </div>`;
+    });
+    html += `</div>`;
+    menuContent.innerHTML = html;
+
+    const input = document.getElementById('st-input');
+    const run = (tool) => {
+        const q = (input && input.value || '').trim();
+        if (!q) { input && input.focus(); return; }
+        try { localStorage.setItem('takeru_search_q', q); } catch (e) {}
+        window.open(tool.url(q), '_blank');
+    };
+    // Enterでは最初の道具（Wikipedia日本語）を開く
+    if (input) input.addEventListener('keydown', e => {
+        if (e.key === 'Enter') { e.preventDefault(); run(SEARCH_TOOLS[0]); }
+    });
+    menuContent.onclick = (e) => {
+        const b = e.target.closest('.st-btn');
+        if (b) { const t = SEARCH_TOOLS.find(x => x.key === b.dataset.tool); if (t) run(t); return; }
+        const s = e.target.closest('.st-site');
+        if (s) { const site = SEARCH_SITES[parseInt(s.dataset.site, 10)]; if (site) window.open(site.url, '_blank'); }
+    };
+}
+
 function showLinkGenreMenu() {
     navState = 'linkgenre';
     isMenuVisible = true;
@@ -1090,12 +1175,19 @@ function showLinkGenreMenu() {
             </button>
         `;
     });
+    // 8つ目は趣向が違う。語を入れて調べる道具（CSVではなくアプリが持つ）
+    html += `
+            <button class="link-genre-btn link-genre-tool" data-tool="1">
+                <span class="link-genre-name">🔍 調べる道具</span>
+                <span class="link-genre-count">${SEARCH_TOOLS.length + SEARCH_SITES.length}</span>
+            </button>`;
     html += `</div></div>`;
     menuContent.innerHTML = html;
 
     menuContent.onclick = (e) => {
         const btn = e.target.closest('.link-genre-btn');
         if (!btn) return;
+        if (btn.dataset.tool) { showSearchTools(); return; }
         curLinkGenre = btn.dataset.genre;
         showLinkList(curLinkGenre);
     };
@@ -2186,6 +2278,7 @@ function goUpOneLevel() {
             showTopMenu();
             break;
         case 'linklist':
+        case 'searchtool':
             showLinkGenreMenu();
             break;
         case 'newsitem':
