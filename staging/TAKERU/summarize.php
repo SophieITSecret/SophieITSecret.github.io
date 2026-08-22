@@ -79,9 +79,9 @@ file_put_contents($dir . '/daily_summary.json', json_encode($daily, $flags));
 file_put_contents($dir . '/card_summary.json',  json_encode($cards, $flags));
 // card_daily.json … { "YYYY-MM-DD": { "CODE": 回数, ... }, ... } 全期間ぶん
 file_put_contents($dir . '/card_daily.json',    json_encode($cardDaily, $flags));
-file_put_contents($dir . '/news_summary.json', json_encode($news,  $flags));
-// リンクIDは数字なのでPHPでは整数キーになる。万一0から連番になったとき
-// JSONが配列に化けるのを防ぐため、ここだけオブジェクトを強制する。
+file_put_contents($dir . '/news_summary.json', json_encode($news,  $flags | JSON_FORCE_OBJECT));
+// この2本はオブジェクトを強制する。空のときPHPは [] を書き、リンクIDは
+// 数字なので整数キーになって配列に化けうる。読む側を常に同じ形で扱えるように。
 file_put_contents($dir . '/link_summary.json', json_encode($links, $flags | JSON_FORCE_OBJECT));
 
 echo 'done ' . date('Y-m-d H:i')
