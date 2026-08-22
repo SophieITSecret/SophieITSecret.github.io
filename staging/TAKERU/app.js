@@ -1090,27 +1090,10 @@ const LINK_HELP_HTML = `
   <p>皆さんの情報収集に役立つと思えるリンクを集めました。信頼できるソースに絞ったつもりです。
   今後も内容の充実に努めますので、ご意見・ご要望をお寄せください。</p>
 
-  <h3 class="lh-h">ちょっとユニークなリンク先のご紹介</h3>
+  <h3 class="lh-h">しるしについて</h3>
   <ul class="lh-list">
-    <li><em>地形の高低差を見る</em>　地理院地図の「断面図」。地図上で2点を結ぶと、
-        その間の地形が高さのグラフになって出てきます。峠の険しさや、上陸に向く海岸かどうかが目で分かります。
-        <span class="lh-in">地図・地形・データ</span></li>
-    <li><em>昔の地形と今を並べる</em>　今昔マップ。明治以降の古い地形図と現在の地図を左右に並べ、
-        同じ場所を見比べられます。埋め立て前の海岸線や、消えた飛行場の跡地が浮かび上がります。
-        <span class="lh-in">地図・地形・データ</span></li>
-    <li><em>距離を測る・射程を円で描く</em>　Great Circle Mapper。2地点を指定すると地球上の最短距離が出ます。
-        基地を中心に半径の円を重ねれば、射程の届く範囲がひと目で分かります。
-        <span class="lh-in">地図・地形・データ</span></li>
-    <li><em>いま飛んでいる機体、動いている船</em>　Flightradar24 と MarineTraffic。
-        世界中の航空機・船舶の現在位置が、そのまま地図に出ます。
-        <span class="lh-in">地図・地形・データ</span></li>
-    <li><em>戦前の公文書を原本で読む</em>　アジア歴史資料センター。国立公文書館・外務省・防衛省が持つ
-        戦前戦中の公文書 約200万件・3000万画像が無料で公開されています。作戦命令や電報が、
-        当時の紙のまま画面で読めます。
-        <span class="lh-in">調べる道具</span></li>
-    <li><em>ひとつの言葉を一度に引く</em>　調べる道具。語を入れてボタンを押すと、Wikipedia、
-        国会図書館サーチ、Google Scholar などへそのまま検索が飛びます。
-        <span class="lh-in">調べる道具</span></li>
+    <li><span class="link-badge">JP</span>　外国語のサイトです。自動的に日本語へ翻訳して開く機能を付けています。</li>
+    <li><span class="link-badge">PDF</span>　PDFファイルが開きます。</li>
   </ul>
 
   <h3 class="lh-h">お出かけの参考になるかも</h3>
@@ -1122,10 +1105,32 @@ const LINK_HELP_HTML = `
         <span class="lh-in">歴史・教養</span></li>
   </ul>
 
-  <h3 class="lh-h">しるしについて</h3>
+  <h3 class="lh-h">地図には、こんな使い方があります</h3>
   <ul class="lh-list">
-    <li><span class="link-badge">JP</span>　外国語のサイトです。自動的に日本語へ翻訳して開く機能を付けています。</li>
-    <li><span class="link-badge">PDF</span>　PDFファイルが開きます。</li>
+    <li><em>地形の高低差を見る</em>　地理院地図の「断面図」。地図上で2点を結ぶと、
+        その間の地形が高さのグラフになって出てきます。峠の険しさや、上陸に向く海岸かどうかが目で分かります。</li>
+    <li><em>昔の地形と今を並べる</em>　今昔マップ。明治以降の古い地形図と現在の地図を左右に並べ、
+        同じ場所を見比べられます。埋め立て前の海岸線や、消えた飛行場の跡地が浮かび上がります。</li>
+    <li><em>距離を測る・射程を円で描く</em>　Great Circle Mapper。2地点を指定すると地球上の最短距離が出ます。
+        基地を中心に半径の円を重ねれば、射程の届く範囲がひと目で分かります。</li>
+    <li><em>いま飛んでいる機体、動いている船</em>　Flightradar24 と MarineTraffic。
+        世界中の航空機・船舶の現在位置が、そのまま地図に出ます。</li>
+    <li class="lh-note">いずれも <span class="lh-in">地図・地形・データ</span> にあります。</li>
+  </ul>
+
+  <h3 class="lh-h">調べるツール ── あまり知られていないもの</h3>
+  <p>語を入れてボタンを押すと、<em>そのまま結果の画面まで飛びます</em>。
+  サイトを開いてから入力し直す手間はいりません。Wikipediaで言葉の意味を引くだけなら、これがいちばん速いはずです。</p>
+  <ul class="lh-list">
+    <li><em>国会図書館サーチ</em>　日本で出版された本・雑誌記事・論文をまとめて探せます。
+        Amazonでは出てこない古い本や、専門誌の記事が見つかります。</li>
+    <li><em>Google Scholar</em>　学術論文だけを探します。研究者が書いたものに絞りたいときに。</li>
+    <li><em>アジア歴史資料センター</em>　国立公文書館・外務省・防衛省が持つ戦前戦中の公文書、
+        約200万件・3000万画像が無料で公開されています。作戦命令や電報が、当時の紙のまま画面で読めます。</li>
+    <li><em>国会図書館デジタルコレクション</em>　著作権の切れた本や古い資料を、その場で読めます。</li>
+    <li><em>CiNii Research</em>　日本の論文・研究データを探します。</li>
+    <li class="lh-note">下の3つは、それぞれのサイトの検索画面が開きます。
+        作りの都合で語を渡せないため、入口までのご案内です。</li>
   </ul>
 
   <h3 class="lh-h">ご意見・ご要望</h3>
@@ -1134,7 +1139,7 @@ const LINK_HELP_HTML = `
 </div>`;
 
 // ==========================================
-// 調べる道具（リンク集の8つ目）
+// 調べるツール（リンク集の8つ目）
 //   他のジャンルと違い、語を入れてボタンを押すとその場で検索結果へ飛ぶ。
 //   検索できるのは「URLに語を埋め込める」サービスだけ。CiNiiやアジ歴は
 //   画面側で検索する作りのためURLでは渡せず、入口を開くだけにしてある。
@@ -1174,7 +1179,7 @@ function showSearchTools() {
         <div class="sub-menu-wrap">
             <div class="double-banner-wrap">
                 <div class="top-btn btn-links banner-btn banner-small">🔗 リンク集</div>
-                <div class="link-genre-btn banner-btn banner-small"><span class="link-genre-name">調べる道具</span></div>
+                <div class="link-genre-btn banner-btn banner-small"><span class="link-genre-name">調べるツール</span></div>
             </div>
             <div class="st-box">
                 <div class="st-lead">調べたい言葉を入れて、探す先を選んでください。</div>
@@ -1242,10 +1247,10 @@ function showLinkGenreMenu() {
             </button>
         `;
     });
-    // 8つ目は趣向が違う。語を入れて調べる道具（CSVではなくアプリが持つ）
+    // 8つ目は趣向が違う。語を入れて調べるツール（CSVではなくアプリが持つ）
     html += `
             <button class="link-genre-btn link-genre-tool" data-tool="1">
-                <span class="link-genre-name">🔍 調べる道具</span>
+                <span class="link-genre-name">🔍 調べるツール</span>
                 <span class="link-genre-count">${SEARCH_TOOLS.length + SEARCH_SITES.length}</span>
             </button>
             <button class="link-genre-btn link-genre-help" data-help="1">

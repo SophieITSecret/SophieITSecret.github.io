@@ -1770,7 +1770,7 @@ body.font-large #card-body { font-size: 1.05rem; }
     font-weight: 700;
 }
 
-/* ==================== 調べる道具（リンク集の8つ目） ==================== */
+/* ==================== 調べるツール（リンク集の8つ目） ==================== */
 /* ジャンル一覧で、他と性格が違うことが分かるように色を変える */
 .link-genre-btn.link-genre-tool {
     background: linear-gradient(135deg, #1a2a3a, #24405e);
@@ -1845,4 +1845,13 @@ body.font-large #card-body { font-size: 1.05rem; }
     font-size: 0.68rem;
     color: var(--text2);
     white-space: nowrap;
+}
+
+/* 使い方：節の末尾に置く補足の一行 */
+.lh-doc .lh-note {
+    list-style: none;
+    margin-left: -1.1em;
+    font-size: 0.78rem;
+    color: var(--text2);
+    opacity: 0.9;
 }
