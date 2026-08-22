@@ -36,7 +36,7 @@ body.dark-mode {
     --settings-bg: rgba(10,12,16,0.97);
     --placeholder-color: #2a3048;
     --link-field-bg: #0f1520;
-    --link-field-color: #7a8fa8;
+    --link-field-color: #6cb6ff;
 }
 
 body.light-mode {
@@ -52,7 +52,7 @@ body.light-mode {
     --settings-bg: rgba(245,245,240,0.97);
     --placeholder-color: #c8d8c8;
     --link-field-bg: #eaeeea;
-    --link-field-color: #4a5a4a;
+    --link-field-color: #1558b0;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
