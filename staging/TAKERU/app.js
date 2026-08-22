@@ -78,7 +78,7 @@ let cardData = [];
 let linkData = [];
 let newsData = [];
 let newsTab = 'ニュース';   // 📰内のタブ：ニュース（既定）／お知らせ
-let newsLevel = 0;          // ニュースをどの層まで開いているか（0=今週 … 3=3ヶ月前まで）
+let newsLevel = 0;          // ニュースをどの層まで開いているか（0=先週 … 3=3ヶ月前まで）
 let curSection = [];
 let curIndex = 0;
 let navState = 'top';
@@ -1079,7 +1079,7 @@ function showLinkHelp() {
     showTextView();
     showMenuBanner();
     cardProgress.innerText = '';
-    cardTitle.innerText = 'リンク集の使い方';
+    cardTitle.innerText = 'このリンク集の使い方';
     cardBody.innerHTML = LINK_HELP_HTML +
         `<div class="reg-back"><button class="reg-backbtn" onclick="showLinkGenreMenu()">← リンク集に戻る</button></div>`;
     textView.scrollTop = 0;
@@ -1087,56 +1087,50 @@ function showLinkHelp() {
 
 const LINK_HELP_HTML = `
 <div class="reg-priv-doc lh-doc">
-  <p>防衛・安全保障を調べるときの入口を、<strong>172件</strong>集めた場所です。
-  官庁や研究機関の公式サイトが中心で、信頼できるものだけを選んでいます。</p>
+  <p>皆さんの情報収集に役立つと思えるリンクを集めました。信頼できるソースに絞ったつもりです。
+  今後も内容の充実に努めますので、ご意見・ご要望をお寄せください。</p>
 
-  <h3 class="lh-h">まず、どこを見ればよいか</h3>
+  <h3 class="lh-h">ちょっとユニークなリンク先のご紹介</h3>
   <ul class="lh-list">
-    <li><strong>何が起きているか知りたい</strong> → 📰 ニュース・情勢</li>
-    <li><strong>自衛隊のことを知りたい</strong> → 🛡 日本の防衛・自衛隊</li>
-    <li><strong>言葉の意味を調べたい</strong> → 🔍 調べる道具</li>
-    <li><strong>正確な数字が欲しい</strong> → 🗺 地図・地形・データ（軍事費・兵力の統計）</li>
-    <li><strong>原典に当たりたい</strong> → 📚 公式機関・1次資料／📜 歴史・教養</li>
+    <li><em>地形の高低差を見る</em>　地理院地図の「断面図」。地図上で2点を結ぶと、
+        その間の地形が高さのグラフになって出てきます。峠の険しさや、上陸に向く海岸かどうかが目で分かります。
+        <span class="lh-in">地図・地形・データ</span></li>
+    <li><em>昔の地形と今を並べる</em>　今昔マップ。明治以降の古い地形図と現在の地図を左右に並べ、
+        同じ場所を見比べられます。埋め立て前の海岸線や、消えた飛行場の跡地が浮かび上がります。
+        <span class="lh-in">地図・地形・データ</span></li>
+    <li><em>距離を測る・射程を円で描く</em>　Great Circle Mapper。2地点を指定すると地球上の最短距離が出ます。
+        基地を中心に半径の円を重ねれば、射程の届く範囲がひと目で分かります。
+        <span class="lh-in">地図・地形・データ</span></li>
+    <li><em>いま飛んでいる機体、動いている船</em>　Flightradar24 と MarineTraffic。
+        世界中の航空機・船舶の現在位置が、そのまま地図に出ます。
+        <span class="lh-in">地図・地形・データ</span></li>
+    <li><em>戦前の公文書を原本で読む</em>　アジア歴史資料センター。国立公文書館・外務省・防衛省が持つ
+        戦前戦中の公文書 約200万件・3000万画像が無料で公開されています。作戦命令や電報が、
+        当時の紙のまま画面で読めます。
+        <span class="lh-in">調べる道具</span></li>
+    <li><em>ひとつの言葉を一度に引く</em>　調べる道具。語を入れてボタンを押すと、Wikipedia、
+        国会図書館サーチ、Google Scholar などへそのまま検索が飛びます。
+        <span class="lh-in">調べる道具</span></li>
   </ul>
 
-  <h3 class="lh-h">8つのジャンル</h3>
+  <h3 class="lh-h">お出かけの参考になるかも</h3>
   <ul class="lh-list">
-    <li><strong>公式機関・1次資料</strong>（36）… 官庁・国連・NATO・白書。<em>すべての土台</em></li>
-    <li><strong>日本の防衛・自衛隊</strong>（28）… 組織・駐屯地・装備・採用。<em>基地見学やイベントの情報も</em></li>
-    <li><strong>世界の軍事</strong>（24）… 各国の国防省、軍事力の比較、研究機関</li>
-    <li><strong>戦略・戦争</strong>（25）… 戦略とは何か、作戦、兵站、サイバー・宇宙</li>
-    <li><strong>地図・地形・データ</strong>（20）… <em>使える道具</em>。地形の断面図、距離と射程、統計</li>
-    <li><strong>ニュース・情勢</strong>（24）… 専門紙・海外メディア・論考</li>
-    <li><strong>歴史・教養</strong>（15）… 資料館、そして<em>当時の公文書そのもの</em></li>
-    <li><strong>調べる道具</strong>（8）… 言葉を入れて、その場で検索</li>
+    <li>航空祭や体験航海など全国の予定は「防衛省・自衛隊 イベント・交流活動」に載っています。
+        見学できる施設は「防衛省 広報施設のご案内」と「陸自 見学できる広報館・資料館」から。
+        <span class="lh-in">日本の防衛・自衛隊</span></li>
+    <li>遊就館、大和ミュージアム、知覧特攻平和会館、昭和館。全国の戦史関連資料館の一覧もあります。
+        <span class="lh-in">歴史・教養</span></li>
   </ul>
 
-  <h3 class="lh-h">知っておくと便利なこと</h3>
-  <p><span class="link-badge badge-jp">JP</span> の印が付いたものは、<strong>自動で日本語に訳して開きます</strong>。
-  海外のサイトでも、そのまま読めます。うまく訳せないときは英語のまま開きますが、
-  パソコンならブラウザの翻訳機能（右クリック →「日本語に翻訳」）が使えます。</p>
-  <p><span class="link-badge badge-pdf">PDF</span> の印は、PDFの資料が開きます。</p>
-
-  <h3 class="lh-h">とくに勧めたいもの</h3>
+  <h3 class="lh-h">しるしについて</h3>
   <ul class="lh-list">
-    <li><strong>地理院地図の断面図</strong>（地図・地形）… 地図に線を引くと、その経路の高低差がグラフになります。
-    「この尾根の向こうは見えるか」を自分で確かめられます</li>
-    <li><strong>Great Circle Mapper</strong>（地図・地形）… 2点間の距離を測り、<strong>指定した距離の円を描けます</strong>。
-    射程の話が具体的になります</li>
-    <li><strong>Flightradar24・MarineTraffic</strong>（地図・地形）… 航空機と船の現在位置。
-    ニュースで聞いた動きをその場で確かめられます</li>
-    <li><strong>アジア歴史資料センター</strong>（調べる道具）… 戦前・戦中の公文書の<strong>原本</strong>が
-    200万件。大本営の命令書や外交電報が、当時の紙のまま読めます</li>
-    <li><strong>朝雲デジタル</strong>（ニュース）… 自衛隊の専門紙。一般にはあまり知られていません</li>
+    <li><span class="link-badge">JP</span>　外国語のサイトです。自動的に日本語へ翻訳して開く機能を付けています。</li>
+    <li><span class="link-badge">PDF</span>　PDFファイルが開きます。</li>
   </ul>
 
-  <h3 class="lh-h">使うときの心得</h3>
-  <p><strong>公式サイトを先に見る</strong>のが基本です。まとめサイトや解説より、
-  官庁や研究機関が出している資料のほうが確かです。数字を引くときは、
-  <strong>いつの時点のものか</strong>を確かめてください。</p>
-  <p>リンク先の内容は、それぞれの発信者によるものです。
-  MSアカデミーの見解とは限りません。</p>
-  <p class="reg-priv-note">開かないリンクがあれば、ご意見フォームからお知らせください。直します。</p>
+  <h3 class="lh-h">ご意見・ご要望</h3>
+  <p>リンク切れを見つけたとき、入れてほしいサイトがあるときは、お知らせください。<br>
+  <a href="https://docs.google.com/forms/d/e/1FAIpQLSfz3y0RuZWcjc4wCxixVfIHoKgrbxcjIYmocfuwZ3DkVnT1ZA/viewform" target="_blank" rel="noopener">ご意見フォームを開く</a></p>
 </div>`;
 
 // ==========================================
@@ -1405,7 +1399,7 @@ function quarterWindow_(latestDate) {
 }
 
 // 記事を時間の層に仕分ける。
-//   近い層（今週・先週・1ヶ月前まで）は、その期間の記事をすべて出す。
+//   近い層（先週・先々週・1ヶ月前まで）は、その期間の記事をすべて出す。
 //   遠い層（3ヶ月）は「月次重要」の印が付いたものだけに絞る。
 //   ＝「近いものは詳しく、遠いものは絞って」。同じ記事に印を足すだけで上の層ができる。
 function digestByLayer() {
@@ -1421,7 +1415,7 @@ function digestByLayer() {
     const bands = [[], [], []], older = [];
     list.forEach(a => {
         const d = String(a.date);
-        // 近い3つの層は互いに排他（1本の記事が今週と先週の両方に出ることはない）
+        // 近い3つの層は互いに排他（1本の記事が先週と先々週の両方に出ることはない）
         if (d >= w0)          bands[0].push(a);
         else if (d >= w1)     bands[1].push(a);
         else if (d >= mStart) bands[2].push(a);
@@ -1430,9 +1424,12 @@ function digestByLayer() {
         // 見る別画面であり、新しいというだけで抜けては用をなさないため。
         if (a.monthly && d >= q.start && d <= q.end) older.push(a);
     });
+    // 週の呼び名。土曜に「前の土曜〜金曜」の分を入れる運用なので、いちばん新しい層は
+    // 掲載されている7日間を通してつねに「先週」にあたる。「今週」と書くと、月曜以降は
+    // そこに載っているのが先週の記事になり、ずれて見える。
     const labels = [
-        { label: '今週',        range: range_(w0, addDays_(w0, 6)) },
-        { label: '先週',        range: range_(w1, addDays_(w1, 6)), btn: '先週を見る' },
+        { label: '先週',        range: range_(w0, addDays_(w0, 6)) },
+        { label: '先々週',      range: range_(w1, addDays_(w1, 6)), btn: '先々週を見る' },
         { label: '1ヶ月前まで', range: range_(mStart, addDays_(w1, -1)), btn: '1ヶ月前までを見る' }
     ];
     return { bands: bands, older: older, labels: labels,
@@ -1492,7 +1489,7 @@ function showNews(tab) {
                     <span class="link-arrow">›</span>
                 </div>`;
             //   層の見出しはそのまま開閉スイッチになる（押すとその層から下を閉じる）。
-            //   今週は常に開いた状態なので閉じない。
+            //   いちばん新しい層は常に開いた状態なので閉じない。
             const bandHead = (t, r, closeTo) =>
                 (closeTo === undefined)
                   ? `<div class="news-band"><span class="nb-label">${escHtml(t)}</span><span class="nb-range">${escHtml(r)}</span></div>`
