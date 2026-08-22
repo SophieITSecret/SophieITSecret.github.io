@@ -1813,3 +1813,20 @@ body.font-large #card-body { font-size: 1.05rem; }
 @media (max-width: 400px) {
     .st-grid { grid-template-columns: 1fr; }
 }
+
+/* リンク集の使い方（9つ目） */
+.link-genre-btn.link-genre-help {
+    background: linear-gradient(135deg, #2a2416, #4a3d1e);
+    border-color: #c9a227;
+}
+.lh-doc h3.lh-h {
+    font-size: 0.95rem;
+    color: var(--accent2);
+    margin: 22px 0 8px;
+    padding-bottom: 5px;
+    border-bottom: 1px solid var(--border);
+}
+.lh-doc .lh-list { margin: 0 0 12px 1.1em; padding: 0; }
+.lh-doc .lh-list li { margin-bottom: 9px; line-height: 1.8; }
+.lh-doc em { font-style: normal; color: var(--accent2); }
+.lh-doc .link-badge { display: inline-block; vertical-align: baseline; }

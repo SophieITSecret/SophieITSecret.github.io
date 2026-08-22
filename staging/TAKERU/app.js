@@ -1067,6 +1067,76 @@ function showCard(idx) {
 // リンク集（リンク集ボタンを看板として持ち込み）
 // ==========================================
 // ==========================================
+// リンク集の使い方（リンク集の9つ目）
+//   使う場所のすぐ隣に置く。何がどこにあるか、どう使い分けるかを一枚で。
+// ==========================================
+function showLinkHelp() {
+    navState = 'linkhelp';
+    isMenuVisible = false;
+    showTextView();
+    showMenuBanner();
+    cardProgress.innerText = '';
+    cardTitle.innerText = 'リンク集の使い方';
+    cardBody.innerHTML = LINK_HELP_HTML +
+        `<div class="reg-back"><button class="reg-backbtn" onclick="showLinkGenreMenu()">← リンク集に戻る</button></div>`;
+    textView.scrollTop = 0;
+}
+
+const LINK_HELP_HTML = `
+<div class="reg-priv-doc lh-doc">
+  <p>防衛・安全保障を調べるときの入口を、<strong>172件</strong>集めた場所です。
+  官庁や研究機関の公式サイトが中心で、信頼できるものだけを選んでいます。</p>
+
+  <h3 class="lh-h">まず、どこを見ればよいか</h3>
+  <ul class="lh-list">
+    <li><strong>何が起きているか知りたい</strong> → 📰 ニュース・情勢</li>
+    <li><strong>自衛隊のことを知りたい</strong> → 🛡 日本の防衛・自衛隊</li>
+    <li><strong>言葉の意味を調べたい</strong> → 🔍 調べる道具</li>
+    <li><strong>正確な数字が欲しい</strong> → 🗺 地図・地形・データ（軍事費・兵力の統計）</li>
+    <li><strong>原典に当たりたい</strong> → 📚 公式機関・1次資料／📜 歴史・教養</li>
+  </ul>
+
+  <h3 class="lh-h">8つのジャンル</h3>
+  <ul class="lh-list">
+    <li><strong>公式機関・1次資料</strong>（36）… 官庁・国連・NATO・白書。<em>すべての土台</em></li>
+    <li><strong>日本の防衛・自衛隊</strong>（28）… 組織・駐屯地・装備・採用。<em>基地見学やイベントの情報も</em></li>
+    <li><strong>世界の軍事</strong>（24）… 各国の国防省、軍事力の比較、研究機関</li>
+    <li><strong>戦略・戦争</strong>（25）… 戦略とは何か、作戦、兵站、サイバー・宇宙</li>
+    <li><strong>地図・地形・データ</strong>（20）… <em>使える道具</em>。地形の断面図、距離と射程、統計</li>
+    <li><strong>ニュース・情勢</strong>（24）… 専門紙・海外メディア・論考</li>
+    <li><strong>歴史・教養</strong>（15）… 資料館、そして<em>当時の公文書そのもの</em></li>
+    <li><strong>調べる道具</strong>（8）… 言葉を入れて、その場で検索</li>
+  </ul>
+
+  <h3 class="lh-h">知っておくと便利なこと</h3>
+  <p><span class="link-badge badge-jp">JP</span> の印が付いたものは、<strong>自動で日本語に訳して開きます</strong>。
+  海外のサイトでも、そのまま読めます。うまく訳せないときは英語のまま開きますが、
+  パソコンならブラウザの翻訳機能（右クリック →「日本語に翻訳」）が使えます。</p>
+  <p><span class="link-badge badge-pdf">PDF</span> の印は、PDFの資料が開きます。</p>
+
+  <h3 class="lh-h">とくに勧めたいもの</h3>
+  <ul class="lh-list">
+    <li><strong>地理院地図の断面図</strong>（地図・地形）… 地図に線を引くと、その経路の高低差がグラフになります。
+    「この尾根の向こうは見えるか」を自分で確かめられます</li>
+    <li><strong>Great Circle Mapper</strong>（地図・地形）… 2点間の距離を測り、<strong>指定した距離の円を描けます</strong>。
+    射程の話が具体的になります</li>
+    <li><strong>Flightradar24・MarineTraffic</strong>（地図・地形）… 航空機と船の現在位置。
+    ニュースで聞いた動きをその場で確かめられます</li>
+    <li><strong>アジア歴史資料センター</strong>（調べる道具）… 戦前・戦中の公文書の<strong>原本</strong>が
+    200万件。大本営の命令書や外交電報が、当時の紙のまま読めます</li>
+    <li><strong>朝雲デジタル</strong>（ニュース）… 自衛隊の専門紙。一般にはあまり知られていません</li>
+  </ul>
+
+  <h3 class="lh-h">使うときの心得</h3>
+  <p><strong>公式サイトを先に見る</strong>のが基本です。まとめサイトや解説より、
+  官庁や研究機関が出している資料のほうが確かです。数字を引くときは、
+  <strong>いつの時点のものか</strong>を確かめてください。</p>
+  <p>リンク先の内容は、それぞれの発信者によるものです。
+  MSアカデミーの見解とは限りません。</p>
+  <p class="reg-priv-note">開かないリンクがあれば、ご意見フォームからお知らせください。直します。</p>
+</div>`;
+
+// ==========================================
 // 調べる道具（リンク集の8つ目）
 //   他のジャンルと違い、語を入れてボタンを押すとその場で検索結果へ飛ぶ。
 //   検索できるのは「URLに語を埋め込める」サービスだけ。CiNiiやアジ歴は
@@ -1180,6 +1250,9 @@ function showLinkGenreMenu() {
             <button class="link-genre-btn link-genre-tool" data-tool="1">
                 <span class="link-genre-name">🔍 調べる道具</span>
                 <span class="link-genre-count">${SEARCH_TOOLS.length + SEARCH_SITES.length}</span>
+            </button>
+            <button class="link-genre-btn link-genre-help" data-help="1">
+                <span class="link-genre-name">📘 リンク集の使い方</span>
             </button>`;
     html += `</div></div>`;
     menuContent.innerHTML = html;
@@ -1188,6 +1261,7 @@ function showLinkGenreMenu() {
         const btn = e.target.closest('.link-genre-btn');
         if (!btn) return;
         if (btn.dataset.tool) { showSearchTools(); return; }
+        if (btn.dataset.help) { showLinkHelp(); return; }
         curLinkGenre = btn.dataset.genre;
         showLinkList(curLinkGenre);
     };
@@ -2279,6 +2353,7 @@ function goUpOneLevel() {
             break;
         case 'linklist':
         case 'searchtool':
+        case 'linkhelp':
             showLinkGenreMenu();
             break;
         case 'newsitem':
