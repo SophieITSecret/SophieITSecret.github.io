@@ -2,7 +2,8 @@
 // ============================================================
 // log.php — アクセスを1行だけ追記する。
 //
-//   記録するのは「日付・種別・カード番号」の3つだけ。
+//   記録するのは「日付・種別・番号」の3つだけ。
+//   番号はカード番号／ニュースID／リンクIDのいずれか（種別で区別する）。
 //   IPアドレス・Cookie・識別子は一切記録しない（誰が見たかは辿れない）。
 //   目的は回数を数えることに限る。
 //
@@ -16,14 +17,15 @@ $data = json_decode($raw, true);
 $type = isset($data['type']) ? (string)$data['type'] : '';
 $code = isset($data['code']) ? (string)$data['code'] : '';
 
-$allowed = ['top_view', 'pwa_installed', 'card_view'];
+$allowed = ['top_view', 'pwa_installed', 'card_view', 'news_view', 'link_open'];
 if (!in_array($type, $allowed, true)) {
     http_response_code(400);
     echo json_encode(['ok' => false]);
     exit;
 }
 
-// カード番号は英数字のみ・20文字まで。
+// 番号は英数字のみ・20文字まで。カード(SENSHI01)・ニュース(N0043)・
+// リンク(111)のいずれもこの形に収まる。
 // 誰でも叩ける口なので、長さの上限を設けて1行が膨らむのを防ぐ。
 if ($code !== '' && !preg_match('/^[A-Za-z0-9]{1,20}$/', $code)) {
     $code = '';

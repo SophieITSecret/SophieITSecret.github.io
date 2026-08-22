@@ -320,11 +320,15 @@
     </div>
     <div id="accessDash" class="access-dash"></div>
     <div class="rank-toolbar">
-      <span class="rank-sortlabel">科目：</span>
-      <select id="rankSubject" class="rank-subject" onchange="renderCardRanking()"></select>
-      <span class="rank-sortlabel">表示：</span>
-      <button class="rank-viewbtn" data-view="cumulative" onclick="setRankView('cumulative')">累計一覧</button>
-      <button class="rank-viewbtn" data-view="matrix" onclick="setRankView('matrix')">📅 日別マトリクス</button>
+      <span class="rank-sortlabel">対象：</span>
+      <button class="rank-tgtbtn" data-tgt="card" onclick="setRankTarget('card')">📕 カード</button>
+      <button class="rank-tgtbtn" data-tgt="news" onclick="setRankTarget('news')">📰 ニュース</button>
+      <button class="rank-tgtbtn" data-tgt="link" onclick="setRankTarget('link')">🔗 リンク</button>
+      <span class="rank-sortlabel rank-cardonly">科目：</span>
+      <select id="rankSubject" class="rank-subject rank-cardonly" onchange="renderCardRanking()"></select>
+      <span class="rank-sortlabel rank-cardonly">表示：</span>
+      <button class="rank-viewbtn rank-cardonly" data-view="cumulative" onclick="setRankView('cumulative')">累計一覧</button>
+      <button class="rank-viewbtn rank-cardonly" data-view="matrix" onclick="setRankView('matrix')">📅 日別マトリクス</button>
       <span class="rank-sortlabel rank-sortonly">並び：</span>
       <button class="rank-sortbtn rank-sortonly" data-sort="natural" onclick="setRankSort('natural')">テーマ順（既定）</button>
       <button class="rank-sortbtn rank-sortonly" data-sort="views" onclick="setRankSort('views')">👁 閲覧の多い順</button>

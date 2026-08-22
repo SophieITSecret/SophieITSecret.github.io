@@ -129,6 +129,21 @@ function getNews(req, res) {
     sendJSON(res, 200, { ok: true, items });
   });
 }
+// GET /api/links — MSlink.csv を配列で返す（読み取り専用）
+//   閲覧状況の画面で、リンクIDに名前とジャンルを添えるためだけに使う。
+function getLinks(req, res) {
+  const p = path.join(path.dirname(config.csvPath), 'MSlink.csv');
+  fs.readFile(p, 'utf8', (err, data) => {
+    if (err) { if (err.code === 'ENOENT') return sendJSON(res, 200, { ok: true, items: [] }); return sendJSON(res, 500, { ok: false, error: err.message }); }
+    const recs = parseCsvText(data.replace(/^﻿/, ''));
+    const items = recs.slice(1).filter(r => (r[0] || '').trim()).map(r => ({
+      id: (r[0] || '').trim(), genre: (r[1] || '').trim(), field: (r[2] || '').trim(),
+      name: (r[3] || '').trim(), url: (r[4] || '').trim(),
+    }));
+    sendJSON(res, 200, { ok: true, items });
+  });
+}
+
 // POST /api/news — 配列を受け取り news.csv を上書き（バックアップ作成）
 function postNews(req, res) {
   let chunks = [];
@@ -313,13 +328,20 @@ const PROD = Object.assign({
 
 async function getAccessStats(req, res) {
   const SEP = '===TAKERU_SPLIT===';
-  // 2ファイルを1回のSSHでまとめて取得（無ければ空として扱う）
+  // 5ファイルを1回のSSHでまとめて取得（無ければ空として扱う）
   const remoteCmd =
     `cat ${PROD.remoteDir}/daily_summary.json 2>/dev/null; ` +
     `echo; echo ${SEP}; ` +
     `cat ${PROD.remoteDir}/card_summary.json 2>/dev/null; ` +
     `echo; echo ${SEP}; ` +
-    `cat ${PROD.remoteDir}/card_daily.json 2>/dev/null`;
+    `cat ${PROD.remoteDir}/card_daily.json 2>/dev/null; ` +
+    `echo; echo ${SEP}; ` +
+    `cat ${PROD.remoteDir}/news_summary.json 2>/dev/null; ` +
+    `echo; echo ${SEP}; ` +
+    `cat ${PROD.remoteDir}/link_summary.json 2>/dev/null; ` +
+    // 末尾を true で閉じる。まだ生成されていないJSONがあると最後の cat が
+    // 失敗し、ssh 全体が異常終了して既存の集計まで空で返ってしまうため。
+    `true`;
   const args = [
     '-i', PROD.keyPath, '-p', String(PROD.port),
     '-o', 'StrictHostKeyChecking=no', '-o', 'BatchMode=yes', '-o', 'ConnectTimeout=20',
@@ -327,12 +349,13 @@ async function getAccessStats(req, res) {
   ];
   try {
     const out = await spawnP('ssh', args, {});
-    const [dailyRaw = '', cardRaw = '', cardDailyRaw = ''] = out.split(SEP);
+    const [dailyRaw = '', cardRaw = '', cardDailyRaw = '', newsRaw = '', linkRaw = ''] = out.split(SEP);
     const parse = s => { s = s.trim(); if (!s) return {}; try { const v = JSON.parse(s); return v && typeof v === 'object' ? v : {}; } catch { return {}; } };
-    sendJSON(res, 200, { ok: true, daily: parse(dailyRaw), cards: parse(cardRaw), cardDaily: parse(cardDailyRaw) });
+    sendJSON(res, 200, { ok: true, daily: parse(dailyRaw), cards: parse(cardRaw), cardDaily: parse(cardDailyRaw),
+                         news: parse(newsRaw), links: parse(linkRaw) });
   } catch (e) {
     // SSH不通でも作業台自体は落とさない。理由を添えて空で返す。
-    sendJSON(res, 200, { ok: false, error: e.message, daily: {}, cards: {}, cardDaily: {} });
+    sendJSON(res, 200, { ok: false, error: e.message, daily: {}, cards: {}, cardDaily: {}, news: {}, links: {} });
   }
 }
 
@@ -808,6 +831,7 @@ const server = http.createServer((req, res) => {
   if (pathname === '/api/members' && method === 'GET') return getMembers(req, res);
   if (pathname === '/api/news' && method === 'GET') return getNews(req, res);
   if (pathname === '/api/news' && method === 'POST') return postNews(req, res);
+  if (pathname === '/api/links' && method === 'GET') return getLinks(req, res);
   if (pathname === '/api/publish' && method === 'POST') return postPublish(req, res);
 
   // 静的

@@ -1896,7 +1896,9 @@ async function persistNews() {
 let progressTab = '';
 
 // ===== アクセス計測（本番集計をSSHで取得して表示） =====
-let accessStats = { daily: {}, cards: {}, cardDaily: {}, loaded: false, error: null };
+let accessStats = { daily: {}, cards: {}, cardDaily: {}, news: {}, links: {}, loaded: false, error: null };
+// 閲覧状況で「どの記事／どのリンクか」を名前で示すための台帳（表示用・読み取り専用）
+let rankNewsItems = [], rankLinkItems = [];
 
 async function loadAccessStats() {
   const dash = document.getElementById('accessDash');
@@ -1904,9 +1906,10 @@ async function loadAccessStats() {
   try {
     const r = await fetch('/api/access-stats');
     const j = await r.json();
-    accessStats = { daily: j.daily || {}, cards: j.cards || {}, cardDaily: j.cardDaily || {}, loaded: true, error: j.ok ? null : (j.error || '取得失敗') };
+    accessStats = { daily: j.daily || {}, cards: j.cards || {}, cardDaily: j.cardDaily || {},
+                    news: j.news || {}, links: j.links || {}, loaded: true, error: j.ok ? null : (j.error || '取得失敗') };
   } catch (e) {
-    accessStats = { daily: {}, cards: {}, cardDaily: {}, loaded: true, error: e.message };
+    accessStats = { daily: {}, cards: {}, cardDaily: {}, news: {}, links: {}, loaded: true, error: e.message };
   }
   renderAccessDash();
   if (document.getElementById('rankModal') && document.getElementById('rankModal').style.display === 'flex') renderCardRanking();
@@ -1932,10 +1935,10 @@ function renderAccessDash() {
   dash.innerHTML = `
     <div class="dash-head">
       <span class="dash-title">📈 本番アクセス（直近7日）</span>
-      <span class="dash-tot">トップ計 ${sum('top_view')}／カード計 ${sum('card_view')}／追加 ${sum('pwa_installed')}</span>
+      <span class="dash-tot">トップ ${sum('top_view')}／カード ${sum('card_view')}／ニュース ${sum('news_view')}／リンク ${sum('link_open')}／追加 ${sum('pwa_installed')}</span>
       <button class="dash-refresh" onclick="loadAccessStats()" title="本番から再取得">↻ 更新</button>
     </div>
-    ${note || `<table class="dash-table"><tr><th></th>${head}</tr>${row('トップ', 'top_view')}${row('カード', 'card_view')}${row('追加', 'pwa_installed')}</table>`}
+    ${note || `<table class="dash-table"><tr><th></th>${head}</tr>${row('トップ', 'top_view')}${row('カード', 'card_view')}${row('ニュース', 'news_view')}${row('リンク', 'link_open')}${row('追加', 'pwa_installed')}</table>`}
   `;
 }
 
@@ -1947,9 +1950,22 @@ function openCardRanking() {
   fillRankSubjects();
   renderCardRanking();
   loadAccessStats();   // 開くたびに本番から最新を取得（非同期・完了後に再描画）
+  loadRankLedgers().then(renderCardRanking);   // 見出し・リンク名の台帳
 }
 function closeCardRanking() {
   document.getElementById('rankModal').style.display = 'none';
+}
+// 閲覧状況で何を見るか。カード／ニュース／リンクで表の作りが違う。
+let rankTarget = 'card';
+function setRankTarget(k) {
+  rankTarget = k;
+  // カード専用の操作（科目・表示・並び・0を隠す）は、ニュースとリンクでは隠す
+  const showCard = (k === 'card');
+  document.querySelectorAll('.rank-cardonly, .rank-sortonly, .rank-zero')
+    .forEach(el => { el.style.display = showCard ? '' : 'none'; });
+  document.querySelectorAll('.rank-tgtbtn')
+    .forEach(b => b.classList.toggle('on', b.dataset.tgt === k));
+  renderCardRanking();
 }
 function setRankSort(k) { rankSort = k; renderCardRanking(); }
 function setRankView(k) { rankView = k; renderCardRanking(); }
@@ -1972,9 +1988,62 @@ function fillRankSubjects() {
   if (prev && (prev === '__ALL__' || subjects.includes(prev))) sel.value = prev;
   else sel.value = '__ALL__';
 }
+// ===== ニュース・リンクの閲覧一覧 =====
+//   カードと違い階層が無いので、素直に「多い順」で並べる。
+//   台帳（news.csv / MSlink.csv）と突き合わせて、IDに見出しと素性を添える。
+async function loadRankLedgers() {
+  try {
+    const [n, l] = await Promise.all([fetch('/api/news'), fetch('/api/links')]);
+    rankNewsItems = (await n.json()).items || [];
+    rankLinkItems = (await l.json()).items || [];
+  } catch (e) { /* 台帳が読めなくてもIDだけで表は出す */ }
+}
+
+function renderItemRanking(body) {
+  const isNews = (rankTarget === 'news');
+  const views  = (isNews ? accessStats.news : accessStats.links) || {};
+  const ledger = isNews ? rankNewsItems : rankLinkItems;
+
+  // 台帳にある全件を並べる。まだ読まれていないものも0として見せる
+  // （何が読まれていないかも、判断の材料になるため）。
+  const rows = ledger.map(it => ({
+    id: it.id,
+    title: isNews ? it.title : it.name,
+    sub: isNews ? `${it.date}　${it.type}${it.monthly ? '　月次' : ''}${it.published ? '' : '　未公開'}`
+                : `${it.genre}　${it.field}`,
+    v: views[it.id] || 0,
+  }));
+  // 台帳から消えたIDの記録も拾う（過去に読まれた記事を削った場合など）
+  Object.keys(views).forEach(id => {
+    if (!ledger.some(it => it.id === id)) rows.push({ id, title: '(台帳にありません)', sub: '', v: views[id] });
+  });
+  rows.sort((a, b) => b.v - a.v || String(a.id).localeCompare(String(b.id), undefined, { numeric: true }));
+
+  const total = rows.reduce((a, r) => a + r.v, 0);
+  const seen  = rows.filter(r => r.v > 0).length;
+  const totEl = document.getElementById('rankTotals');
+  if (totEl) totEl.textContent = `${rows.length}件中 ${seen}件が閲覧あり／のべ ${total}回`;
+
+  if (!rows.length) { body.innerHTML = '<div class="dash-empty">台帳が読み込めませんでした</div>'; return; }
+
+  body.innerHTML = `
+    <table class="rank-table">
+      <tr><th style="width:3em">順</th><th style="width:5em">ID</th><th>${isNews ? '見出し' : 'リンク先'}</th><th style="width:5em">回数</th></tr>
+      ${rows.map((r, i) => `
+        <tr>
+          <td>${r.v > 0 ? (i + 1) : '－'}</td>
+          <td>${esc(r.id)}</td>
+          <td><span class="rank-nl-title">${esc(r.title)}</span><br><span class="rank-nl-sub">${esc(r.sub)}</span></td>
+          <td class="rank-nl-num">${r.v}</td>
+        </tr>`).join('')}
+    </table>`;
+}
+
 function renderCardRanking() {
   const body = document.getElementById('rankBody');
   if (!body) return;
+  document.querySelectorAll('.rank-tgtbtn').forEach(b => b.classList.toggle('on', b.dataset.tgt === rankTarget));
+  if (rankTarget !== 'card') return renderItemRanking(body);
   const sel = document.getElementById('rankSubject');
   const subject = sel ? sel.value : '';
   const hideZero = document.getElementById('rankHideZero') && document.getElementById('rankHideZero').checked;

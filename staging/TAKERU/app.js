@@ -288,6 +288,7 @@ function toTranslateGoogUrl(url) {
 
 function openLink(item) {
     if (!item.url) return;
+    logAccess('link_open', item.id);        // どのリンクが使われたかを数える
     // 翻訳の中継をどう通すか。サイトによって通る経路が違うので、リンクごとに指定する。
     //   1 = 翻訳（…translate.goog）。ふつうはこちら
     //   3 = 翻訳（旧形式）。新形式を弾くサイト向け（中国国防部・CSTOなど）
@@ -1561,6 +1562,7 @@ function showNewsItem(id) {
     if (!n) return;
     const isDigest = (n.type === 'ニュース');
     const date = n.date, title = n.title, body = n.body;
+    logAccess('news_view', n.id);           // どの記事が読まれたかを数える
     navState = 'newsitem';
     isMenuVisible = false;
     showTextView();

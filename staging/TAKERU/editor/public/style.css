@@ -437,3 +437,13 @@ textarea.svg-overlay-input { min-height:120px; font-family:monospace; font-size:
 }
 .nei-flag:hover { border-color: var(--accent2); }
 .nei-flag.on { background: rgba(224,164,88,.22); border-color: #e0a458; color: #e0a458; font-weight: 700; }
+
+/* 閲覧状況：対象（カード／ニュース／リンク）の切り替え */
+.rank-tgtbtn {
+  padding: 3px 11px; margin-right: 3px; font-size: 12px; cursor: pointer;
+  border: 1px solid #c8c8c0; border-radius: 4px; background: #fff; color: #444;
+}
+.rank-tgtbtn.on { background: #4a3728; color: #f5f0e8; border-color: #4a3728; }
+.rank-nl-title { font-weight: 600; }
+.rank-nl-sub { font-size: 11px; color: #777; }
+.rank-nl-num { text-align: right; font-variant-numeric: tabular-nums; }
