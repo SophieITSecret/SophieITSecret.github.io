@@ -231,7 +231,10 @@ async function loadNewsCSV() {
             // 上の層に持ち上げる印。1記事1行なので、印を立てるだけで
             // 3ヶ月表・年次表の素材になる（同じ記事を作り直さない）
             monthly: c[6]?.trim() === '1',
-            yearly:  c[7]?.trim() === '1'
+            yearly:  c[7]?.trim() === '1',
+            // 英語の原文。本文末尾のリンクは翻訳版なので、
+            // 翻訳が崩れたときに原文へ逃げられるよう別に持つ
+            srcUrl:  c[8]?.trim() || ''
         })).filter(d => d.id);
     } catch (e) {
         console.error('お知らせCSVロード失敗:', e);
@@ -1544,7 +1547,10 @@ function showNewsItem(id) {
     showMenuBanner();
     cardProgress.innerText = date || '';
     cardTitle.innerText = title || (isDigest ? 'ニュース' : 'お知らせ');
-    cardBody.innerHTML = bodyToHtml(body) +
+    const srcLink = (isDigest && n.srcUrl)
+        ? `<div class="news-orig"><a href="${escHtml(n.srcUrl)}" target="_blank" rel="noopener">原文（英語）を読む</a></div>`
+        : '';
+    cardBody.innerHTML = bodyToHtml(body) + srcLink +
         (isDigest ? `<div class="news-source">（出所：英ガーディアン紙／要約はMSアカデミー）</div>` : '') +
         `<div class="reg-back"><button class="reg-backbtn" onclick="showNews('${isDigest ? 'ニュース' : 'お知らせ'}')">← ${isDigest ? 'ニュース' : 'お知らせ'}一覧に戻る</button></div>`;
     textView.scrollTop = 0;

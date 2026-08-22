@@ -1830,3 +1830,7 @@ body.font-large #card-body { font-size: 1.05rem; }
 .lh-doc .lh-list li { margin-bottom: 9px; line-height: 1.8; }
 .lh-doc em { font-style: normal; color: var(--accent2); }
 .lh-doc .link-badge { display: inline-block; vertical-align: baseline; }
+
+/* ニュース記事の原文（英語）リンク */
+.news-orig { margin-top: 14px; font-size: 0.82rem; }
+.news-orig a { color: var(--text2); text-decoration: underline; }
