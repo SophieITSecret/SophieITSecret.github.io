@@ -1421,11 +1421,14 @@ function digestByLayer() {
     const bands = [[], [], []], older = [];
     list.forEach(a => {
         const d = String(a.date);
+        // 近い3つの層は互いに排他（1本の記事が今週と先週の両方に出ることはない）
         if (d >= w0)          bands[0].push(a);
         else if (d >= w1)     bands[1].push(a);
         else if (d >= mStart) bands[2].push(a);
-        // 1ヶ月より古いものは「月次の印がある」かつ「3ヶ月の期間内」の両方を満たすものだけ
-        else if (a.monthly && d >= q.start && d <= q.end) older.push(a);
+        // 3ヶ月は上の層と排他ではない。近い層に出ている記事でも、印があって
+        // 期間内なら3ヶ月にも載せる。3ヶ月は「その3か月を通して何が起きたか」を
+        // 見る別画面であり、新しいというだけで抜けては用をなさないため。
+        if (a.monthly && d >= q.start && d <= q.end) older.push(a);
     });
     const labels = [
         { label: '今週',        range: range_(w0, addDays_(w0, 6)) },
