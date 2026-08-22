@@ -1391,6 +1391,19 @@ function monthRange_(a, b) {
     return (x === y) ? x : (x + '〜' + y);
 }
 
+// 3ヶ月の層が受け持つ期間。いま進行中の月の1つ前から3か月ぶん（8月なら5月〜7月）。
+// 印が立っているだけでは載らない。この期間に入っていることがもう一つの条件で、
+// これが無いと印付きの記事が消えずに溜まり続け、いずれ「3ヶ月」でなくなる。
+// 基準はカレンダーの今日ではなく最新記事の月。ほかの層もすべて最新記事から
+// 数えているので、更新が止まったとき3ヶ月の画面だけが空になるのを避ける。
+function quarterWindow_(latestDate) {
+    const d = dateOf_(latestDate);
+    return {
+        start: ymd_(new Date(d.getFullYear(), d.getMonth() - 3, 1)),  // 3か月前の1日
+        end:   ymd_(new Date(d.getFullYear(), d.getMonth(), 0))       // 前月の末日
+    };
+}
+
 // 記事を時間の層に仕分ける。
 //   近い層（今週・先週・1ヶ月前まで）は、その期間の記事をすべて出す。
 //   遠い層（3ヶ月）は「月次重要」の印が付いたものだけに絞る。
@@ -1404,13 +1417,15 @@ function digestByLayer() {
     const w1 = addDays_(w0, -7);                  // 先週の土曜
     const mStart = addDays_(w0, -21);             // 1ヶ月の層の始まり
 
+    const q = quarterWindow_(list[0].date);       // 3ヶ月の層が受け持つ期間
     const bands = [[], [], []], older = [];
     list.forEach(a => {
         const d = String(a.date);
         if (d >= w0)          bands[0].push(a);
         else if (d >= w1)     bands[1].push(a);
         else if (d >= mStart) bands[2].push(a);
-        else if (a.monthly)   older.push(a);       // 1ヶ月より古いものは印のあるものだけ
+        // 1ヶ月より古いものは「月次の印がある」かつ「3ヶ月の期間内」の両方を満たすものだけ
+        else if (a.monthly && d >= q.start && d <= q.end) older.push(a);
     });
     const labels = [
         { label: '今週',        range: range_(w0, addDays_(w0, 6)) },
@@ -1418,7 +1433,7 @@ function digestByLayer() {
         { label: '1ヶ月前まで', range: range_(mStart, addDays_(w1, -1)), btn: '1ヶ月前までを見る' }
     ];
     return { bands: bands, older: older, labels: labels,
-             olderRange: older.length ? monthRange_(older[older.length - 1].date, older[0].date) : '' };
+             olderRange: older.length ? monthRange_(q.start, q.end) : '' };
 }
 
 // 新着の赤●は「お知らせ」「ニュース」どちらの新着でも点ける
