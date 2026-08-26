@@ -22,7 +22,8 @@ try {
 }
 
 const PUBLIC_DIR = path.join(__dirname, 'public');
-const PORT = config.port || 3000;
+// 動作確認用に別ポートで立てられるようにしておく（既に作業台が動いていても試せる）
+const PORT = process.env.EDITOR_PORT || config.port || 3000;
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',
@@ -129,6 +130,69 @@ function getNews(req, res) {
     sendJSON(res, 200, { ok: true, items });
   });
 }
+// ===== sw.js のバージョン =====
+//   内容を変えても版数を上げないと、利用者の端末に古い図や音声が残る。
+//   CSVを保存するたびに自動で上げると、校正中の小さな直しでも番号が進み、
+//   利用者に何度も更新を促すことになる。だから「上げる」は人が押して決める。
+//   代わりに、上げる必要があるかどうかは中身の日付を見て教える。
+function swPath() { return path.join(path.dirname(config.csvPath), 'sw.js'); }
+
+// 版数より新しい内容ファイルがあるか。あれば「上げどき」。
+function swPending() {
+  const dir = path.dirname(config.csvPath);
+  let swTime = 0;
+  try { swTime = fs.statSync(swPath()).mtimeMs; } catch { return { pending: false, changed: [] }; }
+  const changed = [];
+  const look = (rel) => {
+    const full = path.join(dir, rel);
+    let st; try { st = fs.statSync(full); } catch { return; }
+    if (st.isDirectory()) {
+      let newest = 0, name = '';
+      for (const f of fs.readdirSync(full)) {
+        try { const t = fs.statSync(path.join(full, f)).mtimeMs; if (t > newest) { newest = t; name = f; } } catch {}
+      }
+      if (newest > swTime) changed.push(rel + '/' + name);
+    } else if (st.mtimeMs > swTime) {
+      changed.push(rel);
+    }
+  };
+  ['TAKERUcard.csv', 'news.csv', 'MSlink.csv', 'app.js', 'style.css', 'index.html', 'images', 'voices'].forEach(look);
+  return { pending: changed.length > 0, changed };
+}
+
+function readSwVersion() {
+  const t = fs.readFileSync(swPath(), 'utf8');
+  const a = (t.match(/SW_VERSION = 'v(\d+)'/) || [])[1];
+  const b = (t.match(/takeru-v(\d+)/) || [])[1];
+  return { text: t, sw: a, cache: b };
+}
+
+// GET /api/sw-version — 現在の版数と、上げどきかどうか
+function getSwVersion(req, res) {
+  try {
+    const v = readSwVersion();
+    sendJSON(res, 200, { ok: true, version: v.sw, mismatch: v.sw !== v.cache, ...swPending() });
+  } catch (e) { sendJSON(res, 200, { ok: false, error: e.message }); }
+}
+
+// POST /api/sw-version — 版数を1つ上げる（tools/bump-sw.sh と同じことをする）
+function bumpSwVersion(req, res) {
+  try {
+    const v = readSwVersion();
+    if (!v.sw || !v.cache) return sendJSON(res, 200, { ok: false, error: 'sw.js から版数を読めません' });
+    const next = String(Math.max(+v.sw, +v.cache) + 1);
+    let t = v.text
+      .replace(/SW_VERSION = 'v\d+'/, "SW_VERSION = 'v" + next + "'")
+      .replace(/takeru-v\d+/g, 'takeru-v' + next);
+    // 2つが揃っているか検算してから書く。片方だけ進むと診断が狂う。
+    const a = (t.match(/SW_VERSION = 'v(\d+)'/) || [])[1];
+    const b = (t.match(/takeru-v(\d+)/) || [])[1];
+    if (a !== b || a !== next) return sendJSON(res, 200, { ok: false, error: '書き換えの検算に失敗しました' });
+    fs.writeFileSync(swPath(), t, 'utf8');
+    sendJSON(res, 200, { ok: true, from: v.sw, version: next });
+  } catch (e) { sendJSON(res, 200, { ok: false, error: e.message }); }
+}
+
 // GET /api/links — MSlink.csv を配列で返す（読み取り専用）
 //   閲覧状況の画面で、リンクIDに名前とジャンルを添えるためだけに使う。
 function getLinks(req, res) {
@@ -832,6 +896,8 @@ const server = http.createServer((req, res) => {
   if (pathname === '/api/news' && method === 'GET') return getNews(req, res);
   if (pathname === '/api/news' && method === 'POST') return postNews(req, res);
   if (pathname === '/api/links' && method === 'GET') return getLinks(req, res);
+  if (pathname === '/api/sw-version' && method === 'GET') return getSwVersion(req, res);
+  if (pathname === '/api/sw-version' && method === 'POST') return bumpSwVersion(req, res);
   if (pathname === '/api/publish' && method === 'POST') return postPublish(req, res);
 
   // 静的

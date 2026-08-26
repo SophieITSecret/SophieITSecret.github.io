@@ -6,6 +6,7 @@ let mp3Ids=new Set();
 // ===== 初期化：サーバーからCSVと画像一覧を自動読み込み =====
 async function init() {
   const status=document.getElementById('fileStatus');
+  refreshSwVersion();            // 版数と「上げどきか」をボタンに出す
   try {
     const res=await fetch('/api/csv');
     if(!res.ok) throw new Error('CSVの読み込みに失敗しました');
@@ -1024,6 +1025,7 @@ async function saveCSV(){
     if(!res.ok||!j.ok) throw new Error(j.error||'保存に失敗しました');
     dirty=false;
     document.getElementById('fileStatus').textContent=`💾 保存しました${j.backup?'（バックアップ: '+j.backup+'）':''}`;
+    refreshSwVersion();          // 保存すると「版数の上げどき」になる
   } catch(err) {
     alert('保存に失敗しました: '+err.message);
   } finally {
@@ -1988,6 +1990,53 @@ function fillRankSubjects() {
   if (prev && (prev === '__ALL__' || subjects.includes(prev))) sel.value = prev;
   else sel.value = '__ALL__';
 }
+// ===== アプリの版数（sw.js）=====
+//   内容を変えても版数を上げないと、利用者の端末に古い図や音声が残る。
+//   校正中の小さな直しでいちいち上げると番号が無駄に進み、利用者に何度も
+//   更新を促すことになるので、上げるのは人が押して決める。
+//   代わりに「上げどきかどうか」はボタンの色で知らせる。
+async function refreshSwVersion() {
+  const b = document.getElementById('btnSwBump');
+  if (!b) return;
+  try {
+    const j = await (await fetch('/api/sw-version')).json();
+    if (!j.ok) { b.textContent = '⬆ v?'; b.title = j.error || '版数を読めません'; return; }
+    b.textContent = '⬆ v' + j.version;
+    b.classList.toggle('sw-pending', !!j.pending);
+    b.title = j.pending
+      ? `版数より新しい内容があります。押すと版数が上がり、利用者の端末で図や音声が入れ替わります。
+新しい内容：${j.changed.slice(0, 6).join('、')}${j.changed.length > 6 ? ' ほか' : ''}`
+      : '版数は最新です（前回上げてから内容の変更はありません）';
+  } catch (e) {
+    b.textContent = '⬆ v?';
+  }
+}
+
+async function bumpSw() {
+  const b = document.getElementById('btnSwBump');
+  const ok = confirm(`アプリの版数を上げますか？
+
+利用者の端末に「新しいバージョンがあります」と出て、図や音声が入れ替わります。
+内容の直しが一区切りついたときに押してください。`);
+  if (!ok) return;
+  b.disabled = true;
+  try {
+    const r = await fetch('/api/sw-version', { method: 'POST' });
+    const j = await r.json();
+    if (!j.ok) {
+      alert('版数を上げられませんでした: ' + (j.error || ''));
+    } else {
+      alert(`v${j.from} → v${j.version} に上げました。
+
+このあと git へ push すると開発版に、「🚀 本番公開」で本番に反映されます。`);
+    }
+  } catch (e) {
+    alert('版数を上げられませんでした: ' + e.message);
+  }
+  b.disabled = false;
+  refreshSwVersion();
+}
+
 // ===== ニュース・リンクの閲覧一覧 =====
 //   カードと違い階層が無いので、素直に「多い順」で並べる。
 //   台帳（news.csv / MSlink.csv）と突き合わせて、IDに見出しと素性を添える。

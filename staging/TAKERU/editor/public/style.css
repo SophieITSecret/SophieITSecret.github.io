@@ -447,3 +447,12 @@ textarea.svg-overlay-input { min-height:120px; font-family:monospace; font-size:
 .rank-nl-title { font-weight: 600; }
 .rank-nl-sub { font-size: 11px; color: #777; }
 .rank-nl-num { text-align: right; font-variant-numeric: tabular-nums; }
+
+/* 版数を上げるボタン。上げどきのときだけ色が付く */
+#btnSwBump { font-variant-numeric: tabular-nums; }
+#btnSwBump.sw-pending {
+  background: #b5651d;
+  color: #fff;
+  border-color: #b5651d;
+  font-weight: 600;
+}
