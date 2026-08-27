@@ -30,4 +30,17 @@ RewriteRule ^(.*)$ https://takeru.ms-forum.com/$1 [R=301,L]
     Header set Pragma "no-cache"
     Header set Expires "0"
   </FilesMatch>
+
+  # ------------------------------------------------------------
+  # 図と音声は「持っていてよいが、使う前に必ず確認する」
+  #   既定のままだと7日間そのまま使われ、差し替えても古い図が出続ける。
+  #   実際、強制リセットでも直らない事態が起きた（アプリのキャッシュは
+  #   消せても、ブラウザ自身が抱えているものには手が届かないため）。
+  #   no-store にはしない。中身が変わっていなければ304で済み、
+  #   毎回まるごと落とし直さずに済む。
+  # ------------------------------------------------------------
+  <FilesMatch ".*\.(jpg|jpeg|png|gif|svg|webp|mp3|m4a)$">
+    Header set Cache-Control "no-cache, must-revalidate"
+    Header unset Expires
+  </FilesMatch>
 </IfModule>

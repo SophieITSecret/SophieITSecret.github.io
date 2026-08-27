@@ -22,6 +22,13 @@ const IS_PROD = (typeof window.__IS_PROD === 'boolean') ? window.__IS_PROD : (fu
     return true;                            // 上記以外はすべて本番
 })();
 
+// 図と音声のURLに付ける版の印。
+//   画像・音声はブラウザ自身が長くキャッシュするため、差し替えても
+//   古いものが出続ける。URLが変われば確実に取り直されるので、版が上がるたび
+//   ここも一緒に上げる（bump-sw.sh と作業台の「⬆ v」ボタンが書き換える）。
+const ASSET_V = 'v116';
+function av(path) { return path + '?v=' + ASSET_V; }
+
 // ==========================================
 // アクセス計測（本番のみ）
 //   記録するのは日付・種別・カード番号だけ。個人を特定する情報は送らない。
@@ -344,7 +351,7 @@ function showMenuBanner() {
     imageArea.classList.add('menu-banner');
     imageArea.style.display = '';
     dividerLine.style.display = '';
-    cardImage.src = 'images/takeru-menu.jpg';
+    cardImage.src = av('images/takeru-menu.jpg');
     cardImage.style.display = 'block';
     imagePlaceholder.style.display = 'none';
     cardImage.onerror = () => {
@@ -361,7 +368,7 @@ function showMainPanel() {
     imageArea.classList.remove('menu-banner');   // 低いバナーにしない＝大パネルのまま
     imageArea.classList.remove('has-image');      // 拡大印は出さない
     cardImage.classList.remove('complete-mascot');
-    cardImage.src = 'images/takeru-top.jpg';
+    cardImage.src = av('images/takeru-top.jpg');
     cardImage.style.display = 'block';
     imagePlaceholder.style.display = 'none';
     cardImage.onerror = () => {
@@ -384,7 +391,7 @@ function showTopMenu() {
     btnSettings.style.display = 'block';
 
     imageArea.classList.remove('menu-banner');   // トップは大パネル。低い枠を必ず解除
-    cardImage.src = 'images/takeru-top.jpg';
+    cardImage.src = av('images/takeru-top.jpg');
     cardImage.style.display = 'block';
     imagePlaceholder.style.display = 'none';
     cardImage.onerror = () => {
@@ -1045,12 +1052,12 @@ function showCard(idx) {
         // カード画像は.jpgに統一済み。.pngは旧データ用のフォールバックとして残す
         cardImage.classList.remove('complete-mascot');   // 完了画面のマスコット指定を解除
         imageArea.classList.remove('menu-banner');       // 化粧パネル用の低い枠を必ず解除
-        cardImage.src = `images/${card.id}.jpg`;
+        cardImage.src = av(`images/${card.id}.jpg`);
         cardImage.style.display = 'block';
         imagePlaceholder.style.display = 'none';
         imageArea.classList.add('has-image');   // 拡大できる印（⛶）を出す
         cardImage.onerror = () => {
-            cardImage.src = `images/${card.id}.png`;
+            cardImage.src = av(`images/${card.id}.png`);
             cardImage.onerror = () => {
                 cardImage.style.display = 'none';
                 imagePlaceholder.style.display = 'flex';
@@ -2168,7 +2175,7 @@ function showSectionComplete() {
     imageArea.classList.remove('has-image');
     imageArea.classList.remove('menu-banner');   // 化粧パネル用の低い枠を必ず解除
     cardImage.classList.add('complete-mascot');
-    cardImage.src = 'images/mascots.png';
+    cardImage.src = av('images/mascots.png');
     cardImage.style.display = 'block';
     imagePlaceholder.style.display = 'none';
 }
@@ -2228,7 +2235,7 @@ function playVoiceDirect() {
     voice.onerror = failPlay;
     voice.onended = () => { if (autoAdvance && navState === 'card') setTimeout(doNextCard, 700); };
     voice.volume = 1.0;
-    voice.src = `voices/${card.id}.mp3`;
+    voice.src = av(`voices/${card.id}.mp3`);
     voice.load();
     _mp3LoadTimer = setTimeout(failPlay, 3000);
 }

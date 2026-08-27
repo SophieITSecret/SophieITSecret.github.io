@@ -160,18 +160,25 @@ function swPending() {
   return { pending: changed.length > 0, changed };
 }
 
+function appPath() { return path.join(path.dirname(config.csvPath), 'app.js'); }
+
 function readSwVersion() {
   const t = fs.readFileSync(swPath(), 'utf8');
+  const u = fs.readFileSync(appPath(), 'utf8');
   const a = (t.match(/SW_VERSION = 'v(\d+)'/) || [])[1];
   const b = (t.match(/takeru-v(\d+)/) || [])[1];
-  return { text: t, sw: a, cache: b };
+  // app.js の ASSET_V は画像・音声のURLに付ける印。ブラウザ自身のキャッシュを
+  // 外すために要るので、sw.js の2つと必ず同じ番号に揃える。
+  const c = (u.match(/ASSET_V = 'v(\d+)'/) || [])[1];
+  return { text: t, appText: u, sw: a, cache: b, asset: c };
 }
 
 // GET /api/sw-version — 現在の版数と、上げどきかどうか
 function getSwVersion(req, res) {
   try {
     const v = readSwVersion();
-    sendJSON(res, 200, { ok: true, version: v.sw, mismatch: v.sw !== v.cache, ...swPending() });
+    sendJSON(res, 200, { ok: true, version: v.sw,
+                         mismatch: (v.sw !== v.cache || v.sw !== v.asset), ...swPending() });
   } catch (e) { sendJSON(res, 200, { ok: false, error: e.message }); }
 }
 
@@ -179,16 +186,19 @@ function getSwVersion(req, res) {
 function bumpSwVersion(req, res) {
   try {
     const v = readSwVersion();
-    if (!v.sw || !v.cache) return sendJSON(res, 200, { ok: false, error: 'sw.js から版数を読めません' });
-    const next = String(Math.max(+v.sw, +v.cache) + 1);
-    let t = v.text
+    if (!v.sw || !v.cache || !v.asset) return sendJSON(res, 200, { ok: false, error: 'sw.js / app.js から版数を読めません' });
+    const next = String(Math.max(+v.sw, +v.cache, +v.asset) + 1);
+    const t = v.text
       .replace(/SW_VERSION = 'v\d+'/, "SW_VERSION = 'v" + next + "'")
       .replace(/takeru-v\d+/g, 'takeru-v' + next);
-    // 2つが揃っているか検算してから書く。片方だけ進むと診断が狂う。
+    const u = v.appText.replace(/ASSET_V = 'v\d+'/, "ASSET_V = 'v" + next + "'");
+    // 3つが揃っているか検算してから書く。ずれると更新が中途半端に届く。
     const a = (t.match(/SW_VERSION = 'v(\d+)'/) || [])[1];
     const b = (t.match(/takeru-v(\d+)/) || [])[1];
-    if (a !== b || a !== next) return sendJSON(res, 200, { ok: false, error: '書き換えの検算に失敗しました' });
+    const c = (u.match(/ASSET_V = 'v(\d+)'/) || [])[1];
+    if (a !== b || a !== c || a !== next) return sendJSON(res, 200, { ok: false, error: '書き換えの検算に失敗しました' });
     fs.writeFileSync(swPath(), t, 'utf8');
+    fs.writeFileSync(appPath(), u, 'utf8');
     sendJSON(res, 200, { ok: true, from: v.sw, version: next });
   } catch (e) { sendJSON(res, 200, { ok: false, error: e.message }); }
 }
