@@ -26,7 +26,7 @@ const IS_PROD = (typeof window.__IS_PROD === 'boolean') ? window.__IS_PROD : (fu
 //   画像・音声はブラウザ自身が長くキャッシュするため、差し替えても
 //   古いものが出続ける。URLが変われば確実に取り直されるので、版が上がるたび
 //   ここも一緒に上げる（bump-sw.sh と作業台の「⬆ v」ボタンが書き換える）。
-const ASSET_V = 'v116';
+const ASSET_V = 'v117';
 function av(path) { return path + '?v=' + ASSET_V; }
 
 // ==========================================
@@ -801,7 +801,10 @@ function showGenreMenu() {
     // preview科目（作成中）：ユニット名は見せるが、個別カードはまだ仮なので開かせない。
     //   各ユニットを「作成中」バッジ付きの押せないタイルにする。
     // それ以外：配下に見えるカードがあれば点灯、無ければ暗く（btn-coming）。
-    const isPreviewSubject = subjectTier(curSubject) === 'preview';
+    // 開発版（GitHub Pages・ローカル）では錠をかけない。
+    // 本文だけ入れて図がまだ、という段階の見え方を確かめたいため。
+    // 本番では従来どおり「作成中」で止める。
+    const isPreviewSubject = IS_PROD && subjectTier(curSubject) === 'preview';
     let genreHtml = '';
     genres.forEach(g => {
         if (isPreviewSubject) {
