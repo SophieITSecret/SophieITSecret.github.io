@@ -130,6 +130,92 @@ function getNews(req, res) {
     sendJSON(res, 200, { ok: true, items });
   });
 }
+// ============================================================
+// 原稿（下書き .md）
+//   チャットとの往復で育てるテーマ単位の原稿を、作業台から直接編集する。
+//   置き場は Obsidian/VSC と同じフォルダ（config.draftsDir）。同じファイルを
+//   両方から触れるようにしてあるので、作業台が合わなければいつでも戻れる。
+//   バックアップは作業台側（editor/draft_backup）に取る。原稿フォルダに
+//   置くと Obsidian の一覧が履歴で埋まるため。
+// ============================================================
+const DRAFT_BACKUP_DIR = path.join(__dirname, 'draft_backup');
+
+function draftsDir() {
+  return config.draftsDir || path.join(path.dirname(config.csvPath), 'drafts');
+}
+
+// 受け取った名前を draftsDir の中に閉じ込める（.. や絶対パスを弾く）
+function draftPath(name) {
+  const BS = String.fromCharCode(92);            // 円記号（Windowsの区切り）
+  const rel = String(name || '').split(BS).join('/');
+  if (!rel || rel[0] === '/' || rel.indexOf('..') >= 0) return null;
+  if (/^[A-Za-z]:/.test(rel)) return null;       // 絶対パスは受け取らない
+  if (!rel.toLowerCase().endsWith('.md')) return null;
+  const root = path.resolve(draftsDir());
+  const full = path.resolve(root, rel);
+  if (full !== root && !full.startsWith(root + path.sep)) return null;
+  return full;
+}
+
+// GET /api/drafts — 原稿フォルダの .md を一覧（3階層まで／更新の新しい順）
+function getDrafts(req, res) {
+  const root = draftsDir();
+  const out = [];
+  const walk = (dir, rel, depth) => {
+    let names;
+    try { names = fs.readdirSync(dir); } catch { return; }
+    for (const n of names) {
+      if (n.startsWith('.')) continue;
+      const full = path.join(dir, n);
+      let st; try { st = fs.statSync(full); } catch { continue; }
+      if (st.isDirectory()) { if (depth > 0) walk(full, rel + n + '/', depth - 1); }
+      else if (n.toLowerCase().endsWith('.md')) out.push({ name: rel + n, size: st.size, mtime: st.mtimeMs });
+    }
+  };
+  walk(root, '', 2);
+  out.sort((a, b) => b.mtime - a.mtime);
+  sendJSON(res, 200, { ok: true, dir: root, items: out });
+}
+
+// GET /api/draft?name=... — 1件読む
+function getDraft(req, res, name) {
+  const full = draftPath(name);
+  if (!full) return sendJSON(res, 400, { ok: false, error: 'ファイル名が不正です' });
+  fs.readFile(full, 'utf8', (err, data) => {
+    if (err) return sendJSON(res, 404, { ok: false, error: '読み込めません: ' + err.message });
+    sendJSON(res, 200, { ok: true, name, text: data });
+  });
+}
+
+// POST /api/draft — 上書き保存（保存前にバックアップ）
+function postDraft(req, res) {
+  let chunks = [];
+  req.on('data', c => chunks.push(c));
+  req.on('end', () => {
+    let payload;
+    try { payload = JSON.parse(Buffer.concat(chunks).toString('utf8')); }
+    catch (e) { return sendJSON(res, 400, { ok: false, error: '受け取れませんでした: ' + e.message }); }
+    const full = draftPath(payload.name);
+    if (!full) return sendJSON(res, 400, { ok: false, error: 'ファイル名が不正です' });
+    const text = String(payload.text == null ? '' : payload.text);
+    if (!text.trim()) return sendJSON(res, 400, { ok: false, error: '空の原稿は保存できません' });
+    try {
+      let backupName = null;
+      if (fs.existsSync(full)) {
+        fs.mkdirSync(DRAFT_BACKUP_DIR, { recursive: true });
+        const base = path.basename(full, '.md');
+        backupName = base + '_backup_' + timestamp() + '.md';
+        fs.copyFileSync(full, path.join(DRAFT_BACKUP_DIR, backupName));
+      }
+      fs.mkdirSync(path.dirname(full), { recursive: true });
+      fs.writeFileSync(full, text, 'utf8');
+      sendJSON(res, 200, { ok: true, backup: backupName });
+    } catch (e) {
+      sendJSON(res, 500, { ok: false, error: '保存に失敗しました: ' + e.message });
+    }
+  });
+}
+
 // ===== sw.js のバージョン =====
 //   内容を変えても版数を上げないと、利用者の端末に古い図や音声が残る。
 //   CSVを保存するたびに自動で上げると、校正中の小さな直しでも番号が進み、
@@ -903,6 +989,9 @@ const server = http.createServer((req, res) => {
   if (pathname === '/api/reading-scripts' && method === 'POST') return postReadingScript(req, res);
   if (pathname === '/api/access-stats' && method === 'GET') return getAccessStats(req, res);
   if (pathname === '/api/members' && method === 'GET') return getMembers(req, res);
+  if (pathname === '/api/drafts' && method === 'GET') return getDrafts(req, res);
+  if (pathname === '/api/draft'  && method === 'GET') return getDraft(req, res, parsed.searchParams.get('name'));
+  if (pathname === '/api/draft'  && method === 'POST') return postDraft(req, res);
   if (pathname === '/api/news' && method === 'GET') return getNews(req, res);
   if (pathname === '/api/news' && method === 'POST') return postNews(req, res);
   if (pathname === '/api/links' && method === 'GET') return getLinks(req, res);

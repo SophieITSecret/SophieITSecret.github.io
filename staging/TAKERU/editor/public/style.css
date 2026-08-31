@@ -456,3 +456,107 @@ textarea.svg-overlay-input { min-height:120px; font-family:monospace; font-size:
   border-color: #b5651d;
   font-weight: 600;
 }
+
+/* ===== 原稿（テーマ単位・一覧＋1枚の箱） ===== */
+.draft-modal-box { width:min(1320px,97vw); height:94vh; max-height:94vh; display:flex; flex-direction:column; gap:8px; }
+.draft-status { font-size:0.75rem; color:var(--accent2); flex:1; margin-left:12px; }
+
+.draft-bar { display:flex; align-items:center; gap:8px; flex-wrap:wrap; flex-shrink:0; }
+.draft-bar #draftFile { max-width:400px; }
+.draft-sep { width:1px; height:20px; background:var(--border); }
+.draft-meta { display:flex; align-items:center; gap:5px; font-size:0.75rem; color:var(--text2); }
+.draft-meta .edit-input { width:190px; padding:4px 7px; font-size:0.78rem; }
+
+.draft-paste-wrap { display:flex; flex-direction:column; gap:6px; flex-shrink:0; }
+.draft-paste {
+  height:190px; resize:vertical; padding:10px 12px;
+  background:var(--bg2); color:var(--text); border:1px solid var(--accent); border-radius:6px;
+  font-family:"Consolas","Menlo",monospace; font-size:0.8rem; line-height:1.8;
+}
+.draft-paste-act { display:flex; gap:8px; justify-content:flex-end; }
+
+/* 左右2枚 */
+.draft-main { flex:1; display:flex; gap:12px; min-height:0; }
+.draft-listcol { width:460px; min-width:460px; display:flex; flex-direction:column; gap:5px; min-height:0; }
+.draft-col-head { display:flex; justify-content:space-between; align-items:baseline; gap:8px;
+                  font-size:0.76rem; color:var(--text2); }
+.draft-col-hint { font-size:0.68rem; color:var(--text3); }
+.draft-list { flex:1; overflow-y:auto; border:1px solid var(--border); border-radius:6px;
+              background:var(--bg2); padding:3px; }
+
+.dl-row { display:grid; grid-template-columns:16px 56px 1fr 30px 92px; gap:3px;
+          align-items:center; padding:5px 6px 5px 4px; border-radius:4px; cursor:pointer;
+          font-size:0.78rem; border-left:3px solid transparent; }
+.dl-row:hover { background:rgba(255,255,255,.05); }
+.dl-row.dl-on { background:rgba(76,175,80,.16); border-left-color:var(--accent); }
+.dl-new    { border-left-color:var(--accent); }
+.dl-update { border-left-color:#e8c040; }
+.dl-empty  { border-left-color:var(--text3); opacity:.7; }
+.dl-same   { opacity:.62; }
+.dl-code { font-family:monospace; color:var(--fact); font-size:0.74rem; }
+.dl-title { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.dl-len { font-size:0.7rem; text-align:right; }
+.dl-badge { font-size:0.66rem; color:var(--text3); white-space:nowrap; text-align:right; }
+.dl-len { padding-right:4px; }
+
+/* 右：選んだ1枚 */
+.draft-editcol { flex:1; min-width:0; display:flex; flex-direction:column; }
+.draft-empty { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center;
+               gap:10px; color:var(--text3); font-size:0.82rem; border:1px dashed var(--border); border-radius:6px; }
+.draft-empty .icon { font-size:2rem; opacity:.5; }
+.draft-pane { flex:1; display:flex; flex-direction:column; gap:9px; min-height:0;
+              border:1px solid var(--border); border-radius:6px; background:var(--bg2); padding:11px 13px; }
+.d-head { display:flex; align-items:center; gap:9px; flex-shrink:0; }
+.d-code { font-family:monospace; font-size:0.92rem; color:var(--fact); font-weight:700; }
+.d-badge { font-size:0.72rem; color:var(--text3); flex:1; }
+.d-badge.d-new    { color:var(--accent); }
+.d-badge.d-update { color:#e8c040; }
+.d-tools { display:flex; gap:3px; }
+.db-btn { background:transparent; border:1px solid var(--border); color:var(--text2);
+          width:24px; height:24px; border-radius:3px; cursor:pointer; font-size:0.72rem; line-height:1; padding:0; }
+.db-btn:hover { border-color:var(--accent); color:var(--accent); }
+.db-btn.db-del:hover { border-color:#e57373; color:#e57373; }
+.d-field { display:flex; flex-direction:column; gap:4px; flex-shrink:0; }
+.d-field .edit-label { display:flex; justify-content:space-between; align-items:center; }
+.d-note { font-size:0.7rem; color:var(--text3); font-weight:400; }
+.d-bodyfield { flex:1; min-height:0; }
+.d-body { flex:1; min-height:0; resize:none; line-height:1.95; font-size:0.86rem;
+          font-family:'Noto Sans JP','Yu Gothic',sans-serif; }
+
+.draft-foot { display:flex; align-items:center; gap:10px; flex-wrap:wrap; flex-shrink:0;
+              border-top:1px solid var(--border); padding-top:8px; }
+.draft-foot-l { display:flex; align-items:center; gap:10px; flex:1; min-width:0; flex-wrap:wrap; }
+.draft-foot-r { display:flex; align-items:center; gap:8px; }
+.draft-opt { font-size:0.74rem; color:var(--text2); display:flex; align-items:center; gap:4px; white-space:nowrap; }
+.draft-missing { font-size:0.72rem; color:#e57373; }
+
+.draft-save { display:flex; align-items:center; gap:8px; flex-wrap:wrap; flex-shrink:0;
+              border-top:1px solid var(--border); padding-top:8px; }
+.draft-save-lbl { font-size:0.74rem; color:var(--text2); white-space:nowrap; }
+.draft-out { width:320px; padding:4px 8px; font-size:0.78rem; font-family:monospace; }
+.draft-note { flex:1; min-width:260px; margin:0; }
+.draft-dir { font-family:monospace; font-size:0.72rem; color:var(--text3); }
+
+/* 一覧をしまったとき */
+.draft-main.list-hidden .draft-listcol { display:none; }
+
+/* 右の箱：順送りと位置 */
+.d-pos { font-size:0.72rem; color:var(--text3); min-width:44px; text-align:center; }
+.d-descr { font-size:0.73rem; color:var(--text2); line-height:1.7; padding:5px 8px;
+           background:var(--bg3); border-radius:4px; }
+
+/* ルーラー（全角1文字ごとの目盛り） */
+.d-wrapinfo { font-size:0.72rem; color:var(--accent2); margin-left:auto; margin-right:10px; }
+.d-ruler { height:9px; margin-bottom:-1px; background-repeat:repeat-x;
+           background-position:bottom left; background-size:auto 5px, auto 9px; }
+
+/* 原稿：まとめて保存を主役にする（押すのはふつうこれ1つ） */
+.btn-draft-all { background:var(--accent); border:none; color:#08140a; font-weight:700;
+                 font-size:0.95rem; border-radius:6px; padding:9px 24px; cursor:pointer; }
+.btn-draft-all:hover { background:var(--accent2); }
+.btn-draft-all:active { opacity:.85; }
+.btn-draft-all:disabled { background:var(--text3); cursor:default; }
+/* 原稿だけ保存は脇役 */
+.btn-sub { background:transparent; border:1px solid var(--border); color:var(--text2);
+           padding:4px 12px; border-radius:4px; cursor:pointer; font-size:0.76rem; font-family:inherit; }
+.btn-sub:hover { background:rgba(255,255,255,.07); color:var(--text); }

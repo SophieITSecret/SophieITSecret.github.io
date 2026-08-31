@@ -41,3 +41,6 @@ news_backup_*.csv
 logs/*.csv
 logs/*.json
 logs/*.log
+
+# 原稿（下書き .md）の保存前バックアップ
+editor/draft_backup/

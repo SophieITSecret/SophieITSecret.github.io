@@ -15,6 +15,7 @@
   <button class="btn-load" id="btnMembers" onclick="openMembers()" disabled>👥 会員</button>
   <button class="btn-load" id="btnNews" onclick="openNewsEditor()">📰 お知らせ</button>
   <button class="btn-load" onclick="openMemo()">📝 メモ</button>
+  <button class="btn-load" id="btnDraft" onclick="openDraft()" disabled>📝 原稿</button>
   <button class="btn-load" id="btnImport" onclick="openImport()" disabled>📥 一括取り込み</button>
   <button class="btn-load" id="btnExport" onclick="openExport()" disabled>📤 書き出し</button>
   <button class="btn-load" id="btnFullscreen" onclick="toggleFullscreen()">⛶ 全画面</button>
@@ -50,7 +51,7 @@
       <button class="btn-cancel" onclick="closeImport()">✕ 閉じる</button>
     </div>
     <div class="modal-desc">
-      ClaudeやGeminiの出力を貼り付けてください。<strong>形式：<code>@カードID</code> の行で始まり、次の行から本文。</strong>空行で区切っても続けて書いてもOKです。<br>
+      ClaudeやGeminiの出力を貼り付けてください。<strong>カードの区切りは <code>@カードID</code> か <code>#### カードID　タイトル</code> の行。</strong>次の行から本文です。<br>見出しにタイトルがあれば<strong>タイトルも一緒に取り込みます</strong>（書き出した .md をそのまま戻せます）。<br>テーマまるごとの編集や、<strong>新しいカードを作る</strong>のは「📝 原稿」から。<br>
       取り込んでもファイルは保存されません（プレビューで確認 → 問題なければ「CSVを保存」）。<br>
       <span style="color:var(--com);font-size:0.78rem">Claudeへの依頼例：「以下のカードIDの本文を作成してください。<br>
       IRUMA01, IRUMA02, IRUMA03…（IDリスト）<br>
@@ -384,6 +385,119 @@
         </div>
         <p class="mem-note">「反映」でリストに入れ、「保存する」で news.csv に書き込みます（保存時に自動バックアップ）。反映後に本番公開すると利用者に届きます。</p>
       </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- 原稿（テーマ単位・一覧＋1枚の箱） -->
+<div id="draftModal" class="modal-overlay">
+  <div class="modal-box draft-modal-box">
+    <div class="modal-head">
+      <h2>📝 原稿</h2>
+      <span id="draftStatus" class="draft-status"></span>
+      <button class="btn-cancel" onclick="closeDraft()">✕ 閉じる</button>
+    </div>
+
+    <div class="draft-bar">
+      <select id="draftFile" class="exp-select" onchange="loadDraft()"></select>
+      <button class="dash-refresh" onclick="listDrafts()" title="原稿フォルダを読み直す">↻</button>
+      <button class="dash-refresh" onclick="togglePaste()" title="チャットの出力をそのまま貼って読み込む">📋 貼り付けて取り込む</button>
+      <select id="draftImport" class="exp-select" onchange="importDraft()"
+              title="外で作った原稿を持ち込む（ふつうは1回きり）"></select>
+      <select id="draftFromCsv" class="exp-select" onchange="loadFromCsv()"
+              title="mdが無い講座を原稿にする／原稿を作り直す"></select>
+      <button class="dash-refresh" id="btnDraftList" onclick="toggleDraftList()">◀ 一覧をしまう</button>
+      <span class="draft-sep"></span>
+      <label class="draft-meta">テーマ <input type="text" id="draftGenre" class="edit-input"></label>
+      <label class="draft-meta">科目 <input type="text" id="draftSubject" class="edit-input"></label>
+    </div>
+
+    <div id="draftPasteWrap" class="draft-paste-wrap" style="display:none">
+      <textarea id="draftPaste" class="draft-paste" spellcheck="false"
+        placeholder="チャットの出力をそのまま貼り付けてください。&#10;見出しは @コード ／ #### コード　タイトル ／ ## コード（事実）タイトル ／ コード（事実）タイトル のどれでも読めます。&#10;備考や申し送りは取り込まれません（本文だけを取り出します）。&#10;すでに原稿を開いているときは、コードが一致するカードだけ差し替えます（直した数枚だけ貼ってOK）。"></textarea>
+      <div class="draft-paste-act">
+        <button class="btn-cancel" onclick="togglePaste()">やめる</button>
+        <button class="btn-apply" onclick="doPaste()">📥 取り込む</button>
+      </div>
+    </div>
+
+    <div class="draft-main" id="draftMain">
+      <div class="draft-listcol">
+        <div class="draft-col-head">
+          <span>カード一覧</span>
+          <span class="draft-col-hint">クリックで開く／チェックは反映の対象</span>
+        </div>
+        <div id="draftList" class="draft-list"></div>
+      </div>
+
+      <div class="draft-editcol">
+        <div id="draftEmpty" class="draft-empty">
+          <div class="icon">📄</div>
+          原稿を選ぶか貼り付けて、左の一覧からカードを選んでください
+        </div>
+        <div id="draftPane" class="draft-pane" style="display:none">
+          <div class="d-head">
+            <button class="db-btn" id="btnDPrev" onclick="stepDraftCard(-1)" title="前のカード">◀</button>
+            <span class="d-pos" id="dPos"></span>
+            <button class="db-btn" id="btnDNext" onclick="stepDraftCard(1)" title="次のカード">▶</button>
+            <code class="d-code" id="dCode"></code>
+            <span class="d-badge" id="dBadge"></span>
+            <span class="d-tools">
+              <button class="db-btn" onclick="moveDraftCard(-1)" title="ひとつ上へ">▲</button>
+              <button class="db-btn" onclick="moveDraftCard(1)" title="ひとつ下へ">▼</button>
+              <button class="db-btn" onclick="addDraftCard()" title="この下に新しいカードを足す（分割用）">＋</button>
+              <button class="db-btn db-del" onclick="removeDraftCard()" title="この原稿から外す（CSVは消えません）">✕</button>
+            </span>
+          </div>
+          <div class="d-descr" id="dDescr"></div>
+          <div class="d-field">
+            <div class="edit-label">タイトル <span class="d-note" id="dTitleNote"></span></div>
+            <input type="text" id="dTitle" class="edit-input" oninput="onDetailInput()">
+          </div>
+          <div class="d-field d-bodyfield">
+            <div class="edit-label">
+              <span>本文</span>
+              <span class="d-wrapinfo" id="dWrapInfo"></span>
+              <span class="char-count" id="dLen">0字</span>
+            </div>
+            <div class="d-ruler" id="dRuler" title="全角1文字ごとの目盛り（5文字ごとに濃い線）"></div>
+            <textarea id="dBody" class="edit-input d-body" spellcheck="false"
+                      oninput="onDetailInput()"
+                      placeholder="本文（改行で段落。空にしておけば未執筆のまま）"></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="draft-foot">
+      <div class="draft-foot-l">
+        <span id="draftSummary" class="batch-count"></span>
+        <span id="draftDirty" class="news-dirty"></span>
+        <span id="draftMissing" class="draft-missing"></span>
+      </div>
+      <div class="draft-foot-r">
+        <label class="draft-opt"><input type="checkbox" id="draftArrow" checked onchange="renderDraftList()"> 解説に <code>→</code></label>
+        <label class="draft-opt"><input type="checkbox" id="draftOrder"> 原稿の順に並べ替える</label>
+        <button class="btn-batch-sel" onclick="draftCheckAll(true)">全選択</button>
+        <button class="btn-batch-sel" onclick="draftCheckAll(false)">全解除</button>
+        <button class="btn-batch-sel" id="btnDraftApply" onclick="applyDraftCards()"
+                title="カードに入れるだけ。原稿mdとCSVは別に保存が必要です">✓ 反映だけ</button>
+        <button class="btn-draft-all" id="btnDraftAll" onclick="saveAllFromDraft()"
+                title="原稿md → カード → TAKERUcard.csv を続けて保存します">✅ まとめて保存</button>
+      </div>
+    </div>
+
+    <div class="draft-save">
+      <span class="draft-save-lbl">整形して置く先</span>
+      <input type="text" id="draftOut" class="edit-input draft-out">
+      <button class="dash-refresh" onclick="copyDraft()" title="整形した原稿をクリップボードへ">📋 コピー</button>
+      <button class="btn-sub" id="btnDraftSave" onclick="saveDraft()"
+              title="原稿mdだけ保存します。カードとCSVは変わりません">💾 原稿だけ保存</button>
+      <span class="mem-note draft-note">
+        置き場は <span id="draftDir" class="draft-dir"></span> の中。<strong>本文だけを定型に整えて書き出します</strong>（備考・申し送りは持ち出しません）。
+        投げ込んだ元のファイルには触りません。上書き前に控えを取ります。
+      </span>
     </div>
   </div>
 </div>

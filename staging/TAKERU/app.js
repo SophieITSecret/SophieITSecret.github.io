@@ -964,7 +964,13 @@ function showFlatCardList(genre) {
     // 一覧本体は箱で包む（広い画面で「左を埋めてから右へ折り返す」段組にするため）
     html += '<div class="card-list-body">';
     curSection.forEach((card, i) => {
-        const type = /\dF\d+$/.test(card.id) ? 'fact' : /\dC\d+$/.test(card.id) ? 'com' : null;
+        // 史実/解説の別は「国家と法律」講座だけの区別。コードの末尾がF/Cかで見る。
+        // 科目で絞らないと、軍事と戦略の JPNDF01（＝Defense）などを拾ってしまう。
+        // どちらでもないカード（まとめ札など）は無印のまま。
+        const isLaw = (card.subject || '').includes('国家と法律');
+        const type = !isLaw ? null
+                   : /F\d+$/.test(card.id) ? 'fact'
+                   : /C\d+$/.test(card.id) ? 'com' : null;
         const badge = type ? `<span class="card-badge badge-${type}">${type === 'fact' ? '史実' : '解説'}</span> ` : '';
         const title = card.title.replace(/^→/, '').trim();
         html += `<div class="menu-item" data-idx="${i}"><span class="item-dot">●</span> ${badge}${title}</div>`;

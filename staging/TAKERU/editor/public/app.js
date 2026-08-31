@@ -30,6 +30,7 @@ async function init() {
     status.textContent=`✅ TAKERUcard.csv（${cardData.length}枚）　🖼 ${Object.keys(imageMap).length}枚`;
     document.getElementById('btnSave').disabled=false;
     document.getElementById('btnImport').disabled=false;
+    document.getElementById('btnDraft').disabled=false;
     document.getElementById('btnExport').disabled=false;
     document.getElementById('btnRename').disabled=false;
     document.getElementById('btnProgress').disabled=false;
@@ -438,23 +439,21 @@ function closeImport(){ document.getElementById('importModal').style.display='no
 
 function parseImport(){
   const text=document.getElementById('importText').value;
-  parsedImport=[];
-  const blocks=text.split(/^@/m).filter(b=>b.trim());
-  for(const b of blocks){
-    const nl=b.indexOf('\n');
-    if(nl<0) continue;
-    const code=b.slice(0,nl).trim();
-    const body=b.slice(nl+1).trim();
-    if(code) parsedImport.push({code,body});
-  }
+  // 原稿タブと同じ解析器。@コード のほか #### コード　タイトル も読める。
+  parsedImport=parseCardBlocks(text).map(b=>({code:b.code,title:b.title,body:b.body}));
   const prev=document.getElementById('importPreview');
   if(!parsedImport.length){ prev.innerHTML='<span style="color:#e57373">解析できませんでした。@コードの形式を確認してください。</span>'; document.getElementById('btnDoImport').disabled=true; return; }
   let html=`<div style="margin-bottom:6px;color:var(--accent)">${parsedImport.length}枚を検出：</div>`;
   let okCount=0;
   for(const p of parsedImport){
     const card=cardData.find(d=>d.id===p.code);
-    if(card){ okCount++; html+=`<div>✅ ${esc(p.code)}（${p.body.length}字）${esc(card.title)}</div>`; }
-    else { html+=`<div style="color:#e57373">⚠ ${esc(p.code)} … CSVに該当コードなし（スキップ）</div>`; }
+    if(!card){ html+=`<div style="color:#e57373">⚠ ${esc(p.code)} … CSVに該当コードなし（スキップ）　※新しいカードを作るには「📝 原稿」を使ってください</div>`; continue; }
+    okCount++;
+    const bits=[];
+    if(p.body) bits.push(`${p.body.length}字`); else bits.push('本文なし・そのまま');
+    const t=p.title&&isCommentary(p.code)&&!p.title.startsWith('→')?('→'+p.title):p.title;
+    if(t&&t!==card.title) bits.push(`タイトル→「${esc(t)}」`);
+    html+=`<div>✅ ${esc(p.code)}（${bits.join(' / ')}）${esc(card.title)}</div>`;
   }
   prev.innerHTML=html;
   document.getElementById('btnDoImport').disabled = okCount===0;
@@ -464,13 +463,20 @@ function doImport(){
   let n=0;
   for(const p of parsedImport){
     const idx=cardData.findIndex(d=>d.id===p.code);
-    if(idx>=0){ cardData[idx].body=p.body; n++; }
+    if(idx<0) continue;
+    if(p.body) cardData[idx].body=p.body;             // 本文がなければ触らない
+    if(p.title){
+      const t=isCommentary(p.code)&&!p.title.startsWith('→')?('→'+p.title):p.title;
+      cardData[idx].title=t;
+    }
+    n++;
   }
   dirty=true;
   closeImport();
   filterCards();
   if(selectedIdx>=0) showCard(selectedIdx);
-  alert(`${n}枚の本文を取り込みました。\nプレビューで確認し、問題なければ「CSVを保存」してください。`);
+  alert(`${n}枚を取り込みました。
+プレビューで確認し、問題なければ「CSVを保存」してください。`);
 }
 
 // ==========================================
@@ -2490,4 +2496,713 @@ async function saveReadingScript(){
       body:JSON.stringify({id, text})
     });
   } catch{}
+}
+
+// ============================================================
+// 原稿（下書き）
+//   チャットとの往復で育てるテーマ単位の原稿を、作業台の中で編集する。
+//   ファイルの実体は Obsidian/VSC と同じ .md。どちらから触ってもよい。
+//
+//   ここでの単位は「カード1枚」ではなく「テーマ1つ」。抜けがあるのは
+//   異常ではなく途中経過なので、見出しだけで本文がないカードも
+//   エラーにせず「未執筆」として並べ、反映のときに飛ばす。
+// ============================================================
+
+// 見出しとして認めるのは次の3つ。いずれも行頭にカードIDが来る形。
+//   @HNRF01
+//   #### HNRF01　紀元元年前後の世界          ← 作業台の書き出しMDそのまま
+//   ## HNRF01（事実・概観）紀元元年前後の世界   ← 手書き原稿の書き方
+//   HNRF01（事実）紀元元年前後の世界           ← 記号なし（テーマ1の原稿がこの形）
+// 記号なしを許すぶん、コードの直後は「行末・空白・括弧」に限って誤爆を防ぐ。
+// 本文の途中の行が見出しに化けると、黙って本文が割れるため。
+const CARD_HEAD_RE = /^(?:@|#{1,6}[ \t]*)([A-Z]{2,10}\d{2,3})[ \t　]*(.*)$/;
+const CARD_HEAD_BARE_RE = /^([A-Z]{2,10}\d{2,3})(?=$|[ \t　（(])(.*)$/;
+
+// カードでない見出し（## 備考 など）。ここで直前のカードを打ち切る。
+const OTHER_HEAD_RE = /^#{1,6}[ \t]/;
+// 本文に混ぜたくない行：区切り線と、書き出しMDが末尾に付ける情報行
+const DROP_LINE_RE = /^(?:-{3,}|\*{3,}|_{3,}|`[^`]*\d+字[^`]*`)$/;
+// 本文が空であることを表す書き方
+const EMPTY_BODY_RE = /^(?:（本文未作成）|（未執筆）)$/;
+
+function draftHeadTitle(rest){
+  let t=String(rest||'').trim();
+  t=t.replace(/^[（(][^）)]*[）)]/,'').trim();   // （事実・概観） を落とす
+  t=t.replace(/^#+/,'').trim();                  // ### の残りを落とす
+  return t;
+}
+
+// 原稿テキストをカードの塊に切り分ける。見出しの前の前書きは無視する。
+function parseCardBlocks(text){
+  const lines=String(text||'').split(/\r?\n/);
+  const out=[]; let cur=null;
+  const push=()=>{ if(cur) out.push(cur); cur=null; };
+  for(const line of lines){
+    let m=line.match(CARD_HEAD_RE);
+    if(!m){
+      const bm=line.match(CARD_HEAD_BARE_RE);
+      if(bm) m=[line,bm[1],bm[2]||''];
+    }
+    if(m){ push(); cur={code:m[1], title:draftHeadTitle(m[2]), body:[]}; continue; }
+    if(OTHER_HEAD_RE.test(line)){ push(); continue; }   // ## 備考 でカードは終わり
+    if(cur) cur.body.push(line);
+  }
+  push();
+  for(const c of out){
+    // 行末の空白を落とし、区切り線などを捨て、空行は詰める。
+    // TAKERUの本文は改行だけで段落を切るので、空行は空行のまま出てしまう。
+    const body=c.body.map(l=>l.replace(/[ \t　]+$/,''))
+                     .filter(l=>!DROP_LINE_RE.test(l.trim()))
+                     .join('\n').trim().replace(/\n{2,}/g,'\n');
+    c.body=(EMPTY_BODY_RE.test(body)||body===WIP_PLACEHOLDER)?'':body;
+  }
+  return out;
+}
+
+// 解説カード（…C99）のタイトルは → で始める。既存324枚がすべてこの形。
+function draftApplyArrow(code,title){
+  if(!title) return title;
+  if(!document.getElementById('draftArrow').checked) return title;
+  if(!isCommentary(code)) return title;
+  return title.startsWith('→')?title:('→'+title);
+}
+
+// コードからテーマの接頭辞を取る（HNRF01 / HNRC01 → HNR、ASAKA01 → ASAKA）
+function codePrefix(code){ return String(code||'').replace(/[FC]?\d+$/,''); }
+
+// TAKERUアプリと同じ見え方。効くのは改行とリンク記法だけで、あとは素の文字。
+function takeruBodyHtml(text){
+  const re=/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)|(https?:\/\/[^\s<]+)/g;
+  let out='',last=0,m;
+  while((m=re.exec(text))){
+    out+=esc(text.slice(last,m.index));
+    if(m[2]) out+=`<a href="${esc(m[2])}" target="_blank" rel="noopener">${esc(m[1])}</a>`;
+    else out+=`<a href="${esc(m[3])}" target="_blank" rel="noopener">${esc(m[3])}</a>`;
+    last=re.lastIndex;
+  }
+  return out+esc(text.slice(last));
+}
+
+// ---- 原稿タブの状態 ----
+//   draftCards が編集中の中身。画面の箱と1対1で対応する。
+//   読み込みは幅を持たせるが、書き出しは常に同じ定型に整える。
+let draftCards=[], draftSrcName='', draftSavedSig='', draftSel=-1;
+
+// 未保存かどうかは、コード・タイトル・本文だけで見る。
+// 整形結果の見出しには更新日が入るので、日をまたぐだけで
+// 「変更あり」になってしまうため。
+function draftSig(){
+  return JSON.stringify(draftCards.map(c=>[c.code,draftApplyArrow(c.code,c.title),c.body]));
+}
+
+function openDraft(){
+  document.getElementById('draftModal').style.display='flex';
+  buildThemeSelect();
+  if(!document.getElementById('draftFile').options.length) listDrafts();
+  if(!draftCards.length) offerStash();
+}
+function closeDraft(){
+  if(draftIsDirty() && !confirm('原稿に未保存の変更があります。閉じると失われます。\n閉じますか？')) return;
+  document.getElementById('draftModal').style.display='none';
+}
+function draftIsDirty(){ return draftCards.length>0 && draftSig()!==draftSavedSig; }
+function draftStatusText(){ return document.getElementById('draftStatus'); }
+
+// ---- 未保存の退避（安全網） ----
+//   カードを1枚ずつ直していくとき、毎回保存するのは面倒。
+//   編集はメモリに保持されるが、ブラウザを閉じたり落ちたりすると消える。
+//   そこで数秒ごとにブラウザの内部へ退避し、次に原稿を開いたときに戻せるようにする。
+//   これは保存ではない。原稿mdに書くのは「原稿だけ保存」「まとめて保存」だけ。
+const DRAFT_STASH_KEY='takeru.draft.stash';
+
+function stashDraft(){
+  try{
+    if(!draftCards.length || !draftIsDirty()){ return; }
+    localStorage.setItem(DRAFT_STASH_KEY, JSON.stringify({
+      name: draftSrcName,
+      out : document.getElementById('draftOut').value,
+      md  : buildNormalizedMd(),
+      at  : Date.now(),
+    }));
+  }catch(e){ /* 保存領域が使えなくても編集は続けられる */ }
+}
+function clearStash(){ try{ localStorage.removeItem(DRAFT_STASH_KEY); }catch(e){} }
+function readStash(){
+  try{ const t=localStorage.getItem(DRAFT_STASH_KEY); return t?JSON.parse(t):null; }catch(e){ return null; }
+}
+// 打つたびに書くと重いので、手が止まってから2秒後に一度だけ
+function scheduleStash(){
+  clearTimeout(window._stashTimer);
+  window._stashTimer=setTimeout(stashDraft,2000);
+}
+
+// 原稿を開いたとき、前回の続きが残っていれば戻せるようにする
+function offerStash(){
+  const st=readStash();
+  if(!st||!st.md) return false;
+  const d=new Date(st.at||Date.now());
+  const p=n=>String(n).padStart(2,'0');
+  const when=`${d.getMonth()+1}月${d.getDate()}日 ${p(d.getHours())}:${p(d.getMinutes())}`;
+  const who=st.name?st.name.slice(st.name.lastIndexOf('/')+1):'（貼り付けた原稿）';
+  if(!confirm(`保存しないまま閉じた原稿が残っています。\n\n　${who}\n　最後の編集：${when}\n\n続きから始めますか？\n（「キャンセル」を選ぶと、この控えは捨てます）`)){
+    clearStash(); return false;
+  }
+  draftSrcName=st.name||'';
+  adoptDraftText(st.md, '前回の続き');
+  if(st.out){ document.getElementById('draftOut').value=st.out; }
+  draftStatusText().textContent=`前回の続きを戻しました（${when} 時点・未保存）`;
+  return true;
+}
+
+// 保存しないまま画面を閉じようとしたら止める
+window.addEventListener('beforeunload', (e)=>{
+  if(draftCards.length && draftIsDirty()){ stashDraft(); e.preventDefault(); e.returnValue=''; }
+});
+
+// ---- CSVから原稿を起こす ----
+//   md を持たない講座（軍事と戦略3級など、CSVにしか本文がないもの）を
+//   原稿の流れに乗せるための入口。原稿を無くしたときの作り直しにも使う。
+let draftThemes=[];
+
+function buildThemeSelect(){
+  const sel=document.getElementById('draftFromCsv');
+  if(!sel) return;
+  draftThemes=[];
+  const seen=new Map();
+  for(const d of cardData){
+    const key=(d.subject||'')+' '+(d.genre||'');
+    if(!seen.has(key)){ seen.set(key,draftThemes.length); draftThemes.push({subject:d.subject||'',genre:d.genre||'',n:0}); }
+    draftThemes[seen.get(key)].n++;
+  }
+  const bySub=new Map();
+  draftThemes.forEach((t,i)=>{ if(!bySub.has(t.subject)) bySub.set(t.subject,[]); bySub.get(t.subject).push(i); });
+  let html='<option value="">── CSVのテーマから起こす ──</option>';
+  for(const [sub,list] of bySub){
+    html+=`<optgroup label="${esc(sub||'（科目なし）')}">`;
+    for(const i of list) html+=`<option value="${i}">${esc(draftThemes[i].genre||'（テーマなし）')}（${draftThemes[i].n}枚）</option>`;
+    html+='</optgroup>';
+  }
+  sel.innerHTML=html;
+}
+
+function loadFromCsv(){
+  const sel=document.getElementById('draftFromCsv');
+  const i=sel.value;
+  if(i==='') return;
+  if(draftIsDirty() && !confirm('原稿に未保存の変更があります。切り替えると失われます。\n切り替えますか？')){
+    sel.value=''; return;
+  }
+  const t=draftThemes[+i];
+  const cards=cardData.filter(d=>(d.subject||'')===t.subject && (d.genre||'')===t.genre);
+  if(!cards.length){ alert('このテーマのカードが見つかりません。'); sel.value=''; return; }
+  draftSrcName='';                       // ファイル由来ではないので置き場は既定に戻す
+  document.getElementById('draftFile').value='';
+  document.getElementById('draftOut').value='';
+  document.getElementById('draftOut').dataset.auto='1';
+  draftCards=cards.map(d=>({
+    code:d.id,
+    title:d.title||'',
+    body:hasRealBody(d.body)?d.body:'',   // 準備中のプレースホルダは「本文まだ」として扱う
+    checked:false,                        // 起こした直後は全部「CSVと同じ」なので既定は外す
+  }));
+  draftSel=0;
+  fillDraftMeta();
+  renderDraftList();
+  showDraftCard(0);
+  draftSavedSig='';
+  const wip=draftCards.filter(c=>!c.body).length;
+  draftStatusText().textContent=
+    `CSVの「${t.genre}」から ${draftCards.length}枚を起こしました`+(wip?`（本文まだ ${wip}枚）`:'')+'（未保存）';
+  sel.value='';
+}
+
+// ---- 読み込み（入口は広く） ----
+// 「カード原稿/」フォルダの中にあるものを整形済み（正本）とみなす。
+// 持ち込んだ生原稿と混ざると取り違えるので、選ぶ口を最初から分けておく。
+const DRAFT_HOME='カード原稿/';
+function isNormalizedPath(n){ return String(n||'').includes(DRAFT_HOME); }
+
+async function listDrafts(){
+  const sel=document.getElementById('draftFile');
+  const imp=document.getElementById('draftImport');
+  try{
+    const j=await(await fetch('/api/drafts')).json();
+    if(!j.ok) throw new Error(j.error||'一覧を取れません');
+    const norm=j.items.filter(f=>isNormalizedPath(f.name));
+    const raw =j.items.filter(f=>!isNormalizedPath(f.name));
+    const cut=n=>n.replace(/\.md$/,'');
+    const shortName=n=>cut(n.slice(n.lastIndexOf('/')+1));
+    sel.innerHTML = norm.length
+      ? '<option value="">── 原稿を開く ──</option>'+
+        norm.map(f=>`<option value="${esc(f.name)}">${esc(shortName(f.name))}</option>`).join('')
+      : '<option value="">（整形した原稿はまだありません）</option>';
+    imp.innerHTML='<option value="">── 生原稿を取り込む ──</option>'+
+      raw.map(f=>`<option value="${esc(f.name)}">${esc(cut(f.name))}</option>`).join('');
+    document.getElementById('draftDir').textContent=j.dir;
+  }catch(e){ draftStatusText().textContent='一覧を取れません: '+e.message; }
+}
+
+// 生原稿の取り込み（持ち込みは基本1回きり）
+async function importDraft(){
+  const sel=document.getElementById('draftImport');
+  const name=sel.value;
+  if(!name) return;
+  await openDraftFile(name);
+  document.getElementById('draftFile').value='';
+  sel.value='';
+}
+
+async function loadDraft(){
+  const name=document.getElementById('draftFile').value;
+  if(!name) return;
+  await openDraftFile(name);
+}
+
+async function openDraftFile(name){
+  if(draftIsDirty() && !confirm('原稿に未保存の変更があります。切り替えると失われます。\n切り替えますか？')){
+    document.getElementById('draftFile').value=draftSrcName; return;
+  }
+  try{
+    const j=await(await fetch('/api/draft?name='+encodeURIComponent(name))).json();
+    if(!j.ok) throw new Error(j.error||'読み込めません');
+    draftSrcName=name;
+    document.getElementById('draftOut').value='';
+    document.getElementById('draftOut').dataset.auto='1';
+    adoptDraftText(j.text, name.slice(name.lastIndexOf('/')+1));
+    if(isNormalizedPath(name)){
+      // 整形済みの正本は、開いた時点でファイルと同じ。未保存ではない。
+      draftSavedSig=draftSig();
+      updateDraftFooter();
+      draftStatusText().textContent=`${name.slice(name.lastIndexOf('/')+1)} を開きました（${draftCards.length}枚）`;
+    }
+  }catch(e){ draftStatusText().textContent='読み込めません: '+e.message; }
+}
+
+function togglePaste(){
+  const el=document.getElementById('draftPasteWrap');
+  el.style.display = el.style.display==='none' ? '' : 'none';
+  if(el.style.display==='') document.getElementById('draftPaste').focus();
+}
+// 貼り付けは「差し替え」であって「入れ替え」ではない。
+// チャットは直した数枚だけ返してくることが多く、まるごと入れ替えると
+// 返ってこなかったカードが原稿から消えてしまうため、コードで突き合わせて
+// 一致した分だけ上書きし、知らないコードは末尾に足す。
+function doPaste(){
+  const t=document.getElementById('draftPaste').value;
+  if(!t.trim()){ alert('取り込む原稿を貼り付けてください。'); return; }
+  const close=()=>{ document.getElementById('draftPaste').value='';
+                    document.getElementById('draftPasteWrap').style.display='none'; };
+  if(!draftCards.length){ adoptDraftText(t,'（貼り付け）'); close(); return; }
+
+  const blocks=parseCardBlocks(t);
+  if(!blocks.length){
+    alert('カードの見出しが見つかりませんでした。\n行頭を @コード か #### コード　タイトル にしてください。');
+    return;
+  }
+  let upd=0, add=0;
+  const seen=new Set();
+  for(const b of blocks){
+    if(seen.has(b.code)) continue;
+    seen.add(b.code);
+    const i=draftCards.findIndex(c=>c.code===b.code);
+    if(i>=0){
+      if(b.title) draftCards[i].title=b.title;
+      if(b.body)  draftCards[i].body=b.body;   // 空なら今の本文を残す
+      draftCards[i].checked=true;
+      upd++;
+    }else{
+      draftCards.push({code:b.code,title:b.title,body:b.body,checked:true});
+      add++;
+    }
+  }
+  if(draftSel<0||draftSel>=draftCards.length) draftSel=0;
+  renderDraftList();
+  showDraftCard(draftSel);
+  const rest=draftCards.length-upd-add;
+  draftStatusText().textContent=
+    `貼り付けから ${seen.size}枚：差し替え ${upd}枚／追加 ${add}枚`+
+    (rest>0?`（ほかの ${rest}枚はそのまま）`:'')+'（未保存）';
+  close();
+}
+
+// どんな書き方の原稿でも、ここでカードの列に均す。備考など本文でないものは落ちる。
+function adoptDraftText(text, label){
+  const blocks=parseCardBlocks(text);
+  if(!blocks.length){
+    alert('カードの見出しが見つかりませんでした。\n行頭を @コード か #### コード　タイトル にしてください。');
+    return;
+  }
+  const seen=new Set();
+  draftCards=[];
+  for(const b of blocks){
+    if(seen.has(b.code)) continue;
+    seen.add(b.code);
+    draftCards.push({code:b.code,title:b.title,body:b.body,checked:true});
+  }
+  for(const c of draftCards) c.checked = draftStatusOf(c).key!=='same';
+  draftSel=0;
+  fillDraftMeta();
+  renderDraftList();
+  showDraftCard(0);
+  draftSavedSig='';           // 取り込んだ直後は未保存（整形して置き直すまでが仕事）
+  draftStatusText().textContent=`${label} から ${draftCards.length}枚を読み込みました（未保存）`;
+}
+
+// テーマ・科目・保存先を、同じ接頭辞の既存カードから決める
+function fillDraftMeta(){
+  const gEl=document.getElementById('draftGenre'), sEl=document.getElementById('draftSubject');
+  const prefixes=new Set(draftCards.map(c=>codePrefix(c.code)));
+  const kin=cardData.find(d=>prefixes.has(codePrefix(d.id)));
+  if(kin){ gEl.value=kin.genre||''; sEl.value=kin.subject||''; }
+  else { gEl.value=''; sEl.value=''; }
+  // 整形後は、読み込んだ原稿と同じフォルダの「カード原稿/」に置く。
+  // 生の原稿（チャットの出力そのまま）と、整形した正本を並べて見分けられるように。
+  const fEl=document.getElementById('draftOut');
+  if(!fEl.value || fEl.dataset.auto==='1'){
+    const base=(gEl.value||[...prefixes].join('-')||'原稿').replace(/[/:*?"<>|]/g,'_');
+    if(isNormalizedPath(draftSrcName)){
+      fEl.value=draftSrcName;                       // 正本を開いたなら同じ場所へ戻す
+    }else{
+      const dir=draftSrcName.includes('/')?draftSrcName.slice(0,draftSrcName.lastIndexOf('/')+1):'';
+      fEl.value=dir+DRAFT_HOME+base+'.md';          // 生原稿からなら「カード原稿/」へ
+    }
+    fEl.dataset.auto='1';
+  }
+}
+
+// ---- カードの状態 ----
+// 原稿の1枚が、いまのCSVに対してどういう状態か。
+// label は一覧用の短いことば、descr は右の箱に出す説明。
+function draftStatusOf(c){
+  const card=cardData.find(d=>d.id===c.code);
+  const title=draftApplyArrow(c.code,c.title);
+  if(!card) return {key:'new', label:'CSVに無い', card:null, title,
+    descr:'このコードのカードはまだCSVにありません。反映すると新しく作られます。'};
+  if(!c.body) return {key:'empty', label:'本文まだ', card, title,
+    descr:'原稿に本文がありません。反映してもカードの本文はいまのままです。'};
+  const t=!!title&&title!==card.title, b=c.body!==card.body;
+  if(!t&&!b) return {key:'same', label:'CSVと同じ', card, title,
+    descr:'いまのカードと同じ内容です。反映しても何も変わりません。'};
+  const w=t&&b?'題と本文':(t?'題':'本文');
+  return {key:'update', label:w+'がちがう', card, title,
+    descr:w+'が、いまのカードと違います。反映すると原稿の内容で上書きします。'};
+}
+
+// ---- 左：カードの一覧 ----
+function renderDraftList(){
+  document.getElementById('draftList').innerHTML=draftCards.map((c,i)=>rowHtml(c,i)).join('');
+  updateDraftFooter();
+}
+function rowHtml(c,i){
+  const st=draftStatusOf(c);
+  return `<div class="dl-row dl-${st.key}${i===draftSel?' dl-on':''}" id="dlRow${i}" onclick="selectDraftCard(${i})">
+    <input type="checkbox" class="dl-chk" ${c.checked?'checked':''}
+           onclick="event.stopPropagation()" onchange="toggleDraftPick(${i},this.checked)">
+    <code class="dl-code">${esc(c.code)}</code>
+    <span class="dl-title">${esc(c.title||'（タイトルなし）')}</span>
+    <span class="dl-len ${c.body.length>400?'char-over':'char-ok'}">${c.body?c.body.length:'—'}</span>
+    <span class="dl-badge">${esc(st.label)}</span>
+  </div>`;
+}
+// 1行だけ塗り直す。打っている最中に一覧を作り直すと入力が飛ぶため。
+function paintRow(i){
+  const el=document.getElementById('dlRow'+i);
+  if(!el) return;
+  el.outerHTML=rowHtml(draftCards[i],i);
+}
+function toggleDraftPick(i,on){ draftCards[i].checked=on; }
+function draftCheckAll(on){ draftCards.forEach(c=>{c.checked=on;}); renderDraftList(); }
+
+// ---- 右：選んだ1枚の箱 ----
+function selectDraftCard(i){
+  if(i<0||i>=draftCards.length) return;
+  const prev=draftSel;
+  draftSel=i;
+  if(prev>=0&&prev<draftCards.length) paintRow(prev);
+  paintRow(i);
+  showDraftCard(i);
+}
+function showDraftCard(i){
+  const c=draftCards[i];
+  const pane=document.getElementById('draftPane');
+  if(!c){ pane.style.display='none'; document.getElementById('draftEmpty').style.display=''; return; }
+  document.getElementById('draftEmpty').style.display='none';
+  pane.style.display='';
+  document.getElementById('dCode').textContent=c.code;
+  document.getElementById('dTitle').value=c.title;
+  document.getElementById('dBody').value=c.body;
+  paintDetail();
+}
+// 右の箱の中身をモデルへ戻す
+function readDetail(){
+  const c=draftCards[draftSel];
+  if(!c) return;
+  c.title=document.getElementById('dTitle').value.trim();
+  c.body=document.getElementById('dBody').value.replace(/[ \t　]+$/gm,'').trim().replace(/\n{2,}/g,'\n');
+}
+function onDetailInput(){
+  readDetail();
+  // 直したカードには自動でチェックを付ける。逆に元へ戻したら外す。
+  // 付け忘れたまま反映を押して「何も起きない」のを防ぐため。
+  const c=draftCards[draftSel];
+  if(c) c.checked = draftStatusOf(c).key!=='same';
+  paintDetail();
+  draftRuler();
+  paintRow(draftSel);
+  updateDraftFooter();
+  scheduleStash();
+}
+function paintDetail(){
+  const c=draftCards[draftSel];
+  if(!c) return;
+  const st=draftStatusOf(c);
+  const len=document.getElementById('dLen');
+  len.textContent=c.body.length+'字';
+  len.className='char-count '+(c.body.length<=400?'char-ok':'char-over');
+  document.getElementById('dBadge').textContent=st.label;
+  document.getElementById('dBadge').className='d-badge d-'+st.key;
+  document.getElementById('dDescr').textContent=st.descr;
+  document.getElementById('dPos').textContent=`${draftSel+1} / ${draftCards.length}`;
+  document.getElementById('btnDPrev').disabled=(draftSel<=0);
+  document.getElementById('btnDNext').disabled=(draftSel>=draftCards.length-1);
+  draftRuler();
+  const now=draftApplyArrow(c.code,c.title);
+  const was=st.card?st.card.title:'';
+  document.getElementById('dTitleNote').textContent=
+    st.card ? (now!==was?`いまのカード：${was}`:'') : 'CSVにまだ無いカードです（反映すると作られます）';
+}
+
+// ---- 順送り ----
+function stepDraftCard(d){
+  const i=draftSel+d;
+  if(i<0||i>=draftCards.length) return;
+  selectDraftCard(i);
+  const row=document.getElementById('dlRow'+i);
+  if(row) row.scrollIntoView({block:'nearest'});
+}
+
+// ---- 左の一覧をしまう ----
+function toggleDraftList(){
+  const main=document.getElementById('draftMain');
+  const on=main.classList.toggle('list-hidden');
+  document.getElementById('btnDraftList').textContent = on?'▶ 一覧を出す':'◀ 一覧をしまう';
+  draftRuler();          // 幅が変わるので測り直す
+}
+
+// ---- ルーラー（横の文字数・縦の行数） ----
+//   本番の折り返しは端末の幅とフォントで決まるので、これは目安。
+//   全角1文字ぶんの幅を実測して、本文欄に何文字入るかを出す。
+function draftRuler(){
+  const ta=document.getElementById('dBody');
+  const ruler=document.getElementById('dRuler');
+  const out=document.getElementById('dWrapInfo');
+  if(!ta||!ruler||!out) return;
+  const cs=getComputedStyle(ta);
+  const cv=draftRuler._cv||(draftRuler._cv=document.createElement('canvas'));
+  const ctx=cv.getContext('2d');
+  ctx.font=`${cs.fontStyle} ${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
+  const cw=ctx.measureText('亜').width;
+  if(!cw||!isFinite(cw)) return;
+  const padL=parseFloat(cs.paddingLeft)||0, padR=parseFloat(cs.paddingRight)||0;
+  const padT=parseFloat(cs.paddingTop)||0,  padB=parseFloat(cs.paddingBottom)||0;
+  const inner=ta.clientWidth-padL-padR;
+  const cols=Math.max(1,Math.floor(inner/cw));
+  let lh=parseFloat(cs.lineHeight);
+  if(!isFinite(lh)) lh=parseFloat(cs.fontSize)*1.95;
+  const rows=Math.max(1,Math.round((ta.scrollHeight-padT-padB)/lh));
+  const shown=Math.max(1,Math.round((ta.clientHeight-padT-padB)/lh));
+
+  // 目盛り：1文字ごとに薄く、5文字ごとに濃く
+  ruler.style.marginLeft=padL+'px';
+  ruler.style.width=(cols*cw)+'px';
+  ruler.style.backgroundImage=
+    `repeating-linear-gradient(to right, var(--border) 0 1px, transparent 1px ${cw}px),`+
+    `repeating-linear-gradient(to right, var(--text3) 0 1px, transparent 1px ${cw*5}px)`;
+  out.textContent=`横 ${cols}字 × 縦 ${rows}行`+(rows>shown?`（見えているのは ${shown}行）`:'');
+}
+window.addEventListener('resize',()=>{ if(draftCards.length) draftRuler(); });
+
+// ---- 並び・分割・除外（選んでいる1枚に対して） ----
+function moveDraftCard(d){
+  const i=draftSel, j=i+d;
+  if(i<0||j<0||j>=draftCards.length) return;
+  [draftCards[i],draftCards[j]]=[draftCards[j],draftCards[i]];
+  draftSel=j;
+  renderDraftList();
+  document.getElementById('dlRow'+j).scrollIntoView({block:'nearest'});
+}
+function addDraftCard(){
+  const base=draftCards[draftSel]?codePrefix(draftCards[draftSel].code):'';
+  const code=prompt('新しいカードのコードを入れてください（例：HNRF07）', base+'F01');
+  if(!code) return;
+  const c=code.trim().toUpperCase();
+  if(!/^[A-Z]{2,10}\d{2,3}$/.test(c)){ alert('コードの形が違います（英大文字＋2桁の数字）。'); return; }
+  if(draftCards.some(x=>x.code===c)){ alert('この原稿に同じコードがあります。'); return; }
+  draftCards.splice(draftSel+1,0,{code:c,title:'',body:'',checked:true});
+  draftSel=draftSel+1;
+  renderDraftList();
+  showDraftCard(draftSel);
+  document.getElementById('dTitle').focus();
+}
+function removeDraftCard(){
+  const c=draftCards[draftSel];
+  if(!c) return;
+  if(!confirm(`${c.code} をこの原稿から外します。\n（CSVのカードは消えません）`)) return;
+  draftCards.splice(draftSel,1);
+  if(draftSel>=draftCards.length) draftSel=draftCards.length-1;
+  renderDraftList();
+  showDraftCard(draftSel);
+}
+
+function updateDraftFooter(){
+  scheduleStash();
+  const n={new:0,update:0,empty:0,same:0};
+  for(const c of draftCards) n[draftStatusOf(c).key]++;
+  const prefixes=new Set(draftCards.map(c=>codePrefix(c.code)));
+  const have=new Set(draftCards.map(c=>c.code));
+  const missing=cardData.filter(d=>prefixes.has(codePrefix(d.id))&&!have.has(d.id)).map(d=>d.id);
+  document.getElementById('draftSummary').textContent=
+    `${draftCards.length}枚（新規 ${n.new} / 反映 ${n.update} / 未執筆 ${n.empty} / 変更なし ${n.same}）`;
+  const m=document.getElementById('draftMissing');
+  m.textContent = missing.length ? `🗑 この原稿にないカードが CSV に ${missing.length}枚：${missing.join('、')}` : '';
+  document.getElementById('draftDirty').textContent = draftIsDirty()?'● 未保存':'';
+}
+
+// ---- 書き出し（出口は定型） ----
+//   本文だけを、常に同じ形に整えて置き場へ書く。備考・申し送りは持ち出さない。
+//   タイトルは CSV に入るのと同じ形（解説カードは → 付き）で書くので、
+//   読み直しても同じ結果になる。
+function buildNormalizedMd(){
+  const genre=document.getElementById('draftGenre').value.trim();
+  const subject=document.getElementById('draftSubject').value.trim();
+  const d=new Date(), p=n=>String(n).padStart(2,'0');
+  const stamp=`${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`;
+  let md=`# ${genre||'（テーマ未設定）'}\n`;
+  md+=`科目：${subject||'（未設定）'}　／　${draftCards.length}枚　／　更新：${stamp}\n\n`;
+  for(const c of draftCards){
+    md+=`#### ${c.code}　${draftApplyArrow(c.code,c.title)}\n`;
+    md+=(c.body||'')+'\n\n';
+  }
+  return md;
+}
+
+async function saveDraft(silent){
+  if(!draftCards.length){ alert('先に原稿を読み込むか貼り付けてください。'); return false; }
+  const out=document.getElementById('draftOut').value.trim();
+  if(!out.toLowerCase().endsWith('.md')){ alert('保存先は .md で終わる名前にしてください。'); return false; }
+  const md=buildNormalizedMd();
+  const btn=document.getElementById('btnDraftSave'); const orig=btn.textContent;
+  btn.disabled=true; btn.textContent='保存中…';
+  try{
+    const res=await fetch('/api/draft',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({name:out,text:md})});
+    const j=await res.json();
+    if(!res.ok||!j.ok) throw new Error(j.error||'保存に失敗しました');
+    draftSavedSig=draftSig();
+    clearStash();                        // 原稿に書けたので控えは不要
+    draftSrcName=out;                    // 以後はこの正本を開いている扱いにする
+    draftStatusText().textContent=`💾 整形して保存しました：${out}${j.backup?'（控え: '+j.backup+'）':''}`;
+    updateDraftFooter();
+    await listDrafts();
+    const sel=document.getElementById('draftFile');
+    if(Array.from(sel.options).some(o=>o.value===out)) sel.value=out;
+    return true;
+  }catch(e){ alert('原稿の保存に失敗しました: '+e.message); return false; }
+  finally{ btn.disabled=false; btn.textContent=orig; }
+}
+
+function copyDraft(){
+  if(!draftCards.length) return;
+  const md=buildNormalizedMd();
+  navigator.clipboard.writeText(md).then(
+    ()=>{ draftStatusText().textContent='📋 整形した原稿をコピーしました（そのままチャットへ）'; },
+    ()=>{ alert('コピーできませんでした。'); });
+}
+
+// ---- カードへ反映 ----
+function applyDraftCards(silent){
+  const targets=draftCards.filter(c=>c.checked);
+  if(!targets.length){ alert('反映するカードが選ばれていません。'); return null; }
+
+  const genre=document.getElementById('draftGenre').value.trim();
+  const subject=document.getElementById('draftSubject').value.trim();
+  const news=targets.filter(c=>!cardData.some(d=>d.id===c.code));
+  if(news.length&&(!genre||!subject)){
+    alert('新規カードを作るには「テーマ」と「科目」を入れてください。'); return null;
+  }
+
+  let upd=0,add=0;
+  const hdr=cardData.length?cardData[0]._header:null;
+  for(const c of targets){
+    const st=draftStatusOf(c);
+    if(st.card){
+      if(st.title&&st.title!==st.card.title) st.card.title=st.title;
+      if(c.body) st.card.body=c.body;          // 本文が空なら触らない
+      upd++;
+    }else{
+      const row={id:c.code,genre,section:'',title:st.title||'',
+                 body:c.body||WIP_PLACEHOLDER,subject,published:false,
+                 author:'',theme:'',pdf:''};
+      if(hdr) row._header=hdr;
+      let at=-1;
+      for(let i=0;i<cardData.length;i++) if(codePrefix(cardData[i].id)===codePrefix(c.code)) at=i;
+      if(at>=0) cardData.splice(at+1,0,row); else cardData.push(row);
+      add++;
+    }
+  }
+
+  if(document.getElementById('draftOrder').checked) reorderByDraft();
+
+  dirty=true;
+  filterCards();
+  renderDraftList();
+  showDraftCard(draftSel);
+  document.getElementById('fileStatus').textContent=
+    `📝 原稿から反映：更新 ${upd}枚／新規 ${add}枚（まだ保存していません）`;
+  if(!silent) alert(`反映しました。\n更新 ${upd}枚 ／ 新規作成 ${add}枚\n\nプレビューで確認し、問題なければ「CSVを保存」してください。`);
+  return {upd,add};
+}
+
+// ---- まとめて保存 ----
+//   原稿md → カード → TAKERUcard.csv の3つを続けて片づける。
+//   途中で失敗したらそこで止める（半端に進めない）。
+async function saveAllFromDraft(){
+  const btn=document.getElementById('btnDraftAll');
+  const orig=btn.textContent;
+  btn.disabled=true; btn.textContent='処理中…';
+  try{
+    if(!await saveDraft(true)) return;
+    // カードに入れるものが無い場合（CSVから起こした直後など）は原稿だけで終わり。
+    // 「選ばれていません」と叱るような場面ではない。
+    if(!draftCards.some(c=>c.checked)){
+      draftStatusText().textContent=`✅ 原稿を保存しました（カードに変える点はありません）`;
+      alert(`原稿mdを保存しました。\n${document.getElementById('draftOut').value}\n\nカードに入れる変更はなかったので、CSVはそのままです。`);
+      return;
+    }
+    const r=applyDraftCards(true);
+    if(!r) return;
+    await saveCSV();
+    if(dirty) return;                    // CSV保存に失敗していたら知らせない
+    draftStatusText().textContent=
+      `✅ 原稿を保存 → カード ${r.upd+r.add}枚に反映 → CSV を保存しました`;
+    alert(`まとめて保存しました。\n\n・原稿md：${document.getElementById('draftOut').value}\n・カード：更新 ${r.upd}枚／新規 ${r.add}枚\n・TAKERUcard.csv：保存済み`);
+  } finally { btn.disabled=false; btn.textContent=orig; }
+}
+
+// 原稿に出てくる順に、そのテーマのカードを並べ替える（表示順はCSVの行順が持つ）
+function reorderByDraft(){
+  const order=draftCards.map(c=>c.code);
+  const prefixes=new Set(order.map(codePrefix));
+  const idx=[];
+  for(let i=0;i<cardData.length;i++) if(prefixes.has(codePrefix(cardData[i].id))) idx.push(i);
+  if(!idx.length) return;
+  const group=idx.map(i=>cardData[i]);
+  group.sort((a,b)=>{
+    const ia=order.indexOf(a.id), ib=order.indexOf(b.id);
+    if(ia<0&&ib<0) return 0;
+    if(ia<0) return 1;      // 原稿にないものは後ろへ（消さずに残す）
+    if(ib<0) return -1;
+    return ia-ib;
+  });
+  idx.forEach((pos,k)=>{ cardData[pos]=group[k]; });
 }
