@@ -26,7 +26,7 @@ const IS_PROD = (typeof window.__IS_PROD === 'boolean') ? window.__IS_PROD : (fu
 //   画像・音声はブラウザ自身が長くキャッシュするため、差し替えても
 //   古いものが出続ける。URLが変われば確実に取り直されるので、版が上がるたび
 //   ここも一緒に上げる（bump-sw.sh と作業台の「⬆ v」ボタンが書き換える）。
-const ASSET_V = 'v117';
+const ASSET_V = 'v118';
 function av(path) { return path + '?v=' + ASSET_V; }
 
 // ==========================================
@@ -72,6 +72,16 @@ function isCardVisible(card) {
     if (!IS_PROD) return true;              // 開発：全部見せる
     return card.published === true;         // 本番：公開フラグのみ
 }
+// 史実／解説のバッジ。「国家と法律」講座だけの区別で、コードの末尾がF/Cかで決まる。
+// 科目で絞らないと、軍事と戦略の JPNDF01（＝Defense）などを拾ってしまう。
+// どちらでもないカード（まとめ札など）は無印のまま。
+function cardTypeBadge(card, after, before) {
+    if (!(card.subject || '').includes('国家と法律')) return '';
+    const type = /F\d+$/.test(card.id) ? 'fact' : /C\d+$/.test(card.id) ? 'com' : null;
+    if (!type) return '';
+    return `${before || ''}<span class="card-badge badge-${type}">${type === 'fact' ? '史実' : '解説'}</span>${after || ''}`;
+}
+
 // 配下に見えるカードが1枚でもあるか（タイル点灯の判定）
 function hasVisibleCards(cards) {
     return cards.some(isCardVisible);
@@ -967,14 +977,7 @@ function showFlatCardList(genre) {
     // 一覧本体は箱で包む（広い画面で「左を埋めてから右へ折り返す」段組にするため）
     html += '<div class="card-list-body">';
     curSection.forEach((card, i) => {
-        // 史実/解説の別は「国家と法律」講座だけの区別。コードの末尾がF/Cかで見る。
-        // 科目で絞らないと、軍事と戦略の JPNDF01（＝Defense）などを拾ってしまう。
-        // どちらでもないカード（まとめ札など）は無印のまま。
-        const isLaw = (card.subject || '').includes('国家と法律');
-        const type = !isLaw ? null
-                   : /F\d+$/.test(card.id) ? 'fact'
-                   : /C\d+$/.test(card.id) ? 'com' : null;
-        const badge = type ? `<span class="card-badge badge-${type}">${type === 'fact' ? '史実' : '解説'}</span> ` : '';
+        const badge = cardTypeBadge(card, ' ');
         const title = card.title.replace(/^→/, '').trim();
         html += `<div class="menu-item" data-idx="${i}"><span class="item-dot">●</span> ${badge}${title}</div>`;
     });
@@ -1037,8 +1040,7 @@ function showCard(idx) {
     exitMenuFull();
     showTextView();
 
-    const cardType = /\dF\d+$/.test(card.id) ? 'fact' : /\dC\d+$/.test(card.id) ? 'com' : null;
-    const typeBadge = cardType ? ` <span class="card-badge badge-${cardType}">${cardType === 'fact' ? '史実' : '解説'}</span>` : '';
+    const typeBadge = cardTypeBadge(card, '', ' ');
     // カード番号は進捗行の右端に小さく出す（ご意見フォームでカードを特定してもらうため）
     const codeTag = `<span class="card-code">${card.id}</span>`;
     if (card.section) {

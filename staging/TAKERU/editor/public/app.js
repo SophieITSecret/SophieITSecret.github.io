@@ -1030,7 +1030,11 @@ async function saveCSV(){
     const j=await res.json();
     if(!res.ok||!j.ok) throw new Error(j.error||'保存に失敗しました');
     dirty=false;
-    document.getElementById('fileStatus').textContent=`💾 保存しました${j.backup?'（バックアップ: '+j.backup+'）':''}`;
+    // 原稿mdも一緒に追いかけている。何本書き直したかを出す。
+    const dn=(j.drafts||[]).length;
+    const dmsg=dn?`　📝 原稿md ${dn}本を更新（${j.drafts.map(d=>d.name.slice(d.name.lastIndexOf('/')+1)).join('、')}）`:'';
+    document.getElementById('fileStatus').textContent=
+      `💾 保存しました${j.backup?'（バックアップ: '+j.backup+'）':''}${dmsg}`;
     refreshSwVersion();          // 保存すると「版数の上げどき」になる
   } catch(err) {
     alert('保存に失敗しました: '+err.message);

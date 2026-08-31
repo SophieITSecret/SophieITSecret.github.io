@@ -81,7 +81,10 @@ function postCsv(req, res) {
         fs.copyFileSync(config.csvPath, path.join(dir, backupName));
       }
       fs.writeFileSync(config.csvPath, text, 'utf8');
-      sendJSON(res, 200, { ok: true, backup: backupName });
+      // 本体画面で直した本文を、既にある原稿mdにも書き戻す
+      let drafts = [];
+      try { drafts = syncDraftsFromCsv(text); } catch (e) { /* 同期に失敗してもCSVの保存は成立させる */ }
+      sendJSON(res, 200, { ok: true, backup: backupName, drafts });
     } catch (e) {
       sendJSON(res, 500, { ok: false, error: '保存に失敗しました: ' + e.message });
     }
@@ -155,6 +158,88 @@ function draftPath(name) {
   const full = path.resolve(root, rel);
   if (full !== root && !full.startsWith(root + path.sep)) return null;
   return full;
+}
+
+// ============================================================
+// 原稿mdをCSVに合わせる
+//   本体画面で図を見ながら本文を直す、というやり方はそのまま続けたい。
+//   そこでCSVを保存したとき、既にある原稿mdを現在のカードで書き直す。
+//   ・新しいmdは作らない（既にあるものだけ追いかける）
+//   ・中身が変わらないファイルには触らない（控えが無駄に増えないように）
+// ============================================================
+const WIP_PLACEHOLDER = '（準備中）このカードは現在作成中です。';
+
+// 原稿mdの1行目「# テーマ名」と2行目「科目：…」から、どのテーマのものか読む
+function draftHeaderOf(text) {
+  const lines = String(text || '').split(/\r?\n/);
+  let genre = null, subject = null;
+  for (let i = 0; i < Math.min(lines.length, 6); i++) {
+    const m1 = lines[i].match(/^#\s+(.+?)\s*$/);
+    if (m1 && genre === null) { genre = m1[1]; continue; }
+    const m2 = lines[i].match(/^科目：\s*([^　\s]+)/);
+    if (m2 && subject === null) subject = m2[1];
+  }
+  return { genre, subject };
+}
+
+// 比較用：最初の「#### 」から後ろだけ取る（見出しの更新日で差が出ないように）
+function draftBodyPart(text) {
+  const i = String(text || '').indexOf('#### ');
+  return i < 0 ? '' : text.slice(i).replace(/\s+$/, '');
+}
+
+function buildDraftMd(genre, subject, rows) {
+  const d = new Date(), p = n => String(n).padStart(2, '0');
+  const stamp = `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+  let md = `# ${genre || '（テーマ未設定）'}\n`;
+  md += `科目：${subject || '（未設定）'}　／　${rows.length}枚　／　更新：${stamp}\n\n`;
+  for (const r of rows) {
+    const body = (r.body === WIP_PLACEHOLDER) ? '' : r.body;
+    md += `#### ${r.id}　${r.title}\n${body}\n\n`;
+  }
+  return md;
+}
+
+// CSVの本文から、既にある原稿mdを書き直す。書き換えたファイル名の配列を返す。
+function syncDraftsFromCsv(csvText) {
+  const recs = parseCsvText(String(csvText || '').replace(/^﻿/, ''));
+  const cards = recs.slice(1)
+    .filter(r => (r[0] || '').trim())
+    .map(r => ({ id: (r[0] || '').trim(), genre: (r[1] || '').trim(), title: (r[3] || '').trim(),
+                 body: (r[4] || ''), subject: (r[5] || '').trim() }));
+
+  const root = draftsDir();
+  const files = [];
+  const walk = (dir, rel, depth) => {
+    let names; try { names = fs.readdirSync(dir); } catch { return; }
+    for (const n of names) {
+      if (n.startsWith('.')) continue;
+      const full = path.join(dir, n);
+      let st; try { st = fs.statSync(full); } catch { continue; }
+      if (st.isDirectory()) { if (depth > 0) walk(full, rel + n + '/', depth - 1); }
+      else if (n.toLowerCase().endsWith('.md') && (rel + n).includes('カード原稿/')) files.push({ full, rel: rel + n });
+    }
+  };
+  walk(root, '', 2);
+
+  const done = [];
+  for (const f of files) {
+    let old; try { old = fs.readFileSync(f.full, 'utf8'); } catch { continue; }
+    const { genre, subject } = draftHeaderOf(old);
+    if (!genre) continue;                       // テーマが読めないファイルは触らない
+    const rows = cards.filter(c => c.genre === genre && (!subject || c.subject === subject));
+    if (!rows.length) continue;                 // 該当カードが無いなら触らない
+    const next = buildDraftMd(genre, subject, rows);
+    if (draftBodyPart(next) === draftBodyPart(old)) continue;   // 中身が同じなら何もしない
+    try {
+      fs.mkdirSync(DRAFT_BACKUP_DIR, { recursive: true });
+      fs.copyFileSync(f.full, path.join(DRAFT_BACKUP_DIR,
+        path.basename(f.full, '.md') + '_backup_' + timestamp() + '.md'));
+      fs.writeFileSync(f.full, next, 'utf8');
+      done.push({ name: f.rel, cards: rows.length });
+    } catch (e) { /* 1本失敗しても他は続ける */ }
+  }
+  return done;
 }
 
 // GET /api/drafts — 原稿フォルダの .md を一覧（3階層まで／更新の新しい順）
