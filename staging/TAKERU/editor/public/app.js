@@ -2803,7 +2803,10 @@ function doPaste(){
     alert('カードの見出しが見つかりませんでした。\n行頭を @コード か #### コード　タイトル にしてください。');
     return;
   }
-  let upd=0, add=0;
+  // 貼り付けた順に見ていき、既にあるカードを目印にして位置を決める。
+  // 新顔をただ末尾に足すと、貼り付け側の並びが崩れる（史実の次が解説、という
+  // 対が壊れる）ため、直前のカードの真下に入れる。
+  let upd=0, add=0, cursor=-1;
   const seen=new Set();
   for(const b of blocks){
     if(seen.has(b.code)) continue;
@@ -2813,9 +2816,13 @@ function doPaste(){
       if(b.title) draftCards[i].title=b.title;
       if(b.body)  draftCards[i].body=b.body;   // 空なら今の本文を残す
       draftCards[i].checked=true;
+      cursor=i;
       upd++;
     }else{
-      draftCards.push({code:b.code,title:b.title,body:b.body,checked:true});
+      // 目印がまだ無いうち（貼り付けの先頭が新顔）は末尾へ
+      const at = cursor<0 ? draftCards.length : cursor+1;
+      draftCards.splice(at,0,{code:b.code,title:b.title,body:b.body,checked:true});
+      cursor=at;
       add++;
     }
   }
