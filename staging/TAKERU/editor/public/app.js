@@ -3075,7 +3075,12 @@ function updateDraftFooter(){
   document.getElementById('draftSummary').textContent=
     `${draftCards.length}枚（新規 ${n.new} / 反映 ${n.update} / 未執筆 ${n.empty} / 変更なし ${n.same}）`;
   const m=document.getElementById('draftMissing');
-  m.textContent = missing.length ? `🗑 この原稿にないカードが CSV に ${missing.length}枚：${missing.join('、')}` : '';
+  const notes=[];
+  if(missing.length) notes.push(`🗑 この原稿にないカードが CSV に ${missing.length}枚：${missing.join('、')}`);
+  if(draftOrderDiffers()) notes.push(document.getElementById('draftOrder').checked
+      ? '↕ 並び順がCSVと違います（反映で入れ替えます）'
+      : '↕ 並び順がCSVと違います（「原稿の順に並べ替える」にチェックを）');
+  m.textContent = notes.join('　');
   document.getElementById('draftDirty').textContent = draftIsDirty()?'● 未保存':'';
 }
 
@@ -3133,7 +3138,8 @@ function copyDraft(){
 // ---- カードへ反映 ----
 function applyDraftCards(silent){
   const targets=draftCards.filter(c=>c.checked);
-  if(!targets.length){ alert('反映するカードが選ばれていません。'); return null; }
+  const reorder=draftWillReorder();
+  if(!targets.length && !reorder){ alert('反映するカードが選ばれていません。'); return null; }
 
   const genre=document.getElementById('draftGenre').value.trim();
   const subject=document.getElementById('draftSubject').value.trim();
@@ -3168,10 +3174,11 @@ function applyDraftCards(silent){
   filterCards();
   renderDraftList();
   showDraftCard(draftSel);
+  const moved=reorder?'／並び順も':'';
   document.getElementById('fileStatus').textContent=
-    `📝 原稿から反映：更新 ${upd}枚／新規 ${add}枚（まだ保存していません）`;
-  if(!silent) alert(`反映しました。\n更新 ${upd}枚 ／ 新規作成 ${add}枚\n\nプレビューで確認し、問題なければ「CSVを保存」してください。`);
-  return {upd,add};
+    `📝 原稿から反映：更新 ${upd}枚／新規 ${add}枚${moved}（まだ保存していません）`;
+  if(!silent) alert(`反映しました。\n更新 ${upd}枚 ／ 新規作成 ${add}枚${reorder?'\n並び順も原稿に合わせました。':''}\n\nプレビューで確認し、問題なければ「CSVを保存」してください。`);
+  return {upd,add,reorder};
 }
 
 // ---- まとめて保存 ----
@@ -3185,7 +3192,7 @@ async function saveAllFromDraft(){
     if(!await saveDraft(true)) return;
     // カードに入れるものが無い場合（CSVから起こした直後など）は原稿だけで終わり。
     // 「選ばれていません」と叱るような場面ではない。
-    if(!draftCards.some(c=>c.checked)){
+    if(!draftCards.some(c=>c.checked) && !draftWillReorder()){
       draftStatusText().textContent=`✅ 原稿を保存しました（カードに変える点はありません）`;
       alert(`原稿mdを保存しました。\n${document.getElementById('draftOut').value}\n\nカードに入れる変更はなかったので、CSVはそのままです。`);
       return;
@@ -3194,10 +3201,29 @@ async function saveAllFromDraft(){
     if(!r) return;
     await saveCSV();
     if(dirty) return;                    // CSV保存に失敗していたら知らせない
+    const mv=r.reorder?'／並び順も原稿に合わせました':'';
     draftStatusText().textContent=
-      `✅ 原稿を保存 → カード ${r.upd+r.add}枚に反映 → CSV を保存しました`;
-    alert(`まとめて保存しました。\n\n・原稿md：${document.getElementById('draftOut').value}\n・カード：更新 ${r.upd}枚／新規 ${r.add}枚\n・TAKERUcard.csv：保存済み`);
+      `✅ 原稿を保存 → カード ${r.upd+r.add}枚に反映${mv} → CSV を保存しました`;
+    alert(`まとめて保存しました。\n\n・原稿md：${document.getElementById('draftOut').value}\n・カード：更新 ${r.upd}枚／新規 ${r.add}枚${r.reorder?'\n・並び順：原稿の順に入れ替えました':''}\n・TAKERUcard.csv：保存済み`);
   } finally { btn.disabled=false; btn.textContent=orig; }
+}
+
+// 原稿の並びが、いまのCSVの行順と違うか。
+// 本文もタイトルも変えず「順番だけ」直した場合、カードの中身は
+// どれも「CSVと同じ」になる。それを変更なしと見ると並べ替えが
+// 永遠にCSVへ届かないので、順番そのものを変更として数える。
+function draftOrderDiffers(){
+  if(!draftCards.length) return false;
+  const prefixes=new Set(draftCards.map(c=>codePrefix(c.code)));
+  const inCsv=cardData.filter(d=>prefixes.has(codePrefix(d.id))).map(d=>d.id);
+  const inDraft=draftCards.map(c=>c.code).filter(id=>inCsv.includes(id));
+  const csvSame=inCsv.filter(id=>inDraft.includes(id));
+  return inDraft.join(' ')!==csvSame.join(' ');
+}
+// 並べ替えを反映する条件（チェックが入っていて、実際に違っている）
+function draftWillReorder(){
+  const el=document.getElementById('draftOrder');
+  return !!(el && el.checked && draftOrderDiffers());
 }
 
 // 原稿に出てくる順に、そのテーマのカードを並べ替える（表示順はCSVの行順が持つ）
