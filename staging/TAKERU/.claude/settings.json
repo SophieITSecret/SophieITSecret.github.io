@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -c 'import urllib.parse,sys;print\\(urllib.parse.quote\\(sys.argv[1],safe='\\\\'''\\\\''\\)\\)' https://www.theguardian.com/world/2026/aug/17/ebola-outbreak-drc)",
+      "Bash(curl -s -o /dev/null -w '  HTTP %{http_code} → %{redirect_url}\\\\n' --max-time 15 'https://translate.google.com/translate?sl=en&tl=ja&u=__CMDSUB_OUTPUT__')",
+      "Bash(curl -s -o /dev/null -w '  HTTP %{http_code}\\\\n' --max-time 15 'https://www-theguardian-com.translate.goog/world/2026/aug/17/ebola-outbreak-drc?_x_tr_sl=auto&_x_tr_tl=ja&_x_tr_hl=ja')"
+    ]
+  }
+}

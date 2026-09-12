@@ -1,0 +1,46 @@
+# 画像データは原則無視（バックアップ・一時ファイルなど。例: editor/image_backup/）
+*.png
+*.jpg
+*.gif
+
+# ただし images/ 内のカード画像はGit管理対象（GitHub Pagesで配信するため）
+!images/*.png
+!images/*.jpg
+!images/*.gif
+
+# PWAアイコンは例外（Git管理対象）
+!icon-192.png
+!icon-512.png
+!takeru-touch-icon.png
+# 開発版（Git）識別アイコンも例外
+!icon-192-git.png
+!icon-512-git.png
+!takeru-touch-icon-git.png
+
+# 音声データを無視（一時・バックアップのみ）
+*.wav
+*.m4a
+
+# voices/ 内のMP3はGit管理対象（GitHub Pagesで配信するため）
+# ただし voices_backup/ は除外
+voices_backup/
+
+# 一時WAVファイル（OS tmpdir配下のため通常不要だが念のため）
+voices_temp/
+
+# Python キャッシュ
+__pycache__/
+*.pyc
+
+# CSVの自動バックアップ（作業台が作る安全用コピー。ローカルには残すが版管理・本番配信はしない）
+TAKERUcard_backup_*.csv
+news_backup_*.csv
+
+# アクセス計測の生ログと集計（本番サーバー上でのみ生成される。版管理しない）
+# ※ logs/.htaccess だけは配信したいので除外しない
+logs/*.csv
+logs/*.json
+logs/*.log
+
+# 原稿（下書き .md）の保存前バックアップ
+editor/draft_backup/
