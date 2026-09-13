@@ -26,7 +26,7 @@ const IS_PROD = (typeof window.__IS_PROD === 'boolean') ? window.__IS_PROD : (fu
 //   画像・音声はブラウザ自身が長くキャッシュするため、差し替えても
 //   古いものが出続ける。URLが変われば確実に取り直されるので、版が上がるたび
 //   ここも一緒に上げる（bump-sw.sh と作業台の「⬆ v」ボタンが書き換える）。
-const ASSET_V = 'v121';
+const ASSET_V = 'v122';
 function av(path) { return path + '?v=' + ASSET_V; }
 
 // ==========================================
@@ -1472,6 +1472,69 @@ function getNewsSeen() { try { return localStorage.getItem('takeru_news_seen') |
 function markNewsSeen() { try { localStorage.setItem('takeru_news_seen', latestNoticeId()); } catch (e) {} }
 function hasUnreadNews() { const l = latestNoticeId(); return !!l && l !== getNewsSeen(); }
 
+// ============================================================
+// ニュースの情報源とマーケット
+//   ガーディアンは自前で選び、要約を付けた記事（news.csv）。
+//   ロイターとBBCは本家のサイトをそのまま開く（記事は持たない）。
+//   マーケットは TradingView の埋め込みチャートを見せるだけ。
+// ============================================================
+//   毎日見る順に並べる。ガーディアンだけ url が空＝この画面の記事一覧。
+const NEWS_SOURCES = [
+    { key: 'reuters',  label: 'ロイター',        url: 'https://jp.reuters.com' },
+    { key: 'guardian', label: 'ガーディアン選抜', url: '' },
+    { key: 'bbc',      label: 'BBC日本語',       url: 'https://www.bbc.com/japanese' },
+];
+
+function newsSourceRow() {
+    return `<div class="news-srcs">` + NEWS_SOURCES.map(s =>
+        s.url
+            ? `<button class="news-src" data-url="${escHtml(s.url)}">${escHtml(s.label)}<span class="src-ext">↗</span></button>`
+            : `<button class="news-src active">${escHtml(s.label)}</button>`
+    ).join('') + `</div>`;
+}
+
+// 毎日見る指標。TradingView のシンボル表記。
+//   金利は日米の10年国債利回り。政策金利ではなく市場が付けた値で、
+//   為替と株の動きを読むときの土台になる。
+const MARKET_ITEMS = [
+    { label: '日経平均',    symbol: 'FOREXCOM:JP225' },
+    { label: 'ドル円',      symbol: 'FX:USDJPY' },
+    { label: 'S&P500',     symbol: 'CAPITALCOM:US500' },
+    { label: '米10年債',    symbol: 'TVC:US10Y' },
+    { label: '日10年債',    symbol: 'TVC:JP10Y' },
+    { label: '原油(WTI)',   symbol: 'TVC:USOIL' },
+    { label: '金',         symbol: 'TVC:GOLD' },
+    { label: 'ビットコイン',  symbol: 'BITSTAMP:BTCUSD' },
+];
+let marketSymbol = MARKET_ITEMS[0].symbol;
+let marketLabel  = MARKET_ITEMS[0].label;
+
+function marketPanelHtml() {
+    const btns = MARKET_ITEMS.map(m =>
+        `<button class="mkt-btn${m.symbol === marketSymbol ? ' active' : ''}" data-symbol="${escHtml(m.symbol)}" data-label="${escHtml(m.label)}">${escHtml(m.label)}</button>`
+    ).join('');
+    return `
+        <div class="mkt-wrap">
+            <div class="mkt-btns">${btns}</div>
+            <div class="mkt-chart" id="mkt-chart"></div>
+            <div class="news-source-foot">（チャート提供：TradingView）</div>
+        </div>`;
+}
+
+function showMarketChart(symbol, label) {
+    const box = document.getElementById('mkt-chart');
+    if (!box) return;
+    marketSymbol = symbol;
+    if (label) marketLabel = label;
+    document.querySelectorAll('.mkt-btn').forEach(b =>
+        b.classList.toggle('active', b.dataset.symbol === symbol));
+    const src = 'https://s.tradingview.com/widgetembed/?symbol=' + encodeURIComponent(symbol) +
+                '&interval=D&theme=dark&style=1&locale=ja&timezone=Asia%2FTokyo' +
+                '&hide_side_toolbar=1&withdateranges=1&save_image=0';
+    box.innerHTML = `<iframe src="${src}" title="${escHtml(marketLabel)}のチャート" loading="lazy"
+        frameborder="0" allowtransparency="true" scrolling="no"></iframe>`;
+}
+
 function showNews(tab) {
     newsTab = tab || newsTab || 'ニュース';
     navState = 'news';
@@ -1483,6 +1546,7 @@ function showNews(tab) {
     const tabRow = `
         <div class="news-tabs">
             <button class="news-tab ${newsTab==='ニュース'?'active':''}" data-tab="ニュース">ニュース</button>
+            <button class="news-tab ${newsTab==='マーケット'?'active':''}" data-tab="マーケット">マーケット</button>
             <button class="news-tab ${newsTab==='お知らせ'?'active':''}" data-tab="お知らせ">お知らせ</button>
         </div>`;
 
@@ -1499,6 +1563,8 @@ function showNews(tab) {
         listHtml = items.length
             ? `<div class="news-list">` + items.map(rowHtml).join('') + `</div>`
             : `<div class="news-empty">まだお知らせはありません。</div>`;
+    } else if (newsTab === 'マーケット') {
+        listHtml = marketPanelHtml();
     } else {
         // ニュース＝記事を時間の層に畳んで見せる。近い層は開いた状態、遠い層はボタンで開く。
         //   3ヶ月は選抜された別の表なので、押すと画面ごと切り替える。
@@ -1556,6 +1622,7 @@ function showNews(tab) {
             }
             listHtml += `<div class="news-source-foot">（出所：英ガーディアン紙）</div>`;
         }
+        listHtml = newsSourceRow() + listHtml;
     }
 
     menuContent.innerHTML = `
@@ -1568,11 +1635,18 @@ function showNews(tab) {
     menuContent.onclick = (e) => {
         const tabBtn = e.target.closest('.news-tab');
         if (tabBtn) { newsLevel = 0; showNews(tabBtn.dataset.tab); return; }
+        // 外部のニュースサイト（ロイター・BBC）は新しいタブで開く
+        const src = e.target.closest('.news-src[data-url]');
+        if (src) { window.open(src.dataset.url, '_blank', 'noopener'); return; }
+        // マーケットの銘柄ボタン
+        const mkt = e.target.closest('.mkt-btn[data-symbol]');
+        if (mkt) { showMarketChart(mkt.dataset.symbol, mkt.dataset.label || ''); return; }
         const lv = e.target.closest('.news-more-btn, .news-band-btn');
         if (lv) { newsLevel = parseInt(lv.dataset.level, 10) || 0; showNews('ニュース'); return; }
         const item = e.target.closest('.news-item');
         if (item) showNewsItem(item.dataset.id);
     };
+    if (newsTab === 'マーケット') showMarketChart(marketSymbol, marketLabel);   // 前に見ていた指標を出し直す
 }
 
 function showNewsItem(id) {
