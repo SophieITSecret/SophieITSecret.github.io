@@ -26,7 +26,7 @@ const IS_PROD = (typeof window.__IS_PROD === 'boolean') ? window.__IS_PROD : (fu
 //   画像・音声はブラウザ自身が長くキャッシュするため、差し替えても
 //   古いものが出続ける。URLが変われば確実に取り直されるので、版が上がるたび
 //   ここも一緒に上げる（bump-sw.sh と作業台の「⬆ v」ボタンが書き換える）。
-const ASSET_V = 'v123';
+const ASSET_V = 'v124';
 function av(path) { return path + '?v=' + ASSET_V; }
 
 // ==========================================
@@ -1504,8 +1504,9 @@ const MARKET_ITEMS = [
     { label: 'S&P500',     symbol: 'CAPITALCOM:US500' },
     { label: '米10年債',    symbol: 'FRED:DGS10' },
     // 日本国債の利回りは無料の埋め込みで出せない（FREDの系列は月次で遅れる）。
-    // チャートを諦めて、財務省が毎営業日出している一次情報へ直接つなぐ。
-    { label: '日本の金利',  url: 'https://www.mof.go.jp/jgbs/reference/interest_rate/' },
+    // 財務省の一次情報は表とCSVで小さな画面に向かないため、
+    // 利回りと値動きが大きく出る外部ページへつなぐ。
+    { label: '日本の金利',  url: 'https://jp.investing.com/rates-bonds/japan-10-year-bond-yield' },
     { label: '原油(WTI)',   symbol: 'TVC:USOIL' },
     { label: '金',         symbol: 'TVC:GOLD' },
     { label: 'ビットコイン',  symbol: 'BITSTAMP:BTCUSD' },
