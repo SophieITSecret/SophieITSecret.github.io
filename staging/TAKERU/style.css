@@ -1926,3 +1926,6 @@ body.font-large #card-body { font-size: 1.05rem; }
     background: #0d0d12;
 }
 .mkt-chart iframe { width: 100%; height: 100%; display: block; border: 0; }
+
+.mkt-btn.mkt-ext { color:#9ab; border-style:dashed; }
+.mkt-btn.mkt-ext:hover { color:#cde; border-color:#678; }

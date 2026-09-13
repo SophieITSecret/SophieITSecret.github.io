@@ -44,3 +44,6 @@ logs/*.log
 
 # 原稿（下書き .md）の保存前バックアップ
 editor/draft_backup/
+
+# 金利シンボルの当たり確認（一時ファイル）
+_symbol_test.html

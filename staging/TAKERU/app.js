@@ -26,7 +26,7 @@ const IS_PROD = (typeof window.__IS_PROD === 'boolean') ? window.__IS_PROD : (fu
 //   画像・音声はブラウザ自身が長くキャッシュするため、差し替えても
 //   古いものが出続ける。URLが変われば確実に取り直されるので、版が上がるたび
 //   ここも一緒に上げる（bump-sw.sh と作業台の「⬆ v」ボタンが書き換える）。
-const ASSET_V = 'v122';
+const ASSET_V = 'v123';
 function av(path) { return path + '?v=' + ASSET_V; }
 
 // ==========================================
@@ -1494,14 +1494,18 @@ function newsSourceRow() {
 }
 
 // 毎日見る指標。TradingView のシンボル表記。
-//   金利は日米の10年国債利回り。政策金利ではなく市場が付けた値で、
+//   金利は米10年国債の利回り。政策金利ではなく市場が付けた値で、
 //   為替と株の動きを読むときの土台になる。
+//   無料の埋め込みで出せる金利は FRED（米政府の公開データ）系だけ。
+//   TVC: や ECONOMICS: の金利は「TradingView上のみ利用可能」で出ない。
 const MARKET_ITEMS = [
     { label: '日経平均',    symbol: 'FOREXCOM:JP225' },
     { label: 'ドル円',      symbol: 'FX:USDJPY' },
     { label: 'S&P500',     symbol: 'CAPITALCOM:US500' },
-    { label: '米10年債',    symbol: 'TVC:US10Y' },
-    { label: '日10年債',    symbol: 'TVC:JP10Y' },
+    { label: '米10年債',    symbol: 'FRED:DGS10' },
+    // 日本国債の利回りは無料の埋め込みで出せない（FREDの系列は月次で遅れる）。
+    // チャートを諦めて、財務省が毎営業日出している一次情報へ直接つなぐ。
+    { label: '日本の金利',  url: 'https://www.mof.go.jp/jgbs/reference/interest_rate/' },
     { label: '原油(WTI)',   symbol: 'TVC:USOIL' },
     { label: '金',         symbol: 'TVC:GOLD' },
     { label: 'ビットコイン',  symbol: 'BITSTAMP:BTCUSD' },
@@ -1511,7 +1515,9 @@ let marketLabel  = MARKET_ITEMS[0].label;
 
 function marketPanelHtml() {
     const btns = MARKET_ITEMS.map(m =>
-        `<button class="mkt-btn${m.symbol === marketSymbol ? ' active' : ''}" data-symbol="${escHtml(m.symbol)}" data-label="${escHtml(m.label)}">${escHtml(m.label)}</button>`
+        m.url
+            ? `<button class="mkt-btn mkt-ext" data-url="${escHtml(m.url)}">${escHtml(m.label)}<span class="src-ext">↗</span></button>`
+            : `<button class="mkt-btn${m.symbol === marketSymbol ? ' active' : ''}" data-symbol="${escHtml(m.symbol)}" data-label="${escHtml(m.label)}">${escHtml(m.label)}</button>`
     ).join('');
     return `
         <div class="mkt-wrap">
@@ -1526,7 +1532,7 @@ function showMarketChart(symbol, label) {
     if (!box) return;
     marketSymbol = symbol;
     if (label) marketLabel = label;
-    document.querySelectorAll('.mkt-btn').forEach(b =>
+    document.querySelectorAll('.mkt-btn[data-symbol]').forEach(b =>
         b.classList.toggle('active', b.dataset.symbol === symbol));
     const src = 'https://s.tradingview.com/widgetembed/?symbol=' + encodeURIComponent(symbol) +
                 '&interval=D&theme=dark&style=1&locale=ja&timezone=Asia%2FTokyo' +
@@ -1635,9 +1641,9 @@ function showNews(tab) {
     menuContent.onclick = (e) => {
         const tabBtn = e.target.closest('.news-tab');
         if (tabBtn) { newsLevel = 0; showNews(tabBtn.dataset.tab); return; }
-        // 外部のニュースサイト（ロイター・BBC）は新しいタブで開く
-        const src = e.target.closest('.news-src[data-url]');
-        if (src) { window.open(src.dataset.url, '_blank', 'noopener'); return; }
+        // 外に出るもの（ロイター・BBC・財務省）は新しいタブで開く
+        const ext = e.target.closest('[data-url]');
+        if (ext) { window.open(ext.dataset.url, '_blank', 'noopener'); return; }
         // マーケットの銘柄ボタン
         const mkt = e.target.closest('.mkt-btn[data-symbol]');
         if (mkt) { showMarketChart(mkt.dataset.symbol, mkt.dataset.label || ''); return; }
