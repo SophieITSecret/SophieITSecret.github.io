@@ -1878,8 +1878,8 @@ body.font-large #card-body { font-size: 1.05rem; }
 }
 .news-src:hover { background: rgba(255,255,255,.06); color: #eee; }
 .news-src.active {
-    background: rgba(245,127,23,.18);
-    border-color: #ffc107;
+    background: rgba(21,101,192,.22);
+    border-color: #6cb6ff;
     color: #fff;
     font-weight: 700;
     cursor: default;
@@ -1912,8 +1912,8 @@ body.font-large #card-body { font-size: 1.05rem; }
 }
 .mkt-btn:hover { background: rgba(255,255,255,.06); color: #eee; }
 .mkt-btn.active {
-    background: rgba(245,127,23,.18);
-    border-color: #ffc107;
+    background: rgba(21,101,192,.22);
+    border-color: #6cb6ff;
     color: #fff;
     font-weight: 700;
 }
@@ -1927,5 +1927,25 @@ body.font-large #card-body { font-size: 1.05rem; }
 }
 .mkt-chart iframe { width: 100%; height: 100%; display: block; border: 0; }
 
-.mkt-btn.mkt-ext { color:#9ab; border-style:dashed; }
-.mkt-btn.mkt-ext:hover { color:#cde; border-color:#678; }
+/* アプリの外に出るボタンは破線。中で切り替わるボタンと見分けが付くように。
+   ロイター・BBC（ニュース）と 日本の金利（マーケット）が同じ見た目になる。 */
+.news-src[data-url],
+.mkt-btn.mkt-ext {
+    border-style: dashed;
+    border-color: #3c4560;
+    color: #93a4c4;
+}
+.news-src[data-url]:hover,
+.mkt-btn.mkt-ext:hover { border-color: #6cb6ff; color: #cfe3ff; }
+
+/* マーケットだけは、画面の縦をチャートに使い切る。
+   看板を畳んだうえで、ボタンの下に残った高さを全部チャートへ渡す。
+   こうすると画面内に収まるので、指でずらす必要がなくなる。 */
+body.market-view #image-area,
+body.market-view #divider-line { display: none !important; }
+body.market-view #menu-view   { overflow: hidden; }
+body.market-view #menu-content { flex: 1; display: flex; min-height: 0; padding-bottom: 0; }
+body.market-view .sub-menu-wrap { flex: 1; min-height: 0; padding-top: 10px; padding-bottom: 0; }
+body.market-view .mkt-wrap     { flex: 1; min-height: 0; padding-bottom: 0; }
+body.market-view .mkt-chart    { flex: 1; height: auto; min-height: 170px; }
+body.market-view .news-source-foot { padding: 6px 12px 8px; }

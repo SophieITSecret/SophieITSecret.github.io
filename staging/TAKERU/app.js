@@ -26,7 +26,7 @@ const IS_PROD = (typeof window.__IS_PROD === 'boolean') ? window.__IS_PROD : (fu
 //   画像・音声はブラウザ自身が長くキャッシュするため、差し替えても
 //   古いものが出続ける。URLが変われば確実に取り直されるので、版が上がるたび
 //   ここも一緒に上げる（bump-sw.sh と作業台の「⬆ v」ボタンが書き換える）。
-const ASSET_V = 'v124';
+const ASSET_V = 'v125';
 function av(path) { return path + '?v=' + ASSET_V; }
 
 // ==========================================
@@ -1550,6 +1550,12 @@ function showNews(tab) {
     showMenuView();
     markNewsSeen();                              // 開いたら既読（お知らせ・ニュース共通）
 
+    // マーケットはチャートが主役。上の看板を畳んで、画面の縦をぜんぶ渡す。
+    // 看板を残すとチャートが半分しか出ず、指でずらすと今度はボタンが隠れる。
+    // 看板の出し入れは CSS 側（body.market-view）に任せる。
+    // ここで style を直に触ると、別の画面へ抜けたときに戻し忘れる経路が出る。
+    document.body.classList.toggle('market-view', newsTab === 'マーケット');
+
     const tabRow = `
         <div class="news-tabs">
             <button class="news-tab ${newsTab==='ニュース'?'active':''}" data-tab="ニュース">ニュース</button>
@@ -2044,10 +2050,12 @@ function showMenuView() {
     menuView.style.display = 'flex';
     menuView.style.flexDirection = 'column';
     isMenuVisible = true;
+    document.body.classList.remove('market-view');   // 既定は解除。マーケットだけが後から付ける
     updateControlButtons();
 }
 
 function showTextView() {
+    document.body.classList.remove('market-view');
     menuView.style.display = 'none';
     textView.style.display = 'block';
     isMenuVisible = false;
