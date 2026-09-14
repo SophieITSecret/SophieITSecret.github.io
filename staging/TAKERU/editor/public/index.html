@@ -502,6 +502,27 @@
   </div>
 </div>
 
+
+<!-- テーマまるごとの公開 -->
+<div id="pubModal" class="modal-overlay">
+  <div class="modal-box pub-modal-box">
+    <div class="modal-head">
+      <h2>🌐 テーマをまとめて公開</h2>
+      <button class="btn-cancel" onclick="closeUnitPub()">✕ 閉じる</button>
+    </div>
+    <div class="pub-unit" id="pubUnitName"></div>
+    <div id="pubBody"></div>
+    <div class="pub-actions">
+      <button class="btn-batch-sel" id="btnPubOff" onclick="setUnitPublished(false)">⬜ 下げる</button>
+      <button class="btn-apply" id="btnPubOn" onclick="setUnitPublished(true)">🌐 公開</button>
+    </div>
+    <p class="mem-note">
+      公開フラグを立てるだけです。<strong>「💾 CSV を保存」してから「🚀 本番公開」</strong>を押すまで、利用者には届きません。<br>
+      開発版（GitHub Pages）では、公開フラグに関わらず全部見えます。
+    </p>
+  </div>
+</div>
+
 <!-- 会員（登録メール一覧） -->
 <div id="membersModal" class="modal-overlay">
   <div class="modal-box members-modal-box">
@@ -543,6 +564,7 @@
       <button class="btn-unit-nav" id="btnNextUnit" onclick="nextUnit()" disabled title="次のテーマ">▶</button>
       <button class="btn-rename" id="btnRename" onclick="openRename()" disabled title="テーマ名・サブテーマ名を変更">✏️</button>
       <button class="btn-batch-rec" id="btnBatchRecord" onclick="recordUnitBatch()" disabled title="テーマ内の未生成カードを一括録音">🎙 一括</button>
+      <button class="btn-unit-pub" id="btnUnitPub" onclick="openUnitPub()" disabled title="このテーマをまとめて公開／非公開にする">🌐 公開</button>
       <span class="card-count" id="cardCount">0枚</span>
     </div>
     <div class="list-scroll" id="listScroll">

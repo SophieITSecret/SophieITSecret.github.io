@@ -111,6 +111,7 @@ function filterCards() {
   filteredList=curUnit?cardData.filter(d=>d.genre===curUnit):cardData;
   document.getElementById('cardCount').textContent=`${filteredList.length}枚`;
   updateUnitNavBtns();
+  updateUnitPubBtn();
   renderList();
 }
 
@@ -131,6 +132,80 @@ function nextUnit() {
   const units=[...new Set(cardData.map(d=>d.genre))];
   const idx=units.indexOf(curUnit);
   if(idx>=0&&idx<units.length-1){ document.getElementById('unitSelect').value=units[idx+1]; filterCards(); }
+}
+
+// ============================================================
+// テーマまるごとの公開
+//   1枚ずつ「🌐 公開」を押していくと、テーマ1つで十数回になる。
+//   本文のないカードを公開すると利用者に「（準備中）」が出てしまうので、
+//   まとめて立てるときは本文のあるカードだけに限る。
+// ============================================================
+function unitPubStats(unit) {
+    const cards = cardData.filter(d => d.genre === unit);
+    const ready = cards.filter(c => hasRealBody(c.body));
+    return {
+        cards,
+        ready,
+        wip:   cards.filter(c => !hasRealBody(c.body)),
+        pub:   cards.filter(c => c.published),
+        noImg: ready.filter(c => !imageMap[c.id]),
+        noMp3: ready.filter(c => !mp3Ids.has(c.id)),
+    };
+}
+
+// ツールバーのボタンに「公開ずみ/全体」を出す
+function updateUnitPubBtn() {
+    const btn = document.getElementById('btnUnitPub');
+    if (!btn) return;
+    if (!curUnit) { btn.disabled = true; btn.textContent = '🌐 公開'; return; }
+    const s = unitPubStats(curUnit);
+    btn.disabled = false;
+    btn.textContent = `🌐 ${s.pub.length}/${s.cards.length}`;
+    btn.classList.toggle('pub-all',  s.cards.length > 0 && s.pub.length === s.cards.length);
+    btn.classList.toggle('pub-some', s.pub.length > 0 && s.pub.length < s.cards.length);
+}
+
+function openUnitPub() {
+    if (!curUnit) { alert('先にテーマを選んでください。'); return; }
+    const s = unitPubStats(curUnit);
+    const warn = [];
+    if (s.noImg.length) warn.push(`図がまだ ${s.noImg.length}枚（${s.noImg.slice(0,4).map(c=>c.id).join('、')}${s.noImg.length>4?' …':''}）`);
+    if (s.noMp3.length) warn.push(`音声がまだ ${s.noMp3.length}枚（${s.noMp3.slice(0,4).map(c=>c.id).join('、')}${s.noMp3.length>4?' …':''}）`);
+
+    document.getElementById('pubUnitName').textContent = curUnit;
+    document.getElementById('pubBody').innerHTML = `
+        <div class="pub-rows">
+          <div class="pub-row"><span>このテーマのカード</span><b>${s.cards.length}枚</b></div>
+          <div class="pub-row"><span>本文あり（公開できる）</span><b class="pub-ok">${s.ready.length}枚</b></div>
+          <div class="pub-row"><span>本文まだ（公開しない）</span><b class="${s.wip.length?'pub-ng':''}">${s.wip.length}枚</b></div>
+          <div class="pub-row"><span>いま公開ずみ</span><b>${s.pub.length}枚</b></div>
+        </div>
+        ${warn.length ? `<div class="pub-warn">⚠ ${warn.join('<br>⚠ ')}<br>
+          <span class="pub-warn-note">図や音声がなくてもカードは開けます（図は枠だけ、音声は読み上げに切り替わります）。承知のうえなら進めて構いません。</span></div>` : ''}
+        ${s.wip.length ? `<div class="pub-note">本文のないカードは公開しません。利用者に「（準備中）」が出てしまうためです。</div>` : ''}`;
+
+    document.getElementById('btnPubOn').textContent  = `🌐 本文のあるカードを公開（${s.ready.length}枚）`;
+    document.getElementById('btnPubOn').disabled     = s.ready.length === 0;
+    document.getElementById('btnPubOff').textContent = `⬜ このテーマを下げる（${s.pub.length}枚）`;
+    document.getElementById('btnPubOff').disabled    = s.pub.length === 0;
+    document.getElementById('pubModal').style.display = 'flex';
+}
+function closeUnitPub() { document.getElementById('pubModal').style.display = 'none'; }
+
+function setUnitPublished(on) {
+    const s = unitPubStats(curUnit);
+    const targets = on ? s.ready : s.cards;
+    let n = 0;
+    for (const c of targets) { if (c.published !== on) { c.published = on; n++; } }
+    if (!n) { closeUnitPub(); return; }
+    dirty = true;
+    renderList();
+    updateUnitPubBtn();
+    if (selectedIdx >= 0) showCard(selectedIdx);   // 開いているカードのチェックも合わせる
+    closeUnitPub();
+    document.getElementById('fileStatus').textContent =
+        `🌐 「${curUnit}」を${on ? '公開' : '非公開'}に：${n}枚（まだ保存していません）`;
+    alert(`${n}枚を${on ? '公開' : '非公開'}にしました。\n\n「💾 CSV を保存」してから「🚀 本番公開」で利用者に届きます。`);
 }
 
 function renderList() {
@@ -284,6 +359,7 @@ function onPublishedChange(){
   cardData[selectedIdx].published=document.getElementById('editPublished').checked;
   dirty=true;
   renderList();
+  updateUnitPubBtn();
 }
 
 function cancelEdit(){ editDirty=false; if(selectedIdx>=0) showCard(selectedIdx); }

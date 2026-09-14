@@ -560,3 +560,34 @@ textarea.svg-overlay-input { min-height:120px; font-family:monospace; font-size:
 .btn-sub { background:transparent; border:1px solid var(--border); color:var(--text2);
            padding:4px 12px; border-radius:4px; cursor:pointer; font-size:0.76rem; font-family:inherit; }
 .btn-sub:hover { background:rgba(255,255,255,.07); color:var(--text); }
+
+/* ===== テーマまるごとの公開 ===== */
+.btn-unit-pub {
+    background: transparent; border: 1px solid var(--border); color: var(--text2);
+    padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 0.75rem;
+    font-family: inherit; white-space: nowrap;
+}
+.btn-unit-pub:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+.btn-unit-pub:disabled { opacity: .4; cursor: default; }
+.btn-unit-pub.pub-all  { border-color: var(--accent); color: var(--accent); }
+.btn-unit-pub.pub-some { border-color: #e8c040; color: #e8c040; }
+
+.pub-modal-box { width: min(560px, 94vw); }
+.pub-unit { font-size: 0.95rem; color: var(--accent2); font-weight: 700; }
+.pub-rows { display: flex; flex-direction: column; gap: 4px; }
+.pub-row {
+    display: flex; justify-content: space-between; align-items: baseline;
+    font-size: 0.82rem; color: var(--text2);
+    padding: 5px 10px; background: var(--bg3); border-radius: 4px;
+}
+.pub-row b { color: var(--text); font-size: 0.88rem; }
+.pub-row b.pub-ok { color: var(--accent); }
+.pub-row b.pub-ng { color: #e8c040; }
+.pub-warn {
+    font-size: 0.78rem; color: #e8c040; line-height: 1.8;
+    padding: 8px 10px; background: rgba(232,192,64,.08);
+    border: 1px solid rgba(232,192,64,.3); border-radius: 4px;
+}
+.pub-warn-note { color: var(--text3); font-size: 0.72rem; }
+.pub-note { font-size: 0.76rem; color: var(--text3); line-height: 1.7; }
+.pub-actions { display: flex; gap: 8px; justify-content: flex-end; align-items: center; }
