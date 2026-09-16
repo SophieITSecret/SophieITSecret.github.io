@@ -1840,6 +1840,7 @@ function renderNewsEditList() {
         <button title="削除" onclick="deleteNews('${n.id}')">🗑</button>
       </div>
     </div>`).join('');
+  renderNewsBulk();
 }
 function startNewNews() {
   newsEditId = null;
@@ -1937,12 +1938,67 @@ function importDigest() {
 }
 
 // 月次・年次の印を切り替える。印は「上の層に持ち上げる」意味を持つ。
+// 印をまとめて付け外しする。週ごとに1本ずつ押していくと、
+// ひと月ぶんで数十回になる。月を選んで一度に触れるようにしておく。
+function bulkNewsFlag(key, on) {
+  const sel = document.getElementById('newsBulkMonth');
+  const ym  = sel ? sel.value : '';
+  const targets = newsItems.filter(n =>
+      n.type === 'ニュース' && (!ym || String(n.date).slice(0, 7) === ym));
+  if (!targets.length) { alert('対象の記事がありません。'); return; }
+  const label = key === 'monthly' ? '月次' : '年次';
+  const range = ym ? ym.replace('-', '年') + '月' : 'すべての月';
+  if (!confirm(`${range}のニュース ${targets.length}本に、${label}の印を${on ? '付け' : '外し'}ます。\nよろしいですか？`)) return;
+  let n = 0;
+  for (const t of targets) { if (t[key] !== on) { t[key] = on; n++; } }
+  if (n) markNewsDirty(true);
+  renderNewsEditList();
+  document.getElementById('newsBulkInfo').textContent =
+      `${label}の印を ${n}本 ${on ? '付けました' : '外しました'}（未保存）`;
+}
+
+// 3ヶ月の受け持ちから外れたのに年次の印がない記事は、アプリのどこからも
+// 辿れなくなる。印の付け忘れで記事が消えた実績があるので、その数を出す。
+function newsOrphanWarn() {
+  const box = document.getElementById('newsOrphan');
+  if (!box) return;
+  const news = newsItems.filter(n => n.type === 'ニュース' && n.published);
+  if (!news.length) { box.textContent = ''; return; }
+  const latest = news.map(n => n.date).sort().pop();
+  const d = new Date(latest + 'T00:00:00');
+  const p2 = n => String(n).padStart(2, '0');
+  const qs = new Date(d.getFullYear(), d.getMonth() - 3, 1);
+  const qsS = `${qs.getFullYear()}-${p2(qs.getMonth() + 1)}-01`;
+  const lost = news.filter(n => n.date < qsS && !n.yearly);
+  box.innerHTML = lost.length
+    ? `⚠ 3ヶ月のまとめ（${qsS}〜）から外れていて、年次の印もない記事が <b>${lost.length}本</b>あります。` +
+      `このままだとアプリのどこにも出ません。${lost.map(n => n.date).sort().slice(0, 3).join('、')}${lost.length > 3 ? ' …' : ''}`
+    : '';
+}
+
+// 月の選択肢と、いまの印の数を出し直す
+function renderNewsBulk() {
+  const sel = document.getElementById('newsBulkMonth');
+  if (!sel) return;
+  const news = newsItems.filter(n => n.type === 'ニュース');
+  const months = [...new Set(news.map(n => String(n.date).slice(0, 7)))].sort().reverse();
+  const keep = sel.value;
+  sel.innerHTML = '<option value="">すべての月</option>' + months.map(m => {
+      const inM = news.filter(n => String(n.date).slice(0, 7) === m);
+      const mo = inM.filter(n => n.monthly).length, yr = inM.filter(n => n.yearly).length;
+      return `<option value="${m}">${m.replace('-', '年')}月（${inM.length}本　月${mo}／年${yr}）</option>`;
+  }).join('');
+  if (keep) sel.value = keep;
+  newsOrphanWarn();
+}
+
 function toggleNewsFlag(id, key) {
   const n = newsItems.find(x => x.id === id);
   if (!n) return;
   n[key] = !n[key];
   markNewsDirty(true);
   renderNewsEditList();
+  renderNewsBulk();
 }
 function toggleNewsPub(id) {
   const n = newsItems.find(x => x.id === id);

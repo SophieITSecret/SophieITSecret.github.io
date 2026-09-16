@@ -26,7 +26,7 @@ const IS_PROD = (typeof window.__IS_PROD === 'boolean') ? window.__IS_PROD : (fu
 //   画像・音声はブラウザ自身が長くキャッシュするため、差し替えても
 //   古いものが出続ける。URLが変われば確実に取り直されるので、版が上がるたび
 //   ここも一緒に上げる（bump-sw.sh と作業台の「⬆ v」ボタンが書き換える）。
-const ASSET_V = 'v125';
+const ASSET_V = 'v126';
 function av(path) { return path + '?v=' + ASSET_V; }
 
 // ==========================================
@@ -1426,6 +1426,23 @@ function quarterWindow_(latestDate) {
 //   近い層（先週・先々週・1ヶ月前まで）は、その期間の記事をすべて出す。
 //   遠い層（3ヶ月）は「月次重要」の印が付いたものだけに絞る。
 //   ＝「近いものは詳しく、遠いものは絞って」。同じ記事に印を足すだけで上の層ができる。
+// 年のまとめ。3ヶ月の受け持ちから外れた記事の行き先。
+//   ローリング12か月ではなく、年ごとの固定テーブルにする。
+//   「2026年に何があったか」を後から引けることが目的なので、
+//   時が経っても中身が動かないほうがよい。
+//   年次の印は月次と独立。3ヶ月に載せなかった記事でも年に残せるし、
+//   その逆もできる。後から重要度を見直せるようにするため。
+function yearlyByYear() {
+    const years = {};
+    digestArticles().forEach(a => {
+        if (!a.yearly) return;
+        const y = String(a.date).slice(0, 4);
+        (years[y] = years[y] || []).push(a);
+    });
+    // 新しい年から並べる。年の中は新しい記事が上（一覧と同じ向き）。
+    return Object.keys(years).sort().reverse().map(y => ({ year: y, list: years[y] }));
+}
+
 function digestByLayer() {
     const list = digestArticles();
     const empty = { bands: [[], [], []], older: [], labels: [], olderRange: '' };
@@ -1618,6 +1635,31 @@ function showNews(tab) {
                     listHtml += artHtml(a);
                 });
                 listHtml += `</div>`;
+                if (yearlyByYear().length) {
+                    listHtml += `<div class="news-more"><button class="news-more-btn news-more-sep" data-level="10">年のまとめを見る</button></div>`;
+                }
+                listHtml += `<div class="news-more"><button class="news-more-btn" data-level="0">← 最近のニュースに戻る</button></div>`;
+            } else if (newsLevel === 10) {
+                // 年のまとめ。年ごとの固定テーブルで、時が経っても中身は動かない。
+                const years = yearlyByYear();
+                if (!years.length) {
+                    listHtml += `<div class="news-empty">年のまとめはまだありません。</div>`;
+                }
+                years.forEach(y => {
+                    listHtml += bandHead(`${y.year}年のまとめ`, `${y.list.length}件`);
+                    let curMonth = '';
+                    listHtml += `<div class="news-list">`;
+                    y.list.forEach(a => {
+                        const mo = String(a.date).slice(0, 7);
+                        if (mo !== curMonth) {
+                            curMonth = mo;
+                            listHtml += `<div class="news-month">${parseInt(mo.slice(5), 10)}月</div>`;
+                        }
+                        listHtml += artHtml(a);
+                    });
+                    listHtml += `</div>`;
+                });
+                listHtml += `<div class="news-more"><button class="news-more-btn" data-level="9">← 3ヶ月のまとめに戻る</button></div>`;
                 listHtml += `<div class="news-more"><button class="news-more-btn" data-level="0">← 最近のニュースに戻る</button></div>`;
             } else {
                 for (let i = 0; i < L.bands.length; i++) {

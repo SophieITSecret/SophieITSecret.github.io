@@ -354,6 +354,17 @@
           <span>お知らせ一覧（新しい順）</span>
           <button class="dash-refresh" onclick="startNewNews()">＋ 新規</button>
         </div>
+        <div class="news-bulk">
+          <select id="newsBulkMonth" class="exp-select" onchange="renderNewsEditList()"></select>
+          <span class="news-bulk-btns">
+            <button class="nei-flag" onclick="bulkNewsFlag('monthly',true)"  title="選んだ月のニュース全部に月次の印を付ける">月 ＋</button>
+            <button class="nei-flag" onclick="bulkNewsFlag('monthly',false)" title="選んだ月の月次の印を全部外す">月 −</button>
+            <button class="nei-flag" onclick="bulkNewsFlag('yearly',true)"   title="選んだ月のニュース全部に年次の印を付ける">年 ＋</button>
+            <button class="nei-flag" onclick="bulkNewsFlag('yearly',false)"  title="選んだ月の年次の印を全部外す">年 −</button>
+          </span>
+        </div>
+        <div id="newsBulkInfo" class="news-bulk-info"></div>
+        <div id="newsOrphan" class="news-orphan"></div>
         <div id="newsEditList" class="news-edit-list"></div>
       </div>
       <div class="news-form-col">

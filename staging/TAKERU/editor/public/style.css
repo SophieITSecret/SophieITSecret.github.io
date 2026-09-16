@@ -591,3 +591,12 @@ textarea.svg-overlay-input { min-height:120px; font-family:monospace; font-size:
 .pub-warn-note { color: var(--text3); font-size: 0.72rem; }
 .pub-note { font-size: 0.76rem; color: var(--text3); line-height: 1.7; }
 .pub-actions { display: flex; gap: 8px; justify-content: flex-end; align-items: center; }
+
+/* ===== お知らせ：印をまとめて付け外し ===== */
+.news-bulk { display:flex; align-items:center; gap:6px; padding:4px 0 2px; flex-wrap:wrap; }
+.news-bulk #newsBulkMonth { flex:1; min-width:150px; }
+.news-bulk-btns { display:flex; gap:3px; }
+.news-bulk-info { font-size:0.72rem; color:var(--accent2); min-height:1em; padding-bottom:2px; }
+
+.news-orphan { font-size:0.72rem; color:#e57373; line-height:1.7; padding:2px 0 4px; }
+.news-orphan b { color:#ff8a80; }
