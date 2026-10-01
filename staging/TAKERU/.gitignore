@@ -51,3 +51,6 @@ _symbol_test.html
 # 送信用の鍵など（絶対にgitへ上げない）
 secrets.json
 editor/secrets.json
+
+# ニュース自動取り込みの記録（手元のPCだけのもの）
+editor/news-auto.log

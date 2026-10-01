@@ -1793,6 +1793,7 @@ function downloadMembersCsv() {
 let newsItems = [];        // {id,date,type,title,body,published}
 let newsEditId = null;     // 編集中のID（新規はnull）
 let newsDirty = false;
+let newsStamp;             // 読み込んだ時点の news.csv の指紋。保存のとき外で書き換わっていないか確かめる
 
 function openNewsEditor() {
   document.getElementById('newsModal').style.display = 'flex';
@@ -1807,8 +1808,10 @@ async function loadNewsItems() {
     const r = await fetch('/api/news');
     const j = await r.json();
     newsItems = j.items || [];
+    newsStamp = j.stamp;
   } catch (e) {
     newsItems = [];
+    newsStamp = undefined;
     alert('お知らせの読み込みに失敗しました: ' + e.message);
   }
   newsDirty = false;
@@ -1891,6 +1894,19 @@ function applyNewsForm() {
 // ダイジェストをまとめて取り込む。
 //   Cowork君が作った「### YYYY-MM-DD 見出し」形式の本文を貼ると、
 //   1記事1行に分解して一覧に加える。牧村さんの手順は「貼って保存」のまま。
+// 担当Bが土曜の朝に書いたダイジェストを GAS から取ってきて、そのまま取り込む。
+//   ふだんは土曜の昼に news-auto.js が自動でやる。PCが付いていなかった週や、
+//   すぐ見たいときにこのボタンで手で取ってくる。
+async function fetchDigest() {
+  if (newsDirty && !confirm('未保存の変更があります。このまま取り込みを続けますか？')) return;
+  let j;
+  try { j = await (await fetch('/api/news/digest')).json(); }
+  catch (e) { alert('取ってこられませんでした: ' + e.message); return; }
+  if (!j.ok) { alert('取ってこられませんでした: ' + (j.error || '不明')); return; }
+  document.getElementById('nfBody').value = j.text || '';
+  importDigest();
+}
+
 function importDigest() {
   const box = document.getElementById('nfBody');
   const text = box ? box.value : '';
@@ -1902,7 +1918,9 @@ function importDigest() {
     return;
   }
   const today = new Date().toISOString().slice(0, 10);
+  // 取り込み済みの判定は editor/news-lib.js の parseDigest と揃える（日付＋見出し、または原URL）
   const known = new Set(newsItems.map(n => n.date + '\u0001' + n.title));
+  const knownUrl = new Set(newsItems.map(n => n.srcUrl).filter(Boolean));
   const added = [], skipped = [];
   for (const b of blocks) {
     const m = b.match(/^###\s*(\d{4}-\d{2}-\d{2})?\s*(.*)$/m);
@@ -1917,8 +1935,9 @@ function importDigest() {
     let srcUrl = '';
     const um = body.match(/^\s*原URL[:：]\s*(\S+)\s*$/m);
     if (um) { srcUrl = um[1]; body = body.replace(um[0], '').trim(); }
-    if (known.has(date + '\u0001' + title)) { skipped.push(title); continue; }   // 二重取り込み防止
+    if (known.has(date + '\u0001' + title) || (srcUrl && knownUrl.has(srcUrl))) { skipped.push(title); continue; }   // 二重取り込み防止
     known.add(date + '\u0001' + title);
+    if (srcUrl) knownUrl.add(srcUrl);
     added.push({ date, type: 'ニュース', title, body, published: true, monthly: false, yearly: false, srcUrl });
   }
   if (!added.length) { alert('新しい記事はありませんでした（すべて取り込み済み）。'); return; }
@@ -2025,10 +2044,19 @@ async function persistNews() {
   try {
     const r = await fetch('/api/news', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ items: newsItems }),
+      body: JSON.stringify({ items: newsItems, stamp: newsStamp }),
     });
     const j = await r.json();
+    if (j.conflict) {
+      // ここで上書きすると、外で足された記事（土曜の自動取り込みなど）が消える
+      if (confirm(j.error + '\n\nこのまま保存すると、その記事が消えてしまうので保存しませんでした。\n'
+          + '「OK」で最新の内容を読み直します（この画面で直した分は消えます。控えてから押してください）。')) {
+        loadNewsItems();
+      }
+      return;
+    }
     if (!j.ok) { alert('保存に失敗しました: ' + (j.error || '不明')); return; }
+    newsStamp = j.stamp;
     markNewsDirty(false);
     alert('保存しました。' + (j.backup ? '\n（バックアップ: ' + j.backup + '）' : '') + '\n\n本番へ反映するには「🚀 本番公開」を押してください。');
   } catch (e) {

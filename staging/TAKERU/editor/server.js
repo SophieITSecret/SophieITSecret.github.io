@@ -133,44 +133,15 @@ function postCsv(req, res) {
 // ---- お知らせ（news.csv）----
 //   news.csv は TAKERUcard.csv と同じフォルダに置く。
 function newsPath() { return path.join(path.dirname(config.csvPath), 'news.csv'); }
-function parseCsvText(text) {
-  const recs = []; let cur = [], f = '', q = false;
-  for (let i = 0; i < text.length; i++) {
-    const c = text[i];
-    if (c === '"') { if (q && text[i + 1] === '"') { f += '"'; i++; } else q = !q; }
-    else if (c === ',' && !q) { cur.push(f); f = ''; }
-    else if ((c === '\n' || (c === '\r' && text[i + 1] === '\n')) && !q) { if (c === '\r') i++; cur.push(f); recs.push(cur); cur = []; f = ''; }
-    else f += c;
-  }
-  if (f !== '' || cur.length) { cur.push(f); recs.push(cur); }
-  return recs;
-}
-function csvField(s) { s = String(s == null ? '' : s); return /[",\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; }
-function buildNewsCsv(items) {
-  // 1記事1行。月次・年次は「上の層へ持ち上げる印」（3ヶ月表・年次表の絞り込みに使う）
-  // 原URL … 翻訳リンクが将来使えなくなっても読み口を作り直せるよう控えておく（画面には出さない）
-  const lines = [['ID', '日付', '種別', 'タイトル', '本文', '公開', '月次', '年次', '原URL'].join(',')];
-  for (const it of items) {
-    lines.push([it.id, it.date, it.type, it.title, it.body,
-                (it.published ? '1' : ''), (it.monthly ? '1' : ''), (it.yearly ? '1' : ''),
-                (it.srcUrl || '')]
-               .map(csvField).join(','));
-  }
-  return '﻿' + lines.join('\r\n') + '\r\n';
-}
-// GET /api/news — news.csv を配列で返す
+const { parseCsvText, buildNewsCsv, readNews, newsStamp, fetchLatestDigest } = require('./news-lib');
+// GET /api/news — news.csv を配列で返す。stamp は保存時の突き合わせ用（→ postNews）
 function getNews(req, res) {
-  fs.readFile(newsPath(), 'utf8', (err, data) => {
-    if (err) { if (err.code === 'ENOENT') return sendJSON(res, 200, { ok: true, items: [] }); return sendJSON(res, 500, { ok: false, error: err.message }); }
-    const recs = parseCsvText(data.replace(/^﻿/, ''));
-    const items = recs.slice(1).filter(r => (r[0] || '').trim()).map(r => ({
-      id: (r[0] || '').trim(), date: (r[1] || '').trim(), type: (r[2] || '').trim() || 'お知らせ',
-      title: (r[3] || '').trim(), body: (r[4] || ''), published: (r[5] || '').trim() === '1',
-      monthly: (r[6] || '').trim() === '1', yearly: (r[7] || '').trim() === '1',
-      srcUrl: (r[8] || '').trim(),
-    }));
-    sendJSON(res, 200, { ok: true, items });
-  });
+  try { const { items, stamp } = readNews(newsPath()); sendJSON(res, 200, { ok: true, items, stamp }); }
+  catch (e) { sendJSON(res, 500, { ok: false, error: e.message }); }
+}
+// GET /api/news/digest — 担当Bが書いた最新のダイジェストを GAS から取ってくる
+async function getNewsDigest(req, res) {
+  sendJSON(res, 200, await fetchLatestDigest());
 }
 // ============================================================
 // 原稿（下書き .md）
@@ -436,9 +407,15 @@ function postNews(req, res) {
   req.on('data', c => chunks.push(c));
   req.on('end', () => {
     try {
-      const { items } = JSON.parse(Buffer.concat(chunks).toString('utf8'));
+      const { items, stamp } = JSON.parse(Buffer.concat(chunks).toString('utf8'));
       if (!Array.isArray(items)) return sendJSON(res, 400, { ok: false, error: 'items配列が必要です' });
       const p = newsPath();
+      // 開いている間に news.csv が外で書き換わっていたら（土曜の自動取り込みなど）、
+      // 手元の古い一覧で上書きすると足された記事が消える。止めて読み直してもらう。
+      if (stamp !== undefined && stamp !== newsStamp(p)) {
+        return sendJSON(res, 409, { ok: false, conflict: true,
+          error: '作業台で開いている間に、ニュースが外で更新されました（自動取り込みなど）。' });
+      }
       let backup = null;
       if (fs.existsSync(p)) {
         backup = `news_backup_${timestamp()}.csv`;
@@ -446,7 +423,7 @@ function postNews(req, res) {
         pruneBackups(path.dirname(p), RE_CSV_BACKUP);
       }
       fs.writeFileSync(p, buildNewsCsv(items), 'utf8');
-      sendJSON(res, 200, { ok: true, backup });
+      sendJSON(res, 200, { ok: true, backup, stamp: newsStamp(p) });
     } catch (e) { sendJSON(res, 500, { ok: false, error: e.message }); }
   });
 }
@@ -1126,6 +1103,7 @@ const server = http.createServer((req, res) => {
   if (pathname === '/api/draft'  && method === 'POST') return postDraft(req, res);
   if (pathname === '/api/news' && method === 'GET') return getNews(req, res);
   if (pathname === '/api/news' && method === 'POST') return postNews(req, res);
+  if (pathname === '/api/news/digest' && method === 'GET') return getNewsDigest(req, res);
   if (pathname === '/api/links' && method === 'GET') return getLinks(req, res);
   if (pathname === '/api/sw-version' && method === 'GET') return getSwVersion(req, res);
   if (pathname === '/api/sw-version' && method === 'POST') return bumpSwVersion(req, res);
