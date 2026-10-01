@@ -1,0 +1,19 @@
+# TAKERU
+
+このフォルダは学習アプリ TAKERU（`takeru.ms-forum.com`）と、その作業台（`editor/`）です。
+
+## 担当の境界
+
+支払・受領確認システムは別担当（`D:\ms-payment`）。pay.サブドメインと `D:\ms-payment` は触らない。
+
+引き継ぎメモは `D:\ms-payment\引き継ぎ_TAKERUから.md` に置いてあります（2026-09-23作成）。
+作業台のUI・Xserverの環境・機密データの扱いを渡してあるので、
+こちら側の仕様を変えたときは、必要に応じて先方へ伝えてください。
+
+会員システム（シクミネット代替・`member.ms-forum.com` と `office.ms-forum.com`）も別担当（`D:\ms-member`）。
+そちらに `CLAUDE.md` があります。2026-09-26にこのフォルダから切り離しました。
+
+ホームページ本体（`ms-forum.com`・いまはWordPress）も別担当（`D:\ms-forum-hp`）。
+WordPressをやめてHTMLに置き換える構想もそちらで扱う。2026-09-27に切り離しました。
+TAKERU本番（`public_html/takeru/`）はホームページと同じ置き場の中にあるので、
+こちらの置き方を変えるときは先方の `CLAUDE.md` も見直してください。

@@ -53,6 +53,44 @@ function timestamp() {
 }
 
 // ============================================================
+// 控えの世代管理
+//   保存のたびに控えを作るので、放っておくと増え続ける。
+//   同じものの控えは新しい30世代だけ残し、古いものから捨てる。
+//   「同じもの」の見分けはファイル名の頭（カードCSVなら1系列、
+//   原稿・画像・音声なら1本ごと）。名前に入っている日時で新旧を決める。
+// ============================================================
+const BACKUP_KEEP = 30;
+
+function pruneBackups(dir, re, keep = BACKUP_KEEP) {
+  try {
+    if (!fs.existsSync(dir)) return 0;
+    const groups = new Map();
+    for (const f of fs.readdirSync(dir)) {
+      const m = re.exec(f);
+      if (!m) continue;                                  // 控え以外は触らない
+      const key = m[1];
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key).push(f);
+    }
+    let gone = 0;
+    for (const files of groups.values()) {
+      if (files.length <= keep) continue;
+      files.sort();                                      // 名前の日時が昇順になる
+      for (const f of files.slice(0, files.length - keep)) {
+        try { fs.unlinkSync(path.join(dir, f)); gone++; } catch {}
+      }
+    }
+    return gone;
+  } catch { return 0; }                                  // 掃除に失敗しても保存は妨げない
+}
+
+// 控えの名前の形。頭を「同じもの」の鍵として取り出す。
+const RE_CSV_BACKUP   = /^(.+)_backup_\d{8}_\d{6}\.csv$/;
+const RE_MD_BACKUP    = /^(.+)_backup_\d{8}_\d{6}\.md$/;
+const RE_STAMP_BACKUP = /^(.+)_\d{8}_\d{6}\.[A-Za-z0-9]+$/;
+
+
+// ============================================================
 // API ハンドラ
 // ============================================================
 
@@ -79,6 +117,7 @@ function postCsv(req, res) {
         const base = path.basename(config.csvPath, '.csv');
         backupName = `${base}_backup_${timestamp()}.csv`;
         fs.copyFileSync(config.csvPath, path.join(dir, backupName));
+        pruneBackups(dir, RE_CSV_BACKUP);
       }
       fs.writeFileSync(config.csvPath, text, 'utf8');
       // 本体画面で直した本文を、既にある原稿mdにも書き戻す
@@ -235,6 +274,7 @@ function syncDraftsFromCsv(csvText) {
       fs.mkdirSync(DRAFT_BACKUP_DIR, { recursive: true });
       fs.copyFileSync(f.full, path.join(DRAFT_BACKUP_DIR,
         path.basename(f.full, '.md') + '_backup_' + timestamp() + '.md'));
+      pruneBackups(DRAFT_BACKUP_DIR, RE_MD_BACKUP);
       fs.writeFileSync(f.full, next, 'utf8');
       done.push({ name: f.rel, cards: rows.length });
     } catch (e) { /* 1本失敗しても他は続ける */ }
@@ -291,6 +331,7 @@ function postDraft(req, res) {
         const base = path.basename(full, '.md');
         backupName = base + '_backup_' + timestamp() + '.md';
         fs.copyFileSync(full, path.join(DRAFT_BACKUP_DIR, backupName));
+        pruneBackups(DRAFT_BACKUP_DIR, RE_MD_BACKUP);
       }
       fs.mkdirSync(path.dirname(full), { recursive: true });
       fs.writeFileSync(full, text, 'utf8');
@@ -399,7 +440,11 @@ function postNews(req, res) {
       if (!Array.isArray(items)) return sendJSON(res, 400, { ok: false, error: 'items配列が必要です' });
       const p = newsPath();
       let backup = null;
-      if (fs.existsSync(p)) { backup = `news_backup_${timestamp()}.csv`; fs.copyFileSync(p, path.join(path.dirname(p), backup)); }
+      if (fs.existsSync(p)) {
+        backup = `news_backup_${timestamp()}.csv`;
+        fs.copyFileSync(p, path.join(path.dirname(p), backup));
+        pruneBackups(path.dirname(p), RE_CSV_BACKUP);
+      }
       fs.writeFileSync(p, buildNewsCsv(items), 'utf8');
       sendJSON(res, 200, { ok: true, backup });
     } catch (e) { sendJSON(res, 500, { ok: false, error: e.message }); }
@@ -460,6 +505,7 @@ function postImageSave(req, res) {
           if (!fs.existsSync(IMG_BACKUP_DIR)) fs.mkdirSync(IMG_BACKUP_DIR, { recursive: true });
           backupName = `${safeId}_${timestamp()}${path.extname(f)}`;
           fs.copyFileSync(path.join(config.imagesDir, f), path.join(IMG_BACKUP_DIR, backupName));
+          pruneBackups(IMG_BACKUP_DIR, RE_STAMP_BACKUP);
           if (ext !== '.jpg') fs.unlinkSync(path.join(config.imagesDir, f));
         }
       }
@@ -970,6 +1016,7 @@ function postVoiceGenerate(req, res) {
       // 既存MP3 → バックアップ
       if (fs.existsSync(mp3Path)) {
         fs.copyFileSync(mp3Path, path.join(backupDir, `${code}_${timestamp()}.mp3`));
+        pruneBackups(backupDir, RE_STAMP_BACKUP);
       }
 
       // テキストを「読み上げ」「無音(【間】)」のセグメント列に。
