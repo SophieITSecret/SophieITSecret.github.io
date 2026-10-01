@@ -2,7 +2,7 @@
 // TAKERUニュース 土曜の自動取り込み
 //   担当B（Coworkのルーチン）が土曜9時台にGASへ書いたダイジェストを取ってきて、
 //   news.csv に足し、開発版（GitHub）と本番（Xserver）へ出す。
-//   Windowsのタスクスケジューラから土曜の昼に起動する（editor/news-auto-install.ps1）。
+//   Windowsのタスクスケジューラから土曜の10時に起動する（editor/news-auto-install.ps1）。
 //
 //   ・取り込み済みの記事は飛ばすので、何度動かしても二重には入らない。
 //     新しい記事が無ければ何もせずに終わる。
