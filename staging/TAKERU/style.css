@@ -1949,3 +1949,37 @@ body.market-view .sub-menu-wrap { flex: 1; min-height: 0; padding-top: 10px; pad
 body.market-view .mkt-wrap     { flex: 1; min-height: 0; padding-bottom: 0; }
 body.market-view .mkt-chart    { flex: 1; height: auto; min-height: 170px; }
 body.market-view .news-source-foot { padding: 6px 12px 8px; }
+
+/* 自由研究の専用リンク（?study=…）で来たとき */
+/* スタートの画面に出す行き先 */
+.entry-study {
+    margin-top: 16px;
+    font-size: 0.9rem;
+    color: var(--text);
+    text-align: center;
+    line-height: 1.5;
+    padding: 0 16px;
+}
+/* 研究のカード一覧の最後に出す、ほかの講座への入口 */
+.study-invite {
+    margin: 22px 12px 8px;
+    padding: 14px 16px;
+    border: 1px dashed var(--border);
+    border-radius: 10px;
+    font-size: 0.85rem;
+    line-height: 1.6;
+    color: var(--text2);
+    text-align: center;
+}
+.study-invite-top {
+    display: block;
+    margin: 10px auto 0;
+    padding: 8px 18px;
+    border-radius: 999px;
+    border: 1px solid rgba(90,160,230,0.55);
+    background: rgba(90,160,230,0.12);
+    color: var(--text);
+    font-size: 0.9rem;
+    font-weight: bold;
+    cursor: pointer;
+}

@@ -1,6 +1,6 @@
 // ★デプロイ(push)のたびに SW_VERSION と CACHE_NAME の番号を一緒に上げる
-const SW_VERSION = 'v127';
-const CACHE_NAME = 'takeru-v127';
+const SW_VERSION = 'v128';
+const CACHE_NAME = 'takeru-v128';
 
 const PRE_CACHE = [
     './',
@@ -84,8 +84,11 @@ self.addEventListener('fetch', e => {
         return;
     }
 
-    // その他はキャッシュ優先
+    // その他はキャッシュ優先。
+    // ページを開くとき（navigate）は住所の ?study=… などを無視して照合する。
+    // そうしないと、専用リンクで開いた時に電波が無いとキャッシュのページが見つからない。
     e.respondWith(
-        caches.match(e.request).then(cached => cached || fetch(e.request))
+        caches.match(e.request, e.request.mode === 'navigate' ? { ignoreSearch: true } : undefined)
+            .then(cached => cached || fetch(e.request))
     );
 });

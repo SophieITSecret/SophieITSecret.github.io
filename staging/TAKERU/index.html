@@ -223,8 +223,12 @@
                 });
 
                 // 新SWが制御を引き継いだらリロード（ループ防止ガード付き）
+                // 初めての端末（それまでSWが無かった）では読み直さない。中身は同じで、
+                // スタート画面が一瞬消えるだけになるため。更新のときだけ読み直す。
+                const hadController = !!navigator.serviceWorker.controller;
                 let refreshing = false;
                 navigator.serviceWorker.addEventListener('controllerchange', () => {
+                    if (!hadController) return;
                     if (refreshing) return;
                     refreshing = true;
                     location.reload();

@@ -26,7 +26,7 @@ const IS_PROD = (typeof window.__IS_PROD === 'boolean') ? window.__IS_PROD : (fu
 //   画像・音声はブラウザ自身が長くキャッシュするため、差し替えても
 //   古いものが出続ける。URLが変われば確実に取り直されるので、版が上がるたび
 //   ここも一緒に上げる（bump-sw.sh と作業台の「⬆ v」ボタンが書き換える）。
-const ASSET_V = 'v127';
+const ASSET_V = 'v128';
 function av(path) { return path + '?v=' + ASSET_V; }
 
 // ==========================================
@@ -157,13 +157,35 @@ window.addEventListener('DOMContentLoaded', async () => {
     loadSavedSettings();
     setupPullToRefresh();
 
+    // 専用リンクで来たときは、スタートの画面で行き先を見せ、押したらその研究へ直行する
+    const studyUnit = findStudyUnit(studyLink);
+    if (studyUnit) {
+        logAccess('study_link', studyLink);     // どの専用リンクから何回来たかを数える
+        const note = document.createElement('div');
+        note.className = 'entry-study';
+        note.textContent = '自由研究「' + studyUnit + '」を開きます';
+        document.getElementById('btn-enter').before(note);
+    }
+
     document.getElementById('btn-enter').onclick = () => {
         // iOS音声解除：ユーザージェスチャー内で空再生してAudioContextをアンロック
         voice.src = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=';
         voice.play().then(() => { voice.pause(); voice.src = ''; }).catch(() => { voice.src = ''; });
         entryScreen.style.display = 'none';
         mainUI.style.display = 'flex';
-        showTopMenu();
+        try { sessionStorage.removeItem(STUDY_KEY); } catch (e) { /* noop */ }   // 行き先は使い切り
+        if (studyUnit) {
+            // ふつうにトップ→自由研究→著者から、と押して入ったのと同じ状態にそろえる。
+            // ずれると ▲ で戻れなくなる（freeunit → 自由研究の一覧 → トップ）
+            showTopMenu();
+            freeTab = 'author';
+            freeTheme = '';
+            btnSettings.style.display = 'none';
+            studyEntry = studyUnit;
+            showFreeUnit(studyUnit);
+        } else {
+            showTopMenu();
+        }
     };
 });
 
@@ -517,6 +539,37 @@ const FREE_SUBJECT = '自由研究';
 let freeTab = 'author';        // author=著者から／theme=テーマから
 let freeTheme = '';            // テーマ絞り込み中のテーマ名
 
+// 自由研究の専用リンク（例 https://takeru.ms-forum.com/?study=MSENSHI）。
+//   研究をQRやSNSで送り、トップを通らずにその研究のカード一覧を開かせる。
+//   研究はカードのコードの頭（MSENSHI01〜 の MSENSHI）で指す。題を変えても住所が変わらない。
+//   読んだら住所から外す。そのままだと、引っ張って再読み込みしたときにまた研究へ飛ぶため。
+//   ただし「スタート」を押すまでは sessionStorage に控えておく。読み直しが挟まっても
+//   行き先を失わないように（初めての端末では sw.js が入った直後に読み直しが起きうる）。
+let studyLink = '';            // 住所で指された研究のコードの頭
+let studyEntry = '';           // 専用リンクから入った研究（講座名）。案内の1行を出すのに使う
+const STUDY_KEY = 'takeru.studyLink';
+try {
+    const s = new URLSearchParams(location.search).get('study') || '';
+    if (/^[A-Za-z]{1,16}$/.test(s)) {
+        studyLink = s.toUpperCase();
+        try { sessionStorage.setItem(STUDY_KEY, studyLink); } catch (e) { /* 控えられなくても進める */ }
+    } else {
+        try { studyLink = sessionStorage.getItem(STUDY_KEY) || ''; } catch (e) { /* noop */ }
+    }
+    if (s) {
+        const u = new URL(location.href);
+        u.searchParams.delete('study');
+        history.replaceState(null, '', u.pathname + u.search + u.hash);
+    }
+} catch (e) { /* 住所が読めなくても普通にトップから始める */ }
+// コードの頭から研究（講座名）を探す。見えるカードが無ければ空（トップから始める）
+function findStudyUnit(prefix) {
+    if (!prefix) return '';
+    const re = new RegExp('^' + prefix + '\\d+$');
+    const c = visibleOf(freeCards()).find(d => re.test(d.id));
+    return c ? c.genre : '';
+}
+
 function freeCards() {
     return cardData.filter(d => d.subject === FREE_SUBJECT);
 }
@@ -689,10 +742,16 @@ function showFreeUnit(unit) {
             html += `<div class="menu-item" data-idx="${i}"><span class="item-dot">●</span> ${escHtml(card.title)}</div>`;
         });
     }
+    // 専用リンクで直接来た人に、TAKERUのほかの講座への入口を1行だけ見せる
+    if (studyEntry === unit) {
+        html += `<div class="study-invite">TAKERUには、ほかにも「軍事と戦略」「国家と法律」などの講座があります。
+                   <button class="study-invite-top">TAKERUのトップへ</button></div>`;
+    }
     html += '</div>';
     menuContent.innerHTML = html;
 
     menuContent.onclick = (e) => {
+        if (e.target.closest('.study-invite-top')) { showTopMenu(); return; }
         // テーマ名のパネルを押したら第1話から始める
         if (e.target.closest('.theme-start')) { startFreeUnitFromTop(unit); return; }
         const secItem = e.target.closest('.menu-item[data-section]');
