@@ -143,6 +143,85 @@ function getNews(req, res) {
 async function getNewsDigest(req, res) {
   sendJSON(res, 200, await fetchLatestDigest());
 }
+
+// ============================================================
+// 宣伝用の専用リンクとQRコード（「🔳 QR」）
+//   自由研究は ?study=<カードのコードの頭> で直接開ける（アプリ側 app.js の studyLink）。
+//   QRの絵は Python（qrcode・Pillow）で作り、Dropbox のマーケティング\QR に置く。
+// ============================================================
+const PROD_URL = 'https://takeru.ms-forum.com/';
+function qrDir() {
+  return config.qrDir || path.join(path.dirname(config.draftsDir || config.csvPath), 'マーケティング', 'QR');
+}
+function qrFileBase(prefix, title) {
+  const safe = String(title).replace(/[\\/:*?"<>|]/g, '').slice(0, 60);
+  return `QR_${prefix || 'TOP'}_${safe}`;
+}
+// 自由研究の研究（講座）ごとに、コードの頭と専用リンクを出す
+function studyLinks() {
+  const recs = parseCsvText(fs.readFileSync(config.csvPath, 'utf8').replace(/^﻿/, '')).slice(1);
+  const units = new Map();
+  for (const r of recs) {
+    if ((r[5] || '').trim() !== '自由研究') continue;
+    const title = (r[1] || '').trim(), code = (r[0] || '').trim();
+    if (!title || !code) continue;
+    if (!units.has(title)) units.set(title, { title, codes: [], published: 0 });
+    const u = units.get(title);
+    u.codes.push(code);
+    if ((r[6] || '').trim() === '1') u.published++;
+  }
+  const out = [{ title: 'TAKERU（トップ）', prefix: '', url: PROD_URL, published: 1, cards: 0, top: true }];
+  for (const u of units.values()) {
+    const heads = new Set(u.codes.map(c => (/^([A-Za-z]+)\d+$/.exec(c) || [])[1] || ''));
+    const prefix = heads.size === 1 ? [...heads][0].toUpperCase() : '';
+    out.push({ title: u.title, prefix, url: prefix ? `${PROD_URL}?study=${prefix}` : '',
+               published: u.published, cards: u.codes.length,
+               problem: prefix ? '' : 'カードのコードの頭がそろっていないので、専用リンクを作れません' });
+  }
+  for (const o of out) {
+    const f = path.join(qrDir(), qrFileBase(o.prefix, o.top ? 'TAKERU' : o.title) + '（説明つき）.png');
+    o.qrExists = fs.existsSync(f);
+  }
+  return out;
+}
+// GET /api/study-links
+function getStudyLinks(req, res) {
+  try { sendJSON(res, 200, { ok: true, dir: qrDir(), items: studyLinks() }); }
+  catch (e) { sendJSON(res, 500, { ok: false, error: e.message }); }
+}
+// POST /api/study-qr { prefix, top } — QRを作って保存し、説明つきの絵を返す
+function postStudyQr(req, res) {
+  let chunks = [];
+  req.on('data', c => chunks.push(c));
+  req.on('end', async () => {
+    try {
+      const { prefix = '', top = false } = JSON.parse(Buffer.concat(chunks).toString('utf8') || '{}');
+      const item = studyLinks().find(o => top ? o.top : (!o.top && o.prefix === prefix));
+      if (!item || !item.url) return sendJSON(res, 400, { ok: false, error: 'その研究が見つかりません' });
+      const base = qrFileBase(item.prefix, item.top ? 'TAKERU' : item.title);
+      const line1 = item.top ? 'TAKERU' : 'TAKERU 自由研究';
+      const line2 = item.top ? '軍事と戦略を、基礎から学ぶスマホアプリ' : item.title;
+      const out = await spawnP('python', [path.join(__dirname, 'make_qr.py'), item.url, qrDir(), base, line1, line2],
+                               { env: { ...process.env, PYTHONIOENCODING: 'utf-8' } });
+      const r = JSON.parse(out.trim().split('\n').pop());
+      if (!r.ok) return sendJSON(res, 200, r);
+      const png = fs.readFileSync(r.labeled).toString('base64');
+      sendJSON(res, 200, { ok: true, url: item.url, labeled: r.labeled, plain: r.plain, image: 'data:image/png;base64,' + png });
+    } catch (e) { sendJSON(res, 200, { ok: false, error: 'QRを作れませんでした: ' + e.message }); }
+  });
+}
+// GET /api/study-qr-image?prefix=…&top=1 — すでにあるQR（説明つき）を見せる
+function getStudyQrImage(req, res, q) {
+  try {
+    const top = q.get('top') === '1';
+    const item = studyLinks().find(o => top ? o.top : (!o.top && o.prefix === (q.get('prefix') || '')));
+    if (!item) return sendJSON(res, 404, { ok: false, error: '見つかりません' });
+    const f = path.join(qrDir(), qrFileBase(item.prefix, item.top ? 'TAKERU' : item.title) + '（説明つき）.png');
+    if (!fs.existsSync(f)) return sendJSON(res, 404, { ok: false, error: 'まだ作っていません' });
+    res.writeHead(200, { 'Content-Type': 'image/png', 'Cache-Control': 'no-store' });
+    res.end(fs.readFileSync(f));
+  } catch (e) { sendJSON(res, 500, { ok: false, error: e.message }); }
+}
 // ============================================================
 // 原稿（下書き .md）
 //   チャットとの往復で育てるテーマ単位の原稿を、作業台から直接編集する。
@@ -1104,6 +1183,9 @@ const server = http.createServer((req, res) => {
   if (pathname === '/api/news' && method === 'GET') return getNews(req, res);
   if (pathname === '/api/news' && method === 'POST') return postNews(req, res);
   if (pathname === '/api/news/digest' && method === 'GET') return getNewsDigest(req, res);
+  if (pathname === '/api/study-links' && method === 'GET') return getStudyLinks(req, res);
+  if (pathname === '/api/study-qr' && method === 'POST') return postStudyQr(req, res);
+  if (pathname === '/api/study-qr-image' && method === 'GET') return getStudyQrImage(req, res, parsed.searchParams);
   if (pathname === '/api/links' && method === 'GET') return getLinks(req, res);
   if (pathname === '/api/sw-version' && method === 'GET') return getSwVersion(req, res);
   if (pathname === '/api/sw-version' && method === 'POST') return bumpSwVersion(req, res);

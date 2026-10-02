@@ -3403,3 +3403,69 @@ function reorderByDraft(){
   });
   idx.forEach((pos,k)=>{ cardData[pos]=group[k]; });
 }
+
+
+// ==================== 宣伝用の専用リンクとQRコード ====================
+//   自由研究ごとに ?study=<コードの頭> の住所と、QRコードの絵（Dropbox のマーケティング\QR）を作る。
+//   本番のアプリが住所を読んで、その研究へ直行させる（TAKERU本体 app.js の studyLink）。
+let qrItems = [], qrSel = -1;
+function openQr() {
+  document.getElementById('qrModal').style.display = 'flex';
+  loadQrList();
+}
+function closeQr() { document.getElementById('qrModal').style.display = 'none'; }
+async function loadQrList() {
+  const list = document.getElementById('qrList');
+  list.innerHTML = '<p class="qr-empty">読み込み中…</p>';
+  try {
+    const j = await (await fetch('/api/study-links')).json();
+    if (!j.ok) throw new Error(j.error || '不明');
+    qrItems = j.items;
+    document.getElementById('qrDir').textContent = '保存先：' + j.dir;
+    renderQrList();
+    if (qrSel >= 0) selectQr(qrSel);
+  } catch (e) { list.innerHTML = '<p class="qr-empty">読み込めませんでした：' + esc(e.message) + '</p>'; }
+}
+function renderQrList() {
+  document.getElementById('qrList').innerHTML = qrItems.map((o, i) => `
+    <button class="qr-item ${i === qrSel ? 'active' : ''}" onclick="selectQr(${i})">
+      <span class="qr-item-title">${esc(o.title)}</span>
+      <span class="qr-item-sub">${o.top ? 'アプリのトップ' : (o.published ? o.published + '枚公開' : '未公開')}${o.qrExists ? '・QRあり' : ''}</span>
+    </button>`).join('');
+}
+function selectQr(i) {
+  qrSel = i; renderQrList();
+  const o = qrItems[i], box = document.getElementById('qrDetail');
+  if (o.problem) { box.innerHTML = `<h3>${esc(o.title)}</h3><p class="qr-warn">${esc(o.problem)}</p>`; return; }
+  const warn = (!o.top && !o.published) ? '<p class="qr-warn">この研究はまだ公開していません。本番で開くと、トップから始まります。</p>' : '';
+  const q = o.top ? 'top=1' : 'prefix=' + encodeURIComponent(o.prefix);
+  box.innerHTML = `
+    <h3>${esc(o.title)}</h3>
+    ${warn}
+    <div class="qr-url"><code id="qrUrl">${esc(o.url)}</code>
+      <button class="dash-refresh" onclick="copyQrUrl()">📋 住所をコピー</button></div>
+    <div class="qr-actions">
+      <button class="btn-load" onclick="makeQr(${i})">${o.qrExists ? '🔁 QRを作り直す' : '🔳 QRを作る'}</button>
+      <a class="dash-refresh" href="${esc(o.url)}" target="_blank" rel="noopener">↗ 本番で開いてみる</a>
+    </div>
+    <div id="qrPreview" class="qr-preview">${o.qrExists ? `<img src="/api/study-qr-image?${q}&t=${Date.now()}" alt="QRコード">` : '<p class="qr-empty">まだQRを作っていません。</p>'}</div>
+    <p class="qr-note" id="qrFiles"></p>`;
+}
+async function copyQrUrl() {
+  const t = document.getElementById('qrUrl').textContent;
+  try { await navigator.clipboard.writeText(t); alert('住所をコピーしました。\n' + t); }
+  catch (e) { prompt('コピーしてください', t); }
+}
+async function makeQr(i) {
+  const o = qrItems[i], pv = document.getElementById('qrPreview');
+  pv.innerHTML = '<p class="qr-empty">作っています…</p>';
+  try {
+    const r = await fetch('/api/study-qr', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(o.top ? { top: true } : { prefix: o.prefix }) });
+    const j = await r.json();
+    if (!j.ok) throw new Error(j.error || '不明');
+    pv.innerHTML = `<img src="${j.image}" alt="QRコード">`;
+    document.getElementById('qrFiles').textContent = '保存しました：' + j.labeled + '（QRだけの版も同じフォルダ）';
+    o.qrExists = true; renderQrList();
+  } catch (e) { pv.innerHTML = '<p class="qr-warn">作れませんでした：' + esc(e.message) + '</p>'; }
+}

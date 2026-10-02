@@ -14,6 +14,7 @@
   <button class="btn-load" id="btnAccess" onclick="openCardRanking()" disabled>👁 閲覧状況</button>
   <button class="btn-load" id="btnMembers" onclick="openMembers()" disabled>👥 会員</button>
   <button class="btn-load" id="btnNews" onclick="openNewsEditor()">📰 お知らせ</button>
+  <button class="btn-load" onclick="openQr()" title="自由研究などを直接開く専用リンクとQRコードを作る">🔳 QR</button>
   <button class="btn-load" onclick="openMemo()">📝 メモ</button>
   <button class="btn-load" id="btnDraft" onclick="openDraft()" disabled>📝 原稿</button>
   <button class="btn-load" id="btnImport" onclick="openImport()" disabled>📥 一括取り込み</button>
@@ -551,6 +552,22 @@
     </div>
     <div id="membersBody" class="members-body"></div>
     <p class="mem-note">※これは個人情報（メールアドレス）です。取り扱いに注意してください。本番の logs/members.csv をSSHで取得して表示しています（外部には非公開）。</p>
+  </div>
+</div>
+
+<!-- 宣伝用の専用リンクとQRコード -->
+<div id="qrModal" class="modal-overlay">
+  <div class="modal-box qr-modal-box">
+    <div class="modal-head">
+      <h2>🔳 専用リンクとQRコード</h2>
+      <button class="btn-cancel" onclick="closeQr()">✕ 閉じる</button>
+    </div>
+    <p class="qr-note">研究を選ぶと、その研究を直接開く住所とQRコードが出ます。QRを読み取った人は、トップを通らずにその研究のカード一覧へ行けます（TOP・▲で普通に戻れます）。</p>
+    <div class="qr-wrap">
+      <div id="qrList" class="qr-list"></div>
+      <div id="qrDetail" class="qr-detail"><p class="qr-empty">左から選んでください。</p></div>
+    </div>
+    <p class="qr-note" id="qrDir"></p>
   </div>
 </div>
 

@@ -600,3 +600,20 @@ textarea.svg-overlay-input { min-height:120px; font-family:monospace; font-size:
 
 .news-orphan { font-size:0.72rem; color:#e57373; line-height:1.7; padding:2px 0 4px; }
 .news-orphan b { color:#ff8a80; }
+
+/* 🔳 専用リンクとQRコード */
+.qr-modal-box { width: min(980px, 94vw); max-height: 90vh; overflow: auto; }
+.qr-note { font-size: 12px; color: #9fb0c4; margin: 6px 0; line-height: 1.6; }
+.qr-wrap { display: grid; grid-template-columns: 300px 1fr; gap: 16px; margin-top: 8px; }
+.qr-list { display: flex; flex-direction: column; gap: 6px; }
+.qr-item { text-align: left; padding: 8px 10px; border-radius: 6px; border: 1px solid #2c3e55; background: #18263a; color: #dde3f0; cursor: pointer; display: flex; flex-direction: column; gap: 2px; }
+.qr-item.active { border-color: #ff9f40; background: #2a2418; }
+.qr-item-title { font-weight: bold; font-size: 13px; }
+.qr-item-sub { font-size: 11px; color: #9fb0c4; }
+.qr-detail h3 { margin: 0 0 8px; font-size: 15px; }
+.qr-url { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin: 8px 0; }
+.qr-url code { background: #0f1824; padding: 4px 8px; border-radius: 4px; user-select: all; }
+.qr-actions { display: flex; gap: 8px; align-items: center; margin: 8px 0; }
+.qr-preview img { max-width: 320px; width: 100%; background: #fff; border-radius: 6px; }
+.qr-empty { color: #9fb0c4; font-size: 13px; }
+.qr-warn { color: #ffb74d; font-size: 13px; }
