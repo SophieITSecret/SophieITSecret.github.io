@@ -210,13 +210,22 @@ function postStudyQr(req, res) {
     } catch (e) { sendJSON(res, 200, { ok: false, error: 'QRを作れませんでした: ' + e.message }); }
   });
 }
-// GET /api/study-qr-image?prefix=…&top=1 — すでにあるQR（説明つき）を見せる
+// POST /api/open-qr-dir — 保存先のフォルダをエクスプローラーで開く
+function postOpenQrDir(req, res) {
+  try {
+    fs.mkdirSync(qrDir(), { recursive: true });
+    spawn('explorer.exe', [qrDir()], { detached: true, stdio: 'ignore' }).unref();
+    sendJSON(res, 200, { ok: true });
+  } catch (e) { sendJSON(res, 200, { ok: false, error: e.message }); }
+}
+// GET /api/study-qr-image?prefix=…&top=1&kind=plain — すでにあるQRを見せる（kind=plain でQRだけ）
 function getStudyQrImage(req, res, q) {
   try {
     const top = q.get('top') === '1';
     const item = studyLinks().find(o => top ? o.top : (!o.top && o.prefix === (q.get('prefix') || '')));
     if (!item) return sendJSON(res, 404, { ok: false, error: '見つかりません' });
-    const f = path.join(qrDir(), qrFileBase(item.prefix, item.top ? 'TAKERU' : item.title) + '（説明つき）.png');
+    const kind = q.get('kind') === 'plain' ? '（QRだけ）' : '（説明つき）';
+    const f = path.join(qrDir(), qrFileBase(item.prefix, item.top ? 'TAKERU' : item.title) + kind + '.png');
     if (!fs.existsSync(f)) return sendJSON(res, 404, { ok: false, error: 'まだ作っていません' });
     res.writeHead(200, { 'Content-Type': 'image/png', 'Cache-Control': 'no-store' });
     res.end(fs.readFileSync(f));
@@ -1186,6 +1195,7 @@ const server = http.createServer((req, res) => {
   if (pathname === '/api/study-links' && method === 'GET') return getStudyLinks(req, res);
   if (pathname === '/api/study-qr' && method === 'POST') return postStudyQr(req, res);
   if (pathname === '/api/study-qr-image' && method === 'GET') return getStudyQrImage(req, res, parsed.searchParams);
+  if (pathname === '/api/open-qr-dir' && method === 'POST') return postOpenQrDir(req, res);
   if (pathname === '/api/links' && method === 'GET') return getLinks(req, res);
   if (pathname === '/api/sw-version' && method === 'GET') return getSwVersion(req, res);
   if (pathname === '/api/sw-version' && method === 'POST') return bumpSwVersion(req, res);

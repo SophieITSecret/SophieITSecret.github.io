@@ -3448,8 +3448,9 @@ function selectQr(i) {
       <button class="btn-load" onclick="makeQr(${i})">${o.qrExists ? '🔁 QRを作り直す' : '🔳 QRを作る'}</button>
       <a class="dash-refresh" href="${esc(o.url)}" target="_blank" rel="noopener">↗ 本番で開いてみる</a>
     </div>
-    <div id="qrPreview" class="qr-preview">${o.qrExists ? `<img src="/api/study-qr-image?${q}&t=${Date.now()}" alt="QRコード">` : '<p class="qr-empty">まだQRを作っていません。</p>'}</div>
-    <p class="qr-note" id="qrFiles"></p>`;
+    <div id="qrPreview" class="qr-preview">${o.qrExists ? qrPair(q) : '<p class="qr-empty">まだQRを作っていません。</p>'}</div>
+    <p class="qr-note" id="qrFiles">${o.qrExists ? '保存してあります。チラシやSNSには、保存先のファイルをそのまま使ってください。' : ''}</p>
+    <button class="dash-refresh" onclick="openQrDir()">📂 保存先のフォルダを開く</button>`;
 }
 async function copyQrUrl() {
   const t = document.getElementById('qrUrl').textContent;
@@ -3464,8 +3465,21 @@ async function makeQr(i) {
       body: JSON.stringify(o.top ? { top: true } : { prefix: o.prefix }) });
     const j = await r.json();
     if (!j.ok) throw new Error(j.error || '不明');
-    pv.innerHTML = `<img src="${j.image}" alt="QRコード">`;
-    document.getElementById('qrFiles').textContent = '保存しました：' + j.labeled + '（QRだけの版も同じフォルダ）';
+    pv.innerHTML = qrPair(o.top ? 'top=1' : 'prefix=' + encodeURIComponent(o.prefix));
+    document.getElementById('qrFiles').textContent = '保存しました（2枚）。チラシやSNSには、保存先のファイルをそのまま使ってください。';
     o.qrExists = true; renderQrList();
   } catch (e) { pv.innerHTML = '<p class="qr-warn">作れませんでした：' + esc(e.message) + '</p>'; }
+}
+
+// 説明つき・QRだけ の2枚を並べる（どちらも保存先に置いてある）
+function qrPair(q) {
+  const t = Date.now();
+  return `<div class="qr-pair">
+      <figure><img src="/api/study-qr-image?${q}&t=${t}" alt="説明つき"><figcaption>説明つき</figcaption></figure>
+      <figure><img src="/api/study-qr-image?${q}&kind=plain&t=${t}" alt="QRだけ"><figcaption>QRだけ（注釈なし）</figcaption></figure>
+    </div>`;
+}
+async function openQrDir() {
+  try { const j = await (await fetch('/api/open-qr-dir', { method: 'POST' })).json(); if (!j.ok) throw new Error(j.error); }
+  catch (e) { alert('フォルダを開けませんでした：' + e.message); }
 }
