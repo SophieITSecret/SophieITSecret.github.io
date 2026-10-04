@@ -26,7 +26,7 @@ const IS_PROD = (typeof window.__IS_PROD === 'boolean') ? window.__IS_PROD : (fu
 //   画像・音声はブラウザ自身が長くキャッシュするため、差し替えても
 //   古いものが出続ける。URLが変われば確実に取り直されるので、版が上がるたび
 //   ここも一緒に上げる（bump-sw.sh と作業台の「⬆ v」ボタンが書き換える）。
-const ASSET_V = 'v130';
+const ASSET_V = 'v131';
 function av(path) { return path + '?v=' + ASSET_V; }
 
 // ==========================================
@@ -166,6 +166,14 @@ window.addEventListener('DOMContentLoaded', async () => {
         note.textContent = '自由研究「' + studyUnit + '」を開きます';
         document.getElementById('btn-enter').before(note);
     }
+    const linkCard = studyUnit ? null : findLinkCard(cardLink);
+    if (linkCard) {
+        logAccess('card_link', linkCard.id);    // どのカードのリンクから何回来たかを数える
+        const note = document.createElement('div');
+        note.className = 'entry-study';
+        note.textContent = '「' + linkCard.title.replace(/^→/, '').trim() + '」を開きます';
+        document.getElementById('btn-enter').before(note);
+    }
 
     document.getElementById('btn-enter').onclick = () => {
         // iOS音声解除：ユーザージェスチャー内で空再生してAudioContextをアンロック
@@ -173,7 +181,7 @@ window.addEventListener('DOMContentLoaded', async () => {
         voice.play().then(() => { voice.pause(); voice.src = ''; }).catch(() => { voice.src = ''; });
         entryScreen.style.display = 'none';
         mainUI.style.display = 'flex';
-        try { sessionStorage.removeItem(STUDY_KEY); } catch (e) { /* noop */ }   // 行き先は使い切り
+        try { sessionStorage.removeItem(STUDY_KEY); sessionStorage.removeItem(CARD_KEY); } catch (e) { /* noop */ }   // 行き先は使い切り
         if (studyUnit) {
             // ふつうにトップ→自由研究→著者から、と押して入ったのと同じ状態にそろえる。
             // ずれると ▲ で戻れなくなる（freeunit → 自由研究の一覧 → トップ）
@@ -183,6 +191,8 @@ window.addEventListener('DOMContentLoaded', async () => {
             btnSettings.style.display = 'none';
             studyEntry = studyUnit;
             showFreeUnit(studyUnit);
+        } else if (linkCard) {
+            openLinkedCard(linkCard);
         } else {
             showTopMenu();
         }
@@ -562,6 +572,50 @@ try {
         history.replaceState(null, '', u.pathname + u.search + u.hash);
     }
 } catch (e) { /* 住所が読めなくても普通にトップから始める */ }
+// カードの専用リンク（例 https://takeru.ms-forum.com/?card=JPNDF12）。
+//   メルマガの「ご存知ですか？」などから、講座のカード1枚を直接開く。研究のリンクと同じく
+//   スタートを押すまで sessionStorage に控え、読んだら住所から外す。
+let cardLink = '';             // 住所で指されたカードのコード
+const CARD_KEY = 'takeru.cardLink';
+try {
+    const s = new URLSearchParams(location.search).get('card') || '';
+    if (/^[A-Za-z0-9]{1,20}$/.test(s)) {
+        cardLink = s.toUpperCase();
+        try { sessionStorage.setItem(CARD_KEY, cardLink); } catch (e) { /* noop */ }
+    } else {
+        try { cardLink = sessionStorage.getItem(CARD_KEY) || ''; } catch (e) { /* noop */ }
+    }
+    if (s) {
+        const u = new URL(location.href);
+        u.searchParams.delete('card');
+        history.replaceState(null, '', u.pathname + u.search + u.hash);
+    }
+} catch (e) { /* 住所が読めなくても普通にトップから始める */ }
+// コードからカードを探す。見えないカード（本番で未公開）なら null（トップから始める）
+function findLinkCard(code) {
+    if (!code) return null;
+    const c = cardData.find(d => String(d.id).toUpperCase() === code);
+    return c && visibleOf([c]).length ? c : null;
+}
+// ふつうにトップから順に押して入ったのと同じ状態にそろえてから、そのカードを開く。
+//   ずれると ▲ や ◀▶ が効かなくなる（カード → テーマの一覧 → 講座のテーマ一覧 → 級 → トップ）
+function openLinkedCard(card) {
+    showTopMenu();
+    if (card.subject === FREE_SUBJECT) {
+        freeTab = 'author';
+        freeTheme = '';
+        btnSettings.style.display = 'none';
+        showFreeUnit(card.genre);
+    } else if (card.subject === GUIDE_SUBJECT) {
+        showGuideCards(card.genre);
+    } else {
+        btnSettings.style.display = 'none';     // 受講に入ると歯車は隠れる（showGradeMenu と同じ）
+        curSubject = card.subject;
+        gotoGenre(card.genre);
+    }
+    curSection = visibleOf(cardData.filter(d => d.genre === card.genre && d.section === card.section));
+    showCard(Math.max(0, curSection.findIndex(d => d.id === card.id)));
+}
 // コードの頭から研究（講座名）を探す。見えるカードが無ければ空（トップから始める）
 function findStudyUnit(prefix) {
     if (!prefix) return '';

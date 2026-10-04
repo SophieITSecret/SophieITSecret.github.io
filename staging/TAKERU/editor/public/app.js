@@ -3430,15 +3430,15 @@ function renderQrList() {
   document.getElementById('qrList').innerHTML = qrItems.map((o, i) => `
     <button class="qr-item ${i === qrSel ? 'active' : ''}" onclick="selectQr(${i})">
       <span class="qr-item-title">${esc(o.title)}</span>
-      <span class="qr-item-sub">${o.top ? 'アプリのトップ' : (o.published ? o.published + '枚公開' : '未公開')}${o.qrExists ? '・QRあり' : ''}</span>
+      <span class="qr-item-sub">${o.card ? 'カード ' + esc(o.card) + '（' + esc(o.label) + '）' + (o.published ? '' : '・未公開') : (o.top ? 'アプリのトップ' : (o.published ? o.published + '枚公開' : '未公開'))}${o.qrExists ? '・QRあり' : ''}</span>
     </button>`).join('');
 }
 function selectQr(i) {
   qrSel = i; renderQrList();
   const o = qrItems[i], box = document.getElementById('qrDetail');
   if (o.problem) { box.innerHTML = `<h3>${esc(o.title)}</h3><p class="qr-warn">${esc(o.problem)}</p>`; return; }
-  const warn = (!o.top && !o.published) ? '<p class="qr-warn">この研究はまだ公開していません。本番で開くと、トップから始まります。</p>' : '';
-  const q = o.top ? 'top=1' : 'prefix=' + encodeURIComponent(o.prefix);
+  const warn = (!o.top && !o.published) ? `<p class="qr-warn">この${o.card ? 'カード' : '研究'}はまだ公開していません。本番で開くと、トップから始まります。</p>` : '';
+  const q = qrQuery(o);
   box.innerHTML = `
     <h3>${esc(o.title)}</h3>
     ${warn}
@@ -3462,10 +3462,10 @@ async function makeQr(i) {
   pv.innerHTML = '<p class="qr-empty">作っています…</p>';
   try {
     const r = await fetch('/api/study-qr', { method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(o.top ? { top: true } : { prefix: o.prefix }) });
+      body: JSON.stringify(o.card ? { card: o.card } : (o.top ? { top: true } : { prefix: o.prefix })) });
     const j = await r.json();
     if (!j.ok) throw new Error(j.error || '不明');
-    pv.innerHTML = qrPair(o.top ? 'top=1' : 'prefix=' + encodeURIComponent(o.prefix));
+    pv.innerHTML = qrPair(qrQuery(o));
     document.getElementById('qrFiles').textContent = '保存しました（2枚）。チラシやSNSには、保存先のファイルをそのまま使ってください。';
     o.qrExists = true; renderQrList();
   } catch (e) { pv.innerHTML = '<p class="qr-warn">作れませんでした：' + esc(e.message) + '</p>'; }
@@ -3482,4 +3482,20 @@ function qrPair(q) {
 async function openQrDir() {
   try { const j = await (await fetch('/api/open-qr-dir', { method: 'POST' })).json(); if (!j.ok) throw new Error(j.error); }
   catch (e) { alert('フォルダを開けませんでした：' + e.message); }
+}
+
+function qrQuery(o) {
+  return o.card ? 'card=' + encodeURIComponent(o.card) : (o.top ? 'top=1' : 'prefix=' + encodeURIComponent(o.prefix));
+}
+// カードのコードから探して、一覧の末尾に足して選ぶ
+async function findQrCard() {
+  const code = document.getElementById('qrCardCode').value.trim();
+  if (!code) return;
+  try {
+    const j = await (await fetch('/api/card-link?code=' + encodeURIComponent(code))).json();
+    if (!j.ok) { alert(j.error || '見つかりません'); return; }
+    let i = qrItems.findIndex(o => o.card === j.item.card);
+    if (i < 0) { qrItems.push(j.item); i = qrItems.length - 1; }
+    selectQr(i);
+  } catch (e) { alert('探せませんでした：' + e.message); }
 }

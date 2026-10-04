@@ -184,6 +184,29 @@ function studyLinks() {
   }
   return out;
 }
+// カード1枚の専用リンク（?card=コード）。メルマガの「ご存知ですか？」などに使う
+function cardLinkItem(code) {
+  code = String(code || '').trim().toUpperCase();
+  if (!/^[A-Z0-9]{1,20}$/.test(code)) return null;
+  const recs = parseCsvText(fs.readFileSync(config.csvPath, 'utf8').replace(/^\uFEFF/, '')).slice(1);
+  const r = recs.find(r => (r[0] || '').trim().toUpperCase() === code);
+  if (!r) return null;
+  const title = (r[3] || '').trim().replace(/^→/, '').trim();
+  const subject = (r[5] || '').trim();
+  const label = subject.replace(/^\d級-/, '');
+  const item = { card: code, title, subject, label, url: `${PROD_URL}?card=${code}`,
+                 published: (r[6] || '').trim() === '1' ? 1 : 0 };
+  item.qrExists = fs.existsSync(path.join(qrDir(), qrFileBase(code, title) + '（説明つき）.png'));
+  return item;
+}
+// GET /api/card-link?code=…
+function getCardLink(req, res, q) {
+  try {
+    const item = cardLinkItem(q.get('code'));
+    if (!item) return sendJSON(res, 200, { ok: false, error: 'そのコードのカードが見つかりません' });
+    sendJSON(res, 200, { ok: true, item });
+  } catch (e) { sendJSON(res, 500, { ok: false, error: e.message }); }
+}
 // GET /api/study-links
 function getStudyLinks(req, res) {
   try { sendJSON(res, 200, { ok: true, dir: qrDir(), items: studyLinks() }); }
@@ -195,12 +218,21 @@ function postStudyQr(req, res) {
   req.on('data', c => chunks.push(c));
   req.on('end', async () => {
     try {
-      const { prefix = '', top = false } = JSON.parse(Buffer.concat(chunks).toString('utf8') || '{}');
-      const item = studyLinks().find(o => top ? o.top : (!o.top && o.prefix === prefix));
-      if (!item || !item.url) return sendJSON(res, 400, { ok: false, error: 'その研究が見つかりません' });
-      const base = qrFileBase(item.prefix, item.top ? 'TAKERU' : item.title);
-      const line1 = item.top ? 'TAKERU' : 'TAKERU 自由研究';
-      const line2 = item.top ? '軍事と戦略を、基礎から学ぶスマホアプリ' : item.title;
+      const { prefix = '', top = false, card = '' } = JSON.parse(Buffer.concat(chunks).toString('utf8') || '{}');
+      let item, base, line1, line2;
+      if (card) {
+        item = cardLinkItem(card);
+        if (!item) return sendJSON(res, 400, { ok: false, error: 'そのコードのカードが見つかりません' });
+        base = qrFileBase(item.card, item.title);
+        line1 = 'TAKERU ' + item.label;
+        line2 = item.title;
+      } else {
+        item = studyLinks().find(o => top ? o.top : (!o.top && o.prefix === prefix));
+        if (!item || !item.url) return sendJSON(res, 400, { ok: false, error: 'その研究が見つかりません' });
+        base = qrFileBase(item.prefix, item.top ? 'TAKERU' : item.title);
+        line1 = item.top ? 'TAKERU' : 'TAKERU 自由研究';
+        line2 = item.top ? '軍事と戦略を、基礎から学ぶスマホアプリ' : item.title;
+      }
       const out = await spawnP('python', [path.join(__dirname, 'make_qr.py'), item.url, qrDir(), base, line1, line2],
                                { env: { ...process.env, PYTHONIOENCODING: 'utf-8' } });
       const r = JSON.parse(out.trim().split('\n').pop());
@@ -222,10 +254,18 @@ function postOpenQrDir(req, res) {
 function getStudyQrImage(req, res, q) {
   try {
     const top = q.get('top') === '1';
-    const item = studyLinks().find(o => top ? o.top : (!o.top && o.prefix === (q.get('prefix') || '')));
-    if (!item) return sendJSON(res, 404, { ok: false, error: '見つかりません' });
     const kind = q.get('kind') === 'plain' ? '（QRだけ）' : '（説明つき）';
-    const f = path.join(qrDir(), qrFileBase(item.prefix, item.top ? 'TAKERU' : item.title) + kind + '.png');
+    let base;
+    if (q.get('card')) {
+      const c = cardLinkItem(q.get('card'));
+      if (!c) return sendJSON(res, 404, { ok: false, error: '見つかりません' });
+      base = qrFileBase(c.card, c.title);
+    } else {
+      const item = studyLinks().find(o => top ? o.top : (!o.top && o.prefix === (q.get('prefix') || '')));
+      if (!item) return sendJSON(res, 404, { ok: false, error: '見つかりません' });
+      base = qrFileBase(item.prefix, item.top ? 'TAKERU' : item.title);
+    }
+    const f = path.join(qrDir(), base + kind + '.png');
     if (!fs.existsSync(f)) return sendJSON(res, 404, { ok: false, error: 'まだ作っていません' });
     res.writeHead(200, { 'Content-Type': 'image/png', 'Cache-Control': 'no-store' });
     res.end(fs.readFileSync(f));
@@ -1196,6 +1236,7 @@ const server = http.createServer((req, res) => {
   if (pathname === '/api/study-qr' && method === 'POST') return postStudyQr(req, res);
   if (pathname === '/api/study-qr-image' && method === 'GET') return getStudyQrImage(req, res, parsed.searchParams);
   if (pathname === '/api/open-qr-dir' && method === 'POST') return postOpenQrDir(req, res);
+  if (pathname === '/api/card-link' && method === 'GET') return getCardLink(req, res, parsed.searchParams);
   if (pathname === '/api/links' && method === 'GET') return getLinks(req, res);
   if (pathname === '/api/sw-version' && method === 'GET') return getSwVersion(req, res);
   if (pathname === '/api/sw-version' && method === 'POST') return bumpSwVersion(req, res);

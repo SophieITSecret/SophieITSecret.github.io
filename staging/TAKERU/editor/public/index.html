@@ -562,7 +562,12 @@
       <h2>🔳 専用リンクとQRコード</h2>
       <button class="btn-cancel" onclick="closeQr()">✕ 閉じる</button>
     </div>
-    <p class="qr-note">研究を選ぶと、その研究を直接開く住所とQRコードが出ます。QRを読み取った人は、トップを通らずにその研究のカード一覧へ行けます（TOP・▲で普通に戻れます）。</p>
+    <p class="qr-note">研究を選ぶか、カードのコードを入れると、そこを直接開く住所とQRコードが出ます。読み取った人は、トップを通らずにその研究の一覧・そのカードへ行けます（TOP・▲で普通に戻れます）。</p>
+    <div class="qr-card-find">
+      <label>カード1枚のリンク（メルマガの「ご存知ですか？」など）：コード
+        <input type="text" id="qrCardCode" placeholder="例 JPNDF12" size="12" onkeydown="if(event.key==='Enter')findQrCard()"></label>
+      <button class="dash-refresh" onclick="findQrCard()">探す</button>
+    </div>
     <div class="qr-wrap">
       <div id="qrList" class="qr-list"></div>
       <div id="qrDetail" class="qr-detail"><p class="qr-empty">左から選んでください。</p></div>

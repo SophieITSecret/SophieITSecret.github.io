@@ -620,3 +620,5 @@ textarea.svg-overlay-input { min-height:120px; font-family:monospace; font-size:
 .qr-pair figcaption { font-size: 12px; color: #9fb0c4; margin-top: 4px; }
 .qr-empty { color: #9fb0c4; font-size: 13px; }
 .qr-warn { color: #ffb74d; font-size: 13px; }
+.qr-card-find { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin: 6px 0 4px; font-size: 13px; color: #c8d3e0; }
+.qr-card-find input { margin-left: 6px; padding: 4px 8px; border-radius: 4px; border: 1px solid #2c3e55; background: #0f1824; color: #dde3f0; }

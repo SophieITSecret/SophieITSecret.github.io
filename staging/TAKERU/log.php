@@ -3,7 +3,7 @@
 // log.php — アクセスを1行だけ追記する。
 //
 //   記録するのは「日付・種別・番号」の3つだけ。
-//   番号はカード番号／ニュースID／リンクID／自由研究の専用リンク（MSENSHI など）のいずれか（種別で区別する）。
+//   番号はカード番号／ニュースID／リンクID／自由研究の専用リンク（MSENSHI など）／カードの専用リンク（JPNDF12 など）のいずれか（種別で区別する）。
 //   IPアドレス・Cookie・識別子は一切記録しない（誰が見たかは辿れない）。
 //   目的は回数を数えることに限る。
 //
@@ -17,7 +17,7 @@ $data = json_decode($raw, true);
 $type = isset($data['type']) ? (string)$data['type'] : '';
 $code = isset($data['code']) ? (string)$data['code'] : '';
 
-$allowed = ['top_view', 'pwa_installed', 'card_view', 'news_view', 'link_open', 'study_link'];
+$allowed = ['top_view', 'pwa_installed', 'card_view', 'news_view', 'link_open', 'study_link', 'card_link'];
 if (!in_array($type, $allowed, true)) {
     http_response_code(400);
     echo json_encode(['ok' => false]);
