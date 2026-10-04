@@ -755,6 +755,30 @@ async function getAccessStats(req, res) {
   }
 }
 
+// GET /api/hp-access — ホームページ（ms-forum.com）のアクセス記録をSSHで取得
+//   書くのはホームページ担当の log.php。こちらは読むだけ（D:\ms-common\ホームページのアクセス記録の形.md）。
+//   ~/hp-private/access-YYYY-MM.csv を全部つなげて返す。下書き（test-access-…）は読まない。
+//   1行 = 「日付,種類(view|click),番号」。小さいので作業台の側で数える。
+async function getHpAccess(req, res) {
+  const remoteCmd = 'cat ~/hp-private/access-[0-9][0-9][0-9][0-9]-[0-9][0-9].csv 2>/dev/null; true';
+  const args = [
+    '-i', PROD.keyPath, '-p', String(PROD.port),
+    '-o', 'StrictHostKeyChecking=no', '-o', 'BatchMode=yes', '-o', 'ConnectTimeout=20',
+    `${PROD.user}@${PROD.host}`, remoteCmd,
+  ];
+  try {
+    const out = await spawnP('ssh', args, {});
+    const rows = [];
+    for (const line of out.split(/\r?\n/)) {
+      const m = /^(\d{4}-\d{2}-\d{2}),(view|click),([a-z0-9_]*)$/.exec(line.trim());
+      if (m) rows.push([m[1], m[2], m[3]]);
+    }
+    sendJSON(res, 200, { ok: true, rows });
+  } catch (e) {
+    sendJSON(res, 200, { ok: false, error: e.message, rows: [] });
+  }
+}
+
 // GET /api/members — 本番の会員メール一覧(logs/members.csv)をSSHで取得
 //   1行 = 「日付, メール」。外部からは403で見えないのでSSHで取りに行く。
 async function getMembers(req, res) {
@@ -1226,6 +1250,7 @@ const server = http.createServer((req, res) => {
   if (pathname === '/api/reading-scripts' && method === 'POST') return postReadingScript(req, res);
   if (pathname === '/api/access-stats' && method === 'GET') return getAccessStats(req, res);
   if (pathname === '/api/members' && method === 'GET') return getMembers(req, res);
+  if (pathname === '/api/hp-access' && method === 'GET') return getHpAccess(req, res);
   if (pathname === '/api/drafts' && method === 'GET') return getDrafts(req, res);
   if (pathname === '/api/draft'  && method === 'GET') return getDraft(req, res, parsed.searchParams.get('name'));
   if (pathname === '/api/draft'  && method === 'POST') return postDraft(req, res);

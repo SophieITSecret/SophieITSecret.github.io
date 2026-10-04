@@ -2262,6 +2262,7 @@ function renderCardRanking() {
   const body = document.getElementById('rankBody');
   if (!body) return;
   document.querySelectorAll('.rank-tgtbtn').forEach(b => b.classList.toggle('on', b.dataset.tgt === rankTarget));
+  if (rankTarget === 'hp') return renderHpAccess(body);
   if (rankTarget !== 'card') return renderItemRanking(body);
   const sel = document.getElementById('rankSubject');
   const subject = sel ? sel.value : '';
@@ -3498,4 +3499,113 @@ async function findQrCard() {
     if (i < 0) { qrItems.push(j.item); i = qrItems.length - 1; }
     selectQr(i);
   } catch (e) { alert('探せませんでした：' + e.message); }
+}
+
+
+// ===== ホームページ（ms-forum.com）のアクセス =====
+//   記録の形は D:\ms-common\ホームページのアクセス記録の形.md（ホームページ担当が書いている）。
+//   view＝ページを見た、click＝ボタンを押した（番号は「何_どのページ」）。回数であって人数ではない。
+const HP_PAGES = { index: 'トップ', takeru: 'TAKERU', koza: '講座の内容', koshi: '講師陣', annai: '受講案内・お申込み',
+                   about: 'ＭＳフォーラムについて', contact: 'お問い合わせ', kiyaku: '会員規約', privacy: '個人情報保護方針' };
+const HP_CLICKS = { join: '新規会員登録', joingen: '一般会員として登録', login: '会員ログイン', takeruapp: 'TAKERUを開く',
+                    herobadge: 'ヒーロー「入門コース第9期生募集中！」', herotakeru: 'ヒーロー「スマホで学ぶTAKERU」',
+                    herocourse: 'ヒーロー「講師から学ぶ入門コース」', x: 'X（旧Twitter）', youtube: 'YouTube' };
+let hpAccess = { rows: [], loaded: false, error: null }, hpPeriod = 7;
+async function loadHpAccess() {
+  try {
+    const j = await (await fetch('/api/hp-access')).json();
+    hpAccess = { rows: j.rows || [], loaded: true, error: j.ok ? null : (j.error || '取得失敗') };
+  } catch (e) { hpAccess = { rows: [], loaded: true, error: e.message }; }
+  if (rankTarget === 'hp') renderCardRanking();
+}
+function setHpPeriod(n) { hpPeriod = n; renderCardRanking(); }
+// 日本時間のまま YYYY-MM-DD にする（toISOString は世界標準時なので1日ずれる）
+function hpYmd(d) { const p = n => String(n).padStart(2, '0'); return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`; }
+function hpLabelPage(k) { return HP_PAGES[k] || (k ? k : '（不明）'); }
+function hpSplitClick(code) {
+  const i = code.lastIndexOf('_');
+  return i < 0 ? [code || '（不明）', ''] : [code.slice(0, i), code.slice(i + 1)];
+}
+function renderHpAccess(body) {
+  const totEl = document.getElementById('rankTotals');
+  if (!hpAccess.loaded) {
+    body.innerHTML = '<p class="rank-empty">ホームページのアクセスを取得中…</p>';
+    if (totEl) totEl.textContent = '';
+    loadHpAccess();
+    return;
+  }
+  if (hpAccess.error) { body.innerHTML = `<p class="rank-empty">⚠ 取得できませんでした（${esc(hpAccess.error)}）</p>`; return; }
+  const all = hpAccess.rows;
+  if (!all.length) { body.innerHTML = '<p class="rank-empty">まだ記録がありません。</p>'; return; }
+
+  // 期間：最後の記録の日から数えて n 日（0＝全部）
+  const allDates = [...new Set(all.map(r => r[0]))].sort();
+  const last = allDates[allDates.length - 1];
+  let from = allDates[0];
+  if (hpPeriod) {
+    const d = new Date(last + 'T00:00:00'); d.setDate(d.getDate() - (hpPeriod - 1));
+    from = hpYmd(d);
+    if (from < allDates[0]) from = allDates[0];   // 記録が始まる前には広げない（0が並ぶだけで、TAKERUとの比較もずれる）
+  }
+  const rows = all.filter(r => r[0] >= from);
+  const dates = []; for (const d = new Date(from + 'T00:00:00'); hpYmd(d) <= last; d.setDate(d.getDate() + 1)) dates.push(hpYmd(d));
+
+  const views = rows.filter(r => r[1] === 'view'), clicks = rows.filter(r => r[1] === 'click');
+  const count = (arr, key) => { const m = {}; for (const r of arr) { const k = key(r); m[k] = (m[k] || 0) + 1; } return m; };
+
+  // ページごと（期間の合計）
+  const byPage = count(views, r => r[2]);
+  const pageKeys = Object.keys(HP_PAGES).filter(k => byPage[k]).concat(Object.keys(byPage).filter(k => !HP_PAGES[k]));
+  pageKeys.sort((a, b) => (byPage[b] || 0) - (byPage[a] || 0));
+
+  // 日ごと×ページ
+  const dayPage = {}; for (const r of views) { (dayPage[r[2]] = dayPage[r[2]] || {})[r[0]] = (dayPage[r[2]]?.[r[0]] || 0) + 1; }
+  const dayTot = count(views, r => r[0]);
+
+  // ボタン（何×どのページ）
+  const clickWhat = {}, clickPages = new Set();
+  for (const r of clicks) {
+    const [w, pg] = hpSplitClick(r[2]); clickPages.add(pg);
+    (clickWhat[w] = clickWhat[w] || {})[pg] = (clickWhat[w][pg] || 0) + 1;
+  }
+  const cp = [...clickPages].sort((a, b) => Object.keys(HP_PAGES).indexOf(a) - Object.keys(HP_PAGES).indexOf(b));
+  const whatKeys = Object.keys(clickWhat).sort((a, b) =>
+    Object.values(clickWhat[b]).reduce((x, y) => x + y, 0) - Object.values(clickWhat[a]).reduce((x, y) => x + y, 0));
+
+  // TAKERUとの比較：HPで「TAKERUを開く」が押された回数 と TAKERUのトップが開かれた回数
+  const takeruClicks = clicks.filter(r => hpSplitClick(r[2])[0] === 'takeruapp').length;
+  const td = accessStats.daily || {};
+  const takeruTop = dates.reduce((a, d) => a + ((td[d] && td[d].top_view) || 0), 0);
+
+  if (totEl) totEl.textContent = `${from} 〜 ${last}：閲覧 ${views.length} 回／ボタン ${clicks.length} 回（回数。人数ではありません）`;
+
+  const per = [[7, '7日'], [30, '30日'], [0, '全部']].map(([n, l]) =>
+    `<button class="rank-viewbtn ${hpPeriod === n ? 'rank-viewbtn-on' : ''}" onclick="setHpPeriod(${n})">${l}</button>`).join('');
+
+  const pageTable = `<table class="hp-table"><tr><th>ページ</th><th>閲覧</th></tr>${pageKeys.map(k =>
+    `<tr><td>${esc(hpLabelPage(k))}</td><td class="num">${byPage[k] || 0}</td></tr>`).join('')}</table>`;
+
+  const dayHead = dates.map(d => `<th>${d.slice(5)}</th>`).join('');
+  const dayRows = pageKeys.map(k => `<tr><th class="dl">${esc(hpLabelPage(k))}</th>${dates.map(d =>
+    `<td>${(dayPage[k] && dayPage[k][d]) || ''}</td>`).join('')}</tr>`).join('');
+  const dayTable = `<div class="hp-scroll"><table class="dash-table hp-day"><tr><th></th>${dayHead}</tr>
+    <tr class="hp-total"><th class="dl">合計</th>${dates.map(d => `<td>${dayTot[d] || 0}</td>`).join('')}</tr>${dayRows}</table></div>`;
+
+  const clickTable = whatKeys.length ? `<div class="hp-scroll"><table class="hp-table"><tr><th>押されたもの</th>${cp.map(pg =>
+    `<th>${esc(hpLabelPage(pg))}</th>`).join('')}<th>計</th></tr>${whatKeys.map(w => {
+      const t = Object.values(clickWhat[w]).reduce((x, y) => x + y, 0);
+      return `<tr class="${w === 'join' || w === 'joingen' ? 'hp-strong' : ''}"><td>${esc(HP_CLICKS[w] || w)}</td>${cp.map(pg =>
+        `<td class="num">${clickWhat[w][pg] || ''}</td>`).join('')}<td class="num"><b>${t}</b></td></tr>`;
+    }).join('')}</table></div>` : '<p class="rank-empty">この期間に押されたボタンはありません。</p>';
+
+  body.innerHTML = `
+    <div class="hp-period"><span class="rank-sortlabel">期間：</span>${per}
+      <button class="dash-refresh" onclick="hpAccess.loaded=false;renderCardRanking()" title="サーバーから取り直す">↻ 更新</button></div>
+    <div class="hp-compare">ホームページで「TAKERUを開く」が押された回数 <b>${takeruClicks}</b> ／ 同じ期間に TAKERU のトップが開かれた回数 <b>${takeruTop}</b>
+      <span class="hp-note">（TAKERUのトップには、ホームページ以外から来た人も含まれます）</span></div>
+    <div class="hp-grid">
+      <div><h3 class="hp-h">ページごとの閲覧</h3>${pageTable}</div>
+      <div class="hp-wide"><h3 class="hp-h">押されたボタン（何を × どのページで）</h3>${clickTable}</div>
+    </div>
+    <h3 class="hp-h">日ごとの閲覧</h3>${dayTable}`;
 }
