@@ -54,3 +54,6 @@ editor/secrets.json
 
 # ニュース自動取り込みの記録（手元のPCだけのもの）
 editor/news-auto.log
+
+# 登録の本人の印を作る鍵（本番サーバーにだけある）
+logs/auth_secret.txt

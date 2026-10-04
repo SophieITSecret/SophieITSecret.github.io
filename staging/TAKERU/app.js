@@ -26,7 +26,7 @@ const IS_PROD = (typeof window.__IS_PROD === 'boolean') ? window.__IS_PROD : (fu
 //   画像・音声はブラウザ自身が長くキャッシュするため、差し替えても
 //   古いものが出続ける。URLが変われば確実に取り直されるので、版が上がるたび
 //   ここも一緒に上げる（bump-sw.sh と作業台の「⬆ v」ボタンが書き換える）。
-const ASSET_V = 'v128';
+const ASSET_V = 'v129';
 function av(path) { return path + '?v=' + ASSET_V; }
 
 // ==========================================
@@ -1810,7 +1810,10 @@ function waitForGis() {
 // 登録状態は端末に保持（無料ゲート＝厳密な認証は不要。メール記録はサーバーが検証済み）
 function getMemberEmail() { try { return localStorage.getItem('takeru_member_email') || ''; } catch (e) { return ''; } }
 function setMemberEmail(email) { try { localStorage.setItem('takeru_member_email', email); } catch (e) {} }
-function clearMemberEmail() { try { localStorage.removeItem('takeru_member_email'); } catch (e) {} }
+function clearMemberEmail() { try { localStorage.removeItem('takeru_member_email'); localStorage.removeItem('takeru_member_token'); } catch (e) {} }
+// 本人の印（auth.php が登録のときに発行）。登録解除のときにサーバーへ見せる
+function getMemberToken() { try { return localStorage.getItem('takeru_member_token') || ''; } catch (e) { return ''; } }
+function setMemberToken(t) { try { if (t) localStorage.setItem('takeru_member_token', t); } catch (e) {} }
 
 async function onGoogleCredential(response) {
     if (!response || !response.credential) return;
@@ -1825,6 +1828,7 @@ async function onGoogleCredential(response) {
         const j = await res.json();
         if (j.ok && j.email) {
             setMemberEmail(j.email);
+            setMemberToken(j.token);
             if (navState === 'register') renderRegisterBody();
         } else if (statusEl) {
             statusEl.textContent = '登録に失敗しました。少し待ってもう一度お試しください。';
@@ -2101,9 +2105,16 @@ async function doUnregister() {
     try {
         const res = await fetch('./auth.php', {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ action: 'unregister', email: email }),
+            body: JSON.stringify({ action: 'unregister', email: email, token: getMemberToken() }),
         });
         const j = await res.json();
+        if (!j.ok && j.error === 'need_verify') {
+            // 印を持っていない端末（印を始める前に登録した人など）。Googleで確かめ直してもらう
+            alert('本人確認のため、もう一度「Googleで登録」を押してください。そのあとで「登録を解除する」を押すと解除できます。');
+            clearMemberEmail();
+            renderRegisterBody();
+            return;
+        }
         if (j.ok) {
             clearMemberEmail();
             try { google.accounts.id.disableAutoSelect(); } catch (e) {}
