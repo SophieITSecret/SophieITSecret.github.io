@@ -111,5 +111,34 @@ async function fetchLatestDigest() {
   }
 }
 
+// ---- TAKERUマガジン（Cowork君の takerunews.gs v22 の窓口） ----
+//   読み取り：magazine_latest / magazine_list（GET）
+//   書き込み：stage=magazine_save（POST。text/plain で JSON を送る。expected_version 必須）
+//   トークンは書き込みもできる鍵なので、作業台のサーバーの中でだけ使う（画面には渡さない）。
+function gasConf() {
+  const s = JSON.parse(fs.readFileSync(SECRETS_PATH, 'utf8')).news;
+  if (!s || !s.gasUrl || !s.token) throw new Error('secrets.json に news.gasUrl / news.token がありません');
+  return s;
+}
+async function gasGet(action, params = {}) {
+  const s = gasConf();
+  const q = new URLSearchParams({ action, token: s.token, ...params });
+  const r = await fetch(s.gasUrl + '?' + q, { redirect: 'follow', signal: AbortSignal.timeout(60000) });
+  const t = await r.text();
+  try { return JSON.parse(t); }
+  catch { return { ok: false, error: r.status === 404 ? 'GASにこの窓口がまだありません（デプロイの更新待ち？）' : 'GASの返事が読めません' }; }
+}
+async function gasPost(body) {
+  const s = gasConf();
+  const r = await fetch(s.gasUrl, { method: 'POST', redirect: 'follow', signal: AbortSignal.timeout(60000),
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ token: s.token, ...body }) });
+  const t = (await r.text()).trim();
+  if (t.startsWith('OK')) {
+    const m = /version=(\d+)/.exec(t);
+    return { ok: true, text: t, version: m ? Number(m[1]) : null };
+  }
+  return { ok: false, error: t.startsWith('ERROR') ? t : ('GASの返事が読めません（' + r.status + '）') };
+}
+
 module.exports = { parseCsvText, csvField, buildNewsCsv, parseNewsCsv, newsStamp, readNews,
-                   parseDigest, assignNewsIds, fetchLatestDigest };
+                   parseDigest, assignNewsIds, fetchLatestDigest, gasGet, gasPost };

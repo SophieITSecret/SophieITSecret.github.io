@@ -3609,3 +3609,162 @@ function renderHpAccess(body) {
     </div>
     <h3 class="hp-h">日ごとの閲覧</h3>${dayTable}`;
 }
+
+
+// ==================== 📮 TAKERUマガジン（確認・添削・OK） ====================
+//   金曜20:50ごろ Cowork君が第1版を書く → ここで確認・添削（保存＝新しい版）→ OK（確認済）。
+//   土曜6:50 に Cowork君が check_note（要確認メモ）だけを書く。土曜8:00 に会員システムが最新版を送る
+//   （確認済でなくても送る）。版を変える書き込みには必ず expected_version を付ける（取り違え防止）。
+let mag = null;            // 読み込んだ版（magazine_latest の返事そのまま）
+let magDirty = false;      // 本文などを直して、まだ保存していない
+const MAG_MIN = 480, MAG_MAX = 520;
+function openMag() {
+  document.getElementById('magModal').style.display = 'flex';
+  loadMag();
+}
+function closeMag() {
+  if (magDirty && !confirm('保存していない直しがあります。閉じますか？（直しは消えます）')) return;
+  magDirty = false;
+  document.getElementById('magModal').style.display = 'none';
+}
+async function loadMag(issue) {
+  if (magDirty && !confirm('保存していない直しがあります。読み直しますか？（直しは消えます）')) return;
+  const box = document.getElementById('magBody');
+  box.innerHTML = '<p class="qr-empty">読み込み中…</p>';
+  const q = issue ? '?issue=' + encodeURIComponent(issue) : '';
+  try {
+    const [j, l] = await Promise.all([(await fetch('/api/magazine' + q)).json(), (await fetch('/api/magazine/list')).json()]);
+    if (!j.ok) {
+      box.innerHTML = `<p class="qr-warn">${j.error === 'no magazine draft' ? 'まだ下書きがありません（金曜20:50ごろに第1版ができます）。' : '読み込めませんでした：' + esc(j.error || '不明')}</p>`;
+      return;
+    }
+    mag = j; magDirty = false;
+    document.getElementById('magIssue').value = j.issue_date || '';
+    renderMag(l && l.ok ? l.rows : []);
+  } catch (e) { box.innerHTML = '<p class="qr-warn">読み込めませんでした：' + esc(e.message) + '</p>'; }
+}
+function magChars(t) { return String(t || '').replace(/\s/g, '').length; }
+function magReasonParts(r) {
+  // reason の末尾に「解釈メモ」が付くことがある。見出しの位置で分ける
+  const s = String(r || ''); const i = s.indexOf('解釈メモ');
+  return i < 0 ? [s, ''] : [s.slice(0, i).trim(), s.slice(i).trim()];
+}
+function renderMag(rows) {
+  const m = mag, box = document.getElementById('magBody');
+  const note = String(m.check_note || '');
+  const noteHtml = !note
+    ? '<div class="mag-note mag-note-quiet">要確認メモ：土曜6:50のチェック前</div>'
+    : note.startsWith('【要確認】')
+      ? `<div class="mag-note mag-note-alert"><b>⚠ 要確認（金曜夜以降に大きなニュースがあった可能性）</b><div class="mag-pre">${esc(note)}</div></div>`
+      : `<div class="mag-note mag-note-quiet">${esc(note)}</div>`;
+  const [reason, interp] = magReasonParts(m.reason);
+  const src = Array.isArray(m.sources)
+    ? `<ol class="mag-src">${m.sources.map(x => `<li><div class="mag-src-point">${esc(x.point || '')}</div>
+         <a href="${esc(x.url || '')}" target="_blank" rel="noopener">${esc(x.title || x.url || '')}</a></li>`).join('')}</ol>`
+    : `<div class="mag-pre">${esc(m.sources || '（根拠なし）')}</div>`;
+  const st = m.status || '';
+  const vers = (rows || []).filter(r => r.issue_date === m.issue_date).map(r =>
+    `<li class="${r.version === m.version ? 'on' : ''}">版${r.version}・${esc(r.status)}・${r.summary_chars}字${r.has_check_note ? '・メモあり' : ''}<span>${esc(r.reason || '')}</span></li>`).join('');
+  box.innerHTML = `
+    ${m.mock ? '<p class="qr-warn">【試験用の見本モード】GASにはつないでいません。</p>' : ''}
+    <div class="mag-head">
+      <span class="mag-date">${esc(m.issue_date)} 号</span>
+      <span class="mag-badge mag-st-${esc(st)}">${esc(st)}</span>
+      <span>版 ${m.version}</span><span>対象 ${esc(m.period || '')}</span>
+      <span class="mag-dim">更新 ${esc((m.updated_at || '').replace('T', ' ').slice(0, 16))}</span>
+    </div>
+    ${noteHtml}
+    <div class="mag-stamp">配信文の最後に付く表示：<b>${esc(m.stamp_text || '')}</b></div>
+    <div class="mag-grid">
+      <div class="mag-main">
+        <div class="mag-label">先週のまとめ <span id="magCount" class="mag-count"></span></div>
+        <textarea id="magSummary" class="mag-text" oninput="magEdited()">${esc(m.summary || '')}</textarea>
+        <p id="magSrcWarn" class="mag-warn" hidden>本文を直しました。右の根拠は、直す前の文に対するものです。</p>
+        <div class="mag-label">今後の重要日程 <span class="mag-dim">（空なら配信文に出ません）</span></div>
+        <textarea id="magSchedule" class="mag-text mag-small" oninput="magEdited()">${esc(m.schedule || '')}</textarea>
+        <div class="mag-label">ご存知ですか？ <span class="mag-dim">（空なら出ません。カードの専用リンクは作業台の🔳 QRで）</span></div>
+        <textarea id="magTrivia" class="mag-text mag-small" oninput="magEdited()">${esc(m.trivia || '')}</textarea>
+        <div class="mag-actions">
+          <button class="btn-load" onclick="magSave()" title="直した内容を新しい版として残す">💾 保存（新しい版）</button>
+          <button class="btn-publish" onclick="magOk()" ${st === '確認済' || st === '配信済' ? 'disabled' : ''}>✅ OK（確認済にする）</button>
+          <button class="dash-refresh" onclick="magSent()" ${st === '配信済' ? 'disabled' : ''} title="ふつうは会員システムが送ったあとに付けます">配信済にする</button>
+          <span id="magMsg" class="mag-msg"></span>
+        </div>
+      </div>
+      <div class="mag-side">
+        <div class="mag-label">根拠（文ごとの元記事）</div>${src}
+        ${reason ? `<div class="mag-label">この版の理由</div><div class="mag-pre mag-dim">${esc(reason)}</div>` : ''}
+        ${interp ? `<details class="mag-interp"><summary>解釈メモ（筆者の読みが入った文）</summary><div class="mag-pre">${esc(interp)}</div></details>` : ''}
+        ${vers ? `<div class="mag-label">この号の版</div><ul class="mag-vers">${vers}</ul>` : ''}
+      </div>
+    </div>`;
+  magCount();
+}
+function magCount() {
+  const el = document.getElementById('magCount'); if (!el) return;
+  const n = magChars(document.getElementById('magSummary').value);
+  el.textContent = `${n}字（目安 ${MAG_MIN}〜${MAG_MAX}字・改行と空白を除く）`;
+  el.classList.toggle('out', n < MAG_MIN || n > MAG_MAX);
+}
+function magEdited() {
+  magDirty = true; magCount();
+  const changed = document.getElementById('magSummary').value !== (mag.summary || '');
+  document.getElementById('magSrcWarn').hidden = !changed;
+  document.getElementById('magMsg').textContent = '保存していない直しがあります';
+}
+function magMsg(t, bad) { const el = document.getElementById('magMsg'); el.textContent = t; el.classList.toggle('bad', !!bad); }
+async function magPost(body) {
+  const r = await fetch('/api/magazine/save', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ issue_date: mag.issue_date, ...body }) });
+  return r.json();
+}
+function magConflict(j) {
+  if (j.ok) return false;
+  if (/版が変わっています/.test(j.error || '')) {
+    alert('別の版ができています（Cowork君の書き直しなど）。\n読み直してから、もう一度直してください。\n\n' + j.error);
+  } else {
+    alert('書き込めませんでした：' + (j.error || '不明'));
+  }
+  return true;
+}
+// 直した内容を新しい版として保存。成功したら新しい版の番号を返す
+async function magSaveCore() {
+  const body = { mode: 'new_version', expected_version: mag.version, status: '下書き', reason: '牧村さんが作業台で添削',
+    summary: document.getElementById('magSummary').value,
+    schedule: document.getElementById('magSchedule').value,
+    trivia: document.getElementById('magTrivia').value };
+  const j = await magPost(body);
+  if (magConflict(j)) return null;
+  return j.version;
+}
+async function magSave() {
+  if (!magDirty) { magMsg('直したところがありません'); return; }
+  magMsg('保存しています…');
+  const v = await magSaveCore();
+  if (v === null) { magMsg('保存できませんでした', true); return; }
+  magDirty = false;
+  await loadMag(mag.issue_date);
+  magMsg(`版${v}として保存しました`);
+}
+async function magOk() {
+  let ver = mag.version;
+  if (magDirty) {
+    if (!confirm('直した内容を保存してから、OK（確認済）にします。よろしいですか？')) return;
+    magMsg('保存しています…');
+    ver = await magSaveCore();
+    if (ver === null) { magMsg('保存できませんでした', true); return; }
+    magDirty = false;
+  } else if (!confirm(`版${ver}を OK（確認済）にします。土曜8:00にこの版が送られます。よろしいですか？`)) return;
+  const j = await magPost({ mode: 'update_latest', expected_version: ver, status: '確認済' });
+  if (magConflict(j)) { await loadMag(mag.issue_date); return; }
+  await loadMag(mag.issue_date);
+  magMsg(`版${ver}を確認済にしました`);
+}
+async function magSent() {
+  if (magDirty) { alert('保存していない直しがあります。先に保存してください。'); return; }
+  if (!confirm(`版${mag.version}を「配信済」にします。ふつうは会員システムが送ったあとに自動で付けます。よろしいですか？`)) return;
+  const j = await magPost({ mode: 'update_latest', expected_version: mag.version, status: '配信済' });
+  if (magConflict(j)) { await loadMag(mag.issue_date); return; }
+  await loadMag(mag.issue_date);
+  magMsg('配信済にしました');
+}

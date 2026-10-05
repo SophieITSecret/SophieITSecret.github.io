@@ -133,7 +133,7 @@ function postCsv(req, res) {
 // ---- お知らせ（news.csv）----
 //   news.csv は TAKERUcard.csv と同じフォルダに置く。
 function newsPath() { return path.join(path.dirname(config.csvPath), 'news.csv'); }
-const { parseCsvText, buildNewsCsv, readNews, newsStamp, fetchLatestDigest } = require('./news-lib');
+const { parseCsvText, buildNewsCsv, readNews, newsStamp, fetchLatestDigest, gasGet, gasPost } = require('./news-lib');
 // GET /api/news — news.csv を配列で返す。stamp は保存時の突き合わせ用（→ postNews）
 function getNews(req, res) {
   try { const { items, stamp } = readNews(newsPath()); sendJSON(res, 200, { ok: true, items, stamp }); }
@@ -142,6 +142,83 @@ function getNews(req, res) {
 // GET /api/news/digest — 担当Bが書いた最新のダイジェストを GAS から取ってくる
 async function getNewsDigest(req, res) {
   sendJSON(res, 200, await fetchLatestDigest());
+}
+
+// ============================================================
+// TAKERUマガジン（「📮 マガジン」）
+//   Cowork君が金曜夜に書いた「先週のまとめ」を、牧村さんが確認・添削・OKする。
+//   土曜8:00 に会員システムが最新版を読んで送る（確認済でなくても送る）。
+//   資料：D:\ms-common\TAKERUマガジン\（00_決まったこと が優先、03 が作業台の要件）
+//   GASへはこのサーバーから行く（トークンを画面に渡さない）。
+//   試験用に MAGAZINE_MOCK=1 で立てると、GASの代わりに見本のデータで動く（牧村さんの作業台では使わない）。
+// ============================================================
+const MAG_MOCK = process.env.MAGAZINE_MOCK === '1';
+let magMock = null;
+function magMockInit() {
+  if (magMock) return;
+  const base = JSON.parse(fs.readFileSync(path.join(__dirname, 'magazine_mock.json'), 'utf8'));
+  magMock = [base];
+}
+function magMockLatest(issue) {
+  magMockInit();
+  const rows = magMock.filter(r => !issue || r.issue_date === issue);
+  if (!rows.length) return { ok: false, error: 'no magazine draft' };
+  return { ok: true, ...rows[rows.length - 1] };
+}
+function magMockSave(b) {
+  magMockInit();
+  const cur = magMock.filter(r => r.issue_date === b.issue_date).pop();
+  if (!cur) return { ok: false, error: 'ERROR: その号がありません' };
+  if (b.expected_version !== undefined && Number(b.expected_version) !== cur.version)
+    return { ok: false, error: `ERROR: 版が変わっています（最新はversion=${cur.version}）` };
+  const now = new Date().toISOString();
+  if (b.mode === 'new_version') {
+    const nv = { ...cur, version: cur.version + 1, check_note: '', updated_at: now, written_at: now, confirmed_at: '',
+                 status: b.status || '下書き', reason: b.reason || '' };
+    for (const k of ['summary', 'schedule', 'trivia', 'period', 'sources']) if (b[k] !== undefined) nv[k] = b[k];
+    nv.stamp_text = '（見本）' + nv.written_at.slice(5, 16) + ' 作成（未確認）';
+    magMock.push(nv);
+    return { ok: true, text: `OK issue=${b.issue_date} version=${nv.version}`, version: nv.version };
+  }
+  for (const k of ['status', 'schedule', 'trivia', 'check_note']) if (b[k] !== undefined) cur[k] = b[k];
+  cur.updated_at = now;
+  if (b.status === '確認済') { cur.confirmed_at = now; cur.stamp_text = '（見本）配信日 8:00 現在（確認済）'; }
+  return { ok: true, text: `OK issue=${b.issue_date} version=${cur.version}`, version: cur.version };
+}
+// GET /api/magazine?issue=YYYY-MM-DD
+async function getMagazine(req, res, q) {
+  try {
+    const issue = q.get('issue') || '';
+    if (issue && !/^\d{4}-\d{2}-\d{2}$/.test(issue)) return sendJSON(res, 400, { ok: false, error: '配信日の形が違います' });
+    const j = MAG_MOCK ? magMockLatest(issue) : await gasGet('magazine_latest', issue ? { issue } : {});
+    sendJSON(res, 200, { ...j, mock: MAG_MOCK });
+  } catch (e) { sendJSON(res, 200, { ok: false, error: e.message }); }
+}
+// GET /api/magazine/list
+async function getMagazineList(req, res) {
+  try {
+    if (MAG_MOCK) { magMockInit(); return sendJSON(res, 200, { ok: true, mock: true, count: magMock.length,
+      rows: magMock.slice().reverse().map(r => ({ issue_date: r.issue_date, version: r.version, status: r.status, reason: r.reason,
+        summary_chars: String(r.summary || '').replace(/\s/g, '').length, has_check_note: !!r.check_note, updated_at: r.updated_at })) }); }
+    sendJSON(res, 200, await gasGet('magazine_list'));
+  } catch (e) { sendJSON(res, 200, { ok: false, error: e.message }); }
+}
+// POST /api/magazine/save { mode, issue_date, expected_version, summary?, schedule?, trivia?, status?, reason? }
+function postMagazineSave(req, res) {
+  let chunks = [];
+  req.on('data', c => chunks.push(c));
+  req.on('end', async () => {
+    try {
+      const b = JSON.parse(Buffer.concat(chunks).toString('utf8') || '{}');
+      if (!['new_version', 'update_latest'].includes(b.mode)) return sendJSON(res, 400, { ok: false, error: 'mode が違います' });
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(b.issue_date || '')) return sendJSON(res, 400, { ok: false, error: '配信日がありません' });
+      if (b.expected_version === undefined || b.expected_version === null)
+        return sendJSON(res, 400, { ok: false, error: 'expected_version がありません（版の取り違えを防ぐため必須）' });
+      const body = { stage: 'magazine_save', mode: b.mode, issue_date: b.issue_date, expected_version: Number(b.expected_version) };
+      for (const k of ['summary', 'schedule', 'trivia', 'status', 'reason']) if (typeof b[k] === 'string') body[k] = b[k];
+      sendJSON(res, 200, MAG_MOCK ? magMockSave(body) : await gasPost(body));
+    } catch (e) { sendJSON(res, 200, { ok: false, error: e.message }); }
+  });
 }
 
 // ============================================================
@@ -1262,6 +1339,9 @@ const server = http.createServer((req, res) => {
   if (pathname === '/api/study-qr-image' && method === 'GET') return getStudyQrImage(req, res, parsed.searchParams);
   if (pathname === '/api/open-qr-dir' && method === 'POST') return postOpenQrDir(req, res);
   if (pathname === '/api/card-link' && method === 'GET') return getCardLink(req, res, parsed.searchParams);
+  if (pathname === '/api/magazine' && method === 'GET') return getMagazine(req, res, parsed.searchParams);
+  if (pathname === '/api/magazine/list' && method === 'GET') return getMagazineList(req, res);
+  if (pathname === '/api/magazine/save' && method === 'POST') return postMagazineSave(req, res);
   if (pathname === '/api/links' && method === 'GET') return getLinks(req, res);
   if (pathname === '/api/sw-version' && method === 'GET') return getSwVersion(req, res);
   if (pathname === '/api/sw-version' && method === 'POST') return bumpSwVersion(req, res);

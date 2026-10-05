@@ -638,3 +638,38 @@ textarea.svg-overlay-input { min-height:120px; font-family:monospace; font-size:
 .hp-scroll { overflow-x: auto; max-width: 100%; }
 .hp-day tr.hp-total td, .hp-day tr.hp-total th { color: #ff9f40; font-weight: bold; }
 .hp-day th.dl { white-space: nowrap; text-align: left; }
+
+/* 📮 TAKERUマガジン */
+.mag-modal-box { width: min(1200px, 96vw); max-height: 94vh; overflow: auto; }
+.mag-modal-box .modal-head { gap: 10px; flex-wrap: wrap; }
+.mag-issue-pick { font-size: 13px; color: #c8d3e0; margin-left: auto; }
+.mag-issue-pick input { background: #0f1824; color: #dde3f0; border: 1px solid #2c3e55; border-radius: 4px; padding: 3px 6px; }
+.mag-head { display: flex; gap: 14px; align-items: baseline; flex-wrap: wrap; font-size: 13px; color: #c8d3e0; margin: 4px 0 8px; }
+.mag-date { font-size: 18px; font-weight: bold; color: #dde3f0; }
+.mag-badge { padding: 2px 10px; border-radius: 99px; font-size: 12px; font-weight: bold; background: #2c3e55; color: #dde3f0; }
+.mag-st-下書き { background: #4a3a18; color: #ffcf8a; }
+.mag-st-確認済 { background: #1c4a26; color: #9be3a8; }
+.mag-st-配信済 { background: #1a3a72; color: #bdd4f5; }
+.mag-dim { color: #8a97a6; font-size: 12px; }
+.mag-note { margin: 6px 0 8px; padding: 8px 12px; border-radius: 6px; font-size: 13px; }
+.mag-note-quiet { color: #8a97a6; background: #142030; }
+.mag-note-alert { border: 2px solid #ff7043; background: #3a1d14; color: #ffd7c9; }
+.mag-stamp { font-size: 13px; color: #c8d3e0; margin-bottom: 10px; }
+.mag-grid { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 18px; align-items: start; }
+.mag-label { font-size: 13px; color: #9fb0c4; margin: 10px 0 4px; font-weight: bold; }
+.mag-count { font-weight: normal; margin-left: 8px; color: #9be3a8; }
+.mag-count.out { color: #ff9f40; }
+.mag-text { width: 100%; min-height: 300px; background: #0f1824; color: #e6edf5; border: 1px solid #2c3e55; border-radius: 6px; padding: 10px 12px; font-size: 15px; line-height: 1.8; font-family: inherit; resize: vertical; box-sizing: border-box; }
+.mag-text.mag-small { min-height: 80px; }
+.mag-warn { color: #ffb74d; font-size: 12px; margin: 4px 0; }
+.mag-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 12px; }
+.mag-msg { font-size: 12px; color: #9be3a8; }
+.mag-msg.bad { color: #ff7043; }
+.mag-src { margin: 0; padding-left: 1.4em; font-size: 13px; display: grid; gap: 8px; }
+.mag-src-point { color: #c8d3e0; }
+.mag-src a { color: #6cb6ff; word-break: break-all; }
+.mag-pre { white-space: pre-wrap; font-size: 13px; line-height: 1.6; }
+.mag-interp summary { cursor: pointer; color: #9fb0c4; font-size: 13px; margin-top: 10px; }
+.mag-vers { margin: 0; padding-left: 1.2em; font-size: 12px; color: #c8d3e0; display: grid; gap: 4px; }
+.mag-vers li.on { color: #ffcf8a; }
+.mag-vers li span { display: block; color: #8a97a6; }
