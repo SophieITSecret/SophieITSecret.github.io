@@ -3699,6 +3699,15 @@ function renderMag(rows) {
       </div>
     </div>`;
   magCount();
+  magGrow();
+}
+// 本文の欄は中身に合わせて伸ばす（スクロールせずに全文を見られるように。最低でも画面の半分ほど）
+function magGrow() {
+  for (const id of ['magSummary', 'magSchedule', 'magTrivia']) {
+    const t = document.getElementById(id); if (!t) continue;
+    t.style.height = 'auto';
+    t.style.height = (t.scrollHeight + 4) + 'px';
+  }
 }
 function magCount() {
   const el = document.getElementById('magCount'); if (!el) return;
@@ -3707,7 +3716,7 @@ function magCount() {
   el.classList.toggle('out', n < MAG_MIN || n > MAG_MAX);
 }
 function magEdited() {
-  magDirty = true; magCount();
+  magDirty = true; magCount(); magGrow();
   const changed = document.getElementById('magSummary').value !== (mag.summary || '');
   document.getElementById('magSrcWarn').hidden = !changed;
   document.getElementById('magMsg').textContent = '保存していない直しがあります';
