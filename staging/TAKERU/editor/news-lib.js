@@ -91,6 +91,33 @@ function assignNewsIds(items, added) {
   return added;
 }
 
+// GAS の Web アプリを呼ぶ。GAS は 1回目に 302 で別の住所（googleusercontent）へ飛ばし、
+//   2回目でそこから中身を返す。この2回目が、ときどき 404 になる（2026-10-05 に確認。同じ住所でも
+//   通ったり通らなかったりする）。そこで、飛び先は自分で取りに行き、404 なら少し待って呼び直す。
+//   POST も 302 のあとは GET で取りに行く（GAS の決まり。書き込みは1回目の POST で済んでいる）。
+//   POST は書き込みが2回にならないよう、1回目そのものは呼び直さない。
+async function gasFetch(url, opts = {}, tries = 3) {
+  const wait = ms => new Promise(r => setTimeout(r, ms));
+  const isPost = (opts.method || 'GET') === 'POST';
+  let last = null;
+  for (let i = 0; i < tries; i++) {
+    const r1 = await fetch(url, { ...opts, redirect: 'manual', signal: AbortSignal.timeout(60000) });
+    const loc = r1.headers.get('location');
+    if (!(r1.status >= 300 && r1.status < 400 && loc)) {
+      if (r1.status !== 404 || isPost) return r1;
+      last = r1; await wait(1500); continue;
+    }
+    // 飛び先は GET で取る。404 なら飛び先だけ呼び直す（POST の書き込みは済んでいるので、1回目には戻らない）
+    for (let j = 0; j < tries; j++) {
+      const r2 = await fetch(loc, { redirect: 'follow', signal: AbortSignal.timeout(60000) });
+      if (r2.status !== 404) return r2;
+      last = r2; await wait(1500);
+    }
+    if (isPost) return last;
+  }
+  return last;
+}
+
 // ガーディアンnews（GAS）から、担当Bが書いた最新のダイジェストを取ってくる。
 //   返り値 { ok, date, text } ／ 失敗時 { ok:false, error }
 async function fetchLatestDigest() {
@@ -100,7 +127,7 @@ async function fetchLatestDigest() {
   if (!s || !s.gasUrl || !s.token) return { ok: false, error: 'secrets.json に news.gasUrl / news.token がありません' };
   const url = s.gasUrl + '?action=latest_digest&token=' + encodeURIComponent(s.token);
   try {
-    const r = await fetch(url, { redirect: 'follow', signal: AbortSignal.timeout(60000) });
+    const r = await gasFetch(url);
     const t = await r.text();
     let j;
     try { j = JSON.parse(t); } catch { return { ok: false, error: 'GASの返事が読めません: ' + t.slice(0, 200) }; }
@@ -123,14 +150,14 @@ function gasConf() {
 async function gasGet(action, params = {}) {
   const s = gasConf();
   const q = new URLSearchParams({ action, token: s.token, ...params });
-  const r = await fetch(s.gasUrl + '?' + q, { redirect: 'follow', signal: AbortSignal.timeout(60000) });
+  const r = await gasFetch(s.gasUrl + '?' + q);
   const t = await r.text();
   try { return JSON.parse(t); }
   catch { return { ok: false, error: r.status === 404 ? 'GASにこの窓口がまだありません（デプロイの更新待ち？）' : 'GASの返事が読めません' }; }
 }
 async function gasPost(body) {
   const s = gasConf();
-  const r = await fetch(s.gasUrl, { method: 'POST', redirect: 'follow', signal: AbortSignal.timeout(60000),
+  const r = await gasFetch(s.gasUrl, { method: 'POST',
     headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ token: s.token, ...body }) });
   const t = (await r.text()).trim();
   if (t.startsWith('OK')) {
