@@ -3506,10 +3506,12 @@ async function findQrCard() {
 //   記録の形は D:\ms-common\ホームページのアクセス記録の形.md（ホームページ担当が書いている）。
 //   view＝ページを見た、click＝ボタンを押した（番号は「何_どのページ」）。回数であって人数ではない。
 const HP_PAGES = { index: 'トップ', takeru: 'TAKERU', koza: '講座の内容', koshi: '講師陣', annai: '受講案内・お申込み',
-                   about: 'ＭＳフォーラムについて', contact: 'お問い合わせ', kiyaku: '会員規約', privacy: '個人情報保護方針' };
+                   about: 'ＭＳフォーラムについて', contact: 'お問い合わせ', kiyaku: '会員規約', privacy: '個人情報保護方針',
+                   mailmag: 'TAKERUマガジン' };
 const HP_CLICKS = { join: '新規会員登録', joingen: '一般会員として登録', login: '会員ログイン', takeruapp: 'TAKERUを開く',
                     herobadge: 'ヒーロー「入門コース第9期生募集中！」', herotakeru: 'ヒーロー「スマホで学ぶTAKERU」',
-                    herocourse: 'ヒーロー「講師から学ぶ入門コース」', x: 'X（旧Twitter）', youtube: 'YouTube' };
+                    herocourse: 'ヒーロー「講師から学ぶ入門コース」', x: 'X（旧Twitter）', youtube: 'YouTube',
+                    mag: 'TAKERUマガジンを読む', magjoin: 'TAKERUマガジンに登録' };
 let hpAccess = { rows: [], loaded: false, error: null }, hpPeriod = 7;
 async function loadHpAccess() {
   try {
@@ -3594,7 +3596,7 @@ function renderHpAccess(body) {
   const clickTable = whatKeys.length ? `<div class="hp-scroll"><table class="hp-table"><tr><th>押されたもの</th>${cp.map(pg =>
     `<th>${esc(hpLabelPage(pg))}</th>`).join('')}<th>計</th></tr>${whatKeys.map(w => {
       const t = Object.values(clickWhat[w]).reduce((x, y) => x + y, 0);
-      return `<tr class="${w === 'join' || w === 'joingen' ? 'hp-strong' : ''}"><td>${esc(HP_CLICKS[w] || w)}</td>${cp.map(pg =>
+      return `<tr class="${['join', 'joingen', 'magjoin'].includes(w) ? 'hp-strong' : ''}"><td>${esc(HP_CLICKS[w] || w)}</td>${cp.map(pg =>
         `<td class="num">${clickWhat[w][pg] || ''}</td>`).join('')}<td class="num"><b>${t}</b></td></tr>`;
     }).join('')}</table></div>` : '<p class="rank-empty">この期間に押されたボタンはありません。</p>';
 
