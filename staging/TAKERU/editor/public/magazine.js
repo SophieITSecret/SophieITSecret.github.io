@@ -230,7 +230,8 @@ function magRenderEdit() {
       <div class="readonly">${m.market ? magEsc(m.market) + '\n' + magEsc(m.market_note || '') : '<span class="mag-dim">まだ入っていません（土曜7時ごろ自動で入ります）</span>'}</div></div>
     ${field('schedule', '今週以降の主要日程', '（自動で入ります。直したいときだけ直す。空で保存＝この欄はメールに出ません）', 'mid')}
     ${ro ? '' : '<div class="mag-btns"><button class="dash-refresh" onclick="magScheduleAuto()">↺ 日程を自動に戻す</button><span class="sub">確認済・配信済の号には効きません</span></div>'}
-    ${field('trivia', 'ご存知ですか', '（空で保存＝この欄はメールに出ません。カードの専用リンクは作業台の🔳 QRで）', 'mid')}
+    ${field('trivia', 'ご存知ですか', '（空で保存＝この欄はメールに出ません）', 'mid')}
+    ${ro ? '' : '<div class="mag-btns"><button class="dash-refresh" onclick="magAddCardLink()">🔗 カードのリンクを足す</button><span class="sub">元になったカードのコード（例 YOKO07）を入れると、欄の最後にTAKERUのカードへのリンクを足します</span></div>'}
     ${field('notice', 'MSフォーラムからのお知らせ', '（牧村さんが書く欄。空で保存＝この欄はメールに出ません）', 'mid')}
     <div class="mag-btns">
       ${ro ? `<button class="btn-load" onclick="magSaveNewVersion(true)">💾 配信後の小さな直しとして、新しい版で保存</button>`
@@ -459,7 +460,8 @@ function magRenderPre() {
     </div>
     <div id="magStashNote"></div>
     ${f('notice', 'MSフォーラムからのお知らせ', '（空で保存＝この欄はメールに出ません）')}
-    ${f('trivia', 'ご存知ですか', '（空で保存＝この欄はメールに出ません。カードの専用リンクは作業台の🔳 QRで）')}
+    ${f('trivia', 'ご存知ですか', '（空で保存＝この欄はメールに出ません）')}
+    <div class="mag-btns"><button class="dash-refresh" onclick="magAddCardLink()">🔗 カードのリンクを足す</button><span class="sub">元になったカードのコード（例 YOKO07）を入れると、欄の最後にTAKERUのカードへのリンクを足します</span></div>
     <div class="mag-btns"><button class="btn-save" onclick="magSavePre()">💾 先に入れておく（保存）</button>
       <span class="sub">主要日程とマーケットは、初版と土曜朝に自動で入ります</span></div>
     <div id="magMsgBox"></div>`;
@@ -473,4 +475,23 @@ async function magSavePre() {
   const j = await magPost(body);
   if (!j.ok) return magFail(j);
   magAfterSave(`先に入れておきました（${n}か所）。金曜の夜に初版ができたら、自動で中に入ります。`);
+}
+
+// ---------------- ご存知ですか：TAKERUのカードへのリンク ----------------
+//   2026-10-08 牧村さんの決定。欄の最後に「このカードをTAKERUで読む：」と専用リンク（?card=コード）を足す。
+//   メールではURLを必ず単独の行に置く決まり（全角の「）」「。」がリンクに入ると開けなくなる）なので、2行に分ける。
+//   公開していないカードは、リンクを開いてもトップから始まってしまうので、確かめてから足す。
+async function magAddCardLink() {
+  const t = document.getElementById('magF_trivia'); if (!t) return;
+  const code = (prompt('元になったカードのコード（例 YOKO07）', '') || '').trim().toUpperCase();
+  if (!code) return;
+  let item = null;
+  try { const j = await (await fetch('/api/card-link?code=' + encodeURIComponent(code))).json(); if (j.ok) item = j.item; } catch (e) {}
+  if (!item) { alert(`「${code}」というカードが見つかりません。作業台の左の一覧で、カードのコードを確かめてください。`); return; }
+  if (!item.published && !confirm(`「${item.title}」は、まだ公開していないカードです。リンクを開いてもトップから始まってしまいます。それでも足しますか？`)) return;
+  // 前に足したリンクがあれば置き換える（1つだけにする）
+  let v = t.value.replace(/\n*このカードをTAKERUで読む：\nhttps:\/\/takeru\.ms-forum\.com\/\?card=[A-Za-z0-9]+\s*$/, '').replace(/\s+$/, '');
+  t.value = v + (v ? '\n\n' : '') + 'このカードをTAKERUで読む：\n' + item.url;
+  magOnInput('trivia');
+  magMsg(`「${item.title}」へのリンクを足しました。保存すると入ります。`, true);
 }
