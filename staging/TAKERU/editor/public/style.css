@@ -673,3 +673,57 @@ textarea.svg-overlay-input { min-height:120px; font-family:monospace; font-size:
 .mag-vers { margin: 0; padding-left: 1.2em; font-size: 12px; color: #c8d3e0; display: grid; gap: 4px; }
 .mag-vers li.on { color: #ffcf8a; }
 .mag-vers li span { display: block; color: #8a97a6; }
+
+/* 📮 TAKERUマガジン（状況・入力・プレビュー・実績） */
+.mag-top .mag-sel { margin-left: auto; background: #0f1824; color: #dde3f0; border: 1px solid #2c3e55; border-radius: 4px; padding: 4px 8px; font-size: 13px; }
+.mag-tabs { display: flex; gap: 6px; align-items: center; border-bottom: 1px solid #2c3e55; margin: 4px 0 10px; flex-wrap: wrap; }
+.mag-tabs button { background: none; border: 1px solid transparent; border-bottom: none; color: #9fb0c4; padding: 6px 16px; font-size: 14px; cursor: pointer; border-radius: 6px 6px 0 0; }
+.mag-tabs button.on { color: #ffcf8a; border-color: #2c3e55; background: #18263a; font-weight: bold; }
+.mag-updated { margin-left: auto; font-size: 11px; color: #8a97a6; }
+.mag-updated.bad { color: #ff9f40; }
+.mag-pane { max-width: 860px; }
+.mag-band { padding: 12px 14px; border-radius: 8px; background: #142030; margin-bottom: 10px; display: grid; gap: 6px; }
+.mag-band .row { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+.mag-test { background: #6a1b1b; color: #ffd7d7; font-weight: bold; padding: 3px 12px; border-radius: 6px; font-size: 15px; letter-spacing: .05em; }
+.mag-alert { border: 2px solid #ff7043; background: #3a1d14; color: #ffd7c9; border-radius: 6px; padding: 8px 12px; font-size: 13px; }
+.mag-alert.info { border-color: #4a6a9a; background: #142438; color: #c8d8f0; }
+.mag-okline { color: #9be3a8; font-size: 13px; }
+.mag-h3 { font-size: 14px; color: #9fb0c4; margin: 16px 0 6px; font-weight: bold; }
+.mag-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.mag-list li { display: grid; grid-template-columns: 28px minmax(0,1fr); gap: 8px; padding: 8px 10px; border-radius: 6px; background: #121c2a; align-items: start; }
+.mag-list li .ic { font-size: 16px; text-align: center; }
+.mag-list li .t { font-size: 14px; color: #dde3f0; }
+.mag-list li .d { font-size: 12px; color: #8a97a6; margin-top: 2px; }
+.mag-todo li.todo { background: #3a2a10; border: 1px solid #ff9f40; cursor: pointer; }
+.mag-todo li.todo .t { font-size: 15px; font-weight: bold; color: #ffd59a; }
+.mag-todo li.done .ic { color: #7cc47f; }
+.mag-todo li.na, .mag-todo li.wait { opacity: .65; }
+.mag-sec li.empty .t { color: #8a97a6; }
+.mag-next { padding: 10px 12px; border-radius: 6px; background: #1a3a72; color: #e6edf5; font-size: 14px; }
+.mag-steps li.done .ic { color: #7cc47f; }
+.mag-steps li.late { background: #3a1d14; border: 1px solid #ff7043; }
+.mag-steps li.late .ic { color: #ff7043; }
+.mag-steps li.next { outline: 2px solid #6cb6ff; }
+.mag-steps li.mine .t::after { content: '　← 牧村さん'; color: #ffcf8a; font-size: 12px; font-weight: bold; }
+.mag-small-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.mag-small-table td, .mag-small-table th { border-bottom: 1px solid #22324a; padding: 4px 6px; text-align: left; vertical-align: top; }
+.mag-field { margin-top: 14px; }
+.mag-field .lbl { font-size: 14px; color: #c8d3e0; font-weight: bold; display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+.mag-field .hint { font-size: 12px; color: #8a97a6; font-weight: normal; }
+.mag-field textarea { width: 100%; box-sizing: border-box; background: #0f1824; color: #e6edf5; border: 1px solid #2c3e55; border-radius: 6px; padding: 10px 12px; font-size: 15px; line-height: 1.8; font-family: inherit; resize: vertical; margin-top: 4px; }
+.mag-field textarea.big { min-height: 50vh; }
+.mag-field textarea.mid { min-height: 120px; }
+.mag-field .readonly { background: #121c2a; border-radius: 6px; padding: 8px 12px; white-space: pre-wrap; font-size: 14px; margin-top: 4px; }
+.mag-count2 { font-size: 12px; color: #9be3a8; font-weight: normal; }
+.mag-count2.out { color: #ff9f40; }
+.mag-btns { display: flex; gap: 8px; flex-wrap: wrap; margin: 14px 0 6px; align-items: center; }
+.mag-btns .sub { font-size: 12px; color: #8a97a6; }
+.mag-msgbox { padding: 8px 12px; border-radius: 6px; font-size: 13px; margin-top: 8px; }
+.mag-msgbox.ok { background: #1c3320; color: #9be3a8; }
+.mag-msgbox.bad { background: #3a1d14; color: #ffd7c9; border: 1px solid #ff7043; }
+.mag-mail { background: #fbfbf8; color: #1a1a1a; border-radius: 8px; padding: 18px 20px; white-space: pre-wrap; font-size: 14px; line-height: 1.8; font-family: "Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo, sans-serif; max-width: 680px; }
+.mag-hist-row { cursor: pointer; }
+.mag-hist-row:hover td { background: #18263a; }
+.mag-chip { display: inline-block; font-size: 11px; padding: 1px 7px; border-radius: 99px; background: #22324a; color: #c8d3e0; margin-right: 3px; }
+.mag-chip.off { opacity: .4; }
+@media (max-width: 700px) { .mag-pane { max-width: 100%; } }

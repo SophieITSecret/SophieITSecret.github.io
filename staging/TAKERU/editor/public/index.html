@@ -557,16 +557,22 @@
   </div>
 </div>
 
-<!-- TAKERUマガジン：確認・添削・OK -->
+<!-- TAKERUマガジン：状況・入力・プレビュー・実績（public/magazine.js） -->
 <div id="magModal" class="modal-overlay">
   <div class="modal-box mag-modal-box">
-    <div class="modal-head">
+    <div class="modal-head mag-top">
       <h2>📮 TAKERUマガジン</h2>
-      <span class="mag-issue-pick">配信日 <input type="date" id="magIssue" onchange="loadMag(this.value)"></span>
-      <button class="dash-refresh" onclick="loadMag()" title="最新を読み直す">↻ 読み直す</button>
+      <select id="magIssueSel" class="mag-sel" onchange="magPickIssue(this.value)" title="号を選ぶ"></select>
       <button class="btn-cancel" onclick="closeMag()">✕ 閉じる</button>
     </div>
-    <div id="magBody" class="mag-body"><p class="qr-empty">読み込み中…</p></div>
+    <div class="mag-tabs">
+      <button data-mtab="status" onclick="magTab('status')">状況</button>
+      <button data-mtab="edit" onclick="magTab('edit')">入力</button>
+      <button data-mtab="preview" onclick="magTab('preview')">プレビュー</button>
+      <button data-mtab="history" onclick="magTab('history')">実績</button>
+      <span id="magUpdated" class="mag-updated"></span>
+    </div>
+    <div id="magPane" class="mag-pane"><p class="qr-empty">読み込み中…</p></div>
   </div>
 </div>
 
@@ -752,5 +758,6 @@
 </div>
 
 <script src="app.js"></script>
+<script src="magazine.js"></script>
 </body>
 </html>

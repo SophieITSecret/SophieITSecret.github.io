@@ -1,20 +1,380 @@
 {
-  "_説明": "TAKERUマガジンの画面を試すための見本（MAGAZINE_MOCK=1 で作業台を立てたときだけ使う）。中身は架空。本番には関係しない。",
-  "issue_date": "2099-12-31",
-  "version": 1,
-  "period": "2099-12-24〜2099-12-30",
-  "summary": "【見本】ここに、Cowork君が金曜の夜に書いた「先週のまとめ」が入ります。約500字で、段落は空行で区切られます。\n\nこれは画面を試すための架空の文です。実際の記事の内容ではありません。本文を直して「保存」を押すと新しい版になり、「OK」を押すと確認済になります。\n\n文字数は、改行と空白を除いて数えます。目安は480字から520字で、外れると数字の色が変わります。保存は止めません。",
-  "sources": [
-    { "point": "第1段落の1文目", "title": "Example headline one (sample)", "url": "https://www.theguardian.com/world" },
-    { "point": "第2段落の2文目", "title": "Example headline two (sample)", "url": "https://www.theguardian.com/world" }
-  ],
-  "schedule": "",
-  "trivia": "",
-  "status": "下書き",
-  "reason": "金曜夜の初版（見本）\n解釈メモ：第2段落の2文目は、筆者の読みが入っています（見本）。",
-  "check_note": "【要確認】（見本）金曜夜以降に大きなニュースがあった場合、ここに見出し・原URL・理由・追記案が出ます。",
-  "updated_at": "2099-12-31T06:50:00+09:00",
-  "written_at": "2099-12-30T20:58:00+09:00",
-  "confirmed_at": "",
-  "stamp_text": "（見本）12月30日 20:58 作成（未確認）"
+  "_説明": "TAKERUマガジンの画面を試すための見本（MAGAZINE_MOCK=1 で作業台を立てたときだけ使う）。2026-10-07 に第0号（試験号）の本物の返事を写したもの。",
+  "latest": {
+    "ok": true,
+    "issue_date": "2026-10-03",
+    "version": 3,
+    "period": "2026-09-26〜2026-10-02",
+    "summary": "イランは、自国の港湾への海上封鎖を米国が解けばホルムズ海峡を1週間以内に開き、核協議も再開すると提案したが、トランプ米大統領は9月26日、これを拒否したと述べた。ウォルツ国連大使は27日、イラン側がすべてを先に求めたためだと説明した。28日にはイランが交渉の予定はないとし、トランプ氏は仲介者を通じ協議したと主張した。米国防総省は30日、イラクからの米軍撤収の完了を発表し、イランと同盟勢力は勝利と祝った。\n\n海峡からの原油輸出は、パイプラインや船同士の積み替えで戦争前の水準にほぼ戻った。だが軽油など石油製品の流れは制約が続き、価格を押し上げている。G7は備蓄1億バレルを放出すると報じられた。トランプ氏はウクライナのロシア製油所攻撃が燃料高を助長していると批判するが、アナリストはイラン戦争が主因とみる。\n\n28日、キーウの国立科学アカデミーにロシアのドローンが命中し、少なくとも1人が死亡した。プーチン大統領は10月1日、ロシアへの攻撃があれば「あらゆる兵器」が使えると警告した。\n\n韓国は、兵士3人が負傷した爆発は北朝鮮の地雷によるとして謝罪を求めた。駐中国米大使は27日、トランプ氏が習近平国家主席に米国製兵器の購入を打診したと明かした。",
+    "sources": [
+      {
+        "point": "イランの提案（封鎖解除と引き換えに海峡を1週間以内に再開・核協議再開）をトランプ氏が9/26に拒否",
+        "title": "Trump rejects Iran’s seven-day peace deal to reopen strait of Hormuz",
+        "url": "https://www.theguardian.com/world/2026/sep/26/trump-dismiss-iran-seven-day-peace-deal-hormuz"
+      },
+      {
+        "point": "ウォルツ国連大使が27日、イラン側がすべてを先に求めたためと説明",
+        "title": "UN ambassador Waltz says Iran was not negotiating ‘in good faith’ to end war",
+        "url": "https://www.theguardian.com/us-news/2026/sep/27/trump-un-ambassador-iran-war"
+      },
+      {
+        "point": "28日、イランは交渉の予定なしとし、トランプ氏は仲介者を通じ協議したと主張（見出し・小見出し）",
+        "title": "Trump doubles down on claims US will win war with Iran ‘one way or another’ as talks are in doubt – US politics live",
+        "url": "https://www.theguardian.com/us-news/live/2026/sep/28/donald-trump-iran-negotiations-fuel-deportations-media-china-latest-news-updates"
+      },
+      {
+        "point": "米国防総省がイラクからの米軍撤収完了を発表／イランと同盟勢力は勝利として祝った",
+        "title": "Pentagon says it has formally completed withdrawal of US troops from Iraq",
+        "url": "https://www.theguardian.com/us-news/2026/sep/30/pentagon-formal-withdrawal-troops-iraq"
+      },
+      {
+        "point": "海峡からの原油輸出は代替手段で戦争前の水準にほぼ回復／軽油など石油製品は制約が続き価格を押し上げ",
+        "title": "Crude oil exports from strait of Hormuz largely return to pre-war levels",
+        "url": "https://www.theguardian.com/business/2026/oct/01/crude-oil-exports-strait-of-hormuz-transport-gulf-region-diesel"
+      },
+      {
+        "point": "G7が備蓄1億バレルを放出（見出し）",
+        "title": "G7 to release 100m barrels from reserves to combat surging diesel prices – as it happened",
+        "url": "https://www.theguardian.com/world/live/2026/oct/02/france-schools-protests-violence-ukraine-kallas-rome-pope-latest-news-updates"
+      },
+      {
+        "point": "トランプ氏がウクライナのロシア製油所攻撃を批判／アナリストはイラン戦争が主因とみる",
+        "title": "Ukraine persists with Russian oil refinery strikes in defiance of Trump",
+        "url": "https://www.theguardian.com/world/2026/oct/01/ukraine-russian-oil-refinery-strikes-defying-trump-fuel-price-warnings"
+      },
+      {
+        "point": "28日、キーウの国立科学アカデミーにロシアのドローン、少なくとも1人死亡",
+        "title": "Russian strike on Kyiv’s science academy kills at least one in latest daytime attack",
+        "url": "https://www.theguardian.com/world/2026/sep/28/russia-strike-on-kyiv-science-academy-drone-ukraine"
+      },
+      {
+        "point": "プーチン氏が10/1、ロシアへの攻撃があれば「あらゆる兵器」が使えると警告（見出し・小見出し）",
+        "title": "Putin says ‘all weapons at disposal’ if there’s an attack on Russia – as it happened",
+        "url": "https://www.theguardian.com/world/live/2026/oct/01/europe-latest-news-updates-russia-strikes-ukraine-nato"
+      },
+      {
+        "point": "韓国が、兵士3人負傷の地雷爆発で北朝鮮に謝罪を要求",
+        "title": "South Korea calls for apology from North Korea after mine injures three soldiers",
+        "url": "https://www.theguardian.com/world/2026/sep/30/south-korea-apology-north-korea-mine-injures-soldiers"
+      },
+      {
+        "point": "駐中国米大使が27日、トランプ氏が習氏に米国製兵器の購入を持ちかけたと発言",
+        "title": "Trump asked Xi Jinping if China would like to buy US weapons, American ambassador says",
+        "url": "https://www.theguardian.com/world/2026/sep/28/trump-xi-jinping-china-buy-weapons"
+      }
+    ],
+    "schedule": "・10月27日　イスラエル総選挙\n・11月3日　米中間選挙（下院435議席・上院35議席）\n・11月18〜19日　APEC首脳会議（中国・深圳）\n・11月28日　台湾の統一地方選挙\n・12月14〜15日　G20サミット（米国・マイアミ）",
+    "trivia": "横須賀基地と日米同盟の要\n【問】 カレーや観光で有名な横須賀が、実は世界でもほかに例がない「特別な海軍基地」だってご存知ですか？\n【解説】 ズバリ、日本の海上自衛隊と、アメリカの最強艦隊が「ひとつの港」を真向かいで分け合って守っている、世界で唯一の場所だからです。 実は横須賀は、全国の護衛艦や潜水艦に作戦を指示する「海上自衛隊の首都（頭脳）」です。そして同じ港の真向かいには、アメリカ本土以外で唯一、「巨大な原子力空母のホームグラウンド（母港）」が置かれています。日米の主力と頭脳がひとつの港に集結し、この横須賀からアジア太平洋全体の平和を24時間コントロールしているのです。",
+    "status": "下書き",
+    "reason": "テスト実行。金曜夜の初版（自動作成）。解釈メモ：【読みが入っている文】(1)イラク撤収をイランの段落の末尾に置いたのは構成上の判断。素材が直接つないでいるのは「イランと同盟勢力が撤収を勝利として祝った」の一点だけ。(2)「28日にはイランが交渉の予定はないとし」の日付はライブブログの日付で、イラン側の発言日そのものは素材にない。(3)韓国の謝罪要求は記事の日付が9/30、爆発は9/21（本文では日付を省いた）。(4)「今週の見どころ」は素材から言えないため書いていない。(5)前号（2099-12-31の試験号）と対象期間が同じため題材は重なるが、段落構成と結びは変えた。【見出しだけで確認した記事】Trump doubles down on claims US will win war with Iran ‘one way or another’…（US politics live。抜粋は大学スポーツ法案の話）／G7 to release 100m barrels from reserves…（抜粋は仏の学校抗議の話。放出の時期・内訳は不明）／Putin says ‘all weapons at disposal’…（抜粋は欧州の軽油備蓄協議の話。発言の場や文脈は不明）。【字数の都合などで落とした記事】Five arrested on terrorism charges after explosives found near RAF base used by US／Questions remain over Iran’s link to alleged RAF Fairford bomb plot（イランの関与は捜査中で未確認、5人は訴追なしで保釈）／Estonia blames Russia for arson attack on drone maker supplying Ukraine（クレムリンは関与を否定）／Pete Hegseth confirms cutting 20% of US military generals and admirals／Pete Hegseth appoints Elon Musk to US taskforce on future of warfare／‘The enemy is tearing our city apart’: terror in Kyiv as Russia ramps up attacks（クリチコ市長「平時」ではない）／Swiss voters reject stricter neutrality rules that would have curbed Nato cooperation／MI5 warns UK universities over ‘theft of tech secrets by Chinese front company’／Saudi Arabia urged to reconcile with UAE to drive back Houthi separatists in Yemen／‘Hell on earth’: last residents eat weeds to survive in Russian-occupied Oleshky。欧州の軽油備蓄放出をめぐる協議と、米国が独仏に放出を求めたとの報道（Europe live 10/1、欧州委はコメントせず）も省いた。",
+    "check_note": "",
+    "updated_at": "2026-10-07T16:06:19+09:00",
+    "written_at": "2026-10-07T15:39:55+09:00",
+    "confirmed_at": "",
+    "reject_note": "",
+    "notice": "・来週10月10日（土）、TAKERUマガジン創刊号が発刊されます。世界の軍事ニュース、マーケットの動き、軍事の基礎知識などを、週1回配信します。\n・10月9日（金）から、軍事・戦略検定講座の第9期がスタートします。",
+    "is_test": true,
+    "issue_label": "第0号（試験）",
+    "market": "日経平均　68,309円（+2.9%）\nS&P500　7,722.72（-0.3%）\nドル円　157.93円（-0.6%）\nWTI原油　91.11ドル（-1.4%）",
+    "market_note": "※10月2日（金）の終値と、前週末（9月25日）比。出典：Yahoo!ファイナンス",
+    "market_items": [
+      {
+        "key": "N225",
+        "name": "日経平均",
+        "unit": "円",
+        "close": 68309.4609375,
+        "prev_close": 66364.203125,
+        "change_pct": 2.93,
+        "close_date": "2026-10-02",
+        "prev_date": "2026-09-25"
+      },
+      {
+        "key": "SPX",
+        "name": "S&P500",
+        "unit": "",
+        "close": 7722.72021484375,
+        "prev_close": 7743.41015625,
+        "change_pct": -0.27,
+        "close_date": "2026-10-02",
+        "prev_date": "2026-09-25"
+      },
+      {
+        "key": "USDJPY",
+        "name": "ドル円",
+        "unit": "円",
+        "close": 157.927001953125,
+        "prev_close": 158.81100463867188,
+        "change_pct": -0.56,
+        "close_date": "2026-10-02",
+        "prev_date": "2026-09-25"
+      },
+      {
+        "key": "WTI",
+        "name": "WTI原油",
+        "unit": "ドル",
+        "close": 91.11000061035156,
+        "prev_close": 92.41000366210938,
+        "change_pct": -1.41,
+        "close_date": "2026-10-02",
+        "prev_date": "2026-09-25"
+      }
+    ],
+    "stamp_text": "10月7日 15:39 作成（未確認）"
+  },
+  "dashboard": {
+    "ok": true,
+    "now": "2026-10-03T07:40:00+09:00",
+    "selectable_issues": [
+      {
+        "issue_date": "2026-10-03",
+        "label": "第0号（試験）",
+        "is_test": true,
+        "focus": true
+      }
+    ],
+    "focus_issue": "2026-10-03",
+    "just_sent": "",
+    "friday": "2026-10-02",
+    "issue": {
+      "issue_date": "2026-10-03",
+      "exists": true,
+      "version": 3,
+      "status": "下書き",
+      "stamp_text": "10月7日 15:39 作成（未確認）",
+      "confirmed_at": "",
+      "check_note": "",
+      "delivered": false,
+      "summary_chars": 518,
+      "is_test": true,
+      "label": "第0号（試験）"
+    },
+    "sections": [
+      {
+        "key": "summary",
+        "label": "先週の世界の動き",
+        "state": "ok",
+        "detail": "第3版・518字"
+      },
+      {
+        "key": "market",
+        "label": "マーケット動向",
+        "state": "ok",
+        "detail": "4/4銘柄そろっています"
+      },
+      {
+        "key": "schedule",
+        "label": "今週以降の主要日程",
+        "state": "ok",
+        "detail": "5行"
+      },
+      {
+        "key": "trivia",
+        "label": "ご存知ですか",
+        "state": "ok",
+        "detail": "284字"
+      },
+      {
+        "key": "notice",
+        "label": "MSフォーラムからのお知らせ",
+        "state": "ok",
+        "detail": "107字"
+      }
+    ],
+    "todo": [
+      {
+        "key": "notice",
+        "label": "お知らせ欄を入れる（なければそのままでOK）",
+        "due": "2026-10-03T07:30",
+        "due_label": "土曜 7:30 ごろまで（金曜夜の初版までに入れておくと楽）",
+        "state": "done"
+      },
+      {
+        "key": "confirm",
+        "label": "下書きを確認して「確認済」にする（任意。しなくても8:00に最新版が送られます）",
+        "due": "2026-10-03T08:00",
+        "due_label": "土曜 8:00 まで",
+        "state": "todo"
+      }
+    ],
+    "steps": [
+      {
+        "id": "fetch_am",
+        "at": "2026-10-02T06:00",
+        "when_label": "10月2日 6:00",
+        "who": "自動",
+        "what": "ガーディアン記事の取り込み（朝）",
+        "mine": false,
+        "state": "passed",
+        "detail": ""
+      },
+      {
+        "id": "days_am",
+        "at": "2026-10-02T07:17",
+        "when_label": "10月2日 7:17",
+        "who": "担当D",
+        "what": "記事から今後の予定を拾う（朝）",
+        "mine": false,
+        "state": "passed",
+        "detail": ""
+      },
+      {
+        "id": "fetch_pm",
+        "at": "2026-10-02T18:00",
+        "when_label": "10月2日 18:00",
+        "who": "自動",
+        "what": "ガーディアン記事の取り込み（夕方）",
+        "mine": false,
+        "state": "passed",
+        "detail": ""
+      },
+      {
+        "id": "days_pm",
+        "at": "2026-10-02T20:17",
+        "when_label": "10月2日 20:17",
+        "who": "担当D",
+        "what": "記事から今後の予定を拾う（夜）",
+        "mine": false,
+        "state": "passed",
+        "detail": ""
+      },
+      {
+        "id": "draft",
+        "at": "2026-10-02T20:50",
+        "when_label": "10月2日 20:50",
+        "who": "担当C",
+        "what": "先週の動きの初版を作る",
+        "mine": false,
+        "state": "done",
+        "detail": "第3版まであります"
+      },
+      {
+        "id": "insurance",
+        "at": "2026-10-02T21:30",
+        "when_label": "10月2日 21:30",
+        "who": "保険の担当",
+        "what": "初版がまだなければ代わりに作る（あれば何もしない）",
+        "mine": false,
+        "state": "done",
+        "detail": "初版があるので不要でした"
+      },
+      {
+        "id": "sat_check",
+        "at": "2026-10-03T06:50",
+        "when_label": "10月3日 6:50",
+        "who": "土曜チェック",
+        "what": "大きな出来事が起きていないか確認し、あれば要確認メモを書く",
+        "mine": false,
+        "state": "passed",
+        "detail": ""
+      },
+      {
+        "id": "market",
+        "at": "2026-10-03T07:05",
+        "when_label": "10月3日 7:05",
+        "who": "マーケット取り込み",
+        "what": "日経平均・S&P500・ドル円・WTIの終値を取り込む",
+        "mine": false,
+        "state": "done",
+        "detail": "4/4銘柄"
+      },
+      {
+        "id": "send",
+        "at": "2026-10-03T08:00",
+        "when_label": "10月3日 8:00",
+        "who": "会員管理",
+        "what": "メールを送る",
+        "mine": false,
+        "state": "upcoming",
+        "detail": ""
+      },
+      {
+        "id": "hp",
+        "at": "2026-10-03T08:00",
+        "when_label": "10月3日 8:00",
+        "who": "HP担当",
+        "what": "HPの号ページを公開する",
+        "mine": false,
+        "state": "upcoming",
+        "detail": ""
+      },
+      {
+        "id": "post",
+        "at": "2026-10-03T08:30",
+        "when_label": "10月3日 8:30",
+        "who": "Claude",
+        "what": "配信後チェック（送信・公開・表示を確認）",
+        "mine": false,
+        "state": "upcoming",
+        "detail": ""
+      }
+    ],
+    "next_step": "send",
+    "alerts": [],
+    "upcoming_schedule": [
+      {
+        "date": "2026-10-27",
+        "end_date": "",
+        "text": "イスラエル総選挙",
+        "kind": "軸"
+      },
+      {
+        "date": "2026-11-03",
+        "end_date": "",
+        "text": "米中間選挙（下院435議席・上院35議席）",
+        "kind": "軸"
+      },
+      {
+        "date": "2026-11-18",
+        "end_date": "2026-11-19",
+        "text": "APEC首脳会議（中国・深圳）",
+        "kind": "軸"
+      },
+      {
+        "date": "2026-11-28",
+        "end_date": "",
+        "text": "台湾の統一地方選挙",
+        "kind": "軸"
+      },
+      {
+        "date": "2026-12-14",
+        "end_date": "2026-12-15",
+        "text": "G20サミット（米国・マイアミ）",
+        "kind": "軸"
+      }
+    ],
+    "upcoming_issues": [
+      {
+        "issue_date": "2026-10-03",
+        "has_draft": true,
+        "status": "下書き",
+        "version": 3
+      },
+      {
+        "issue_date": "2026-10-10",
+        "has_draft": false,
+        "status": "",
+        "version": 0
+      },
+      {
+        "issue_date": "2026-10-17",
+        "has_draft": false,
+        "status": "",
+        "version": 0
+      },
+      {
+        "issue_date": "2026-10-24",
+        "has_draft": false,
+        "status": "",
+        "version": 0
+      }
+    ],
+    "history": [],
+    "stats": {
+      "issues_sent": 0,
+      "issues_in_list": 0,
+      "test_issues": 0,
+      "avg_chars": 0,
+      "total_post_fixes": 0
+    }
+  }
 }
