@@ -69,12 +69,14 @@ function magFillIssueSel(list) {
 // ---------------- 状況 ----------------
 async function magLoadDash(quiet, tries = 2) {
   const pane = document.getElementById('magPane');
-  if (!quiet && !magDash) pane.innerHTML = '<p class="qr-empty">状況を読み込み中…</p>';
+  if (!quiet && !magDash) magWaiting('状況を読み込み中…');
   try {
     const j = await (await fetch('/api/magazine/dashboard' + (magIssue ? '?issue=' + encodeURIComponent(magIssue) : ''))).json();
     if (!j.ok) throw new Error(j.error || '不明');
+    if (magDoc && magDoc.issue_date === j.focus_issue && (!!magDoc.pre) === !!(j.issue && j.issue.exists)) magDoc = null;   // 先置き⇔初版が入れ替わった
     magDash = j; magSetUpdated(true);
     magFillIssueSel(j.selectable_issues);
+    magWaitEnd();
     if (magTabName === 'status') magRenderStatus();
     return j;
   } catch (e) {
@@ -134,10 +136,31 @@ function magGoInput(key) {
 }
 
 // ---------------- 入力 ----------------
+// GASの返事は数秒〜1分ほどばらつく（2026-10-07 に 60秒・101秒を確認）。待っているあいだは秒数を出して、
+//   止まっているのではないとわかるようにする
+let magWaitTimer = null;
+function magWaiting(text) {
+  const pane = document.getElementById('magPane'), t0 = Date.now();
+  clearInterval(magWaitTimer);
+  const draw = () => { const sec = Math.round((Date.now() - t0) / 1000);
+    pane.innerHTML = `<p class="qr-empty">${magEsc(text)}　GASの返事を待っています（${sec}秒）${sec >= 20 ? '<br>GASが混んでいると1分ほどかかることがあります。そのままお待ちください。' : ''}</p>`; };
+  draw(); magWaitTimer = setInterval(draw, 1000);
+}
+function magWaitEnd() { clearInterval(magWaitTimer); magWaitTimer = null; }
 async function magLoadDoc(render, tries = 2) {
-  const pane = document.getElementById('magPane');
-  if (render) pane.innerHTML = '<p class="qr-empty">下書きを読み込み中…</p>';
   const issue = magIssue || (magDash && magDash.focus_issue) || '';
+  // 一度読んだ号は覚えておく（タブを行き来するたびに読み直さない）。読み直しは保存のあとと号の切り替え
+  if (magDoc && magDoc.issue_date === issue) { if (render) magRenderEdit(); return magDoc; }
+  // 状況ボードで「まだ下書きが無い」とわかっている号は、本文を取りに行かずに先置きの画面にする
+  const di = magDash && magDash.focus_issue === issue ? magDash.issue : null;
+  if (di && !di.exists) {
+    const inp = di.inputs || {};
+    magDoc = { pre: true, issue_date: issue, version: 0, notice: inp.notice || '', trivia: inp.trivia || '',
+               updated_at: inp.updated_at || '', is_test: !!di.is_test, issue_label: di.label || '', mock: magDash.mock };
+    if (render) magRenderEdit();
+    return magDoc;
+  }
+  if (render) magWaiting('下書きを読み込み中…');
   try {
     const j = await (await fetch('/api/magazine' + (issue ? '?issue=' + encodeURIComponent(issue) : ''))).json();
     if (!j.ok && j.error !== 'no magazine draft') throw new Error(j.error || '不明');
@@ -147,13 +170,15 @@ async function magLoadDoc(render, tries = 2) {
       const p = await (await fetch('/api/magazine/inputs?issue=' + encodeURIComponent(issue))).json();
       if (!p.ok) throw new Error(p.error || '不明');
       if (!p.has_draft) magDoc = { pre: true, issue_date: issue, version: 0, notice: p.notice || '', trivia: p.trivia || '',
-        updated_at: p.updated_at || '', is_test: !!(magDash && magDash.issue && magDash.issue.is_test), issue_label: (magDash && magDash.issue && magDash.issue.label) || '', mock: p.mock };
+        updated_at: p.updated_at || '', is_test: !!(di && di.is_test), issue_label: (di && di.label) || '', mock: p.mock };
     }
+    magWaitEnd();
     if (render) magRenderEdit();
     return magDoc;
   } catch (e) {
     if (tries > 0) { await new Promise(r => setTimeout(r, 4000)); return magLoadDoc(render, tries - 1); }
-    if (render) pane.innerHTML = `<p class="qr-warn">読み込めませんでした：${magEsc(e.message)}</p>`;
+    magWaitEnd();
+    if (render) document.getElementById('magPane').innerHTML = `<p class="qr-warn">読み込めませんでした：${magEsc(e.message)}　<button class="dash-refresh" onclick="magDoc=null;magTab('edit')">もう一度</button></p>`;
     return null;
   }
 }
@@ -272,6 +297,9 @@ function magFail(j) {
 }
 async function magAfterSave(text) {
   try { localStorage.removeItem(magStashKey()); } catch (e) {}
+  const wasPre = magDoc && magDoc.pre, issue = magDoc && magDoc.issue_date;
+  magDoc = null;
+  if (wasPre) { await magLoadDash(true); if (magDash && magDash.focus_issue !== issue) magDash = null; }
   await magLoadDoc(true);
   magMsg(text, true);
   magLoadDash(true);
@@ -326,20 +354,36 @@ async function magScheduleAuto() {
 }
 
 // ---------------- プレビュー（メールに載る形） ----------------
-//   規則（10/6・10/7の追記）：5つの欄をこの順に。空の欄は見出しごと出さない。market の直下に market_note。
-//   本文の後ろに stamp_text。根拠はメールに入れず、号ページへのリンクで見せる。
-//   ※会員システムの実際の組み立て（件名・区切り・末尾の発行者や配信停止）とそろえる作業中
+//   会員システム担当から受け取った組み立ての規則（2026-10-07）と同じものを作る。ここと実際のメールが違わないことが大事。
+//   件名：【TAKERUマガジン】2026年10月10日号（試験号は末尾に「（テスト）」）
+//   本文：「TAKERUマガジン　2026年10月10日号」／「ＭＳフォーラムがお届けする、軍事と戦略の週刊マガジンです。」／空行
+//         （事務局の画面でその号に添える一言を書いてあれば：その文、空行 ← 作業台からは見えない）
+//         各欄「■ 見出し」→空行→本文→（添え：空行→添え）→空行。空の欄は見出しごと出さない
+//           先週の世界の動き（period）＋添え「（stamp_text）」／マーケット動向＋添え market_note／主要日程／ご存知ですか／お知らせ
+//         「根拠の記事つきの全文は、こちらでもお読みいただけます：」＋号ページのURL（試験号は test-YYYYMMDD.html）
+//         末尾（会員システムが付ける）：発行・お問い合わせ・バックナンバー・読者ごとの配信停止リンク。宛名は付けない
+function magIssueJa(iso) { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso || ''); return m ? `${+m[1]}年${+m[2]}月${+m[3]}日号` : iso; }
+function magMailSubject(m) { return `【TAKERUマガジン】${magIssueJa(m.issue_date)}${m.is_test ? '（テスト）' : ''}`; }
 function magBuildMail(m, v) {
-  const sec = (title, body) => body && String(body).trim() ? `■ ${title}\n${String(body).trim()}\n` : '';
-  const parts = [
-    sec('先週の世界の動き', (v.summary || '').trim() + (m.stamp_text ? `\n\n（${m.stamp_text}）` : '')),
-    sec('マーケット動向', m.market ? m.market + (m.market_note ? '\n' + m.market_note : '') : ''),
-    sec('今週以降の主要日程', v.schedule),
-    sec('ご存知ですか', v.trivia),
-    sec('MSフォーラムからのお知らせ', v.notice),
-  ].filter(Boolean);
-  const page = `https://ms-forum.com/mailmag/${String(m.issue_date).replace(/-/g, '')}.html`;
-  return `【TAKERUマガジン】${magDateLabel(m.issue_date)}号\n\n${parts.join('\n')}\n全文と、文ごとの元記事（ガーディアン）はこちら：\n${page}\n\n――――\n（このあとに、会員システムが発行者・住所・お問い合わせ・バックナンバー・配信停止のリンクを付けます）`;
+  const out = [`TAKERUマガジン　${magIssueJa(m.issue_date)}`, 'ＭＳフォーラムがお届けする、軍事と戦略の週刊マガジンです。', ''];
+  const sec = (title, body, add) => {
+    if (!body || !String(body).trim()) return;
+    out.push(`■ ${title}`, '', String(body).replace(/\s+$/, ''));
+    if (add) out.push('', add);
+    out.push('');
+  };
+  sec(`先週の世界の動き${m.period ? '（' + m.period + '）' : ''}`, v.summary, m.stamp_text ? `（${m.stamp_text}）` : '');
+  sec('マーケット動向', m.market, m.market_note || '');
+  sec('今週以降の主要日程', v.schedule);
+  sec('ご存知ですか', v.trivia);
+  sec('MSフォーラムからのお知らせ', v.notice);
+  const ymd = String(m.issue_date).replace(/-/g, '');
+  out.push('根拠の記事つきの全文は、こちらでもお読みいただけます：', `https://ms-forum.com/mailmag/${m.is_test ? 'test-' : ''}${ymd}.html`,
+    '', '', '──────', 'TAKERUマガジン（ＭＳフォーラムのメルマガ）', '発行：一般社団法人ＭＳフォーラム',
+    '発行者について：https://ms-forum.com/about.html', 'お問い合わせ：support@ms-forum.com', 'バックナンバー：https://ms-forum.com/mailmag/', '',
+    '配信停止（このアドレスへのメルマガのお届けを止めます）：', '（読者ごとのリンクが入ります）',
+    '※会員の方へ：メルマガを止めても、講座や事務局からのご連絡はこれまでどおり届きます。', '──────');
+  return out.join('\n');
 }
 function magRenderPreview() {
   const pane = document.getElementById('magPane'), m = magDoc;
@@ -350,7 +394,9 @@ function magRenderPreview() {
   pane.innerHTML = `
     ${m.is_test ? `<div class="mag-band"><span class="mag-test">試験号　${magEsc(m.issue_label || '')}</span></div>` : ''}
     <p class="mag-dim">メールに載る形です（空の欄は見出しごと省きます）。${fromStash ? '<b>まだ保存していない直しも入れて組み立てています。</b>' : ''}
-      件名・区切り・末尾は、会員システムの実際の組み立てに合わせて直していきます。</p>
+      会員システムの組み立ての規則（10/7）と同じ形です。</p>
+    <div class="mag-dim">件名：<b>${magEsc(magMailSubject(m))}</b></div>
+    <p class="mag-dim">※事務局の「メルマガ」画面で、その号に添える一言を書いた場合は、2行目のあとに入ります（作業台からは見えません）。</p>
     <div class="mag-mail">${magEsc(magBuildMail(m, v))}</div>
     <div class="mag-btns"><button class="dash-refresh" onclick="magTab('edit')">✎ 入力に戻る</button></div>`;
 }
