@@ -365,26 +365,42 @@ async function magScheduleAuto() {
 //         末尾（会員システムが付ける）：発行・お問い合わせ・バックナンバー・読者ごとの配信停止リンク。宛名は付けない
 function magIssueJa(iso) { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso || ''); return m ? `${+m[1]}年${+m[2]}月${+m[3]}日号` : iso; }
 function magMailSubject(m) { return `【TAKERUマガジン】${magIssueJa(m.issue_date)}${m.is_test ? '（テスト）' : ''}`; }
+// 2026-10-08 版の規則（会員システム担当から。テキストメール・Cowork君のレイアウト案 22/23）：
+//   ━×20／「TAKERUマガジン　2026年10月10日号」／試験号は次の行に「（第0号（試験））」／キャッチ／━×20／※stamp_text／空行
+//   各欄：絵文字＋半角空白＋見出し／─×20／本文（加工しない）／（市況だけ 空行＋market_note）／空行・空行
+//   見出し：💡 ご存知ですか？／🌐 先週の世界の動き（9月26日〜10月2日）／📈 マーケット動向／📅 今週以降の主要日程／📢 MSフォーラムからのお知らせ
+//   号ページ：「根拠の記事つきの全文は、こちら：」＋URL（単独の行）／空行／「本稿は、英ガーディアン紙の記事をもとに、」「TAKERUがまとめています。」
+//   末尾：会員システムが付ける（URLはすべて単独の行）。固定の行はすべて全角23字以内
+const MAG_RULE = '━'.repeat(20), MAG_LINE = '─'.repeat(20);
+function magPeriodJa(p) {
+  return String(p || '').replace(/(\d{4})-(\d{2})-(\d{2})/g, (_, y, mo, d) => `${+mo}月${+d}日`);
+}
 function magBuildMail(m, v) {
-  const out = [`TAKERUマガジン　${magIssueJa(m.issue_date)}`, 'ＭＳフォーラムがお届けする、軍事と戦略の週刊マガジンです。', ''];
+  const out = [MAG_RULE, `TAKERUマガジン　${magIssueJa(m.issue_date)}`];
+  if (m.is_test && m.issue_label) out.push(`（${m.issue_label}）`);
+  out.push('ＭＳフォーラムの軍事と戦略、週刊メルマガ', MAG_RULE);
+  if (m.stamp_text) out.push('※' + m.stamp_text);
+  out.push('');
   const sec = (title, body, add) => {
     if (!body || !String(body).trim()) return;
-    out.push(`■ ${title}`, '', String(body).replace(/\s+$/, ''));
+    out.push(title, MAG_LINE, String(body).replace(/\s+$/, ''));
     if (add) out.push('', add);
-    out.push('');
+    out.push('', '');
   };
-  // 並び順：2026-10-07 牧村さんのご希望で「ご存知ですか」を一番上に（10/10号から）
-  sec('ご存知ですか', v.trivia);
-  sec(`先週の世界の動き${m.period ? '（' + m.period + '）' : ''}`, v.summary, m.stamp_text ? `（${m.stamp_text}）` : '');
-  sec('マーケット動向', m.market, m.market_note || '');
-  sec('今週以降の主要日程', v.schedule);
-  sec('MSフォーラムからのお知らせ', v.notice);
+  // 並び：ご存知ですか → 先週の世界の動き → マーケット動向 → 今週以降の主要日程 → お知らせ（section_order）
+  sec('💡 ご存知ですか？', v.trivia);
+  sec(`🌐 先週の世界の動き${m.period ? '（' + magPeriodJa(m.period) + '）' : ''}`, v.summary);
+  sec('📈 マーケット動向', m.market, m.market_note || '');
+  sec('📅 今週以降の主要日程', v.schedule);
+  sec('📢 MSフォーラムからのお知らせ', v.notice);
   const ymd = String(m.issue_date).replace(/-/g, '');
-  out.push('根拠の記事つきの全文は、こちらでもお読みいただけます：', `https://ms-forum.com/mailmag/${m.is_test ? 'test-' : ''}${ymd}.html`,
-    '', '', '──────', 'TAKERUマガジン（ＭＳフォーラムのメルマガ）', '発行：一般社団法人ＭＳフォーラム',
-    '発行者について：https://ms-forum.com/about.html', 'お問い合わせ：support@ms-forum.com', 'バックナンバー：https://ms-forum.com/mailmag/', '',
-    '配信停止（このアドレスへのメルマガのお届けを止めます）：', '（読者ごとのリンクが入ります）',
-    '※会員の方へ：メルマガを止めても、講座や事務局からのご連絡はこれまでどおり届きます。', '──────');
+  out.push('根拠の記事つきの全文は、こちら：', `https://ms-forum.com/mailmag/${m.is_test ? 'test-' : ''}${ymd}.html`, '',
+    '本稿は、英ガーディアン紙の記事をもとに、', 'TAKERUがまとめています。',
+    '', MAG_RULE, 'TAKERUマガジン（ＭＳフォーラムのメルマガ）', '発行：一般社団法人ＭＳフォーラム',
+    '発行者について：', 'https://ms-forum.com/about.html', 'お問い合わせ：support@ms-forum.com',
+    'バックナンバー：', 'https://ms-forum.com/mailmag/', '',
+    '配信停止（このアドレスだけ止まります）：', '（読者ごとの停止のURLが入ります）',
+    '会員の方へ：メルマガを止めても、', '講座や事務局のご連絡は届きます。', MAG_RULE);
   return out.join('\n');
 }
 function magRenderPreview() {
@@ -398,7 +414,7 @@ function magRenderPreview() {
     <p class="mag-dim">メールに載る形です（空の欄は見出しごと省きます）。${fromStash ? '<b>まだ保存していない直しも入れて組み立てています。</b>' : ''}
       会員システムの組み立ての規則（10/7）と同じ形です。</p>
     <div class="mag-dim">件名：<b>${magEsc(magMailSubject(m))}</b></div>
-    <p class="mag-dim">※事務局の「メルマガ」画面で、その号に添える一言を書いた場合は、2行目のあとに入ります（作業台からは見えません）。</p>
+    <p class="mag-dim">※事務局の「メルマガ」画面で、その号に添える一言を書いた場合は、※の行のあとに入ります（作業台からは見えません）。</p>
     <div class="mag-mail">${magEsc(magBuildMail(m, v))}</div>
     <div class="mag-btns"><button class="dash-refresh" onclick="magTab('edit')">✎ 入力に戻る</button></div>`;
 }
