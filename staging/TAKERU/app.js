@@ -26,7 +26,7 @@ const IS_PROD = (typeof window.__IS_PROD === 'boolean') ? window.__IS_PROD : (fu
 //   画像・音声はブラウザ自身が長くキャッシュするため、差し替えても
 //   古いものが出続ける。URLが変われば確実に取り直されるので、版が上がるたび
 //   ここも一緒に上げる（bump-sw.sh と作業台の「⬆ v」ボタンが書き換える）。
-const ASSET_V = 'v132';
+const ASSET_V = 'v133';
 function av(path) { return path + '?v=' + ASSET_V; }
 
 // ==========================================
@@ -167,6 +167,14 @@ window.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('btn-enter').before(note);
     }
     const linkCard = studyUnit ? null : findLinkCard(cardLink);
+    const linkView = (studyUnit || linkCard) ? '' : viewLink;
+    if (linkView) {
+        logAccess('study_link', 'VIEW' + linkView.toUpperCase());   // どの画面のリンクから何回来たかを数える（VIEWMARKET など）
+        const note = document.createElement('div');
+        note.className = 'entry-study';
+        note.textContent = '「' + VIEW_LINKS[linkView] + '」を開きます';
+        document.getElementById('btn-enter').before(note);
+    }
     if (linkCard) {
         logAccess('card_link', linkCard.id);    // どのカードのリンクから何回来たかを数える
         const note = document.createElement('div');
@@ -181,7 +189,7 @@ window.addEventListener('DOMContentLoaded', async () => {
         voice.play().then(() => { voice.pause(); voice.src = ''; }).catch(() => { voice.src = ''; });
         entryScreen.style.display = 'none';
         mainUI.style.display = 'flex';
-        try { sessionStorage.removeItem(STUDY_KEY); sessionStorage.removeItem(CARD_KEY); } catch (e) { /* noop */ }   // 行き先は使い切り
+        try { sessionStorage.removeItem(STUDY_KEY); sessionStorage.removeItem(CARD_KEY); sessionStorage.removeItem(VIEW_KEY); } catch (e) { /* noop */ }   // 行き先は使い切り
         if (studyUnit) {
             // ふつうにトップ→自由研究→著者から、と押して入ったのと同じ状態にそろえる。
             // ずれると ▲ で戻れなくなる（freeunit → 自由研究の一覧 → トップ）
@@ -193,6 +201,9 @@ window.addEventListener('DOMContentLoaded', async () => {
             showFreeUnit(studyUnit);
         } else if (linkCard) {
             openLinkedCard(linkCard);
+        } else if (linkView) {
+            showTopMenu();                      // トップから「ニュース・お知らせ」を押したのと同じ状態に
+            showNews(VIEW_LINKS[linkView]);
         } else {
             showTopMenu();
         }
@@ -588,6 +599,27 @@ try {
     if (s) {
         const u = new URL(location.href);
         u.searchParams.delete('card');
+        history.replaceState(null, '', u.pathname + u.search + u.hash);
+    }
+} catch (e) { /* 住所が読めなくても普通にトップから始める */ }
+// 画面の専用リンク（例 https://takeru.ms-forum.com/?view=market）。メルマガのマーケット欄などから、
+//   「ニュース・お知らせ」の中の画面を直接開く。market＝マーケット、news＝ニュース、notice＝お知らせ。
+//   研究・カードのリンクと同じく、スタートを押すまで sessionStorage に控え、読んだら住所から外す。
+const VIEW_LINKS = { market: 'マーケット', news: 'ニュース', notice: 'お知らせ' };
+let viewLink = '';
+const VIEW_KEY = 'takeru.viewLink';
+try {
+    const s = (new URLSearchParams(location.search).get('view') || '').toLowerCase();
+    if (VIEW_LINKS[s]) {
+        viewLink = s;
+        try { sessionStorage.setItem(VIEW_KEY, viewLink); } catch (e) { /* noop */ }
+    } else {
+        try { viewLink = sessionStorage.getItem(VIEW_KEY) || ''; } catch (e) { /* noop */ }
+        if (!VIEW_LINKS[viewLink]) viewLink = '';
+    }
+    if (new URLSearchParams(location.search).has('view')) {
+        const u = new URL(location.href);
+        u.searchParams.delete('view');
         history.replaceState(null, '', u.pathname + u.search + u.hash);
     }
 } catch (e) { /* 住所が読めなくても普通にトップから始める */ }
