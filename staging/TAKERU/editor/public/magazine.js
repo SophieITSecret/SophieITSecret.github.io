@@ -141,7 +141,14 @@ async function magLoadDoc(render, tries = 2) {
   try {
     const j = await (await fetch('/api/magazine' + (issue ? '?issue=' + encodeURIComponent(issue) : ''))).json();
     if (!j.ok && j.error !== 'no magazine draft') throw new Error(j.error || '不明');
-    magDoc = j.ok ? j : null;
+    magDoc = j.ok && (!issue || j.issue_date === issue) ? j : null;
+    if (!magDoc && issue) {
+      // 下書きがまだ無い号：お知らせ・ご存知ですかは「先置き」できる（GAS v27 issue_inputs。初版が自動で拾う）
+      const p = await (await fetch('/api/magazine/inputs?issue=' + encodeURIComponent(issue))).json();
+      if (!p.ok) throw new Error(p.error || '不明');
+      if (!p.has_draft) magDoc = { pre: true, issue_date: issue, version: 0, notice: p.notice || '', trivia: p.trivia || '',
+        updated_at: p.updated_at || '', is_test: !!(magDash && magDash.issue && magDash.issue.is_test), issue_label: (magDash && magDash.issue && magDash.issue.label) || '', mock: p.mock };
+    }
     if (render) magRenderEdit();
     return magDoc;
   } catch (e) {
@@ -168,6 +175,7 @@ function magStashNow() {
 function magRenderEdit() {
   const pane = document.getElementById('magPane'), m = magDoc;
   if (!m) { pane.innerHTML = '<p class="qr-warn">この号の下書きはまだありません（金曜20:50ごろに初版ができます）。</p>'; return; }
+  if (m.pre) return magRenderPre();
   const ro = m.status === '配信済';
   const field = (k, label, hint, cls) => `
     <div class="mag-field"><div class="lbl">${label} <span class="hint">${hint}</span>${k === 'summary' || k === 'notice' ? ` <span id="magC_${k}" class="mag-count2"></span>` : ''}</div>
@@ -222,7 +230,7 @@ function magAfterRenderEdit() {
         <button class="dash-refresh" onclick="magDropStash()">捨てる</button></div>`;
     }
   } catch (e) { /* noop */ }
-  for (const k of ['summary', 'notice']) magCountUp(k);
+  for (const k of ['summary', 'notice', 'trivia']) magCountUp(k);
   magGrow2();
 }
 function magRestoreStash() {
@@ -243,7 +251,7 @@ function magGrow2() {
 let magStashTimer = null;
 function magOnInput(k) {
   magCountUp(k); magGrow2();
-  if (k === 'summary') document.getElementById('magSrcWarn').hidden = document.getElementById('magF_summary').value === String(magDoc.summary || '');
+  if (k === 'summary' && document.getElementById('magSrcWarn')) document.getElementById('magSrcWarn').hidden = document.getElementById('magF_summary').value === String(magDoc.summary || '');
   clearTimeout(magStashTimer); magStashTimer = setTimeout(magStashNow, 800);
 }
 function magMsg(text, ok) {
@@ -335,7 +343,7 @@ function magBuildMail(m, v) {
 }
 function magRenderPreview() {
   const pane = document.getElementById('magPane'), m = magDoc;
-  if (!m) { pane.innerHTML = '<p class="qr-warn">この号の下書きはまだありません。</p>'; return; }
+  if (!m || m.pre) { pane.innerHTML = '<p class="qr-warn">この号の下書きはまだありません（金曜20:50ごろにできます）。先に入れたお知らせ・ご存知ですかは、初版ができたらプレビューに出ます。</p>'; return; }
   // 入力タブで直しかけの文章があれば、それで組み立てる（保存前でも見られるように）
   let v = { summary: m.summary, schedule: m.schedule, trivia: m.trivia, notice: m.notice }, fromStash = false;
   try { const st = JSON.parse(localStorage.getItem(magStashKey()) || 'null'); if (st && st.v) { v = { ...v, ...st.v }; fromStash = true; } } catch (e) {}
@@ -385,4 +393,37 @@ async function magHistDetail(issue) {
       <div class="mag-h3">配信された本文（最新の版）</div>
       ${m.ok ? `<div class="mag-mail">${magEsc(magBuildMail(m, m))}</div>` : '<p class="mag-dim">読めませんでした</p>'}`;
   } catch (e) { box.innerHTML = `<p class="qr-warn">読み込めませんでした：${magEsc(e.message)}</p>`; }
+}
+
+// ---------------- 下書きがまだ無い号：先置き ----------------
+function magRenderPre() {
+  const pane = document.getElementById('magPane'), m = magDoc;
+  const f = (k, label, hint) => `
+    <div class="mag-field"><div class="lbl">${label} <span class="hint">${hint}</span> <span id="magC_${k}" class="mag-count2"></span></div>
+      <textarea id="magF_${k}" class="mid" oninput="magOnInput('${k}')">${magEsc(m[k] || '')}</textarea></div>`;
+  pane.innerHTML = `
+    ${m.mock ? '<p class="qr-warn">【試験用の見本モード】GASには書き込みません。</p>' : ''}
+    <div class="mag-band"><div class="row">
+      ${m.is_test ? `<span class="mag-test">試験号　${magEsc(m.issue_label || '')}</span>` : ''}
+      <span class="mag-date">${magEsc(magDateLabel(m.issue_date))}号</span><span class="mag-dim">まだ下書きがありません</span></div>
+      <div>下書き（先週の世界の動き）は、金曜20:50ごろに自動でできます。<b>お知らせ欄と「ご存知ですか」は、いま先に入れておけます。</b>
+        初版ができたとき、自動で中に入ります。</div>
+      ${m.updated_at ? `<div class="mag-dim">先に入れた内容があります（${magEsc(String(m.updated_at).replace('T', ' ').slice(0, 16))}）</div>` : ''}
+    </div>
+    <div id="magStashNote"></div>
+    ${f('notice', 'MSフォーラムからのお知らせ', '（空で保存＝この欄はメールに出ません）')}
+    ${f('trivia', 'ご存知ですか', '（空で保存＝この欄はメールに出ません。カードの専用リンクは作業台の🔳 QRで）')}
+    <div class="mag-btns"><button class="btn-save" onclick="magSavePre()">💾 先に入れておく（保存）</button>
+      <span class="sub">主要日程とマーケットは、初版と土曜朝に自動で入ります</span></div>
+    <div id="magMsgBox"></div>`;
+  magAfterRenderEdit();
+}
+async function magSavePre() {
+  const v = magEditValues(), body = { mode: 'issue_inputs' };
+  let n = 0; for (const k of ['notice', 'trivia']) if (v[k] !== String(magDoc[k] || '')) { body[k] = v[k]; n++; }
+  if (!n) { magMsg('直したところがありません。', true); return; }
+  magMsg('保存しています…', true);
+  const j = await magPost(body);
+  if (!j.ok) return magFail(j);
+  magAfterSave(`先に入れておきました（${n}か所）。金曜の夜に初版ができたら、自動で中に入ります。`);
 }

@@ -154,7 +154,7 @@ async function getNewsDigest(req, res) {
 // ============================================================
 const MAG_MOCK = process.env.MAGAZINE_MOCK === '1';
 // ---- 見本モード（試験用）：magazine_mock.json の本物の写し（第0号）を、メモリの中で版を重ねて使う ----
-let magMock = null, magMockDash = null, magMockLog = [];
+let magMock = null, magMockDash = null, magMockLog = [], magMockPre = {};
 function magMockInit() {
   if (magMock) return;
   const m = JSON.parse(fs.readFileSync(path.join(__dirname, 'magazine_mock.json'), 'utf8'));
@@ -169,6 +169,9 @@ function magMockSave(b) {
   magMockInit();
   if (b.stage === 'schedule_apply') return { ok: true, text: 'OK schedule applied（見本）' };
   if (b.stage === 'delivery_log') { magMockLog.push(b); return { ok: true, text: 'OK logged（見本）' }; }
+  if (b.stage === 'issue_inputs') { const pre = magMockPre[b.issue_date] = magMockPre[b.issue_date] || { notice: '', trivia: '' };
+    for (const k of ['notice', 'trivia']) if (b[k] !== undefined) pre[k] = b[k]; pre.updated_at = new Date().toISOString();
+    return { ok: true, text: `OK issue=${b.issue_date} pre_input`, version: 0 }; }
   const cur = magMock.filter(r => r.issue_date === b.issue_date).pop();
   if (!cur) return { ok: false, error: 'ERROR: その号がありません' };
   if (b.expected_version !== undefined && Number(b.expected_version) !== cur.version)
@@ -211,6 +214,16 @@ async function getMagazineDashboard(req, res, q) {
     sendGas(res, await gasGet('magazine_dashboard', p));
   } catch (e) { sendJSON(res, 200, { ok: false, error: e.message }); }
 }
+// GET /api/magazine/inputs?issue=  … 号の先置き（issue_inputs、GAS v27）。下書きがあれば最新版、無ければ先置きの内容
+async function getMagazineInputs(req, res, q) {
+  try {
+    const issue = q.get('issue') || '';
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(issue)) return sendJSON(res, 400, { ok: false, error: '配信日がありません' });
+    if (MAG_MOCK) { magMockInit(); const m = magMockPre[issue] || { notice: '', trivia: '', updated_at: '' };
+      return sendGas(res, { ok: true, issue_date: issue, has_draft: false, version: 0, source: 'pre_input', ...m }); }
+    sendGas(res, await gasGet('issue_inputs', { issue }));
+  } catch (e) { sendJSON(res, 200, { ok: false, error: e.message }); }
+}
 // GET /api/magazine/list  … 版の一覧（magazine_list）
 async function getMagazineList(req, res) {
   try {
@@ -241,9 +254,16 @@ function postMagazineSave(req, res) {
     try {
       const b = JSON.parse(Buffer.concat(chunks).toString('utf8') || '{}');
       if (!/^\d{4}-\d{2}-\d{2}$/.test(b.issue_date || '')) return sendJSON(res, 400, { ok: false, error: '配信日がありません' });
+      let body;
+      if (b.mode === 'issue_inputs') {
+        // 号の先置き（GAS v27）：下書きが無い号は置き場へ、ある号は最新版へ。notice・trivia だけ。expected_version は任意
+        body = { stage: 'issue_inputs', issue_date: b.issue_date };
+        for (const k of ['notice', 'trivia']) if (typeof b[k] === 'string') body[k] = b[k];
+        if (b.expected_version) body.expected_version = Number(b.expected_version);
+        return sendGas(res, MAG_MOCK ? magMockSave(body) : await gasPost(body));
+      }
       if (b.expected_version === undefined || b.expected_version === null)
         return sendJSON(res, 400, { ok: false, error: 'expected_version がありません（版の取り違えを防ぐため必須）' });
-      let body;
       if (b.mode === 'schedule_apply') {
         body = { stage: 'schedule_apply', issue_date: b.issue_date, expected_version: Number(b.expected_version) };
       } else if (['new_version', 'update_latest'].includes(b.mode)) {
@@ -1378,6 +1398,7 @@ const server = http.createServer((req, res) => {
   if (pathname === '/api/magazine/list' && method === 'GET') return getMagazineList(req, res);
   if (pathname === '/api/magazine/dashboard' && method === 'GET') return getMagazineDashboard(req, res, parsed.searchParams);
   if (pathname === '/api/magazine/deliveries' && method === 'GET') return getMagazineDeliveries(req, res, parsed.searchParams);
+  if (pathname === '/api/magazine/inputs' && method === 'GET') return getMagazineInputs(req, res, parsed.searchParams);
   if (pathname === '/api/magazine/save' && method === 'POST') return postMagazineSave(req, res);
   if (pathname === '/api/links' && method === 'GET') return getLinks(req, res);
   if (pathname === '/api/sw-version' && method === 'GET') return getSwVersion(req, res);
