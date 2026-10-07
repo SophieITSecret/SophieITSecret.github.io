@@ -359,7 +359,7 @@ async function magScheduleAuto() {
 //   本文：「TAKERUマガジン　2026年10月10日号」／「ＭＳフォーラムがお届けする、軍事と戦略の週刊マガジンです。」／空行
 //         （事務局の画面でその号に添える一言を書いてあれば：その文、空行 ← 作業台からは見えない）
 //         各欄「■ 見出し」→空行→本文→（添え：空行→添え）→空行。空の欄は見出しごと出さない
-//           先週の世界の動き（period）＋添え「（stamp_text）」／マーケット動向＋添え market_note／主要日程／ご存知ですか／お知らせ
+//           ご存知ですか／先週の世界の動き（period）＋添え「（stamp_text）」／マーケット動向＋添え market_note／主要日程／お知らせ（10/10号から）
 //         「根拠の記事つきの全文は、こちらでもお読みいただけます：」＋号ページのURL（試験号は test-YYYYMMDD.html）
 //         末尾（会員システムが付ける）：発行・お問い合わせ・バックナンバー・読者ごとの配信停止リンク。宛名は付けない
 function magIssueJa(iso) { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso || ''); return m ? `${+m[1]}年${+m[2]}月${+m[3]}日号` : iso; }
@@ -372,10 +372,11 @@ function magBuildMail(m, v) {
     if (add) out.push('', add);
     out.push('');
   };
+  // 並び順：2026-10-07 牧村さんのご希望で「ご存知ですか」を一番上に（10/10号から）
+  sec('ご存知ですか', v.trivia);
   sec(`先週の世界の動き${m.period ? '（' + m.period + '）' : ''}`, v.summary, m.stamp_text ? `（${m.stamp_text}）` : '');
   sec('マーケット動向', m.market, m.market_note || '');
   sec('今週以降の主要日程', v.schedule);
-  sec('ご存知ですか', v.trivia);
   sec('MSフォーラムからのお知らせ', v.notice);
   const ymd = String(m.issue_date).replace(/-/g, '');
   out.push('根拠の記事つきの全文は、こちらでもお読みいただけます：', `https://ms-forum.com/mailmag/${m.is_test ? 'test-' : ''}${ymd}.html`,
