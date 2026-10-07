@@ -222,6 +222,8 @@ function magRenderEdit() {
       ${ro ? '<div class="mag-alert info">配信済の号です。ここでは直せません（配信後の小さな直しは「新しい版として保存」で行います）。</div>' : ''}
     </div>
     <div id="magStashNote"></div>
+    ${field('trivia', 'ご存知ですか', '（空で保存＝この欄はメールに出ません）', 'mid')}
+    ${ro ? '' : '<div class="mag-btns"><button class="dash-refresh" onclick="magAddCardLink()">🔗 カードのリンクを足す</button><span class="sub">元になったカードのコード（例 YOKO07）を入れると、欄の最後にTAKERUのカードへのリンクを足します</span></div>'}
     ${field('summary', '先週の世界の動き', `（目安 ${MAG_SUMMARY_MIN}〜${MAG_SUMMARY_MAX}字・改行と空白を除く）`, 'big')}
     <p id="magSrcWarn" class="mag-warn" hidden>本文を直しました。根拠は、直す前の文に対するものです。</p>
     ${src}
@@ -230,8 +232,6 @@ function magRenderEdit() {
       <div class="readonly">${m.market ? magEsc(m.market) + '\n' + magEsc(m.market_note || '') : '<span class="mag-dim">まだ入っていません（土曜7時ごろ自動で入ります）</span>'}</div></div>
     ${field('schedule', '今週以降の主要日程', '（自動で入ります。直したいときだけ直す。空で保存＝この欄はメールに出ません）', 'mid')}
     ${ro ? '' : '<div class="mag-btns"><button class="dash-refresh" onclick="magScheduleAuto()">↺ 日程を自動に戻す</button><span class="sub">確認済・配信済の号には効きません</span></div>'}
-    ${field('trivia', 'ご存知ですか', '（空で保存＝この欄はメールに出ません）', 'mid')}
-    ${ro ? '' : '<div class="mag-btns"><button class="dash-refresh" onclick="magAddCardLink()">🔗 カードのリンクを足す</button><span class="sub">元になったカードのコード（例 YOKO07）を入れると、欄の最後にTAKERUのカードへのリンクを足します</span></div>'}
     ${field('notice', 'MSフォーラムからのお知らせ', '（牧村さんが書く欄。空で保存＝この欄はメールに出ません）', 'mid')}
     <div class="mag-btns">
       ${ro ? `<button class="btn-load" onclick="magSaveNewVersion(true)">💾 配信後の小さな直しとして、新しい版で保存</button>`
@@ -369,7 +369,7 @@ function magMailSubject(m) { return `【TAKERUマガジン】${magIssueJa(m.issu
 //   ━×20／「TAKERUマガジン　2026年10月10日号」／試験号は次の行に「（第0号（試験））」／キャッチ／━×20／※stamp_text／空行
 //   各欄：絵文字＋半角空白＋見出し／─×20／本文（加工しない）／（市況だけ 空行＋market_note）／空行・空行
 //   見出し：💡 ご存知ですか？／🌐 先週の世界の動き（9月26日〜10月2日）／📈 マーケット動向／📅 今週以降の主要日程／📢 MSフォーラムからのお知らせ
-//   号ページ：「根拠の記事つきの全文は、こちら：」＋URL（単独の行）／空行／「本稿は、英ガーディアン紙の記事をもとに、」「TAKERUがまとめています。」
+//   号ページ：「根拠の記事つきの全文は、こちら：」＋URL（単独の行）／空行／「本稿の「世界の動き」は、」「英ガーディアン紙の記事をもとに、」「TAKERUがまとめています。」（10/8 文言を変更、3行）
 //   末尾：会員システムが付ける（URLはすべて単独の行）。固定の行はすべて全角23字以内
 const MAG_RULE = '━'.repeat(20), MAG_LINE = '─'.repeat(20);
 function magPeriodJa(p) {
@@ -395,7 +395,7 @@ function magBuildMail(m, v) {
   sec('📢 MSフォーラムからのお知らせ', v.notice);
   const ymd = String(m.issue_date).replace(/-/g, '');
   out.push('根拠の記事つきの全文は、こちら：', `https://ms-forum.com/mailmag/${m.is_test ? 'test-' : ''}${ymd}.html`, '',
-    '本稿は、英ガーディアン紙の記事をもとに、', 'TAKERUがまとめています。',
+    '本稿の「世界の動き」は、', '英ガーディアン紙の記事をもとに、', 'TAKERUがまとめています。',
     '', MAG_RULE, 'TAKERUマガジン（ＭＳフォーラムのメルマガ）', '発行：一般社団法人ＭＳフォーラム',
     '発行者について：', 'https://ms-forum.com/about.html', 'お問い合わせ：support@ms-forum.com',
     'バックナンバー：', 'https://ms-forum.com/mailmag/', '',
@@ -475,9 +475,9 @@ function magRenderPre() {
       ${m.updated_at ? `<div class="mag-dim">先に入れた内容があります（${magEsc(String(m.updated_at).replace('T', ' ').slice(0, 16))}）</div>` : ''}
     </div>
     <div id="magStashNote"></div>
-    ${f('notice', 'MSフォーラムからのお知らせ', '（空で保存＝この欄はメールに出ません）')}
     ${f('trivia', 'ご存知ですか', '（空で保存＝この欄はメールに出ません）')}
     <div class="mag-btns"><button class="dash-refresh" onclick="magAddCardLink()">🔗 カードのリンクを足す</button><span class="sub">元になったカードのコード（例 YOKO07）を入れると、欄の最後にTAKERUのカードへのリンクを足します</span></div>
+    ${f('notice', 'MSフォーラムからのお知らせ', '（空で保存＝この欄はメールに出ません）')}
     <div class="mag-btns"><button class="btn-save" onclick="magSavePre()">💾 先に入れておく（保存）</button>
       <span class="sub">主要日程とマーケットは、初版と土曜朝に自動で入ります</span></div>
     <div id="magMsgBox"></div>`;
@@ -494,7 +494,7 @@ async function magSavePre() {
 }
 
 // ---------------- ご存知ですか：TAKERUのカードへのリンク ----------------
-//   2026-10-08 牧村さんの決定。欄の最後に「このカードをTAKERUで読む：」と専用リンク（?card=コード）を足す。
+//   2026-10-08 牧村さんの決定。欄の最後に「この記事の関連カードをTAKERUで読む：」と専用リンク（?card=コード）を足す。
 //   メールではURLを必ず単独の行に置く決まり（全角の「）」「。」がリンクに入ると開けなくなる）なので、2行に分ける。
 //   公開していないカードは、リンクを開いてもトップから始まってしまうので、確かめてから足す。
 async function magAddCardLink() {
@@ -506,8 +506,8 @@ async function magAddCardLink() {
   if (!item) { alert(`「${code}」というカードが見つかりません。作業台の左の一覧で、カードのコードを確かめてください。`); return; }
   if (!item.published && !confirm(`「${item.title}」は、まだ公開していないカードです。リンクを開いてもトップから始まってしまいます。それでも足しますか？`)) return;
   // 前に足したリンクがあれば置き換える（1つだけにする）
-  let v = t.value.replace(/\n*このカードをTAKERUで読む：\nhttps:\/\/takeru\.ms-forum\.com\/\?card=[A-Za-z0-9]+\s*$/, '').replace(/\s+$/, '');
-  t.value = v + (v ? '\n\n' : '') + 'このカードをTAKERUで読む：\n' + item.url;
+  let v = t.value.replace(/\n*(?:このカード|この記事の関連カード)をTAKERUで読む：\nhttps:\/\/takeru\.ms-forum\.com\/\?card=[A-Za-z0-9]+\s*$/, '').replace(/\s+$/, '');
+  t.value = v + (v ? '\n\n' : '') + 'この記事の関連カードをTAKERUで読む：\n' + item.url;
   magOnInput('trivia');
   magMsg(`「${item.title}」へのリンクを足しました。保存すると入ります。`, true);
 }
