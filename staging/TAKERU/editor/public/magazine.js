@@ -422,17 +422,27 @@ function magBuildMail(m, v) {
 }
 function magRenderPreview() {
   const pane = document.getElementById('magPane'), m = magDoc;
-  if (!m || m.pre) { pane.innerHTML = '<p class="qr-warn">この号の下書きはまだありません（金曜20:50ごろにできます）。先に入れたお知らせ・ご存知ですかは、初版ができたらプレビューに出ます。</p>'; return; }
+  if (!m) { pane.innerHTML = '<p class="qr-warn">この号を読み込めませんでした。入力タブを開き直してください。</p>'; return; }
+  // 初版の前（先置き）：入れたご存知ですか・お知らせだけで組み立て、Cowork君が入れる欄は「（初版で入ります）」と出す
+  const PRE_FILL = '（金曜20:50ごろ、Cowork君の初版で入ります）';
+  let mm = m;
+  if (m.pre) {
+    const d0 = new Date(m.issue_date + 'T00:00:00'), ymd = n => { const d = new Date(d0); d.setDate(d.getDate() + n);
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
+    mm = { ...m, period: `${ymd(-7)}〜${ymd(-1)}`, market: PRE_FILL, market_note: '', stamp_text: '' };
+  }
   // 入力タブで直しかけの文章があれば、それで組み立てる（保存前でも見られるように）
-  let v = { summary: m.summary, schedule: m.schedule, trivia: m.trivia, notice: m.notice }, fromStash = false;
+  let v = { summary: m.pre ? PRE_FILL : m.summary, schedule: m.pre ? PRE_FILL : m.schedule, trivia: m.trivia, notice: m.notice }, fromStash = false;
   try { const st = JSON.parse(localStorage.getItem(magStashKey()) || 'null'); if (st && st.v) { v = { ...v, ...st.v }; fromStash = true; } } catch (e) {}
+  if (m.pre) { if (!String(v.summary || '').trim()) v.summary = PRE_FILL; if (!String(v.schedule || '').trim()) v.schedule = PRE_FILL; }
   pane.innerHTML = `
+    ${m.pre ? '<p class="qr-warn">この号の初版はまだです（金曜20:50ごろにできます）。いま見えているのは、先に入れたご存知ですか・お知らせと、メールの形だけです。</p>' : ''}
     ${m.is_test ? `<div class="mag-band"><span class="mag-test">試験号　${magEsc(m.issue_label || '')}</span></div>` : ''}
     <p class="mag-dim">メールに載る形です（空の欄は見出しごと省きます）。${fromStash ? '<b>まだ保存していない直しも入れて組み立てています。</b>' : ''}
       会員システムの組み立ての規則（10/7）と同じ形です。</p>
     <div class="mag-dim">件名：<b>${magEsc(magMailSubject(m))}</b></div>
     <p class="mag-dim">※事務局の「メルマガ」画面で、その号に添える一言を書いた場合は、※の行のあとに入ります（作業台からは見えません）。</p>
-    <div class="mag-mail">${magEsc(magBuildMail(m, v))}</div>
+    <div class="mag-mail">${magEsc(magBuildMail(mm, v))}</div>
     <div class="mag-btns"><button class="dash-refresh" onclick="magTab('edit')">✎ 入力に戻る</button></div>`;
 }
 
