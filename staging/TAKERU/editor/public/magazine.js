@@ -384,7 +384,7 @@ function magMailSubject(m) { return `【TAKERUマガジン】${magIssueJa(m.issu
 //   ━×20／「TAKERUマガジン　2026年10月10日号」／試験号は次の行に「（第0号（試験））」／キャッチ／━×20／※stamp_text／空行
 //   各欄：絵文字＋半角空白＋見出し／─×20／本文（加工しない）／（市況だけ 空行＋market_note、空行＋「チャートはTAKERUで見られます：」＋URL）／空行・空行
 //   見出し：💡 ご存知ですか？／🌐 先週の世界の動き（9月26日〜10月2日）／📈 マーケット動向／📅 今週以降の主要日程／📢 MSフォーラムからのお知らせ
-//   号ページ：「根拠の記事つきの全文は、こちら：」＋URL（単独の行）／空行／「本稿の「世界の動き」は、」「英ガーディアン紙の記事をもとに、」「TAKERUがまとめています。」（10/8 文言を変更、3行）
+//   号ページ：「本稿の「世界の動き」は、」「英ガーディアン紙の記事をもとに、」「TAKERUがまとめています。」「元になった記事はこちらでご覧ください。」＋URL（単独の行）（10/8 牧村さん、順を入れ替え）
 //   末尾：会員システムが付ける（URLはすべて単独の行）。固定の行はすべて全角23字以内
 const MAG_RULE = '━'.repeat(20), MAG_LINE = '─'.repeat(20);
 const MAG_MARKET_URL = 'https://takeru.ms-forum.com/?view=market';
@@ -411,8 +411,9 @@ function magBuildMail(m, v) {
   sec('📅 今週以降の主要日程', v.schedule);
   sec('📢 MSフォーラムからのお知らせ', v.notice);
   const ymd = String(m.issue_date).replace(/-/g, '');
-  out.push('根拠の記事つきの全文は、こちら：', `https://ms-forum.com/mailmag/${m.is_test ? 'test-' : ''}${ymd}.html`, '',
-    '本稿の「世界の動き」は、', '英ガーディアン紙の記事をもとに、', 'TAKERUがまとめています。',
+  // 号ページへの案内（10/8 牧村さん：出典の3行を先に、そのあと号ページ）
+  out.push('本稿の「世界の動き」は、', '英ガーディアン紙の記事をもとに、', 'TAKERUがまとめています。',
+    '元になった記事はこちらでご覧ください。', `https://ms-forum.com/mailmag/${m.is_test ? 'test-' : ''}${ymd}.html`,
     '', MAG_RULE, 'TAKERUマガジン（ＭＳフォーラムのメルマガ）', '発行：一般社団法人ＭＳフォーラム',
     '発行者について：', 'https://ms-forum.com/about.html', 'お問い合わせ：support@ms-forum.com',
     'バックナンバー：', 'https://ms-forum.com/mailmag/', '',
