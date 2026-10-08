@@ -48,7 +48,10 @@ function magTab(name) {
 }
 function magPickIssue(v) {
   if (magTabName === 'edit' && magEditDirty()) magStashNow();
-  magIssue = v; magDoc = null; magTab(magTabName);
+  magIssue = v; magDoc = null;
+  // 入力・プレビューでも、先にその号の状況を読む（下書きが無い号なら、本文を取りに行かずに先置きの画面にできる）
+  if (magTabName === 'edit' || magTabName === 'preview') { magWaiting('号を切り替えています…'); magLoadDash(true).then(() => magTab(magTabName)); }
+  else magTab(magTabName);
 }
 // 開いている間は60秒ごとに状況を取り直す（状況タブのときだけ。入力中は邪魔しない）
 function magStartTimer() {
@@ -60,8 +63,20 @@ function magSetUpdated(ok, msg) {
   if (ok) { magLastOkAt = new Date(); el.textContent = `最終更新 ${magHm(magLastOkAt)}`; el.classList.remove('bad'); }
   else { el.textContent = `更新できませんでした（${magLastOkAt ? magHm(magLastOkAt) + 'の内容' : '内容なし'}）${msg ? '：' + msg : ''}`; el.classList.add('bad'); }
 }
-function magFillIssueSel(list) {
+// 号を指定して dashboard を読むと、selectable_issues がその号だけになる（2026-10-08 確認）。
+//   そのまま入れ替えると、ほかの号へ戻れなくなるので、一度見えた号は残して足し合わせる。
+//   「注目」の印は、号を指定しないで読んだときの返事だけで決める
+let magIssueList = [];
+function magFillIssueSel(list, base) {
   const sel = document.getElementById('magIssueSel'); if (!sel || !Array.isArray(list)) return;
+  const byDate = new Map(magIssueList.map(x => [x.issue_date, x]));
+  for (const x of list) {
+    const old = byDate.get(x.issue_date);
+    byDate.set(x.issue_date, { ...x, focus: base ? !!x.focus : !!(old && old.focus) });
+  }
+  if (base) for (const [k, x] of byDate) if (!list.some(y => y.issue_date === k)) byDate.set(k, { ...x, focus: false });
+  magIssueList = [...byDate.values()].sort((a, b) => String(b.issue_date).localeCompare(String(a.issue_date)));
+  list = magIssueList;
   sel.innerHTML = list.map(x => `<option value="${magEsc(x.issue_date)}">${magEsc(magDateLabel(x.issue_date))}号${x.label ? '　' + magEsc(x.label) : ''}${x.focus ? '（注目）' : ''}</option>`).join('');
   sel.value = magIssue || (list.find(x => x.focus) || list[0] || {}).issue_date || '';
 }
@@ -75,7 +90,7 @@ async function magLoadDash(quiet, tries = 2) {
     if (!j.ok) throw new Error(j.error || '不明');
     if (magDoc && magDoc.issue_date === j.focus_issue && (!!magDoc.pre) === !!(j.issue && j.issue.exists)) magDoc = null;   // 先置き⇔初版が入れ替わった
     magDash = j; magSetUpdated(true);
-    magFillIssueSel(j.selectable_issues);
+    magFillIssueSel(j.selectable_issues, !magIssue);
     magWaitEnd();
     if (magTabName === 'status') magRenderStatus();
     return j;
