@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TAKERU 地図ツール</title>
+<style>
+* { box-sizing:border-box; margin:0; padding:0; }
+:root{
+  --bg:#1a1a1a; --bg2:#222; --bg3:#2a2a2a; --border:#333;
+  --accent:#4caf50; --accent2:#81c784; --text:#e8e8e8; --text2:#aaa; --text3:#666;
+}
+body{ background:var(--bg); color:var(--text); font-family:'Noto Sans JP','Yu Gothic',sans-serif; height:100vh; overflow:hidden; display:flex; flex-direction:column; }
+header{ background:var(--bg2); border-bottom:1px solid var(--border); padding:8px 18px; display:flex; align-items:center; gap:14px; height:46px; flex-shrink:0; }
+header h1{ font-size:0.95rem; color:var(--accent); font-weight:700; letter-spacing:.08em; }
+header .hint{ font-size:0.72rem; color:var(--text2); }
+.main{ display:flex; flex:1; overflow:hidden; }
+
+/* 左パネル */
+.panel{ width:330px; min-width:330px; background:var(--bg2); border-right:1px solid var(--border); overflow-y:auto; padding:14px; display:flex; flex-direction:column; gap:16px; }
+.sec{ border:1px solid var(--border); border-radius:6px; padding:10px 12px; background:var(--bg); }
+.sec h2{ font-size:0.78rem; color:var(--accent2); margin-bottom:8px; letter-spacing:.05em; }
+.row{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+label.lbl{ font-size:0.72rem; color:var(--text2); }
+input[type=text], input[type=number]{ background:var(--bg3); border:1px solid var(--border); color:var(--text); padding:5px 8px; border-radius:4px; font-size:0.8rem; font-family:inherit; }
+input[type=text]{ flex:1; min-width:60px; }
+input[type=number]{ width:64px; }
+input[type=range]{ flex:1; }
+button{ font-family:inherit; cursor:pointer; }
+.btn{ background:transparent; border:1px solid var(--accent); color:var(--accent); padding:5px 12px; border-radius:4px; font-size:0.78rem; }
+.btn:hover{ background:rgba(76,175,80,.12); }
+.btn:disabled{ opacity:.35; cursor:default; border-color:var(--text3); color:var(--text3); }
+.btn:disabled:hover{ background:transparent; }
+.btn-primary{ background:var(--accent); border:none; color:#000; font-weight:700; padding:8px 14px; border-radius:4px; font-size:0.82rem; width:100%; }
+.btn-primary:hover{ background:var(--accent2); }
+.btn-sm{ font-size:0.7rem; padding:3px 8px; border:1px solid var(--border); background:transparent; color:var(--text2); border-radius:3px; }
+.btn-sm:hover{ border-color:var(--accent2); color:var(--accent2); }
+
+/* スウォッチ */
+.swatches{ display:flex; flex-wrap:wrap; gap:6px; }
+.sw{ width:30px; height:30px; border-radius:5px; cursor:pointer; border:2px solid transparent; }
+.sw.active{ border-color:#fff; box-shadow:0 0 0 2px var(--accent); }
+.bg-presets .sw{ border:2px solid var(--border); }
+.bg-presets .sw.active{ border-color:var(--accent); box-shadow:0 0 0 2px var(--accent); }
+
+/* モード切替 */
+.modes{ display:flex; gap:6px; }
+.mode-btn{ flex:1; padding:7px; border:1px solid var(--border); background:var(--bg3); color:var(--text2); border-radius:5px; font-size:0.78rem; }
+.mode-btn.active{ background:var(--accent); color:#000; font-weight:700; border-color:var(--accent); }
+
+/* マーカー/凡例リスト */
+.list-item{ display:flex; align-items:center; gap:6px; padding:5px 0; border-bottom:1px solid var(--border); }
+.list-item input[type=text]{ font-size:0.74rem; padding:3px 6px; }
+.mini-sw{ width:20px; height:20px; border-radius:3px; flex-shrink:0; border:1px solid var(--border); cursor:pointer; }
+.del{ color:#d05050; background:transparent; border:none; font-size:0.9rem; padding:0 4px; }
+
+/* ステージ */
+.stage-wrap{ flex:1; background:#111; padding:18px; overflow:auto; }
+#stage{ display:block; background:#000; box-shadow:0 8px 40px rgba(0,0,0,.6); }
+#mapSvg{ background:#C8DCE8; }
+.prefecture, .region{ cursor:pointer; }
+#mapSvg g, #mapSvg path, #mapSvg line{ stroke-width: inherit; }
+.prefecture:hover, .region:hover{ opacity:.85; }
+.marker-g{ cursor:move; }
+.marker-g.sel polygon{ stroke:#fff; stroke-width:2.5; }
+.legend-pos{ display:grid; grid-template-columns:repeat(3,1fr); gap:4px; }
+.legend-pos button{ font-size:0.66rem; padding:4px 2px; border:1px solid var(--border); background:var(--bg3); color:var(--text2); border-radius:3px; }
+.legend-pos button.active{ background:var(--accent); color:#000; border-color:var(--accent); }
+.note{ font-size:0.68rem; color:var(--text3); line-height:1.5; }
+#sizeBtns .mode-btn{ font-size:0.7rem; line-height:1.35; padding:6px 2px; }
+
+/* ツールパレット */
+.tool-grid{ display:grid; grid-template-columns:1fr 1fr; gap:5px; }
+.tool-btn{ padding:7px 6px; border:1px solid var(--border); background:var(--bg3); color:var(--text2); border-radius:5px; font-size:0.76rem; text-align:center; }
+.tool-btn:hover{ border-color:var(--accent2); }
+.tool-btn.active{ background:var(--accent); color:#000; font-weight:700; border-color:var(--accent); }
+
+/* プロパティパネル */
+#propPanel .prow{ display:flex; align-items:center; gap:7px; margin-bottom:7px; flex-wrap:wrap; }
+#propPanel .prow label{ font-size:0.72rem; color:var(--text2); min-width:50px; }
+#propPanel textarea{ width:100%; background:var(--bg3); border:1px solid var(--border); color:var(--text); border-radius:4px; font-family:inherit; font-size:0.8rem; padding:6px; resize:vertical; min-height:54px; }
+#propPanel select{ background:var(--bg3); border:1px solid var(--border); color:var(--text); border-radius:4px; font-size:0.78rem; padding:4px 6px; }
+.seg{ display:flex; gap:3px; flex-wrap:wrap; }
+.seg button{ font-size:0.7rem; padding:4px 8px; border:1px solid var(--border); background:var(--bg3); color:var(--text2); border-radius:3px; }
+.seg button.on{ background:var(--accent); color:#000; border-color:var(--accent); font-weight:700; }
+
+/* レイヤー一覧 */
+.layer-list{ display:flex; flex-direction:column; gap:3px; max-height:260px; overflow-y:auto; }
+.layer-item{ display:flex; align-items:center; gap:6px; padding:5px 6px; border:1px solid var(--border); border-radius:4px; background:var(--bg3); font-size:0.74rem; cursor:pointer; }
+.layer-item.sel{ border-color:var(--accent); background:rgba(76,175,80,.15); }
+.layer-item .lname{ flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:var(--text); }
+.layer-item.hidden-el .lname{ color:var(--text3); text-decoration:line-through; }
+.layer-item .licon{ width:16px; text-align:center; flex-shrink:0; }
+.layer-item .lbtn{ background:transparent; border:none; color:var(--text2); font-size:0.8rem; padding:0 2px; cursor:pointer; }
+.layer-item .lbtn:hover{ color:var(--accent2); }
+.layer-item.drag-over{ border-top:2px solid var(--accent); }
+
+/* 選択ハンドル（カーソル） */
+#selOverlay .handle{ cursor:nwse-resize; }
+#selOverlay .rot-handle{ cursor:grab; }
+#selOverlay .pt-handle{ cursor:move; }
+#selOverlay .lbl-handle{ cursor:move; }
+.el-g{ cursor:default; }
+.el-g.movable{ cursor:move; }
+
+/* ユーザーパレット */
+.user-palette{ display:flex; flex-wrap:wrap; gap:4px; }
+.user-sw{ width:28px; height:28px; border-radius:4px; cursor:pointer; border:2px solid transparent; }
+.user-sw:hover{ border-color:var(--accent2); }
+.user-sw.empty{ border:2px dashed var(--border); background:transparent; cursor:default; }
+/* ライブラリ */
+#libPanel{ display:flex; flex-direction:column; gap:4px; max-height:280px; overflow-y:auto; }
+.lib-item{ display:flex; align-items:center; gap:8px; padding:6px; border:1px solid var(--border); border-radius:4px; background:var(--bg3); cursor:pointer; }
+.lib-item:hover{ border-color:var(--accent2); }
+.lib-thumb{ width:40px; height:40px; flex-shrink:0; overflow:visible; }
+.lib-name{ font-size:0.74rem; color:var(--text); flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.lib-del{ background:transparent; border:none; color:#d05050; font-size:0.85rem; padding:0 4px; cursor:pointer; flex-shrink:0; }
+/* 整列ボタン */
+.align-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:3px; margin-top:6px; }
+.align-grid button{ font-size:0.66rem; padding:4px 2px; border:1px solid var(--border); background:var(--bg3); color:var(--text2); border-radius:3px; cursor:pointer; }
+.align-grid button:hover{ border-color:var(--accent2); color:var(--accent2); }
+.align-grid button:disabled{ opacity:.35; cursor:default; }
+/* トースト */
+#toastMsg{ position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:#2a2a2a; color:#e8e8e8; border:1px solid #555; padding:10px 20px; border-radius:8px; font-size:0.8rem; z-index:9999; display:none; pointer-events:none; white-space:nowrap; }
+/* インラインテキスト編集 */
+#inlineEdit{ position:absolute; z-index:50; display:none; background:#fff; color:#111;
+  border:2px solid var(--accent); border-radius:3px; font-family:'Noto Sans JP','Yu Gothic',sans-serif;
+  padding:2px 4px; resize:none; line-height:1.3; overflow:hidden; }
+</style>
+</head>
+<body>
+<header>
+  <h1>🗾 TAKERU 地図ツール</h1>
+  <button class="btn" id="btnUndo" onclick="undo()" disabled style="padding:3px 10px">↩ 戻す</button>
+  <button class="btn" id="btnRedo" onclick="redo()" disabled style="padding:3px 10px">↪ やり直し</button>
+  <span class="hint" id="modeHint">選択ツール：要素をクリックで選択・ドラッグで移動</span>
+  <div style="display:flex;align-items:center;gap:5px;margin-left:auto;flex-shrink:0">
+    <span style="font-size:0.72rem;color:var(--text2)">表示倍率</span>
+    <button class="btn-sm" onclick="setZoom(zoom-0.1)">－</button>
+    <input type="range" id="zoomSlider" min="30" max="200" value="100" oninput="setZoom(this.value/100)" style="width:90px;accent-color:var(--accent)">
+    <span id="zoomDisp" style="min-width:36px;font-size:0.78rem;text-align:right;color:var(--text2)">100%</span>
+    <button class="btn-sm" onclick="setZoom(zoom+0.1)">＋</button>
+    <button class="btn-sm" onclick="setZoom(0.5)">50%</button>
+    <button class="btn-sm" onclick="setZoom(1.0)">100%</button>
+    <button class="btn-sm" onclick="setZoom(1.5)">150%</button>
+    <button class="btn-sm" onclick="setZoom(2.0)">200%</button>
+  </div>
+</header>
+<div class="main">
+  <!-- 左パネル -->
+  <div class="panel">
+    <!-- ツール -->
+    <div class="sec">
+      <h2>ツール</h2>
+      <div class="tool-grid" id="toolBtns">
+        <button class="tool-btn active" data-t="select" onclick="setTool('select')">▱ 選択</button>
+        <button class="tool-btn" data-t="paint" onclick="setTool('paint')">🎨 地域塗り</button>
+        <button class="tool-btn" data-t="unit" onclick="setTool('unit')">凸 部隊</button>
+        <button class="tool-btn" data-t="arrow" onclick="setTool('arrow')">➤ 矢印</button>
+        <button class="tool-btn" data-t="rect" onclick="setTool('rect')">▭ 矩形</button>
+        <button class="tool-btn" data-t="text" onclick="setTool('text')">あ テキスト</button>
+        <button class="tool-btn" data-t="star" onclick="setTool('star')">★ 拠点</button>
+        <button class="tool-btn" data-t="symbol" onclick="setTool('symbol')">⚓ 記号</button>
+      </div>
+      <div id="symbolTypeSec" style="display:none;margin-top:10px">
+        <label class="lbl" style="display:block;margin-bottom:4px">記号の種類</label>
+        <select id="symbolTypeSelect" onchange="activeSymbolType=this.value"
+                style="width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:4px;font-size:0.8rem;padding:5px 8px;font-family:inherit">
+          <option value="ship">🚢 艦隊（艦船）</option>
+          <option value="aircraft">✈ 航空（飛行機）</option>
+          <option value="base">■ 基地</option>
+          <option value="city">◎ 都市</option>
+          <option value="battle">✕ 戦闘</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- 選択中の要素プロパティ -->
+    <div class="sec" id="propSec" style="display:none">
+      <h2>プロパティ</h2>
+      <div id="propPanel"></div>
+    </div>
+
+    <!-- レイヤー一覧 -->
+    <div class="sec">
+      <h2>レイヤー（重ね順：上が前面）</h2>
+      <div id="layerList" class="layer-list"></div>
+    </div>
+
+    <!-- 地図選択 -->
+    <div class="sec">
+      <h2>地図レイヤー</h2>
+      <div class="modes" id="mapBtns" style="flex-wrap:wrap;gap:4px">
+        <button class="mode-btn active" data-m="japan" onclick="switchMap('japan')" style="font-size:0.72rem;padding:5px 4px">🗾 日本</button>
+        <button class="mode-btn" data-m="world" onclick="switchMap('world')" style="font-size:0.72rem;padding:5px 4px">🌍 世界</button>
+        <button class="mode-btn" data-m="asia_pacific" onclick="switchMap('asia_pacific')" style="font-size:0.72rem;padding:5px 4px">アジア太平洋</button>
+        <button class="mode-btn" data-m="europe" onclick="switchMap('europe')" style="font-size:0.72rem;padding:5px 4px">欧州・中東</button>
+        <button class="mode-btn" data-m="north_america" onclick="switchMap('north_america')" style="font-size:0.72rem;padding:5px 4px">北米</button>
+        <div class="note" style="width:100%;margin:2px 0 0">── 詳細版（拡大向け）──</div>
+        <button class="mode-btn" data-m="japan_hd" onclick="switchMap('japan_hd')" style="font-size:0.72rem;padding:5px 4px">🗾 日本HD</button>
+        <button class="mode-btn" data-m="world_hd" onclick="switchMap('world_hd')" style="font-size:0.72rem;padding:5px 4px">🌍 世界HD</button>
+        <button class="mode-btn" data-m="asia_pacific_hd" onclick="switchMap('asia_pacific_hd')" style="font-size:0.72rem;padding:5px 4px">アジアHD</button>
+        <button class="mode-btn" data-m="europe_hd" onclick="switchMap('europe_hd')" style="font-size:0.72rem;padding:5px 4px">欧州HD</button>
+        <button class="mode-btn" data-m="north_america_hd" onclick="switchMap('north_america_hd')" style="font-size:0.72rem;padding:5px 4px">北米HD</button>
+      </div>
+      <button class="btn-sm" style="width:100%;margin-top:6px" onclick="document.getElementById('customSvgFile').click()">📁 カスタムSVGを読み込む</button>
+      <input type="file" id="customSvgFile" accept=".svg,image/svg+xml" style="display:none" onchange="onCustomSvg(event)">
+      <div class="row" style="margin-top:6px;align-items:center">
+        <button class="btn-sm" onclick="resetMapView()">初期位置に戻す</button>
+        <span id="mapZoomLabel" style="font-size:0.7rem;color:var(--text3);margin-left:auto">100%</span>
+      </div>
+      <div class="note" style="margin-top:4px">右ドラッグで移動、スクロールで拡縮</div>
+    </div>
+
+    <!-- 下絵（背景画像） -->
+    <div class="sec">
+      <h2>下絵（背景画像）</h2>
+      <button class="btn-sm" style="width:100%" onclick="document.getElementById('bgFile').click()">🖼 下絵を追加</button>
+      <input type="file" id="bgFile" accept="image/png,image/jpeg,image/gif,image/webp" style="display:none" onchange="onBgFile(event)">
+      <label class="lbl" style="display:flex;align-items:center;gap:6px;margin-top:8px">
+        <input type="checkbox" id="mapVisChk" checked onchange="toggleMap(this.checked)"> 地図を表示する
+      </label>
+      <div class="note" style="margin-top:6px">画像は地図の下に敷かれます。選択すると位置・サイズ・透明度を調整できます。</div>
+    </div>
+
+    <!-- カラーパレット -->
+    <div class="sec">
+      <h2>カラーパレット（よく使う色）</h2>
+      <div class="user-palette" id="userPalette"></div>
+      <div class="row" style="margin-top:6px">
+        <label class="lbl">色</label>
+        <input type="color" id="palettePickerAdd" value="#E24B4A">
+        <button class="btn-sm" onclick="addPaletteColor()">＋ 登録</button>
+      </div>
+      <div class="note" style="margin-top:4px">クリック→選択要素の色に適用。右クリックで削除。</div>
+    </div>
+
+    <!-- 背景色 -->
+    <div class="sec">
+      <h2>背景色</h2>
+      <div class="row bg-presets swatches" id="bgPresets"></div>
+      <div class="row" style="margin-top:8px">
+        <label class="lbl">任意色</label>
+        <input type="color" id="bgPicker" value="#F5F0E8" onchange="setBg(this.value)">
+      </div>
+    </div>
+
+    <!-- 境界線 -->
+    <div class="sec">
+      <h2>境界線（県境・海岸線）</h2>
+      <div class="modes" id="borderBtns">
+        <button class="mode-btn active" data-b="normal" onclick="setBorder('normal')">通常</button>
+        <button class="mode-btn" data-b="light" onclick="setBorder('light')">薄い</button>
+        <button class="mode-btn" data-b="none" onclick="setBorder('none')">なし</button>
+      </div>
+      <div class="row" style="margin-top:8px">
+        <label class="lbl">線幅</label>
+        <input type="range" id="borderWidthRange" min="0.2" max="6" step="0.1" value="1.0"
+               style="flex:1" oninput="setBorderWidth(this.value)">
+        <span id="borderWidthVal" style="font-size:0.72rem;color:var(--text2);min-width:28px;text-align:right">1.0</span>
+      </div>
+    </div>
+
+    <!-- 塗り -->
+    <div class="sec">
+      <h2>地域の塗り色</h2>
+      <div class="row swatches" id="paintSwatches"></div>
+      <div class="row" style="margin-top:8px">
+        <label class="lbl">任意色</label>
+        <input type="color" id="paintPicker" value="#4a7fb5" onchange="pickPaint(this.value)">
+      </div>
+      <div class="row" style="margin-top:8px">
+        <label class="lbl">濃さ</label>
+        <input type="range" id="opacity" min="20" max="100" value="80" oninput="setOpacity(this.value)">
+        <span id="opacityVal" class="lbl">80%</span>
+      </div>
+      <div class="note" style="margin-top:6px">同じ県を同じ色で再クリックすると色が消えます。</div>
+    </div>
+
+    <!-- 凡例 -->
+    <div class="sec">
+      <h2>凡例（はんれい）</h2>
+      <div id="legendList"></div>
+      <button class="btn-sm" style="margin-top:6px" onclick="addLegend()">＋ 行を追加</button>
+      <div style="margin-top:8px">
+        <label class="lbl">位置</label>
+        <div class="legend-pos" id="legendPos" style="margin-top:4px">
+          <button data-p="tl" onclick="setLegendPos('tl')">左上</button>
+          <button data-p="tr" onclick="setLegendPos('tr')">右上</button>
+          <button data-p="none" onclick="setLegendPos('none')">なし</button>
+          <button data-p="bl" class="active" onclick="setLegendPos('bl')">左下</button>
+          <button data-p="br" onclick="setLegendPos('br')">右下</button>
+          <button data-p="center" onclick="setLegendPos('center')">中央</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- タイトル -->
+    <div class="sec">
+      <h2>図表タイトル</h2>
+      <input type="text" id="titleInput" placeholder="例：航空自衛隊の防衛区域" oninput="updateTitle()" style="width:100%">
+    </div>
+
+    <!-- 出力サイズ -->
+    <div class="sec">
+      <h2>出力サイズ</h2>
+      <div class="modes" id="sizeBtns">
+        <button class="mode-btn active" data-s="S" onclick="setOutputSize('S')">小<br>960×720</button>
+        <button class="mode-btn" data-s="M" onclick="setOutputSize('M')">中<br>1440×1080</button>
+        <button class="mode-btn" data-s="L" onclick="setOutputSize('L')">大<br>1920×1440</button>
+      </div>
+    </div>
+
+    <!-- 部品ライブラリ -->
+    <div class="sec">
+      <h2>部品ライブラリ</h2>
+      <div class="row" style="gap:4px;flex-wrap:nowrap">
+        <button class="btn-sm" style="flex:1" onclick="saveToLibrary()">＋ 選択を保存</button>
+        <button class="btn-sm" onclick="exportLibrary()">⬇ 書出</button>
+        <button class="btn-sm" onclick="document.getElementById('libImportFile').click()">⬆ 読込</button>
+      </div>
+      <input type="file" id="libImportFile" accept=".json,application/json" style="display:none" onchange="importLibrary(event)">
+      <div id="libPanel" style="margin-top:6px"></div>
+    </div>
+
+    <!-- 出力・作業ファイル -->
+    <div class="sec">
+      <h2>PNG出力 / 作業ファイル</h2>
+      <div class="row">
+        <input type="text" id="fileName" placeholder="IRUMA10" value="map" style="flex:1">
+        <span class="lbl" id="fnSuffix">_S.png</span>
+      </div>
+      <button class="btn-primary" style="margin-top:8px" onclick="exportPNG()">💾 PNGをダウンロード</button>
+      <div class="row" style="margin-top:8px; gap:6px; flex-wrap:nowrap">
+        <button class="btn" style="flex:1" onclick="saveWork()">💼 作業を保存</button>
+        <button class="btn" style="flex:1" onclick="loadWork()">📂 作業を読込</button>
+      </div>
+      <input type="file" id="loadFile" accept="application/json,.json" style="display:none" onchange="onLoadFile(event)">
+      <button class="btn-sm" style="margin-top:8px; width:100%" onclick="resetAll()">全てクリア（やり直し）</button>
+    </div>
+  </div>
+
+  <!-- ステージ -->
+  <div class="stage-wrap">
+    <svg id="stage" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 720">
+      <rect id="bg" x="0" y="0" width="960" height="720" fill="#F5F0E8"/>
+      <g id="bgLayer"></g>
+      <!-- 地図レイヤー（JS から動的に読み込み） -->
+      <!-- 日本地図データ出典: Japanese Prefectures by Geolonia (https://github.com/geolonia/japanese-prefectures) MITライセンス -->
+      <!-- 世界地図データ出典: Natural Earth (https://www.naturalearthdata.com/) Public Domain -->
+      <svg id="mapSvg" x="0" y="0" width="960" height="720" viewBox="0 0 1000 1000">
+      </svg>
+      <g id="legendLayer"></g>
+      <text id="title" x="480" y="44" text-anchor="middle"
+            font-family="'Noto Sans JP','Yu Gothic',sans-serif" font-size="34" font-weight="700"
+            fill="#2d5a27"></text>
+      <g id="layerEls"></g>
+      <g id="selOverlay"></g>
+    </svg>
+  </div>
+</div>
+
+<div id="toastMsg"></div>
+<textarea id="inlineEdit" spellcheck="false"></textarea>
+<script src="maps/japan.js"></script>
+<script src="maps/world.js"></script>
+<script src="maps/asia_pacific.js"></script>
+<script src="maps/europe.js"></script>
+<script src="maps/north_america.js"></script>
+<script src="maps/japan_hd.js"></script>
+<script src="maps/world_hd.js"></script>
+<script src="maps/asia_pacific_hd.js"></script>
+<script src="maps/europe_hd.js"></script>
+<script src="maps/north_america_hd.js"></script>
+<script src="maptool.js"></script>
+</body>
+</html>
