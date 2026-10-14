@@ -727,3 +727,42 @@ textarea.svg-overlay-input { min-height:120px; font-family:monospace; font-size:
 .mag-chip { display: inline-block; font-size: 11px; padding: 1px 7px; border-radius: 99px; background: #22324a; color: #c8d3e0; margin-right: 3px; }
 .mag-chip.off { opacity: .4; }
 @media (max-width: 700px) { .mag-pane { max-width: 100%; } }
+
+/* ---- 𝕏 Xの投稿（x.js） ---- */
+#btnX.x-attn { border-color: #ff9f40; color: #ffd59a; }
+.x-live { background: #3a2a10; border: 1px solid #ff9f40; color: #ffd59a; border-radius: 6px; padding: 6px 10px; font-size: 13px; font-weight: bold; }
+.x-dry { background: #1a3a72; color: #bdd4f5; border-radius: 6px; padding: 6px 10px; font-size: 14px; font-weight: bold; }
+.x-st { display: inline-block; font-size: 12px; padding: 2px 9px; border-radius: 99px; background: #2c3e55; color: #dde3f0; }
+.x-st-承認待ち { background: #4a3a18; color: #ffcf8a; font-weight: bold; }
+.x-st-待機中 { background: #1a3a72; color: #bdd4f5; }
+.x-st-投稿済, .x-st-試運転済 { background: #1c4a26; color: #9be3a8; }
+.x-st-保留 { background: #333; color: #aaa; }
+.x-st-エラー, .x-st-要確認 { background: #6a1b1b; color: #ffd7d7; font-weight: bold; }
+.x-filter { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin: 12px 0 8px; }
+.x-filter button { background: #121c2a; border: 1px solid #2c3e55; color: #9fb0c4; padding: 5px 14px; border-radius: 99px; cursor: pointer; font-size: 13px; }
+.x-filter button.on { background: #18263a; color: #ffcf8a; border-color: #ffcf8a; font-weight: bold; }
+.x-list { display: grid; gap: 10px; }
+.x-item { background: #121c2a; border: 1px solid #22324a; border-radius: 8px; padding: 10px 12px; display: grid; gap: 6px; }
+.x-item.st-承認待ち { border-color: #ff9f40; }
+.x-item.st-エラー, .x-item.st-要確認 { border-color: #ff7043; }
+.x-item.st-保留 { opacity: .7; }
+.x-item.editing { border-color: #6cb6ff; }
+.x-head { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; font-size: 14px; color: #dde3f0; }
+.x-kind { font-size: 12px; padding: 1px 8px; border-radius: 4px; background: #22324a; color: #c8d3e0; }
+.x-text { white-space: pre-wrap; font-size: 14px; line-height: 1.7; color: #e6edf5; }
+.x-more summary { cursor: pointer; white-space: pre-wrap; font-size: 14px; line-height: 1.7; color: #e6edf5; }
+.x-link { font-size: 12px; word-break: break-all; }
+.x-link a { color: #6cb6ff; }
+.x-err { color: #ff9f80; font-size: 13px; font-weight: bold; }
+.x-btns { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 4px; }
+.x-ok { background: #1c4a26; color: #c9f2d0; border: 1px solid #3f8a4c; border-radius: 6px; padding: 6px 14px; cursor: pointer; font-size: 13px; font-weight: bold; }
+.x-add { background: #121c2a; border: 1px dashed #2c3e55; border-radius: 8px; padding: 8px 12px; margin-top: 10px; }
+.x-add summary { cursor: pointer; color: #9fb0c4; font-size: 14px; }
+.x-form { display: grid; gap: 6px; margin-top: 6px; }
+.x-form-row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; font-size: 13px; color: #c8d3e0; }
+.x-form select, .x-form input[type=datetime-local] { background: #0f1824; color: #dde3f0; border: 1px solid #2c3e55; border-radius: 4px; padding: 4px 6px; }
+.x-lbl { font-size: 13px; color: #9fb0c4; font-weight: bold; margin-top: 4px; }
+.x-ta { width: 100%; box-sizing: border-box; min-height: 160px; background: #0f1824; color: #e6edf5; border: 1px solid #2c3e55; border-radius: 6px; padding: 8px 10px; font-size: 15px; line-height: 1.7; font-family: inherit; resize: vertical; }
+.x-in { width: 100%; box-sizing: border-box; background: #0f1824; color: #e6edf5; border: 1px solid #2c3e55; border-radius: 6px; padding: 6px 10px; font-size: 14px; }
+.x-code { background: #0f1824; padding: 8px 10px; border-radius: 6px; }
+@media (max-width: 700px) { .x-head { font-size: 13px; } .x-btns button { flex: 1 1 auto; } }

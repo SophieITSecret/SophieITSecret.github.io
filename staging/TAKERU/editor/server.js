@@ -133,7 +133,7 @@ function postCsv(req, res) {
 // ---- お知らせ（news.csv）----
 //   news.csv は TAKERUcard.csv と同じフォルダに置く。
 function newsPath() { return path.join(path.dirname(config.csvPath), 'news.csv'); }
-const { parseCsvText, buildNewsCsv, readNews, newsStamp, fetchLatestDigest, gasGet, gasPost } = require('./news-lib');
+const { parseCsvText, buildNewsCsv, readNews, newsStamp, fetchLatestDigest, gasGet, gasPost, xGet, xPost, xConfigured } = require('./news-lib');
 // GET /api/news — news.csv を配列で返す。stamp は保存時の突き合わせ用（→ postNews）
 function getNews(req, res) {
   try { const { items, stamp } = readNews(newsPath()); sendJSON(res, 200, { ok: true, items, stamp }); }
@@ -255,6 +255,13 @@ function postMagazineSave(req, res) {
       const b = JSON.parse(Buffer.concat(chunks).toString('utf8') || '{}');
       if (!/^\d{4}-\d{2}-\d{2}$/.test(b.issue_date || '')) return sendJSON(res, 400, { ok: false, error: '配信日がありません' });
       let body;
+      if (b.mode === 'market_comment') {
+        // マーケット欄の一言コメント（GAS v30〜。号ごと。空文字で削除）。版は変わらない
+        body = { stage: 'market_comment', issue_date: b.issue_date, text: String(b.text || '') };
+        if (MAG_MOCK) { magMockInit(); const cur = magMock.filter(r => r.issue_date === b.issue_date).pop();
+          if (cur) cur.market_comment = body.text; return sendGas(res, { ok: true, text: 'OK market_comment（見本）' }); }
+        return sendGas(res, await gasPost(body));
+      }
       if (b.mode === 'issue_inputs') {
         // 号の先置き（GAS v27）：下書きが無い号は置き場へ、ある号は最新版へ。notice・trivia だけ。expected_version は任意
         body = { stage: 'issue_inputs', issue_date: b.issue_date };
@@ -272,6 +279,132 @@ function postMagazineSave(req, res) {
           if (typeof b[k] === 'string') body[k] = b[k];
       } else return sendJSON(res, 400, { ok: false, error: 'mode が違います' });
       sendGas(res, MAG_MOCK ? magMockSave(body) : await gasPost(body));
+    } catch (e) { sendJSON(res, 200, { ok: false, error: e.message }); }
+  });
+}
+
+// ============================================================
+// X（旧Twitter）発信の一覧（「𝕏 X」）
+//   X用GAS（Claude＝Cowork君の作。版 x3〜、10/10 から本番）の一覧を読む・直す・承認する。
+//   資料：「MSフォーラム X発信管理 仕様書 第3版」と「コード君たちへの依頼」（10/14）の 1-1
+//   ⚠本番：「待機中」にした行は、予定の時刻に @MSforum01 へ本当に投稿される
+//   鍵は secrets.json の x { gasUrl, token }。画面には渡さない
+//   試験用に X_MOCK=1 で立てると、GASの代わりに見本の一覧で動く（Xには何も出ない）
+// ============================================================
+const X_MOCK = process.env.X_MOCK === '1';
+const X_KINDS = ['マーケット', '先週の動き', 'ご存知ですか', '時事', 'アプリ紹介', 'お知らせ', '在庫', 'その他'];
+const X_SET_STATUS = ['承認待ち', '待機中', '保留'];
+// Xの数え方の目安（twitter-text と同じ考え方：ラテン文字などは1、日本語などは2、URLは23）
+function xWeight(s) {
+  let n = 0;
+  const t = String(s || '').replace(/https?:\/\/\S+/g, () => { n += 23; return ''; });
+  for (const ch of t) {
+    const c = ch.codePointAt(0);
+    n += (c <= 4351 || (c >= 8192 && c <= 8205) || (c >= 8208 && c <= 8223) || (c >= 8242 && c <= 8247)) ? 1 : 2;
+  }
+  return n;
+}
+function xNowStr(d = new Date()) {
+  const p = n => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+// ---- 見本モード ----
+let xMock = null;
+function xMockInit() {
+  if (xMock) return;
+  const row = (id, kind, at, text, link, status, extra = {}) => ({ id, kind, at, text, link, images: [], status, source: '手動', issue: '',
+    approved: '', posted_at: '', post_id: '', post_url: '', error: '', memo: '', updated_at: '2026-10-14 09:00', ...extra });
+  xMock = [
+    row('X001', 'お知らせ', '2026-10-09 20:00', 'MSフォーラムのXを再開します。（見本）', 'https://ms-forum.com/?src=x', '投稿済',
+      { posted_at: '2026-10-09 20:01', post_id: '1', post_url: 'https://x.com/MSforum01/status/1' }),
+    row('X006', '時事', '2026-10-21 17:00', '（見本）今週の時事コメントの下書きです。Claudeが書き、牧村さんの承認を待っています。', 'https://ms-forum.com/mailmag/20261010.html?src=x', '承認待ち', { source: 'Claude下書き' }),
+    row('X007', 'アプリ紹介', '2026-10-16 17:00', '（見本）スマホで学ぶ軍事戦略ジュニアコース「TAKERU」。', 'https://takeru.ms-forum.com/?src=x', '待機中', { approved: '牧村 2026-10-14 10:00' }),
+    row('X008', 'その他', '', '（見本）保留にした行です。', '', '保留'),
+    row('X009', 'マーケット', '2026-10-11 08:00', '（見本）先週のマーケット', 'https://takeru.ms-forum.com/?view=market&src=x', 'エラー',
+      { error: '（見本）401 Unauthorized', source: '号（マガジン）', issue: '2026-10-10' }),
+  ];
+}
+function xMockList(q) {
+  xMockInit();
+  return xMock.filter(r => (!q.status || r.status === q.status) && (!q.from || (r.at || '9') >= q.from) && (!q.to || (r.at || '') <= q.to + ' 99'))
+    .map(r => ({ ...r, weighted_length: xWeight(r.text + (r.link ? '\n' + r.link : '')) }))
+    .sort((a, b) => (a.at || '9999').localeCompare(b.at || '9999'));
+}
+function xMockStatus() {
+  xMockInit();
+  const count = {}; for (const r of xMock) count[r.status] = (count[r.status] || 0) + 1;
+  return { ok: true, version: 'x3（見本）', dry_run: false, attach_chart: false, now: xNowStr(), count,
+    next: xMockList({}).filter(r => r.status === '待機中').slice(0, 7) };
+}
+function xMockSave(b) {
+  xMockInit();
+  const now = xNowStr();
+  if (b.stage === 'x_add') {
+    const max = Math.max(0, ...xMock.map(r => Number(String(r.id).slice(1)) || 0));
+    const id = 'X' + String(max + 1).padStart(3, '0');
+    xMock.push({ id, kind: b.kind, at: b.at || '', text: b.text || '', link: b.link || '', images: [], status: b.status || '承認待ち',
+      source: b.source || '手動', issue: b.issue || '', approved: b.status === '待機中' ? `${b.by || '牧村'} ${now}` : '',
+      posted_at: '', post_id: '', post_url: '', error: '', memo: b.memo || '', updated_at: now });
+    return { ok: true, text: 'OK ids=' + id };
+  }
+  const r = xMock.find(x => x.id === b.id);
+  if (!r) return { ok: false, error: 'NG no such id' };
+  if (r.status === '投稿済') return { ok: false, posted: true, error: 'もう投稿済なので直せません' };
+  if (b.expected_updated && b.expected_updated !== r.updated_at) return { ok: false, conflict: true, updated_at: r.updated_at, error: '別の画面（またはGAS）で先に直されていました' };
+  for (const k of ['text', 'link', 'at', 'memo']) if (b[k] !== undefined) r[k] = b[k];
+  if (b.status) { if (b.status === '待機中' && r.status !== '待機中') r.approved = `${b.by || '牧村'} ${now}`; r.status = b.status; if (b.status === '待機中') r.error = ''; }
+  r.updated_at = now;
+  return { ok: true, text: 'OK id=' + r.id };
+}
+function sendX(res, j) { sendJSON(res, 200, { ...j, mock: X_MOCK }); }
+function xReady(res) {
+  if (X_MOCK || xConfigured()) return true;
+  sendJSON(res, 200, { ok: false, need_secret: true, error: 'X用GASの鍵がまだ作業台に入っていません（secrets.json の x）' });
+  return false;
+}
+// GET /api/x/status … 件数と直近の待機中（x_status）
+async function getXStatus(req, res) {
+  if (!xReady(res)) return;
+  try { sendX(res, X_MOCK ? xMockStatus() : await xGet('x_status')); }
+  catch (e) { sendJSON(res, 200, { ok: false, error: e.message }); }
+}
+// GET /api/x/list?status=&from=&to= … 一覧（x_list）
+async function getXList(req, res, q) {
+  if (!xReady(res)) return;
+  try {
+    const p = {};
+    const st = q.get('status') || '', from = q.get('from') || '', to = q.get('to') || '';
+    if (st) p.status = st;
+    for (const [k, v] of [['from', from], ['to', to]]) if (v) {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) return sendJSON(res, 400, { ok: false, error: '日付の形が違います' });
+      p[k] = v;
+    }
+    sendX(res, X_MOCK ? { ok: true, version: 'x3（見本）', dry_run: false, now: xNowStr(), items: xMockList(p) } : await xGet('x_list', p));
+  } catch (e) { sendJSON(res, 200, { ok: false, error: e.message }); }
+}
+// POST /api/x/save { op:'add', kind, at, text, link, status, memo } ／ { op:'update', id, text?, link?, at?, memo?, status?, expected_updated? }
+//   承認＝status を「待機中」にすること。承認者は「牧村」として残す（作業台を使うのは牧村さんだけ）
+function postXSave(req, res) {
+  if (!xReady(res)) return;
+  let chunks = [];
+  req.on('data', c => chunks.push(c));
+  req.on('end', async () => {
+    try {
+      const b = JSON.parse(Buffer.concat(chunks).toString('utf8') || '{}');
+      if (b.at && !/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/.test(b.at)) return sendJSON(res, 400, { ok: false, error: '予定日時の形が違います（YYYY-MM-DD HH:MM）' });
+      if (b.status && !X_SET_STATUS.includes(b.status)) return sendJSON(res, 400, { ok: false, error: '状態が違います' });
+      let body;
+      if (b.op === 'add') {
+        if (!X_KINDS.includes(b.kind)) return sendJSON(res, 400, { ok: false, error: '種類が違います' });
+        if (!String(b.text || '').trim()) return sendJSON(res, 400, { ok: false, error: '本文がありません' });
+        body = { stage: 'x_add', kind: b.kind, at: b.at || '', text: String(b.text), link: String(b.link || ''),
+                 status: b.status || '承認待ち', source: '手動', issue: '', memo: String(b.memo || ''), by: '牧村' };
+      } else if (b.op === 'update') {
+        if (!/^X\d+$/.test(b.id || '')) return sendJSON(res, 400, { ok: false, error: 'ID がありません' });
+        body = { stage: 'x_update', id: b.id, by: '牧村' };
+        for (const k of ['text', 'link', 'at', 'memo', 'status', 'expected_updated']) if (typeof b[k] === 'string') body[k] = b[k];
+      } else return sendJSON(res, 400, { ok: false, error: 'op が違います' });
+      sendX(res, X_MOCK ? xMockSave(body) : await xPost(body));
     } catch (e) { sendJSON(res, 200, { ok: false, error: e.message }); }
   });
 }
@@ -1400,6 +1533,9 @@ const server = http.createServer((req, res) => {
   if (pathname === '/api/magazine/deliveries' && method === 'GET') return getMagazineDeliveries(req, res, parsed.searchParams);
   if (pathname === '/api/magazine/inputs' && method === 'GET') return getMagazineInputs(req, res, parsed.searchParams);
   if (pathname === '/api/magazine/save' && method === 'POST') return postMagazineSave(req, res);
+  if (pathname === '/api/x/status' && method === 'GET') return getXStatus(req, res);
+  if (pathname === '/api/x/list' && method === 'GET') return getXList(req, res, parsed.searchParams);
+  if (pathname === '/api/x/save' && method === 'POST') return postXSave(req, res);
   if (pathname === '/api/links' && method === 'GET') return getLinks(req, res);
   if (pathname === '/api/sw-version' && method === 'GET') return getSwVersion(req, res);
   if (pathname === '/api/sw-version' && method === 'POST') return bumpSwVersion(req, res);

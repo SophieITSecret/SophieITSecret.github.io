@@ -15,6 +15,7 @@
   <button class="btn-load" id="btnMembers" onclick="openMembers()" disabled>👥 会員</button>
   <button class="btn-load" id="btnNews" onclick="openNewsEditor()">📰 お知らせ</button>
   <button class="btn-load" onclick="openMag()" title="TAKERUマガジン：金曜夜の下書きを確認・添削・OKする">📮 マガジン</button>
+  <button class="btn-load" id="btnX" onclick="openX()" title="MSフォーラムのXの投稿：一覧・直し・承認（本番）">𝕏 X</button>
   <button class="btn-load" onclick="openQr()" title="自由研究などを直接開く専用リンクとQRコードを作る">🔳 QR</button>
   <button class="btn-load" onclick="openMemo()">📝 メモ</button>
   <button class="btn-load" id="btnDraft" onclick="openDraft()" disabled>📝 原稿</button>
@@ -576,6 +577,18 @@
   </div>
 </div>
 
+<!-- MSフォーラムのX発信：一覧・直し・承認（public/x.js）。本番：待機中の行は予定の時刻に投稿される -->
+<div id="xModal" class="modal-overlay">
+  <div class="modal-box mag-modal-box">
+    <div class="modal-head mag-top">
+      <h2>𝕏 Xの投稿（@MSforum01）</h2>
+      <span id="xUpdated" class="mag-updated"></span>
+      <button class="btn-cancel" onclick="closeX()">✕ 閉じる</button>
+    </div>
+    <div id="xPane" class="mag-pane"><p class="qr-empty">読み込み中…</p></div>
+  </div>
+</div>
+
 <!-- 宣伝用の専用リンクとQRコード -->
 <div id="qrModal" class="modal-overlay">
   <div class="modal-box qr-modal-box">
@@ -759,5 +772,6 @@
 
 <script src="app.js"></script>
 <script src="magazine.js"></script>
+<script src="x.js"></script>
 </body>
 </html>

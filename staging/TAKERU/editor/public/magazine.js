@@ -141,8 +141,17 @@ function magRenderStatus() {
       `<tr><td>${magEsc(magDateLabel(x.date))}${x.end_date ? '〜' + magEsc(magDateLabel(x.end_date)) : ''}</td><td>${magEsc(x.text)}</td><td class="mag-dim">${magEsc(x.kind)}</td></tr>`).join('')}</table>` : '';
   const ups = (d.upcoming_issues || []).length ? `<div class="mag-h3">今後の号</div><table class="mag-small-table">${d.upcoming_issues.map(x =>
       `<tr><td>${magEsc(magDateLabel(x.issue_date))}号</td><td>${x.has_draft ? `下書きあり（版${x.version}・${magEsc(x.status)}）` : '<span class="mag-dim">まだ下書きなし</span>'}</td></tr>`).join('')}</table>` : '';
-  pane.innerHTML = `${d.mock ? '<p class="qr-warn">【試験用の見本モード】</p>' : ''}${band}${todo}${secs}${nextHtml}${steps}${sched}${ups}
+  pane.innerHTML = `${d.mock ? '<p class="qr-warn">【試験用の見本モード】</p>' : ''}${band}<div id="magXLine"></div>${todo}${secs}${nextHtml}${steps}${sched}${ups}
     <div class="mag-btns"><button class="dash-refresh" onclick="magLoadDash()">↻ 今すぐ取り直す</button><span class="sub">開いている間は60秒ごとに自動で取り直します</span></div>`;
+  magXLine();
+}
+// Xの承認待ちの件数を、状況の帯の下に小さく出す（x.js の xPeek。鍵が無ければ何も出さない）
+async function magXLine() {
+  if (typeof xPeek !== 'function') return;
+  const s = await xPeek(), el = document.getElementById('magXLine'); if (!el || !s || !s.ok) return;
+  const n = (s.count || {})['承認待ち'] || 0, bad = ((s.count || {})['エラー'] || 0) + ((s.count || {})['要確認'] || 0);
+  el.innerHTML = `<div class="mag-dim" style="margin:-4px 0 8px">𝕏 X：${n ? `<b style="color:#ffcf8a">承認待ち ${n}件</b>` : '承認待ちなし'}${bad ? `　<b style="color:#ff9f80">エラー・要確認 ${bad}件</b>` : ''}
+    <button class="dash-refresh" style="margin-left:8px" onclick="openX()">Xの一覧を開く</button></div>`;
 }
 function magGoInput(key) {
   magTab('edit');
@@ -245,6 +254,11 @@ function magRenderEdit() {
     ${interp ? `<details class="mag-interp"><summary>解釈メモ（筆者の読みが入った文）</summary><div class="mag-pre">${magEsc(interp)}</div></details>` : ''}
     <div class="mag-field"><div class="lbl">マーケット動向 <span class="hint">（自動。直せません。空ならメールに出ません）</span></div>
       <div class="readonly">${m.market ? magEsc(m.market) + '\n' + magEsc(m.market_note || '') : '<span class="mag-dim">まだ入っていません（土曜7時ごろ自動で入ります）</span>'}</div></div>
+    ${ro ? '' : `<div class="mag-field"><div class="lbl">マーケットの一言コメント <span class="hint">（号ごと。数字のあと1行あけて出ます。空で保存＝出さない。毎週でなくてよい）</span></div>
+      <textarea id="magF_mcomment" rows="2" placeholder="例：中東の緊張が続き、原油が上がりました。">${magEsc(m.market_comment || '')}</textarea>
+      <div class="mag-btns"><button class="dash-refresh" onclick="magSaveMarketComment()">💾 一言コメントを保存</button>
+        <span class="sub">${m.market ? '保存すると、上のマーケット欄の数字のあとに入ります' : '数字が入ったら（土曜7時ごろ）、数字のあとに表示されます'}。ほかの欄の保存とは別です</span></div>
+      <div id="magMcMsg"></div></div>`}
     ${field('schedule', '今週以降の主要日程', '（自動で入ります。直したいときだけ直す。空で保存＝この欄はメールに出ません）', 'mid')}
     ${ro ? '' : '<div class="mag-btns"><button class="dash-refresh" onclick="magScheduleAuto()">↺ 日程を自動に戻す</button><span class="sub">確認済・配信済の号には効きません</span></div>'}
     ${field('notice', 'MSフォーラムからのお知らせ', '（牧村さんが書く欄。空で保存＝この欄はメールに出ません）', 'mid')}
@@ -485,6 +499,17 @@ async function magHistDetail(issue) {
       <div class="mag-h3">配信された本文（最新の版）</div>
       ${m.ok ? `<div class="mag-mail">${magEsc(magBuildMail(m, m))}</div>` : '<p class="mag-dim">読めませんでした</p>'}`;
   } catch (e) { box.innerHTML = `<p class="qr-warn">読み込めませんでした：${magEsc(e.message)}</p>`; }
+}
+
+// マーケット欄の一言コメント（GAS v30〜 stage=market_comment。版は変わらない。空文字で削除）
+async function magSaveMarketComment() {
+  const el = document.getElementById('magF_mcomment'), box = document.getElementById('magMcMsg'); if (!el || !magDoc) return;
+  const text = el.value.trim();
+  box.innerHTML = '<div class="mag-msgbox ok">保存しています…</div>';
+  const j = await magPost({ mode: 'market_comment', issue_date: magDoc.issue_date, text });
+  if (!j.ok) { box.innerHTML = `<div class="mag-msgbox bad">保存できませんでした：${magEsc(j.error || '')}（入れた文は残してあります）</div>`; return; }
+  magDoc.market_comment = text;
+  box.innerHTML = `<div class="mag-msgbox ok">${text ? '一言コメントを保存しました' : '一言コメントを消しました'}。マーケット欄の表示は、次に読み直したときに変わります。</div>`;
 }
 
 // ---------------- 下書きがまだ無い号：先置き ----------------

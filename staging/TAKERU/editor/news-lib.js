@@ -167,5 +167,34 @@ async function gasPost(body) {
   return { ok: false, error: t.startsWith('ERROR') ? t : ('GASの返事が読めません（' + r.status + '）') };
 }
 
+// ---- X発信の一覧（X用GAS。Claude＝Cowork君が作ったもの、版 x3〜） ----
+//   鍵は secrets.json の x { gasUrl, token }（牧村さんが入れる）。ガーディアンnewsの鍵とは別
+//   書き込みの返事は1行の文字：「OK ids=X00n」「OK id=…」「NG conflict updated=…」「NG posted」「ERROR …」
+function xConf() {
+  let s;
+  try { s = JSON.parse(fs.readFileSync(SECRETS_PATH, 'utf8')).x; } catch (e) { throw new Error('secrets.json を読めません: ' + e.message); }
+  if (!s || !s.gasUrl || !s.token) throw new Error('secrets.json に x.gasUrl / x.token がありません（牧村さんから受け取って入れてください）');
+  return s;
+}
+function xConfigured() { try { xConf(); return true; } catch { return false; } }
+async function xGet(action, params = {}) {
+  const s = xConf();
+  const r = await gasFetch(s.gasUrl + '?' + new URLSearchParams({ action, token: s.token, ...params }));
+  const t = await r.text();
+  try { return JSON.parse(t); }
+  catch { return { ok: false, error: r.status === 404 ? 'X用GASが一時的に応えません（404）' : 'X用GASの返事が読めません' }; }
+}
+async function xPost(body) {
+  const s = xConf();
+  const r = await gasFetch(s.gasUrl, { method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ token: s.token, ...body }) });
+  const t = (await r.text()).trim();
+  if (t.startsWith('OK')) return { ok: true, text: t };
+  const c = /^NG conflict(?: updated=(.*))?/.exec(t);
+  if (c) return { ok: false, conflict: true, updated_at: c[1] || '', error: '別の画面（またはGAS）で先に直されていました' };
+  if (t.startsWith('NG posted')) return { ok: false, posted: true, error: 'もう投稿済なので直せません' };
+  return { ok: false, error: t.startsWith('NG') || t.startsWith('ERROR') ? t : ('X用GASの返事が読めません（' + r.status + '）') };
+}
+
 module.exports = { parseCsvText, csvField, buildNewsCsv, parseNewsCsv, newsStamp, readNews,
-                   parseDigest, assignNewsIds, fetchLatestDigest, gasGet, gasPost };
+                   parseDigest, assignNewsIds, fetchLatestDigest, gasGet, gasPost, xGet, xPost, xConfigured };
