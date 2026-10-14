@@ -989,7 +989,7 @@ const PROD = Object.assign({
 
 async function getAccessStats(req, res) {
   const SEP = '===TAKERU_SPLIT===';
-  // 5ファイルを1回のSSHでまとめて取得（無ければ空として扱う）
+  // 7ファイルを1回のSSHでまとめて取得（無ければ空として扱う）
   const remoteCmd =
     `cat ${PROD.remoteDir}/daily_summary.json 2>/dev/null; ` +
     `echo; echo ${SEP}; ` +
@@ -1000,6 +1000,10 @@ async function getAccessStats(req, res) {
     `cat ${PROD.remoteDir}/news_summary.json 2>/dev/null; ` +
     `echo; echo ${SEP}; ` +
     `cat ${PROD.remoteDir}/link_summary.json 2>/dev/null; ` +
+    `echo; echo ${SEP}; ` +
+    `cat ${PROD.remoteDir}/study_summary.json 2>/dev/null; ` +
+    `echo; echo ${SEP}; ` +
+    `cat ${PROD.remoteDir}/src_summary.json 2>/dev/null; ` +
     // 末尾を true で閉じる。まだ生成されていないJSONがあると最後の cat が
     // 失敗し、ssh 全体が異常終了して既存の集計まで空で返ってしまうため。
     `true`;
@@ -1010,13 +1014,13 @@ async function getAccessStats(req, res) {
   ];
   try {
     const out = await spawnP('ssh', args, {});
-    const [dailyRaw = '', cardRaw = '', cardDailyRaw = '', newsRaw = '', linkRaw = ''] = out.split(SEP);
+    const [dailyRaw = '', cardRaw = '', cardDailyRaw = '', newsRaw = '', linkRaw = '', studyRaw = '', srcRaw = ''] = out.split(SEP);
     const parse = s => { s = s.trim(); if (!s) return {}; try { const v = JSON.parse(s); return v && typeof v === 'object' ? v : {}; } catch { return {}; } };
     sendJSON(res, 200, { ok: true, daily: parse(dailyRaw), cards: parse(cardRaw), cardDaily: parse(cardDailyRaw),
-                         news: parse(newsRaw), links: parse(linkRaw) });
+                         news: parse(newsRaw), links: parse(linkRaw), studies: parse(studyRaw), srcs: parse(srcRaw) });
   } catch (e) {
     // SSH不通でも作業台自体は落とさない。理由を添えて空で返す。
-    sendJSON(res, 200, { ok: false, error: e.message, daily: {}, cards: {}, cardDaily: {}, news: {}, links: {} });
+    sendJSON(res, 200, { ok: false, error: e.message, daily: {}, cards: {}, cardDaily: {}, news: {}, links: {}, studies: {}, srcs: {} });
   }
 }
 

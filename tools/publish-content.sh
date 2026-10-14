@@ -18,9 +18,18 @@ echo " TAKERU 内容の公開（開発版＋本番）"
 echo "============================================"
 echo ""
 
+# 0) カードごとの共有ページ（c/。Xなどでカードの絵を出すため）を、いまのCSVと画像で作り直す
+#    失敗しても公開は止めない（共有ページが古いままになるだけ）
+if command -v python >/dev/null 2>&1; then
+  python staging/TAKERU/editor/make_card_pages.py || echo "⚠ 共有ページを作り直せませんでした（公開は続けます）"
+else
+  echo "⚠ python が無いので、共有ページは作り直しませんでした（公開は続けます）"
+fi
+
 # 1) 内容ファイルをコミット（変更があれば）
 git add staging/TAKERU/TAKERUcard.csv staging/TAKERU/MSlink.csv staging/TAKERU/news.csv \
-        staging/TAKERU/images staging/TAKERU/voices 2>/dev/null
+        staging/TAKERU/images staging/TAKERU/voices staging/TAKERU/c 2>/dev/null
+git add -u staging/TAKERU/c 2>/dev/null   # 非公開に戻して消えた共有ページも
 
 if git diff --cached --quiet; then
   echo "▶ 新しい変更はありません（すでにコミット済みかも）。そのまま反映へ進みます。"

@@ -766,3 +766,4 @@ textarea.svg-overlay-input { min-height:120px; font-family:monospace; font-size:
 .x-in { width: 100%; box-sizing: border-box; background: #0f1824; color: #e6edf5; border: 1px solid #2c3e55; border-radius: 6px; padding: 6px 10px; font-size: 14px; }
 .x-code { background: #0f1824; padding: 8px 10px; border-radius: 6px; }
 @media (max-width: 700px) { .x-head { font-size: 13px; } .x-btns button { flex: 1 1 auto; } }
+.rank-promo-h { font-size: 15px; color: #dde3f0; margin: 14px 0 4px; }

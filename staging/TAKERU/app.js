@@ -26,7 +26,7 @@ const IS_PROD = (typeof window.__IS_PROD === 'boolean') ? window.__IS_PROD : (fu
 //   画像・音声はブラウザ自身が長くキャッシュするため、差し替えても
 //   古いものが出続ける。URLが変われば確実に取り直されるので、版が上がるたび
 //   ここも一緒に上げる（bump-sw.sh と作業台の「⬆ v」ボタンが書き換える）。
-const ASSET_V = 'v134';
+const ASSET_V = 'v135';
 function av(path) { return path + '?v=' + ASSET_V; }
 
 // ==========================================
@@ -182,6 +182,12 @@ window.addEventListener('DOMContentLoaded', async () => {
         note.textContent = '「' + linkCard.title.replace(/^→/, '').trim() + '」を開きます';
         document.getElementById('btn-enter').before(note);
     }
+    if (srcLink) {
+        // どこから来て（X など）、どこへ行くか。行き先の無いリンクなら TOP
+        const dest = studyUnit ? 'STUDY_' + studyLink : linkCard ? 'CARD_' + String(linkCard.id).toUpperCase()
+                   : linkView ? 'VIEW_' + linkView.toUpperCase() : 'TOP';
+        logAccess('src_visit', srcLink.toUpperCase() + '_' + dest);
+    }
 
     document.getElementById('btn-enter').onclick = () => {
         // iOS音声解除：ユーザージェスチャー内で空再生してAudioContextをアンロック
@@ -189,7 +195,7 @@ window.addEventListener('DOMContentLoaded', async () => {
         voice.play().then(() => { voice.pause(); voice.src = ''; }).catch(() => { voice.src = ''; });
         entryScreen.style.display = 'none';
         mainUI.style.display = 'flex';
-        try { sessionStorage.removeItem(STUDY_KEY); sessionStorage.removeItem(CARD_KEY); sessionStorage.removeItem(VIEW_KEY); } catch (e) { /* noop */ }   // 行き先は使い切り
+        try { sessionStorage.removeItem(STUDY_KEY); sessionStorage.removeItem(CARD_KEY); sessionStorage.removeItem(VIEW_KEY); sessionStorage.removeItem(SRC_KEY); } catch (e) { /* noop */ }   // 行き先は使い切り
         if (studyUnit) {
             // ふつうにトップ→自由研究→著者から、と押して入ったのと同じ状態にそろえる。
             // ずれると ▲ で戻れなくなる（freeunit → 自由研究の一覧 → トップ）
@@ -623,6 +629,26 @@ try {
         history.replaceState(null, '', u.pathname + u.search + u.hash);
     }
 } catch (e) { /* 住所が読めなくても普通にトップから始める */ }
+// どこから来たか（例 ?src=x ＝Xの投稿から。2026-10-14 X発信の依頼 1-2）。
+//   行き先のリンクと組み合わせて数える（X_TOP・X_CARD_JPNDF12・X_STUDY_MSENSHI・X_VIEW_MARKET）。
+//   ほかのリンクと同じく、スタートを押すまで sessionStorage に控え、読んだら住所から外す。
+let srcLink = '';
+const SRC_KEY = 'takeru.srcLink';
+try {
+    const s = (new URLSearchParams(location.search).get('src') || '').toLowerCase();
+    if (/^[a-z0-9]{1,12}$/.test(s)) {
+        srcLink = s;
+        try { sessionStorage.setItem(SRC_KEY, srcLink); } catch (e) { /* noop */ }
+    } else {
+        try { srcLink = sessionStorage.getItem(SRC_KEY) || ''; } catch (e) { /* noop */ }
+        if (!/^[a-z0-9]{1,12}$/.test(srcLink)) srcLink = '';
+    }
+    if (new URLSearchParams(location.search).has('src')) {
+        const u = new URL(location.href);
+        u.searchParams.delete('src');
+        history.replaceState(null, '', u.pathname + u.search + u.hash);
+    }
+} catch (e) { /* noop */ }
 // コードからカードを探す。見えないカード（本番で未公開）なら null（トップから始める）
 function findLinkCard(code) {
     if (!code) return null;

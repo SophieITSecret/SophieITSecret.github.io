@@ -17,7 +17,8 @@ $data = json_decode($raw, true);
 $type = isset($data['type']) ? (string)$data['type'] : '';
 $code = isset($data['code']) ? (string)$data['code'] : '';
 
-$allowed = ['top_view', 'pwa_installed', 'card_view', 'news_view', 'link_open', 'study_link', 'card_link'];
+// src_visit … ?src=x など、どこから来たか（X_TOP・X_CARD_JPNDF12 など。2026-10-14）
+$allowed = ['top_view', 'pwa_installed', 'card_view', 'news_view', 'link_open', 'study_link', 'card_link', 'src_visit'];
 if (!in_array($type, $allowed, true)) {
     http_response_code(400);
     echo json_encode(['ok' => false]);
@@ -27,7 +28,9 @@ if (!in_array($type, $allowed, true)) {
 // 番号は英数字のみ・20文字まで。カード(SENSHI01)・ニュース(N0043)・
 // リンク(111)のいずれもこの形に収まる。
 // 誰でも叩ける口なので、長さの上限を設けて1行が膨らむのを防ぐ。
-if ($code !== '' && !preg_match('/^[A-Za-z0-9]{1,20}$/', $code)) {
+// src_visit だけは「出どころ_行き先」の形なので、下線を許して40文字まで。
+$codeRe = $type === 'src_visit' ? '/^[A-Za-z0-9_]{1,40}$/' : '/^[A-Za-z0-9]{1,20}$/';
+if ($code !== '' && !preg_match($codeRe, $code)) {
     $code = '';
 }
 

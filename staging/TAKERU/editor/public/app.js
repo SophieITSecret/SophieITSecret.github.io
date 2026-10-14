@@ -2079,7 +2079,8 @@ async function loadAccessStats() {
     const r = await fetch('/api/access-stats');
     const j = await r.json();
     accessStats = { daily: j.daily || {}, cards: j.cards || {}, cardDaily: j.cardDaily || {},
-                    news: j.news || {}, links: j.links || {}, loaded: true, error: j.ok ? null : (j.error || '取得失敗') };
+                    news: j.news || {}, links: j.links || {}, studies: j.studies || {}, srcs: j.srcs || {},
+                    loaded: true, error: j.ok ? null : (j.error || '取得失敗') };
   } catch (e) {
     accessStats = { daily: {}, cards: {}, cardDaily: {}, news: {}, links: {}, loaded: true, error: e.message };
   }
@@ -2258,11 +2259,42 @@ function renderItemRanking(body) {
     </table>`;
 }
 
+// ===== 専用リンク・Xから（study_summary.json と src_summary.json） =====
+//   専用リンク：MSENSHI（研究）・JPNDF12（カード）・VIEWMARKET（画面）など、開かれた回数
+//   Xから：?src=x で来た回数を、行き先ごとに（X_TOP・X_CARD_JPNDF12・X_STUDY_MSENSHI・X_VIEW_MARKET）
+function promoLabel(code) {
+  const c = String(code).toUpperCase();
+  const v = /^VIEW(\w+)$/.exec(c) || /_VIEW_(\w+)$/.exec(c);
+  if (v) return '画面「' + ({ MARKET: 'マーケット', NEWS: 'ニュース', NOTICE: 'お知らせ' }[v[1]] || v[1]) + '」';
+  if (/_TOP$/.test(c)) return 'トップ';
+  const card = /_CARD_(\w+)$/.exec(c), study = /_STUDY_(\w+)$/.exec(c);
+  const key = card ? card[1] : study ? study[1] : c;
+  const hit = cardData.find(d => String(d.id).toUpperCase() === key);
+  if (hit) return 'カード「' + String(hit.title || '').replace(/^→/, '').trim() + '」';
+  const unit = cardData.find(d => String(d.id).toUpperCase().startsWith(key) && /^[A-Z]+$/.test(key));
+  if (unit) return '研究「' + (unit.genre || key) + '」';
+  return '';
+}
+function renderPromoAccess(body) {
+  const tbl = (title, obj, note) => {
+    const rows = Object.entries(obj || {}).sort((a, b) => b[1] - a[1]);
+    const tot = rows.reduce((a, r) => a + r[1], 0);
+    return `<h3 class="rank-promo-h">${title}　<span class="rank-nl-sub">のべ ${tot}回</span></h3><p class="rank-nl-sub">${note}</p>
+      ${rows.length ? `<table class="rank-table"><tr><th>コード</th><th>行き先</th><th style="width:5em">回数</th></tr>
+        ${rows.map(([k, v]) => `<tr><td>${esc(k)}</td><td>${esc(promoLabel(k))}</td><td class="rank-nl-num">${v}</td></tr>`).join('')}</table>`
+        : '<div class="dash-empty">まだ記録がありません</div>'}`;
+  };
+  const totEl = document.getElementById('rankTotals'); if (totEl) totEl.textContent = '';
+  body.innerHTML = (accessStats.error ? `<div class="dash-err">⚠ 本番未接続（${esc(accessStats.error)}）</div>` : '')
+    + tbl('𝕏 Xから来た回数', accessStats.srcs, 'Xの投稿のリンク（?src=x）から開かれた回数。行き先ごと。集計は1日1回')
+    + tbl('🔳 専用リンクが開かれた回数', accessStats.studies, 'QR・メルマガ・Xなどの専用リンク（?study= ?card= ?view=）。Xから来た分も含みます');
+}
 function renderCardRanking() {
   const body = document.getElementById('rankBody');
   if (!body) return;
   document.querySelectorAll('.rank-tgtbtn').forEach(b => b.classList.toggle('on', b.dataset.tgt === rankTarget));
   if (rankTarget === 'hp') return renderHpAccess(body);
+  if (rankTarget === 'promo') return renderPromoAccess(body);
   if (rankTarget !== 'card') return renderItemRanking(body);
   const sel = document.getElementById('rankSubject');
   const subject = sel ? sel.value : '';
