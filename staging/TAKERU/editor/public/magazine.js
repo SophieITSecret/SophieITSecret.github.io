@@ -117,7 +117,7 @@ function magRenderStatus() {
         <span class="mag-date">${magEsc(magDateLabel(d.focus_issue))}号</span>
         ${is.exists ? `<span class="mag-badge mag-st-${magEsc(is.status)}">${magEsc(is.status)}</span><span>版 ${is.version}</span>` : '<span class="mag-dim">まだ下書きがありません</span>'}
       </div>
-      ${is.stamp_text ? `<div class="mag-dim">配信文の最後に付く表示：<b>${magEsc(is.stamp_text)}</b></div>` : ''}
+      ${is.stamp_text ? `<div class="mag-dim">作成の印（作業台だけ。メールと号ページには出ません）：<b>${magEsc(is.stamp_text)}</b></div>` : ''}
       ${warns.map(a => `<div class="mag-alert">⚠ ${magEsc(a.text)}</div>`).join('') || '<div class="mag-okline">いまのところ異常はありません</div>'}
       ${infos.map(a => `<div class="mag-alert info">ℹ ${magEsc(a.text)}</div>`).join('')}
     </div>`;
@@ -240,7 +240,7 @@ function magRenderEdit() {
       <span class="mag-date">${magEsc(magDateLabel(m.issue_date))}号</span>
       <span class="mag-badge mag-st-${magEsc(m.status)}">${magEsc(m.status)}</span><span>版 ${m.version}</span>
       <span class="mag-dim">対象 ${magEsc(m.period || '')}</span></div>
-      <div class="mag-dim">配信文の最後に付く表示：<b>${magEsc(m.stamp_text || '')}</b></div>
+      <div class="mag-dim">作成の印（作業台だけ。メールと号ページには出ません）：<b>${magEsc(m.stamp_text || '')}</b></div>
       ${String(m.check_note || '').startsWith('【要確認】') ? `<div class="mag-alert">⚠ ${magEsc(m.check_note)}</div>` : (m.check_note ? `<div class="mag-dim">${magEsc(m.check_note)}</div>` : '')}
       ${m.reject_note ? `<div class="mag-alert info">差し戻しのメモ：${magEsc(m.reject_note)}</div>` : ''}
       ${ro ? '<div class="mag-alert info">配信済の号です。ここでは直せません（配信後の小さな直しは「新しい版として保存」で行います）。</div>' : ''}
@@ -395,7 +395,7 @@ async function magScheduleAuto() {
 function magIssueJa(iso) { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso || ''); return m ? `${+m[1]}年${+m[2]}月${+m[3]}日号` : iso; }
 function magMailSubject(m) { return `【TAKERUマガジン】${magIssueJa(m.issue_date)}${m.is_test ? '（テスト）' : ''}`; }
 // 2026-10-08 版の規則（会員システム担当から。テキストメール・Cowork君のレイアウト案 22/23）：
-//   ━×20／「TAKERUマガジン　2026年10月10日号」／試験号は次の行に「（第0号（試験））」／キャッチ／━×20／※stamp_text／空行
+//   ━×20／「TAKERUマガジン　2026年10月10日号」／試験号は次の行に「（第0号（試験））」／キャッチ／━×20／空行（※stamp_text の行は 10/15 に外した）
 //   各欄：絵文字＋半角空白＋見出し／─×20／本文（加工しない）／（市況だけ 空行＋market_note、空行＋「チャートはTAKERUで見られます：」＋URL）／空行・空行
 //   見出し：💡 ご存知ですか？／🌐 先週の世界の動き（9月26日〜10月2日）／📈 マーケット動向／📅 今週以降の主要日程／📢 MSフォーラムからのお知らせ
 //   号ページ：「本稿の「世界の動き」は、」「英ガーディアン紙の記事をもとに、」「TAKERUがまとめています。」「元になった記事はこちらでご覧ください。」＋URL（単独の行）（10/8 牧村さん、順を入れ替え）
@@ -409,7 +409,7 @@ function magBuildMail(m, v) {
   const out = [MAG_RULE, `TAKERUマガジン　${magIssueJa(m.issue_date)}`];
   if (m.is_test && m.issue_label) out.push(`（${m.issue_label}）`);
   out.push('ＭＳフォーラムの軍事と戦略、週刊メルマガ', MAG_RULE);
-  if (m.stamp_text) out.push('※' + m.stamp_text);
+  // stamp_text（作成・確認の印）は読者向けには出さない（10/15 牧村さん）。作業台の帯にだけ出す
   out.push('');
   const sec = (title, body, add) => {
     if (!body || !String(body).trim()) return;
@@ -456,7 +456,7 @@ function magRenderPreview() {
     <p class="mag-dim">メールに載る形です（空の欄は見出しごと省きます）。${fromStash ? '<b>まだ保存していない直しも入れて組み立てています。</b>' : ''}
       会員システムの組み立ての規則（10/7）と同じ形です。</p>
     <div class="mag-dim">件名：<b>${magEsc(magMailSubject(m))}</b></div>
-    <p class="mag-dim">※事務局の「メルマガ」画面で、その号に添える一言を書いた場合は、※の行のあとに入ります（作業台からは見えません）。</p>
+    <p class="mag-dim">※事務局の「メルマガ」画面で、その号に添える一言を書いた場合は、見出しのあとに入ります（作業台からは見えません）。</p>
     <div class="mag-mail">${magEsc(magBuildMail(mm, v))}</div>
     <div class="mag-btns"><button class="dash-refresh" onclick="magTab('edit')">✎ 入力に戻る</button></div>`;
 }
