@@ -26,7 +26,7 @@ const IS_PROD = (typeof window.__IS_PROD === 'boolean') ? window.__IS_PROD : (fu
 //   画像・音声はブラウザ自身が長くキャッシュするため、差し替えても
 //   古いものが出続ける。URLが変われば確実に取り直されるので、版が上がるたび
 //   ここも一緒に上げる（bump-sw.sh と作業台の「⬆ v」ボタンが書き換える）。
-const ASSET_V = 'v136';
+const ASSET_V = 'v137';
 function av(path) { return path + '?v=' + ASSET_V; }
 
 // ==========================================
@@ -1761,9 +1761,11 @@ function showNews(tab) {
     let listHtml = '';
     if (newsTab === 'お知らせ') {
         const items = visibleNotices();
-        listHtml = items.length
+        // TAKERUマガジンの入口（ホームページの号の一覧へ。2026-10-15 牧村さん）。最新号のお知らせは毎週土曜に自動で入る
+        const magBtn = `<div class="news-srcs"><button class="news-src news-mag" data-url="https://ms-forum.com/mailmag/" data-log="MAGAZINE">📮 TAKERUマガジン（毎週土曜・これまでの号）<span class="src-ext">↗</span></button></div>`;
+        listHtml = magBtn + (items.length
             ? `<div class="news-list">` + items.map(rowHtml).join('') + `</div>`
-            : `<div class="news-empty">まだお知らせはありません。</div>`;
+            : `<div class="news-empty">まだお知らせはありません。</div>`);
     } else if (newsTab === 'マーケット') {
         listHtml = marketPanelHtml();
     } else {
@@ -1863,7 +1865,7 @@ function showNews(tab) {
         if (tabBtn) { newsLevel = 0; showNews(tabBtn.dataset.tab); return; }
         // 外に出るもの（ロイター・BBC・財務省）は新しいタブで開く
         const ext = e.target.closest('[data-url]');
-        if (ext) { window.open(ext.dataset.url, '_blank', 'noopener'); return; }
+        if (ext) { if (ext.dataset.log) logAccess('link_open', ext.dataset.log); window.open(ext.dataset.url, '_blank', 'noopener'); return; }
         // マーケットの銘柄ボタン
         const mkt = e.target.closest('.mkt-btn[data-symbol]');
         if (mkt) { showMarketChart(mkt.dataset.symbol, mkt.dataset.label || ''); return; }

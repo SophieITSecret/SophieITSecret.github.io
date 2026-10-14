@@ -1885,6 +1885,7 @@ body.font-large #card-body { font-size: 1.05rem; }
     cursor: default;
 }
 .src-ext { margin-left: 3px; font-size: 0.66rem; opacity: .65; }
+.news-src.news-mag { font-size: 0.82rem; padding: 10px 6px; }
 
 /* ===== マーケット ===== */
 .mkt-wrap { display: flex; flex-direction: column; padding: 8px 14px 0; }

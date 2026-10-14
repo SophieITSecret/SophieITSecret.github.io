@@ -218,3 +218,21 @@ N0097,2026-10-04,ニュース,沖縄で米兵、殺人容疑で逮捕,"沖縄に
 [記事本文](https://translate.google.com/translate?sl=en&tl=ja&u=https%3A%2F%2Fwww.theguardian.com%2Fus-news%2F2026%2Foct%2F04%2Fmarine-arrested-japan-suspicion-murder)",1,,,https://www.theguardian.com/us-news/2026/oct/04/marine-arrested-japan-suspicion-murder
 N0098,2026-10-03,ニュース,北朝鮮が弾道ミサイル発射,"北朝鮮が土曜、弾道ミサイル1発を東方の海域へ発射したと韓国・日本が発表した。ミサイルは元山付近から午前6時30分ごろ発射され、東海（日本海）に向けて700キロ以上飛行したと韓国軍が明らかにした。この発射は、金正恩氏の妹が、非武装地帯（DMZ）の地雷により韓国兵士が負傷したとの韓国側の主張を否定した翌日に行われた。韓国と米国はミサイルの詳細を分析しているという。
 [記事本文](https://translate.google.com/translate?sl=en&tl=ja&u=https%3A%2F%2Fwww.theguardian.com%2Fworld%2F2026%2Foct%2F03%2Fnorth-korea-launches-ballistic-missile-after-seoul-demands-apology-over-wounded-soldiers)",1,,,https://www.theguardian.com/world/2026/oct/03/north-korea-launches-ballistic-missile-after-seoul-demands-apology-over-wounded-soldiers
+NEWS007,2026-09-14,お知らせ,「ニュース」を3つに増やしました,"「📰 ニュース」の情報源を3つにしました。
+
+・ロイター … 日本語の速報。ロイターのサイトが開きます
+・ガーディアン選抜 … 英ガーディアン紙の報道から、軍事・安全保障に関わるものを選んで日本語に要約したもの。毎週土曜に新しい記事が入ります
+・BBC日本語 … BBCの日本語のサイトが開きます
+
+毎日見ておきたい順に並べています。",1,,,
+NEWS008,2026-09-14,お知らせ,「マーケット」を始めました,"「📰 ニュース」の中に「マーケット」を足しました。日経平均・ドル円・S&P500・米10年債・日本の金利・原油（WTI）・金・ビットコインのチャートを見られます。
+
+株や為替、原油の値動きには、世界の出来事が映ります。ニュースと合わせて、マーケットからも世界の動きを見てみてください。
+
+（チャート提供：TradingView）",1,,,
+NEWS009,2026-10-10,お知らせ,「TAKERUマガジン」を創刊しました,"MSフォーラムの週刊メルマガ「TAKERUマガジン」を創刊しました。毎週土曜の朝8時に、メールでお届けします。
+
+先週の世界の動き、マーケット、今週以降の主要日程、軍事の基礎知識の「ご存知ですか？」などをまとめています。TAKERUに登録された方には、メールで届きます。
+
+[創刊号（10月10日号）を読む](https://ms-forum.com/mailmag/20261010.html)
+[これまでの号（バックナンバー）](https://ms-forum.com/mailmag/)",1,,,

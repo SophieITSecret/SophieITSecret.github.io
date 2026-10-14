@@ -167,6 +167,40 @@ async function gasPost(body) {
   return { ok: false, error: t.startsWith('ERROR') ? t : ('GASの返事が読めません（' + r.status + '）') };
 }
 
+// ---- お知らせ「TAKERUマガジン ◯月◯日号が出ました」（2026-10-15 牧村さん） ----
+//   配信済の最新号（試験号は除く）を1件だけお知らせに置く。新しい号が出たら、前の号のお知らせは消す。
+//   IDは MAG＋配信日（MAG20261017）。創刊のお知らせ（NEWS…）は消さない
+const MAG_NOTICE_RE = /^MAG\d{8}$/;
+async function latestDeliveredIssue() {
+  const j = await gasGet('magazine_dashboard');
+  if (!j.ok) throw new Error('マガジンのGAS: ' + (j.error || '不明'));
+  const h = (j.history || []).filter(x => !x.is_test && x.hp && x.hp.ok && x.hp.url)
+    .sort((a, b) => String(b.issue_date).localeCompare(String(a.issue_date)))[0];
+  return h ? { issue_date: h.issue_date, url: h.hp.url } : null;
+}
+function magazineNoticeItem(issue) {
+  const [y, m, d] = issue.issue_date.split('-').map(Number);
+  const ja = `${m}月${d}日号`;
+  return { id: 'MAG' + issue.issue_date.replace(/-/g, ''), date: issue.issue_date, type: 'お知らせ',
+    title: `TAKERUマガジン ${ja}が出ました`,
+    body: `MSフォーラムの週刊メルマガ「TAKERUマガジン」の${ja}です。先週の世界の動き、マーケット、今週以降の主要日程などをまとめています。\n\n` +
+          `[${ja}を読む](${issue.url})\n[これまでの号（バックナンバー）](https://ms-forum.com/mailmag/)\n\n` +
+          `毎週土曜の朝8時に、メールでもお届けしています。`,
+    published: true, monthly: false, yearly: false, srcUrl: '' };
+}
+// items を直接書き換える。返り値 { added: 足したお知らせ or null, removed: 消したIDの配列 }
+function upsertMagazineNotice(items, issue) {
+  const want = magazineNoticeItem(issue);
+  const removed = [];
+  for (let i = items.length - 1; i >= 0; i--) {
+    if (MAG_NOTICE_RE.test(items[i].id || '') && items[i].id !== want.id) { removed.push(items[i].id); items.splice(i, 1); }
+  }
+  // 同じ号へのリンクを持つ別のお知らせ（創刊のお知らせなど）があれば、二重には足さない
+  const has = items.some(x => x.id === want.id || (x.type === 'お知らせ' && String(x.body || '').includes(issue.url)));
+  if (!has) items.push(want);
+  return { added: has ? null : want, removed };
+}
+
 // ---- X発信の一覧（X用GAS。Claude＝Cowork君が作ったもの、版 x3〜） ----
 //   鍵は secrets.json の x { gasUrl, token }（牧村さんが入れる）。ガーディアンnewsの鍵とは別
 //   書き込みの返事は1行の文字：「OK ids=X00n」「OK id=…」「NG conflict updated=…」「NG posted」「ERROR …」
@@ -197,4 +231,5 @@ async function xPost(body) {
 }
 
 module.exports = { parseCsvText, csvField, buildNewsCsv, parseNewsCsv, newsStamp, readNews,
-                   parseDigest, assignNewsIds, fetchLatestDigest, gasGet, gasPost, xGet, xPost, xConfigured };
+                   parseDigest, assignNewsIds, fetchLatestDigest, gasGet, gasPost, xGet, xPost, xConfigured,
+                   latestDeliveredIssue, upsertMagazineNotice };

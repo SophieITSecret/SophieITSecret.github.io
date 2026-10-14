@@ -16,7 +16,8 @@
 const fs = require('fs');
 const path = require('path');
 const { spawnSync, spawn } = require('child_process');
-const { readNews, buildNewsCsv, parseDigest, assignNewsIds, fetchLatestDigest } = require('./news-lib');
+const { readNews, buildNewsCsv, parseDigest, assignNewsIds, fetchLatestDigest,
+        latestDeliveredIssue, upsertMagazineNotice } = require('./news-lib');
 
 const DRY = process.argv.includes('--dry-run');
 const NO_DEPLOY = process.argv.includes('--no-deploy');
@@ -81,19 +82,36 @@ function git(args, cwd) {
   const today = new Date().toISOString().slice(0, 10);
   const { added, skipped, blocks } = parseDigest(d.text, items, today);
   if (!blocks) fail('ダイジェストに記事が1本もありませんでした（書式が変わった？）。');
-  if (!added.length) { log(`新しい記事はありません（${skipped.length}本すべて取り込み済み）。終わります。`); return; }
-  assignNewsIds(items, added);
-  for (const a of added) log(`  + ${a.id} ${a.date} ${a.title}`);
-  if (skipped.length) log(`  （${skipped.length}本は取り込み済みのため飛ばしました）`);
-  if (DRY) { log(`${added.length}本が入る予定です。--dry-run なので何も書きません。`); return; }
+  if (added.length) {
+    assignNewsIds(items, added);
+    for (const a of added) log(`  + ${a.id} ${a.date} ${a.title}`);
+    if (skipped.length) log(`  （${skipped.length}本は取り込み済みのため飛ばしました）`);
+  } else log(`新しい記事はありません（${skipped.length}本すべて取り込み済み）。`);
+
+  // 3b) お知らせ「TAKERUマガジン ◯月◯日号が出ました」を最新号に（前の号のお知らせは消す）。
+  //     マガジンのGASがつまずいても、ニュースの取り込みは止めない
+  const all = items.concat(added);
+  let mag = { added: null, removed: [] };
+  try {
+    const issue = await latestDeliveredIssue();
+    if (issue) {
+      mag = upsertMagazineNotice(all, issue);
+      if (mag.added) log(`  + お知らせ ${mag.added.id} ${mag.added.title}`);
+      if (mag.removed.length) log(`  − 前の号のお知らせを消しました: ${mag.removed.join(', ')}`);
+      if (!mag.added && !mag.removed.length) log(`マガジンのお知らせは最新号（${issue.issue_date}）のままです。`);
+    } else log('配信済のマガジンの号がまだありません。');
+  } catch (e) { log('⚠ マガジンのお知らせは更新できませんでした（ニュースは続けます）: ' + e.message); }
+  if (!added.length && !mag.added && !mag.removed.length) { log('変わるものがないので、終わります。'); return; }
+  const what = `${added.length}本${mag.added ? '＋マガジンのお知らせ' : ''}`;
+  if (DRY) { log(`${what}が入る予定です。--dry-run なので何も書きません。`); return; }
 
   const backup = path.join(TAKERU_DIR, `news_backup_${stamp().replace(/[-: ]/g, '').replace(/^(\d{8})/, '$1_')}.csv`);
   fs.copyFileSync(NEWS_PATH, backup);
-  fs.writeFileSync(NEWS_PATH, buildNewsCsv(items.concat(added)), 'utf8');
-  log(`news.csv に ${added.length}本を足しました（控え: ${path.basename(backup)}）`);
+  fs.writeFileSync(NEWS_PATH, buildNewsCsv(all), 'utf8');
+  log(`news.csv に ${what}を足しました（控え: ${path.basename(backup)}）`);
 
   // 4) news.csv だけをコミット
-  const msg = `ニュース自動取り込み ${d.date || today}（${added.length}本）`;
+  const msg = `ニュース自動取り込み ${d.date || today}（${what}）`;
   const c = git(['commit', '-m', msg, '--', rel], root);
   if (!c.ok) fail('コミットに失敗しました: ' + c.out);
   log('コミットしました: ' + msg);
@@ -120,8 +138,8 @@ function git(args, cwd) {
   try {
     const r = await fetch(PROD_NEWS + '?t=' + Date.now(), { signal: AbortSignal.timeout(30000) });
     const t = await r.text();
-    const miss = added.filter(a => !t.includes(a.title));
+    const miss = added.concat(mag.added ? [mag.added] : []).filter(a => !t.includes(a.title));
     if (miss.length) fail(`本番の news.csv に ${miss.length}本が見当たりません: ${miss.map(m => m.title).join(' / ')}`);
   } catch (e) { fail('本番の確認ができませんでした: ' + e.message); }
-  log(`✅ 完了：${added.length}本を本番に出しました。`);
+  log(`✅ 完了：${added.length}本${mag.added ? '＋マガジンのお知らせ' : ''}を本番に出しました。`);
 })().catch(e => fail('思わぬ失敗: ' + (e && e.stack || e)));
