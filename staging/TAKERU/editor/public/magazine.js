@@ -243,6 +243,7 @@ function magRenderEdit() {
       <div class="mag-dim">作成の印（作業台だけ。メールと号ページには出ません）：<b>${magEsc(m.stamp_text || '')}</b></div>
       ${String(m.check_note || '').startsWith('【要確認】') ? `<div class="mag-alert">⚠ ${magEsc(m.check_note)}</div>` : (m.check_note ? `<div class="mag-dim">${magEsc(m.check_note)}</div>` : '')}
       ${m.reject_note ? `<div class="mag-alert info">差し戻しのメモ：${magEsc(m.reject_note)}</div>` : ''}
+      ${m.correction_note ? `<div class="mag-alert info">訂正の注記（号ページの末尾に出ます。入れるのは Cowork君）：<br>${magEsc(m.correction_note).replace(/\n/g, '<br>')}</div>` : ''}
       ${ro ? '<div class="mag-alert info">配信済の号です。ここでは直せません（配信後の小さな直しは「新しい版として保存」で行います）。</div>' : ''}
     </div>
     <div id="magStashNote"></div>
