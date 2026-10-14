@@ -394,7 +394,19 @@ async function magScheduleAuto() {
 //         「根拠の記事つきの全文は、こちらでもお読みいただけます：」＋号ページのURL（試験号は test-YYYYMMDD.html）
 //         末尾（会員システムが付ける）：発行・お問い合わせ・バックナンバー・読者ごとの配信停止リンク。宛名は付けない
 function magIssueJa(iso) { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso || ''); return m ? `${+m[1]}年${+m[2]}月${+m[3]}日号` : iso; }
-function magMailSubject(m) { return `【TAKERUマガジン】${magIssueJa(m.issue_date)}${m.is_test ? '（テスト）' : ''}`; }
+// 号の呼び名と発行日（10/15 牧村さん：一覧・号ページ・メールで「創刊号」「第2号」…＋「2026年10月17日（土）発行」にそろえる）
+//   数え方は会員システムと同じ：試験号を除いた配信済の号を古い順に。まだ送っていない号は、その次の番号
+function magIssueNo(m) {
+  if (m.is_test) return m.issue_label || '第0号（試験）';
+  const hist = (typeof magDash !== 'undefined' && magDash && magDash.history) || [];
+  const n = hist.filter(h => !h.is_test && h.mail && String(h.issue_date) < String(m.issue_date)).length + 1;
+  return n === 1 ? '創刊号' : `第${n}号`;
+}
+function magIssueDateJa(iso) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso || ''); if (!m) return iso || '';
+  return `${+m[1]}年${+m[2]}月${+m[3]}日（${'日月火水木金土'[new Date(+m[1], +m[2] - 1, +m[3]).getDay()]}）発行`;
+}
+function magMailSubject(m) { return `【TAKERUマガジン】${magIssueNo(m)}　${magIssueDateJa(m.issue_date)}${m.is_test ? '（テスト）' : ''}`; }
 // 2026-10-08 版の規則（会員システム担当から。テキストメール・Cowork君のレイアウト案 22/23）：
 //   ━×20／「TAKERUマガジン　2026年10月10日号」／試験号は次の行に「（第0号（試験））」／キャッチ／━×20／空行（※stamp_text の行は 10/15 に外した）
 //   各欄：絵文字＋半角空白＋見出し／─×20／本文（加工しない）／（市況だけ 空行＋market_note、空行＋「チャートはTAKERUで見られます：」＋URL）／空行・空行
@@ -407,8 +419,7 @@ function magPeriodJa(p) {
   return String(p || '').replace(/(\d{4})-(\d{2})-(\d{2})/g, (_, y, mo, d) => `${+mo}月${+d}日`);
 }
 function magBuildMail(m, v) {
-  const out = [MAG_RULE, `TAKERUマガジン　${magIssueJa(m.issue_date)}`];
-  if (m.is_test && m.issue_label) out.push(`（${m.issue_label}）`);
+  const out = [MAG_RULE, `TAKERUマガジン　${magIssueNo(m)}`, magIssueDateJa(m.issue_date)];
   out.push('ＭＳフォーラムの軍事と戦略、週刊メルマガ', MAG_RULE);
   // stamp_text（作成・確認の印）は読者向けには出さない（10/15 牧村さん）。作業台の帯にだけ出す
   out.push('');
