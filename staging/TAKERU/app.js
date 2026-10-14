@@ -2131,6 +2131,10 @@ function isIosNonSafari() {
 }
 function maybeShowInAppBanner() {
     if (isAppInstalled()) return;                 // アイコン起動なら不要
+    // メルマガやXの専用リンク（研究・カード・画面）から来た人には出さない（2026-10-15 牧村さん）。
+    //   その1枚を読みに来た人で、すでにアイコンにしている人も多い（メールのリンクはブラウザで開くので見分けられない）。
+    //   行き先の無いリンク（トップ）から来た人には、これまでどおり出す
+    if (studyLink || cardLink || viewLink) return;
     const name = detectInAppBrowser();
     // アプリ内ブラウザでなくても、iPhoneのChrome等ならホーム画面に追加できないので案内する
     if (!name && !isIosNonSafari()) return;
