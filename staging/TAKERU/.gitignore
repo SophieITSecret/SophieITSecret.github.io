@@ -7,6 +7,8 @@
 !images/*.png
 !images/*.jpg
 !images/*.gif
+# カードごとの共有ページの絵（editor/make_card_pages.py が作る。本番で配信する）
+!c/img/*.jpg
 
 # PWAアイコンは例外（Git管理対象）
 !icon-192.png
