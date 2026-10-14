@@ -398,7 +398,7 @@ function magMailSubject(m) { return `【TAKERUマガジン】${magIssueJa(m.issu
 // 2026-10-08 版の規則（会員システム担当から。テキストメール・Cowork君のレイアウト案 22/23）：
 //   ━×20／「TAKERUマガジン　2026年10月10日号」／試験号は次の行に「（第0号（試験））」／キャッチ／━×20／空行（※stamp_text の行は 10/15 に外した）
 //   各欄：絵文字＋半角空白＋見出し／─×20／本文（加工しない）／（市況だけ 空行＋market_note、空行＋「チャートはTAKERUで見られます：」＋URL）／空行・空行
-//   見出し：💡 ご存知ですか？／🌐 先週の世界の動き（9月26日〜10月2日）／📈 マーケット動向／📅 今週以降の主要日程／📢 MSフォーラムからのお知らせ
+//   見出し：💡 ご存知ですか？／🌐 先週の世界の動き（9月26日〜10月2日）／📈 マーケット動向（カッコ内は前週比）（10/15）／📅 今週以降の主要日程／📢 MSフォーラムからのお知らせ
 //   号ページ：「本稿の「世界の動き」は、」「英ガーディアン紙の記事をもとに、」「TAKERUがまとめています。」「元になった記事はこちらでご覧ください。」＋URL（単独の行）（10/8 牧村さん、順を入れ替え）
 //   末尾：会員システムが付ける（URLはすべて単独の行）。固定の行はすべて全角23字以内
 const MAG_RULE = '━'.repeat(20), MAG_LINE = '─'.repeat(20);
@@ -422,7 +422,7 @@ function magBuildMail(m, v) {
   sec('💡 ご存知ですか？', v.trivia);
   sec(`🌐 先週の世界の動き${m.period ? '（' + magPeriodJa(m.period) + '）' : ''}`, v.summary);
   // 市況の下に、TAKERUのマーケット画面へのリンク（10/8 牧村さん。URLは単独の行）
-  sec('📈 マーケット動向', m.market, [m.market_note, 'チャートはTAKERUで見られます：\n' + MAG_MARKET_URL].filter(Boolean).join('\n\n'));
+  sec('📈 マーケット動向（カッコ内は前週比）', m.market, [m.market_note, 'チャートはTAKERUで見られます：\n' + MAG_MARKET_URL].filter(Boolean).join('\n\n'));
   sec('📅 今週以降の主要日程', v.schedule);
   sec('📢 MSフォーラムからのお知らせ', v.notice);
   const ymd = String(m.issue_date).replace(/-/g, '');
