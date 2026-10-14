@@ -134,12 +134,17 @@ function xItemHtml(r) {
       <button class="dash-refresh" onclick="xEdit('${xEsc(r.id)}')">✎ 直す</button>
       ${r.status !== '待機中' ? `<button class="x-ok" onclick="xApprove('${xEsc(r.id)}')">${['エラー', '要確認'].includes(r.status) ? '↻ もう一度出す（待機中に）' : '✓ 承認（待機中に）'}</button>` : ''}
       ${r.status !== '保留' ? `<button class="dash-refresh" onclick="xHold('${xEsc(r.id)}')">⏸ 保留</button>` : ''}
-    </div>`;
+      <button class="dash-refresh" onclick="xPickImages('${xEsc(r.id)}')" title="PNG／JPGを4枚まで。送るたびに、この行の画像は置き換わります">🖼 画像を添える</button>
+      ${(r.images || []).length ? `<button class="dash-refresh" onclick="xClearImages('${xEsc(r.id)}')">画像を外す</button>` : ''}
+    </div>
+    <div id="xImgMsg_${xEsc(r.id)}"></div>`;
   return `<div class="x-item st-${xEsc(r.status)}" id="xItem_${xEsc(r.id)}">
     ${xHeadHtml(r)}
     ${text}
     ${r.link ? `<div class="x-link">🔗 <a href="${xEsc(r.link)}" target="_blank" rel="noopener">${xEsc(r.link)}</a></div>` : '<div class="mag-dim">リンクなし</div>'}
-    ${(r.images || []).length ? `<div class="mag-dim">🖼 画像 ${r.images.length}枚</div>` : ''}
+    ${(r.images || []).length ? `<div class="x-link">🖼 画像 ${r.images.length}枚：${r.images.map((fid, i) =>
+        `<a href="https://drive.google.com/file/d/${encodeURIComponent(fid)}/view" target="_blank" rel="noopener">${i + 1}枚目↗</a>`).join('　')}
+        <span class="mag-dim">（画像を付けると、Xではリンクのカードの代わりに画像が出ます）</span></div>` : ''}
     ${r.error ? `<div class="x-err">⚠ ${xEsc(r.error)}</div>` : ''}
     <div class="mag-dim">${r.source ? '出どころ：' + xEsc(r.source) : ''}${r.issue ? '　号：' + xEsc(r.issue) : ''}${r.approved ? '　承認：' + xEsc(r.approved) : ''}${r.memo ? '　メモ：' + xEsc(r.memo) : ''}</div>
     ${r.post_url ? `<div class="x-link">✓ ${xEsc(r.posted_at || '')} 投稿　<a href="${xEsc(r.post_url)}" target="_blank" rel="noopener">Xで見る↗</a></div>` : ''}
@@ -224,14 +229,14 @@ function xWhen(at) {
   const t = new Date(at.replace(' ', 'T'));
   return t <= new Date() ? `${xAtLabel(at)}（予定の時刻を過ぎているので、5分以内）` : xAtLabel(at);
 }
-function xConfirmText(at, text, link) {
-  return `この内容で ${xWhen(at)} に、@MSforum01 へ本当に投稿されます。\n\n${String(text).slice(0, 300)}${String(text).length > 300 ? '…' : ''}${link ? '\n' + link : ''}\n\nよろしいですか？`;
+function xConfirmText(at, text, link, nImg) {
+  return `この内容で ${xWhen(at)} に、@MSforum01 へ本当に投稿されます。${nImg ? `（画像${nImg}枚つき）` : ''}\n\n${String(text).slice(0, 300)}${String(text).length > 300 ? '…' : ''}${link ? '\n' + link : ''}\n\nよろしいですか？`;
 }
 async function xSaveEdit(id) {
   const r = xItems.find(x => x.id === id); if (!r) return;
   const v = xVals(id);
   if (!v.text.trim()) return xMsg(id, false, '本文が空です。');
-  if (r.status === '待機中' && !confirm(xConfirmText(v.at, v.text, v.link))) return;
+  if (r.status === '待機中' && !confirm(xConfirmText(v.at, v.text, v.link, (r.images || []).length))) return;
   xMsg(id, true, '保存しています…');
   const j = await xPost({ op: 'update', id, text: v.text, link: v.link, at: v.at, memo: v.memo, expected_updated: r.updated_at || '' });
   if (!j.ok) return xMsg(id, false, j.conflict ? `${j.error}（${j.updated_at}）。直した文章は残してあります。「やめる」で読み直して、もう一度直してください。` : '保存できませんでした：' + j.error);
@@ -248,7 +253,7 @@ async function xSaveNew(approve) {
 }
 async function xApprove(id) {
   const r = xItems.find(x => x.id === id); if (!r) return;
-  if (!confirm(xConfirmText(r.at, r.text, r.link))) return;
+  if (!confirm(xConfirmText(r.at, r.text, r.link, (r.images || []).length))) return;
   const j = await xPost({ op: 'update', id, status: '待機中', expected_updated: r.updated_at || '' });
   if (!j.ok) { alert(j.conflict ? j.error + '。読み直します。もう一度中身を見てから承認してください。' : '承認できませんでした：' + j.error); }
   await xLoad(true); xRender();
@@ -259,6 +264,66 @@ async function xHold(id) {
   const j = await xPost({ op: 'update', id, status: '保留', expected_updated: r.updated_at || '' });
   if (!j.ok) alert('保留にできませんでした：' + j.error);
   await xLoad(true); xRender();
+}
+
+// ---------------- 画像を添える（x_image。送るたびに、その行の画像は送った分で置き換わる） ----------------
+const X_IMG_MAX = 5 * 1024 * 1024;   // 1枚5MB未満
+function xImgMsg(id, ok, t) { const el = document.getElementById('xImgMsg_' + id); if (el) el.innerHTML = t ? `<div class="mag-msgbox ${ok ? 'ok' : 'bad'}">${xEsc(t)}</div>` : ''; }
+function xIssueOf(r) {   // その行の予定日（無ければ今日）
+  if (/^\d{4}-\d{2}-\d{2}/.test(r.at || '')) return r.at.slice(0, 10);
+  const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+function xPickImages(id) {
+  const inp = document.createElement('input');
+  inp.type = 'file'; inp.accept = 'image/png,image/jpeg'; inp.multiple = true;
+  inp.onchange = () => xSendFiles(id, [...inp.files]);
+  inp.click();
+}
+function xReadDataUrl(blob) { return new Promise((ok, ng) => { const fr = new FileReader(); fr.onload = () => ok(fr.result); fr.onerror = ng; fr.readAsDataURL(blob); }); }
+// 5MB以上なら、JPGにして縮める（長い辺を 4096→2048→… と小さくし、5MB未満になるまで）
+async function xShrink(file) {
+  if (file.size < X_IMG_MAX) return { name: file.name, mime: file.type, blob: file };
+  const img = await new Promise((ok, ng) => { const i = new Image(); i.onload = () => ok(i); i.onerror = ng; i.src = URL.createObjectURL(file); });
+  for (const side of [4096, 3072, 2048, 1600, 1200]) {
+    const s = Math.min(1, side / Math.max(img.width, img.height));
+    const c = document.createElement('canvas'); c.width = Math.round(img.width * s); c.height = Math.round(img.height * s);
+    c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+    const blob = await new Promise(ok => c.toBlob(ok, 'image/jpeg', 0.88));
+    if (blob && blob.size < X_IMG_MAX) return { name: file.name.replace(/\.\w+$/, '') + '.jpg', mime: 'image/jpeg', blob, shrunk: true };
+  }
+  throw new Error(`${file.name} を5MB未満に縮められませんでした`);
+}
+async function xSendFiles(id, files) {
+  const r = xItems.find(x => x.id === id); if (!r || !files.length) return;
+  files = files.filter(f => ['image/png', 'image/jpeg'].includes(f.type));
+  if (!files.length) return xImgMsg(id, false, 'PNG か JPG を選んでください。');
+  if (files.length > 4) return xImgMsg(id, false, `画像は4枚までです（${files.length}枚選ばれています）。`);
+  const had = (r.images || []).length;
+  if (!confirm(`${r.id}（${xAtLabel(r.at)}・${r.kind}）に、画像${files.length}枚を添えます。${had ? `\nいま付いている${had}枚は、外れて置き換わります。` : ''}\n\n画像を付けると、Xではリンクのカードの代わりに画像が出ます。${r.status === '待機中' ? '\nこの行は待機中なので、予定の時刻にこの画像つきで投稿されます。' : ''}`)) return;
+  xImgMsg(id, true, '画像を用意しています…');
+  try {
+    const images = [], notes = [];
+    for (const f of files) {
+      const s = await xShrink(f);
+      if (s.shrunk) notes.push(`${f.name} は5MBを超えていたので縮めました`);
+      images.push({ name: s.name, mime: s.mime, base64: String(await xReadDataUrl(s.blob)).split(',')[1] });
+    }
+    xImgMsg(id, true, `X用GASへ送っています…（${images.length}枚）${notes.length ? '　' + notes.join('・') : ''}`);
+    const j = await (await fetch('/api/x/image', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, issue: xIssueOf(r), images }) })).json();
+    if (!j.ok) return xImgMsg(id, false, '添えられませんでした：' + j.error);
+    await xLoad(true); xRender();
+    xImgMsg(id, true, `画像を${images.length}枚添えました。${notes.join('・')}`);
+  } catch (e) { xImgMsg(id, false, '添えられませんでした：' + e.message); }
+}
+async function xClearImages(id) {
+  const r = xItems.find(x => x.id === id); if (!r) return;
+  if (!confirm(`${r.id}（${xAtLabel(r.at)}・${r.kind}）から、画像${(r.images || []).length}枚を外します。`)) return;
+  const j = await (await fetch('/api/x/image', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id, issue: xIssueOf(r), images: [] }) })).json();
+  if (!j.ok) return xImgMsg(id, false, '外せませんでした：' + j.error);
+  await xLoad(true); xRender();
+  xImgMsg(id, true, '画像を外しました。');
 }
 
 // 作業台を開いたときに、承認待ちの件数だけ見ておく

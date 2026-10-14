@@ -362,6 +362,37 @@ function xReady(res) {
   sendJSON(res, 200, { ok: false, need_secret: true, error: 'X用GASの鍵がまだ作業台に入っていません（secrets.json の x）' });
   return false;
 }
+// POST /api/x/image { id, issue, images:[{name, mime, base64}] } … 行に画像を添える（x_image。送った分で置き換わる。[] で外す）
+//   最大4枚・PNG／JPG・1枚5MB未満（画面の側で縮めてから送る）。投稿済の行は NG posted
+function postXImage(req, res) {
+  if (!xReady(res)) return;
+  let chunks = [];
+  req.on('data', c => chunks.push(c));
+  req.on('end', async () => {
+    try {
+      const b = JSON.parse(Buffer.concat(chunks).toString('utf8') || '{}');
+      if (!/^X\d+$/.test(b.id || '')) return sendJSON(res, 400, { ok: false, error: 'ID がありません' });
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(b.issue || '')) return sendJSON(res, 400, { ok: false, error: '日付がありません' });
+      const imgs = Array.isArray(b.images) ? b.images : null;
+      if (!imgs || imgs.length > 4) return sendJSON(res, 400, { ok: false, error: '画像は4枚までです' });
+      for (const im of imgs) {
+        if (!['image/png', 'image/jpeg'].includes(im.mime)) return sendJSON(res, 400, { ok: false, error: 'PNG か JPG だけ添えられます' });
+        if (!/^[A-Za-z0-9+/=]+$/.test(im.base64 || '')) return sendJSON(res, 400, { ok: false, error: '画像の中身が読めません' });
+        if (im.base64.length * 3 / 4 >= 5 * 1024 * 1024) return sendJSON(res, 400, { ok: false, error: '5MB以上の画像があります（縮めてから送ってください）' });
+      }
+      const body = { stage: 'x_image', id: b.id, issue: b.issue,
+                     images: imgs.map((im, i) => ({ name: String(im.name || `image${i + 1}`).replace(/[^\w.\-]/g, '_').slice(0, 60), mime: im.mime, base64: im.base64 })) };
+      if (X_MOCK) {
+        xMockInit(); const r = xMock.find(x => x.id === b.id);
+        if (!r) return sendX(res, { ok: false, error: 'NG no such id' });
+        if (r.status === '投稿済') return sendX(res, { ok: false, posted: true, error: 'もう投稿済なので直せません' });
+        r.images = body.images.map((_, i) => `mock-${b.id}-${i + 1}`); r.updated_at = xNowStr();
+        return sendX(res, { ok: true, text: `OK images=${r.images.length} id=${b.id}` });
+      }
+      sendX(res, await xPost(body));
+    } catch (e) { sendJSON(res, 200, { ok: false, error: e.message }); }
+  });
+}
 // GET /api/x/status … 件数と直近の待機中（x_status）
 async function getXStatus(req, res) {
   if (!xReady(res)) return;
@@ -1540,6 +1571,7 @@ const server = http.createServer((req, res) => {
   if (pathname === '/api/x/status' && method === 'GET') return getXStatus(req, res);
   if (pathname === '/api/x/list' && method === 'GET') return getXList(req, res, parsed.searchParams);
   if (pathname === '/api/x/save' && method === 'POST') return postXSave(req, res);
+  if (pathname === '/api/x/image' && method === 'POST') return postXImage(req, res);
   if (pathname === '/api/links' && method === 'GET') return getLinks(req, res);
   if (pathname === '/api/sw-version' && method === 'GET') return getSwVersion(req, res);
   if (pathname === '/api/sw-version' && method === 'POST') return bumpSwVersion(req, res);
