@@ -77,7 +77,7 @@ function magFillIssueSel(list, base) {
   if (base) for (const [k, x] of byDate) if (!list.some(y => y.issue_date === k)) byDate.set(k, { ...x, focus: false });
   magIssueList = [...byDate.values()].sort((a, b) => String(b.issue_date).localeCompare(String(a.issue_date)));
   list = magIssueList;
-  sel.innerHTML = list.map(x => `<option value="${magEsc(x.issue_date)}">${magEsc(magDateLabel(x.issue_date))}号${x.label ? '　' + magEsc(x.label) : ''}${x.focus ? '（注目）' : ''}</option>`).join('');
+  sel.innerHTML = list.map(x => `<option value="${magEsc(x.issue_date)}">${magEsc(magDateLabel(x.issue_date))}号${x.label ? '　' + magEsc(x.label) : ''}${x.focus ? '（注目）' : x.sent && !x.is_test ? '（配信済）' : ''}</option>`).join('');
   sel.value = magIssue || (list.find(x => x.focus) || list[0] || {}).issue_date || '';
 }
 
@@ -90,7 +90,10 @@ async function magLoadDash(quiet, tries = 2) {
     if (!j.ok) throw new Error(j.error || '不明');
     if (magDoc && magDoc.issue_date === j.focus_issue && (!!magDoc.pre) === !!(j.issue && j.issue.exists)) magDoc = null;   // 先置き⇔初版が入れ替わった
     magDash = j; magSetUpdated(true);
-    magFillIssueSel(j.selectable_issues, !magIssue);
+    // selectable_issues には、注目の号と試験号しか入らない（2026-10-16 確認）。配信済の号は history から足す
+    const sent = (j.history || []).filter(h => h.issue_date && !(j.selectable_issues || []).some(x => x.issue_date === h.issue_date))
+      .map(h => ({ issue_date: h.issue_date, label: h.is_test ? '第0号（試験）' : '', is_test: !!h.is_test, focus: false, sent: true }));
+    magFillIssueSel((j.selectable_issues || []).concat(sent), !magIssue);
     magWaitEnd();
     if (magTabName === 'status') magRenderStatus();
     return j;
