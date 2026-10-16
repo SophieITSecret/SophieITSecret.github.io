@@ -266,6 +266,7 @@ function magRenderEdit() {
     ${field('schedule', '今週以降の主要日程', '（自動で入ります。直したいときだけ直す。空で保存＝この欄はメールに出ません）', 'mid')}
     ${ro ? '' : '<div class="mag-btns"><button class="dash-refresh" onclick="magScheduleAuto()">↺ 日程を自動に戻す</button><span class="sub">確認済・配信済の号には効きません</span></div>'}
     ${field('notice', 'MSフォーラムからのお知らせ', '（牧村さんが書く欄。空で保存＝この欄はメールに出ません）', 'mid')}
+    ${ro ? '' : '<div class="mag-btns"><button class="dash-refresh" onclick="magCopyPrevNotice()">📋 前の号のお知らせを写す</button><span class="sub">いちばん近い配信済の号のお知らせを、この欄に写します（写したあと直して、保存してください）</span></div><div id="magCopyMsg"></div>'}
     <div class="mag-btns">
       ${ro ? `<button class="btn-load" onclick="magSaveNewVersion(true)">💾 配信後の小さな直しとして、新しい版で保存</button>`
            : `<button class="btn-save" onclick="magSaveOver()">💾 上書き保存</button>
@@ -527,6 +528,30 @@ async function magSaveMarketComment() {
   box.innerHTML = `<div class="mag-msgbox ok">${text ? '一言コメントを保存しました' : '一言コメントを消しました'}。マーケット欄の表示は、次に読み直したときに変わります。</div>`;
 }
 
+// お知らせを前の号から写す（10/16 牧村さん。お知らせは毎週あまり変わらないので）
+//   いちばん近い配信済の号（試験号は除く。この号より前）の最新版の notice を読む。写すだけで、保存は牧村さんが押す
+async function magCopyPrevNotice() {
+  const ta = document.getElementById('magF_notice'); if (!ta || !magDoc) return;
+  const say = (t, ok) => { const el = document.getElementById('magCopyMsg'); if (el) el.innerHTML = `<div class="mag-msgbox ${ok ? 'ok' : 'bad'}">${magEsc(t)}</div>`; };
+  const hist = (magDash && magDash.history) || [];
+  const prev = hist.filter(h => !h.is_test && h.mail && String(h.issue_date) < String(magDoc.issue_date))
+    .sort((a, b) => String(b.issue_date).localeCompare(String(a.issue_date)))[0];
+  if (!prev) { say('写せる前の号（配信済）がありません。', false); return; }
+  if (ta.value.trim() && !confirm(`いまの欄の文を、${magDateLabel(prev.issue_date)}号のお知らせで置き換えます。よろしいですか？`)) return;
+  say(`${magDateLabel(prev.issue_date)}号のお知らせを読んでいます…（GASが混んでいると1分ほどかかります）`, true);
+  try {
+    const j = await (await fetch('/api/magazine?issue=' + encodeURIComponent(prev.issue_date))).json();
+    if (!j.ok || j.issue_date !== prev.issue_date) throw new Error(j.error || '号が読めません');
+    const t = String(j.notice || '');
+    if (!t.trim()) { say(`${magDateLabel(prev.issue_date)}号には、お知らせがありませんでした。`, false); return; }
+    // 読み込み中に別の号へ切り替えていたら写さない
+    if (document.getElementById('magF_notice') !== ta) return;
+    ta.value = t; magOnInput('notice');
+    ta.scrollIntoView({ block: 'center' }); ta.focus();
+    say(`${magDateLabel(prev.issue_date)}号のお知らせを写しました。日付などを直して、保存してください（まだ保存していません）。`, true);
+  } catch (e) { say('前の号のお知らせを読めませんでした：' + e.message, false); }
+}
+
 // ---------------- 下書きがまだ無い号：先置き ----------------
 function magRenderPre() {
   const pane = document.getElementById('magPane'), m = magDoc;
@@ -546,6 +571,7 @@ function magRenderPre() {
     ${f('trivia', 'ご存知ですか', '（空で保存＝この欄はメールに出ません）')}
     <div class="mag-btns"><button class="dash-refresh" onclick="magAddCardLink()">🔗 カードのリンクを足す</button><span class="sub">元になったカードのコード（例 YOKO07）を入れると、欄の最後にTAKERUのカードへのリンクを足します</span></div>
     ${f('notice', 'MSフォーラムからのお知らせ', '（空で保存＝この欄はメールに出ません）')}
+    ${'<div class="mag-btns"><button class="dash-refresh" onclick="magCopyPrevNotice()">📋 前の号のお知らせを写す</button><span class="sub">いちばん近い配信済の号のお知らせを、この欄に写します（写したあと直して、保存してください）</span></div><div id="magCopyMsg"></div>'}
     <div class="mag-btns"><button class="btn-save" onclick="magSavePre()">💾 先に入れておく（保存）</button>
       <span class="sub">主要日程とマーケットは、初版と土曜朝に自動で入ります</span></div>
     <div id="magMsgBox"></div>`;
