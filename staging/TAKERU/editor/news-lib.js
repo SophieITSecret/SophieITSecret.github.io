@@ -174,13 +174,17 @@ const MAG_NOTICE_RE = /^MAG\d{8}$/;
 async function latestDeliveredIssue() {
   const j = await gasGet('magazine_dashboard');
   if (!j.ok) throw new Error('マガジンのGAS: ' + (j.error || '不明'));
-  const h = (j.history || []).filter(x => !x.is_test && x.hp && x.hp.ok && x.hp.url)
-    .sort((a, b) => String(b.issue_date).localeCompare(String(a.issue_date)))[0];
-  return h ? { issue_date: h.issue_date, url: h.hp.url } : null;
+  const sent = (j.history || []).filter(x => !x.is_test && x.hp && x.hp.ok && x.hp.url)
+    .sort((a, b) => String(a.issue_date).localeCompare(String(b.issue_date)));
+  const h = sent[sent.length - 1];
+  // 号の呼び名は会員システムと同じ数え方（試験号を除いた配信済の号を古い順に。10/10＝創刊号）
+  return h ? { issue_date: h.issue_date, url: h.hp.url, no: sent.length } : null;
 }
 function magazineNoticeItem(issue) {
   const [y, m, d] = issue.issue_date.split('-').map(Number);
-  const ja = `${m}月${d}日号`;
+  // 「第3号（10月24日発行）」の形（10/17 牧村さん。メール・号ページの呼び名とそろえる）
+  const name = issue.no === 1 ? '創刊号' : issue.no ? `第${issue.no}号` : '';
+  const ja = name ? `${name}（${m}月${d}日発行）` : `${m}月${d}日号`;
   return { id: 'MAG' + issue.issue_date.replace(/-/g, ''), date: issue.issue_date, type: 'お知らせ',
     title: `TAKERUマガジン ${ja}が出ました`,
     body: `MSフォーラムの週刊メルマガ「TAKERUマガジン」の${ja}です。先週の世界の動き、マーケット、今週以降の主要日程などをまとめています。\n\n` +
