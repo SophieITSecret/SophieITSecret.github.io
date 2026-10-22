@@ -50,6 +50,22 @@
             set('meta[name="apple-mobile-web-app-title"]', 'content', 'TAKERU Git');
             document.title = 'TAKERU（Git）';
         })();
+
+        // ブラウザで開いたとき（ホーム画面のアイコンからでないとき）の画面の高さ（2026-10-23）。
+        //   ホーム画面では画面いっぱい（style.css の 100lvh）。ブラウザでは、ブラウザの欄の下にもぐらないよう
+        //   見えている高さ（100dvh）にする。iOS 26 以降の Safari は下の欄が画面の上に浮くので、その分も空ける。
+        (function () {
+            try {
+                var standalone = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone === true;
+                if (standalone) return;
+                var h = document.documentElement, ua = navigator.userAgent || '';
+                h.classList.add('in-browser');
+                var ios = /iPhone|iPod/.test(ua);
+                var safari = ios && /Safari\//.test(ua) && !/CriOS|EdgiOS|FxiOS|OPT\/|Line\/|FBAN|FBAV|Instagram|Twitter/i.test(ua);
+                var v = (/Version\/(\d+)/.exec(ua) || [])[1];
+                if (safari && v && +v >= 26) h.classList.add('ios-float-bar');
+            } catch (e) { /* 判定できなくても、これまでどおり表示する */ }
+        })();
     </script>
     <!-- Googleサインイン（登録・ログイン用） -->
     <script src="https://accounts.google.com/gsi/client" async></script>

@@ -75,6 +75,11 @@ body {
     padding-bottom: calc(env(safe-area-inset-bottom) * 0.5);
     transition: background 0.3s, color 0.3s;
 }
+/* ブラウザで開いたとき（index.html が html に in-browser を付ける）：ブラウザの欄の下にもぐらないよう、見えている高さに */
+html.in-browser body { height: 100dvh; }
+/* iOS 26 以降の Safari：下のアドレス欄が画面の上に浮くので、下のボタンの段がその上に来るよう空ける（2026-10-23 牧村さんのiPhoneで確認） */
+html.ios-float-bar body { padding-bottom: 88px; }
+@media (orientation: landscape) { html.ios-float-bar body { padding-bottom: 0; } }
 
 /* ==================== 入口画面 ==================== */
 #entry-screen {
