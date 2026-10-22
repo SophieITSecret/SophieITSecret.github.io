@@ -221,6 +221,133 @@ module.exports = function desk(ctx) {
     return aims;
   }
 
+  // ---------------- 依頼書と受け取り（2026-10-22） ----------------
+  //   ひな形：制作デスク/_依頼のひな形/*.md。頭に title・stage・to・scope（theme|cards）・returns（none|research|plan|skeleton|body）。
+  //   本文の {{…}} に、デスクで決まったことを差し込む。作った依頼書はテーマの 依頼/ に残す
+  const TPL_DIR = () => path.join(ROOT(), '_依頼のひな形');
+  function parseTpl(text, name) {
+    const t = String(text || '').replace(/^﻿/, '').replace(/\r\n/g, '\n');
+    const meta = { name, title: name.replace(/\.md$/, ''), stage: '', to: '', scope: 'theme', returns: 'none', note: '' };
+    const fm = /^---\n([\s\S]*?)\n---\n?/.exec(t);
+    if (fm) for (const line of fm[1].split('\n')) { const m = /^(\w+):\s*(.*)$/.exec(line); if (m) meta[m[1]] = m[2].trim(); }
+    return { ...meta, body: fm ? t.slice(fm[0].length) : t };
+  }
+  function listTpls() {
+    let names = []; try { names = fs.readdirSync(TPL_DIR()).filter(n => n.endsWith('.md') && !n.startsWith('_')); } catch {}
+    return names.map(n => parseTpl(fs.readFileSync(path.join(TPL_DIR(), n), 'utf8'), n)).sort((a, b) => a.name.localeCompare(b.name));
+  }
+  const kindJa = k => k === 'F' ? '史実' : k === 'C' ? '解説' : '';
+  function buildBrief(dir, th, tpl, opt) {
+    const cards = th.order.map(c => readCard(dir, c));
+    const pick = (opt.cards || []).length ? cards.filter(c => opt.cards.includes(c.code)) : [];
+    const stagesTxt = STAGES.map(s => { const st = th.stages[s.no] || {};
+      return `- 段${s.no} ${s.name}：${st.state || '未'}${st.approved ? '（承認済み）' : ''}${st.note ? '　' + st.note.replace(/\n/g, ' ') : ''}`; }).join('\n');
+    const table = ['| コード | 種別 | 題 | 狙い（そのカードで言うこと） | 状態 |', '|---|---|---|---|---|']
+      .concat(cards.map(c => `| ${c.code} | ${kindJa(c.kind)} | ${c.title} | ${String(c.aim || '').replace(/\n/g, ' ')} | ${c.status} |`)).join('\n');
+    const one = (c, full) => `#### ${c.code}（${kindJa(c.kind)}）${c.title}\n狙い：${c.aim || '（未記入）'}` +
+      (c.skeleton ? `\n\n骨組み・ファクト：\n${c.skeleton}` : '') + (full && c.body ? `\n\nいまの本文（${countChars(c.body)}字）：\n${c.body}` : '');
+    let near = '';
+    if (pick.length) {
+      const idx = pick.map(p => th.order.indexOf(p.code));
+      const lo = Math.max(0, Math.min(...idx) - 1), hi = Math.min(cards.length - 1, Math.max(...idx) + 1);
+      near = cards.slice(lo, hi + 1).map(c => `- ${c.code}（${kindJa(c.kind)}）${c.title}${pick.includes(c) ? '　← 今回' : ''}`).join('\n');
+    }
+    const res = (opt.research || []).map(n => {
+      try { return `----- 資料：${n} -----\n${fs.readFileSync(path.join(dir, 'research', fileSafe(n)), 'utf8').trim()}\n----- ここまで -----`; } catch { return ''; }
+    }).filter(Boolean).join('\n\n');
+    const vals = {
+      'テーマ名': th.name, '科目': th.subject, '主軸': th.axis || '（まだ決まっていない）', '縦糸': th.threads || '（まだ決まっていない）',
+      '学習目標': th.goal || '（未記入）', 'コンセプト': th.concept || '（未記入）', '段の進み具合': stagesTxt,
+      'カード一覧': cards.length ? table : '（カードはまだない）', '枚数': String(cards.length),
+      '選んだカード': pick.length ? pick.map(c => one(c, false)).join('\n\n') : '（カードを選んでいない）',
+      '選んだカード本文つき': pick.length ? pick.map(c => one(c, true)).join('\n\n') : '（カードを選んでいない）',
+      '画像プロンプト': pick.length ? pick.map(c => `#### ${c.code}　${c.title}\n${c.imagePrompt || '（画像プロンプトは未記入）'}`).join('\n\n') : '（カードを選んでいない）',
+      '前後のカード': near || '（なし）', '資料': res || '（資料を添えていない）',
+      '資料の名前': (opt.research || []).join('、') || '（なし）',
+      '頼みたいこと': String(opt.ask || '').trim() || '（特になし）', '日付': now().slice(0, 10),
+    };
+    return tpl.body.replace(/\{\{([^}]+)\}\}/g, (m, k) => vals[k.trim()] !== undefined ? vals[k.trim()] : m).replace(/\n{3,}/g, '\n\n').trim() + '\n';
+  }
+  // 「#### コード　題」で区切られた返事を、コードごとに分ける（NotebookLM・Claude の返事）
+  function parseBlocks(text) {
+    const out = []; let cur = null;
+    for (const line of String(text || '').replace(/\r\n/g, '\n').split('\n')) {
+      const m = /^#{2,4}\s*\**\s*([A-Z][A-Z0-9]{1,19})\b[\s　:：）)（(]*(.*?)\**\s*$/.exec(line);
+      if (m) { cur = { code: m[1], title: m[2].replace(/^(史実|解説)[）)]?\s*/, '').trim(), lines: [] }; out.push(cur); continue; }
+      if (cur) cur.lines.push(line);
+    }
+    return out.map(b => ({ code: b.code, title: b.title, text: b.lines.join('\n').replace(/^\n+|\s+$/g, '') })).filter(b => b.text || b.title);
+  }
+  // カード割りの表（| コード | 種別 | 題 | 狙い |）。列の名前で読む（順番が違っても読めるように）
+  function parsePlan(text) {
+    const rows = String(text || '').split(/\r?\n/).filter(l => /^\s*\|/.test(l))
+      .map(l => l.trim().replace(/^\||\|$/g, '').split('|').map(x => x.trim().replace(/\*\*/g, '')));
+    if (rows.length < 2) return [];
+    const head = rows[0], col = (re) => head.findIndex(h => re.test(h));
+    const ci = col(/コード/), ki = col(/種別/), ti = col(/題|タイトル/), ai = col(/狙い|言うこと|内容/);
+    if (ci < 0 || ti < 0) return [];
+    return rows.slice(1).filter(r => !/^[-:\s]+$/.test(r.join(''))).map(r => ({ code: String(r[ci] || '').toUpperCase(),
+      kind: ki >= 0 ? (/解説|C/.test(r[ki]) ? 'C' : /史実|F/.test(r[ki]) ? 'F' : '') : '', title: String(r[ti] || ''), aim: ai >= 0 ? String(r[ai] || '') : '' }))
+      .filter(r => codeOk(r.code));
+  }
+  // 受け取りの下見と反映。kind = research | plan | skeleton | body
+  function receive(dir, th, b, apply) {
+    const kind = b.kind, text = String(b.text || '');
+    if (!text.trim()) throw new Error('貼り付けた文がありません');
+    if (kind === 'research') {
+      let n = fileSafe(b.name || ''); if (!n) throw new Error('資料の名前を入れてください'); if (!/\.(md|txt)$/i.test(n)) n += '.md';
+      if (fs.existsSync(path.join(dir, 'research', n))) throw new Error('同じ名前の資料がもうあります');
+      if (apply) { fs.mkdirSync(path.join(dir, 'research'), { recursive: true }); fs.writeFileSync(path.join(dir, 'research', n), text, 'utf8'); }
+      return { changes: [{ what: `資料「${n}」を足す（${countChars(text)}字）` }] };
+    }
+    if (kind === 'plan') {
+      const plan = parsePlan(text);
+      if (!plan.length) throw new Error('「| コード | 種別 | 題 | 狙い |」の表が見つかりませんでした');
+      const changes = plan.map(p => {
+        if (!th.order.includes(p.code)) return { code: p.code, what: `新しく作る：（${kindJa(p.kind)}）${p.title}` };
+        const c = readCard(dir, p.code), d = [];
+        if (p.title && p.title !== c.title) d.push(`題「${c.title}」→「${p.title}」`);
+        if (p.aim && p.aim !== c.aim) d.push('狙いを書き換え');
+        if (p.kind && p.kind !== c.kind) d.push(`種別 ${c.kind}→${p.kind}`);
+        return { code: p.code, what: d.length ? d.join('・') : '変わらない', same: !d.length };
+      });
+      const missing = th.order.filter(c => !plan.some(p => p.code === c));
+      if (apply) {
+        for (const p of plan) {
+          if (!th.order.includes(p.code)) {
+            fs.writeFileSync(cardPath(dir, p.code), cardText({ code: p.code, kind: p.kind, status: '構想', title: p.title, aim: p.aim, skeleton: '', body: '', imagePrompt: '', memo: `（${now()} カード割りの表から作成）` }), 'utf8');
+            th.order.push(p.code);
+          } else { const c = readCard(dir, p.code); if (p.title) c.title = p.title; if (p.aim) c.aim = p.aim; if (p.kind) c.kind = p.kind; fs.writeFileSync(cardPath(dir, p.code), cardText(c), 'utf8'); }
+        }
+        if (b.reorder) th.order = plan.map(p => p.code).concat(th.order.filter(c => !plan.some(p => p.code === c)));
+      }
+      return { changes, missing };
+    }
+    if (kind === 'skeleton' || kind === 'body') {
+      const blocks = parseBlocks(text);
+      if (!blocks.length) throw new Error('「#### コード　題」の見出しが見つかりませんでした（返事の形を確かめてください）');
+      const field = kind === 'skeleton' ? '骨組み' : '本文';
+      const changes = blocks.map(bl => {
+        if (!th.order.includes(bl.code)) return { code: bl.code, what: 'このテーマにないコードなので入れない', skip: true };
+        const c = readCard(dir, bl.code), old = c[kind] || '';
+        return { code: bl.code, what: old.trim() ? `${field}を書き換え（${countChars(old)}字→${countChars(bl.text)}字）` : `${field}に入れる（${countChars(bl.text)}字）`,
+                 titleNew: bl.title && bl.title !== c.title ? bl.title : '' };
+      });
+      if (apply) for (const bl of blocks) {
+        if (!th.order.includes(bl.code)) continue;
+        if (Array.isArray(b.codes) && !b.codes.includes(bl.code)) continue;
+        const c = readCard(dir, bl.code);
+        if (kind === 'body' && String(c.body || '').trim()) c.memo = (c.memo ? c.memo + '\n' : '') + `（${now()} 本文を受け取りで書き換え。前の本文は 依頼/ の受け取りの控えにあります）`;
+        c[kind] = bl.text;
+        if (kind === 'skeleton' && c.status === '構想') c.status = '骨組み';
+        if (kind === 'body' && ['構想', '骨組み'].includes(c.status)) c.status = '執筆中';
+        fs.writeFileSync(cardPath(dir, bl.code), cardText(c), 'utf8');
+      }
+      return { changes };
+    }
+    throw new Error('受け取りの種類が違います');
+  }
+
   // ---------------- 窓口 ----------------
   async function handle(pathname, method, req, res, q) {
     if (!pathname.startsWith('/api/desk/')) return false;
@@ -454,6 +581,48 @@ module.exports = function desk(ctx) {
         walk(root, '', 2);
         return sendJSON(res, 200, { ok: true, files: out.sort() }), true;
       }
+      // 依頼書のひな形の一覧
+      if (r === 'templates' && method === 'GET') {
+        return sendJSON(res, 200, { ok: true, dir: TPL_DIR(), templates: listTpls().map(({ body, ...m }) =>
+          ({ ...m, slots: [...new Set((body.match(/\{\{([^}]+)\}\}/g) || []).map(x => x.slice(2, -2).trim()))] })) }), true;
+      }
+      // 依頼書を作る（テーマの 依頼/ に控えを残す）
+      if (r === 'brief' && method === 'POST') {
+        const b = await body(req); const dir = themeDir(b.folder), th = loadTheme(dir);
+        const tpl = listTpls().find(t => t.name === b.template); if (!tpl) throw new Error('ひな形が見つかりません');
+        const text = buildBrief(dir, th, tpl, b);
+        const d = path.join(dir, '依頼'); fs.mkdirSync(d, { recursive: true });
+        const stamp = now().replace(/[-: ]/g, '').slice(4, 12);
+        const cs = b.cards || [];
+        const name = fileSafe(`${stamp}_${tpl.title}${b.to ? '_' + b.to : ''}${cs.length ? '_' + cs.slice(0, 3).join('・') + (cs.length > 3 ? 'ほか' : '') : ''}`) + '.md';
+        fs.writeFileSync(path.join(d, name), text, 'utf8');
+        return sendJSON(res, 200, { ok: true, text, name, chars: text.length }), true;
+      }
+      // これまでの依頼書・受け取りの控え（name を付けると1本読む）
+      if (r === 'briefs' && method === 'GET') {
+        const dir = themeDir(q.get('f'));
+        if (q.get('name')) { const n = fileSafe(q.get('name')); return sendJSON(res, 200, { ok: true, name: n, text: fs.readFileSync(path.join(dir, '依頼', n), 'utf8') }), true; }
+        let names = []; try { names = fs.readdirSync(path.join(dir, '依頼')).filter(n => n.endsWith('.md')).sort().reverse().slice(0, 60); } catch {}
+        return sendJSON(res, 200, { ok: true, names }), true;
+      }
+      // 受け取り（返ってきた文をデスクに入れる）。preview=true なら見るだけ
+      if (r === 'receive' && method === 'POST') {
+        const b = await body(req); const dir = themeDir(b.folder), th = loadTheme(dir);
+        let before = '';
+        if (!b.preview && b.kind === 'body') before = th.order.map(c => { try { const x = readCard(dir, c); return x.body ? `#### ${x.code}　${x.title}\n${x.body}` : ''; } catch { return ''; } }).filter(Boolean).join('\n\n');
+        const out = receive(dir, th, b, !b.preview);
+        if (!b.preview) {
+          // 受け取った文も控えに残す（本文なら、受け取る前の本文も。あとで見比べられるように）
+          const d = path.join(dir, '依頼'); fs.mkdirSync(d, { recursive: true });
+          const stamp = now().replace(/[-: ]/g, '').slice(4, 12);
+          const label = { research: '資料', plan: 'カード割り', skeleton: '骨組み', body: '本文' }[b.kind] || b.kind;
+          fs.writeFileSync(path.join(d, `${stamp}_受け取り_${label}${b.from ? '_' + fileSafe(b.from) : ''}.md`),
+            String(b.text) + (before ? '\n\n----- 受け取る前の本文 -----\n' + before : ''), 'utf8');
+          saveTheme(dir, th); writeSummary(dir, th);
+        }
+        return sendJSON(res, 200, { ok: true, ...out }), true;
+      }
+
       return sendJSON(res, 404, { ok: false, error: '窓口がありません' }), true;
     } catch (e) {
       return sendJSON(res, 200, { ok: false, error: e.message }), true;

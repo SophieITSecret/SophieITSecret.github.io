@@ -66,10 +66,10 @@ function dkRender() {
     ${dkRefsHtml()}
     <div class="dk-h">置き場</div><button class="dash-refresh" onclick="dkOpenPath({folder: dk.folder})">📁 このテーマのフォルダ</button>
     <div class="mag-dim" style="margin-top:4px">Claude Code や Obsidian からは、このフォルダの cards/・research/・カード一覧.md を直接読めます。</div>`;
-  const tabs = [['theme', 'テーマ'], ['research', `資料（${d.research.length}）`], ['cards', `カード（${d.cards.length}）`], ['export', 'CSVへ出力']]
+  const tabs = [['theme', 'テーマ'], ['research', `資料（${d.research.length}）`], ['cards', `カード（${d.cards.length}）`], ['brief', '依頼と受け取り'], ['export', 'CSVへ出力']]
     .map(([k, l]) => `<button class="${dk.tab === k ? 'on' : ''}" onclick="dkTab('${k}')">${l}</button>`).join('');
   document.getElementById('dkTabs').innerHTML = tabs;
-  ({ theme: dkRenderTheme, research: dkRenderResearch, cards: dkRenderCards, export: dkRenderExport })[dk.tab]();
+  ({ theme: dkRenderTheme, research: dkRenderResearch, cards: dkRenderCards, brief: dkRenderBrief, export: dkRenderExport })[dk.tab]();
 }
 function dkRefsHtml() {
   const refs = (dk.meta && dk.meta.refs) || [];
@@ -199,7 +199,7 @@ function dkRenderCards() {
       <span class="dk-no">${i + 1}</span><span class="dk-code">${dkEsc(c.code)}</span>
       <span class="dk-title">${dkEsc(c.title)}</span>
       <span class="dk-stat s-${dkEsc(c.status)}" title="${dkEsc(c.status)}">${st[c.status] || '・'}</span>
-      <span class="dk-chars ${c.chars > 420 ? 'over' : ''}">${c.chars || ''}</span></div>`).join('') + plus(d.cards.length);
+      <span class="dk-chars ${c.chars > 460 ? 'over' : ''}">${c.chars || ''}</span></div>`).join('') + plus(d.cards.length);
   const done = d.cards.filter(c => c.status === '確定').length;
   document.getElementById('dkBody').innerHTML = `
     <div class="dk-cards">
@@ -222,7 +222,7 @@ function dkPick(code) {
   dkRenderPanel();
 }
 const DK_FIELDS = [['aim', '狙い', 'このカードで言うこと', 'dk-s'], ['skeleton', '骨組み・ファクト', 'NotebookLM などで拾った箇条書き。出典もここに', 'dk-m'],
-                   ['body', '本文', '360字前後。アプリにはこの文が出る', 'dk-l'], ['imagePrompt', '画像プロンプト', 'チャッピーに渡す文', 'dk-m'], ['memo', 'メモ', '確認したいこと・申し送り', 'dk-s']];
+                   ['body', '本文', '400字前後（現行の基準）。アプリにはこの文が出る', 'dk-l'], ['imagePrompt', '画像プロンプト', 'チャッピーに渡す文', 'dk-m'], ['memo', 'メモ', '確認したいこと・申し送り', 'dk-s']];
 function dkRenderPanel() {
   const p = document.getElementById('dkPanel'), c = dkCard(), th = dk.data.theme;
   if (!c) { p.innerHTML = '<p class="qr-empty">左からカードを選ぶか、「＋」で差し込んでください。</p>'; return; }
@@ -241,6 +241,7 @@ function dkRenderPanel() {
     <div class="dk-row dk-actions">
       <button class="btn-save" onclick="dkSaveCard()">💾 保存（Ctrl+S）</button>
       <button class="dash-refresh" onclick="dkCopyBrief()" title="テーマの主軸・縦糸と、このカードの題・狙い・骨組みをまとめて写す">📋 AIへの依頼の素を写す</button>
+      <button class="dash-refresh" onclick="dkTab('brief')" title="ひな形を選んで、このカードの依頼書を作る">📨 このカードの依頼書へ</button>
       <button class="dash-refresh" onclick="dkDelete()">外す（ごみ箱へ）</button>
       <span id="dkMsg" class="mag-dim"></span>
     </div>`;
@@ -255,7 +256,7 @@ function dkVals() {
   return v;
 }
 function dkCount() { const el = document.getElementById('dkN_body'); if (!el) return; const n = dkChars(document.getElementById('dkF_body').value);
-  el.textContent = `${n}字`; el.classList.toggle('out', n > 420 || (n > 0 && n < 280)); }
+  el.textContent = `${n}字`; el.classList.toggle('out', n > 460 || (n > 0 && n < 320)); }
 function dkKey() { return DK_SAVE + dk.folder + '.' + dk.cur; }
 function dkOnInput() {
   dk.dirty = true; dkCount();
@@ -355,7 +356,7 @@ function dkCopyBrief() {
     `\n■ このカード：${c.code}（${v.kind === 'C' ? '解説' : v.kind === 'F' ? '史実' : ''}）${v.title}\n` +
     (v.aim ? `狙い：${v.aim}\n` : '') + (v.skeleton ? `\n骨組み・ファクト：\n${v.skeleton}\n` : '') +
     (v.body ? `\nいまの本文：\n${v.body}\n` : '') +
-    `\n■ 前後のカード\n${near}\n\n（書き方は「TAKERU カード作成ルール」と「テーマ制作手順書」に従う。本文は360字前後）`);
+    `\n■ 前後のカード\n${near}\n\n（書き方は「TAKERU カード作成ルール」と「テーマ制作手順書」に従う。本文は400字前後）`);
 }
 
 // ---------------- CSVへ出力・取り込み ----------------
@@ -377,7 +378,7 @@ async function dkRenderExport() {
         <span class="sub">出したあと、本体の画面に読み直します。アプリへの公開は、これまでどおり「🚀 本番公開」で</span></div>
     </div>
     <table class="mag-small-table"><tr><th>コード</th><th>題（CSVに出る形）</th><th>字数</th><th>CSV</th></tr>
-      ${p.cards.map(c => `<tr><td>${dkEsc(c.code)}</td><td>${dkEsc(c.title)}</td><td class="${c.chars > 420 ? 'mag-warn' : ''}">${c.chars}</td>
+      ${p.cards.map(c => `<tr><td>${dkEsc(c.code)}</td><td>${dkEsc(c.title)}</td><td class="${c.chars > 460 ? 'mag-warn' : ''}">${c.chars}</td>
         <td>${c.isNew ? '<b>新しく入る</b>' : c.changed ? '置き換え' : '<span class="mag-dim">変わらない</span>'}${c.published ? '（公開中）' : ''}</td></tr>`).join('')}</table>
     <div class="mag-band" style="margin-top:14px">
       <div><b>取り込み（CSV→デスク）</b>：本体の画面で直した題・本文を、デスクのカードへ戻します。</div>
@@ -404,6 +405,114 @@ async function dkPull() {
   const j = await dkPost('pull', { folder: dk.folder, codes });
   if (!j.ok) return dkToast(j.error, true);
   dkToast(`${j.diff.length}枚を取り込みました`); await dkOpenTheme(dk.folder); dk.tab = 'export'; dkRender();
+}
+
+// ---------------- 依頼と受け取り（AIからAIへ引き継ぐ。2026-10-22） ----------------
+//   依頼書：ひな形（制作デスク/_依頼のひな形）に、デスクで決まったことを差し込んで作る。控えはテーマの 依頼/ に残る
+//   受け取り：返ってきた文を、資料・カード割り・骨組み・本文としてデスクに入れる（先に下見を見せる）
+let dkTpls = null, dkBriefSel = '', dkLastBrief = '';
+const DK_RET = { none: '受け取りなし（話し合い・指摘）', research: '資料として受け取る', plan: 'カード割りの表として受け取る', skeleton: '骨組みとして受け取る', body: '本文として受け取る' };
+async function dkRenderBrief() {
+  const b = document.getElementById('dkBody');
+  if (!dkTpls) { const j = await dkGet('templates'); if (!j.ok) { b.innerHTML = `<p class="qr-warn">${dkEsc(j.error)}</p>`; return; } dkTpls = j; }
+  const tpls = dkTpls.templates;
+  if (!tpls.find(t => t.name === dkBriefSel)) dkBriefSel = (tpls[0] || {}).name || '';
+  const t = tpls.find(x => x.name === dkBriefSel);
+  const d = dk.data;
+  const cardPick = t && (t.scope === 'cards' || t.slots.some(s => /選んだカード|前後のカード|画像プロンプト/.test(s)));
+  const resPick = t && t.slots.includes('資料');
+  b.innerHTML = `<div class="dk-brief">
+    <div class="dk-tpls"><div class="dk-h" style="margin-top:0">依頼のひな形</div>
+      <ul>${tpls.map(x => `<li class="${x.name === dkBriefSel ? 'on' : ''}" onclick='dkBriefPick(${JSON.stringify(x.name)})'>
+        <span class="dk-tstage">${x.stage ? (/^\d+$/.test(x.stage) ? '段' + dkEsc(x.stage) : dkEsc(x.stage)) : ''}</span>${dkEsc(x.title)}<div class="mag-dim">${dkEsc(x.to)}</div></li>`).join('') || '<li class="mag-dim">ひな形がありません</li>'}</ul>
+      <button class="dash-refresh" onclick="dkOpenPath({})">📁 ひな形のフォルダ（制作デスク）</button>
+      <button class="dash-refresh" onclick="dkTpls=null; dkRenderBrief()">↻ ひな形を読み直す</button>
+      <div class="mag-dim">ひな形は「_依頼のひな形」の md です。文面は自由に直せます。</div>
+      <div class="dk-h">これまでの依頼と受け取り</div><div id="dkBriefHist" class="dk-hist"></div></div>
+    <div class="dk-bform">${t ? `
+      <div class="mag-band"><div><b>${dkEsc(t.title)}</b>　→ ${dkEsc(t.to)}</div>${t.note ? `<div class="mag-dim">${dkEsc(t.note)}</div>` : ''}
+        <div class="mag-dim">返事は：${dkEsc(DK_RET[t.returns] || t.returns)}</div></div>
+      ${/／/.test(t.to) ? `<div class="mag-field"><div class="lbl">渡す相手 <span class="hint">控えの名前に入ります</span></div>
+        <select id="dkBTo" class="x-in">${t.to.split('／').map(x => `<option>${dkEsc(x.trim())}</option>`).join('')}</select></div>` : ''}
+      ${cardPick ? `<div class="mag-field"><div class="lbl">カード <span class="hint">選んだカードの題・狙い・骨組みなどが入ります</span>
+          <button class="dk-mini" onclick="dkBriefAll(true)">全部</button><button class="dk-mini" onclick="dkBriefAll(false)">外す</button></div>
+        <div class="dk-picks">${d.cards.map(c => `<label><input type="checkbox" class="dkBCard" value="${dkEsc(c.code)}" ${c.code === dk.cur ? 'checked' : ''}> ${dkEsc(c.code)} ${dkEsc(c.title)}</label>`).join('')}</div></div>` : ''}
+      ${resPick ? `<div class="mag-field"><div class="lbl">添える資料 <span class="hint">全文が入ります（長いと依頼書も長くなります）</span></div>
+        <div class="dk-picks">${d.research.map(r => `<label><input type="checkbox" class="dkBRes" value="${dkEsc(r.name)}"> ${dkEsc(r.name)}</label>`).join('') || '<span class="mag-dim">資料はまだありません</span>'}</div></div>` : ''}
+      <div class="mag-field"><div class="lbl">頼みたいこと <span class="hint">依頼書の「頼みたいこと」に入ります</span></div>
+        <textarea id="dkBAsk" class="mid" placeholder="例：1450〜1700年のオスマン帝国の軍制の変化を、時系列で"></textarea></div>
+      <div class="mag-btns"><button class="btn-save" onclick="dkBriefBuild()">📨 依頼書を作る（写す）</button><span class="sub">作った依頼書はクリップボードに写り、テーマの 依頼/ に控えが残ります</span></div>
+      <div id="dkBOut"></div>
+      ${t.returns && t.returns !== 'none' ? dkRecvHtml(t.returns) : `<div class="mag-band"><div><b>受け取り</b></div>${dkRecvHtml('', true)}</div>`}` : '<p class="qr-empty">左からひな形を選んでください。</p>'}
+    </div></div>`;
+  if (document.getElementById('dkRKind')) dkRecvKind();
+  dkBriefHist();
+}
+function dkRecvHtml(kind, plain) {
+  const opt = ['research', 'plan', 'skeleton', 'body'].map(k => `<option value="${k}" ${k === kind ? 'selected' : ''}>${DK_RET[k]}</option>`).join('');
+  return `${plain ? '' : '<div class="mag-band"><div><b>受け取り</b>：返ってきた文を貼って、デスクに入れます</div>'}
+    <div class="dk-row"><select id="dkRKind" onchange="dkRecvKind()">${opt}</select>
+      <input id="dkRFrom" class="x-in" style="max-width:200px" placeholder="どのAIから（控えの名前に）">
+      <input id="dkRName" class="x-in" style="max-width:260px" placeholder="資料の名前（資料のとき）"></div>
+    <textarea id="dkRText" class="mid" style="min-height:160px" placeholder="返ってきた文をそのまま貼る"></textarea>
+    <div class="dk-row"><button class="dash-refresh" onclick="dkRecv(true)">下見（何が変わるか）</button>
+      <label class="mag-dim" id="dkRReorderL"><input type="checkbox" id="dkRReorder"> 表の並びにカードを並べ替える</label></div>
+    <div id="dkROut"></div>${plain ? '' : '</div>'}`;
+}
+function dkRecvKind() {
+  const k = document.getElementById('dkRKind').value;
+  document.getElementById('dkRName').style.display = k === 'research' ? '' : 'none';
+  document.getElementById('dkRReorderL').style.display = k === 'plan' ? '' : 'none';
+}
+function dkBriefPick(n) { dkBriefSel = n; dkRenderBrief(); }
+function dkBriefAll(on) { document.querySelectorAll('.dkBCard').forEach(e => e.checked = on); }
+async function dkBriefBuild() {
+  const to = document.getElementById('dkBTo');
+  const j = await dkPost('brief', { folder: dk.folder, template: dkBriefSel, to: to ? to.value : '',
+    cards: [...document.querySelectorAll('.dkBCard:checked')].map(e => e.value),
+    research: [...document.querySelectorAll('.dkBRes:checked')].map(e => e.value),
+    ask: document.getElementById('dkBAsk').value });
+  if (!j.ok) return dkToast(j.error, true);
+  dkLastBrief = j.text;
+  try { await navigator.clipboard.writeText(j.text); } catch (e) {}
+  document.getElementById('dkBOut').innerHTML = `<div class="mag-msgbox ok">依頼書を写しました（${j.chars}字）。控え：依頼/${dkEsc(j.name)}　相手のAIにそのまま貼ってください。</div>
+    <details><summary class="mag-dim">中身を見る・直して写す</summary><textarea id="dkBText" class="mid" style="min-height:240px">${dkEsc(j.text)}</textarea>
+    <button class="dash-refresh" onclick="dkCopy(document.getElementById('dkBText').value)">📋 直したものを写す</button></details>`;
+  dkBriefHist();
+}
+async function dkRecv(preview) {
+  const b = { folder: dk.folder, kind: document.getElementById('dkRKind').value, text: document.getElementById('dkRText').value,
+              name: document.getElementById('dkRName').value, from: document.getElementById('dkRFrom').value,
+              reorder: document.getElementById('dkRReorder').checked, preview };
+  if (!preview) { const ck = [...document.querySelectorAll('.dkRCode')]; if (ck.length) b.codes = ck.filter(e => e.checked).map(e => e.value); }
+  const j = await dkPost('receive', b);
+  const out = document.getElementById('dkROut');
+  if (!j.ok) { out.innerHTML = `<div class="mag-msgbox bad">${dkEsc(j.error)}</div>`; return; }
+  if (!preview) {
+    out.innerHTML = '<div class="mag-msgbox ok">デスクに入れました。控えはテーマの 依頼/ にあります。</div>';
+    document.getElementById('dkRText').value = '';
+    const keep = dk.tab; await dkOpenTheme(dk.folder); dk.tab = keep; return;
+  }
+  const pick = ['skeleton', 'body'].includes(b.kind);
+  out.innerHTML = `<div class="mag-band"><b>下見</b>
+    <ul class="dk-chg">${j.changes.map(c => `<li class="${c.skip ? 'skip' : c.same ? 'same' : ''}">${pick && !c.skip ? `<label><input type="checkbox" class="dkRCode" value="${dkEsc(c.code)}" checked> ` : ''}${c.code ? `<b>${dkEsc(c.code)}</b>　` : ''}${dkEsc(c.what)}${c.titleNew ? `<span class="mag-dim">（返事の題：${dkEsc(c.titleNew)}。題は変えません）</span>` : ''}${pick && !c.skip ? '</label>' : ''}</li>`).join('')}</ul>
+    ${(j.missing || []).length ? `<div class="mag-dim">表に無いカード（そのまま残します）：${j.missing.map(dkEsc).join('、')}</div>` : ''}
+    ${b.kind === 'body' ? '<div class="mag-dim">本文を書き換えるカードは、受け取る前の本文を 依頼/ の控えに残します。</div>' : ''}
+    <div class="mag-btns"><button class="btn-save" onclick="dkRecv(false)">この内容でデスクに入れる</button></div></div>`;
+}
+async function dkBriefHist() {
+  const el = document.getElementById('dkBriefHist'); if (!el) return;
+  const j = await dkGet('briefs?f=' + encodeURIComponent(dk.folder));
+  if (!j.ok) { el.textContent = ''; return; }
+  el.innerHTML = j.names.length ? j.names.slice(0, 20).map(n => `<div class="dk-hrow" onclick='dkBriefShow(${JSON.stringify(n)})'>${dkEsc(n.replace(/\.md$/, ''))}</div>`).join('')
+                                : '<div class="mag-dim">まだありません</div>';
+}
+async function dkBriefShow(n) {
+  const j = await dkGet(`briefs?f=${encodeURIComponent(dk.folder)}&name=${encodeURIComponent(n)}`);
+  if (!j.ok) return dkToast(j.error, true);
+  document.getElementById('dkBOut').innerHTML = `<div class="mag-band"><div class="dk-row"><b>${dkEsc(n)}</b>
+      <button class="dash-refresh" onclick="dkCopy(document.getElementById('dkBText').value)">📋 写す</button></div>
+    <textarea id="dkBText" class="mid" style="min-height:240px">${dkEsc(j.text)}</textarea></div>`;
 }
 
 // Ctrl+S でカードを保存
