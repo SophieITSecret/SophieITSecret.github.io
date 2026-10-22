@@ -14,6 +14,7 @@
   <button class="btn-load" id="btnAccess" onclick="openCardRanking()" disabled>👁 閲覧状況</button>
   <button class="btn-load" id="btnMembers" onclick="openMembers()" disabled>👥 会員</button>
   <button class="btn-load" id="btnNews" onclick="openNewsEditor()">📰 お知らせ</button>
+  <button class="btn-load" onclick="openDesk()" title="カード制作の上流：テーマ・段1〜7・調査資料・カード割り・執筆・CSVへ出力">🧭 制作デスク</button>
   <button class="btn-load" onclick="openMag()" title="TAKERUマガジン：金曜夜の下書きを確認・添削・OKする">📮 マガジン</button>
   <button class="btn-load" id="btnX" onclick="openX()" title="MSフォーラムのXの投稿：一覧・直し・承認（本番）">𝕏 X</button>
   <button class="btn-load" onclick="openQr()" title="自由研究などを直接開く専用リンクとQRコードを作る">🔳 QR</button>
@@ -578,6 +579,24 @@
   </div>
 </div>
 
+<!-- 🧭 制作デスク（public/desk.js ／ サーバーは editor/desk.js） -->
+<div id="deskModal" class="modal-overlay">
+  <div class="modal-box dk-box">
+    <div class="modal-head mag-top">
+      <h2>🧭 制作デスク</h2>
+      <select id="dkThemeSel" class="mag-sel" onchange="dkOpenTheme(this.value)" title="テーマを選ぶ"></select>
+      <button class="dash-refresh" onclick="dkNewTheme()">＋ 新しいテーマ</button>
+      <button class="dash-refresh" onclick="dkReload()" title="Claude Code や Obsidian で直したものを読み直す">↻ 読み直す</button>
+      <button class="btn-cancel" onclick="closeDesk()">✕ 閉じる</button>
+    </div>
+    <div class="dk-wrap">
+      <aside id="dkSide" class="dk-side"></aside>
+      <main class="dk-main"><div id="dkTabs" class="mag-tabs"></div><div id="dkBody"></div></main>
+    </div>
+    <div id="dkToast" class="dk-toast" style="display:none"></div>
+  </div>
+</div>
+
 <!-- MSフォーラムのX発信：一覧・直し・承認（public/x.js）。本番：待機中の行は予定の時刻に投稿される -->
 <div id="xModal" class="modal-overlay">
   <div class="modal-box mag-modal-box">
@@ -774,5 +793,6 @@
 <script src="app.js"></script>
 <script src="magazine.js"></script>
 <script src="x.js"></script>
+<script src="desk.js"></script>
 </body>
 </html>

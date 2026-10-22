@@ -23,6 +23,9 @@ try {
 
 const PUBLIC_DIR = path.join(__dirname, 'public');
 // 動作確認用に別ポートで立てられるようにしておく（既に作業台が動いていても試せる）
+// 試験用：本物の CSV・原稿フォルダを触らずに動かすとき（牧村さんの作業台では使わない）
+if (process.env.EDITOR_TEST_CSV) config.csvPath = process.env.EDITOR_TEST_CSV;
+if (process.env.EDITOR_TEST_DRAFTS) config.draftsDir = process.env.EDITOR_TEST_DRAFTS;
 const PORT = process.env.EDITOR_PORT || config.port || 3000;
 
 const MIME = {
@@ -439,6 +442,10 @@ function postXSave(req, res) {
     } catch (e) { sendJSON(res, 200, { ok: false, error: e.message }); }
   });
 }
+
+// 🧭 制作デスク（カード制作の上流）。中身は editor/desk.js
+const DESK = require('./desk')({ config, sendJSON, timestamp, pruneBackups, RE_CSV_BACKUP, parseCsvText,
+                                 syncDraftsFromCsv: (t) => syncDraftsFromCsv(t), draftsDir: () => draftsDir() });
 
 // ============================================================
 // 宣伝用の専用リンクとQRコード（「🔳 QR」）
@@ -1576,6 +1583,9 @@ const server = http.createServer((req, res) => {
   if (pathname === '/api/sw-version' && method === 'GET') return getSwVersion(req, res);
   if (pathname === '/api/sw-version' && method === 'POST') return bumpSwVersion(req, res);
   if (pathname === '/api/publish' && method === 'POST') return postPublish(req, res);
+
+  // 🧭 制作デスク（editor/desk.js）
+  if (pathname.startsWith('/api/desk/')) { DESK.handle(pathname, method, req, res, parsed.searchParams); return; }
 
   // 静的
   if (method === 'GET') return serveStatic(req, res, pathname);
