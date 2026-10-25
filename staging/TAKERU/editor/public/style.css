@@ -841,3 +841,12 @@ textarea.svg-overlay-input { min-height:120px; font-family:monospace; font-size:
 /* 制作デスクのタブの段は、中をスクロールしても上に残す（10/25：前後のボタンでタブが隠れた） */
 #dkTabs { position: sticky; top: 0; z-index: 3; background: #0d1520; margin-top: 0; padding-top: 4px; }
 .dk-outline { top: 44px; }
+/* 制作デスクの文字を大きく（10/25 牧村さん） */
+.dk-panel textarea, .dk-panel textarea.dk-s, .dk-panel textarea.dk-m { font-size: 17px; line-height: 1.85; }
+.dk-panel textarea.dk-l { font-size: 18px; line-height: 1.9; min-height: 360px; }
+.dk-titlein { font-size: 20px; }
+.dk-panel .mag-field .lbl { font-size: 15px; }
+.dk-restext { font-size: 17px; line-height: 1.85; }
+.dk-reslist li { font-size: 14px; }
+.dk-card { font-size: 14.5px; padding: 7px 8px; }
+.dk-code { font-size: 13px; }
