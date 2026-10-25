@@ -309,6 +309,9 @@ async function dkSaveCard() {
   const m = document.getElementById('dkMsg'); if (m) m.textContent = '保存しました';
 }
 async function dkInsert(i, kind) {
+  // 押しまちがいで空のカードができないよう、必ず確かめる（10/26：題を押したつもりで差し込まれた）
+  const what = kind === 'F' ? '史実' : kind === 'C' ? '解説' : '新しい';
+  if (!confirm(`${i + 1}枚目の位置に、${what}のカードを差し込みます。よろしいですか？`)) return;
   if (dk.dirty && !confirm('いまのカードに保存していない直しがあります（一時保存はしてあります）。差し込みますか？')) return;
   const j = await dkPost('card/insert', { folder: dk.folder, index: i, kind });
   if (!j.ok) return dkToast(j.error, true);
