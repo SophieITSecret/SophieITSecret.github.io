@@ -214,6 +214,14 @@ function dkRenderCards() {
   dkRenderPanel();
 }
 function dkCard() { return dk.data.cards.find(c => c.code === dk.cur); }
+// 作業欄の ◀▶：テーマの並びの前後のカードへ（直しかけなら dkPick が確かめる）。左の並びも、選んだカードが見えるようにずらす
+function dkStep(d) {
+  const o = dk.data.theme.order, i = o.indexOf(dk.cur), j = i + d;
+  if (i < 0 || j < 0 || j >= o.length) return;
+  dkPick(o[j]);
+  const row = document.querySelector(`.dk-card[data-code="${o[j]}"]`); if (row) row.scrollIntoView({ block: 'nearest' });
+  const pn = document.getElementById('dkPanel'); if (pn) pn.scrollIntoView({ block: 'start' });
+}
 function dkPick(code) {
   if (code === dk.cur) return;
   if (dk.dirty && !confirm('このカードに保存していない直しがあります（一時保存はしてあります）。ほかのカードに移りますか？')) return;
@@ -226,7 +234,13 @@ const DK_FIELDS = [['aim', '狙い', 'このカードで言うこと', 'dk-s'], 
 function dkRenderPanel() {
   const p = document.getElementById('dkPanel'), c = dkCard(), th = dk.data.theme;
   if (!c) { p.innerHTML = '<p class="qr-empty">左からカードを選ぶか、「＋」で差し込んでください。</p>'; return; }
+  const i = dk.data.theme.order.indexOf(c.code), n = dk.data.theme.order.length;
   p.innerHTML = `
+    <div class="dk-row dk-nav">
+      <button class="dash-refresh" onclick="dkStep(-1)" ${i <= 0 ? 'disabled' : ''} title="前のカード（Alt+←）">◀ 前のカード</button>
+      <span class="mag-dim">${i + 1} / ${n}</span>
+      <button class="dash-refresh" onclick="dkStep(1)" ${i >= n - 1 ? 'disabled' : ''} title="次のカード（Alt+→）">次のカード ▶</button>
+    </div>
     <div class="dk-row">
       <span class="dk-bigcode">${dkEsc(c.code)}</span><button class="dash-refresh" onclick="dkRecode()">コードを変える</button>
       ${th.usesKind !== false ? `<select id="dkF_kind" onchange="dkOnInput()"><option value="F" ${c.kind === 'F' ? 'selected' : ''}>史実（F）</option><option value="C" ${c.kind === 'C' ? 'selected' : ''}>解説（C）</option></select>` : ''}
@@ -522,5 +536,9 @@ document.addEventListener('keydown', e => {
   if ((e.ctrlKey || e.metaKey) && e.key === 's' && document.getElementById('deskModal') && document.getElementById('deskModal').style.display === 'flex') {
     e.preventDefault(); e.stopPropagation();
     if (dk.tab === 'cards') dkSaveCard(); else if (dk.tab === 'research' && dk.research) dkResSave();
+  }
+  // Alt+← / Alt+→ で前後のカードへ（カードのタブのとき）
+  if (e.altKey && (e.key === 'ArrowLeft' || e.key === 'ArrowRight') && dk.tab === 'cards' && document.getElementById('deskModal') && document.getElementById('deskModal').style.display === 'flex') {
+    e.preventDefault(); dkStep(e.key === 'ArrowLeft' ? -1 : 1);
   }
 }, true);
