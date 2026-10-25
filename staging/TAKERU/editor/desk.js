@@ -262,6 +262,8 @@ module.exports = function desk(ctx) {
       '選んだカード': pick.length ? pick.map(c => one(c, false)).join('\n\n') : '（カードを選んでいない）',
       '選んだカード本文つき': pick.length ? pick.map(c => one(c, true)).join('\n\n') : '（カードを選んでいない）',
       '画像プロンプト': pick.length ? pick.map(c => `#### ${c.code}　${c.title}\n${c.imagePrompt || '（画像プロンプトは未記入）'}`).join('\n\n') : '（カードを選んでいない）',
+      // テーマの全カードの題と本文（並び順。画像をテーマ1本のスレッドで頼むとき、最初に渡す。10/25）
+      '全カードの本文': cards.length ? cards.map((c, i) => `#### ${i + 1}. ${c.code}（${kindJa(c.kind)}）${c.title}\n${c.body || '（本文はまだない）'}`).join('\n\n') : '（カードはまだない）',
       // 1枚だけ選んだときの差し込み口（画像の依頼など、カード1枚ずつ頼むひな形のため。10/25）
       'カードコード': pick[0] ? pick[0].code : '（カードを選んでいない）',
       'カードタイトル': pick[0] ? pick[0].title : '（カードを選んでいない）',

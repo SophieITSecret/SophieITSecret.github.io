@@ -256,8 +256,10 @@ function dkRenderPanel() {
       <button class="btn-save" onclick="dkSaveCard()">💾 保存（Ctrl+S）</button>
       <button class="dash-refresh" onclick="dkCopyBrief()" title="テーマの主軸・縦糸と、このカードの題・狙い・骨組みをまとめて写す">📋 AIへの依頼の素を写す</button>
       <button class="dash-refresh" onclick="dkTab('brief')" title="ひな形を選んで、このカードの依頼書を作る">📨 このカードの依頼書へ</button>
-      <button class="dash-refresh" onclick="dkImageBrief('70_')" title="チャッピーへの画像の依頼（固定部つきの全文）を写す。新しいチャットの最初に">🖼 画像の依頼を写す</button>
-      <button class="dk-mini" onclick="dkImageBrief('71_')" title="同じチャットの2枚目以降・チャッピーのプロジェクトに固定部を入れてあるとき">可変部だけ</button>
+      <span class="dk-imgbtns" title="画像はテーマ1本のスレッドで作る：最初に「テーマ全体」を1回、あとはカードごとに「このカードへ」">🖼 画像：
+        <button class="dk-mini" onclick="dkImageBrief('72_')" title="チャッピーのプロジェクトで新しいスレッドを開き、最初に1回だけ貼る（全カードの題と本文）">① テーマ全体を写す（最初に1回）</button>
+        <button class="dk-mini" onclick="dkImageBrief('73_')" title="同じスレッドで、このカードへ進む（コード・題・メモだけ）">② このカードへ進む</button>
+        <button class="dk-mini" onclick="dkImageBrief('70_')" title="このカード1枚だけを、決まりの全文つきで頼む（スレッドを分けるとき・プロジェクトを使わないとき）">1枚だけ（全文）</button></span>
       <button class="dash-refresh" onclick="dkDelete()">外す（ごみ箱へ）</button>
       <span id="dkMsg" class="mag-dim"></span>
     </div>`;
@@ -370,9 +372,11 @@ async function dkImageBrief(prefix) {
   if (!dkTpls) { const j = await dkGet('templates'); if (!j.ok) return dkToast(j.error, true); dkTpls = j; }
   const t = dkTpls.templates.find(x => x.name.startsWith(prefix));
   if (!t) return dkToast('画像の依頼のひな形（' + prefix + '…）が見つかりません', true);
-  const j = await dkPost('brief', { folder: dk.folder, template: t.name, to: 'チャッピー', cards: [c.code], ask: '' });
+  const whole = t.scope === 'theme';
+  const j = await dkPost('brief', { folder: dk.folder, template: t.name, to: 'チャッピー', cards: whole ? [] : [c.code], ask: '' });
   if (!j.ok) return dkToast(j.error, true);
-  try { await navigator.clipboard.writeText(j.text); dkToast(`${c.code} の画像の依頼（${prefix === '70_' ? '全文' : '可変部だけ'}）を写しました。チャッピーに貼ってください`); }
+  const what = whole ? `テーマ全体（${dk.data.cards.length}枚の題と本文、${j.chars}字）` : `${c.code} の画像の依頼（${t.title.replace(/^画像の依頼[：（]?/, '').replace(/）$/, '')}）`;
+  try { await navigator.clipboard.writeText(j.text); dkToast(`${what}を写しました。チャッピーに貼ってください`); }
   catch (e) { dkToast('写せませんでした（控えは 依頼/ にあります）', true); }
 }
 function dkCopyBrief() {
