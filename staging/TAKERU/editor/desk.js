@@ -271,12 +271,19 @@ module.exports = function desk(ctx) {
   // 「#### コード　題」で区切られた返事を、コードごとに分ける（NotebookLM・Claude の返事）
   function parseBlocks(text) {
     const out = []; let cur = null;
+    // 見出しの揺れも読む（10/25 テーマ5の原稿で実際にあった形）：
+    //   「#### **GNPC02　題**」「#### GNPF01　**題**」「#### **GNPC07　題**（530字）」「#### ##### GNPC08　題」
     for (const line of String(text || '').replace(/\r\n/g, '\n').split('\n')) {
-      const m = /^#{2,4}\s*\**\s*([A-Z][A-Z0-9]{1,19})\b[\s　:：）)（(]*(.*?)\**\s*$/.exec(line);
-      if (m) { cur = { code: m[1], title: m[2].replace(/^(史実|解説)[）)]?\s*/, '').trim(), lines: [] }; out.push(cur); continue; }
+      const m = /^#{2,6}(?:\s+#{1,6})?\s*\**\s*([A-Z][A-Z0-9]{1,19})\b[\s　:：）)（(]*(.*?)\s*$/.exec(line);
+      if (m) {
+        const title = m[2].replace(/\*\*/g, '').replace(/[（(]\s*\d+\s*字\s*[）)]\s*$/, '').replace(/^(史実|解説)[）)]?\s*/, '').trim();
+        cur = { code: m[1], title, lines: [] }; out.push(cur); continue;
+      }
       if (cur) cur.lines.push(line);
     }
-    return out.map(b => ({ code: b.code, title: b.title, text: b.lines.join('\n').replace(/^\n+|\s+$/g, '') })).filter(b => b.text || b.title);
+    // 本文に紛れた Markdown の引用の印（行頭の「> 」）と、行末の空白（改行の印の2つの空白など）は外す。アプリにそのまま出てしまうため
+    return out.map(b => ({ code: b.code, title: b.title,
+      text: b.lines.map(l => l.replace(/^>\s?/, '').replace(/[ \t　]+$/, '')).join('\n').replace(/^\n+|\s+$/g, '') })).filter(b => b.text || b.title);
   }
   // カード割りの表（| コード | 種別 | 題 | 狙い |）。列の名前で読む（順番が違っても読めるように）
   function parsePlan(text) {
@@ -330,8 +337,9 @@ module.exports = function desk(ctx) {
       const changes = blocks.map(bl => {
         if (!th.order.includes(bl.code)) return { code: bl.code, what: 'このテーマにないコードなので入れない', skip: true };
         const c = readCard(dir, bl.code), old = c[kind] || '';
-        return { code: bl.code, what: old.trim() ? `${field}を書き換え（${countChars(old)}字→${countChars(bl.text)}字）` : `${field}に入れる（${countChars(bl.text)}字）`,
-                 titleNew: bl.title && bl.title !== c.title ? bl.title : '' };
+        const tn = bl.title && bl.title !== c.title ? bl.title : '';
+        return { code: bl.code, what: (old.trim() ? `${field}を書き換え（${countChars(old)}字→${countChars(bl.text)}字）` : `${field}に入れる（${countChars(bl.text)}字）`) +
+                 (tn && b.withTitle ? `・題「${c.title}」→「${tn}」` : ''), titleNew: tn, titleOld: tn ? c.title : '' };
       });
       if (apply) for (const bl of blocks) {
         if (!th.order.includes(bl.code)) continue;
@@ -339,6 +347,7 @@ module.exports = function desk(ctx) {
         const c = readCard(dir, bl.code);
         if (kind === 'body' && String(c.body || '').trim()) c.memo = (c.memo ? c.memo + '\n' : '') + `（${now()} 本文を受け取りで書き換え。前の本文は 依頼/ の受け取りの控えにあります）`;
         c[kind] = bl.text;
+        if (b.withTitle && bl.title) c.title = bl.title.replace(/^→/, '').trim();   // 「題も書き換える」に印があるときだけ
         if (kind === 'skeleton' && c.status === '構想') c.status = '骨組み';
         if (kind === 'body' && ['構想', '骨組み'].includes(c.status)) c.status = '執筆中';
         fs.writeFileSync(cardPath(dir, bl.code), cardText(c), 'utf8');

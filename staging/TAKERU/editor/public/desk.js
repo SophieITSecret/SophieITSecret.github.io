@@ -456,13 +456,15 @@ function dkRecvHtml(kind, plain) {
       <input id="dkRName" class="x-in" style="max-width:260px" placeholder="資料の名前（資料のとき）"></div>
     <textarea id="dkRText" class="mid" style="min-height:160px" placeholder="返ってきた文をそのまま貼る"></textarea>
     <div class="dk-row"><button class="dash-refresh" onclick="dkRecv(true)">下見（何が変わるか）</button>
-      <label class="mag-dim" id="dkRReorderL"><input type="checkbox" id="dkRReorder"> 表の並びにカードを並べ替える</label></div>
+      <label class="mag-dim" id="dkRReorderL"><input type="checkbox" id="dkRReorder"> 表の並びにカードを並べ替える</label>
+      <label class="mag-dim" id="dkRTitleL"><input type="checkbox" id="dkRTitle"> 題も、返事の見出しの題に書き換える</label></div>
     <div id="dkROut"></div>${plain ? '' : '</div>'}`;
 }
 function dkRecvKind() {
   const k = document.getElementById('dkRKind').value;
   document.getElementById('dkRName').style.display = k === 'research' ? '' : 'none';
   document.getElementById('dkRReorderL').style.display = k === 'plan' ? '' : 'none';
+  document.getElementById('dkRTitleL').style.display = (k === 'body' || k === 'skeleton') ? '' : 'none';
 }
 function dkBriefPick(n) { dkBriefSel = n; dkRenderBrief(); }
 function dkBriefAll(on) { document.querySelectorAll('.dkBCard').forEach(e => e.checked = on); }
@@ -483,7 +485,7 @@ async function dkBriefBuild() {
 async function dkRecv(preview) {
   const b = { folder: dk.folder, kind: document.getElementById('dkRKind').value, text: document.getElementById('dkRText').value,
               name: document.getElementById('dkRName').value, from: document.getElementById('dkRFrom').value,
-              reorder: document.getElementById('dkRReorder').checked, preview };
+              reorder: document.getElementById('dkRReorder').checked, withTitle: document.getElementById('dkRTitle').checked, preview };
   if (!preview) { const ck = [...document.querySelectorAll('.dkRCode')]; if (ck.length) b.codes = ck.filter(e => e.checked).map(e => e.value); }
   const j = await dkPost('receive', b);
   const out = document.getElementById('dkROut');
@@ -495,7 +497,7 @@ async function dkRecv(preview) {
   }
   const pick = ['skeleton', 'body'].includes(b.kind);
   out.innerHTML = `<div class="mag-band"><b>下見</b>
-    <ul class="dk-chg">${j.changes.map(c => `<li class="${c.skip ? 'skip' : c.same ? 'same' : ''}">${pick && !c.skip ? `<label><input type="checkbox" class="dkRCode" value="${dkEsc(c.code)}" checked> ` : ''}${c.code ? `<b>${dkEsc(c.code)}</b>　` : ''}${dkEsc(c.what)}${c.titleNew ? `<span class="mag-dim">（返事の題：${dkEsc(c.titleNew)}。題は変えません）</span>` : ''}${pick && !c.skip ? '</label>' : ''}</li>`).join('')}</ul>
+    <ul class="dk-chg">${j.changes.map(c => `<li class="${c.skip ? 'skip' : c.same ? 'same' : ''}">${pick && !c.skip ? `<label><input type="checkbox" class="dkRCode" value="${dkEsc(c.code)}" checked> ` : ''}${c.code ? `<b>${dkEsc(c.code)}</b>　` : ''}${dkEsc(c.what)}${c.titleNew && !b.withTitle ? `<span class="mag-dim">（返事の題：${dkEsc(c.titleNew)}。題は変えません）</span>` : ''}${pick && !c.skip ? '</label>' : ''}</li>`).join('')}</ul>
     ${(j.missing || []).length ? `<div class="mag-dim">表に無いカード（そのまま残します）：${j.missing.map(dkEsc).join('、')}</div>` : ''}
     ${b.kind === 'body' ? '<div class="mag-dim">本文を書き換えるカードは、受け取る前の本文を 依頼/ の控えに残します。</div>' : ''}
     <div class="mag-btns"><button class="btn-save" onclick="dkRecv(false)">この内容でデスクに入れる</button></div></div>`;
