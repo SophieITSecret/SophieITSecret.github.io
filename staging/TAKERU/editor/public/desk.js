@@ -256,6 +256,8 @@ function dkRenderPanel() {
       <button class="btn-save" onclick="dkSaveCard()">💾 保存（Ctrl+S）</button>
       <button class="dash-refresh" onclick="dkCopyBrief()" title="テーマの主軸・縦糸と、このカードの題・狙い・骨組みをまとめて写す">📋 AIへの依頼の素を写す</button>
       <button class="dash-refresh" onclick="dkTab('brief')" title="ひな形を選んで、このカードの依頼書を作る">📨 このカードの依頼書へ</button>
+      <button class="dash-refresh" onclick="dkImageBrief('70_')" title="チャッピーへの画像の依頼（固定部つきの全文）を写す。新しいチャットの最初に">🖼 画像の依頼を写す</button>
+      <button class="dk-mini" onclick="dkImageBrief('71_')" title="同じチャットの2枚目以降・チャッピーのプロジェクトに固定部を入れてあるとき">可変部だけ</button>
       <button class="dash-refresh" onclick="dkDelete()">外す（ごみ箱へ）</button>
       <span id="dkMsg" class="mag-dim"></span>
     </div>`;
@@ -360,6 +362,18 @@ async function dkDrop(e) {
 }
 function dkCopy(t) {
   navigator.clipboard.writeText(String(t || '')).then(() => dkToast('写しました（貼り付けできます）'), () => dkToast('写せませんでした', true));
+}
+// チャッピーへの画像の依頼を、このカード1枚で作って写す（ひな形 70_／71_。控えはテーマの 依頼/ に残る。10/25）
+async function dkImageBrief(prefix) {
+  const c = dkCard(); if (!c) return;
+  if (dk.dirty) return dkToast('先にこのカードを保存してください（依頼書は保存した内容で作ります）', true);
+  if (!dkTpls) { const j = await dkGet('templates'); if (!j.ok) return dkToast(j.error, true); dkTpls = j; }
+  const t = dkTpls.templates.find(x => x.name.startsWith(prefix));
+  if (!t) return dkToast('画像の依頼のひな形（' + prefix + '…）が見つかりません', true);
+  const j = await dkPost('brief', { folder: dk.folder, template: t.name, to: 'チャッピー', cards: [c.code], ask: '' });
+  if (!j.ok) return dkToast(j.error, true);
+  try { await navigator.clipboard.writeText(j.text); dkToast(`${c.code} の画像の依頼（${prefix === '70_' ? '全文' : '可変部だけ'}）を写しました。チャッピーに貼ってください`); }
+  catch (e) { dkToast('写せませんでした（控えは 依頼/ にあります）', true); }
 }
 function dkCopyBrief() {
   const th = dk.data.theme, v = dkVals(), c = dkCard();
