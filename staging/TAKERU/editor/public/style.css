@@ -838,3 +838,6 @@ textarea.svg-overlay-input { min-height:120px; font-family:monospace; font-size:
 .dk-bform select { padding: 5px 8px; }
 .dk-bform textarea { width: 100%; box-sizing: border-box; padding: 8px 10px; font-size: 14px; line-height: 1.7; margin-top: 4px; }
 .dk-nav { justify-content: space-between; border-bottom: 1px solid #22324a; padding-bottom: 6px; margin-bottom: 8px; }
+/* 制作デスクのタブの段は、中をスクロールしても上に残す（10/25：前後のボタンでタブが隠れた） */
+#dkTabs { position: sticky; top: 0; z-index: 3; background: #0d1520; margin-top: 0; padding-top: 4px; }
+.dk-outline { top: 44px; }

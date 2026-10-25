@@ -220,7 +220,7 @@ function dkStep(d) {
   if (i < 0 || j < 0 || j >= o.length) return;
   dkPick(o[j]);
   const row = document.querySelector(`.dk-card[data-code="${o[j]}"]`); if (row) row.scrollIntoView({ block: 'nearest' });
-  const pn = document.getElementById('dkPanel'); if (pn) pn.scrollIntoView({ block: 'start' });
+  const pn = document.getElementById('dkPanel'); if (pn) pn.scrollIntoView({ block: 'nearest' });   // 'start' だとタブの段が上に隠れた（10/25）
 }
 function dkPick(code) {
   if (code === dk.cur) return;
