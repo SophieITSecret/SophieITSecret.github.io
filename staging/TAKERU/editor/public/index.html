@@ -14,6 +14,7 @@
   <button class="btn-load" id="btnAccess" onclick="openCardRanking()" disabled>👁 閲覧状況</button>
   <button class="btn-load" id="btnMembers" onclick="openMembers()" disabled>👥 会員</button>
   <button class="btn-load" id="btnNews" onclick="openNewsEditor()">📰 お知らせ</button>
+  <button class="btn-load" onclick="openBook()" title="TAKERU関係のサイト・管理画面・フォルダの住所をまとめた場所">📌 住所録</button>
   <button class="btn-load" onclick="openDesk()" title="カード制作の上流：テーマ・段1〜7・調査資料・カード割り・執筆・CSVへ出力">🧭 制作デスク</button>
   <button class="btn-load" onclick="openMag()" title="TAKERUマガジン：金曜夜の下書きを確認・添削・OKする">📮 マガジン</button>
   <button class="btn-load" id="btnX" onclick="openX()" title="MSフォーラムのXの投稿：一覧・直し・承認（本番）">𝕏 X</button>
@@ -579,6 +580,17 @@
   </div>
 </div>
 
+<!-- 📌 住所録（public/book.js ／ サーバーは editor/book.js） -->
+<div id="bookModal" class="modal-overlay">
+  <div class="modal-box mag-modal-box">
+    <div class="modal-head mag-top">
+      <h2>📌 住所録</h2>
+      <button class="btn-cancel" onclick="closeBook()">✕ 閉じる</button>
+    </div>
+    <div id="bkBody" class="bk-wrap"><p class="qr-empty">読み込み中…</p></div>
+  </div>
+</div>
+
 <!-- 🧭 制作デスク（public/desk.js ／ サーバーは editor/desk.js） -->
 <div id="deskModal" class="modal-overlay">
   <div class="modal-box dk-box">
@@ -794,5 +806,6 @@
 <script src="magazine.js"></script>
 <script src="x.js"></script>
 <script src="desk.js"></script>
+<script src="book.js"></script>
 </body>
 </html>

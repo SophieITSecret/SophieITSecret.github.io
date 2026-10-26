@@ -443,6 +443,9 @@ function postXSave(req, res) {
   });
 }
 
+// 📌 住所録（TAKERU関係のサイト・管理画面・フォルダの住所）。中身は editor/book.js
+const BOOK = require('./book')({ sendJSON, draftsDir: () => draftsDir() });
+
 // 🧭 制作デスク（カード制作の上流）。中身は editor/desk.js
 const DESK = require('./desk')({ config, sendJSON, timestamp, pruneBackups, RE_CSV_BACKUP, parseCsvText,
                                  syncDraftsFromCsv: (t) => syncDraftsFromCsv(t), draftsDir: () => draftsDir() });
@@ -1586,6 +1589,8 @@ const server = http.createServer((req, res) => {
 
   // 🧭 制作デスク（editor/desk.js）
   if (pathname.startsWith('/api/desk/')) { DESK.handle(pathname, method, req, res, parsed.searchParams); return; }
+  // 📌 住所録（editor/book.js）
+  if (pathname.startsWith('/api/book')) { BOOK.handle(pathname, method, req, res); return; }
 
   // 静的
   if (method === 'GET') return serveStatic(req, res, pathname);
