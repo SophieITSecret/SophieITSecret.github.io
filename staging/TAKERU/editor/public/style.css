@@ -896,3 +896,6 @@ textarea.svg-overlay-input { min-height:120px; font-family:monospace; font-size:
 .dkh-snip-h { display: flex; justify-content: space-between; align-items: center; padding: 6px 12px; border-bottom: 1px solid #22324a; font-size: 13px; color: #c8d3e0; }
 .dkh-snip pre, .dkh-tree { margin: 0; padding: 10px 14px; white-space: pre-wrap; font-size: 13.5px; line-height: 1.6; color: #e6edf5; font-family: Consolas, "Yu Gothic", monospace; }
 .dkh-tree { background: #0b131d; border-radius: 8px; border: 1px solid #22324a; }
+
+/* 10/28 牧村さん：骨組みの欄は広げすぎ→半分ぐらいに */
+.dk-panel textarea.dk-xl { min-height: 200px; height: 24vh; }
