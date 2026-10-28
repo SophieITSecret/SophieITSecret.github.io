@@ -297,8 +297,11 @@ module.exports = function desk(ctx) {
   }
   // カード割りの表（| コード | 種別 | 題 | 狙い |）。列の名前で読む（順番が違っても読めるように）
   function parsePlan(text) {
-    const rows = String(text || '').split(/\r?\n/).filter(l => /^\s*\|/.test(l))
+    const lines = String(text || '').split(/\r?\n/);
+    let rows = lines.filter(l => /^\s*\|/.test(l))
       .map(l => l.trim().replace(/^\||\|$/g, '').split('|').map(x => x.trim().replace(/\*\*/g, '')));
+    // チャッピーなどの画面に出た表をそのままコピーすると、「|」ではなくタブ区切りになる（10/28 テーマ6で実際にあった）。それも読む
+    if (rows.length < 2) rows = lines.filter(l => l.includes('\t')).map(l => l.split('\t').map(x => x.trim().replace(/\*\*/g, '')));
     if (rows.length < 2) return [];
     const head = rows[0], col = (re) => head.findIndex(h => re.test(h));
     const ci = col(/コード/), ki = col(/種別/), ti = col(/題|タイトル/), ai = col(/狙い|言うこと|内容/);
