@@ -284,9 +284,10 @@ module.exports = function desk(ctx) {
     // 見出しの揺れも読む（10/25 テーマ5の原稿で実際にあった形）：
     //   「#### **GNPC02　題**」「#### GNPF01　**題**」「#### **GNPC07　題**（530字）」「#### ##### GNPC08　題」
     for (const line of String(text || '').replace(/\r\n/g, '\n').split('\n')) {
-      const m = /^#{2,6}(?:\s+#{1,6})?\s*\**\s*([A-Z][A-Z0-9]{1,19})\b[\s　:：）)（(]*(.*?)\s*$/.exec(line);
+      //   「## 【VOYF01】題〔史実・導入〕」（チャッピーの引継ぎメモの形。10/28）：コードを【】で囲み、題の後ろの〔…〕は外す
+      const m = /^#{2,6}(?:\s+#{1,6})?\s*\**\s*【?([A-Z][A-Z0-9]{1,19})\b】?[\s　:：）)（(]*(.*?)\s*$/.exec(line);
       if (m) {
-        const title = m[2].replace(/\*\*/g, '').replace(/[（(]\s*\d+\s*字\s*[）)]\s*$/, '').replace(/^(史実|解説)[）)]?\s*/, '').trim();
+        const title = m[2].replace(/\*\*/g, '').replace(/〔[^〕]*〕\s*$/, '').replace(/[（(]\s*\d+\s*字\s*[）)]\s*$/, '').replace(/^(史実|解説)[）)]?\s*/, '').trim();
         cur = { code: m[1], title, lines: [] }; out.push(cur); continue;
       }
       if (cur) cur.lines.push(line);
