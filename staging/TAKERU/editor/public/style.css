@@ -870,3 +870,29 @@ textarea.svg-overlay-input { min-height:120px; font-family:monospace; font-size:
 .bk-row:hover .bk-btns { opacity: 1; }
 .bk-form label { display: grid; gap: 2px; margin-top: 6px; }
 @media (max-width: 700px) { .bk-row { grid-template-columns: 1fr auto; } .bk-note { grid-column: 1 / -1; } }
+
+/* 制作デスクの欄の大きさ・行間（10/28 牧村さん：骨組みを広く、狙いは1行、行間は詰めて、文字の大きさは今のまま） */
+.dk-panel textarea { line-height: 1.5; }
+.dk-panel textarea.dk-l { line-height: 1.55; }
+.dk-panel textarea.dk-1 { min-height: 0; height: 44px; overflow: hidden; resize: none; }   /* 1行。長い狙いのときだけ、中身に合わせて伸びる（desk.js の dkAutoGrow） */
+.dk-panel textarea.dk-xl { min-height: 360px; height: 46vh; line-height: 1.5; }
+.dk-restext { line-height: 1.55; }
+
+/* ---- 制作デスクの「❓ 使い方」（desk-help.js） ---- */
+.dk-help { position: absolute; inset: 0; z-index: 30; background: #0d1520; flex-direction: column; border-radius: inherit; }
+.dkh-head { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; padding: 12px 18px; border-bottom: 1px solid #22324a; }
+.dkh-head h2 { margin: 0; font-size: 18px; color: #ffcf8a; }
+.dkh-toc { display: flex; gap: 6px 14px; flex-wrap: wrap; flex: 1; font-size: 13px; }
+.dkh-toc a { color: #6cb6ff; text-decoration: none; } .dkh-toc a:hover { text-decoration: underline; }
+.dkh-body { overflow: auto; padding: 8px 24px 40px; max-width: 1100px; font-size: 15px; line-height: 1.7; color: #dde3f0; }
+.dkh-body h3 { font-size: 18px; color: #ffcf8a; border-bottom: 1px solid #22324a; padding-bottom: 4px; margin: 26px 0 10px; }
+.dkh-body h4 { font-size: 15px; color: #9be3a8; margin: 18px 0 4px; }
+.dkh-body code { background: #18263a; padding: 1px 6px; border-radius: 4px; font-size: 13px; }
+.dkh-body li { margin: 3px 0; }
+.dkh-t { width: 100%; border-collapse: collapse; font-size: 14px; margin: 6px 0; }
+.dkh-t th, .dkh-t td { border: 1px solid #22324a; padding: 6px 10px; text-align: left; vertical-align: top; }
+.dkh-t th { background: #142030; color: #9fb0c4; }
+.dkh-snip { background: #0b131d; border: 1px solid #2c3e55; border-radius: 8px; margin: 8px 0 14px; }
+.dkh-snip-h { display: flex; justify-content: space-between; align-items: center; padding: 6px 12px; border-bottom: 1px solid #22324a; font-size: 13px; color: #c8d3e0; }
+.dkh-snip pre, .dkh-tree { margin: 0; padding: 10px 14px; white-space: pre-wrap; font-size: 13.5px; line-height: 1.6; color: #e6edf5; font-family: Consolas, "Yu Gothic", monospace; }
+.dkh-tree { background: #0b131d; border-radius: 8px; border: 1px solid #22324a; }

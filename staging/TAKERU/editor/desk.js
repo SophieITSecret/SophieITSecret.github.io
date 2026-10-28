@@ -5,7 +5,7 @@
 //   置き場：原稿フォルダ（config.draftsDir）の中の「制作デスク」。Obsidian からも Claude Code からも
 //           ふつうのファイルとして読み書きできるようにする。
 //     制作デスク/_設定.json             … 基礎資料の一覧（手順書・作成ルールなど。押すと開く）
-//     制作デスク/<テーマ>/theme.json     … テーマの情報・段・主軸・縦糸・カードの並び（order）
+//     制作デスク/<テーマ>/theme.json     … テーマの情報・段・主軸・カードの並び（order）
 //     制作デスク/<テーマ>/cards/<コード>.md … カード1枚（題・狙い・骨組み・本文・画像プロンプト）
 //     制作デスク/<テーマ>/research/*.md  … 調査資料（カードに縛られない）
 //     制作デスク/<テーマ>/カード一覧.md   … 自動で作る読み物（AIに渡す用。手で直さない）
@@ -19,12 +19,14 @@ const fs = require('fs');
 const path = require('path');
 const { spawn } = require('child_process');
 
+// 段の「no」は、theme.json に残る記録の鍵（動かさない）。画面に出す番号は、この並びの順（1〜7）。
+//   2026-10-28 牧村さんの希望で、縦糸の段（鍵3）をやめ、「各カードの骨組みを作る」（鍵8）をカード割りの次に入れた
 const STAGES = [
   { no: 1, name: '現在地の復元' },
   { no: 2, name: 'テーマの主軸を一文で決める', approve: true },
-  { no: 3, name: '縦糸の割り当て' },
   { no: 4, name: '基礎調査（二本立て・突き合わせ）' },
   { no: 5, name: 'カード割り（F／Cの設計）', approve: true },
+  { no: 8, name: '各カードの骨組みを作る' },
   { no: 6, name: '執筆と確定（一枚ずつ）' },
   { no: 7, name: '締めの処理' },
 ];
@@ -113,7 +115,6 @@ module.exports = function desk(ctx) {
     let md = `# ${th.name}（制作デスク）\n科目：${th.subject}　／　${cards.length}枚　／　更新：${now()}\n`;
     md += `\n> このファイルは制作デスクが自動で作ります。直すときは cards/ の各カードを直してください。\n`;
     if (th.axis) md += `\n## 主軸\n${th.axis}\n`;
-    if (th.threads) md += `\n## 縦糸\n${th.threads}\n`;
     md += `\n## カード\n`;
     for (const c of cards) md += `\n#### ${c.code}　${c.title}${c.status ? `　〔${c.status}〕` : ''}\n${c.aim ? `（狙い）${c.aim.replace(/\n/g, ' ')}\n` : ''}${c.body || '（本文まだ）'}\n`;
     fs.writeFileSync(path.join(dir, 'カード一覧.md'), md, 'utf8');
@@ -240,8 +241,8 @@ module.exports = function desk(ctx) {
   function buildBrief(dir, th, tpl, opt) {
     const cards = th.order.map(c => readCard(dir, c));
     const pick = (opt.cards || []).length ? cards.filter(c => opt.cards.includes(c.code)) : [];
-    const stagesTxt = STAGES.map(s => { const st = th.stages[s.no] || {};
-      return `- 段${s.no} ${s.name}：${st.state || '未'}${st.approved ? '（承認済み）' : ''}${st.note ? '　' + st.note.replace(/\n/g, ' ') : ''}`; }).join('\n');
+    const stagesTxt = STAGES.map((s, i) => { const st = th.stages[s.no] || {};
+      return `- 段${i + 1} ${s.name}：${st.state || '未'}${st.approved ? '（承認済み）' : ''}${st.note ? '　' + st.note.replace(/\n/g, ' ') : ''}`; }).join('\n');
     const table = ['| コード | 種別 | 題 | 狙い（そのカードで言うこと） | 状態 |', '|---|---|---|---|---|']
       .concat(cards.map(c => `| ${c.code} | ${kindJa(c.kind)} | ${c.title} | ${String(c.aim || '').replace(/\n/g, ' ')} | ${c.status} |`)).join('\n');
     const one = (c, full) => `#### ${c.code}（${kindJa(c.kind)}）${c.title}\n狙い：${c.aim || '（未記入）'}` +
@@ -256,7 +257,7 @@ module.exports = function desk(ctx) {
       try { return `----- 資料：${n} -----\n${fs.readFileSync(path.join(dir, 'research', fileSafe(n)), 'utf8').trim()}\n----- ここまで -----`; } catch { return ''; }
     }).filter(Boolean).join('\n\n');
     const vals = {
-      'テーマ名': th.name, '科目': th.subject, '主軸': th.axis || '（まだ決まっていない）', '縦糸': th.threads || '（まだ決まっていない）',
+      'テーマ名': th.name, '科目': th.subject, '主軸': th.axis || '（まだ決まっていない）',
       '学習目標': th.goal || '（未記入）', 'コンセプト': th.concept || '（未記入）', '段の進み具合': stagesTxt,
       'カード一覧': cards.length ? table : '（カードはまだない）', '枚数': String(cards.length),
       '選んだカード': pick.length ? pick.map(c => one(c, false)).join('\n\n') : '（カードを選んでいない）',
@@ -290,11 +291,17 @@ module.exports = function desk(ctx) {
         const title = m[2].replace(/\*\*/g, '').replace(/〔[^〕]*〕\s*$/, '').replace(/[（(]\s*\d+\s*字\s*[）)]\s*$/, '').replace(/^(史実|解説)[）)]?\s*/, '').trim();
         cur = { code: m[1], title, lines: [] }; out.push(cur); continue;
       }
-      if (cur) cur.lines.push(line);
+      if (cur) {
+        // 「【図表の方針】」「図表の方針：」「**図表の方針**」「## 図表の方針」のどれかの行から、次のカードの見出しまでは、
+        // 図の方針（画像プロンプトの欄）に分ける（10/28）
+        const fm = /^\s*(?:#{1,6}\s*)?[-*]?\s*\**【?\s*図表の方針\s*】?\**\s*[：:]?\s*(.*?)\s*$/.exec(line);
+        if (fm && !cur.fig) { cur.fig = []; if (fm[1]) cur.fig.push(fm[1]); continue; }
+        (cur.fig || cur.lines).push(line);
+      }
     }
     // 本文に紛れた Markdown の引用の印（行頭の「> 」）と、行末の空白（改行の印の2つの空白など）は外す。アプリにそのまま出てしまうため
-    return out.map(b => ({ code: b.code, title: b.title,
-      text: b.lines.map(l => l.replace(/^>\s?/, '').replace(/[ \t　]+$/, '')).join('\n').replace(/^\n+|\s+$/g, '') })).filter(b => b.text || b.title);
+    const tidy = ls => ls.map(l => l.replace(/^>\s?/, '').replace(/[ \t　]+$/, '')).join('\n').replace(/^\n+|\s+$/g, '');
+    return out.map(b => ({ code: b.code, title: b.title, text: tidy(b.lines), fig: b.fig ? tidy(b.fig) : '' })).filter(b => b.text || b.title);
   }
   // カード割りの表（| コード | 種別 | 題 | 狙い |）。列の名前で読む（順番が違っても読めるように）
   function parsePlan(text) {
@@ -353,7 +360,9 @@ module.exports = function desk(ctx) {
         const c = readCard(dir, bl.code), old = c[kind] || '';
         const tn = bl.title && bl.title !== c.title ? bl.title : '';
         return { code: bl.code, what: (old.trim() ? `${field}を書き換え（${countChars(old)}字→${countChars(bl.text)}字）` : `${field}に入れる（${countChars(bl.text)}字）`) +
-                 (tn && b.withTitle ? `・題「${c.title}」→「${tn}」` : ''), titleNew: tn, titleOld: tn ? c.title : '' };
+                 (tn && b.withTitle ? `・題「${c.title}」→「${tn}」` : '') +
+                 (kind === 'skeleton' && bl.fig ? `・図の方針も画像プロンプトに${String(c.imagePrompt || '').trim() ? '（いまの内容を書き換え）' : '入れる'}（${countChars(bl.fig)}字）` : ''),
+                 titleNew: tn, titleOld: tn ? c.title : '' };
       });
       if (apply) for (const bl of blocks) {
         if (!th.order.includes(bl.code)) continue;
@@ -361,6 +370,7 @@ module.exports = function desk(ctx) {
         const c = readCard(dir, bl.code);
         if (kind === 'body' && String(c.body || '').trim()) c.memo = (c.memo ? c.memo + '\n' : '') + `（${now()} 本文を受け取りで書き換え。前の本文は 依頼/ の受け取りの控えにあります）`;
         c[kind] = bl.text;
+        if (kind === 'skeleton' && bl.fig) c.imagePrompt = bl.fig;   // 「図表の方針」の部分は画像プロンプトの欄へ
         if (b.withTitle && bl.title) c.title = bl.title.replace(/^→/, '').trim();   // 「題も書き換える」に印があるときだけ
         if (kind === 'skeleton' && c.status === '構想') c.status = '骨組み';
         if (kind === 'body' && ['構想', '骨組み'].includes(c.status)) c.status = '執筆中';
@@ -415,14 +425,14 @@ module.exports = function desk(ctx) {
         if (b.prefix) { const hit = readCsvRows().slice(1).find(x => String(x[0]).trim().startsWith(b.prefix) && String(x[5]).trim() === (b.subject || '3級-国家と法律'));
           if (hit) { unit = String(hit[1]).trim() || unit; subunit = String(hit[2]).trim(); } }
         const th = { name: String(b.name).trim(), subject: b.subject || '3級-国家と法律', unit, subunit,
-                     prefix: b.prefix || '', usesKind: b.usesKind !== false, axis: '', threads: '', concept: '', goal: '', stages: {}, order: [], created: now() };
+                     prefix: b.prefix || '', usesKind: b.usesKind !== false, axis: '', concept: '', goal: '', stages: {}, order: [], created: now() };
         saveTheme(dir, th); writeSummary(dir, th);
         return sendJSON(res, 200, { ok: true, folder }), true;
       }
-      // テーマの情報（段・主軸・縦糸など）を保存。order はここでは変えない
+      // テーマの情報（段・主軸など）を保存。order はここでは変えない
       if (r === 'theme/save' && method === 'POST') {
         const b = await body(req); const dir = themeDir(b.folder), th = loadTheme(dir);
-        for (const k of ['name', 'subject', 'unit', 'subunit', 'axis', 'threads', 'concept', 'goal', 'notes']) if (typeof b[k] === 'string') th[k] = b[k];
+        for (const k of ['name', 'subject', 'unit', 'subunit', 'axis', 'concept', 'goal', 'notes']) if (typeof b[k] === 'string') th[k] = b[k];
         if (typeof b.prefix === 'string') { if (b.prefix && !/^[A-Z][A-Z0-9]{0,9}$/.test(b.prefix)) throw new Error('コードの略称は大文字の英数字にしてください'); th.prefix = b.prefix; }
         if (b.stage && STAGES.some(s => s.no === +b.stage.no)) {
           const s = th.stages[b.stage.no] = th.stages[b.stage.no] || {};

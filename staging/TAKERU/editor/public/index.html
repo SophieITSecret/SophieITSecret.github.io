@@ -599,6 +599,7 @@
       <select id="dkThemeSel" class="mag-sel" onchange="dkOpenTheme(this.value)" title="テーマを選ぶ"></select>
       <button class="dash-refresh" onclick="dkNewTheme()">＋ 新しいテーマ</button>
       <button class="dash-refresh" onclick="dkReload()" title="Claude Code や Obsidian で直したものを読み直す">↻ 読み直す</button>
+      <button class="dash-refresh" onclick="openDeskHelp()" title="使い方と、AIとのやり取りの形">❓ 使い方</button>
       <button class="btn-cancel" onclick="closeDesk()">✕ 閉じる</button>
     </div>
     <div class="dk-wrap">
@@ -606,6 +607,7 @@
       <main class="dk-main"><div id="dkTabs" class="mag-tabs"></div><div id="dkBody"></div></main>
     </div>
     <div id="dkToast" class="dk-toast" style="display:none"></div>
+    <div id="dkHelp" class="dk-help" style="display:none"></div>
   </div>
 </div>
 
@@ -806,6 +808,7 @@
 <script src="magazine.js"></script>
 <script src="x.js"></script>
 <script src="desk.js"></script>
+<script src="desk-help.js"></script>
 <script src="book.js"></script>
 </body>
 </html>

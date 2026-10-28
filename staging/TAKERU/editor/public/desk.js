@@ -56,11 +56,11 @@ function dkRender() {
   const side = document.getElementById('dkSide');
   if (!d) { side.innerHTML = dkRefsHtml(); document.getElementById('dkBody').innerHTML = '<p class="qr-empty">「＋ 新しいテーマ」から始めてください。</p>'; return; }
   const th = d.theme;
-  side.innerHTML = `<div class="dk-h">手順（段1〜7）</div><ol class="dk-stages">${m.stages.map(s => {
+  side.innerHTML = `<div class="dk-h">手順（段1〜7）</div><ol class="dk-stages">${m.stages.map((s, idx) => {
       const st = (th.stages || {})[s.no] || {}, state = st.state || '未';
       return `<li class="st-${state}">
         <button class="dk-st" onclick="dkStageCycle(${s.no})" title="押すと 未→途中→済">${state === '済' ? '✓' : state === '途中' ? '◐' : '○'}</button>
-        <div><div class="t">段${s.no}　${dkEsc(s.name)}</div>
+        <div><div class="t">段${idx + 1}　${dkEsc(s.name)}</div>
           ${s.approve ? `<label class="dk-appr"><input type="checkbox" ${st.approved ? 'checked' : ''} onchange="dkStageApprove(${s.no}, this.checked)"> 牧村さんの承認${st.approved ? `（${dkEsc(st.approved)}）` : ''}</label>` : ''}
           <div class="dk-stnote" contenteditable="true" data-no="${s.no}" onblur="dkStageNote(this)" title="メモ（押して書く）">${dkEsc(st.note || '')}</div></div></li>`; }).join('')}</ol>
     ${dkRefsHtml()}
@@ -87,7 +87,7 @@ function dkStageCycle(no) {
   const cur = ((dk.data.theme.stages || {})[no] || {}).state || '未';
   const next = { '未': '途中', '途中': '済', '済': '未' }[cur];
   const s = dk.meta.stages.find(x => x.no === no);
-  if (next === '済' && s.approve && !((dk.data.theme.stages || {})[no] || {}).approved && !confirm(`段${no}は、牧村さんの承認を得てから次へ進む段です。承認の印を付けずに「済」にしますか？`)) return;
+  if (next === '済' && s.approve && !((dk.data.theme.stages || {})[no] || {}).approved && !confirm(`段${dk.meta.stages.indexOf(s) + 1}は、牧村さんの承認を得てから次へ進む段です。承認の印を付けずに「済」にしますか？`)) return;
   dkStageSave({ no, state: next });
 }
 function dkStageApprove(no, v) { dkStageSave({ no, approved: v }); }
@@ -103,8 +103,7 @@ function dkRenderTheme() {
   document.getElementById('dkBody').innerHTML = `
     <div class="dk-grid2">${f('name', 'テーマ名')}${f('subject', '科目（CSVの科目）', '例 3級-国家と法律')}
       ${f('unit', 'ユニット（CSVのテーマ列）', 'アプリのメニューに出る名前')}${f('prefix', 'コードの略称', '例 GNP → GNPF01・GNPC01')}</div>
-    ${f('axis', '段2　テーマの主軸（一文）', '牧村さんの承認を得る', true)}
-    ${f('threads', '段3　縦糸の割り当て', 'どの縦糸を、どのカードで回収するか', true)}
+    ${f('axis', 'テーマの主軸（一文）', '段2。牧村さんの承認を得る', true)}
     ${f('goal', '学習目標', '', true)}
     ${f('concept', 'コンセプト・全体のメモ', 'この時代・テーマで何を伝えるか', true)}
     <div class="mag-btns"><button class="btn-save" onclick="dkThemeSave()">💾 テーマを保存</button>
@@ -114,7 +113,7 @@ function dkRenderTheme() {
       <div id="dkImport"><button class="dash-refresh" onclick="dkImportForm()">取り込む元を選ぶ</button></div></div>`}`;
 }
 async function dkThemeSave() {
-  const b = { folder: dk.folder }; for (const k of ['name', 'subject', 'unit', 'prefix', 'axis', 'threads', 'goal', 'concept']) b[k] = document.getElementById('dkT_' + k).value;
+  const b = { folder: dk.folder }; for (const k of ['name', 'subject', 'unit', 'prefix', 'axis', 'goal', 'concept']) b[k] = document.getElementById('dkT_' + k).value;
   b.prefix = b.prefix.trim().toUpperCase();
   const j = await dkPost('theme/save', b);
   if (!j.ok) return dkToast(j.error, true);
@@ -229,7 +228,7 @@ function dkPick(code) {
   document.querySelectorAll('.dk-card').forEach(e => e.classList.toggle('on', e.dataset.code === code));
   dkRenderPanel();
 }
-const DK_FIELDS = [['aim', '狙い', 'このカードで言うこと', 'dk-s'], ['skeleton', '骨組み・ファクト', 'NotebookLM などで拾った箇条書き。出典もここに', 'dk-m'],
+const DK_FIELDS = [['aim', '狙い', 'このカードで言うこと（1行）', 'dk-1'], ['skeleton', '骨組み・ファクト', '本文に使う事実の箇条書き。出典もここに', 'dk-xl'],
                    ['body', '本文', '400字前後（現行の基準）。アプリにはこの文が出る', 'dk-l'], ['imagePrompt', '画像プロンプト', 'チャッピーに渡す文', 'dk-m'], ['memo', 'メモ', '確認したいこと・申し送り', 'dk-s']];
 function dkRenderPanel() {
   const p = document.getElementById('dkPanel'), c = dkCard(), th = dk.data.theme;
@@ -254,7 +253,7 @@ function dkRenderPanel() {
       <textarea id="dkF_${k}" class="${cls}" oninput="dkOnInput()">${dkEsc(c[k] || '')}</textarea></div>`).join('')}
     <div class="dk-row dk-actions">
       <button class="btn-save" onclick="dkSaveCard()">💾 保存（Ctrl+S）</button>
-      <button class="dash-refresh" onclick="dkCopyBrief()" title="テーマの主軸・縦糸と、このカードの題・狙い・骨組みをまとめて写す">📋 AIへの依頼の素を写す</button>
+      <button class="dash-refresh" onclick="dkCopyBrief()" title="テーマの主軸と、このカードの題・狙い・骨組みをまとめて写す">📋 AIへの依頼の素を写す</button>
       <button class="dash-refresh" onclick="dkTab('brief')" title="ひな形を選んで、このカードの依頼書を作る">📨 このカードの依頼書へ</button>
       <span class="dk-imgbtns" title="画像はテーマ1本のスレッドで作る：最初に「テーマ全体」を1回、あとはカードごとに「このカードへ」">🖼 画像：
         <button class="dk-mini" onclick="dkImageBrief('72_')" title="チャッピーのプロジェクトで新しいスレッドを開き、最初に1回だけ貼る（全カードの題と本文）">① テーマ全体を写す（最初に1回）</button>
@@ -265,6 +264,7 @@ function dkRenderPanel() {
     </div>`;
   dkRestore();
   dkCount();
+  dkGrowAll();
 }
 function dkVals() {
   const g = id => document.getElementById(id);
@@ -273,11 +273,14 @@ function dkVals() {
   for (const [k] of DK_FIELDS) v[k] = g('dkF_' + k).value;
   return v;
 }
+// 1行の欄（狙い）：短ければ1行のまま、長いときだけ中身に合わせて伸ばす
+function dkAutoGrow(el) { el.style.height = '0px'; el.style.height = Math.max(44, el.scrollHeight + 2) + 'px'; }   // 'auto' だと最低2行ぶんになるので、いったん 0 にして中身の高さを測る
+function dkGrowAll() { document.querySelectorAll('.dk-panel textarea.dk-1').forEach(dkAutoGrow); }
 function dkCount() { const el = document.getElementById('dkN_body'); if (!el) return; const n = dkChars(document.getElementById('dkF_body').value);
   el.textContent = `${n}字`; el.classList.toggle('out', n > 460 || (n > 0 && n < 320)); }
 function dkKey() { return DK_SAVE + dk.folder + '.' + dk.cur; }
 function dkOnInput() {
-  dk.dirty = true; dkCount();
+  dk.dirty = true; dkCount(); dkGrowAll();
   try { localStorage.setItem(dkKey(), JSON.stringify({ v: dkVals(), mtime: (dkCard() || {}).mtime, at: Date.now() })); } catch (e) {}
   const m = document.getElementById('dkMsg'); if (m) m.textContent = '保存していません（この端末に一時保存中）';
 }
@@ -387,7 +390,7 @@ function dkCopyBrief() {
   const i = dk.data.theme.order.indexOf(c.code);
   const near = dk.data.cards.slice(Math.max(0, i - 1), i + 2).map(x => `${x.code}　${x.code === c.code ? v.title : x.title}`).join('\n');
   dkCopy(`【TAKERU ${th.subject}／テーマ：${th.name}】\n` +
-    (th.axis ? `\n■ テーマの主軸\n${th.axis}\n` : '') + (th.threads ? `\n■ 縦糸\n${th.threads}\n` : '') +
+    (th.axis ? `\n■ テーマの主軸\n${th.axis}\n` : '') +
     `\n■ このカード：${c.code}（${v.kind === 'C' ? '解説' : v.kind === 'F' ? '史実' : ''}）${v.title}\n` +
     (v.aim ? `狙い：${v.aim}\n` : '') + (v.skeleton ? `\n骨組み・ファクト：\n${v.skeleton}\n` : '') +
     (v.body ? `\nいまの本文：\n${v.body}\n` : '') +
