@@ -1011,6 +1011,9 @@ body:not(.menu-mode) #image-area.has-image::after {
     font-size: 0.95rem;
     cursor: pointer;
 }
+/* 選ばれていないタブも「押せる」と分かるように、縁と文字を明るめに（2026-10-30 牧村さん） */
+body.dark-mode .news-tab:not(.active) { border-color: #7a8bb0; color: #dde3f0; }
+body.light-mode .news-tab:not(.active) { border-color: #6f8a6f; }
 .news-tab.active {
     background: linear-gradient(135deg, #2a2a1a, #f57f17);
     border-color: #ffc107;
@@ -1870,9 +1873,9 @@ body.font-large #card-body { font-size: 1.05rem; }
     flex: 1;
     padding: 8px 2px;
     background: transparent;
-    border: 1px solid #444;
+    border: 1px solid #7a8bb0;
     border-radius: 6px;
-    color: #bbb;
+    color: #dde3f0;
     font-family: inherit;
     font-size: 0.76rem;
     cursor: pointer;
@@ -1905,9 +1908,9 @@ body.font-large #card-body { font-size: 1.05rem; }
 .mkt-btn {
     padding: 9px 2px;
     background: transparent;
-    border: 1px solid #444;
+    border: 1px solid #7a8bb0;
     border-radius: 6px;
-    color: #bbb;
+    color: #dde3f0;
     font-family: inherit;
     font-size: 0.78rem;
     cursor: pointer;
@@ -1937,8 +1940,8 @@ body.font-large #card-body { font-size: 1.05rem; }
 .news-src[data-url],
 .mkt-btn.mkt-ext {
     border-style: dashed;
-    border-color: #3c4560;
-    color: #93a4c4;
+    border-color: #7a8bb0;
+    color: #c4d3ee;
 }
 .news-src[data-url]:hover,
 .mkt-btn.mkt-ext:hover { border-color: #6cb6ff; color: #cfe3ff; }
