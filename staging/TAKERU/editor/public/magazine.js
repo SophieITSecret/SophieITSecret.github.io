@@ -256,6 +256,7 @@ function magRenderEdit() {
     <p id="magSrcWarn" class="mag-warn" hidden>本文を直しました。根拠は、直す前の文に対するものです。</p>
     ${src}
     ${interp ? `<details class="mag-interp"><summary>解釈メモ（筆者の読みが入った文）</summary><div class="mag-pre">${magEsc(interp)}</div></details>` : ''}
+    <div id="magCm"></div>
     <div class="mag-field"><div class="lbl">マーケット動向 <span class="hint">（自動。直せません。空ならメールに出ません）</span></div>
       <div class="readonly">${m.market ? magEsc(m.market) + '\n' + magEsc(m.market_note || '') : '<span class="mag-dim">まだ入っていません（土曜7時ごろ自動で入ります）</span>'}</div></div>
     ${ro ? '' : `<div class="mag-field"><div class="lbl">マーケットの一言コメント <span class="hint">（号ごと。数字のあと1行あけて出ます。空で保存＝出さない。毎週でなくてよい）</span></div>
@@ -266,7 +267,7 @@ function magRenderEdit() {
     ${field('schedule', '今週以降の主要日程', '（自動で入ります。直したいときだけ直す。空で保存＝この欄はメールに出ません）', 'mid')}
     ${ro ? '' : '<div class="mag-btns"><button class="dash-refresh" onclick="magScheduleAuto()">↺ 日程を自動に戻す</button><span class="sub">確認済・配信済の号には効きません</span></div>'}
     ${field('notice', 'MSフォーラムからのお知らせ', '（牧村さんが書く欄。空で保存＝この欄はメールに出ません）', 'mid')}
-    ${ro ? '' : '<div class="mag-btns"><button class="dash-refresh" onclick="magCopyPrevNotice()">📋 前の号のお知らせを写す</button><span class="sub">いちばん近い配信済の号のお知らせを、この欄に写します（写したあと直して、保存してください）</span></div><div id="magCopyMsg"></div>'}
+    ${ro ? '' : '<div class="mag-btns"><button class="dash-refresh" onclick="magCopyPrevNotice()">📋 前の号のお知らせを写す</button><button class="dash-refresh" onclick="magXPick()" title="投稿済のXの投稿（新しい順に5件）から選んで、お知らせの欄の最後にリンクを足します">🔗 Xの投稿のリンクを貼る</button><span id="magXPick"></span><span class="sub">いちばん近い配信済の号のお知らせを、この欄に写します（写したあと直して、保存してください）</span></div><div id="magCopyMsg"></div>'}
     <div class="mag-btns">
       ${ro ? `<button class="btn-load" onclick="magSaveNewVersion(true)">💾 配信後の小さな直しとして、新しい版で保存</button>`
            : `<button class="btn-save" onclick="magSaveOver()">💾 上書き保存</button>
@@ -278,6 +279,7 @@ function magRenderEdit() {
     <div id="magMsgBox"></div>`;
   if (ro) { for (const k of MAG_FIELDS) { const el = document.getElementById('magF_' + k); if (el) el.removeAttribute('readonly'); } }
   magAfterRenderEdit();
+  if (!m.mock) magCmMount(m.issue_date);
 }
 function magAfterRenderEdit() {
   // 前に入れかけていた文章が端末に残っていれば戻すか聞く
@@ -368,7 +370,7 @@ async function magSaveNewVersion(afterSent) {
 async function magSetStatus(st) {
   const v = magEditValues(), body = { mode: 'update_latest', status: st };
   let n = 0; for (const k of MAG_FIELDS) if (v[k] !== String(magDoc[k] || '')) { body[k] = v[k]; n++; }
-  let msg = st === '確認済' ? `版${magDoc.version}を確認済にします。土曜8:00にこの版が送られます。` : `版${magDoc.version}を下書きに戻します。`;
+  let msg = st === '確認済' ? `版${magDoc.version}を確認済にします。\n土曜8:00には、その時点の最新版が送られます（このあと新しい版ができれば、そちらが送られます）。` : `版${magDoc.version}を下書きに戻します。`;
   if (n) msg += `\n直した${n}か所も一緒に保存します。`;
   if (st === '下書き') {
     const note = prompt(msg + '\n差し戻す理由があれば（空でも可）', '');
@@ -436,6 +438,12 @@ function magBuildMail(m, v) {
   // 並び：ご存知ですか → 先週の世界の動き → マーケット動向 → 今週以降の主要日程 → お知らせ（section_order）
   sec('💡 ご存知ですか？', v.trivia);
   sec(`🌐 先週の世界の動き${m.period ? '（' + magPeriodJa(m.period) + '）' : ''}`, v.summary);
+  // 解説（ときどき付く欄。GAS v37〜。出す印があり本文があるときだけ。図はメールに付けず号ページへ案内＝案A 10/30）
+  if (m.commentary_show && String(m.commentary_text || '').trim()) {
+    const page = `https://ms-forum.com/mailmag/${m.is_test ? 'test-' : ''}${String(m.issue_date).replace(/-/g, '')}.html`;
+    const add = [(m.commentary_images || []).length ? '図はホームページでご覧ください。\n' + page : '', m.commentary_note || ''].filter(Boolean).join('\n\n');
+    sec(`🔎 解説：${m.commentary_title || ''}`, m.commentary_text, add);
+  }
   // 市況の下に、TAKERUのマーケット画面へのリンク（10/8 牧村さん。URLは単独の行）
   sec('📈 マーケット動向（カッコ内は前週比）', m.market, [m.market_note, 'チャートはTAKERUで見られます：\n' + MAG_MARKET_URL].filter(Boolean).join('\n\n'));
   sec('📅 今週以降の主要日程', v.schedule);
@@ -571,11 +579,13 @@ function magRenderPre() {
     ${f('trivia', 'ご存知ですか', '（空で保存＝この欄はメールに出ません）')}
     <div class="mag-btns"><button class="dash-refresh" onclick="magAddCardLink()">🔗 カードのリンクを足す</button><span class="sub">元になったカードのコード（例 YOKO07）を入れると、欄の最後にTAKERUのカードへのリンクを足します</span></div>
     ${f('notice', 'MSフォーラムからのお知らせ', '（空で保存＝この欄はメールに出ません）')}
-    ${'<div class="mag-btns"><button class="dash-refresh" onclick="magCopyPrevNotice()">📋 前の号のお知らせを写す</button><span class="sub">いちばん近い配信済の号のお知らせを、この欄に写します（写したあと直して、保存してください）</span></div><div id="magCopyMsg"></div>'}
+    ${'<div class="mag-btns"><button class="dash-refresh" onclick="magCopyPrevNotice()">📋 前の号のお知らせを写す</button><button class="dash-refresh" onclick="magXPick()" title="投稿済のXの投稿（新しい順に5件）から選んで、お知らせの欄の最後にリンクを足します">🔗 Xの投稿のリンクを貼る</button><span id="magXPick"></span><span class="sub">いちばん近い配信済の号のお知らせを、この欄に写します（写したあと直して、保存してください）</span></div><div id="magCopyMsg"></div>'}
     <div class="mag-btns"><button class="btn-save" onclick="magSavePre()">💾 先に入れておく（保存）</button>
       <span class="sub">主要日程とマーケットは、初版と土曜朝に自動で入ります</span></div>
-    <div id="magMsgBox"></div>`;
+    <div id="magMsgBox"></div>
+    <div id="magCm"></div>`;
   magAfterRenderEdit();
+  if (!m.mock) magCmMount(m.issue_date);
 }
 async function magSavePre() {
   const v = magEditValues(), body = { mode: 'issue_inputs' };
@@ -604,4 +614,30 @@ async function magAddCardLink() {
   t.value = v + (v ? '\n\n' : '') + 'この記事の関連カードをTAKERUで読む：\n' + item.url;
   magOnInput('trivia');
   magMsg(`「${item.title}」へのリンクを足しました。保存すると入ります。`, true);
+}
+
+// お知らせに、最近のXの投稿のリンクを足す（10/30 Cowork君の依頼。任意の分）
+//   投稿済の新しい5件から選ぶ。リンクは追跡の印のない形（x.js の xPostLink）。メールの決まりで、URLは単独の行に置く
+async function magXPick() {
+  const box = document.getElementById('magXPick'); if (!box) return;
+  box.innerHTML = '<span class="mag-dim">　読み込み中…</span>';
+  try {
+    const from = new Date(Date.now() - 45 * 86400000);
+    const ymd = `${from.getFullYear()}-${String(from.getMonth() + 1).padStart(2, '0')}-${String(from.getDate()).padStart(2, '0')}`;
+    const j = await (await fetch('/api/x/list?from=' + ymd)).json();
+    const rows = (j.items || []).filter(r => r.status === '投稿済' && xPostLink(r)).slice(-5).reverse();
+    if (!rows.length) { box.innerHTML = '<span class="mag-dim">　最近の投稿済はありません</span>'; return; }
+    box.innerHTML = `<div class="mag-cm-xlist">${rows.map(r => `<div><button class="dash-refresh" onclick="magXInsert('${magEsc(r.id)}')">貼る</button>
+      <span class="mag-dim">${magEsc(r.kind || '')}・${magEsc(String(r.posted_at || '').slice(0, 16))}</span> ${magEsc(String(r.text || '').split('\n')[0].slice(0, 40))}</div>`).join('')}
+      <button class="dash-refresh" onclick="document.getElementById('magXPick').innerHTML=''">閉じる</button></div>`;
+    magXRows = rows;
+  } catch (e) { box.innerHTML = `<span class="qr-warn">　読めませんでした：${magEsc(e.message)}</span>`; }
+}
+let magXRows = [];
+function magXInsert(id) {
+  const r = magXRows.find(x => x.id === id), ta = document.getElementById('magF_notice'); if (!r || !ta) return;
+  const head = String(r.text || '').split('\n')[0].trim();
+  ta.value = ta.value.replace(/\s+$/, '') + (ta.value.trim() ? '\n\n' : '') + head + '\n' + xPostLink(r);
+  magOnInput('notice');
+  document.getElementById('magXPick').innerHTML = '<span class="mag-dim">　お知らせの欄の最後に足しました（保存はまだです）</span>';
 }

@@ -41,6 +41,9 @@ async function dkOpenTheme(f) {
   if (!j.cards.some(c => c.code === dk.cur)) dk.cur = (j.cards[0] || {}).code || '';
   try { localStorage.setItem(DK_SAVE + 'last', f); } catch (e) {}
   dkRender();
+  const sy = j.sync || {};
+  if ((sy.pulled || []).length) dkToast(`本体で直した ${sy.pulled.length}枚（${sy.pulled.join('、')}）を、デスクに取り込みました`);
+  if ((sy.conflicts || []).length) dkToast(`本体とデスクの両方で直したカードがあります：${sy.conflicts.join('、')}（「CSVへ出力」タブの取り込みで、本体の方を入れられます）`, true);
 }
 async function dkReload() { await dkLoadMeta(); if (dk.folder) await dkOpenTheme(dk.folder); }
 function dkTab(t) {
@@ -103,7 +106,7 @@ function dkRenderTheme() {
   document.getElementById('dkBody').innerHTML = `
     <div class="dk-grid2">${f('name', 'テーマ名')}${f('subject', '科目（CSVの科目）', '例 3級-国家と法律')}
       ${f('unit', 'ユニット（CSVのテーマ列）', 'アプリのメニューに出る名前')}${f('prefix', 'コードの略称', '例 GNP → GNPF01・GNPC01')}</div>
-    ${f('axis', 'テーマの主軸（一文）', '段2。牧村さんの承認を得る', true)}
+    ${f('axis', 'メインテーマ（簡潔に）', '段2で決め、牧村さんの承認を得る。書き換えは、骨組みか本文ができたときに必要なら後追いで', true)}
     ${f('goal', '学習目標', '', true)}
     ${f('concept', 'コンセプト・全体のメモ', 'この時代・テーマで何を伝えるか', true)}
     <div class="mag-btns"><button class="btn-save" onclick="dkThemeSave()">💾 テーマを保存</button>
@@ -204,7 +207,8 @@ function dkRenderCards() {
     <div class="dk-cards">
       <div class="dk-outline">
         <div class="dk-row"><b>${d.cards.length}枚</b><span class="mag-dim">確定 ${done}・史実 ${d.cards.filter(c => c.kind === 'F').length}・解説 ${d.cards.filter(c => c.kind === 'C').length}</span>
-          <button class="dash-refresh" onclick="dkRenumber()" title="いまの並びのとおりに、種別ごとに01から振り直す">番号を振り直す</button></div>
+          <button class="dash-refresh" onclick="dkRenumber()" title="いまの並びのとおりに、種別ごとに01から振り直す">番号を振り直す</button>
+          <button class="dash-refresh" onclick="dkCopyTitles()" title="コード・種別・題・狙いの表だけを写します。別のAIに『カードの並び』だけを渡したいときに（本文や骨組みは入りません）">📋 題の一覧を写す</button></div>
         <div class="mag-dim">ドラッグで並べ替え。・構想 ◔骨組み ◑執筆中 ●確定。右の数字は本文の字数（空白を除く）</div>
         <div class="dk-list">${list}</div>
       </div>
@@ -253,7 +257,7 @@ function dkRenderPanel() {
       <textarea id="dkF_${k}" class="${cls}" oninput="dkOnInput()">${dkEsc(c[k] || '')}</textarea></div>`).join('')}
     <div class="dk-row dk-actions">
       <button class="btn-save" onclick="dkSaveCard()">💾 保存（Ctrl+S）</button>
-      <button class="dash-refresh" onclick="dkCopyBrief()" title="テーマの主軸と、このカードの題・狙い・骨組みをまとめて写す">📋 AIへの依頼の素を写す</button>
+      <button class="dash-refresh" onclick="dkCopyBrief()" title="メインテーマと、このカードの題・狙い・骨組みをまとめて写す">📋 AIへの依頼の素を写す</button>
       <button class="dash-refresh" onclick="dkTab('brief')" title="ひな形を選んで、このカードの依頼書を作る">📨 このカードの依頼書へ</button>
       <span class="dk-imgbtns" title="画像はテーマ1本のスレッドで作る：最初に「テーマ全体」を1回、あとはカードごとに「このカードへ」">🖼 画像：
         <button class="dk-mini" onclick="dkImageBrief('72_')" title="チャッピーのプロジェクトで新しいスレッドを開き、最初に1回だけ貼る（全カードの題と本文）">① テーマ全体を写す（最初に1回）</button>
@@ -385,12 +389,22 @@ async function dkImageBrief(prefix) {
   try { await navigator.clipboard.writeText(j.text); dkToast(`${what}を写しました。チャッピーに貼ってください`); }
   catch (e) { dkToast('写せませんでした（控えは 依頼/ にあります）', true); }
 }
+function dkCopyTitles() {
+  const th = dk.data.theme, cs = dk.data.cards;
+  if (!cs.length) return dkToast('カードがまだありません', true);
+  const kind = k => k === 'F' ? '史実' : k === 'C' ? '解説' : '';
+  const cell = t => String(t || '').replace(/\s*\n\s*/g, ' ').replace(/\|/g, '／').trim();
+  dkCopy(`【TAKERU ${th.subject}／テーマ：${th.name}】カード一覧（${cs.length}枚。上から順番）\n` +
+    (th.axis ? `メインテーマ：${th.axis}\n` : '') + '\n' +
+    '| コード | 種別 | 題 | 狙い |\n|---|---|---|---|\n' +
+    cs.map(c => `| ${c.code} | ${kind(c.kind)} | ${cell(c.title)} | ${cell(c.aim)} |`).join('\n'));
+}
 function dkCopyBrief() {
   const th = dk.data.theme, v = dkVals(), c = dkCard();
   const i = dk.data.theme.order.indexOf(c.code);
   const near = dk.data.cards.slice(Math.max(0, i - 1), i + 2).map(x => `${x.code}　${x.code === c.code ? v.title : x.title}`).join('\n');
   dkCopy(`【TAKERU ${th.subject}／テーマ：${th.name}】\n` +
-    (th.axis ? `\n■ テーマの主軸\n${th.axis}\n` : '') +
+    (th.axis ? `\n■ メインテーマ\n${th.axis}\n` : '') +
     `\n■ このカード：${c.code}（${v.kind === 'C' ? '解説' : v.kind === 'F' ? '史実' : ''}）${v.title}\n` +
     (v.aim ? `狙い：${v.aim}\n` : '') + (v.skeleton ? `\n骨組み・ファクト：\n${v.skeleton}\n` : '') +
     (v.body ? `\nいまの本文：\n${v.body}\n` : '') +

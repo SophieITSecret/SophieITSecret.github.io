@@ -80,7 +80,7 @@ module.exports = function book(ctx) {
       // このPCの場所を、エクスプローラーで開く。住所録に載っている場所だけ（任意の場所は開かない）。ファイルは場所を示すだけ
       if (pathname === '/api/book/open' && method === 'POST') {
         const b = await body(req), t = String(b.target || '');
-        if (!isPath(t) || !read().items.some(x => x.url === t)) throw new Error('住所録にない場所は開けません');
+        if (!isPath(t) || !read().items.some(x => x.url === t)) throw new Error('リンク集にない場所は開けません');
         if (!fs.existsSync(t)) throw new Error('見つかりません：' + t);
         const args = fs.statSync(t).isDirectory() ? [t] : ['/select,', t];
         spawn('explorer.exe', args, { detached: true, stdio: 'ignore' }).unref();

@@ -762,7 +762,7 @@ textarea.svg-overlay-input { min-height:120px; font-family:monospace; font-size:
 .x-form-row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; font-size: 13px; color: #c8d3e0; }
 .x-form select, .x-form input[type=datetime-local] { background: #0f1824; color: #dde3f0; border: 1px solid #2c3e55; border-radius: 4px; padding: 4px 6px; }
 .x-lbl { font-size: 13px; color: #9fb0c4; font-weight: bold; margin-top: 4px; }
-.x-ta { width: 100%; box-sizing: border-box; min-height: 160px; background: #0f1824; color: #e6edf5; border: 1px solid #2c3e55; border-radius: 6px; padding: 8px 10px; font-size: 15px; line-height: 1.7; font-family: inherit; resize: vertical; }
+.x-ta { width: 100%; box-sizing: border-box; min-height: 480px; height: 60vh; background: #0f1824; color: #e6edf5; border: 1px solid #2c3e55; border-radius: 6px; padding: 8px 10px; font-size: 15px; line-height: 1.7; font-family: inherit; resize: vertical; }
 .x-in { width: 100%; box-sizing: border-box; background: #0f1824; color: #e6edf5; border: 1px solid #2c3e55; border-radius: 6px; padding: 6px 10px; font-size: 14px; }
 .x-code { background: #0f1824; padding: 8px 10px; border-radius: 6px; }
 @media (max-width: 700px) { .x-head { font-size: 13px; } .x-btns button { flex: 1 1 auto; } }
@@ -899,3 +899,22 @@ textarea.svg-overlay-input { min-height:120px; font-family:monospace; font-size:
 
 /* 10/28 牧村さん：骨組みの欄は広げすぎ→半分ぐらいに */
 .dk-panel textarea.dk-xl { min-height: 200px; height: 24vh; }
+
+/* 上の段：よく使うものだけ並べ、あとは「⋯ その他」にまとめる */
+header { position:relative; z-index:50; }
+.hmenu { position:relative; flex-shrink:0; }
+.hmenu-list { display:none; position:absolute; top:calc(100% + 6px); left:0; z-index:200; flex-direction:column; gap:4px; min-width:170px;
+  background:var(--bg2); border:1px solid var(--accent); border-radius:6px; padding:8px; box-shadow:0 8px 24px rgba(0,0,0,.5); }
+.hmenu-list.open { display:flex; }
+.hmenu-list .btn-load { text-align:left; width:100%; }
+
+/* 📮マガジン：解説（ときどき付く欄） */
+.mag-cm { margin: 14px 0; padding: 10px 12px; border: 1px dashed #4a6a8a; border-radius: 8px; }
+.mag-cm > summary { cursor: pointer; font-weight: 700; }
+.mag-cm-show { display: block; margin: 10px 0; }
+.mag-cm-in { width: 100%; box-sizing: border-box; padding: 6px 8px; background: #0f1824; color: #e6edf5; border: 1px solid #2c3e55; border-radius: 6px; font-size: 15px; }
+.mag-cm-img { display: flex; gap: 12px; margin: 10px 0; padding: 8px; border: 1px solid #2c3e55; border-radius: 6px; }
+.mag-cm-img img { width: 160px; max-height: 260px; object-fit: contain; background: #fff; border-radius: 4px; }
+.mag-cm-imgf { flex: 1; display: flex; flex-direction: column; gap: 6px; }
+.mag-cm-imgf input, .mag-cm-imgf textarea { width: 100%; box-sizing: border-box; background: #0f1824; color: #e6edf5; border: 1px solid #2c3e55; border-radius: 6px; padding: 5px 8px; }
+.mag-cm-xlist { margin-top: 8px; display: flex; flex-direction: column; gap: 4px; max-height: 300px; overflow-y: auto; }

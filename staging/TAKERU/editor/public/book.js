@@ -1,5 +1,5 @@
 // ============================================================
-// 📌 住所録（サーバー側は editor/book.js）2026-10-27
+// 📌 リンク集（サーバー側は editor/book.js）2026-10-27
 //   TAKERU関係のサイト・管理画面・フォルダの住所をまとめておく。名前を押すと開く（サイトはブラウザ、フォルダはエクスプローラー）
 //   ⚠パスワード・鍵は入れない
 // ============================================================
@@ -50,7 +50,7 @@ function bkRender() {
     ${bk.msg ? `<div class="mag-msgbox ${bk.msgBad ? 'bad' : 'ok'}">${bkEsc(bk.msg)}</div>` : ''}
     ${bk.editing ? bkForm(groups) : ''}
     <div id="bkList">${body}</div>
-    <p class="mag-dim" style="margin-top:12px">⚠ パスワード・鍵は入れないでください（この住所録は Dropbox に写ります）。ファイル：${bkEsc(bk.path)}</p>`;
+    <p class="mag-dim" style="margin-top:12px">⚠ パスワード・鍵は入れないでください（このリンク集は Dropbox に写ります）。ファイル：${bkEsc(bk.path)}</p>`;
 }
 // 打ちながら絞り込むとき、入力欄を作り直さない（打っている途中で文字が途切れないように）
 function bkRenderList() {
@@ -84,7 +84,7 @@ async function bkSaveForm() {
   const x = { id: bk.editing.id, group: g('group') || 'その他', name: g('name'), url: g('url'), note: g('note') };
   if (!x.name) { bk.msg = '名前を入れてください'; bk.msgBad = true; return bkRender(); }
   if (!/^https?:\/\/\S+$/i.test(x.url) && !/^[A-Za-z]:\\/.test(x.url)) { bk.msg = '住所は、https:// で始まるサイトの住所か、D:\\… のようなこのPCの場所にしてください'; bk.msgBad = true; return bkRender(); }
-  if (/(password|passwd|パスワード|token|トークン)\s*[:=：]/i.test(x.note + ' ' + x.url)) { if (!confirm('パスワードや鍵のような文字が入っているようです。この住所録は Dropbox に写ります。本当に入れますか？')) return; }
+  if (/(password|passwd|パスワード|token|トークン)\s*[:=：]/i.test(x.note + ' ' + x.url)) { if (!confirm('パスワードや鍵のような文字が入っているようです。このリンク集は Dropbox に写ります。本当に入れますか？')) return; }
   const items = bk.items.slice(), isNew = !x.id;
   if (x.id) { const i = items.findIndex(i => i.id === x.id); items[i] = x; }
   else {
@@ -96,7 +96,7 @@ async function bkSaveForm() {
 }
 async function bkDelete(id) {
   const x = bk.items.find(i => i.id === id); if (!x) return;
-  if (!confirm(`「${x.name}」を住所録から消します。よろしいですか？`)) return;
+  if (!confirm(`「${x.name}」をリンク集から消します。よろしいですか？`)) return;
   await bkSave(bk.items.filter(i => i.id !== id), '消しました（直前の分は「TAKERU 住所録.bak.json」に残っています）');
 }
 async function bkOpen(id) {

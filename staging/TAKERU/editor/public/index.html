@@ -8,25 +8,31 @@
 <body>
 <header>
   <h1>⚔ TAKERU 作業台</h1>
-  <button class="btn-load" onclick="reload()">🔄 再読み込み</button>
+  <button title="CSV（カードの一覧）とサーバーの状態を読み直します。他の場所で直したあとや、表示がおかしいときに押します。保存していない直しは消えるので、先に保存してください。" class="btn-load" onclick="reload()">🔄 再読み込み</button>
   <span class="file-status" id="fileStatus">読み込み中…</span>
-  <button class="btn-load" id="btnProgress" onclick="openProgress()" disabled>📊 進捗</button>
-  <button class="btn-load" id="btnAccess" onclick="openCardRanking()" disabled>👁 閲覧状況</button>
-  <button class="btn-load" id="btnMembers" onclick="openMembers()" disabled>👥 会員</button>
-  <button class="btn-load" id="btnNews" onclick="openNewsEditor()">📰 お知らせ</button>
-  <button class="btn-load" onclick="openBook()" title="TAKERU関係のサイト・管理画面・フォルダの住所をまとめた場所">📌 住所録</button>
-  <button class="btn-load" onclick="openDesk()" title="カード制作の上流：テーマ・段1〜7・調査資料・カード割り・執筆・CSVへ出力">🧭 制作デスク</button>
-  <button class="btn-load" onclick="openMag()" title="TAKERUマガジン：金曜夜の下書きを確認・添削・OKする">📮 マガジン</button>
-  <button class="btn-load" id="btnX" onclick="openX()" title="MSフォーラムのXの投稿：一覧・直し・承認（本番）">𝕏 X</button>
-  <button class="btn-load" onclick="openQr()" title="自由研究などを直接開く専用リンクとQRコードを作る">🔳 QR</button>
-  <button class="btn-load" onclick="openMemo()">📝 メモ</button>
-  <button class="btn-load" id="btnDraft" onclick="openDraft()" disabled>📝 原稿</button>
-  <button class="btn-load" id="btnImport" onclick="openImport()" disabled>📥 一括取り込み</button>
-  <button class="btn-load" id="btnExport" onclick="openExport()" disabled>📤 書き出し</button>
-  <button class="btn-load" id="btnFullscreen" onclick="toggleFullscreen()">⛶ 全画面</button>
-  <button class="btn-load" id="btnSwBump" onclick="bumpSw()" title="アプリの版数を上げて、利用者の端末の古い図や音声を入れ替える">⬆ v—</button>
-  <button class="btn-save" id="btnSave" onclick="saveCSV()" disabled>💾 CSV を保存</button>
-  <button class="btn-publish" id="btnPublish" onclick="doPublish()" title="開発版(GitHub)と本番(takeru.ms-forum.com)へ反映">🚀 本番公開</button>
+  <button title="お知らせ編集：アプリの「お知らせ」欄に出す文章を、作る・直す・消す画面です。毎週のマガジンの案内もここに並びます。" class="btn-load" id="btnNews" onclick="openNewsEditor()">📰 お知らせ</button>
+  <button title="制作デスク：新しいテーマのカードを作る作業の置き場です。構想・カード割り・調査・骨組み・本文を順に進め、仕上がったらCSVへ出力します。AIへの依頼文もここで作ります。使い方は、中の「❓ 使い方」。" class="btn-load" onclick="openDesk()">🧭 制作デスク</button>
+  <button title="TAKERUマガジン：毎週金曜の夜にできる下書きを、確認・添削して「OK」を出す画面です。OKが出ると土曜の朝に配信されます。" class="btn-load" onclick="openMag()">📮 マガジン</button>
+  <button title="MSフォーラムのX（旧Twitter）の投稿の画面です。予定の一覧・文面の直し・画像の添付・承認ができます。承認したものが、決まった日時に投稿されます。" class="btn-load" id="btnX" onclick="openX()">𝕏 X</button>
+  <button title="原稿：テーマごとの原稿ファイル（md）を開いて、カードの本文を読み・書き直す画面です。チャットの出力を貼って取り込むこともできます。作ったものは本体のカードに反映できます。" class="btn-load" id="btnDraft" onclick="openDraft()" disabled>📝 原稿</button>
+  <button title="閲覧状況：本番のTAKERUアプリが、いつ・どれだけ見られているか、どのカードがよく見られているかを見る画面です。" class="btn-load" id="btnAccess" onclick="openCardRanking()" disabled>👁 閲覧状況</button>
+  <div class="hmenu">
+    <button title="あまり使わないボタンをしまってある所です。押すと一覧が開きます（進捗・会員・リンク集・QR・メモ・一括取り込み・書き出し・全画面・版番号・終了）。" class="btn-load" onclick="toggleHMenu(event)">⋯ その他 ▾</button>
+    <div class="hmenu-list" id="hmenuList" onclick="closeHMenu()">
+      <button title="進捗ボード：科目・テーマごとに、本文ができたか・画像があるか・公開されたかを一覧で見る画面です。次に何を作るかを決めるときに使います。" class="btn-load" id="btnProgress" onclick="openProgress()" disabled>📊 進捗</button>
+      <button title="TAKERUに登録してくれた人（メルマガの宛先）の一覧です。サーバーから読んで見せるだけで、手元にファイルは残しません。個人情報なので、画面を人に見せないよう注意してください。" class="btn-load" id="btnMembers" onclick="openMembers()" disabled>👥 会員</button>
+      <button title="TAKERU関係のサイト・管理画面・フォルダへのリンク集です。「あれはどこだっけ」というときに、ここから開けます。パスワードは入れないでください。" class="btn-load" onclick="openBook()">📌 リンク集</button>
+      <button title="自由研究などのカードを直接開く専用リンクと、そのQRコードを作ります。チラシやXで宣伝するときに使います。" class="btn-load" onclick="openQr()">🔳 QR</button>
+      <button title="プロンプトメモ：AIに頼むときの依頼文のひな形を、名前をつけて置いておく場所です。コピーしてClaudeやチャッピーに貼ります。" class="btn-load" onclick="openMemo()">📝 メモ</button>
+      <button title="本文の一括取り込み：ClaudeやGeminiが出した文章を貼ると、「@カードID」「#### カードID　タイトル」の区切りで、複数のカードの本文にまとめて入れます。取り込んだ内容は、先にプレビューで確認できます。" class="btn-load" id="btnImport" onclick="openImport()" disabled>📥 一括取り込み</button>
+      <button title="カードの原稿と画像を、人やAIに見せる形（MD・HTML）に書き出します。ClaudeやChatGPTに読ませるときは「MDだけ」が軽くて便利です。ファイルはダウンロードフォルダに保存されます。" class="btn-load" id="btnExport" onclick="openExport()" disabled>📤 書き出し</button>
+      <button title="作業台の画面を全画面にします。もう一度押すと元に戻ります（Escでも戻れます）。" class="btn-load" id="btnFullscreen" onclick="toggleFullscreen()">⛶ 全画面</button>
+      <button title="アプリの版番号を1つ上げます。利用者のスマホに残っている古い図や音声を、新しいものに入れ替えさせたいときに押します。ふつうは「🚀 本番公開」が自動で上げるので、単独で押すことは少ないです。" class="btn-load" id="btnSwBump" onclick="bumpSw()">⬆ v—</button>
+      <button title="作業台を終わらせます。黒い窓も一緒に閉じます。保存していない直しは残らないので、先に保存してください。" class="btn-load" onclick="quitEditor()">⏻ 終了</button>
+    </div>
+  </div>
+  <button title="直したカードの内容を、TAKERUcard.csv（手元のファイル）に保存します。まだ利用者には出ません。公開は右の「🚀 本番公開」です。" class="btn-save" id="btnSave" onclick="saveCSV()" disabled style="margin-left:auto">💾 CSV を保存</button>
+  <button title="保存した内容を、開発版（GitHub）と本番（takeru.ms-forum.com）の両方へ出します。「公開」の印がないカードは、本番には出ません。数分かかります。" class="btn-publish" id="btnPublish" onclick="doPublish()">🚀 本番公開</button>
 </header>
 
 <!-- 本番公開モーダル -->
@@ -580,11 +586,11 @@
   </div>
 </div>
 
-<!-- 📌 住所録（public/book.js ／ サーバーは editor/book.js） -->
+<!-- 📌 リンク集（public/book.js ／ サーバーは editor/book.js） -->
 <div id="bookModal" class="modal-overlay">
   <div class="modal-box mag-modal-box">
     <div class="modal-head mag-top">
-      <h2>📌 住所録</h2>
+      <h2>📌 リンク集</h2>
       <button class="btn-cancel" onclick="closeBook()">✕ 閉じる</button>
     </div>
     <div id="bkBody" class="bk-wrap"><p class="qr-empty">読み込み中…</p></div>
@@ -806,9 +812,21 @@
 
 <script src="app.js"></script>
 <script src="magazine.js"></script>
+<script src="mag-commentary.js"></script>
 <script src="x.js"></script>
 <script src="desk.js"></script>
 <script src="desk-help.js"></script>
 <script src="book.js"></script>
+<script>
+function toggleHMenu(e){ e.stopPropagation(); document.getElementById('hmenuList').classList.toggle('open'); }
+function closeHMenu(){ document.getElementById('hmenuList').classList.remove('open'); }
+document.addEventListener('click',closeHMenu);
+async function quitEditor(){
+  if(!confirm('作業台を終了します。保存していない直しは残りません。よろしいですか？')) return;
+  try{ await fetch('/api/quit',{method:'POST'}); }catch(e){}
+  document.body.innerHTML='<div style="padding:40px;font:16px sans-serif;color:#ccc">作業台を終了しました。この窓は閉じて構いません。</div>';
+  try{ window.close(); }catch(e){}
+}
+</script>
 </body>
 </html>

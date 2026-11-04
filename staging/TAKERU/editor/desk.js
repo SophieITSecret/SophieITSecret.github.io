@@ -5,7 +5,7 @@
 //   置き場：原稿フォルダ（config.draftsDir）の中の「制作デスク」。Obsidian からも Claude Code からも
 //           ふつうのファイルとして読み書きできるようにする。
 //     制作デスク/_設定.json             … 基礎資料の一覧（手順書・作成ルールなど。押すと開く）
-//     制作デスク/<テーマ>/theme.json     … テーマの情報・段・主軸・カードの並び（order）
+//     制作デスク/<テーマ>/theme.json     … テーマの情報・段・メインテーマ（キーは axis）・カードの並び（order）
 //     制作デスク/<テーマ>/cards/<コード>.md … カード1枚（題・狙い・骨組み・本文・画像プロンプト）
 //     制作デスク/<テーマ>/research/*.md  … 調査資料（カードに縛られない）
 //     制作デスク/<テーマ>/カード一覧.md   … 自動で作る読み物（AIに渡す用。手で直さない）
@@ -24,7 +24,7 @@ const { spawn } = require('child_process');
 //   進め方は「全体の構想 → カード割り → 基礎調査 → 骨組み → 本文」。ただし、カード割りは途中で何度でも見直し、追加調査もいつでもかける
 const STAGES = [
   { no: 1, name: '現在地の復元' },
-  { no: 2, name: '全体の構想を立てる（主軸を一文で）', approve: true },
+  { no: 2, name: '全体の構想を立てる（メインテーマを簡潔に）', approve: true },
   { no: 5, name: 'カード割り（F／Cの設計。見直しあり）', approve: true },
   { no: 4, name: '基礎調査（追加調査あり）' },
   { no: 8, name: '各カードの骨組みを作る' },
@@ -115,7 +115,7 @@ module.exports = function desk(ctx) {
     const cards = th.order.map(c => { try { return readCard(dir, c); } catch { return null; } }).filter(Boolean);
     let md = `# ${th.name}（制作デスク）\n科目：${th.subject}　／　${cards.length}枚　／　更新：${now()}\n`;
     md += `\n> このファイルは制作デスクが自動で作ります。直すときは cards/ の各カードを直してください。\n`;
-    if (th.axis) md += `\n## 主軸\n${th.axis}\n`;
+    if (th.axis) md += `\n## メインテーマ\n${th.axis}\n`;
     md += `\n## カード\n`;
     for (const c of cards) md += `\n#### ${c.code}　${c.title}${c.status ? `　〔${c.status}〕` : ''}\n${c.aim ? `（狙い）${c.aim.replace(/\n/g, ' ')}\n` : ''}${c.body || '（本文まだ）'}\n`;
     fs.writeFileSync(path.join(dir, 'カード一覧.md'), md, 'utf8');
@@ -191,6 +191,34 @@ module.exports = function desk(ctx) {
     });
     return { head, data, out, removed, isMine };
   }
+  // 本体で直した題・本文を、デスクへ自動でならす。
+  //   th.synced[コード]＝デスクとCSVが一致していた最後の内容。CSVだけ変わっていれば取り込み、
+  //   デスクも変わっていれば食い違い（どちらも消さずに知らせる）。
+  const normBody = t => String(t || '').replace(/\s+$/, '');
+  const normTitle = t => String(t || '').replace(/^→/, '').trim();
+  function syncFromCsv(dir, th) {
+    const byCode = new Map(readCsvRows().slice(1).map(x => [String(x[0]).trim(), x]));
+    th.synced = th.synced || {};
+    const pulled = [], conflicts = []; let touched = false;
+    for (const code of th.order) {
+      const row = byCode.get(code); if (!row) continue;
+      const c = readCard(dir, code);
+      const csv = { title: normTitle(row[3]), body: normBody(row[4]) };
+      if (!csv.body.trim() || csv.body.trim() === WIP) continue;
+      const mine = { title: normTitle(c.title), body: normBody(c.body) };
+      const snap = th.synced[code];
+      const same = (a, b) => a.title === b.title && a.body === b.body;
+      if (same(csv, mine)) { if (!snap || !same(snap, csv)) { th.synced[code] = csv; touched = true; } continue; }
+      if (!snap) continue;                                    // 記録がない食い違いは、手動の取り込みにまかせる
+      if (same(snap, mine)) {                                 // デスクは触っていない＝本体の直しを取り込む
+        c.title = normTitle(row[3]); c.body = String(row[4] || '');
+        fs.writeFileSync(cardPath(dir, code), cardText(c), 'utf8');
+        th.synced[code] = csv; pulled.push(code); touched = true;
+      } else if (!same(snap, csv)) conflicts.push(code);      // 両方で直した
+    }
+    if (touched) { saveTheme(dir, th); if (pulled.length) writeSummary(dir, th); }
+    return { pulled, conflicts };
+  }
   function writeCsv(head, rows) {
     const text = '﻿' + [head].concat(rows).map(r => r.map(csvCell).join(',')).join('\r\n');
     const dir = path.dirname(config.csvPath), base = path.basename(config.csvPath, '.csv');
@@ -258,7 +286,7 @@ module.exports = function desk(ctx) {
       try { return `----- 資料：${n} -----\n${fs.readFileSync(path.join(dir, 'research', fileSafe(n)), 'utf8').trim()}\n----- ここまで -----`; } catch { return ''; }
     }).filter(Boolean).join('\n\n');
     const vals = {
-      'テーマ名': th.name, '科目': th.subject, '主軸': th.axis || '（まだ決まっていない）',
+      'テーマ名': th.name, '科目': th.subject, 'メインテーマ': th.axis || '（まだ決まっていない）', '主軸': th.axis || '（まだ決まっていない）',  // 主軸は旧い名前（11/04 メインテーマに改名。古いひな形のため残す）
       '学習目標': th.goal || '（未記入）', 'コンセプト': th.concept || '（未記入）', '段の進み具合': stagesTxt,
       'カード一覧': cards.length ? table : '（カードはまだない）', '枚数': String(cards.length),
       '選んだカード': pick.length ? pick.map(c => one(c, false)).join('\n\n') : '（カードを選んでいない）',
@@ -403,6 +431,7 @@ module.exports = function desk(ctx) {
       // テーマを1つ読む（カード全部と、調査資料の一覧）
       if (r === 'theme' && method === 'GET') {
         const dir = themeDir(q.get('f')), th = loadTheme(dir);
+        let sync = { pulled: [], conflicts: [] }; try { sync = syncFromCsv(dir, th); } catch {}
         const cards = th.order.map(c => { const x = readCard(dir, c); x.chars = countChars(x.body);
           x.image = (() => { try { return fs.readdirSync(path.join(dir, 'images')).find(n => n.startsWith(c + '.')) || ''; } catch { return ''; } })();
           x.liveImage = ['.jpg', '.png'].some(e => fs.existsSync(path.join(config.imagesDir || path.join(path.dirname(config.csvPath), 'images'), c + e)));
@@ -410,7 +439,7 @@ module.exports = function desk(ctx) {
         let research = []; try { research = fs.readdirSync(path.join(dir, 'research')).filter(n => /\.(md|txt)$/i.test(n))
           .map(n => { const st = fs.statSync(path.join(dir, 'research', n)); return { name: n, size: st.size, mtime: st.mtimeMs }; })
           .sort((a, b) => a.name.localeCompare(b.name)); } catch {}
-        return sendJSON(res, 200, { ok: true, folder: q.get('f'), dir, theme: th, cards, research }), true;
+        return sendJSON(res, 200, { ok: true, folder: q.get('f'), dir, theme: th, cards, research, sync }), true;
       }
       // 新しいテーマ
       if (r === 'theme/create' && method === 'POST') {
@@ -430,7 +459,7 @@ module.exports = function desk(ctx) {
         saveTheme(dir, th); writeSummary(dir, th);
         return sendJSON(res, 200, { ok: true, folder }), true;
       }
-      // テーマの情報（段・主軸など）を保存。order はここでは変えない
+      // テーマの情報（段・メインテーマなど）を保存。order はここでは変えない
       if (r === 'theme/save' && method === 'POST') {
         const b = await body(req); const dir = themeDir(b.folder), th = loadTheme(dir);
         for (const k of ['name', 'subject', 'unit', 'subunit', 'axis', 'concept', 'goal', 'notes']) if (typeof b[k] === 'string') th[k] = b[k];
@@ -538,6 +567,8 @@ module.exports = function desk(ctx) {
       if (r === 'export' && method === 'POST') {
         const b = await body(req); const dir = themeDir(b.folder), th = loadTheme(dir);
         if (!th.prefix) throw new Error('テーマの「コードの略称」がありません');
+        const sy = syncFromCsv(dir, th);
+        if (sy.conflicts.length) throw new Error('本体とデスクの両方で直したカードがあります：' + sy.conflicts.join('、') + '。どちらを残すか決めてから出力してください（デスクの「取り込み」で本体の方を入れられます）');
         const p = exportPlan(dir, th);
         if (p.out.some(o => o.otherTheme)) throw new Error('ほかのテーマで使っているコードがあります：' + p.out.filter(o => o.otherTheme).map(o => o.code).join('、'));
         const codes = new Set(p.out.map(o => o.code));
@@ -549,6 +580,8 @@ module.exports = function desk(ctx) {
         else { let last = -1; kept.forEach((r, i) => { if (String(r[5]).trim() === th.subject) last = i; }); pos = last >= 0 ? last + 1 : kept.length; }
         const rows = kept.slice(0, pos).concat(p.out.map(o => o.row), kept.slice(pos));
         const w = writeCsv(p.head, rows);
+        th.synced = th.synced || {};
+        for (const o of p.out) th.synced[o.code] = { title: normTitle(o.row[3]), body: normBody(o.row[4]) };
         th.exported = now(); saveTheme(dir, th);
         return sendJSON(res, 200, { ok: true, written: p.out.length, removed: p.removed.length, backup: w.backup, drafts: w.drafts }), true;
       }

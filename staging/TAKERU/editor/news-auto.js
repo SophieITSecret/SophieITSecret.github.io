@@ -37,9 +37,9 @@ function log(msg) {
   if (!DRY) { try { fs.appendFileSync(LOG_PATH, line + '\n', 'utf8'); } catch {} }
 }
 // 失敗を牧村さんの画面に出す。ログを見に行かなくても気づけるように。
-function notify(msg) {
+function notify(msg, head = 'TAKERUニュースの自動取り込みが止まりました。') {
   if (DRY || process.platform !== 'win32') return;
-  const text = ('TAKERUニュースの自動取り込みが止まりました。\n\n' + msg +
+  const text = (head + '\n\n' + msg +
                 '\n\n作業台の「🌐 今週のニュースを取ってくる」で手で取り込めます。\n記録: ' + LOG_PATH)
                .replace(/'/g, "''");
   const ps = `Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.MessageBox]::Show('${text}', 'TAKERU ニュース', 'OK', 'Warning') | Out-Null`;
@@ -68,6 +68,14 @@ function git(args, cwd) {
   const d = await fetchLatestDigest();
   if (!d.ok) fail(d.error);
   log(`GASのダイジェスト: ${d.date || '日付なし'}`);
+  // 今週の分か。担当A・B（Cowork君）が遅れたり止まったりしても、取り込み済みの記事は飛ばすので
+  // 先週の記事を新着として出すことは無い。ただ黙って終わると気づけないので、知らせる（監査の改善提案 8、2026-11-01）
+  const ageDays = d.date ? (Date.now() - new Date(d.date + 'T00:00:00+09:00').getTime()) / 864e5 : Infinity;
+  if (!(ageDays < 6)) {
+    const m = `今週のダイジェストがまだありません（GASにある最新は ${d.date || '日付なし'}）。担当A・B（Cowork君）が終わっていないかもしれません。`;
+    log('⚠ ' + m);
+    notify(m, 'TAKERUニュース：今週の分がまだ届いていません。');
+  }
 
   // 2) 手元の news.csv が作業途中でないか。途中なら巻き込まないよう止める。
   const top = git(['rev-parse', '--show-toplevel'], TAKERU_DIR);

@@ -227,6 +227,15 @@ async function getMagazineInputs(req, res, q) {
     sendGas(res, await gasGet('issue_inputs', { issue }));
   } catch (e) { sendJSON(res, 200, { ok: false, error: e.message }); }
 }
+// GET /api/magazine/image?issue=&name=  … 解説の図をそのまま返す（magazine_image_get。作業台の見本表示用）
+async function getMagazineImage(req, res, q) {
+  try {
+    const j = await gasGet('magazine_image_get', { issue: q.get('issue') || '', name: q.get('name') || '' });
+    if (!j.ok || !j.base64) { res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' }); return res.end(j.error || 'not found'); }
+    res.writeHead(200, { 'Content-Type': j.mime || 'image/png', 'Cache-Control': 'no-store' });
+    res.end(Buffer.from(j.base64, 'base64'));
+  } catch (e) { res.writeHead(500); res.end(String(e.message)); }
+}
 // GET /api/magazine/list  … 版の一覧（magazine_list）
 async function getMagazineList(req, res) {
   try {
@@ -271,6 +280,33 @@ function postMagazineSave(req, res) {
         for (const k of ['notice', 'trivia']) if (typeof b[k] === 'string') body[k] = b[k];
         if (b.expected_version) body.expected_version = Number(b.expected_version);
         return sendGas(res, MAG_MOCK ? magMockSave(body) : await gasPost(body));
+      }
+      if (b.mode === 'commentary_save') {
+        // 解説欄（GAS v37〜。号の版とは別の「解説」タブ。送った項目だけ上書き。下書きが無い号にも入れられる）
+        body = { stage: 'commentary_save', issue_date: b.issue_date };
+        for (const k of ['commentary_title', 'commentary_text', 'commentary_note']) if (typeof b[k] === 'string') body[k] = b[k];
+        if (typeof b.commentary_show === 'boolean') body.commentary_show = b.commentary_show;
+        if (b.expected_updated) body.expected_updated = String(b.expected_updated);
+        if (MAG_MOCK) return sendGas(res, { ok: true, text: 'OK commentary（見本）' });
+        return sendGas(res, await gasPost(body));
+      }
+      if (b.mode === 'magazine_image') {
+        // 解説の図（GAS v37〜）。name は半角英数字と . - _（会員システムがそれ以外を写さないため）。同じ name は差し替え
+        const name = String(b.name || '');
+        if (!/^[A-Za-z0-9._-]{1,80}$/.test(name)) return sendJSON(res, 400, { ok: false, error: '図の名前は半角英数字と . - _ だけにしてください' });
+        body = { stage: 'magazine_image', issue_date: b.issue_date, name };
+        if (b.remove) body.remove = true;
+        else {
+          for (const k of ['caption', 'credit']) body[k] = String(b[k] || '');
+          if (b.from_file_id) body.from_file_id = String(b.from_file_id);
+          else {
+            if (!/^image\/(png|jpeg)$/.test(b.mime || '')) return sendJSON(res, 400, { ok: false, error: 'PNG か JPEG にしてください' });
+            if (String(b.base64 || '').length * 0.75 > 2 * 1024 * 1024) return sendJSON(res, 400, { ok: false, error: '図が2MBを超えています' });
+            body.mime = b.mime; body.base64 = String(b.base64 || '');
+          }
+        }
+        if (MAG_MOCK) return sendGas(res, { ok: true, text: 'OK image（見本）' });
+        return sendGas(res, await gasPost(body));
       }
       if (b.expected_version === undefined || b.expected_version === null)
         return sendJSON(res, 400, { ok: false, error: 'expected_version がありません（版の取り違えを防ぐため必須）' });
@@ -1571,6 +1607,8 @@ const server = http.createServer((req, res) => {
   if (pathname === '/api/study-qr' && method === 'POST') return postStudyQr(req, res);
   if (pathname === '/api/study-qr-image' && method === 'GET') return getStudyQrImage(req, res, parsed.searchParams);
   if (pathname === '/api/open-qr-dir' && method === 'POST') return postOpenQrDir(req, res);
+  // 作業台を終わらせる（黒い窓ごと）。画面の「⏻ 終了」から
+  if (pathname === '/api/quit' && method === 'POST') { sendJSON(res, 200, { ok: true }); setTimeout(() => process.exit(0), 300); return; }
   if (pathname === '/api/card-link' && method === 'GET') return getCardLink(req, res, parsed.searchParams);
   if (pathname === '/api/magazine' && method === 'GET') return getMagazine(req, res, parsed.searchParams);
   if (pathname === '/api/magazine/list' && method === 'GET') return getMagazineList(req, res);
@@ -1578,6 +1616,7 @@ const server = http.createServer((req, res) => {
   if (pathname === '/api/magazine/deliveries' && method === 'GET') return getMagazineDeliveries(req, res, parsed.searchParams);
   if (pathname === '/api/magazine/inputs' && method === 'GET') return getMagazineInputs(req, res, parsed.searchParams);
   if (pathname === '/api/magazine/save' && method === 'POST') return postMagazineSave(req, res);
+  if (pathname === '/api/magazine/image' && method === 'GET') return getMagazineImage(req, res, parsed.searchParams);
   if (pathname === '/api/x/status' && method === 'GET') return getXStatus(req, res);
   if (pathname === '/api/x/list' && method === 'GET') return getXList(req, res, parsed.searchParams);
   if (pathname === '/api/x/save' && method === 'POST') return postXSave(req, res);
@@ -1602,6 +1641,7 @@ const server = http.createServer((req, res) => {
 const URL_LOCAL = 'http://localhost:' + PORT;
 
 function openAppBrowser(url) {
+  if (process.env.EDITOR_NO_BROWSER === "1") return;   // 試験用に立てるとき（窓を開かない）
   if (process.platform === 'win32') {
     const chromeCandidates = [
       process.env.LOCALAPPDATA + '\\Google\\Chrome\\Application\\chrome.exe',

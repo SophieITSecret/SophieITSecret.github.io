@@ -19,6 +19,7 @@ if errorlevel 1 (
 )
 
 node server.js
+if not errorlevel 1 exit /b
 
 echo.
 echo Server stopped. Press any key to close.

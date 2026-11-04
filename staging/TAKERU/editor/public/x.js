@@ -11,6 +11,22 @@ let xItems = [], xStat = null, xFilter = 'coming', xEditing = null, xTimer = nul
 const X_STASH = 'takeru.x.stash.';
 const X_KIND_LIST = ['マーケット', '先週の動き', 'ご存知ですか', '時事', 'アプリ紹介', 'お知らせ', '在庫', 'その他'];
 const X_DONE = ['投稿済', '試運転済'];
+// 投稿のリンクに入れるアカウント名（変わったらここだけ直す）。追跡の印（?s=20 など）のない形でコピーする（10/30 Cowork君の依頼）
+const X_ACCOUNT = 'MSforum01';
+function xPostLink(r) {
+  const id = String(r.post_id || '').trim() || ((/status\/(\d+)/.exec(r.post_url || '') || [])[1] || '');
+  return id ? `https://x.com/${X_ACCOUNT}/status/${id}` : '';
+}
+// コピー。clipboard が使えないとき（スマホの http など）は、選べる文字欄で出す
+function xCopyText(t, boxId) {
+  const box = boxId && document.getElementById(boxId);
+  const show = ok => { if (box) box.innerHTML = ok ? `<div class="mag-msgbox ok">コピーしました：${xEsc(t)}</div>`
+    : `<div class="mag-msgbox">長押し（または Ctrl+C）でコピーしてください：<input class="x-copybox" value="${xEsc(t)}" readonly onfocus="this.select()"></div>`; };
+  if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(t).then(() => show(true), () => show(false));
+  else show(false);
+  if (!box) return;
+  setTimeout(() => { const i = box.querySelector('.x-copybox'); if (i) { i.focus(); i.select(); } }, 0);
+}
 
 function xEsc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
 function xHm(d) { return `${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}`; }
@@ -34,7 +50,7 @@ function openX() {
   document.getElementById('xModal').style.display = 'flex';
   xLoad();
   clearInterval(xTimer);
-  xTimer = setInterval(() => { if (!xEditing) xLoad(true); }, 60000);   // 直している最中は取り直さない
+  xTimer = setInterval(() => { if (!xEditing) xLoad(true); }, 180000);   // 3分ごと。直している最中は取り直さない
 }
 function closeX() {
   if (xEditing && !confirm('直している途中の行があります（この端末には一時保存してあります）。閉じますか？')) return;
@@ -123,11 +139,14 @@ function xRender() {
     <div class="mag-btns"><button class="dash-refresh" onclick="xLoad()">↻ 今すぐ取り直す</button><span class="sub">開いている間は60秒ごとに取り直します（直している最中は止めます）</span></div>`;
   xRestore(xEditing && xEditing !== 'new' && document.getElementById('xF_text_' + xEditing) ? xEditing : 'new');
 }
+// 全文を開いたカードを覚えておく（3分ごとの読み直しで閉じないように）
+const xOpen = new Set();
+function xOpenMark(id, open) { if (open) xOpen.add(id); else xOpen.delete(id); }
 function xItemHtml(r) {
   if (xEditing === r.id) return `<div class="x-item editing" id="xItem_${xEsc(r.id)}">${xHeadHtml(r)}${xFormHtml(r)}</div>`;
   const body = String(r.text || '');
   const long = body.split('\n').length > 6 || body.length > 220;
-  const text = long ? `<details class="x-more"><summary>${xEsc(body.split('\n').slice(0, 3).join('\n').slice(0, 140))}…<span class="mag-dim">（全文を開く）</span></summary><div class="x-text">${xEsc(body)}</div></details>`
+  const text = long ? `<details class="x-more" ${xOpen.has(r.id) ? 'open' : ''} ontoggle="xOpenMark('${xEsc(r.id)}', this.open)"><summary>${xEsc(body.split('\n').slice(0, 3).join('\n').slice(0, 140))}…<span class="mag-dim">（全文を開く）</span></summary><div class="x-text">${xEsc(body)}</div></details>`
                     : `<div class="x-text">${xEsc(body)}</div>`;
   const done = X_DONE.includes(r.status);
   const btns = done ? '' : `<div class="x-btns">
@@ -147,7 +166,9 @@ function xItemHtml(r) {
         <span class="mag-dim">（画像を付けると、Xではリンクのカードの代わりに画像が出ます）</span></div>` : ''}
     ${r.error ? `<div class="x-err">⚠ ${xEsc(r.error)}</div>` : ''}
     <div class="mag-dim">${r.source ? '出どころ：' + xEsc(r.source) : ''}${r.issue ? '　号：' + xEsc(r.issue) : ''}${r.approved ? '　承認：' + xEsc(r.approved) : ''}${r.memo ? '　メモ：' + xEsc(r.memo) : ''}</div>
-    ${r.post_url ? `<div class="x-link">✓ ${xEsc(r.posted_at || '')} 投稿　<a href="${xEsc(r.post_url)}" target="_blank" rel="noopener">Xで見る↗</a></div>` : ''}
+    ${r.post_url ? `<div class="x-link">✓ ${xEsc(r.posted_at || '')} 投稿　<a href="${xEsc(r.post_url)}" target="_blank" rel="noopener">Xで見る↗</a>
+      ${xPostLink(r) ? `<button class="dash-refresh" onclick="xCopyText('${xEsc(xPostLink(r))}','xCopy_${xEsc(r.id)}')" title="${xEsc(xPostLink(r))}（追跡の印なし）">🔗 リンクをコピー</button>` : ''}</div>
+      <div id="xCopy_${xEsc(r.id)}"></div>` : ''}
     ${btns}
   </div>`;
 }
