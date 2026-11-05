@@ -141,6 +141,14 @@ html.in-browser body { height: 100dvh; }
     opacity: 0.8;
 }
 
+/* スタート画面の1行の説明。リピーターの邪魔にならないよう短く保つ（牧村さん 11/05） */
+.entry-lead {
+    margin-top: 14px;
+    font-size: 0.95rem;
+    letter-spacing: 0.08em;
+    color: var(--text);
+}
+
 .entry-beta {
     margin-top: 14px;
     font-size: 0.72rem;
@@ -680,6 +688,7 @@ body:not(.menu-mode) #image-area.has-image::after {
     margin-top: 5px;
     text-align: center;
 }
+.grade-soon { margin-left: 8px; font-size: 0.68rem; font-weight: normal; opacity: 0.85; }
 .grade-label-1 { color: #ff9a9a; border: 1px solid #c62828; background: rgba(198,40,40,0.25); }
 .grade-label-2 { color: #b0bdf8; border: 1px solid #3949ab; background: rgba(57,73,171,0.25); }
 .grade-label-3 { color: #b5f0b8; border: 1px solid #2e7d32; background: rgba(46,125,50,0.25); }
@@ -869,6 +878,17 @@ body:not(.menu-mode) #image-area.has-image::after {
     cursor: default;
 }
 .genre-btn.btn-coming::after { content: none; }   /* 進める印(▶)は消す */
+/* テーマの枚数（読む量の見当がつくように）。▶の手前に寄せる */
+.genre-count {
+    margin-left: auto;
+    margin-right: 10px;
+    padding-left: 10px;
+    font-size: 0.68rem;
+    font-weight: normal;
+    opacity: 0.75;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
 
 /* 作成中のユニット（テーマ）タイル。名前は見せるが押せない。右端に「作成中」バッジ。
    .genre-btn の hover/coming より後に置き、同特異度でも確実に勝たせる。 */

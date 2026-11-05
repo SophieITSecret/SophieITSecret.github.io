@@ -26,7 +26,7 @@ const IS_PROD = (typeof window.__IS_PROD === 'boolean') ? window.__IS_PROD : (fu
 //   画像・音声はブラウザ自身が長くキャッシュするため、差し替えても
 //   古いものが出続ける。URLが変われば確実に取り直されるので、版が上がるたび
 //   ここも一緒に上げる（bump-sw.sh と作業台の「⬆ v」ボタンが書き換える）。
-const ASSET_V = 'v140';
+const ASSET_V = 'v141';
 function av(path) { return path + '?v=' + ASSET_V; }
 
 // ==========================================
@@ -821,6 +821,7 @@ function showFreeUnit(unit) {
     isMenuVisible = true;
     curSubject = FREE_SUBJECT;
     curGenre = unit;
+    if (curSection[0]?.genre !== unit) pointToListTop(freeCards().filter(d => d.genre === unit));
     showMenuBanner();
     showMenuView();
 
@@ -925,13 +926,13 @@ function showGradeMenu() {
         <div class="sub-menu-wrap">
             <div class="top-btn btn-jukou banner-btn">📚 受　講</div>
             <div class="sub-panel-wrap">
-                <div class="grade-label grade-label-1">１級</div>
+                <div class="grade-label grade-label-1">１級<span class="grade-soon">準備中</span></div>
                 <div class="subject-row">
                     <button class="subject-btn btn-coming" disabled>軍事と戦略</button>
                     <button class="subject-btn btn-coming" disabled>国家と法律</button>
                     <button class="subject-btn btn-coming" disabled>戦争の歴史</button>
                 </div>
-                <div class="grade-label grade-label-2">２級</div>
+                <div class="grade-label grade-label-2">２級<span class="grade-soon">準備中</span></div>
                 <div class="subject-row">
                     <button class="subject-btn btn-coming" disabled>軍事と戦略</button>
                     <button class="subject-btn btn-coming" disabled>国家と法律</button>
@@ -991,9 +992,10 @@ function showGenreMenu() {
         if (isPreviewSubject) {
             genreHtml += `<button class="genre-btn btn-preview" disabled>${g}<span class="wip-tag">作成中</span></button>`;
         } else {
-            genreHtml += hasVisibleCards(cardData.filter(d => d.genre === g))
-                ? `<button class="genre-btn" data-genre="${g}">${g}</button>`
-                : `<button class="genre-btn btn-coming" disabled>${g}</button>`;
+            const count = visibleOf(cardData.filter(d => d.genre === g)).length;
+            genreHtml += count
+                ? `<button class="genre-btn" data-genre="${g}">${g}<span class="genre-count">全${count}枚</span></button>`
+                : `<button class="genre-btn btn-coming" disabled>${g}<span class="wip-tag">作成中</span></button>`;
         }
     });
     html += `<div class="genre-list-wrap">${genreHtml}</div>`;
@@ -1058,6 +1060,22 @@ function showSectionMenu(genre) {
     };
 }
 
+// 別のテーマの一覧を開いたら、CARD と ▶ の行き先をこの一覧の先頭に揃える。
+//   揃えないと、前のテーマのカードが今のテーマの見出しで開いてしまう（R-20261105-S-06）。
+function pointToListTop(cards) {
+    const first = visibleOf(cards)[0];
+    curSection = first ? visibleOf(cards.filter(d => d.section === first.section)) : [];
+    curIndex = 0;
+}
+// メニューから読んでいたカードへ戻るときは、科目とテーマをカードに合わせ直す。
+//   科目で図の出し方が、テーマで見出しと次のカードが決まるため。
+function restoreCardContext() {
+    const card = curSection[curIndex];
+    if (!card) return;
+    curSubject = card.subject;
+    curGenre = card.genre;
+}
+
 function showCardList(section) {
     navState = 'cardlist';
     isMenuVisible = true;
@@ -1082,6 +1100,7 @@ function showSectionedCardList(genre) {
     navState = 'sectionedlist';
     isMenuVisible = true;
     curGenre = genre;
+    if (curSection[0]?.genre !== genre) pointToListTop(cardData.filter(d => d.genre === genre));
     showMenuBanner();
     showMenuView();
 
@@ -2344,6 +2363,7 @@ function setupButtons() {
     btnNext.onclick = () => {
         if (isMenuVisible) {
             if (curSection.length) {
+                restoreCardContext();
                 if (curIndex < curSection.length - 1) showCard(curIndex + 1);
                 else advanceToNextSection();
             }
@@ -2359,7 +2379,7 @@ function setupButtons() {
     // ◀／CARD：カード戻し（カード画面）/ 最後のカードへ戻る（メニュー・完了画面）
     btnBack.onclick = () => {
         if (isMenuVisible) {
-            if (curSection.length) showCard(curIndex);
+            if (curSection.length) { restoreCardContext(); showCard(curIndex); }
         } else if (navState === 'card') {
             if (curIndex > 0) {
                 showCard(curIndex - 1);
