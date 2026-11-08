@@ -117,7 +117,7 @@ module.exports = function desk(ctx) {
     md += `\n> このファイルは制作デスクが自動で作ります。直すときは cards/ の各カードを直してください。\n`;
     if (th.axis) md += `\n## メインテーマ\n${th.axis}\n`;
     md += `\n## カード\n`;
-    for (const c of cards) md += `\n#### ${c.code}　${c.title}${c.status ? `　〔${c.status}〕` : ''}\n${c.aim ? `（狙い）${c.aim.replace(/\n/g, ' ')}\n` : ''}${c.body || '（本文まだ）'}\n`;
+    for (const c of cards) md += `\n#### ${c.code}　${c.title}\n${c.aim ? `（狙い）${c.aim.replace(/\n/g, ' ')}\n` : ''}${c.body || '（本文まだ）'}\n`;
     fs.writeFileSync(path.join(dir, 'カード一覧.md'), md, 'utf8');
   }
   function countChars(s) { return String(s || '').replace(/\s/g, '').length; }
@@ -219,6 +219,33 @@ module.exports = function desk(ctx) {
     if (touched) { saveTheme(dir, th); if (pulled.length) writeSummary(dir, th); }
     return { pulled, conflicts };
   }
+  // ---------------- 進み具合（自動。2026-11-04 牧村さん） ----------------
+  //   手で押す印は古くなるので、実物から判定する。カードの status と theme.json の段の state は、ファイルに残っているが判定に使わない。
+  //   判定：骨組み・本文＝デスクのカード（本文はCSVにあっても可）／図・音声＝アプリの images・voices のファイル／
+  //         CSV＝本文の行がある（same＝デスクと同じ、diff＝違う）／公開＝CSVの公開の印が1
+  function csvIndex() { try { return new Map(readCsvRows().slice(1).map(x => [String(x[0]).trim(), x])); } catch { return new Map(); } }
+  const realBody = t => { const s = String(t || '').trim(); return !!s && s !== WIP; };
+  function cardProgress(c, byCode) {
+    const row = byCode.get(c.code), home = path.dirname(config.csvPath);
+    const has = (d, exts) => exts.some(e => fs.existsSync(path.join(d, c.code + e)));
+    const csvHas = !!row && realBody(row[4]);
+    const sameAsCsv = csvHas && normBody(row[4]) === normBody(c.body) && normTitle(row[3]) === normTitle(c.title);
+    return { skeleton: !!String(c.skeleton || '').trim(), body: realBody(c.body) || csvHas,
+             image: has(config.imagesDir || path.join(home, 'images'), ['.jpg', '.png']), voice: has(path.join(home, 'voices'), ['.mp3']),
+             csv: !csvHas ? '' : sameAsCsv ? 'same' : 'diff', published: !!row && String(row[6]).trim() === '1' };
+  }
+  const progressLabel = p => p.published ? '公開' : p.body ? '本文あり' : p.skeleton ? '骨組み' : '構想';
+  const researchCount = dir => { try { return fs.readdirSync(path.join(dir, 'research')).filter(n => /\.(md|txt)$/i.test(n)).length; } catch { return 0; } };
+  // 段の進み具合。段の鍵（no）ごとに。「現在地の復元」は実物から分からないので出さない
+  function stageProgress(th, ps, nRes) {
+    const n = ps.length, of = k => ({ state: !k ? '未' : k >= n ? '済' : '途中', text: `${k}/${n}枚` });
+    return { 2: { state: String(th.axis || '').trim() ? '済' : '未', text: '' },
+             5: { state: n ? '済' : '未', text: n ? `${n}枚` : '' },
+             4: { state: nRes ? '済' : '未', text: nRes ? `資料${nRes}本` : '' },
+             8: of(ps.filter(p => p.skeleton || p.body).length),   // 本文まで進んだカードは、骨組みの欄が空でも通り過ぎたものとして数える
+             6: of(ps.filter(p => p.body).length),
+             7: of(ps.filter(p => p.published).length) };
+  }
   function writeCsv(head, rows) {
     const text = '﻿' + [head].concat(rows).map(r => r.map(csvCell).join(',')).join('\r\n');
     const dir = path.dirname(config.csvPath), base = path.basename(config.csvPath, '.csv');
@@ -270,10 +297,11 @@ module.exports = function desk(ctx) {
   function buildBrief(dir, th, tpl, opt) {
     const cards = th.order.map(c => readCard(dir, c));
     const pick = (opt.cards || []).length ? cards.filter(c => opt.cards.includes(c.code)) : [];
-    const stagesTxt = STAGES.map((s, i) => { const st = th.stages[s.no] || {};
-      return `- 段${i + 1} ${s.name}：${st.state || '未'}${st.approved ? '（承認済み）' : ''}${st.note ? '　' + st.note.replace(/\n/g, ' ') : ''}`; }).join('\n');
+    const byCode = csvIndex(), auto = stageProgress(th, cards.map(c => cardProgress(c, byCode)), researchCount(dir));
+    const stagesTxt = STAGES.map((s, i) => { const st = th.stages[s.no] || {}, a = auto[s.no];
+      return `- 段${i + 1} ${s.name}：${a ? a.state + (a.text ? `（${a.text}）` : '') : '―'}${st.approved ? '（承認済み）' : ''}${st.note ? '　' + st.note.replace(/\n/g, ' ') : ''}`; }).join('\n');
     const table = ['| コード | 種別 | 題 | 狙い（そのカードで言うこと） | 状態 |', '|---|---|---|---|---|']
-      .concat(cards.map(c => `| ${c.code} | ${kindJa(c.kind)} | ${c.title} | ${String(c.aim || '').replace(/\n/g, ' ')} | ${c.status} |`)).join('\n');
+      .concat(cards.map(c => `| ${c.code} | ${kindJa(c.kind)} | ${c.title} | ${String(c.aim || '').replace(/\n/g, ' ')} | ${progressLabel(cardProgress(c, byCode))} |`)).join('\n');
     const one = (c, full) => `#### ${c.code}（${kindJa(c.kind)}）${c.title}\n狙い：${c.aim || '（未記入）'}` +
       (c.skeleton ? `\n\n骨組み・ファクト：\n${c.skeleton}` : '') + (full && c.body ? `\n\nいまの本文（${countChars(c.body)}字）：\n${c.body}` : '');
     let near = '';
@@ -418,11 +446,12 @@ module.exports = function desk(ctx) {
       // テーマの一覧と、基礎資料
       if (r === 'themes' && method === 'GET') {
         fs.mkdirSync(ROOT(), { recursive: true });
+        const byCode = csvIndex();
         const themes = fs.readdirSync(ROOT(), { withFileTypes: true }).filter(d => d.isDirectory() && !d.name.startsWith('_') && !d.name.startsWith('.'))
           .map(d => { try { const dir = path.join(ROOT(), d.name); const th = loadTheme(dir);
-            const st = th.order.map(c => { try { return readCard(dir, c).status; } catch { return ''; } });
+            const ps = th.order.map(c => { try { return cardProgress(readCard(dir, c), byCode); } catch { return null; } }).filter(Boolean);
             return { folder: d.name, name: th.name, subject: th.subject, prefix: th.prefix, cards: th.order.length,
-                     done: st.filter(s => s === '確定').length, stages: th.stages, updated: th.updated || '' };
+                     bodyDone: ps.filter(p => p.body).length, published: ps.filter(p => p.published).length, stages: th.stages, updated: th.updated || '' };
           } catch { return null; } }).filter(Boolean).sort((a, b) => String(b.updated).localeCompare(String(a.updated)));
         const conf = readJSON(path.join(ROOT(), '_設定.json'), null) || { refs: DEFAULT_REFS };
         const refs = (conf.refs || []).map(f => ({ file: f, exists: fs.existsSync(path.join(draftsDir(), f)) }));
@@ -432,14 +461,15 @@ module.exports = function desk(ctx) {
       if (r === 'theme' && method === 'GET') {
         const dir = themeDir(q.get('f')), th = loadTheme(dir);
         let sync = { pulled: [], conflicts: [] }; try { sync = syncFromCsv(dir, th); } catch {}
-        const cards = th.order.map(c => { const x = readCard(dir, c); x.chars = countChars(x.body);
+        const byCode = csvIndex();
+        const cards = th.order.map(c => { const x = readCard(dir, c); x.chars = countChars(x.body); x.progress = cardProgress(x, byCode);
           x.image = (() => { try { return fs.readdirSync(path.join(dir, 'images')).find(n => n.startsWith(c + '.')) || ''; } catch { return ''; } })();
-          x.liveImage = ['.jpg', '.png'].some(e => fs.existsSync(path.join(config.imagesDir || path.join(path.dirname(config.csvPath), 'images'), c + e)));
           return x; });
         let research = []; try { research = fs.readdirSync(path.join(dir, 'research')).filter(n => /\.(md|txt)$/i.test(n))
           .map(n => { const st = fs.statSync(path.join(dir, 'research', n)); return { name: n, size: st.size, mtime: st.mtimeMs }; })
           .sort((a, b) => a.name.localeCompare(b.name)); } catch {}
-        return sendJSON(res, 200, { ok: true, folder: q.get('f'), dir, theme: th, cards, research, sync }), true;
+        const stageAuto = stageProgress(th, cards.map(c => c.progress), research.length);
+        return sendJSON(res, 200, { ok: true, folder: q.get('f'), dir, theme: th, cards, research, sync, stageAuto }), true;
       }
       // 新しいテーマ
       if (r === 'theme/create' && method === 'POST') {
@@ -504,8 +534,9 @@ module.exports = function desk(ctx) {
         if (CARD_STATUS.includes(b.status)) cur.status = b.status;
         fs.writeFileSync(cardPath(dir, b.code), cardText(cur), 'utf8');
         saveTheme(dir, th); writeSummary(dir, th);
-        const x = readCard(dir, b.code); x.chars = countChars(x.body);
-        return sendJSON(res, 200, { ok: true, card: x }), true;
+        const x = readCard(dir, b.code), byCode = csvIndex(); x.chars = countChars(x.body); x.progress = cardProgress(x, byCode);
+        const ps = th.order.map(c => cardProgress(readCard(dir, c), byCode));
+        return sendJSON(res, 200, { ok: true, card: x, progressAll: Object.fromEntries(th.order.map((c, i) => [c, ps[i]])), stageAuto: stageProgress(th, ps, researchCount(dir)) }), true;
       }
       // カード：差し込み（index の位置に。コードは種別ごとの次の番号）
       if (r === 'card/insert' && method === 'POST') {

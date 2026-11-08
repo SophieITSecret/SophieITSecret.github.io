@@ -55,24 +55,28 @@ function dkTab(t) {
 function dkRender() {
   const m = dk.meta || { themes: [], refs: [], stages: [] }, d = dk.data;
   document.getElementById('dkThemeSel').innerHTML = (m.themes.length ? '' : '<option value="">（テーマがありません）</option>') +
-    m.themes.map(t => `<option value="${dkEsc(t.folder)}" ${t.folder === dk.folder ? 'selected' : ''}>${dkEsc(t.name)}（${t.done}/${t.cards}枚 確定）</option>`).join('');
+    m.themes.map(t => `<option value="${dkEsc(t.folder)}" ${t.folder === dk.folder ? 'selected' : ''}>${dkEsc(t.name)}（本文 ${t.bodyDone}/${t.cards}枚・公開 ${t.published}枚）</option>`).join('');
   const side = document.getElementById('dkSide');
   if (!d) { side.innerHTML = dkRefsHtml(); document.getElementById('dkBody').innerHTML = '<p class="qr-empty">「＋ 新しいテーマ」から始めてください。</p>'; return; }
-  const th = d.theme;
-  side.innerHTML = `<div class="dk-h">手順（段1〜7）</div><ol class="dk-stages">${m.stages.map((s, idx) => {
-      const st = (th.stages || {})[s.no] || {}, state = st.state || '未';
+  dkRenderSide();
+  const tabs = [['theme', 'テーマ'], ['research', `資料（${d.research.length}）`], ['cards', `カード（${d.cards.length}）`], ['brief', '依頼と受け取り'], ['export', 'CSVへ出力']]
+    .map(([k, l]) => `<button class="${dk.tab === k ? 'on' : ''}" onclick="dkTab('${k}')">${l}</button>`).join('');
+  document.getElementById('dkTabs').innerHTML = tabs;
+  ({ theme: dkRenderTheme, research: dkRenderResearch, cards: dkRenderCards, brief: dkRenderBrief, export: dkRenderExport })[dk.tab]();
+}
+// 左の欄。段の印は実物から自動で出る（押さない）。承認の印とメモは手で
+function dkRenderSide() {
+  const m = dk.meta, d = dk.data, th = d.theme, side = document.getElementById('dkSide'), auto = d.stageAuto || {};
+  side.innerHTML = `<div class="dk-h">手順（段1〜7・自動）</div><ol class="dk-stages">${m.stages.map((s, idx) => {
+      const st = (th.stages || {})[s.no] || {}, a = auto[s.no], state = a ? a.state : '';
       return `<li class="st-${state}">
-        <button class="dk-st" onclick="dkStageCycle(${s.no})" title="押すと 未→途中→済">${state === '済' ? '✓' : state === '途中' ? '◐' : '○'}</button>
-        <div><div class="t">段${idx + 1}　${dkEsc(s.name)}</div>
+        <span class="dk-st" title="カードと資料から自動で出ます">${state === '済' ? '✓' : state === '途中' ? '◐' : state === '未' ? '○' : '・'}</span>
+        <div><div class="t">段${idx + 1}　${dkEsc(s.name)}${a && a.text ? ` <span class="mag-dim">${dkEsc(a.text)}</span>` : ''}</div>
           ${s.approve ? `<label class="dk-appr"><input type="checkbox" ${st.approved ? 'checked' : ''} onchange="dkStageApprove(${s.no}, this.checked)"> 牧村さんの承認${st.approved ? `（${dkEsc(st.approved)}）` : ''}</label>` : ''}
           <div class="dk-stnote" contenteditable="true" data-no="${s.no}" onblur="dkStageNote(this)" title="メモ（押して書く）">${dkEsc(st.note || '')}</div></div></li>`; }).join('')}</ol>
     ${dkRefsHtml()}
     <div class="dk-h">置き場</div><button class="dash-refresh" onclick="dkOpenPath({folder: dk.folder})">📁 このテーマのフォルダ</button>
     <div class="mag-dim" style="margin-top:4px">Claude Code や Obsidian からは、このフォルダの cards/・research/・カード一覧.md を直接読めます。</div>`;
-  const tabs = [['theme', 'テーマ'], ['research', `資料（${d.research.length}）`], ['cards', `カード（${d.cards.length}）`], ['brief', '依頼と受け取り'], ['export', 'CSVへ出力']]
-    .map(([k, l]) => `<button class="${dk.tab === k ? 'on' : ''}" onclick="dkTab('${k}')">${l}</button>`).join('');
-  document.getElementById('dkTabs').innerHTML = tabs;
-  ({ theme: dkRenderTheme, research: dkRenderResearch, cards: dkRenderCards, brief: dkRenderBrief, export: dkRenderExport })[dk.tab]();
 }
 function dkRefsHtml() {
   const refs = (dk.meta && dk.meta.refs) || [];
@@ -85,13 +89,6 @@ async function dkStageSave(stage) {
   const j = await dkPost('theme/save', { folder: dk.folder, stage });
   if (!j.ok) return dkToast(j.error, true);
   dk.data.theme.stages = j.theme.stages; dkRender();
-}
-function dkStageCycle(no) {
-  const cur = ((dk.data.theme.stages || {})[no] || {}).state || '未';
-  const next = { '未': '途中', '途中': '済', '済': '未' }[cur];
-  const s = dk.meta.stages.find(x => x.no === no);
-  if (next === '済' && s.approve && !((dk.data.theme.stages || {})[no] || {}).approved && !confirm(`段${dk.meta.stages.indexOf(s) + 1}は、牧村さんの承認を得てから次へ進む段です。承認の印を付けずに「済」にしますか？`)) return;
-  dkStageSave({ no, state: next });
 }
 function dkStageApprove(no, v) { dkStageSave({ no, approved: v }); }
 function dkStageNote(el) {
@@ -190,26 +187,39 @@ async function dkResDelete() {
 }
 
 // ---------------- カード（並び＋作業欄） ----------------
+// 進み具合（自動）。［字, 判定, 欄の名前］の順。全部サーバーが実物から判定する
+const DK_PROG = [['骨', p => p.skeleton, '骨組み'], ['本', p => p.body, '本文'], ['図', p => p.image, '図'], ['音', p => p.voice, '音声'],
+                 ['出', p => p.csv === 'same' ? 'on' : p.csv === 'diff' ? 'half' : '', 'CSV'], ['公', p => p.published, '公開']];
+const dkProgCls = (f, p) => { const v = f(p || {}); return v === true ? 'on' : v || ''; };
+const dkProgWord = (cls, name) => cls === 'half' ? `${name}：デスクと違う` : `${name}：${cls ? 'あり' : 'まだ'}`;
+function dkProgHtml(p) {
+  return DK_PROG.map(([ch, f, name]) => { const cls = dkProgCls(f, p); return `<i class="${cls}" title="${dkProgWord(cls, name)}">${ch}</i>`; }).join('');
+}
+function dkProgFull(p) {
+  return DK_PROG.map(([ch, f, name]) => { const cls = dkProgCls(f, p); return `<span class="dk-chip ${cls}">${cls === 'on' ? '●' : cls === 'half' ? '◐' : '○'} ${name}${cls === 'half' ? '（デスクと違う）' : ''}</span>`; }).join('');
+}
+function dkProgSum() {
+  const cs = dk.data.cards, n = cs.length, k = f => cs.filter(c => f(c.progress || {})).length;
+  return `本文 ${k(p => p.body)}/${n}・図 ${k(p => p.image)}・音声 ${k(p => p.voice)}・公開 ${k(p => p.published)}`;
+}
 function dkRenderCards() {
   const d = dk.data, th = d.theme, useKind = th.usesKind !== false;
   const plus = (i) => `<div class="dk-plus"><span>＋</span>${useKind ? `<button onclick="dkInsert(${i},'F')">史実を差し込む</button><button onclick="dkInsert(${i},'C')">解説を差し込む</button>`
                                                               : `<button onclick="dkInsert(${i},'')">カードを差し込む</button>`}</div>`;
-  const st = { '構想': '・', '骨組み': '◔', '執筆中': '◑', '確定': '●' };
   const list = d.cards.map((c, i) => `${plus(i)}
     <div class="dk-card ${c.code === dk.cur ? 'on' : ''} k-${dkEsc(c.kind || 'X')}" draggable="true" data-code="${dkEsc(c.code)}"
          onclick="dkPick('${dkEsc(c.code)}')" ondragstart="dkDragStart(event)" ondragover="dkDragOver(event)" ondragleave="this.classList.remove('drop')" ondrop="dkDrop(event)">
       <span class="dk-no">${i + 1}</span><span class="dk-code">${dkEsc(c.code)}</span>
       <span class="dk-title">${dkEsc(c.title)}</span>
-      <span class="dk-stat s-${dkEsc(c.status)}" title="${dkEsc(c.status)}">${st[c.status] || '・'}</span>
+      <span class="dk-prog">${dkProgHtml(c.progress)}</span>
       <span class="dk-chars ${c.chars > 460 ? 'over' : ''}">${c.chars || ''}</span></div>`).join('') + plus(d.cards.length);
-  const done = d.cards.filter(c => c.status === '確定').length;
   document.getElementById('dkBody').innerHTML = `
     <div class="dk-cards">
       <div class="dk-outline">
-        <div class="dk-row"><b>${d.cards.length}枚</b><span class="mag-dim">確定 ${done}・史実 ${d.cards.filter(c => c.kind === 'F').length}・解説 ${d.cards.filter(c => c.kind === 'C').length}</span>
+        <div class="dk-row"><b>${d.cards.length}枚</b><span class="mag-dim"><span id="dkProgSum">${dkProgSum()}</span>・史実 ${d.cards.filter(c => c.kind === 'F').length}・解説 ${d.cards.filter(c => c.kind === 'C').length}</span>
           <button class="dash-refresh" onclick="dkRenumber()" title="いまの並びのとおりに、種別ごとに01から振り直す">番号を振り直す</button>
           <button class="dash-refresh" onclick="dkCopyTitles()" title="コード・種別・題・狙いの表だけを写します。別のAIに『カードの並び』だけを渡したいときに（本文や骨組みは入りません）">📋 題の一覧を写す</button></div>
-        <div class="mag-dim">ドラッグで並べ替え。・構想 ◔骨組み ◑執筆中 ●確定。右の数字は本文の字数（空白を除く）</div>
+        <div class="mag-dim">ドラッグで並べ替え。骨組み・本文・図・音声・CSV出力（出）・公開は自動で光ります。黄の「出」は、デスクとCSVの中身が違う印。右の数字は本文の字数（空白を除く）</div>
         <div class="dk-list">${list}</div>
       </div>
       <div class="dk-panel" id="dkPanel"></div>
@@ -247,9 +257,9 @@ function dkRenderPanel() {
     <div class="dk-row">
       <span class="dk-bigcode">${dkEsc(c.code)}</span><button class="dash-refresh" onclick="dkRecode()">コードを変える</button>
       ${th.usesKind !== false ? `<select id="dkF_kind" onchange="dkOnInput()"><option value="F" ${c.kind === 'F' ? 'selected' : ''}>史実（F）</option><option value="C" ${c.kind === 'C' ? 'selected' : ''}>解説（C）</option></select>` : ''}
-      <select id="dkF_status" onchange="dkOnInput()">${dk.meta.cardStatus.map(s => `<option ${s === c.status ? 'selected' : ''}>${s}</option>`).join('')}</select>
-      <span class="mag-dim">${c.liveImage ? '🖼 アプリの画像あり' : '🖼 アプリの画像なし'}</span>
+      <input type="hidden" id="dkF_status" value="${dkEsc(c.status)}">
     </div>
+    <div class="dk-row dk-chips" id="dkProgFull">${dkProgFull(c.progress)}</div>
     <div class="mag-field"><div class="lbl">題 <span class="hint">${c.kind === 'C' ? 'CSVに出すとき、頭に「→」が付きます' : ''}</span></div><input id="dkF_title" class="x-in dk-titlein" value="${dkEsc(c.title)}" oninput="dkOnInput()"></div>
     ${DK_FIELDS.map(([k, l, h, cls]) => `<div class="mag-field"><div class="lbl">${l} <span class="hint">${h}</span>
         ${k === 'body' ? `<span class="mag-count2" id="dkN_body"></span>` : ''}
@@ -309,10 +319,14 @@ async function dkSaveCard() {
   }
   try { localStorage.removeItem(dkKey()); } catch (e) {}
   Object.assign(c, j.card); dk.dirty = false;
+  for (const x of dk.data.cards) if (j.progressAll && j.progressAll[x.code]) x.progress = j.progressAll[x.code];
+  if (j.stageAuto) { dk.data.stageAuto = j.stageAuto; dkRenderSide(); }
   const row = document.querySelector(`.dk-card[data-code="${c.code}"]`);
   if (row) { row.querySelector('.dk-title').textContent = c.title; row.querySelector('.dk-chars').textContent = c.chars || '';
-    const s = row.querySelector('.dk-stat'); s.className = 'dk-stat s-' + c.status; s.textContent = { '構想': '・', '骨組み': '◔', '執筆中': '◑', '確定': '●' }[c.status] || '・';
+    row.querySelector('.dk-prog').innerHTML = dkProgHtml(c.progress);
     row.className = row.className.replace(/k-\w+/, 'k-' + (c.kind || 'X')); }
+  const pf = document.getElementById('dkProgFull'); if (pf) pf.innerHTML = dkProgFull(c.progress);
+  const ps = document.getElementById('dkProgSum'); if (ps) ps.textContent = dkProgSum();
   const m = document.getElementById('dkMsg'); if (m) m.textContent = '保存しました';
 }
 async function dkInsert(i, kind) {

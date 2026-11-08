@@ -53,7 +53,7 @@ function magCmRender() {
       <div class="mag-btns"><button class="btn-save" onclick="magCmSave()">💾 解説を保存</button>
         <span class="sub">${c.updated ? '前の保存：' + magEsc(String(c.updated).replace('T', ' ').slice(0, 16)) : 'まだ保存していません'}。
         配信後に直したときは、号の「新しい版として保存」をすると号ページに入ります</span></div>
-      <div class="mag-field"><div class="lbl">図 <span class="hint">（PNG・JPEG、1枚2MBまで。メールには付かず、「図はホームページで」と案内します）</span></div>
+      <div class="mag-field"><div class="lbl">図 <span class="hint">（PNG・JPEG、1枚2MBまで。メールには付かず、「関連図表があります。ホームページでご覧ください。」と案内します）</span></div>
         ${imgs || '<div class="mag-dim">図はありません</div>'}
         <div class="mag-btns"><button class="dash-refresh" onclick="magCmPickFile('')">＋ 図を足す（ファイルから）</button>
           <button class="dash-refresh" onclick="magCmFromX()">＋ Xで使った図から</button></div>

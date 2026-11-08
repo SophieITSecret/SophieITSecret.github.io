@@ -2261,7 +2261,7 @@ function renderItemRanking(body) {
 
 // ===== 専用リンク・Xから（study_summary.json と src_summary.json） =====
 //   専用リンク：MSENSHI（研究）・JPNDF12（カード）・VIEWMARKET（画面）など、開かれた回数
-//   Xから：?src=x で来た回数を、行き先ごとに（X_TOP・X_CARD_JPNDF12・X_STUDY_MSENSHI・X_VIEW_MARKET）
+//   外から：?src=x（X）・?src=yt（YouTube）などで来た回数を、行き先ごとに（X_TOP・X_CARD_JPNDF12・YT_CARD_ASAKA01 など）
 function promoLabel(code) {
   const c = String(code).toUpperCase();
   const v = /^VIEW(\w+)$/.exec(c) || /_VIEW_(\w+)$/.exec(c);
@@ -2286,7 +2286,7 @@ function renderPromoAccess(body) {
   };
   const totEl = document.getElementById('rankTotals'); if (totEl) totEl.textContent = '';
   body.innerHTML = (accessStats.error ? `<div class="dash-err">⚠ 本番未接続（${esc(accessStats.error)}）</div>` : '')
-    + tbl('𝕏 Xから来た回数', accessStats.srcs, 'Xの投稿のリンク（?src=x）から開かれた回数。行き先ごと。集計は1日1回')
+    + tbl('↗ 外から来た回数（X・YouTube など）', accessStats.srcs, '出どころの印つきのリンクから開かれた回数。頭が出どころ（X_＝Xの投稿 ?src=x、YT_＝YouTube ?src=yt）、後ろが行き先。集計は1日1回')
     + tbl('🔳 専用リンクが開かれた回数', accessStats.studies, 'QR・メルマガ・Xなどの専用リンク（?study= ?card= ?view=）。Xから来た分も含みます');
 }
 function renderCardRanking() {

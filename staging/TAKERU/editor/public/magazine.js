@@ -436,12 +436,19 @@ function magBuildMail(m, v) {
     out.push('', '');
   };
   // 並び：ご存知ですか → 先週の世界の動き → マーケット動向 → 今週以降の主要日程 → お知らせ（section_order）
-  sec('💡 ご存知ですか？', v.trivia);
+  // 図は commentary_images に入り、section で置く欄が決まる（GAS v38〜。11/9 会員システムの書き出しと同じ分け方）。
+  //   "trivia" ＝ご存知ですかの欄。それ以外（"commentary"・無し・知らない値）＝解説欄。
+  //   メールには図を付けず、図のある欄の後にだけ号ページへの案内を出す（案A 10/30）
+  const page = `https://ms-forum.com/mailmag/${m.is_test ? 'test-' : ''}${String(m.issue_date).replace(/-/g, '')}.html`;
+  const figNote = '関連図表があります。ホームページでご覧ください。\n' + page;
+  const imgs = m.commentary_images || [];
+  const triviaImgs = imgs.filter(f => f && f.section === 'trivia');
+  const commentaryImgs = imgs.filter(f => !(f && f.section === 'trivia'));
+  sec('💡 ご存知ですか？', v.trivia, triviaImgs.length ? figNote : '');
   sec(`🌐 先週の世界の動き${m.period ? '（' + magPeriodJa(m.period) + '）' : ''}`, v.summary);
-  // 解説（ときどき付く欄。GAS v37〜。出す印があり本文があるときだけ。図はメールに付けず号ページへ案内＝案A 10/30）
+  // 解説（ときどき付く欄。GAS v37〜。出す印があり本文があるときだけ）
   if (m.commentary_show && String(m.commentary_text || '').trim()) {
-    const page = `https://ms-forum.com/mailmag/${m.is_test ? 'test-' : ''}${String(m.issue_date).replace(/-/g, '')}.html`;
-    const add = [(m.commentary_images || []).length ? '図はホームページでご覧ください。\n' + page : '', m.commentary_note || ''].filter(Boolean).join('\n\n');
+    const add = [commentaryImgs.length ? figNote : '', m.commentary_note || ''].filter(Boolean).join('\n\n');
     sec(`🔎 解説：${m.commentary_title || ''}`, m.commentary_text, add);
   }
   // 市況の下に、TAKERUのマーケット画面へのリンク（10/8 牧村さん。URLは単独の行）

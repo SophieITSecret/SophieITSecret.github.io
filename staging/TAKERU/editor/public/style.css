@@ -779,7 +779,7 @@ textarea.svg-overlay-input { min-height:120px; font-family:monospace; font-size:
 .dk-stages li .t { font-size: 13px; color: #dde3f0; }
 .dk-stages li.st-済 { opacity: .75; } .dk-stages li.st-済 .dk-st { color: #7cc47f; }
 .dk-stages li.st-途中 { outline: 1px solid #ff9f40; } .dk-stages li.st-途中 .dk-st { color: #ffcf8a; }
-.dk-st { background: none; border: 1px solid #2c3e55; color: #8a97a6; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; font-size: 13px; padding: 0; }
+.dk-st { display: flex; align-items: center; justify-content: center; box-sizing: border-box; border: 1px solid #2c3e55; color: #8a97a6; border-radius: 50%; width: 24px; height: 24px; font-size: 13px; }
 .dk-appr { display: block; font-size: 11px; color: #ffcf8a; margin-top: 2px; }
 .dk-stnote { font-size: 11px; color: #8a97a6; min-height: 14px; margin-top: 2px; outline: none; border-bottom: 1px dashed transparent; }
 .dk-stnote:empty::before { content: 'メモ…'; color: #4a5a6e; }
@@ -797,14 +797,16 @@ textarea.svg-overlay-input { min-height:120px; font-family:monospace; font-size:
 .dk-cards { display: grid; grid-template-columns: minmax(300px, 420px) minmax(0, 1fr); gap: 14px; align-items: start; }
 .dk-outline { position: sticky; top: 0; }
 .dk-list { max-height: 78vh; overflow: auto; padding-right: 4px; }
-.dk-card { display: grid; grid-template-columns: 22px 64px minmax(0, 1fr) 18px 34px; gap: 6px; align-items: center; padding: 6px 8px; border-radius: 6px; background: #121c2a; cursor: pointer; font-size: 13px; border-left: 3px solid #2c3e55; }
+.dk-card { display: grid; grid-template-columns: 22px 64px minmax(0, 1fr) 76px 34px; gap: 6px; align-items: center; padding: 6px 8px; border-radius: 6px; background: #121c2a; cursor: pointer; font-size: 13px; border-left: 3px solid #2c3e55; }
 .dk-card.k-F { border-left-color: #6cb6ff; } .dk-card.k-C { border-left-color: #ffcf8a; }
 .dk-card.on { background: #1a2b44; outline: 1px solid #6cb6ff; }
 .dk-card.drop { outline: 2px dashed #9be3a8; }
 .dk-no { color: #6a7a8e; font-size: 11px; text-align: right; }
 .dk-code { color: #9fb0c4; font-family: Consolas, monospace; font-size: 12px; }
 .dk-title { color: #e6edf5; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.dk-stat { text-align: center; } .dk-stat.s-確定 { color: #7cc47f; } .dk-stat.s-執筆中 { color: #ffcf8a; }
+.dk-prog { display: flex; gap: 1px; font-size: 11px; } .dk-prog i { font-style: normal; width: 12px; text-align: center; color: #3f4f63; }
+.dk-prog i.on { color: #7cc47f; } .dk-prog i.half { color: #ffcf8a; }
+.dk-chips { gap: 10px; flex-wrap: wrap; } .dk-chip { font-size: 12.5px; color: #6a7a8e; } .dk-chip.on { color: #7cc47f; } .dk-chip.half { color: #ffcf8a; }
 .dk-chars { font-size: 11px; color: #8a97a6; text-align: right; } .dk-chars.over { color: #ff9f40; }
 .dk-plus { height: 10px; position: relative; display: flex; align-items: center; gap: 6px; opacity: 0; transition: opacity .15s, height .15s; font-size: 11px; color: #9be3a8; }
 .dk-plus:hover { opacity: 1; height: 26px; }
