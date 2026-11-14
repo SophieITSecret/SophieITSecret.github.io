@@ -1,0 +1,9 @@
+# 生ログと集計ファイルは外部から一切見せない。
+# 作業台へはSSH経由で取得するため、Web公開する必要がない。
+<IfModule mod_authz_core.c>
+  Require all denied
+</IfModule>
+<IfModule !mod_authz_core.c>
+  Order allow,deny
+  Deny from all
+</IfModule>
