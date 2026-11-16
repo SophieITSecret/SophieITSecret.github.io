@@ -26,6 +26,8 @@ const PUBLIC_DIR = path.join(__dirname, 'public');
 // 試験用：本物の CSV・原稿フォルダを触らずに動かすとき（牧村さんの作業台では使わない）
 if (process.env.EDITOR_TEST_CSV) config.csvPath = process.env.EDITOR_TEST_CSV;
 if (process.env.EDITOR_TEST_DRAFTS) config.draftsDir = process.env.EDITOR_TEST_DRAFTS;
+if (process.env.EDITOR_TEST_IMAGES) config.imagesDir = process.env.EDITOR_TEST_IMAGES;
+if (process.env.EDITOR_TEST_INTAKE) config.intakeDir = process.env.EDITOR_TEST_INTAKE;
 const PORT = process.env.EDITOR_PORT || config.port || 3000;
 
 const MIME = {
@@ -485,6 +487,43 @@ const BOOK = require('./book')({ sendJSON, draftsDir: () => draftsDir() });
 // 🧭 制作デスク（カード制作の上流）。中身は editor/desk.js
 const DESK = require('./desk')({ config, sendJSON, timestamp, pruneBackups, RE_CSV_BACKUP, parseCsvText,
                                  syncDraftsFromCsv: (t) => syncDraftsFromCsv(t), draftsDir: () => draftsDir() });
+
+// 📖 使い方（マニュアル）2026-11-17 牧村さんの希望
+//   中身は editor/manual/ の md（1章1ファイル。頭の番号の順に並ぶ）。開くたびに読むので、直したら開き直すだけでよい。
+//   搬入の章には、置き場の「搬入の決まり.md」（ソフィー向け）をその場で読んで足す（同じ説明を2か所に書かないため）。
+//   制作デスクの章は public/desk-help.js の文（画面の側で足す）。
+const MANUAL_DIR = path.join(__dirname, 'manual');
+function getManual(res, r, q) {
+  try {
+    if (r === 'list') {
+      const files = fs.existsSync(MANUAL_DIR) ? fs.readdirSync(MANUAL_DIR).filter(f => /\.md$/i.test(f)).sort() : [];
+      const items = files.map(f => {
+        const text = fs.readFileSync(path.join(MANUAL_DIR, f), 'utf8');
+        const h = /^#\s+(.+)$/m.exec(text);
+        return { name: f.replace(/\.md$/i, ''), title: h ? h[1].trim() : f.replace(/^\d+_/, '').replace(/\.md$/i, '') };
+      });
+      return sendJSON(res, 200, { ok: true, items });
+    }
+    if (r === 'get') {
+      const name = path.basename(String(q.get('name') || ''));
+      const full = path.join(MANUAL_DIR, name + '.md');
+      if (!name || !fs.existsSync(full)) return sendJSON(res, 404, { ok: false, error: 'その章がありません' });
+      return sendJSON(res, 200, { ok: true, name, text: fs.readFileSync(full, 'utf8').replace(/^\uFEFF/, '') });
+    }
+    if (r === 'intake-rules') {
+      const full = path.join(config.intakeDir || 'G:\\マイドライブ\\TAKERU_共有\\60_自由研究の搬入', '搬入の決まり.md');
+      if (!fs.existsSync(full)) return sendJSON(res, 200, { ok: false, path: full, error: '搬入の決まり.md が読めませんでした（Google ドライブがつながっているか確かめてください）' });
+      return sendJSON(res, 200, { ok: true, path: full, text: fs.readFileSync(full, 'utf8').replace(/^\uFEFF/, '') });
+    }
+    return sendJSON(res, 404, { ok: false, error: 'not found' });
+  } catch (e) {
+    return sendJSON(res, 500, { ok: false, error: e.message });
+  }
+}
+
+// 📥 搬入（自由研究の原稿を決まった形で受け取り、CSVへ未公開で入れる）。中身は editor/intake.js
+const INTAKE = require('./intake')({ config, sendJSON, timestamp, pruneBackups, RE_CSV_BACKUP, RE_STAMP_BACKUP, parseCsvText,
+                                     syncDraftsFromCsv: (t) => syncDraftsFromCsv(t), imgBackupDir: process.env.EDITOR_TEST_IMAGES ? path.join(process.env.EDITOR_TEST_IMAGES, '_backup') : path.join(__dirname, 'image_backup') });
 
 // ============================================================
 // 宣伝用の専用リンクとQRコード（「🔳 QR」）
@@ -1628,6 +1667,10 @@ const server = http.createServer((req, res) => {
 
   // 🧭 制作デスク（editor/desk.js）
   if (pathname.startsWith('/api/desk/')) { DESK.handle(pathname, method, req, res, parsed.searchParams); return; }
+  // 📥 搬入（editor/intake.js）
+  if (pathname.startsWith('/api/intake/')) { INTAKE.handle(pathname, method, req, res, parsed.searchParams); return; }
+  // 📖 使い方（editor/manual/*.md）
+  if (pathname.startsWith('/api/manual/') && method === 'GET') return getManual(res, pathname.slice('/api/manual/'.length), parsed.searchParams);
   // 📌 住所録（editor/book.js）
   if (pathname.startsWith('/api/book')) { BOOK.handle(pathname, method, req, res); return; }
 

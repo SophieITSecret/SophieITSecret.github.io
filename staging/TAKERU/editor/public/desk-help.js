@@ -8,7 +8,10 @@ function dkhSnip(label, text) {
   DKH_SNIP.push(text);
   return `<div class="dkh-snip"><div class="dkh-snip-h"><b>${dkEsc(label)}</b><button class="dk-mini" onclick="dkhCopy(${DKH_SNIP.length - 1})">📋 写す</button></div><pre>${dkEsc(text)}</pre></div>`;
 }
-function dkhCopy(i) { dkCopy(DKH_SNIP[i]); }
+// 写したことの知らせは、使い方の画面に出す（デスクの画面の外から写すこともあるため）
+function dkhCopy(i) {
+  navigator.clipboard.writeText(String(DKH_SNIP[i] || '')).then(() => mnToast('写しました（貼り付けできます）'), () => mnToast('写せませんでした', true));
+}
 
 function dkhSections() {
   DKH_SNIP.length = 0;
@@ -138,16 +141,7 @@ ${dkhSnip('クロードへの頼み文（本文）の返事の形', `確定し�
   ];
 }
 
-let dkhOpen = false;
-function openDeskHelp() {
-  const secs = dkhSections();
-  const el = document.getElementById('dkHelp');
-  el.innerHTML = `<div class="dkh-head"><h2>❓ 制作デスクの使い方</h2>
-      <div class="dkh-toc">${secs.map(s => `<a href="#" onclick="dkhGo('${s[0]}'); return false;">${dkEsc(s[1])}</a>`).join('')}</div>
-      <button class="btn-cancel" onclick="closeDeskHelp()">✕ 閉じる</button></div>
-    <div class="dkh-body" id="dkhBody">${secs.map(s => `<section id="dkh_${s[0]}"><h3>${dkEsc(s[1])}</h3>${s[2]}</section>`).join('')}</div>`;
-  el.style.display = 'flex'; dkhOpen = true;
-}
-function closeDeskHelp() { document.getElementById('dkHelp').style.display = 'none'; dkhOpen = false; }
+// 2026-11-17 牧村さんのご指示で、出す場所をデスクの中の重ね窓から、メイン画面の「📖 使い方」（public/manual.js）の
+//   「制作デスク」の章へ移した。デスクの「❓ 使い方」ボタンは、その章を開く。文（上の dkhSections）はそのまま。
+function openDeskHelp() { openManual('desk'); }
 function dkhGo(id) { const t = document.getElementById('dkh_' + id); if (t) t.scrollIntoView({ block: 'start' }); }
-document.addEventListener('keydown', e => { if (e.key === 'Escape' && dkhOpen) { e.stopPropagation(); closeDeskHelp(); } }, true);

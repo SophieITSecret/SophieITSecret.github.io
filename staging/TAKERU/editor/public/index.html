@@ -12,10 +12,12 @@
   <span class="file-status" id="fileStatus">読み込み中…</span>
   <button title="お知らせ編集：アプリの「お知らせ」欄に出す文章を、作る・直す・消す画面です。毎週のマガジンの案内もここに並びます。" class="btn-load" id="btnNews" onclick="openNewsEditor()">📰 お知らせ</button>
   <button title="制作デスク：新しいテーマのカードを作る作業の置き場です。構想・カード割り・調査・骨組み・本文を順に進め、仕上がったらCSVへ出力します。AIへの依頼文もここで作ります。使い方は、中の「❓ 使い方」。" class="btn-load" onclick="openDesk()">🧭 制作デスク</button>
+  <button title="搬入：自由研究の原稿（SSRI Monthly など）を、決まった形で受け取る画面です。TAKERU_共有の「60_自由研究の搬入」の受付にあるものを確かめ、コードを決めて、カードのCSVへ未公開で入れます。合わないものは理由を付けて差し戻します。" class="btn-load" onclick="openIntake()">📥 搬入</button>
   <button title="TAKERUマガジン：毎週金曜の夜にできる下書きを、確認・添削して「OK」を出す画面です。OKが出ると土曜の朝に配信されます。" class="btn-load" onclick="openMag()">📮 マガジン</button>
   <button title="MSフォーラムのX（旧Twitter）の投稿の画面です。予定の一覧・文面の直し・画像の添付・承認ができます。承認したものが、決まった日時に投稿されます。" class="btn-load" id="btnX" onclick="openX()">𝕏 X</button>
   <button title="原稿：テーマごとの原稿ファイル（md）を開いて、カードの本文を読み・書き直す画面です。チャットの出力を貼って取り込むこともできます。作ったものは本体のカードに反映できます。" class="btn-load" id="btnDraft" onclick="openDraft()" disabled>📝 原稿</button>
   <button title="閲覧状況：本番のTAKERUアプリが、いつ・どれだけ見られているか、どのカードがよく見られているかを見る画面です。" class="btn-load" id="btnAccess" onclick="openCardRanking()" disabled>👁 閲覧状況</button>
+  <button title="使い方：作業台の画面ごとの説明です（はじめに・カードの基本作業・制作デスク・搬入・お知らせと閲覧状況とQR・その他）。中身は editor\manual の md ファイルで、直すと次に開いたときから変わります。" class="btn-load" onclick="openManual()">📖 使い方</button>
   <div class="hmenu">
     <button title="あまり使わないボタンをしまってある所です。押すと一覧が開きます（進捗・会員・リンク集・QR・メモ・一括取り込み・書き出し・全画面・版番号・終了）。" class="btn-load" onclick="toggleHMenu(event)">⋯ その他 ▾</button>
     <div class="hmenu-list" id="hmenuList" onclick="closeHMenu()">
@@ -613,7 +615,38 @@
       <main class="dk-main"><div id="dkTabs" class="mag-tabs"></div><div id="dkBody"></div></main>
     </div>
     <div id="dkToast" class="dk-toast" style="display:none"></div>
-    <div id="dkHelp" class="dk-help" style="display:none"></div>
+  </div>
+</div>
+
+<!-- 📥 搬入（public/intake.js ／ サーバーは editor/intake.js） -->
+<div id="intakeModal" class="modal-overlay">
+  <div class="modal-box dk-box">
+    <div class="modal-head mag-top">
+      <h2>📥 搬入（自由研究の原稿）</h2>
+      <button class="dash-refresh" onclick="ikLoad()" title="受付を読み直す">↻ 読み直す</button>
+      <button class="dash-refresh" onclick="openManual('搬入')" title="搬入の使い方（ソフィー向けの決まりも）">❓ 使い方</button>
+      <button class="btn-cancel" onclick="closeIntake()">✕ 閉じる</button>
+    </div>
+    <div class="dk-wrap">
+      <aside id="ikSide" class="dk-side"></aside>
+      <main class="dk-main"><div id="ikBody"></div></main>
+    </div>
+    <div id="ikToast" class="dk-toast" style="display:none"></div>
+  </div>
+</div>
+
+<!-- 📖 使い方（public/manual.js ／ 中身は editor/manual/*.md と public/desk-help.js） -->
+<div id="manualModal" class="modal-overlay">
+  <div class="modal-box dk-box">
+    <div class="modal-head mag-top">
+      <h2>📖 作業台の使い方</h2>
+      <button class="btn-cancel" onclick="closeManual()">✕ 閉じる</button>
+    </div>
+    <div class="dk-wrap">
+      <aside id="mnToc" class="dk-side mn-toc"></aside>
+      <main class="dk-main"><div id="mnBody" class="dkh-body mn-body"></div></main>
+    </div>
+    <div id="mnToast" class="dk-toast" style="display:none"></div>
   </div>
 </div>
 
@@ -815,6 +848,8 @@
 <script src="mag-commentary.js"></script>
 <script src="x.js"></script>
 <script src="desk.js"></script>
+<script src="intake.js"></script>
+<script src="manual.js"></script>
 <script src="desk-help.js"></script>
 <script src="book.js"></script>
 <script>
