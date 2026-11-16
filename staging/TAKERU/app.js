@@ -26,7 +26,7 @@ const IS_PROD = (typeof window.__IS_PROD === 'boolean') ? window.__IS_PROD : (fu
 //   画像・音声はブラウザ自身が長くキャッシュするため、差し替えても
 //   古いものが出続ける。URLが変われば確実に取り直されるので、版が上がるたび
 //   ここも一緒に上げる（bump-sw.sh と作業台の「⬆ v」ボタンが書き換える）。
-const ASSET_V = 'v141';
+const ASSET_V = 'v142';
 function av(path) { return path + '?v=' + ASSET_V; }
 
 // ==========================================
@@ -1781,7 +1781,9 @@ function showNews(tab) {
     if (newsTab === 'お知らせ') {
         const items = visibleNotices();
         // TAKERUマガジンの入口（ホームページの号の一覧へ。2026-10-15 牧村さん）。最新号のお知らせは毎週土曜に自動で入る
-        const magBtn = `<div class="news-srcs"><button class="news-src news-mag" data-url="https://ms-forum.com/mailmag/" data-log="MAGAZINE">📮 TAKERUマガジン（毎週土曜・これまでの号）<span class="src-ext">↗</span></button></div>`;
+        // 隣に登録の出口（2026-11-15 牧村さん。マガジンの広報戦略 R-20261109-C-02 の「試す→続ける」）。登録済みの人には出さない
+        const regBtn = getMemberEmail() ? '' : `<button class="news-src news-reg" data-reg="REG_NEWS">✉️ 登録する（無料）</button>`;
+        const magBtn = `<div class="news-srcs${regBtn ? ' has-reg' : ''}"><button class="news-src news-mag" data-url="https://ms-forum.com/mailmag/" data-log="MAGAZINE">📮 TAKERUマガジン（${regBtn ? '' : '毎週土曜・'}これまでの号）<span class="src-ext">↗</span></button>${regBtn}</div>`;
         listHtml = magBtn + (items.length
             ? `<div class="news-list">` + items.map(rowHtml).join('') + `</div>`
             : `<div class="news-empty">まだお知らせはありません。</div>`);
@@ -1885,6 +1887,9 @@ function showNews(tab) {
         // 外に出るもの（ロイター・BBC・財務省）は新しいタブで開く
         const ext = e.target.closest('[data-url]');
         if (ext) { if (ext.dataset.log) logAccess('link_open', ext.dataset.log); window.open(ext.dataset.url, '_blank', 'noopener'); return; }
+        // メルマガ登録の出口 → アプリの中の登録案内へ
+        const reg = e.target.closest('[data-reg]');
+        if (reg) { logAccess('link_open', reg.dataset.reg); showRegisterInfo(); return; }
         // マーケットの銘柄ボタン
         const mkt = e.target.closest('.mkt-btn[data-symbol]');
         if (mkt) { showMarketChart(mkt.dataset.symbol, mkt.dataset.label || ''); return; }
@@ -2522,6 +2527,15 @@ function showSectionComplete() {
     cardProgress.innerText = unitName;
     cardTitle.innerText = '✅ 完了';
     cardBody.innerText = `${unitName}の全${unitTotal}枚を読み終えました。\n\n◀ で最後のカードに戻れます。\n▲ で上位メニューに戻れます。`;
+    // メルマガ登録の出口（2026-11-15 牧村さん：カードごとではなく、読み終えた区切りでだけ出す）。登録済みの人には出さない
+    if (!getMemberEmail()) {
+        const box = document.createElement('div');
+        box.className = 'complete-reg';
+        box.innerHTML = `<div class="complete-reg-text">続きは毎週、メールで届きます。</div>` +
+            `<button class="complete-reg-btn" type="button">✉️ TAKERUマガジンに登録（無料）</button>`;
+        box.querySelector('button').onclick = () => { logAccess('link_open', 'REG_COMPLETE'); showRegisterInfo(); };
+        cardBody.appendChild(box);
+    }
     // 完了画面はタケル＆サクラを小さめに（⚔の代わり）。ズーム印は出さない。
     imageArea.classList.remove('has-image');
     imageArea.classList.remove('menu-banner');   // 化粧パネル用の低い枠を必ず解除

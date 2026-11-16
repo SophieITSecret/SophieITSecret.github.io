@@ -455,6 +455,12 @@ body:not(.menu-mode) #image-area.has-image::after {
 .reg-backbtn { background: var(--accent); border: none; color: #000; font-weight: 700;
                padding: 10px 26px; border-radius: 6px; cursor: pointer; font-family: inherit; font-size: 0.9rem; }
 .reg-backbtn:active { opacity: 0.85; }
+/* 完了の画面のメルマガ登録の出口（2026-11-15） */
+.complete-reg { white-space: normal; margin-top: 26px; padding-top: 16px; border-top: 1px solid var(--border); text-align: center; }
+.complete-reg-text { font-size: 0.88rem; color: var(--text2); margin-bottom: 10px; }
+.complete-reg-btn { background: var(--accent); border: none; color: #000; font-weight: 700; max-width: 100%;
+                    padding: 10px 20px; border-radius: 6px; cursor: pointer; font-family: inherit; font-size: 0.9rem; }
+.complete-reg-btn:active { opacity: 0.85; }
 
 /* 本文中のリンク */
 #card-body a {
@@ -1913,6 +1919,13 @@ body.font-large #card-body { font-size: 1.05rem; }
 }
 .src-ext { margin-left: 3px; font-size: 0.66rem; opacity: .65; }
 .news-src.news-mag { font-size: 0.82rem; padding: 10px 6px; }
+/* マガジンの隣の登録ボタン（アプリの中で開くので実線。号の一覧より狭く） */
+.news-src.news-reg { flex: 0 0 auto; font-size: 0.82rem; padding: 10px 10px; border-color: #6cb6ff; color: #fff; font-weight: 700; }
+/* 狭いスマホでは横に並べると号の一覧の字が切れるので、登録を下の段へ */
+@media (max-width: 480px) {
+    .news-srcs.has-reg { flex-wrap: wrap; }
+    .news-srcs.has-reg .news-src { flex: 1 1 100%; }
+}
 
 /* ===== マーケット ===== */
 .mkt-wrap { display: flex; flex-direction: column; padding: 8px 14px 0; }

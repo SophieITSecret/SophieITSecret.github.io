@@ -2234,7 +2234,10 @@ function renderItemRanking(body) {
     v: views[it.id] || 0,
   }));
   // 台帳から消えたIDの記録も拾う（過去に読まれた記事を削った場合など）
+  // 台帳に無いが、アプリの中のボタンが付ける記録名（2026-11-15）
+  const appBtnNames = { MAGAZINE: 'TAKERUマガジン（号の一覧へ・ニュースの欄）', REG_NEWS: 'メルマガ登録の出口（ニュースの欄）', REG_COMPLETE: 'メルマガ登録の出口（完了の画面）' };
   Object.keys(views).forEach(id => {
+    if (!ledger.some(it => it.id === id) && !isNews && appBtnNames[id]) { rows.push({ id, title: appBtnNames[id], sub: 'アプリの中のボタン', v: views[id] }); return; }
     if (!ledger.some(it => it.id === id)) rows.push({ id, title: '(台帳にありません)', sub: '', v: views[id] });
   });
   rows.sort((a, b) => b.v - a.v || String(a.id).localeCompare(String(b.id), undefined, { numeric: true }));
