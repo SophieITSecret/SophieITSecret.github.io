@@ -5,7 +5,10 @@
 //   搬入の章の <!-- intake-rules --> の所に、置き場の「搬入の決まり.md」（ソフィー向け）をその場で読んで足す。
 //   md は、見出し・段落・箇条書き（入れ子）・番号付き・表・引用・コードの囲み・太字・`コード`・リンクだけを扱う。
 // ============================================================
-const mn = { items: [], cur: '' };
+const mn = { items: [], cur: '', snips: [] };
+function mnCopy(i) {
+  navigator.clipboard.writeText(String(mn.snips[i] || '')).then(() => mnToast('写しました（貼り付けできます）'), () => mnToast('写せませんでした', true));
+}
 const DESK_CH = { name: 'desk', title: '制作デスク' };
 const mnEsc = s => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 function mnToast(t, bad) {
@@ -47,6 +50,7 @@ async function mnShow(name) {
   let j;
   try { j = await (await fetch('/api/manual/get?name=' + encodeURIComponent(name))).json(); } catch (e) { j = { ok: false, error: e.message }; }
   if (!j.ok) { body.innerHTML = `<p class="qr-warn">読めませんでした：${mnEsc(j.error)}</p>`; return; }
+  mn.snips = [];
   let html = mdToHtml(j.text);
   if (html.includes('<!-- intake-rules -->')) {
     let rules;
@@ -76,11 +80,16 @@ function mdToHtml(src, shift = 0) {
   for (let i = 0; i < lines.length; i++) {
     const ln = lines[i];
     if (/^\s*<!--\s*intake-rules\s*-->\s*$/.test(ln)) { flush(); out.push('<!-- intake-rules -->'); continue; }
-    // コードの囲み
+    // コードの囲み。```写す:名前 と書くと「📋 写す」ボタンの付いた文になる
     if (/^```/.test(ln)) {
       flush(); const buf = [];
+      const label = (/^```\s*写す[:：]\s*(.+)$/.exec(ln) || [])[1];
       while (++i < lines.length && !/^```/.test(lines[i])) buf.push(lines[i]);
-      out.push(`<pre class="dkh-tree">${mnEsc(buf.join('\n'))}</pre>`); continue;
+      if (label) {
+        mn.snips.push(buf.join('\n'));
+        out.push(`<div class="dkh-snip"><div class="dkh-snip-h"><b>${mnEsc(label)}</b><button class="dk-mini" onclick="mnCopy(${mn.snips.length - 1})">📋 写す</button></div><pre>${mnEsc(buf.join('\n'))}</pre></div>`);
+      } else out.push(`<pre class="dkh-tree">${mnEsc(buf.join('\n'))}</pre>`);
+      continue;
     }
     // 見出し
     const h = /^(#{1,4})\s+(.+)$/.exec(ln);
