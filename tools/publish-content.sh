@@ -28,6 +28,7 @@ fi
 
 # 1) 内容ファイルをコミット（変更があれば）
 git add staging/TAKERU/TAKERUcard.csv staging/TAKERU/MSlink.csv staging/TAKERU/news.csv \
+        staging/TAKERU/free_courses.json \
         staging/TAKERU/images staging/TAKERU/voices staging/TAKERU/c 2>/dev/null
 git add -u staging/TAKERU/c 2>/dev/null   # 非公開に戻して消えた共有ページも
 

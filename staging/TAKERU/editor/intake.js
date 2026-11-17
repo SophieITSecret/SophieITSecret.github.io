@@ -2,12 +2,14 @@
 // 📥 搬入（自由研究の原稿を、決まった形で受け取ってカードのCSVへ入れる）2026-11-17
 //   依頼：R-20261117-S-03（ソフィー）。原稿は手を入れずに使う。音声は原稿に付けない（作業台で牧村さんが付ける）。
 //   牧村さんの決定（11/17）：講座は作業台で立てる。ソフィーはテーマ（5〜6枚）ごとに入れるだけ。
-//     例：講座「歴史の中の戦争解説」（宇田川敬介）に、テーマ「天下統一への城攻め」を足していく。
-//   アプリでは 講座＝CSVの「テーマ」欄、テーマ＝「サブテーマ」欄（講座の中の見出し）。
+//   牧村さんの決定（11/18）：アプリでは「講座 → テーマ → カード」で見せる。講座名に著者名を含める。
+//     例：講座「宇田川敬介の歴史の中の戦争解説」の中に、テーマ「城攻め1『…』」を足していく。
+//   CSV では テーマ＝「テーマ」欄（アプリのまとまり）、部＝「サブテーマ」欄（テーマの中の見出し。省いてよい）。
+//   講座名は CSV に入らない。アプリのフォルダの free_courses.json（頭→講座名）で渡し、アプリが見出しに出す。
 //
 //   置き場（config.intakeDir。既定 G:\マイドライブ\TAKERU_共有\60_自由研究の搬入）
 //     講座一覧.json … 講座の正本（作業台が読み書き）。講座一覧.md … 人が見る表（作業台が書く）
-//     受付\<講座名>\<テーマ名>\ … 台帳.csv（番号,題,出典）・01.txt…・01.jpg|png…
+//     受付\<講座名>\<テーマ名>\ … 台帳.csv（番号,部,題,出典）・01.txt…・01.jpg|png…
 //     取り込み済み\<講座名>\YYYYMMDD_<テーマ名>\（取り込み記録.md）
 //     差し戻し\<講座名>\YYYYMMDD_<テーマ名>\（差し戻し理由.md）
 //   コードは 講座の頭＋番号。講座の続きの番号を作業台が振る（2桁、100枚目からは3桁）。
@@ -72,12 +74,14 @@ module.exports = function intake(ctx) {
   const codeOf = r => str(r[COL.code]);
   const prefixRe = p => new RegExp('^' + p + '(\\d+)$');
   // 講座のCSVの様子（行・番号の最大・テーマの並び）
+  //   2026-11-18：テーマ1つがアプリのまとまり1つ（CSV の「テーマ」欄＝テーマ名、「サブテーマ」欄＝部）。
+  //   講座の行は「頭＋数字のコードで、同じ著者の自由研究」。講座名はアプリへ free_courses.json で渡す
   function courseState(data, c) {
     const re = prefixRe(c.prefix);
     const rows = data.filter(r => re.test(codeOf(r)));
-    const mine = rows.filter(r => str(r[COL.theme]) === c.name && str(r[COL.subject]) === SUBJECT);
+    const mine = rows.filter(r => str(r[COL.author]) === c.author && str(r[COL.subject]) === SUBJECT);
     const maxNo = rows.reduce((m, r) => Math.max(m, parseInt(re.exec(codeOf(r))[1], 10)), 0);
-    const themes = []; for (const r of mine) { const t = str(r[COL.sub]); if (!themes.includes(t)) themes.push(t); }
+    const themes = []; for (const r of mine) { const t = str(r[COL.theme]); if (!themes.includes(t)) themes.push(t); }
     return { re, rows, mine, foreign: rows.filter(r => !mine.includes(r)), maxNo, themes,
              published: mine.filter(r => str(r[COL.pub]) === '1').length };
   }
@@ -89,6 +93,7 @@ module.exports = function intake(ctx) {
   function saveCourses(list) {
     fs.writeFileSync(path.join(ROOT(), COURSES_JSON), JSON.stringify({ note: '作業台の「📥 搬入」が書く講座の正本です。手で直さないでください。', courses: list }, null, 2) + '\n', 'utf8');
     writeCoursesMd(list);
+    try { writeFreeCourses(list); } catch {}
   }
   function writeCoursesMd(list) {
     let data = []; try { data = readCsvRows().slice(1); } catch {}
@@ -101,6 +106,11 @@ module.exports = function intake(ctx) {
     }
     if (!list.length) lines.push('| （まだありません） | | | | | | |');
     fs.writeFileSync(path.join(ROOT(), COURSES_MD), lines.join('\n') + '\n', 'utf8');
+  }
+  // アプリが講座名を引く表（アプリのフォルダの free_courses.json）。講座一覧.json の写し（秘密は入らない）
+  function writeFreeCourses(list) {
+    const out = list.map(c => ({ prefix: c.prefix, name: c.name, author: c.author }));
+    fs.writeFileSync(path.join(path.dirname(config.csvPath), 'free_courses.json'), JSON.stringify(out, null, 2) + '\n', 'utf8');
   }
   function findCourse(name) {
     const c = loadCourses().find(x => x.name === str(name));
@@ -128,21 +138,21 @@ module.exports = function intake(ctx) {
     if (!/^[A-Z]{2,8}$/.test(c.prefix)) throw new Error('コードの頭は、英大文字2〜8字にしてください（例 UDG）');
     const data = readCsvRows().slice(1);
     if (orig) {
+      // 講座名は CSV に入らないので、いつでも変えられる。頭と著者は、カードが入った後は変えない（行とのつながりが切れる）
       const s = courseState(data, orig);
-      if (s.mine.length && (c.name !== orig.name || c.prefix !== orig.prefix)) throw new Error(`この講座のカードがもう ${s.mine.length}枚 CSV にあるので、講座名とコードの頭は変えられません`);
+      if (s.mine.length && (c.prefix !== orig.prefix || c.author !== orig.author)) throw new Error(`この講座のカードがもう ${s.mine.length}枚 CSV にあるので、コードの頭と著者は変えられません`);
     }
     const others = list.filter(x => x !== orig);
     if (others.some(x => x.name === c.name)) throw new Error(`講座「${c.name}」はもうあります`);
     if (others.some(x => x.prefix === c.prefix)) throw new Error(`コードの頭「${c.prefix}」は、ほかの講座が使っています`);
-    // CSVで同じ頭のコードを使っている行（この講座の行は別）
-    const used = data.filter(r => prefixRe(c.prefix).test(codeOf(r)) && !(orig && str(r[COL.theme]) === orig.name));
-    if (used.length) throw new Error(`コードの頭「${c.prefix}」は、もうカードが使っています（${used.slice(0, 3).map(r => codeOf(r) + '「' + str(r[COL.theme]) + '」').join('、')}${used.length > 3 ? ' ほか' : ''}）`);
-    // 長い頭で、ほかのコードの頭と紛れないか（例 頭 MS に対して MSENSHI01 は ^MS\d+$ に当たらないので問題なし）
-    const nameUsed = data.filter(r => str(r[COL.theme]) === c.name && !(orig && orig.name === c.name));
-    if (nameUsed.length) throw new Error(`「${c.name}」という名前の講座（テーマ）が、もう CSV にあります（${codeOf(nameUsed[0])} など）`);
-    // 受付のフォルダ（名前を変えたら移す）
+    // CSVで同じ頭のコードを使っている行。同じ著者の自由研究だけなら使ってよい（牧村さんの MSENSHI を講座にするときなど）
+    const used = data.filter(r => prefixRe(c.prefix).test(codeOf(r)) && !(str(r[COL.subject]) === SUBJECT && str(r[COL.author]) === c.author));
+    if (used.length) throw new Error(`コードの頭「${c.prefix}」は、もうほかのカードが使っています（${used.slice(0, 3).map(r => codeOf(r) + '「' + str(r[COL.theme]) + '」').join('、')}${used.length > 3 ? ' ほか' : ''}）`);
+    // 置き場のフォルダ（講座名を変えたら、受付・取り込み済み・差し戻しの講座のフォルダも名前を変える）
     if (!fs.existsSync(boxDir('in'))) fs.mkdirSync(boxDir('in'), { recursive: true });
-    if (orig && orig.name !== c.name && fs.existsSync(boxDir('in', orig.name))) fs.renameSync(boxDir('in', orig.name), boxDir('in', c.name));
+    if (orig && orig.name !== c.name) for (const k of ['in', 'done', 'back']) {
+      if (fs.existsSync(boxDir(k, orig.name)) && !fs.existsSync(boxDir(k, c.name))) fs.renameSync(boxDir(k, orig.name), boxDir(k, c.name));
+    }
     if (!fs.existsSync(boxDir('in', c.name))) fs.mkdirSync(boxDir('in', c.name), { recursive: true });
     const next = orig ? list.map(x => (x === orig ? c : x)) : list.concat([c]);
     saveCourses(next);
@@ -191,9 +201,10 @@ module.exports = function intake(ctx) {
       const rows = parseCsvText(readText(path.join(dir, '台帳.csv'))).filter(r => r.some(x => String(x).trim()));
       const head = (rows[0] || []).map(s => str(s));
       const at = k => head.indexOf(k);
-      if (at('番号') < 0 || at('題') < 0) errors.push('台帳.csv の1行目（見出し）に「番号」と「題」が要ります（番号,題,出典）');
+      if (at('番号') < 0 || at('題') < 0) errors.push('台帳.csv の1行目（見出し）に「番号」と「題」が要ります（番号,部,題,出典。部と出典は省いてよい）');
       else {
         for (const r of rows.slice(1)) cards.push({ no: parseInt(str(r[at('番号')]), 10), title: str(r[at('題')]),
+          part: (at('部') >= 0 ? str(r[at('部')]) : ''),
           source: (at('出典') >= 0 ? str(r[at('出典')]) : '') });
         if (!cards.length) errors.push('台帳.csv にカードの行がありません');
         if (cards.length > MAX_CARDS) errors.push(`カードが${cards.length}枚あります。1つのテーマは${MAX_CARDS}枚までです`);
@@ -240,7 +251,10 @@ module.exports = function intake(ctx) {
     const data = readCsvRows().slice(1);
     const s = courseState(data, course);
     if (s.foreign.length) errors.push(`コードの頭「${course.prefix}」を、この講座でないカードが使っています（${s.foreign.slice(0, 3).map(r => codeOf(r)).join('、')}）`);
-    const old = s.mine.filter(r => str(r[COL.sub]) === theme);
+    // テーマ名はアプリのまとまりの名前。ほかの講座・科目に同じ名前があると、アプリで1つに混ざる
+    const clash = data.filter(r => str(r[COL.theme]) === theme && !s.mine.includes(r));
+    if (clash.length) errors.push(`テーマ名「${theme}」は、ほかのカードがもう使っています（${clash.slice(0, 3).map(r => codeOf(r)).join('、')}）。テーマ名（フォルダの名前）を変えてください`);
+    const old = s.mine.filter(r => str(r[COL.theme]) === theme);
     // 一度外したコードは使い回さない（外に出したリンク ?card= が別のカードを指さないように）。講座に「振った最後の番号」を覚えておく
     let next = Math.max(s.maxNo, Number(course.lastNo) || 0);
     cards.forEach((c, i) => { c.code = i < old.length ? codeOf(old[i]) : course.prefix + padNo(++next); c.reuse = i < old.length; });
@@ -257,7 +271,7 @@ module.exports = function intake(ctx) {
 
   const toRow = (t, c, pub) => {
     const r = new Array(10).fill('');
-    r[COL.code] = c.code; r[COL.theme] = t.course.name; r[COL.sub] = t.theme; r[COL.title] = c.title;
+    r[COL.code] = c.code; r[COL.theme] = t.theme; r[COL.sub] = c.part || ''; r[COL.title] = c.title;
     r[COL.body] = c.body + (c.sourceLine ? '\n\n' + c.sourceLine : ''); r[COL.subject] = SUBJECT; r[COL.pub] = pub || '';
     r[COL.author] = t.course.author; r[COL.tags] = t.course.tags;
     return r;
@@ -294,7 +308,7 @@ module.exports = function intake(ctx) {
       if (r === 'item' && method === 'GET') {
         const t = readTheme(q.get('course'), q.get('theme'));
         return sendJSON(res, 200, { ok: true, ...themeSummary(t), courseInfo: t.course, courseCount: t.courseCount,
-          cards: t.cards.map(c => ({ no: c.no, code: c.code, reuse: !!c.reuse, title: c.title, sourceLine: c.sourceLine || '', body: c.body || '', len: c.len || 0,
+          cards: t.cards.map(c => ({ no: c.no, code: c.code, reuse: !!c.reuse, part: c.part || '', title: c.title, sourceLine: c.sourceLine || '', body: c.body || '', len: c.len || 0,
                                      image: c.imageFile || '', imgW: c.imgW || 0, imgH: c.imgH || 0 })) });
       }
       // 図のファイルを返す（ブラウザで960×720のJPEGにするため）
@@ -320,7 +334,7 @@ module.exports = function intake(ctx) {
         }
         const rows = readCsvRows(), head = rows[0], data = rows.slice(1);
         const s = courseState(data, t.course);
-        const oldRows = s.mine.filter(x => str(x[COL.sub]) === t.theme);
+        const oldRows = s.mine.filter(x => str(x[COL.theme]) === t.theme);
         const oldSet = new Set(oldRows);
         const pubOf = new Map(oldRows.map(x => [codeOf(x), str(x[COL.pub])]));
         const newRows = t.cards.map(c => toRow(t, c, pubOf.get(c.code) || ''));
@@ -328,6 +342,17 @@ module.exports = function intake(ctx) {
         let pos;
         if (oldRows.length) { const first = data.indexOf(oldRows[0]); pos = data.slice(0, first).filter(x => !oldSet.has(x)).length; }   // もとの場所
         else {
+          const mineKept = new Set(s.mine);
+          // 同じ続きもの（「城攻め」＋番号のように、数字の前が同じ名前）の、番号の大きいテーマがもうあれば、その前に入れる。
+          //   城攻め1・3 の後から 城攻め2 を入れても、アプリで 1→2→3 と並ぶように（2026-11-18）
+          const series = n => { const m = /^(\D*?)(\d+)/.exec(n); return m ? { head: m[1], no: parseInt(m[2], 10) } : null; };
+          const me = series(t.theme);
+          if (me) {
+            const later = kept.findIndex(x => { if (!mineKept.has(x)) return false; const o = series(str(x[COL.theme])); return o && o.head === me.head && o.no > me.no; });
+            if (later >= 0) pos = later;
+          }
+        }
+        if (pos === undefined) {
           const mineKept = new Set(s.mine);
           let last = -1; kept.forEach((x, i) => { if (mineKept.has(x)) last = i; });                  // 講座の最後の行の後ろ
           if (last < 0) kept.forEach((x, i) => { if (str(x[COL.subject]) === SUBJECT) last = i; });   // 講座が空なら最後の自由研究の後ろ

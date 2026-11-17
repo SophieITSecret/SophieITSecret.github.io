@@ -65,13 +65,13 @@ function ikCourseForm(name) {
     <h3 class="ik-ftitle">${c ? '📚 講座の情報' : '＋ 新しい講座を立てる'}</h3>
     ${c ? `<div class="ik-note">CSV に ${c.cardCount}枚（公開 ${c.published}枚）。入ったテーマ：${ikEsc(c.themes.join('・') || 'まだありません')}</div>` : ''}
     <div class="ik-form">
-      ${f('ikCName', '講座名', c && c.name, '例：歴史の中の戦争解説', 'アプリの講座の名前。受付のフォルダの名前にもなります', locked)}
-      ${f('ikCAuthor', '著者', c && c.author, '例：宇田川敬介', 'アプリの「著者から」に出ます')}
-      ${f('ikCPrefix', 'コードの頭', c && c.prefix, '例：UDG', '英大文字2〜8字。カードのコードは「頭＋番号」（UDG01, UDG02…）。専用リンク ?study=頭 で講座を開けます', locked)}
+      ${f('ikCName', '講座名', c && c.name, '例：宇田川敬介の歴史の中の戦争解説', 'アプリの自由研究の見出しになります（著者名を含めてください）。受付のフォルダの名前にもなります。あとから変えられます')}
+      ${f('ikCAuthor', '著者', c && c.author, '例：宇田川敬介', 'カードの「著者」欄に入ります', locked)}
+      ${f('ikCPrefix', 'コードの頭', c && c.prefix, '例：UDG', '英大文字2〜8字。カードのコードは「頭＋番号」（UDG01, UDG02…）。専用リンク ?study=頭 は講座の最初のテーマを開きます', locked)}
       ${f('ikCTags', '研究テーマ', c && c.tags, '例：歴史;戦争', 'アプリの「テーマから」の分け方。いくつか書くときは ; で区切ります')}
       ${f('ikCSource', '出典の書き方', c && c.source, '例：『SSRI Monthly』', 'カードの本文の最後に「（出典：著者＋これ＋台帳の号）」の1行が付きます。空なら付けません')}
     </div>
-    ${locked ? '<div class="ik-note">カードが入っているので、講座名とコードの頭は変えられません。</div>' : ''}
+    ${locked ? '<div class="ik-note">カードが入っているので、著者とコードの頭は変えられません（講座名は変えられます）。</div>' : ''}
     <div class="ik-actions"><button class="btn-save" onclick="ikCourseSave(${c ? 'true' : 'false'})">${c ? '💾 講座の情報を直す' : '＋ この講座を立てる'}</button></div>`;
   document.getElementById('ikCPrefix').addEventListener('input', e => { e.target.value = e.target.value.toUpperCase(); });
 }
@@ -110,8 +110,8 @@ async function ikOpen(course, theme) {
       <input id="ikReason" class="ik-reason" placeholder="差し戻す理由（自動で見つけた問題は、書かなくても添えます）">
       <button class="btn-cancel" onclick="ikReturn()">↩ 差し戻す</button>
     </div>
-    <table class="ik-table"><tr><th>コード</th><th>題・本文の頭</th><th>図</th></tr>
-      ${j.cards.map(c => `<tr><td>${ikEsc(c.code)}${c.reuse ? '<div class="ik-sub">使い回し</div>' : ''}</td>
+    <table class="ik-table"><tr><th>コード</th><th>部</th><th>題・本文の頭</th><th>図</th></tr>
+      ${j.cards.map(c => `<tr><td>${ikEsc(c.code)}${c.reuse ? '<div class="ik-sub">使い回し</div>' : ''}</td><td>${ikEsc(c.part || '')}</td>
         <td><div class="ik-title">${c.no}. ${ikEsc(c.title)}</div><div class="ik-body">${ikEsc(String(c.body).slice(0, 120))}${c.body.length > 120 ? '…' : ''}</div>
             <div class="ik-sub">${c.len}字${c.sourceLine ? '・最後に ' + ikEsc(c.sourceLine) : ''}</div></td>
         <td>${img(c)}<div class="ik-sub">${c.imgW ? `${c.imgW}×${c.imgH}` : ''}</div></td></tr>`).join('')}

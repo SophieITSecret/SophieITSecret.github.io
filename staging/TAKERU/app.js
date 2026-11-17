@@ -26,7 +26,7 @@ const IS_PROD = (typeof window.__IS_PROD === 'boolean') ? window.__IS_PROD : (fu
 //   画像・音声はブラウザ自身が長くキャッシュするため、差し替えても
 //   古いものが出続ける。URLが変われば確実に取り直されるので、版が上がるたび
 //   ここも一緒に上げる（bump-sw.sh と作業台の「⬆ v」ボタンが書き換える）。
-const ASSET_V = 'v142';
+const ASSET_V = 'v143';
 function av(path) { return path + '?v=' + ASSET_V; }
 
 // ==========================================
@@ -151,7 +151,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     waitForGis();                           // Googleサインインの初期化（読み込み待ち）
     maybeShowInAppBanner();                  // LINE等の内蔵ブラウザ検知→外部ブラウザ案内
 
-    await Promise.all([loadCSV(), loadLinkCSV(), loadMp3List(), loadNewsCSV()]);
+    await Promise.all([loadCSV(), loadLinkCSV(), loadMp3List(), loadNewsCSV(), loadFreeCourses()]);
     setupButtons();
     setupSettings();
     loadSavedSettings();
@@ -243,6 +243,26 @@ async function loadCSV() {
     } catch (e) {
         console.error('CSVロード失敗:', e);
     }
+}
+
+// ==========================================
+// 自由研究の講座名（free_courses.json）2026-11-18 牧村さん
+//   自由研究は「講座（例 宇田川敬介の歴史の中の戦争解説）→ テーマ → カード」で見せる。
+//   講座はカードのコードの頭で引く。作業台の「📥 搬入」が講座を立てるたびに書く。
+//   読めない・講座に入っていないカードは、今までどおり「著者 の自由研究」の見出しで出す。
+// ==========================================
+let freeCourses = [];
+async function loadFreeCourses() {
+    try {
+        const res = await fetch(`free_courses.json?v=${Date.now()}`);
+        if (res.ok) {
+            const j = await res.json();
+            freeCourses = (Array.isArray(j) ? j : []).filter(c => c && /^[A-Z]{2,8}$/.test(c.prefix || '') && c.name);
+        }
+    } catch (e) { /* 読めなければ今までどおり */ }
+}
+function freeCourseOf(card) {
+    return freeCourses.find(c => new RegExp('^' + c.prefix + '\\d+$').test(card.id)) || null;
 }
 
 // ==========================================
@@ -727,16 +747,25 @@ function showFreeMenu(tab) {
 
     let body = '';
     if (freeTab === 'author') {
-        // 著者ごとに講座を並べる
-        const authors = [];
-        for (const c of freeCards()) if (c.author && !authors.includes(c.author)) authors.push(c.author);
-        if (!authors.length) {
+        // 講座ごとにテーマを並べる（2026-11-18）。講座の見出しは講座名（例 宇田川敬介の歴史の中の戦争解説）。
+        //   講座に入っていないカードは、著者ごとに「著者 の自由研究」の見出しでまとめる（前からの形）
+        const groups = [];
+        for (const c of freeCards()) {
+            if (!c.author && !freeCourseOf(c)) continue;
+            const co = freeCourseOf(c);
+            const key = co ? 'C:' + co.prefix : 'A:' + c.author;
+            if (!groups.some(g => g.key === key)) {
+                groups.push({ key, test: co ? (d => freeCourseOf(d) === co) : (d => !freeCourseOf(d) && d.author === c.author),
+                              label: co ? co.name : c.author + (c.author === 'MSフォーラム' ? '' : ' の自由研究') });
+            }
+        }
+        if (!groups.length) {
             body = `<div class="news-empty">準備中です。</div>`;
         } else {
             body = '<div class="card-list-body">';
-            for (const a of authors) {
-                body += `<div class="section-header">${escHtml(a)}${a === 'MSフォーラム' ? '' : ' の自由研究'}</div>`;
-                for (const u of freeUnits(c => c.author === a)) {
+            for (const g of groups) {
+                body += `<div class="section-header">${escHtml(g.label)}</div>`;
+                for (const u of freeUnits(g.test)) {
                     const enabled = hasVisibleCards(freeCards().filter(d => d.genre === u));
                     body += enabled
                         ? `<div class="menu-item free-unit" data-unit="${escHtml(u)}"><span class="item-dot">●</span> ${escHtml(u)}</div>`
