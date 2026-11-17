@@ -978,3 +978,12 @@ header { position:relative; z-index:50; }
 .mn-subtoc a { color: #6cb6ff; text-decoration: none; } .mn-subtoc a:hover { text-decoration: underline; }
 .mn-embed { margin-top: 18px; border: 1px solid #2c3e55; border-radius: 8px; padding: 4px 18px 14px; background: #0b131d; }
 .mn-embed-h { font-size: 13px; color: #9fb0c4; margin: 10px 0 4px; }
+/* 搬入：取り込んだ後の直し（2026-11-18） */
+.ik-change { border-color: #c9a227; }
+.ik-chg { border: 1px solid #2c3e55; border-radius: 8px; padding: 10px 14px; margin-bottom: 12px; }
+.ik-chg-h { font-size: 13px; margin-bottom: 8px; }
+.ik-chg-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.ik-chg-row figure { margin: 0; text-align: center; }
+.ik-chg-row img { width: 320px; height: 240px; object-fit: fill; border: 1px solid #2c3e55; border-radius: 4px; display: block; background: #fff; }
+.ik-chg-row figcaption { font-size: 11px; color: #8aa0b8; margin-top: 3px; }
+.ik-chg-arrow { font-size: 24px; color: #6cb6ff; }

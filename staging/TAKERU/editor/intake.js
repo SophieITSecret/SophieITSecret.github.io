@@ -279,6 +279,60 @@ module.exports = function intake(ctx) {
   const themeSummary = t => ({ course: t.course.name, theme: t.theme, count: t.cards.length, errors: t.errors, warnings: t.warnings, replace: t.replace,
     range: t.cards.length ? (t.cards.length > 1 ? `${t.cards[0].code}〜${t.cards[t.cards.length - 1].code}` : t.cards[0].code) : '' });
 
+  // ---------------- 取り込んだ後の直し（2026-11-18 牧村さんの希望） ----------------
+  //   ソフィーは、取り込み済みのフォルダの中の図や台帳を差し替えることがある。作業台はそれを見つけて画面に出す。
+  //   目印：「取り込んだ日時」（取り込み記録.md）より後に書き換わったファイル。片付けたものは _直しの記録.json に覚える
+  //   （ファイルごとに「ここまでは片付けた」時刻。取り込み記録.md には人が読む1行を足す）
+  const HANDLED = '_直しの記録.json';
+  function doneDir(course, folder) {
+    const c = okName(course, '講座名'), f = okName(folder, 'フォルダ名');
+    const d = boxDir('done', c, f);
+    if (!fs.existsSync(d) || !fs.statSync(d).isDirectory()) throw new Error(`取り込み済みにそのフォルダがありません：${c}\\${f}`);
+    return d;
+  }
+  function readRecord(dir) {
+    const p = path.join(dir, '取り込み記録.md');
+    if (!fs.existsSync(p)) return null;
+    const t = readText(p);
+    const m = /取り込んだ日時：(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2})/.exec(t);
+    const at = m ? new Date(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], 59).getTime() : fs.statSync(p).mtimeMs;
+    const theme = (/^- テーマ：(.+)$/m.exec(t) || [])[1] || '';
+    const codes = []; for (const line of t.split('\n')) { const x = /^\|\s*([A-Z]+\d+)\s*\|/.exec(line); if (x) codes.push(x[1]); }
+    return { at, theme: theme.trim(), codes };
+  }
+  const readHandled = dir => { try { return JSON.parse(readText(path.join(dir, HANDLED))); } catch { return {}; } };
+  function markHandled(dir, file, line) {
+    const h = readHandled(dir);
+    // ファイルの時刻が今より先（時計のずれなど）でも、片付いた扱いになるように
+    let mt = 0; try { mt = fs.statSync(path.join(dir, file)).mtimeMs; } catch {}
+    h[file] = Math.max(Date.now(), mt);
+    fs.writeFileSync(path.join(dir, HANDLED), JSON.stringify(h, null, 2) + '\n', 'utf8');
+    if (line) fs.appendFileSync(path.join(dir, '取り込み記録.md'), `\n- ${line}（${nowText()}・作業台）`, 'utf8');
+  }
+  // 講座の取り込み済みフォルダごとの直し：{ folder, theme, images:[{no, code, file}], texts:[file] }
+  function changesOf(course, data) {
+    const codesInCsv = new Set(data.map(codeOf));
+    const out = [];
+    for (const folder of lsDirs(boxDir('done', course.name))) {
+      const dir = boxDir('done', course.name, folder);
+      const rec = readRecord(dir); if (!rec) continue;
+      const h = readHandled(dir);
+      const images = [], texts = [];
+      for (const f of fs.readdirSync(dir)) {
+        if (f === HANDLED || f === '取り込み記録.md' || f === '差し戻し理由.md') continue;
+        const mt = fs.statSync(path.join(dir, f)).mtimeMs;
+        if (mt <= rec.at || mt <= (h[f] || 0)) continue;
+        const im = /^0*(\d+)\.(jpe?g|png)$/i.exec(f);
+        if (im) {
+          const code = rec.codes[parseInt(im[1], 10) - 1];
+          if (code && codesInCsv.has(code)) images.push({ no: parseInt(im[1], 10), code, file: f });
+        } else if (/^0*\d+\.txt$/i.test(f) || f === '台帳.csv') texts.push(f);
+      }
+      if (images.length || texts.length) out.push({ folder, theme: rec.theme || folder.replace(/^\d{8}_/, ''), images: images.sort((a, b) => a.no - b.no), texts });
+    }
+    return out;
+  }
+
   // ---------------- 経路 ----------------
   async function handle(pathname, method, req, res, q) {
     const r = pathname.slice('/api/intake/'.length);
@@ -291,7 +345,8 @@ module.exports = function intake(ctx) {
         const courses = list.map(c => {
           const s = courseState(data, c);
           const inbox = lsDirs(boxDir('in', c.name)).map(t => { try { return themeSummary(readTheme(c.name, t)); } catch (e) { return { course: c.name, theme: t, count: 0, errors: [e.message], warnings: [] }; } });
-          return { ...c, cardCount: s.mine.length, published: s.published, themes: s.themes, maxNo: s.maxNo, inbox };
+          let changes = []; try { changes = changesOf(c, data); } catch {}
+          return { ...c, cardCount: s.mine.length, published: s.published, themes: s.themes, maxNo: s.maxNo, inbox, changes };
         });
         const stray = lsDirs(boxDir('in')).filter(n => !list.some(c => c.name === n));
         const past = k => list.flatMap(c => lsDirs(boxDir(k, c.name)).map(n => `${c.name}\\${n}`)).sort((a, b) => b.split('\\')[1].localeCompare(a.split('\\')[1])).slice(0, 20);
@@ -394,6 +449,59 @@ module.exports = function intake(ctx) {
           saveCourses(list);
         } catch {}
         return sendJSON(res, 200, { ok: true, codes: t.cards.map(c => c.code), removed: oldRows.length, dropped, backup: w.backup, movedTo: `${t.course.name}\\${path.basename(to)}` });
+      }
+      // 取り込み済みの図を返す（直しの下見・変換用）
+      if (r === 'done-image' && method === 'GET') {
+        const dir = doneDir(q.get('course'), q.get('folder')), f = String(q.get('file') || '');
+        if (f !== path.basename(f) || !/\.(jpe?g|png)$/i.test(f)) throw new Error('図の名前が正しくありません');
+        const full = path.join(dir, f);
+        if (!fs.existsSync(full)) throw new Error('図がありません');
+        res.writeHead(200, { 'Content-Type': /png$/i.test(f) ? 'image/png' : 'image/jpeg', 'Cache-Control': 'no-store' });
+        return res.end(fs.readFileSync(full));
+      }
+      // 図を差し替える（ブラウザで 960×720 の JPEG にしたもの）。今の図は控える
+      if (r === 'replace-image' && method === 'POST') {
+        const b = await body(req);
+        const course = findCourse(b.course), dir = doneDir(b.course, b.folder);
+        const ch = changesOf(course, readCsvRows().slice(1)).find(x => x.folder === b.folder);
+        const it = ch && ch.images.find(x => x.file === b.file);
+        if (!it) throw new Error('その図の直しは見つかりません（もう片付いているかもしれません）');
+        const m = /^data:image\/jpeg;base64,(.+)$/.exec(String(b.image || ''));
+        if (!m) throw new Error('図を変換できませんでした');
+        const imgDir = config.imagesDir;
+        let backup = '';
+        for (const f of fs.readdirSync(imgDir)) {
+          if (path.basename(f, path.extname(f)) !== it.code) continue;
+          if (!fs.existsSync(imgBackupDir)) fs.mkdirSync(imgBackupDir, { recursive: true });
+          backup = `${it.code}_${timestamp()}${path.extname(f)}`;
+          fs.copyFileSync(path.join(imgDir, f), path.join(imgBackupDir, backup));
+          if (path.extname(f).toLowerCase() !== '.jpg') fs.unlinkSync(path.join(imgDir, f));
+        }
+        fs.writeFileSync(path.join(imgDir, it.code + '.jpg'), Buffer.from(m[1], 'base64'));
+        try { pruneBackups(imgBackupDir, RE_STAMP_BACKUP); } catch {}
+        markHandled(dir, it.file, `図を差し替え ${it.code} ← ${it.file}`);
+        return sendJSON(res, 200, { ok: true, code: it.code, backup });
+      }
+      // 差し替えない（一覧から外す）
+      if (r === 'skip-image' && method === 'POST') {
+        const b = await body(req);
+        const dir = doneDir(b.course, b.folder), f = path.basename(String(b.file || ''));
+        if (!fs.existsSync(path.join(dir, f))) throw new Error('そのファイルがありません');
+        markHandled(dir, f, `${f} の差し替えは、しないことにした`);
+        return sendJSON(res, 200, { ok: true });
+      }
+      // 題・本文の直し：フォルダを受付へ戻す（あとは「置き換えて取り込む」）
+      if (r === 'reopen' && method === 'POST') {
+        const b = await body(req);
+        findCourse(b.course);
+        const dir = doneDir(b.course, b.folder);
+        const rec = readRecord(dir);
+        const theme = okName((rec && rec.theme) || String(b.folder).replace(/^\d{8}_/, '').replace(/_\d+$/, ''), 'テーマ名');
+        const to = boxDir('in', okName(b.course, '講座名'), theme);
+        if (fs.existsSync(to)) throw new Error(`受付に同じテーマのフォルダがもうあります：${theme}`);
+        if (!fs.existsSync(path.dirname(to))) fs.mkdirSync(path.dirname(to), { recursive: true });
+        fs.renameSync(dir, to);
+        return sendJSON(res, 200, { ok: true, theme });
       }
       // 差し戻す：理由を書いて「差し戻し\<講座名>」へ
       if (r === 'return' && method === 'POST') {

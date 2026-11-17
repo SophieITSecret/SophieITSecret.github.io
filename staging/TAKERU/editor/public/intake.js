@@ -35,6 +35,10 @@ async function ikLoad() {
       <div class="ik-course">
         <div class="ik-cname ${ik.sel && ik.sel.edit && ik.sel.course === c.name ? 'on' : ''}" data-c="${ikEsc(c.name)}" onclick="ikCourseForm(this.dataset.c)" title="押すと講座の情報を見る・直す">
           📚 ${ikEsc(c.name)}<span class="ik-sub">　${ikEsc(c.author)}・${ikEsc(c.prefix)}・${c.cardCount}枚（公開${c.published}）</span></div>
+        ${(c.changes || []).map(ch => `<div class="ik-item ik-change ${ik.sel && ik.sel.change && ik.sel.course === c.name && ik.sel.folder === ch.folder ? 'on' : ''}" data-c="${ikEsc(c.name)}" data-f="${ikEsc(ch.folder)}" onclick="ikOpenChange(this.dataset.c, this.dataset.f)">
+            <div class="ik-name">🖼 直しが来ています：${ikEsc(ch.theme)}</div>
+            <div class="ik-sub">${ch.images.length ? `図 ${ch.images.map(x => ikEsc(x.code)).join('・')}` : ''}${ch.images.length && ch.texts.length ? '／' : ''}${ch.texts.length ? '題・本文' : ''}</div>
+          </div>`).join('')}
         ${c.inbox.length ? c.inbox.map(t => `<div class="ik-item ${on(c.name, t.theme)}" data-c="${ikEsc(c.name)}" data-t="${ikEsc(t.theme)}" onclick="ikOpen(this.dataset.c, this.dataset.t)">
             <div class="ik-name">${t.errors.length ? '⚠️' : '✅'} ${ikEsc(t.theme)}</div>
             <div class="ik-sub">${t.count || 0}枚${t.range ? '・' + ikEsc(t.range) : ''}${t.replace ? '・出し直し' : ''}${t.errors.length ? `・直し ${t.errors.length}件` : ''}${t.warnings.length ? `・注意 ${t.warnings.length}件` : ''}</div>
@@ -46,7 +50,8 @@ async function ikLoad() {
   // 開いていたものを開き直す
   const s = ik.sel;
   const c = s && j.courses.find(x => x.name === s.course);
-  if (s && s.theme && c && c.inbox.some(t => t.theme === s.theme)) await ikOpen(s.course, s.theme);
+  if (s && s.change && c && (c.changes || []).some(x => x.folder === s.folder)) ikOpenChange(s.course, s.folder);
+  else if (s && s.theme && c && c.inbox.some(t => t.theme === s.theme)) await ikOpen(s.course, s.theme);
   else if (s && s.edit && c) ikCourseForm(s.course);
   else if (s && s.newCourse) ikCourseForm();
   else { ik.sel = null; ik.item = null; document.getElementById('ikBody').innerHTML = '<p class="qr-empty">左の受付からテーマを1つ選んでください。新しい講座は「＋ 新しい講座」から立てます。形の決まりは置き場の「搬入の決まり.md」にあります。</p>'; }
@@ -116,6 +121,70 @@ async function ikOpen(course, theme) {
             <div class="ik-sub">${c.len}字${c.sourceLine ? '・最後に ' + ikEsc(c.sourceLine) : ''}</div></td>
         <td>${img(c)}<div class="ik-sub">${c.imgW ? `${c.imgW}×${c.imgH}` : ''}</div></td></tr>`).join('')}
     </table>`;
+}
+
+// ---------------- 取り込んだ後の直し（2026-11-18） ----------------
+//   取り込み済みのフォルダで差し替えられた図を、今のカードの図と並べて見せる。押せば差し替える
+function ikOpenChange(course, folder) {
+  const c = ik.list.courses.find(x => x.name === course);
+  const ch = c && (c.changes || []).find(x => x.folder === folder);
+  if (!ch) { ik.sel = null; ikLoad(); return; }
+  ik.sel = { course, folder, change: true }; ik.item = null;
+  document.querySelectorAll('.ik-item').forEach(e => e.classList.toggle('on', e.dataset.c === course && e.dataset.f === folder));
+  document.querySelectorAll('.ik-cname').forEach(e => e.classList.remove('on'));
+  const q = `course=${encodeURIComponent(course)}&folder=${encodeURIComponent(folder)}`;
+  const t = Date.now();
+  document.getElementById('ikBody').innerHTML = `
+    <div class="ik-meta"><div class="ik-crumb">📚 ${ikEsc(course)}　›　<b>${ikEsc(ch.theme)}</b>　の直し</div>
+      <div class="ik-note">取り込んだ後に、置き場（取り込み済み\\${ikEsc(course)}\\${ikEsc(folder)}）で差し替えられたファイルです。</div></div>
+    ${ch.images.map(x => `
+      <div class="ik-chg">
+        <div class="ik-chg-h"><b>${ikEsc(x.code)}</b>　${ikEsc(x.file)}</div>
+        <div class="ik-chg-row">
+          <figure><img src="/api/images/${encodeURIComponent(x.code)}.jpg?t=${t}" alt=""><figcaption>いまのカードの図</figcaption></figure>
+          <div class="ik-chg-arrow">→</div>
+          <figure><img src="/api/intake/done-image?${q}&file=${encodeURIComponent(x.file)}&t=${t}" alt=""><figcaption>新しい図</figcaption></figure>
+        </div>
+        <div class="ik-actions">
+          <button class="btn-save" onclick="ikReplaceImage('${ikEsc(x.file)}','${ikEsc(x.code)}', this)">🖼 この図に差し替える</button>
+          <button class="btn-cancel" onclick="ikSkipImage('${ikEsc(x.file)}')">差し替えない</button>
+        </div>
+      </div>`).join('')}
+    ${ch.texts.length ? `
+      <div class="ik-warns"><b>題や本文が直されています</b>（${ch.texts.map(ikEsc).join('・')}）<br>
+        「受付へ戻す」を押すと、このテーマのフォルダが受付に戻ります。そのあと、受付のテーマを開いて「⚠ 置き換えて取り込む」を押してください。テーマ全体（題・本文・図）が、置き場の原稿の形で入り直します（上の図の差し替えは、しなくてもかまいません）。
+        <div class="ik-actions"><button class="btn-save" onclick="ikReopen()">↩ 受付へ戻す</button></div></div>` : ''}`;
+}
+async function ikReplaceImage(file, code, btn) {
+  const s = ik.sel; if (!s || !s.change) return;
+  if (!confirm(`${code} の図を、${file} に差し替えます。今の図は控えに残ります。よろしいですか？`)) return;
+  if (btn) { btn.disabled = true; btn.textContent = '差し替えています…'; }
+  try {
+    const image = await ikToJpeg(`/api/intake/done-image?course=${encodeURIComponent(s.course)}&folder=${encodeURIComponent(s.folder)}&file=${encodeURIComponent(file)}`);
+    const r = await ikPost('replace-image', { course: s.course, folder: s.folder, file, image });
+    if (!r.ok) throw new Error(r.error);
+    ikToast(`${r.code} の図を差し替えました（前の図は控えに残しました）。カードの画面で見るときは「🔄 再読み込み」を押してください`);
+    await ikLoad();
+  } catch (e) {
+    ikToast('差し替えられませんでした：' + e.message, true);
+    if (btn) { btn.disabled = false; btn.textContent = '🖼 この図に差し替える'; }
+  }
+}
+async function ikSkipImage(file) {
+  const s = ik.sel; if (!s || !s.change) return;
+  if (!confirm(`${file} は差し替えずに、一覧から外します。よろしいですか？`)) return;
+  const r = await ikPost('skip-image', { course: s.course, folder: s.folder, file });
+  if (!r.ok) { ikToast(r.error, true); return; }
+  await ikLoad();
+}
+async function ikReopen() {
+  const s = ik.sel; if (!s || !s.change) return;
+  if (!confirm('このテーマのフォルダを受付へ戻します。そのあと「置き換えて取り込む」で入れ直してください。よろしいですか？')) return;
+  const r = await ikPost('reopen', { course: s.course, folder: s.folder });
+  if (!r.ok) { ikToast(r.error, true); return; }
+  ikToast(`受付へ戻しました。左の「${r.theme}」を開いて「⚠ 置き換えて取り込む」を押してください`);
+  ik.sel = { course: s.course, theme: r.theme };
+  await ikLoad();
 }
 
 // 図を 960×720 の JPEG に（伸び縮みさせる。白で下地を塗ってから描く）
