@@ -10,6 +10,7 @@
 //   読む所（どれも読むだけ）：
 //     X 用 GAS の窓口（action=x_list）／マガジン GAS の窓口（action=magazine_dashboard）
 //     本番のアプリ（takeru.ms-forum.com）と「様子の窓」（health.php）／開発版の sw.js（版の比べ）
+//     HP の YouTube の予定（ms-forum.com/youtube.html）／チャンネルの公開の一覧（RSS）／YouTube の oEmbed（リンク切れ）
 //   合鍵・住所は「スクリプトのプロパティ」に置く（コードにもリポジトリにも書かない）：
 //     X_GAS_URL, X_TOKEN, MAG_GAS_URL, MAG_TOKEN, ALERT_TO, WATCH_FOLDER_ID
 //     （任意）DEADLINES_JSON … 期日表。[{"name":"…","due":"YYYY-MM-DD","who":"牧村さん","note":"…"}]
@@ -19,6 +20,8 @@
 var APP_URL = 'https://takeru.ms-forum.com/';
 var HEALTH_URL = 'https://takeru.ms-forum.com/health.php';
 var DEV_SW_URL = 'https://sophieitsecret.github.io/staging/TAKERU/sw.js';
+var YT_PAGE_URL = 'https://ms-forum.com/youtube.html';
+var YT_FEED_URL = 'https://www.youtube.com/feeds/videos.xml?channel_id=UCOhTl9zeT96dp5XYXEJbZYw';   // MSフォーラム 軍事・戦略検定講座（@MSCPOfficial）
 var TZ = 'Asia/Tokyo';
 var STATUS_FILE = '今日の様子.md';
 var RENOTIFY_HOURS = 24;
@@ -52,7 +55,7 @@ function hourly() {
     var now = now_();
     var results = [];                 // 確かめた項目：{ name, state: 'ok'|'ng'|'skip', detail }
     var found = [];                   // 異常：{ key, title, detail, who }
-    var checks = [checkX_, checkMagazine_, checkApp_, checkDeadlines_];
+    var checks = [checkX_, checkMagazine_, checkApp_, checkYouTube_, checkDeadlines_];
     checks.forEach(function (fn) {
       try { fn(now, results, found); }
       catch (e) { found.push({ key: 'watch-' + fn.name, title: '見張り番の確かめごとが失敗しました（' + fn.name + '）', detail: String(e && e.message || e), who: 'T' }); }
@@ -157,6 +160,95 @@ function checkApp_(now, results, found) {
   }
   results.push({ name: 'アプリ本番', state: n ? 'ng' : 'ok', detail: '版 ' + s.version + '・集計 ' + s.summary_last_date + '・ニュース ' + s.news_csv + (n ? '・異常 ' + n + '件' : '') });
 }
+
+// YouTube の毎日17時の公開と HP の入口（2026-11-19 ソフィーの頼み R-20261119-S-01）
+//   予定：HP の youtube.html（テーマごとに data-open・テーマ名・全N話・公開済みの印 data-ready とリンク）
+//   実際：チャンネルの公開の一覧（RSS。新しい15本）。リンク切れ：oEmbed（無い・非公開なら 404）
+function checkYouTube_(now, results, found) {
+  var sp = PropertiesService.getScriptProperties();
+  var page = fetch_(YT_PAGE_URL);
+  if (!page || page.code !== 200) {
+    var since = Number(sp.getProperty('YT_PAGE_FAIL_SINCE') || 0) || now.getTime();
+    sp.setProperty('YT_PAGE_FAIL_SINCE', String(since));
+    if (now.getTime() - since > 12 * 3600000) {
+      found.push({ key: 'yt-page', title: 'HP の YouTube のページ（予定の一覧）が半日以上読めません', detail: YT_PAGE_URL + ' が ' + (page ? 'HTTP ' + page.code : '応えない'), who: 'ホームくん' });
+      results.push({ name: 'YouTube の公開', state: 'ng', detail: '予定が読めない（半日以上）' });
+    } else results.push({ name: 'YouTube の公開', state: 'skip', detail: '予定（HP）が読めない' });
+    return;
+  }
+  sp.deleteProperty('YT_PAGE_FAIL_SINCE');
+  var themes = parseYtPage_(page.text);
+  var opened = themes.filter(function (t) { return t.open && t.open.getTime() <= now.getTime(); });
+  if (!opened.length) { results.push({ name: 'YouTube の公開', state: 'skip', detail: '公開済みのテーマがまだ無い' }); return; }
+  var n = 0, notes = [];
+
+  // 1. 公開の40分後から24時間：RSS に合本と Shorts が出たか
+  var recent = opened.filter(function (t) { var m = minutesBetween_(t.open, now); return m >= 40 && m < 24 * 60; });
+  if (recent.length) {
+    var feed = fetch_(YT_FEED_URL), entries = feed && feed.code === 200 ? parseYtFeed_(feed.text) : null;
+    if (!entries) { notes.push('公開の一覧（RSS）が読めない'); }
+    else recent.forEach(function (t) {
+      var shorts = entries.filter(function (e) { return e.isShort && e.title.indexOf('｜' + t.name) >= 0; }).length;
+      var full = entries.some(function (e) { return !e.isShort && e.title.indexOf(t.name + ' 全') === 0; });
+      var need = Math.min(t.count || 1, 14);
+      if (!full || shorts < need) {
+        n++; found.push({ key: 'yt-missing-' + t.no, title: 'YouTube：' + t.label + '「' + t.name + '」が出そろっていません（' + fmt_(t.open, 'M月d日 HH:mm') + ' 公開の予定）',
+          detail: '合本：' + (full ? 'あり' : 'なし') + '／Shorts：' + shorts + '本（' + need + '本以上のはず）', who: '牧村さん（YouTube の予約）・ソフィー（原因の説明）' });
+      } else notes.push(t.name + ' 合本あり・Shorts ' + shorts + '本');
+    });
+  }
+  // 2. 公開の60分後から：HP のそのテーマが公開済みの形になったか
+  opened.forEach(function (t) {
+    if (minutesBetween_(t.open, now) >= 60 && (!t.ready || !t.links.length)) {
+      n++; found.push({ key: 'yt-hp-' + t.no, title: 'HP の YouTube のページ：' + t.label + '「' + t.name + '」が「公開予定」のままです',
+        detail: '公開の時刻（' + fmt_(t.open, 'M月d日 HH:mm') + '）を過ぎたのに、スタートカードと合本のリンクが出ていません', who: 'ホームくん（ソフィーから依頼）' });
+    }
+  });
+  // 3. 1日1回（19時台）：公開済みのテーマのリンクが生きているか
+  var today = fmt_(now, 'yyyy-MM-dd');
+  if (fmt_(now, 'HH') === '19' && sp.getProperty('YT_LINKCHECK_DATE') !== today) {
+    sp.setProperty('YT_LINKCHECK_DATE', today);
+    var checked = 0;
+    opened.forEach(function (t) {
+      t.links.forEach(function (url) {
+        checked++;
+        var r = fetch_('https://www.youtube.com/oembed?format=json&url=' + encodeURIComponent(url));
+        if (r && (r.code === 404 || r.code === 401 || r.code === 403)) {
+          n++; found.push({ key: 'yt-link-' + hash_(url), title: 'HP の YouTube のページのリンクが切れています：' + t.label + '「' + t.name + '」',
+            detail: url + '（YouTube が HTTP ' + r.code + '。動画が無いか、非公開）', who: 'ホームくん（リンクの直し）・牧村さん（動画の公開設定）' });
+        }
+      });
+    });
+    notes.push('リンク ' + checked + '本を確かめた');
+  }
+  results.push({ name: 'YouTube の公開', state: n ? 'ng' : 'ok', detail: '公開済み ' + opened.length + 'テーマ' + (notes.length ? '・' + notes.join('・') : '') + (n ? '・異常 ' + n + '件' : '') });
+}
+// HP の youtube.html から、テーマの予定を拾う
+function parseYtPage_(html) {
+  var out = [], re = /<li class="yt-item[^"]*"([^>]*)>([\s\S]*?)<\/li>/g, m;   // 公開済みは class="yt-item is-open"
+  while ((m = re.exec(html))) {
+    var attrs = m[1], body = m[2];
+    var open = /data-open="([^"]+)"/.exec(attrs);
+    var h3 = /<span class="yt-no">([^<]*)<\/span>([^<]*)<span class="yt-count">全(\d+)話/.exec(body);
+    if (!open || !h3) continue;
+    var links = [], on = /<p class="yt-links yt-on">([\s\S]*?)<\/p>/.exec(body);
+    if (on) { var a, ra = /href="([^"]+)"/g; while ((a = ra.exec(on[1]))) links.push(a[1]); }
+    out.push({ open: new Date(open[1]), ready: /data-ready/.test(attrs), label: h3[1].trim(), no: h3[1].replace(/\D/g, ''),
+               name: h3[2].trim(), count: Number(h3[3]), links: links });
+  }
+  return out;
+}
+// チャンネルの公開の一覧（RSS）から、題と種類を拾う
+function parseYtFeed_(xml) {
+  var out = [], re = /<entry>([\s\S]*?)<\/entry>/g, m;
+  while ((m = re.exec(xml))) {
+    var e = m[1], t = /<title>([\s\S]*?)<\/title>/.exec(e), l = /<link rel="alternate" href="([^"]+)"/.exec(e);
+    if (!t) continue;
+    out.push({ title: unescapeXml_(t[1]), isShort: !!(l && l[1].indexOf('/shorts/') >= 0) });
+  }
+  return out;
+}
+function unescapeXml_(s) { return String(s).replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'"); }
 
 // 期限もの：2週間前から知らせる
 function checkDeadlines_(now, results, found) {
