@@ -635,6 +635,24 @@
   </div>
 </div>
 
+<!-- 🔤 読み確認と読みの辞書（public/reading.js） -->
+<div id="readingModal" class="modal-overlay">
+  <div class="modal-box dk-box">
+    <div class="modal-head mag-top">
+      <h2>🔤 読み確認</h2>
+      <button class="rd-tab dash-refresh" data-t="cards" onclick="rdSetTab('cards')">カードの読み</button>
+      <button class="rd-tab dash-refresh" data-t="dict" onclick="rdSetTab('dict')">読みの辞書</button>
+      <button class="dash-refresh" onclick="openManual('カードの基本作業')" title="使い方">❓ 使い方</button>
+      <button class="btn-cancel" onclick="closeReading()">✕ 閉じる</button>
+    </div>
+    <div class="dk-wrap">
+      <aside id="rdSide" class="dk-side"></aside>
+      <main class="dk-main"><div id="rdBody"></div></main>
+    </div>
+    <div id="rdToast" class="dk-toast" style="display:none"></div>
+  </div>
+</div>
+
 <!-- 📖 使い方（public/manual.js ／ 中身は editor/manual/*.md と public/desk-help.js） -->
 <div id="manualModal" class="modal-overlay">
   <div class="modal-box dk-box">
@@ -704,6 +722,7 @@
       </select>
       <button class="btn-unit-nav" id="btnNextUnit" onclick="nextUnit()" disabled title="次のテーマ">▶</button>
       <button class="btn-rename" id="btnRename" onclick="openRename()" disabled title="テーマ名・サブテーマ名を変更">✏️</button>
+      <button class="btn-batch-rec" id="btnReading" onclick="openReading()" disabled title="読み確認：テーマのカードの読みの原稿（VOICEPEAK に読ませる文）を確かめて確定する。年代の読みや辞書の語は自動で置き換え、辞書に無い型式は要確認で出す。確定した読みを「🎙 一括」が読む">🔤 読み</button>
       <button class="btn-batch-rec" id="btnBatchRecord" onclick="recordUnitBatch()" disabled title="テーマ内の未生成カードを一括録音">🎙 一括</button>
       <button class="btn-unit-pub" id="btnUnitPub" onclick="openUnitPub()" disabled title="このテーマをまとめて公開／非公開にする">🌐 公開</button>
       <span class="card-count" id="cardCount">0枚</span>
@@ -850,6 +869,7 @@
 <script src="desk.js"></script>
 <script src="intake.js"></script>
 <script src="manual.js"></script>
+<script src="reading.js"></script>
 <script src="desk-help.js"></script>
 <script src="book.js"></script>
 <script>

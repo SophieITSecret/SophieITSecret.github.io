@@ -10,7 +10,11 @@ const { exec, spawn } = require('child_process');
 
 // ---- 設定読み込み ----
 const CONFIG_PATH = path.join(__dirname, 'config.json');
-const READING_SCRIPTS_PATH = path.join(__dirname, 'reading_scripts.json');
+// 読み上げ原稿・読みの辞書・読みの確定の記録（試しのときは EDITOR_TEST_READING_DIR で置き場を差し替える）
+const READING_DIR = process.env.EDITOR_TEST_READING_DIR || __dirname;
+const READING_SCRIPTS_PATH = path.join(READING_DIR, 'reading_scripts.json');
+const READING_DICT_PATH = path.join(READING_DIR, 'reading_dict.json');
+const READING_META_PATH = path.join(READING_DIR, 'reading_meta.json');
 const PROMPTS_PATH = path.join(__dirname, 'prompts.json');
 const VOICE_SETTINGS_PATH = path.join(__dirname, 'voice_settings.json');
 let config;
@@ -1092,6 +1096,181 @@ function postReadingScript(req, res) {
   });
 }
 
+// ============================================================
+// 🔤 読みの辞書と、読みの確定の記録（2026-11-19 牧村さん。画面は public/reading.js）
+//   reading_dict.json … [{ sur, pron, src: 'voicepeak'|'workbench'|'sophie', note, added }]
+//     src=voicepeak は VOICEPEAK の辞書から取り込んだ語（VOICEPEAK 側で効くので、作業台は置き換えに使わない）
+//   reading_meta.json … { <コード>: { confirmedAt, bodyHash } }  どの本文で読みを確定したか
+// ============================================================
+function readJsonFile(p, dflt) { try { return JSON.parse(fs.readFileSync(p, 'utf8')); } catch { return dflt; } }
+function readBody(req) {
+  return new Promise((ok, ng) => { const c = []; req.on('data', x => c.push(x));
+    req.on('end', () => { try { ok(JSON.parse(Buffer.concat(c).toString('utf8') || '{}')); } catch (e) { ng(e); } }); });
+}
+const katakanaOk = s => /^[ァ-ヶー・\s]+$/.test(String(s || ''));
+// ソフィーとの受け渡しの置き場（既定 TAKERU_共有\70_読み。試しは EDITOR_TEST_READING_BOX）
+const readingBox = () => process.env.EDITOR_TEST_READING_BOX || config.readingDir || 'G:\\マイドライブ\\TAKERU_共有\\70_読み';
+const ymdNow = () => { const d = new Date(), p = n => String(n).padStart(2, '0'); return `${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}`; };
+function safeName(n) {
+  const s = String(n || '').trim();
+  if (!s || /[\\/:*?"<>|]/.test(s) || s.startsWith('.')) throw new Error('テーマ名がファイル名に使えません：' + s);
+  return s;
+}
+// 返事\ の中で、そのテーマのいちばん新しい CSV（YYYYMMDD_<テーマ>.csv）
+function findReply(theme) {
+  const dir = path.join(readingBox(), '返事');
+  let names = []; try { names = fs.readdirSync(dir); } catch { return null; }
+  const hit = names.filter(n => n.toLowerCase().endsWith('.csv') && n.replace(/^\d{8}_/, '').replace(/(_\d+)?\.csv$/i, '') === theme).sort();
+  return hit.length ? path.join(dir, hit[hit.length - 1]) : null;
+}
+// 返事の CSV：書き方,読み,カード,範囲,なぜ
+function parseReply(text) {
+  const rows = parseCsvText(String(text).replace(/^\uFEFF/, '')).filter(r => r.some(x => String(x).trim()));
+  const head = (rows[0] || []).map(s => String(s).trim()), at = k => head.indexOf(k);
+  const out = [], bad = [];
+  if (at('書き方') < 0 || at('読み') < 0) return { rows: [], bad: [{ line: 1, reason: '1行目の見出しに「書き方」と「読み」が要ります（書き方,読み,カード,範囲,なぜ）' }] };
+  rows.slice(1).forEach((r, i) => {
+    const g = k => (at(k) >= 0 ? String(r[at(k)] || '').trim() : '');
+    const row = { sur: g('書き方'), pron: g('読み').replace(/\s+/g, ''), cards: g('カード').split(/[;；、,\s]+/).filter(Boolean), scope: g('範囲') || '全体', why: g('なぜ') };
+    const line = i + 2;
+    if (!row.sur) bad.push({ line, reason: '書き方が空' });
+    else if (!katakanaOk(row.pron)) bad.push({ line, reason: `「${row.sur}」の読みがカタカナでない（${row.pron || '空'}）` });
+    else if (!['全体', 'このカードだけ'].includes(row.scope)) bad.push({ line, reason: `「${row.sur}」の範囲は「全体」か「このカードだけ」（${row.scope}）` });
+    else if (row.scope === 'このカードだけ' && !row.cards.length) bad.push({ line, reason: `「${row.sur}」はこのカードだけなのに、カードが書いてない` });
+    else out.push(row);
+  });
+  return { rows: out, bad };
+}
+// 依頼の md：ソフィーが読む。本文・今の辞書・作業台の決まり・返事の書き方
+function readingRequestMd(name, theme, cards, dict) {
+  const words = dict.filter(x => !x.pending);
+  return [
+    `# 読みの洗い出しの依頼：${theme}`, '',
+    `- 依頼の名前：${name}`, `- 作った日時：${timestamp()}（作業台）`, `- カード：${cards.length}枚`, '',
+    '## お願い',
+    '下の「本文」を読み、VOICEPEAK が読み違えそうな語を拾って、**辞書の追加分**を返してください。拾い方は `70_読み\\読みの決まり.md` のとおりです。',
+    '- 下の「今の辞書」にある語と、「作業台が自動で直すもの」は、拾わなくてよい。',
+    `- 返事は \`70_読み\\返事\\${name}.csv\` に置いてください（UTF-8）。1行目は見出し：`, '',
+    '```', '書き方,読み,カード,範囲,なぜ', '金沢柵,カネザワノサク,UDG02,全体,城の名前。カナザワと読まれやすい', '十分,ジュップン,UDG05,このカードだけ,「十分間」の意味', '```', '',
+    '- 読み：カタカナ。範囲：「全体」（ほかのカードでも同じ読み）か「このカードだけ」。カード：その語が出るカードのコード（いくつかあれば ; で区切る）。',
+    '- 拾う語が1つも無ければ、見出しの1行だけの CSV を置いてください。', '',
+    '## 作業台が自動で直すもの（拾わなくてよい）',
+    '- 年代：数字＋年／年代／年頃／年間（例 1087年 → センハチジュウナナネン、1542〜43年、1980年代、紀元前221年）。', '',
+    `## 今の辞書（${words.length}語。拾わなくてよい）`,
+    words.map(x => `${x.sur}＝${x.pron}${(x.cards || []).length ? `（${x.cards.join('・')}だけ）` : ''}`).join('　'), '',
+    '## 本文', '',
+    ...cards.flatMap(c => [`### ${c.id}　${String(c.title || '').replace(/^→/, '')}`, '', String(c.body || '').trim(), '']),
+  ].join('\n');
+}
+async function handleReading(pathname, method, req, res) {
+  try {
+    if (pathname === '/api/reading-dict' && method === 'GET') return sendJSON(res, 200, { ok: true, items: readJsonFile(READING_DICT_PATH, []) });
+    // 1語を足す・直す（同じ書き方があれば置き換え）・消す
+    if (pathname === '/api/reading-dict' && method === 'POST') {
+      const b = await readBody(req);
+      const items = readJsonFile(READING_DICT_PATH, []);
+      const sur = String(b.sur || '').trim();
+      if (!sur) return sendJSON(res, 400, { ok: false, error: '書き方が空です' });
+      const i = items.findIndex(x => x.sur === sur);
+      if (b.op === 'delete') { if (i >= 0) items.splice(i, 1); }
+      else {
+        const pron = String(b.pron || '').trim();
+        if (!katakanaOk(pron)) return sendJSON(res, 400, { ok: false, error: '読みはカタカナで書いてください' });
+        const it = { sur, pron, src: b.src || 'workbench', note: String(b.note || ''), added: new Date().toISOString().slice(0, 10) };
+        if (i >= 0) items[i] = { ...items[i], ...it, src: b.src || (items[i].src === 'voicepeak' ? 'workbench' : items[i].src) };
+        else items.push(it);
+      }
+      fs.writeFileSync(READING_DICT_PATH, JSON.stringify(items, null, 2) + '\n', 'utf8');
+      return sendJSON(res, 200, { ok: true, items });
+    }
+    // VOICEPEAK の辞書の書き出し（.vdc2 の中身。画面で読んだ JSON を送る）を取り込む。作業台で足した語は残す
+    if (pathname === '/api/reading-dict/import' && method === 'POST') {
+      const b = await readBody(req);
+      if (!Array.isArray(b.entries)) return sendJSON(res, 400, { ok: false, error: 'VOICEPEAK の辞書の形ではありません' });
+      const vp = b.entries.filter(e => e && e.sur && e.pron).map(e => ({ sur: String(e.sur), pron: String(e.pron), src: 'voicepeak', note: '', added: new Date().toISOString().slice(0, 10) }));
+      const items = readJsonFile(READING_DICT_PATH, []).filter(x => x.src !== 'voicepeak');
+      const mine = new Set(items.map(x => x.sur));
+      const merged = items.concat(vp.filter(x => !mine.has(x.sur)));
+      fs.writeFileSync(READING_DICT_PATH, JSON.stringify(merged, null, 2) + '\n', 'utf8');
+      return sendJSON(res, 200, { ok: true, imported: vp.length, total: merged.length, items: merged });
+    }
+    // 辞書の語を認める（ソフィー案 → 正式な語）
+    if (pathname === '/api/reading-dict/approve' && method === 'POST') {
+      const b = await readBody(req);
+      const items = readJsonFile(READING_DICT_PATH, []);
+      for (const s of (b.surs || [])) { const it = items.find(x => x.sur === s); if (it) delete it.pending; }
+      fs.writeFileSync(READING_DICT_PATH, JSON.stringify(items, null, 2) + '\n', 'utf8');
+      return sendJSON(res, 200, { ok: true, items });
+    }
+    // ---- ソフィーとの受け渡し（置き場 config.readingDir。依頼\ 返事\ 済み\）----
+    // 依頼を作る：{ theme, cards:[{id,title,body}] }
+    if (pathname === '/api/reading-request' && method === 'POST') {
+      const b = await readBody(req);
+      const theme = safeName(b.theme);
+      const cards = (b.cards || []).filter(c => c && c.id);
+      if (!cards.length) return sendJSON(res, 400, { ok: false, error: 'カードがありません' });
+      const dict = readJsonFile(READING_DICT_PATH, []);
+      const name = `${ymdNow()}_${theme}`;
+      const dir = path.join(readingBox(), '依頼');
+      fs.mkdirSync(dir, { recursive: true });
+      fs.writeFileSync(path.join(dir, name + '.md'), readingRequestMd(name, theme, cards, dict), 'utf8');
+      return sendJSON(res, 200, { ok: true, name, path: path.join(dir, name + '.md') });
+    }
+    // 返事を読む：?theme= … 返事\ の、そのテーマのいちばん新しい CSV
+    if (pathname === '/api/reading-reply' && method === 'GET') {
+      const theme = safeName(new URL(req.url, 'http://x').searchParams.get('theme'));
+      const f = findReply(theme);
+      if (!f) return sendJSON(res, 200, { ok: true, found: false });
+      return sendJSON(res, 200, { ok: true, found: true, file: path.basename(f), ...parseReply(fs.readFileSync(f, 'utf8')) });
+    }
+    // 返事を取り込む：{ theme } … 辞書に「ソフィー案（未承認）」で入れ、依頼と返事を 済み\ へ
+    if (pathname === '/api/reading-reply/import' && method === 'POST') {
+      const b = await readBody(req);
+      const theme = safeName(b.theme);
+      const f = findReply(theme);
+      if (!f) return sendJSON(res, 400, { ok: false, error: 'そのテーマの返事がありません' });
+      const { rows, bad } = parseReply(fs.readFileSync(f, 'utf8'));
+      const items = readJsonFile(READING_DICT_PATH, []);
+      let added = 0, kept = 0;
+      for (const r of rows) {
+        const cards = r.scope === 'このカードだけ' ? r.cards : [];
+        const same = items.find(x => x.sur === r.sur && JSON.stringify(x.cards || []) === JSON.stringify(cards));
+        if (same && !same.pending) { kept++; continue; }   // もう認めた語は、そのまま
+        const it = { sur: r.sur, pron: r.pron, src: 'sophie', note: r.why || '', added: ymdNow(), pending: true, cards };
+        if (same) Object.assign(same, it); else items.push(it);
+        added++;
+      }
+      fs.writeFileSync(READING_DICT_PATH, JSON.stringify(items, null, 2) + '\n', 'utf8');
+      const doneDir = path.join(readingBox(), '済み'); fs.mkdirSync(doneDir, { recursive: true });
+      const base = path.basename(f, '.csv');
+      const moveTo = (p) => { let t = path.join(doneDir, path.basename(p)), i = 2; while (fs.existsSync(t)) t = path.join(doneDir, path.basename(p).replace(/(\.\w+)$/, `_${i++}$1`)); fs.renameSync(p, t); };
+      moveTo(f);
+      const req1 = path.join(readingBox(), '依頼', base + '.md'); if (fs.existsSync(req1)) moveTo(req1);
+      return sendJSON(res, 200, { ok: true, added, kept, bad, items });
+    }
+    if (pathname === '/api/reading-meta' && method === 'GET') return sendJSON(res, 200, { ok: true, meta: readJsonFile(READING_META_PATH, {}) });
+    // 確定：読み原稿を保存し、どの本文で確定したかを覚える（{ id, text, bodyHash }）
+    if (pathname === '/api/reading-confirm' && method === 'POST') {
+      const b = await readBody(req);
+      const id = String(b.id || '').trim(), text = String(b.text || '').trim();
+      if (!id || !text) return sendJSON(res, 400, { ok: false, error: 'コードか読み原稿が空です' });
+      const scripts = readJsonFile(READING_SCRIPTS_PATH, {}); scripts[id] = text;
+      fs.writeFileSync(READING_SCRIPTS_PATH, JSON.stringify(scripts, null, 2), 'utf8');
+      const meta = readJsonFile(READING_META_PATH, {}); meta[id] = { confirmedAt: timestamp(), bodyHash: String(b.bodyHash || '') };
+      fs.writeFileSync(READING_META_PATH, JSON.stringify(meta, null, 2) + '\n', 'utf8');
+      // このカードで使ったソフィー案の語を認める
+      let items;
+      if (Array.isArray(b.approve) && b.approve.length) {
+        items = readJsonFile(READING_DICT_PATH, []);
+        for (const s of b.approve) for (const it of items) if (it.sur === s && it.pending) delete it.pending;
+        fs.writeFileSync(READING_DICT_PATH, JSON.stringify(items, null, 2) + '\n', 'utf8');
+      }
+      return sendJSON(res, 200, { ok: true, meta: meta[id], items });
+    }
+    return sendJSON(res, 404, { ok: false, error: 'not found' });
+  } catch (e) { return sendJSON(res, 500, { ok: false, error: e.message }); }
+}
+
 // GET /api/access-stats — 本番サーバーの集計JSONをSSHで取得して返す
 //   本番の logs/ は外部非公開なので、デプロイと同じ鍵でSSH経由で取りに行く。
 //   設定は config.json の prodStats で上書き可。既定はデプロイ先と同じ。
@@ -1633,6 +1812,7 @@ const server = http.createServer((req, res) => {
   if (pathname === '/api/voice-settings' && method === 'POST') return postVoiceSettings(req, res);
   if (pathname === '/api/reading-scripts' && method === 'GET')  return getReadingScripts(req, res);
   if (pathname === '/api/reading-scripts' && method === 'POST') return postReadingScript(req, res);
+  if (pathname.startsWith('/api/reading-dict') || pathname.startsWith('/api/reading-reply') || pathname === '/api/reading-request' || pathname === '/api/reading-meta' || pathname === '/api/reading-confirm') return handleReading(pathname, method, req, res);
   if (pathname === '/api/access-stats' && method === 'GET') return getAccessStats(req, res);
   if (pathname === '/api/members' && method === 'GET') return getMembers(req, res);
   if (pathname === '/api/hp-access' && method === 'GET') return getHpAccess(req, res);

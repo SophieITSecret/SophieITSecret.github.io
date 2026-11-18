@@ -37,6 +37,7 @@ async function init() {
     document.getElementById('btnAccess').disabled=false;
     document.getElementById('btnMembers').disabled=false;
     document.getElementById('btnBatchRecord').disabled=false;
+    const rdBtn=document.getElementById('btnReading'); if(rdBtn) rdBtn.disabled=false;
     dirty=false;
   } catch(err) {
     status.textContent='⚠ '+err.message;
@@ -1270,9 +1271,10 @@ let _recordAbort = null;
 async function recordVoice(){
   if(selectedIdx<0) return;
   const code=cardData[selectedIdx].id;
+  // 読み修正の欄を開いていればその文、開いていなくても読み原稿（確定した読み）があればそれを読ませる（一括録音と同じ。2026-11-19）
   const text = showingReadScript
     ? document.getElementById('editReadScript').value.trim()
-    : document.getElementById('editBody').value.trim();
+    : ((readingScripts[code] || '').trim() || document.getElementById('editBody').value.trim());
   if(!text){ alert('テキストが空です'); return; }
   const btn=document.getElementById('btnRecord');
   const btnAbort=document.getElementById('btnRecordAbort');
@@ -1470,10 +1472,16 @@ function _renderBatchList(cards) {
     const dot = hasMp3
       ? '<span class="bdot bdot-mp3">音</span>'
       : '<span class="bdot bdot-off">音</span>';
+    // 読みの状態（public/reading.js）。未確認・本文が変わった は ⚠
+    const rs = (typeof readingStatus === 'function') ? readingStatus(c) : '';
+    const rdot = rs === 'ok' ? '<span class="rd-bmark ok" title="読み確定済み">読✅</span>'
+      : rs === 'legacy' ? '<span class="rd-bmark legacy" title="前からの読み原稿（確定の印なし）">読📝</span>'
+      : rs === 'changed' ? '<span class="rd-bmark warn" title="確定の後に本文が変わった。読み確認で確定し直してください">読⚠</span>'
+      : rs ? '<span class="rd-bmark warn" title="読み未確認（本文のまま読ませます）">読⚠</span>' : '';
     return `<label class="batch-item">
       <input type="checkbox" class="batch-cb" data-id="${c.id}" ${hasMp3?'':'checked'} onchange="_updateBatchCount()">
       <span class="batch-code">${esc(c.id)}</span>
-      ${dot}
+      ${dot}${rdot}
       <span class="batch-title">${esc(c.title||'')}</span>
     </label>`;
   }).join('');
