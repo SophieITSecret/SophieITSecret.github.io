@@ -44,6 +44,9 @@ const RD_MODEL_RE = /[A-Za-zＡ-Ｚａ-ｚ]{1,5}[\-‐－–][0-9A-Za-z０-９�
 //   cardId を渡すと、「このカードだけ」の語（cards にそのコードがある語）も当てる。ソフィー案（pending）は kind='sophie'
 //   opt.noPending=true なら、ソフィー案（未承認）は当てない（一括録音の自動の読み。ソフィー案は牧村さんが確かめてから）
 //   ソフィー案は、頼んだテーマ（theme）のカードにだけ当てる（S-15）
+// ソフィー案を頼んだテーマ（themes。古い形は theme）。テーマの記録が無い語は、どのテーマにも当てる
+function rdThemes(x) { return x.themes || (x.theme ? [x.theme] : []); }
+function rdInTheme(x, theme) { const t = rdThemes(x); return !t.length || t.includes(theme); }
 function rdBuild(body, cardId, opt) {
   opt = opt || {};
   body = String(body || '');
@@ -52,7 +55,7 @@ function rdBuild(body, cardId, opt) {
   const card = cardId && typeof cardData !== 'undefined' ? cardData.find(c => c.id === cardId) : null;
   const theme = card ? card.genre : '';
   const active = rdDict.filter(x => x.src !== 'voicepeak' && x.sur && (!(x.cards || []).length || (cardId && x.cards.includes(cardId)))
-      && (!x.pending || (!opt.noPending && (!x.theme || x.theme === theme))))
+      && (!x.pending || (!opt.noPending && rdInTheme(x, theme))))
     .sort((a, b) => b.sur.length - a.sur.length || ((b.cards || []).length - (a.cards || []).length));
   for (const d of active) {
     let i = 0;
@@ -131,7 +134,7 @@ function rdRender() {
   if (rdTab === 'check') return rdRenderCheck();
   const cs = rdCards();
   const count = s => cs.filter(c => readingStatus(c) === s).length;
-  const pend = rdDict.filter(x => x.pending && (!x.theme || x.theme === curUnit)).length;
+  const pend = rdDict.filter(x => x.pending && rdInTheme(x, curUnit)).length;
   document.getElementById('rdSide').innerHTML =
     `<div class="rd-sum">確定 ${count('ok')}／${cs.length}枚${count('changed') ? `・本文が変わった ${count('changed')}` : ''}</div>` +
     `<div class="rd-sophiebox">
@@ -248,7 +251,7 @@ function rdRenderDict() {
       <div class="ik-note">書き出した後：<br>① VOICEPEAK の辞書の画面で「辞書のインポート」→ 書き出したファイル →「マージ」<br>② アクセントがおかしい語は、●を動かして直す<br>③ VOICEPEAK で「辞書のエクスポート」<br>④ 上の「📥 取り込む」で取り込み直す（VOICEPEAK に入った語は、作業台の置き換えから外れます）<br>書き出しには VOICEPEAK の全部の語を元のアクセントのまま入れてあるので、「置換」を選んでも消えません。</div>
     </div>`;
   const acc = x => { const a = x.src === 'voicepeak' ? x.vp : (x.vpShadow && x.vpShadow.pron === x.pron ? x.vpShadow : null); return a ? ((a.overwriteAccents ? '●で直した' : a.accentType === 0 ? '平板' : String(a.accentType))) : ''; };
-  const row = x => `<tr class="${x.pending ? 'rd-pend' : ''}"><td>${esc(x.sur)}${(x.cards || []).length ? `<div class="ik-sub">${esc(x.cards.join('・'))}だけ</div>` : ''}${x.pending && x.theme ? `<div class="ik-sub">${esc(x.theme)} で頼んだ</div>` : ''}</td><td>${esc(x.pron)}${x.vpShadow && x.vpShadow.pron !== x.pron ? `<div class="ik-sub">⚠ VOICEPEAK では ${esc(x.vpShadow.pron)}</div>` : ''}</td>
+  const row = x => `<tr class="${x.pending ? 'rd-pend' : ''}"><td>${esc(x.sur)}${(x.cards || []).length ? `<div class="ik-sub">${esc(x.cards.join('・'))}だけ</div>` : ''}${x.pending && rdThemes(x).length ? `<div class="ik-sub">${esc(rdThemes(x).join('・'))} で頼んだ</div>` : ''}</td><td>${esc(x.pron)}${x.vpShadow && x.vpShadow.pron !== x.pron ? `<div class="ik-sub">⚠ VOICEPEAK では ${esc(x.vpShadow.pron)}</div>` : ''}</td>
     <td>${esc(acc(x))}</td>
     <td>${x.src === 'voicepeak' ? 'VOICEPEAK' : x.src === 'sophie' ? (x.pending ? '🟣 ソフィー案（未承認）' : 'ソフィー') : '作業台'}</td><td>${esc(x.note || '')}</td>
     <td>${x.pending ? `<button class="dk-mini" data-s="${esc(x.sur)}" onclick="rdApproveWord(this.dataset.s)">認める</button>` : ''}${x.src === 'voicepeak' ? '' : `<button class="dk-mini" data-s="${esc(x.sur)}" onclick="rdDelWord(this.dataset.s)">消す</button>`}</td></tr>`;

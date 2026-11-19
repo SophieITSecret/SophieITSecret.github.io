@@ -1154,8 +1154,11 @@ function readingRequestMd(name, theme, cards, dict) {
     `# 読みの洗い出しの依頼：${theme}`, '',
     `- 依頼の名前：${name}`, `- 作った日時：${timestamp()}（作業台）`, `- カード：${cards.length}枚`, '',
     '## お願い',
-    '下の「本文」を読み、VOICEPEAK が読み違えそうな語を拾って、**辞書の追加分**を返してください。拾い方は `70_読み\\読みの決まり.md` のとおりです。',
-    '- 拾うのは、**その原稿に特有の固有名詞と、変わった表現だけ**（S-15・S-16）。ふつうの語の念のための拾いは要りません。録った後の Whisper の検算で、実際に読み違えた所を拾います。',
+    '下の「本文」から語を拾って、正しい読みを **辞書の追加分** として返してください。拾い方は `70_読み\\読みの決まり.md` のとおりです。',
+    '- **人名・地名・城や寺社の名前・歴史や軍事の用語・英字や型式は、VOICEPEAK が読めそうでも全部拾う**（2026-11-20 牧村さんの決定。読み違えそうかは前もって当てられないため）。ふつうの言葉は拾わない。',
+    '- 地名・寺社などの読みは調べて裏を取り、「なぜ」に根拠を書く（例：横手市の金沢はカネザワ）。',
+    '- 1文字の語は前後を付けて書く（「米」でなく「米の高騰」）。',
+    '- 本文の最後の「（出典：…）」の行は読み上げないので、下の本文から除いてあります。',
     '- 下の「今の辞書」にある語と、「作業台が自動で直すもの」は、拾わなくてよい。',
     `- 返事は \`70_読み\\返事\\${name}.csv\` に置いてください（UTF-8）。1行目は見出し：`, '',
     '```', '書き方,読み,カード,範囲,なぜ', '金沢柵,カネザワノサク,UDG02,全体,城の名前。カナザワと読まれやすい', '十分,ジュップン,UDG05,このカードだけ,「十分間」の意味', '```', '',
@@ -1166,19 +1169,26 @@ function readingRequestMd(name, theme, cards, dict) {
     `## 今の辞書（${words.length}語。拾わなくてよい）`,
     words.map(x => `${x.sur}＝${x.pron}${(x.cards || []).length ? `（${x.cards.join('・')}だけ）` : ''}`).join('　'), '',
     '## 本文', '',
-    ...cards.flatMap(c => [`### ${c.id}　${String(c.title || '').replace(/^→/, '')}`, '', String(c.body || '').trim(), '']),
+    ...cards.flatMap(c => [`### ${c.id}　${String(c.title || '').replace(/^→/, '')}`, '', stripSourceLines(c.body || ''), '']),
   ].join('\n');
 }
 // ソフィー案（未承認）の語を辞書に足す。theme を持たせ、作業台はそのテーマのカードにだけ当てる（S-15）
 //   replaceTheme=true なら、そのテーマの前の未承認の分を先に除く（同じテーマの返事を取り込み直したとき）
+//   同じ語がいくつかのテーマで頼まれたら、themes にテーマを足していく（どのテーマのカードにも当たる）
+const themesOf = x => x.themes || (x.theme ? [x.theme] : []);
 function addSophieWords(items, words, theme, replaceTheme) {
-  if (replaceTheme) for (let i = items.length - 1; i >= 0; i--) if (items[i].pending && items[i].theme === theme) items.splice(i, 1);
+  if (replaceTheme) for (let i = items.length - 1; i >= 0; i--) {
+    const x = items[i]; if (!x.pending || !themesOf(x).includes(theme)) continue;
+    const rest = themesOf(x).filter(t => t !== theme);
+    if (rest.length) { x.themes = rest; delete x.theme; } else items.splice(i, 1);
+  }
   let added = 0, kept = 0;
   for (const w of words) {
     const same = items.find(x => x.sur === w.sur && JSON.stringify(x.cards || []) === JSON.stringify(w.cards || []));
     if (same && !same.pending) { kept++; continue; }   // もう認めた語は、そのまま
-    const it = { sur: w.sur, pron: w.pron, src: 'sophie', note: w.why || '', added: ymdNow(), pending: true, cards: w.cards || [], theme };
-    if (same) Object.assign(same, it); else items.push(it);
+    const themes = same ? [...new Set(themesOf(same).concat(theme))] : [theme];
+    const it = { sur: w.sur, pron: w.pron, src: 'sophie', note: w.why || '', added: ymdNow(), pending: true, cards: w.cards || [], themes };
+    if (same) { Object.assign(same, it); delete same.theme; } else items.push(it);
     added++;
   }
   return { added, kept };
@@ -1898,6 +1908,9 @@ function getVoiceCompareAudio(req, res, idx) {
   });
 }
 
+function stripSourceLines(t) {
+  return String(t).split(/\r?\n/).filter(l => !/^\s*[（(]\s*出典\s*[:：].*[)）]\s*$/.test(l)).join('\n').trim();
+}
 function postVoiceGenerate(req, res) {
   let chunks = [];
   const cancelRef = { cancelled: false, proc: null };
@@ -1914,7 +1927,8 @@ function postVoiceGenerate(req, res) {
     try {
       const d        = JSON.parse(Buffer.concat(chunks).toString('utf8'));
       const code     = (d.code     || '').trim();
-      const text     = (d.text     || '').trim();
+      // 「（出典：…）」の行は読み上げない（画面には出す。搬入が本文の最後に足す行。2026-11-20 牧村さん）
+      const text     = stripSourceLines(d.text || '');
       const narrator = (d.narrator || 'Japanese Female 1').trim();
       const emotion  = (d.emotion  || 'happy=40,fun=30');
       const speed    = String(d.speed || 100);
