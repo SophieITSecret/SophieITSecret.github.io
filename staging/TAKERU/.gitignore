@@ -30,6 +30,9 @@ voices_backup/
 # 一時WAVファイル（OS tmpdir配下のため通常不要だが念のため）
 voices_temp/
 
+# 読みの検算（Whisper）の結果。作業台の作業用（2026-11-19）
+editor/reading_check/
+
 # Python キャッシュ
 __pycache__/
 *.pyc

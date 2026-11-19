@@ -38,6 +38,7 @@ async function init() {
     document.getElementById('btnMembers').disabled=false;
     document.getElementById('btnBatchRecord').disabled=false;
     const rdBtn=document.getElementById('btnReading'); if(rdBtn) rdBtn.disabled=false;
+    const ckBtn=document.getElementById('btnCheck'); if(ckBtn) ckBtn.disabled=false;
     dirty=false;
   } catch(err) {
     status.textContent='⚠ '+err.message;
@@ -1272,9 +1273,11 @@ async function recordVoice(){
   if(selectedIdx<0) return;
   const code=cardData[selectedIdx].id;
   // 読み修正の欄を開いていればその文、開いていなくても読み原稿（確定した読み）があればそれを読ませる（一括録音と同じ。2026-11-19）
+  // 読み原稿が無ければ、年代・作業台の辞書を自動で置き換えた読み（public/reading.js の rdAutoText。2026-11-19 S-16）
+  const bodyNow = document.getElementById('editBody').value.trim();
   const text = showingReadScript
     ? document.getElementById('editReadScript').value.trim()
-    : ((readingScripts[code] || '').trim() || document.getElementById('editBody').value.trim());
+    : (typeof rdAutoText === 'function' ? rdAutoText({ ...cardData[selectedIdx], body: bodyNow }) : ((readingScripts[code] || '').trim() || bodyNow));
   if(!text){ alert('テキストが空です'); return; }
   const btn=document.getElementById('btnRecord');
   const btnAbort=document.getElementById('btnRecordAbort');
@@ -1457,10 +1460,13 @@ function seekVoice(val){
 // ---- 一括録音 ----
 let _batchCancel = false;
 
-function recordUnitBatch() {
+let _batchRerecord = {};   // 検算で「録り直す」になったカード（server の reading_check/_rerecord.json）
+async function recordUnitBatch() {
   if (!curUnit) { alert('テーマを選択してください'); return; }
   const cards = filteredList.filter(c => (c.body||'').trim());
   if (!cards.length) { alert('本文のあるカードがありません'); return; }
+  if (typeof rdLoad === 'function') await rdLoad();
+  try { const j = await (await fetch('/api/reading-check?codes=')).json(); _batchRerecord = (j.ok && j.rerecord) || {}; } catch { _batchRerecord = {}; }
   _renderBatchList(cards);
   document.getElementById('batchModal').style.display = 'flex';
 }
@@ -1469,6 +1475,7 @@ function _renderBatchList(cards) {
   const el = document.getElementById('batchList');
   el.innerHTML = cards.map(c => {
     const hasMp3 = mp3Ids.has(c.id);
+    const rerec = !!_batchRerecord[c.id];
     const dot = hasMp3
       ? '<span class="bdot bdot-mp3">音</span>'
       : '<span class="bdot bdot-off">音</span>';
@@ -1476,12 +1483,13 @@ function _renderBatchList(cards) {
     const rs = (typeof readingStatus === 'function') ? readingStatus(c) : '';
     const rdot = rs === 'ok' ? '<span class="rd-bmark ok" title="読み確定済み">読✅</span>'
       : rs === 'legacy' ? '<span class="rd-bmark legacy" title="前からの読み原稿（確定の印なし）">読📝</span>'
-      : rs === 'changed' ? '<span class="rd-bmark warn" title="確定の後に本文が変わった。読み確認で確定し直してください">読⚠</span>'
-      : rs ? '<span class="rd-bmark warn" title="読み未確認（本文のまま読ませます）">読⚠</span>' : '';
+      : rs === 'changed' ? '<span class="rd-bmark warn" title="確定の後に本文が変わった。今の本文から、年代・辞書を自動で置き換えた読みで録ります">読⚠自動</span>'
+      : rs ? '<span class="rd-bmark legacy" title="年代・作業台の辞書を自動で置き換えた読みで録ります。録った後に「🔎 検算」で確かめます">読🤖</span>' : '';
+    const rdot2 = rerec ? `<span class="rd-bmark warn" title="検算で読み違いが見つかったカード：${esc(_batchRerecord[c.id].why || '')}">🔁録り直す</span>` : '';
     return `<label class="batch-item">
-      <input type="checkbox" class="batch-cb" data-id="${c.id}" ${hasMp3?'':'checked'} onchange="_updateBatchCount()">
+      <input type="checkbox" class="batch-cb" data-id="${c.id}" ${(hasMp3 && !rerec)?'':'checked'} onchange="_updateBatchCount()">
       <span class="batch-code">${esc(c.id)}</span>
-      ${dot}${rdot}
+      ${dot}${rdot}${rdot2}
       <span class="batch-title">${esc(c.title||'')}</span>
     </label>`;
   }).join('');
@@ -1501,7 +1509,7 @@ function batchCheckAll(v) {
 
 function batchCheckUngenerated() {
   document.querySelectorAll('.batch-cb').forEach(cb => {
-    cb.checked = !mp3Ids.has(cb.dataset.id);
+    cb.checked = !mp3Ids.has(cb.dataset.id) || !!_batchRerecord[cb.dataset.id];
   });
   _updateBatchCount();
 }
@@ -1529,7 +1537,7 @@ async function startBatch() {
     const card = cardData.find(c => c.id === id);
     floatCard.textContent = `🎙 ${id}`;
     if (!card) { done++; continue; }
-    const text = (readingScripts[id] || card.body || '').trim();
+    const text = typeof rdAutoText === 'function' ? rdAutoText(card) : (readingScripts[id] || card.body || '').trim();
     if (!text) { done++; continue; }
     try {
       const p = getSliderParams();

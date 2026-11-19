@@ -15,6 +15,11 @@ const READING_DIR = process.env.EDITOR_TEST_READING_DIR || __dirname;
 const READING_SCRIPTS_PATH = path.join(READING_DIR, 'reading_scripts.json');
 const READING_DICT_PATH = path.join(READING_DIR, 'reading_dict.json');
 const READING_META_PATH = path.join(READING_DIR, 'reading_meta.json');
+// 検算（S-16）：録音で実際に読ませた文・Whisper の結果・録り直すカード・原稿の直しの知らせ
+const VOICE_TEXTS_PATH = path.join(READING_DIR, 'voice_texts.json');
+const CHECK_DIR = path.join(READING_DIR, 'reading_check');
+const RERECORD_PATH = path.join(CHECK_DIR, '_rerecord.json');
+const FIXES_PATH = path.join(CHECK_DIR, '_fixes.json');
 const PROMPTS_PATH = path.join(__dirname, 'prompts.json');
 const VOICE_SETTINGS_PATH = path.join(__dirname, 'voice_settings.json');
 let config;
@@ -32,6 +37,7 @@ if (process.env.EDITOR_TEST_CSV) config.csvPath = process.env.EDITOR_TEST_CSV;
 if (process.env.EDITOR_TEST_DRAFTS) config.draftsDir = process.env.EDITOR_TEST_DRAFTS;
 if (process.env.EDITOR_TEST_IMAGES) config.imagesDir = process.env.EDITOR_TEST_IMAGES;
 if (process.env.EDITOR_TEST_INTAKE) config.intakeDir = process.env.EDITOR_TEST_INTAKE;
+if (process.env.EDITOR_TEST_VOICES) config.voicesDir = process.env.EDITOR_TEST_VOICES;
 const PORT = process.env.EDITOR_PORT || config.port || 3000;
 
 const MIME = {
@@ -1149,6 +1155,7 @@ function readingRequestMd(name, theme, cards, dict) {
     `- 依頼の名前：${name}`, `- 作った日時：${timestamp()}（作業台）`, `- カード：${cards.length}枚`, '',
     '## お願い',
     '下の「本文」を読み、VOICEPEAK が読み違えそうな語を拾って、**辞書の追加分**を返してください。拾い方は `70_読み\\読みの決まり.md` のとおりです。',
+    '- 拾うのは、**その原稿に特有の固有名詞と、変わった表現だけ**（S-15・S-16）。ふつうの語の念のための拾いは要りません。録った後の Whisper の検算で、実際に読み違えた所を拾います。',
     '- 下の「今の辞書」にある語と、「作業台が自動で直すもの」は、拾わなくてよい。',
     `- 返事は \`70_読み\\返事\\${name}.csv\` に置いてください（UTF-8）。1行目は見出し：`, '',
     '```', '書き方,読み,カード,範囲,なぜ', '金沢柵,カネザワノサク,UDG02,全体,城の名前。カナザワと読まれやすい', '十分,ジュップン,UDG05,このカードだけ,「十分間」の意味', '```', '',
@@ -1162,6 +1169,102 @@ function readingRequestMd(name, theme, cards, dict) {
     ...cards.flatMap(c => [`### ${c.id}　${String(c.title || '').replace(/^→/, '')}`, '', String(c.body || '').trim(), '']),
   ].join('\n');
 }
+// ソフィー案（未承認）の語を辞書に足す。theme を持たせ、作業台はそのテーマのカードにだけ当てる（S-15）
+//   replaceTheme=true なら、そのテーマの前の未承認の分を先に除く（同じテーマの返事を取り込み直したとき）
+function addSophieWords(items, words, theme, replaceTheme) {
+  if (replaceTheme) for (let i = items.length - 1; i >= 0; i--) if (items[i].pending && items[i].theme === theme) items.splice(i, 1);
+  let added = 0, kept = 0;
+  for (const w of words) {
+    const same = items.find(x => x.sur === w.sur && JSON.stringify(x.cards || []) === JSON.stringify(w.cards || []));
+    if (same && !same.pending) { kept++; continue; }   // もう認めた語は、そのまま
+    const it = { sur: w.sur, pron: w.pron, src: 'sophie', note: w.why || '', added: ymdNow(), pending: true, cards: w.cards || [], theme };
+    if (same) Object.assign(same, it); else items.push(it);
+    added++;
+  }
+  return { added, kept };
+}
+// 取り込んだ返事と、同じ名前の依頼を 済み\ へ
+function moveToDone(f) {
+  const doneDir = path.join(readingBox(), '済み'); fs.mkdirSync(doneDir, { recursive: true });
+  const moveTo = (p) => { let t = path.join(doneDir, path.basename(p)), i = 2; while (fs.existsSync(t)) t = path.join(doneDir, path.basename(p).replace(/(\.\w+)$/, `_${i++}$1`)); fs.renameSync(p, t); };
+  const base = path.basename(f, '.csv');
+  moveTo(f);
+  const req1 = path.join(readingBox(), '依頼', base + '.md'); if (fs.existsSync(req1)) moveTo(req1);
+}
+// Whisper の検算（editor/tools/whisper_check.py）を1枚ぶん走らせる
+function runWhisperCheck(mp3, text) {
+  return new Promise((resolve) => {
+    const tmp = path.join(os.tmpdir(), `takeru_check_${Date.now().toString(36)}.txt`);
+    fs.writeFileSync(tmp, text, 'utf8');
+    const py = config.pythonPath || 'python';
+    // 試しのときは EDITOR_TEST_WHISPER で、偽の検算の Python に差し替える
+    const args = [process.env.EDITOR_TEST_WHISPER || path.join(__dirname, 'tools', 'whisper_check.py'), '--mp3', mp3, '--text', tmp, '--model', config.whisperModel || 'small'];
+    const p = spawn(py, args, { windowsHide: true, env: { ...process.env, PYTHONIOENCODING: 'utf-8', PYTHONUTF8: '1' } });
+    let out = '', err = '';
+    const timer = setTimeout(() => { try { p.kill(); } catch {} }, 15 * 60 * 1000);
+    p.stdout.on('data', d => out += d); p.stderr.on('data', d => err += d);
+    const done = (r) => { clearTimeout(timer); try { fs.unlinkSync(tmp); } catch {} resolve(r); };
+    p.on('error', e => done({ ok: false, error: `Python を起動できません（${e.message}）。config.json の pythonPath を確かめてください` }));
+    p.on('close', code => {
+      const line = out.trim().split(/\r?\n/).pop() || '';
+      try { return done(JSON.parse(line)); } catch {}
+      done({ ok: false, error: `検算が止まりました（終了 ${code}）：${(err || out).trim().split(/\r?\n/).slice(-3).join(' ')}` });
+    });
+  });
+}
+// 検算の依頼の md：ソフィーが仕分ける
+function checkRequestMd(name, theme, cards, rows, voicesDir) {
+  const cell = s => String(s == null ? '' : s).replace(/\|/g, '｜').replace(/\r?\n/g, ' ');
+  return [
+    `# 読みの検算の仕分けの依頼：${theme}`, '',
+    `- 依頼の名前：${name}`, `- 作った日時：${timestamp()}（作業台）`, `- カード：${cards.length}枚、ずれ：${rows.length}件`, '',
+    '## お願い（R-20261119-S-16 の流れ）',
+    '録った音声を Whisper（small）で書き起こし、読ませた文と「音」で見比べた、ずれの一覧です。1件ずつ、原因を仕分けてください。',
+    '- **a**：VOICEPEAK の読み違い（本当の不良。直して録り直す）',
+    '- **b**：Whisper の聞き違い（音声は正しい）',
+    '- **c**：表記のゆれ（音は同じで字だけ違う）',
+    '- **d**：原稿の誤り（誤字をそのまま読んだ）', '',
+    '際どいものは、音声の「秒」の所を聞いて決めてください。音声は作業台の手元の `' + voicesDir + '\\<カード>.mp3`。',
+    '本番公開の後なら、開発版の `https://sophieitsecret.github.io/staging/TAKERU/voices/<カード>.mp3` でも聞けます（公開の前は古い音声のことがある）。聞けないときは、分類の見当を付けて「なぜ」に「要確認」と書いてください。',
+    'Whisper は聞いた音を漢字に直して書くので、漢字の別の読み（金沢柵をカナザワと読んだ、など）は、この一覧には出にくいです。', '',
+    `## 返事の書き方`,
+    `\`70_読み\\返事\\${name}.csv\`（UTF-8）。1行目は見出し。全部の番号に1行ずつ。`, '',
+    '```', '番号,分類,書き方,読み,カード,なぜ', '3,a,アッバース朝,アッバースチョウ,ISLF02,アッパースと読んでいた', '4,b,,,,Whisper の聞き違い', '5,c,,,,表記のゆれ', '6,d,金沢冊,,UDG02,柵の誤字', '```', '',
+    '- **a** は、書き方（本文に出てくるとおり）と読み（カタカナだけ）が要る。辞書に「ソフィー案」として入り、牧村さんが確かめてから録り直す。',
+    '- **d** は、書き方に直すべき所を書く。牧村さんが本文を直す。',
+    '- カードは空でよい（番号から作業台が分かる）。なぜにカンマは入れない。', '',
+    '## ずれの一覧', '',
+    '| 番号 | カード | 秒 | 読ませた文 | 書き起こし | 読ませた音 → 聞こえた音 |', '|---|---|---|---|---|---|',
+    ...rows.map(r => `| ${r.no} | ${r.code} | ${r.at} | ${cell(r.script)} | ${cell(r.heard)} | ${cell(r.said)} → ${cell(r.got)} |`), '',
+    '## カードごとの一致の割合（参考）', '',
+    ...cards.map(c => `- ${c.code}${c.title ? `　${cell(c.title)}` : ''}：一致 ${Math.round(c.r.match * 100)}%、ずれ ${c.r.diffs.length}件${c.r.textFrom === 'guess' ? '（読ませた文の記録が無く、今の読み原稿か本文と見比べた）' : ''}`), '',
+  ].join('\n');
+}
+function checkRowsOf(f) {
+  const j = readJsonFile(path.join(CHECK_DIR, path.basename(f, '.csv') + '.json'), { rows: [] });
+  const m = {}; for (const r of j.rows || []) m[r.no] = r; return m;
+}
+// 検算の返事の CSV：番号,分類,書き方,読み,カード,なぜ
+function parseCheckReply(text, byNo) {
+  const rows = parseCsvText(String(text).replace(/^﻿/, '')).filter(r => r.some(x => String(x).trim()));
+  const head = (rows[0] || []).map(s => String(s).trim()), at = k => head.indexOf(k);
+  const out = [], bad = [];
+  if (at('番号') < 0 || at('分類') < 0) return { rows: [], bad: [{ line: 1, reason: '1行目の見出しに「番号」と「分類」が要ります（番号,分類,書き方,読み,カード,なぜ）' }] };
+  rows.slice(1).forEach((r, i) => {
+    const g = k => (at(k) >= 0 ? String(r[at(k)] || '').trim() : '');
+    const line = i + 2, no = Number(g('番号').replace(/[０-９]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xFEE0)));
+    const kind = g('分類').toLowerCase().replace(/[ａ-ｄ]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xFEE0));
+    const src = byNo[no];
+    const cards = g('カード').split(/[;；、,\s]+/).filter(Boolean);
+    const row = { no, kind, sur: g('書き方'), pron: g('読み').replace(/\s+/g, ''), cards: cards.length ? cards : (src ? [src.code] : []), why: g('なぜ') };
+    if (!['a', 'b', 'c', 'd'].includes(kind)) bad.push({ line, reason: `分類は a・b・c・d のどれか（${g('分類') || '空'}）` });
+    else if (kind === 'a' && !row.sur) bad.push({ line, reason: `番号 ${no}：a なのに書き方が空` });
+    else if (kind === 'a' && !katakanaOk(row.pron)) bad.push({ line, reason: `番号 ${no}：「${row.sur}」の読みがカタカナでない（${row.pron || '空'}）` });
+    else if ((kind === 'a' || kind === 'd') && !row.cards.length) bad.push({ line, reason: `番号 ${no}：カードが分からない（番号が一覧に無い）` });
+    else out.push(row);
+  });
+  return { rows: out, bad };
+}
 async function handleReading(pathname, method, req, res) {
   try {
     if (pathname === '/api/reading-dict' && method === 'GET') return sendJSON(res, 200, { ok: true, items: readJsonFile(READING_DICT_PATH, []) });
@@ -1172,27 +1275,76 @@ async function handleReading(pathname, method, req, res) {
       const sur = String(b.sur || '').trim();
       if (!sur) return sendJSON(res, 400, { ok: false, error: '書き方が空です' });
       const i = items.findIndex(x => x.sur === sur);
-      if (b.op === 'delete') { if (i >= 0) items.splice(i, 1); }
+      if (b.op === 'delete') {
+        if (i >= 0) {
+          const was = items[i]; items.splice(i, 1);
+          // 隠れていた VOICEPEAK の語があれば、元に戻す
+          if (was.vpShadow && !items.some(x => x.sur === sur)) items.push({ sur, pron: was.vpShadow.pron, src: 'voicepeak', note: '', added: was.added, vp: was.vpShadow });
+        }
+      }
       else {
         const pron = String(b.pron || '').trim();
         if (!katakanaOk(pron)) return sendJSON(res, 400, { ok: false, error: '読みはカタカナで書いてください' });
         const it = { sur, pron, src: b.src || 'workbench', note: String(b.note || ''), added: new Date().toISOString().slice(0, 10) };
-        if (i >= 0) items[i] = { ...items[i], ...it, src: b.src || (items[i].src === 'voicepeak' ? 'workbench' : items[i].src) };
+        if (i >= 0) {
+          const was = items[i];
+          items[i] = { ...was, ...it, src: b.src || (was.src === 'voicepeak' ? 'workbench' : was.src) };
+          // VOICEPEAK の語を作業台で直したときは、元の語（アクセントなど）を vpShadow に移して書き出しに使う
+          if (was.src === 'voicepeak') { items[i].vpShadow = was.vp; delete items[i].vp; }
+        }
         else items.push(it);
       }
       fs.writeFileSync(READING_DICT_PATH, JSON.stringify(items, null, 2) + '\n', 'utf8');
       return sendJSON(res, 200, { ok: true, items });
     }
-    // VOICEPEAK の辞書の書き出し（.vdc2 の中身。画面で読んだ JSON を送る）を取り込む。作業台で足した語は残す
+    // VOICEPEAK の辞書の書き出し（.vdc2 の中身。画面で読んだ JSON を送る）を取り込む（2026-11-19：VOICEPEAK が正本）
+    //   VOICEPEAK の語は、アクセントなど元の項目を vp に丸ごと残す（書き出しで戻すため）
+    //   作業台の語と書き方・読みが同じなら、VOICEPEAK に入ったと見て作業台の語を除く。読みが違えば作業台の語を残す（作業台が先に効く）
     if (pathname === '/api/reading-dict/import' && method === 'POST') {
       const b = await readBody(req);
       if (!Array.isArray(b.entries)) return sendJSON(res, 400, { ok: false, error: 'VOICEPEAK の辞書の形ではありません' });
-      const vp = b.entries.filter(e => e && e.sur && e.pron).map(e => ({ sur: String(e.sur), pron: String(e.pron), src: 'voicepeak', note: '', added: new Date().toISOString().slice(0, 10) }));
-      const items = readJsonFile(READING_DICT_PATH, []).filter(x => x.src !== 'voicepeak');
-      const mine = new Set(items.map(x => x.sur));
+      const vp = b.entries.filter(e => e && e.sur && e.pron).map(e => ({ sur: String(e.sur), pron: String(e.pron), src: 'voicepeak', note: '', added: new Date().toISOString().slice(0, 10),
+        // 元の語を項目も並びもそのまま（牧村さんが●で直したアクセントは overwriteAccents に入っている）
+        vp: JSON.parse(JSON.stringify(e)) }));
+      const vpBy = new Map(vp.map(x => [x.sur, x]));
+      let absorbed = 0; const differ = [];
+      const items = readJsonFile(READING_DICT_PATH, []).filter(x => {
+        if (x.src === 'voicepeak') return false;
+        const v = !x.pending && !(x.cards || []).length ? vpBy.get(x.sur) : null;
+        if (v && v.pron === x.pron) { absorbed++; return false; }
+        if (v) differ.push(x.sur);
+        return true;
+      });
+      const mine = new Set(items.filter(x => !(x.cards || []).length).map(x => x.sur));
       const merged = items.concat(vp.filter(x => !mine.has(x.sur)));
+      // 作業台の語に隠れた VOICEPEAK の語も、書き出しのために残す（vpShadow）
+      for (const x of items) { const v = vpBy.get(x.sur); if (v && !(x.cards || []).length) x.vpShadow = v.vp; else delete x.vpShadow; }
       fs.writeFileSync(READING_DICT_PATH, JSON.stringify(merged, null, 2) + '\n', 'utf8');
-      return sendJSON(res, 200, { ok: true, imported: vp.length, total: merged.length, items: merged });
+      return sendJSON(res, 200, { ok: true, imported: vp.length, absorbed, differ, total: merged.length, items: merged });
+    }
+    // VOICEPEAK 用に書き出す（.vdc2）：VOICEPEAK の全部の語（元のアクセントのまま）＋ 作業台の語（認めた語。このカードだけ・未承認は除く）
+    if (pathname === '/api/reading-dict/export' && method === 'GET') {
+      const items = readJsonFile(READING_DICT_PATH, []);
+      const vps = items.filter(x => x.src === 'voicepeak');
+      if (vps.some(x => !x.vp)) return sendJSON(res, 400, { ok: false, error: 'VOICEPEAK の語のアクセントがまだ作業台にありません。書き出すとアクセントが消えるので、先に VOICEPEAK の辞書を書き出して「📥 取り込む」で取り込み直してください' });
+      const out = [], seen = new Set();
+      const mine = items.filter(x => x.src !== 'voicepeak' && !x.pending && !(x.cards || []).length);
+      const mineBy = new Map(mine.map(x => [x.sur, x]));
+      const add = e => { if (!seen.has(e.sur)) { seen.add(e.sur); out.push(e); } };
+      for (const x of vps) add(x.vp);
+      for (const x of mine) {
+        const base = x.vpShadow;
+        if (base && base.pron === x.pron) { add(base); continue; }   // 読みが同じなら、元の語（アクセントも）のまま
+        // 読みが変わった語は、音の数が変わるのでアクセントを平板に戻す（overwriteAccents は付けない）
+        add({ sur: x.sur, pron: x.pron, pos: (base && base.pos) || 'Japanese_Futsuu_meishi', priority: (base && base.priority) || 5, accentType: 0, lang: (base && base.lang) || 'ja' });
+      }
+      // 作業台の語に隠れた VOICEPEAK の語は、上で作業台の読みに置き換わっている。隠れていた分の元の語も抜けないように
+      for (const x of items) if (x.vpShadow && !mineBy.has(x.sur)) add(x.vpShadow);
+      const esc16 = s => s.replace(/[\u0080-￿]/g, c => '\\u' + c.charCodeAt(0).toString(16).padStart(4, '0'));
+      const body = esc16(JSON.stringify(out, null, 2)).replace(/\n/g, '\r\n');
+      const name = `TAKERU読み辞書_${ymdNow()}.vdc2`;
+      res.writeHead(200, { 'Content-Type': 'application/octet-stream', 'Content-Disposition': `attachment; filename*=UTF-8''${encodeURIComponent(name)}`, 'X-Count': String(out.length), 'X-New': String(mine.filter(x => !x.vpShadow).length) });
+      return res.end(body);
     }
     // 辞書の語を認める（ソフィー案 → 正式な語）
     if (pathname === '/api/reading-dict/approve' && method === 'POST') {
@@ -1231,22 +1383,90 @@ async function handleReading(pathname, method, req, res) {
       if (!f) return sendJSON(res, 400, { ok: false, error: 'そのテーマの返事がありません' });
       const { rows, bad } = parseReply(fs.readFileSync(f, 'utf8'));
       const items = readJsonFile(READING_DICT_PATH, []);
-      let added = 0, kept = 0;
-      for (const r of rows) {
-        const cards = r.scope === 'このカードだけ' ? r.cards : [];
-        const same = items.find(x => x.sur === r.sur && JSON.stringify(x.cards || []) === JSON.stringify(cards));
-        if (same && !same.pending) { kept++; continue; }   // もう認めた語は、そのまま
-        const it = { sur: r.sur, pron: r.pron, src: 'sophie', note: r.why || '', added: ymdNow(), pending: true, cards };
-        if (same) Object.assign(same, it); else items.push(it);
-        added++;
-      }
+      const { added, kept } = addSophieWords(items, rows.map(r => ({ sur: r.sur, pron: r.pron, cards: r.scope === 'このカードだけ' ? r.cards : [], why: r.why })), theme, true);
       fs.writeFileSync(READING_DICT_PATH, JSON.stringify(items, null, 2) + '\n', 'utf8');
-      const doneDir = path.join(readingBox(), '済み'); fs.mkdirSync(doneDir, { recursive: true });
-      const base = path.basename(f, '.csv');
-      const moveTo = (p) => { let t = path.join(doneDir, path.basename(p)), i = 2; while (fs.existsSync(t)) t = path.join(doneDir, path.basename(p).replace(/(\.\w+)$/, `_${i++}$1`)); fs.renameSync(p, t); };
-      moveTo(f);
-      const req1 = path.join(readingBox(), '依頼', base + '.md'); if (fs.existsSync(req1)) moveTo(req1);
+      moveToDone(f);
       return sendJSON(res, 200, { ok: true, added, kept, bad, items });
+    }
+    // ---- 検算（S-16）：録った音声を Whisper で書き起こし、読ませた文と見比べる ----
+    // 1枚：{ code, text }  text は、読ませた文の記録（voice_texts.json）が無いときに使う（この仕組みの前に録った音声）
+    if (pathname === '/api/reading-check' && method === 'POST') {
+      const b = await readBody(req);
+      const code = String(b.code || '').trim();
+      if (!/^[A-Za-z0-9_-]+$/.test(code)) return sendJSON(res, 400, { ok: false, error: 'コードが正しくありません' });
+      const mp3 = path.join(getVpConfig().voicesDir, code + '.mp3');
+      if (!fs.existsSync(mp3)) return sendJSON(res, 400, { ok: false, error: `${code} の音声がありません` });
+      const vt = readJsonFile(VOICE_TEXTS_PATH, {})[code];
+      const text = (vt && vt.text) || String(b.text || '').trim();
+      if (!text) return sendJSON(res, 400, { ok: false, error: '見比べる文がありません' });
+      const r = await runWhisperCheck(mp3, text);
+      if (!r.ok) return sendJSON(res, 200, r);
+      r.code = code; r.textFrom = vt ? 'recorded' : 'guess'; r.script = text; r.checkedAt = timestamp();
+      fs.mkdirSync(CHECK_DIR, { recursive: true });
+      fs.writeFileSync(path.join(CHECK_DIR, code + '.json'), JSON.stringify(r, null, 2) + '\n', 'utf8');
+      return sendJSON(res, 200, r);
+    }
+    // 結果を読む：?codes=A,B
+    if (pathname === '/api/reading-check' && method === 'GET') {
+      const codes = String(new URL(req.url, 'http://x').searchParams.get('codes') || '').split(',').filter(c => /^[A-Za-z0-9_-]+$/.test(c));
+      const results = {};
+      for (const c of codes) { const r = readJsonFile(path.join(CHECK_DIR, c + '.json'), null); if (r) results[c] = r; }
+      return sendJSON(res, 200, { ok: true, results, rerecord: readJsonFile(RERECORD_PATH, {}), fixes: readJsonFile(FIXES_PATH, []) });
+    }
+    // ソフィーに仕分けを頼む：{ theme, codes } → 依頼\YYYYMMDD_<テーマ>_検算.md（番号の表は reading_check\<名前>.json に控える）
+    if (pathname === '/api/reading-check/request' && method === 'POST') {
+      const b = await readBody(req);
+      const theme = safeName(b.theme);
+      const name = `${ymdNow()}_${theme}_検算`;
+      const rows = []; const cards = [];
+      for (const c of (b.codes || [])) {
+        const r = readJsonFile(path.join(CHECK_DIR, String(c) + '.json'), null); if (!r) continue;
+        cards.push({ code: c, title: (b.titles || {})[c] || '', r });
+        for (const d of r.diffs) rows.push({ no: rows.length + 1, code: c, ...d });
+      }
+      if (!cards.length) return sendJSON(res, 400, { ok: false, error: '検算の結果がありません。先に「🔎 検算」を回してください' });
+      fs.mkdirSync(CHECK_DIR, { recursive: true });
+      fs.writeFileSync(path.join(CHECK_DIR, name + '.json'), JSON.stringify({ theme, rows }, null, 2) + '\n', 'utf8');
+      const dir = path.join(readingBox(), '依頼'); fs.mkdirSync(dir, { recursive: true });
+      fs.writeFileSync(path.join(dir, name + '.md'), checkRequestMd(name, theme, cards, rows, getVpConfig().voicesDir), 'utf8');
+      return sendJSON(res, 200, { ok: true, name, count: rows.length });
+    }
+    // ソフィーの仕分けの返事：GET ?theme= ／ 取り込み POST { theme }
+    if (pathname === '/api/reading-check/reply' && method === 'GET') {
+      const theme = safeName(new URL(req.url, 'http://x').searchParams.get('theme'));
+      const f = findReply(theme + '_検算');
+      if (!f) return sendJSON(res, 200, { ok: true, found: false });
+      return sendJSON(res, 200, { ok: true, found: true, file: path.basename(f), ...parseCheckReply(fs.readFileSync(f, 'utf8'), checkRowsOf(f)) });
+    }
+    if (pathname === '/api/reading-check/reply/import' && method === 'POST') {
+      const b = await readBody(req);
+      const theme = safeName(b.theme);
+      const f = findReply(theme + '_検算');
+      if (!f) return sendJSON(res, 400, { ok: false, error: 'そのテーマの検算の返事がありません' });
+      const { rows, bad } = parseCheckReply(fs.readFileSync(f, 'utf8'), checkRowsOf(f));
+      const items = readJsonFile(READING_DICT_PATH, []);
+      const as = rows.filter(r => r.kind === 'a');
+      const { added, kept } = addSophieWords(items, as.map(r => ({ sur: r.sur, pron: r.pron, cards: [], why: r.why })), theme, false);
+      fs.writeFileSync(READING_DICT_PATH, JSON.stringify(items, null, 2) + '\n', 'utf8');
+      fs.mkdirSync(CHECK_DIR, { recursive: true });
+      const rr = readJsonFile(RERECORD_PATH, {});
+      for (const r of as) for (const c of r.cards) rr[c] = { since: timestamp(), why: `${r.sur}＝${r.pron}` };
+      fs.writeFileSync(RERECORD_PATH, JSON.stringify(rr, null, 2) + '\n', 'utf8');
+      const fixes = readJsonFile(FIXES_PATH, []);
+      for (const r of rows.filter(r => r.kind === 'd')) fixes.push({ code: r.cards.join(';'), what: r.sur, why: r.why, from: path.basename(f), at: timestamp() });
+      fs.writeFileSync(FIXES_PATH, JSON.stringify(fixes, null, 2) + '\n', 'utf8');
+      moveToDone(f);
+      const count = k => rows.filter(r => r.kind === k).length;
+      return sendJSON(res, 200, { ok: true, added, kept, bad, items, counts: { a: count('a'), b: count('b'), c: count('c'), d: count('d') },
+        rerecord: [...new Set(as.flatMap(r => r.cards))], fixes });
+    }
+    // 原稿の直しの知らせを片付ける：{ index }
+    if (pathname === '/api/reading-check/fix-done' && method === 'POST') {
+      const b = await readBody(req);
+      const fixes = readJsonFile(FIXES_PATH, []); fixes.splice(Number(b.index), 1);
+      fs.mkdirSync(CHECK_DIR, { recursive: true });
+      fs.writeFileSync(FIXES_PATH, JSON.stringify(fixes, null, 2) + '\n', 'utf8');
+      return sendJSON(res, 200, { ok: true, fixes });
     }
     if (pathname === '/api/reading-meta' && method === 'GET') return sendJSON(res, 200, { ok: true, meta: readJsonFile(READING_META_PATH, {}) });
     // 確定：読み原稿を保存し、どの本文で確定したかを覚える（{ id, text, bodyHash }）
@@ -1754,6 +1974,13 @@ function postVoiceGenerate(req, res) {
       await wavsToMp3(chunkWavs, mp3Path, tempDir, reqId);
       console.log(`  ✅ ${code}.mp3 完成`);
       updateMp3List(voicesDir);
+      // 検算のため、実際に読ませた文を残す。録り直したカードは「録り直す」の印を外す
+      try {
+        const vt = readJsonFile(VOICE_TEXTS_PATH, {}); vt[code] = { text, at: timestamp() };
+        fs.writeFileSync(VOICE_TEXTS_PATH, JSON.stringify(vt, null, 2) + '\n', 'utf8');
+        const rr = readJsonFile(RERECORD_PATH, null);
+        if (rr && rr[code]) { delete rr[code]; fs.writeFileSync(RERECORD_PATH, JSON.stringify(rr, null, 2) + '\n', 'utf8'); }
+      } catch (e) { console.warn('  [voice_texts] ' + e.message); }
       sendJSON(res, 200, { ok: true, message: `${code}.mp3 を生成しました` });
 
     } catch (e) {
@@ -1812,7 +2039,7 @@ const server = http.createServer((req, res) => {
   if (pathname === '/api/voice-settings' && method === 'POST') return postVoiceSettings(req, res);
   if (pathname === '/api/reading-scripts' && method === 'GET')  return getReadingScripts(req, res);
   if (pathname === '/api/reading-scripts' && method === 'POST') return postReadingScript(req, res);
-  if (pathname.startsWith('/api/reading-dict') || pathname.startsWith('/api/reading-reply') || pathname === '/api/reading-request' || pathname === '/api/reading-meta' || pathname === '/api/reading-confirm') return handleReading(pathname, method, req, res);
+  if (pathname.startsWith('/api/reading-dict') || pathname.startsWith('/api/reading-reply') || pathname.startsWith('/api/reading-check') || pathname === '/api/reading-request' || pathname === '/api/reading-meta' || pathname === '/api/reading-confirm') return handleReading(pathname, method, req, res);
   if (pathname === '/api/access-stats' && method === 'GET') return getAccessStats(req, res);
   if (pathname === '/api/members' && method === 'GET') return getMembers(req, res);
   if (pathname === '/api/hp-access' && method === 'GET') return getHpAccess(req, res);

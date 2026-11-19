@@ -42,11 +42,17 @@ const RD_MODEL_RE = /[A-Za-zＡ-Ｚａ-ｚ]{1,5}[\-‐－–][0-9A-Za-z０-９�
 // ---------------- 下書きを作る ----------------
 //   返り値 { text, marks:[{from,to,orig,read,kind:'dict'|'year'|'flag'}] }（from/to は本文の位置）
 //   cardId を渡すと、「このカードだけ」の語（cards にそのコードがある語）も当てる。ソフィー案（pending）は kind='sophie'
-function rdBuild(body, cardId) {
+//   opt.noPending=true なら、ソフィー案（未承認）は当てない（一括録音の自動の読み。ソフィー案は牧村さんが確かめてから）
+//   ソフィー案は、頼んだテーマ（theme）のカードにだけ当てる（S-15）
+function rdBuild(body, cardId, opt) {
+  opt = opt || {};
   body = String(body || '');
   const norm = rdZen(body);   // 全角数字を半角にした写し（位置は同じ）
   const cands = [];
-  const active = rdDict.filter(x => x.src !== 'voicepeak' && x.sur && (!(x.cards || []).length || (cardId && x.cards.includes(cardId))))
+  const card = cardId && typeof cardData !== 'undefined' ? cardData.find(c => c.id === cardId) : null;
+  const theme = card ? card.genre : '';
+  const active = rdDict.filter(x => x.src !== 'voicepeak' && x.sur && (!(x.cards || []).length || (cardId && x.cards.includes(cardId)))
+      && (!x.pending || (!opt.noPending && (!x.theme || x.theme === theme))))
     .sort((a, b) => b.sur.length - a.sur.length || ((b.cards || []).length - (a.cards || []).length));
   for (const d of active) {
     let i = 0;
@@ -82,6 +88,13 @@ function readingStatus(card) {
   return (readingScripts[card.id] || '').trim() ? 'legacy' : 'none';
 }
 const RD_ST = { ok: ['✅', '確定済み'], changed: ['⚠', '本文が変わった'], legacy: ['📝', '前からの読み原稿'], none: ['・', '未確認'] };
+// 録音で読ませる文（S-16。1枚ずつの確定は要らない）
+//   確定済み・前からの読み原稿 → その読み原稿／それ以外 → 決まり（年代・作業台の辞書）で自動に作った読み
+function rdAutoText(card) {
+  const st = readingStatus(card), s = (readingScripts[card.id] || '').trim();
+  if ((st === 'ok' || st === 'legacy') && s) return s;
+  return rdBuild(card.body, card.id, { noPending: true }).text.trim();
+}
 
 // ---------------- 画面 ----------------
 async function rdLoad() {
@@ -95,12 +108,13 @@ async function rdLoadReply() {
   if (typeof curUnit === 'undefined' || !curUnit) return;
   try { const j = await (await fetch('/api/reading-reply?theme=' + encodeURIComponent(curUnit))).json(); if (j.ok && j.found) rdReply = j; } catch (e) {}
 }
-async function openReading() {
+async function openReading(tab) {
   if (typeof curUnit !== 'undefined' && !curUnit) { alert('先に左の一覧でテーマを選んでください'); return; }
   await rdLoad();
   await rdLoadReply();
   document.getElementById('readingModal').style.display = 'flex';
-  rdTab = 'cards';
+  rdTab = tab === 'check' ? 'check' : 'cards';
+  if (rdTab === 'check') { rdChkCur = ''; await rdChkLoad(); }
   const cs = rdCards();
   if (!cs.some(c => c.id === rdCur)) rdCur = (cs.find(c => readingStatus(c) !== 'ok') || cs[0] || {}).id || '';
   rdRender();
@@ -114,9 +128,10 @@ function rdToast(t, bad) {
 function rdRender() {
   document.querySelectorAll('.rd-tab').forEach(b => b.classList.toggle('on', b.dataset.t === rdTab));
   if (rdTab === 'dict') return rdRenderDict();
+  if (rdTab === 'check') return rdRenderCheck();
   const cs = rdCards();
   const count = s => cs.filter(c => readingStatus(c) === s).length;
-  const pend = rdDict.filter(x => x.pending).length;
+  const pend = rdDict.filter(x => x.pending && (!x.theme || x.theme === curUnit)).length;
   document.getElementById('rdSide').innerHTML =
     `<div class="rd-sum">確定 ${count('ok')}／${cs.length}枚${count('changed') ? `・本文が変わった ${count('changed')}` : ''}</div>` +
     `<div class="rd-sophiebox">
@@ -220,17 +235,37 @@ async function rdImportReply() {
 // ---------------- 辞書の画面 ----------------
 function rdRenderDict() {
   const mine = rdDict.filter(x => x.src !== 'voicepeak'), vp = rdDict.filter(x => x.src === 'voicepeak');
+  const toVp = mine.filter(x => !x.pending && !(x.cards || []).length);   // VOICEPEAK にまだ入っていない語（書き出す語）
+  const noAccent = vp.some(x => !x.vp);
   document.getElementById('rdSide').innerHTML = `<div class="rd-sum">作業台の語 ${mine.length}・VOICEPEAK の語 ${vp.length}</div>
-    <p class="ik-note">作業台の語は、録音の前に作業台が置き換えます。VOICEPEAK の語は VOICEPEAK の辞書で効いているので、ここでは「登録済み」と分かるためだけに持っています。</p>
-    <label class="dash-refresh rd-import">📥 VOICEPEAK の辞書を取り込む（.vdc2）<input type="file" accept=".vdc2,.json" style="display:none" onchange="rdImport(event)"></label>`;
-  const row = x => `<tr class="${x.pending ? 'rd-pend' : ''}"><td>${esc(x.sur)}${(x.cards || []).length ? `<div class="ik-sub">${esc(x.cards.join('・'))}だけ</div>` : ''}</td><td>${esc(x.pron)}</td>
+    <p class="ik-note"><b>正本は VOICEPEAK の辞書</b>です（アクセントは VOICEPEAK にしか持てないため）。VOICEPEAK の語は VOICEPEAK の中で効くので、作業台は置き換えません。<br>
+    作業台の語は、VOICEPEAK に入るまでの間、録音の前に作業台が置き換えます。</p>
+    <label class="dash-refresh rd-import">📥 VOICEPEAK の辞書を取り込む（.vdc2）<input type="file" accept=".vdc2,.json" style="display:none" onchange="rdImport(event)"></label>
+    ${noAccent ? '<div class="ik-warns">VOICEPEAK の語のアクセントが、まだ作業台にありません。VOICEPEAK で辞書を書き出し、上の「📥 取り込む」で取り込み直してください。</div>' : ''}
+    <div class="rd-sophiebox">
+      <button class="btn-save" onclick="rdExport()" ${noAccent || !toVp.length ? 'disabled' : ''}>📤 VOICEPEAK 用に書き出す（.vdc2）</button>
+      <div class="ik-note">VOICEPEAK にまだ入っていない語：${toVp.length}語${toVp.length ? `（${toVp.slice(0, 6).map(x => esc(x.sur)).join('・')}${toVp.length > 6 ? '…' : ''}）` : ''}</div>
+      <div class="ik-note">書き出した後：<br>① VOICEPEAK の辞書の画面で「辞書のインポート」→ 書き出したファイル →「マージ」<br>② アクセントがおかしい語は、●を動かして直す<br>③ VOICEPEAK で「辞書のエクスポート」<br>④ 上の「📥 取り込む」で取り込み直す（VOICEPEAK に入った語は、作業台の置き換えから外れます）<br>書き出しには VOICEPEAK の全部の語を元のアクセントのまま入れてあるので、「置換」を選んでも消えません。</div>
+    </div>`;
+  const acc = x => { const a = x.src === 'voicepeak' ? x.vp : (x.vpShadow && x.vpShadow.pron === x.pron ? x.vpShadow : null); return a ? ((a.overwriteAccents ? '●で直した' : a.accentType === 0 ? '平板' : String(a.accentType))) : ''; };
+  const row = x => `<tr class="${x.pending ? 'rd-pend' : ''}"><td>${esc(x.sur)}${(x.cards || []).length ? `<div class="ik-sub">${esc(x.cards.join('・'))}だけ</div>` : ''}${x.pending && x.theme ? `<div class="ik-sub">${esc(x.theme)} で頼んだ</div>` : ''}</td><td>${esc(x.pron)}${x.vpShadow && x.vpShadow.pron !== x.pron ? `<div class="ik-sub">⚠ VOICEPEAK では ${esc(x.vpShadow.pron)}</div>` : ''}</td>
+    <td>${esc(acc(x))}</td>
     <td>${x.src === 'voicepeak' ? 'VOICEPEAK' : x.src === 'sophie' ? (x.pending ? '🟣 ソフィー案（未承認）' : 'ソフィー') : '作業台'}</td><td>${esc(x.note || '')}</td>
     <td>${x.pending ? `<button class="dk-mini" data-s="${esc(x.sur)}" onclick="rdApproveWord(this.dataset.s)">認める</button>` : ''}${x.src === 'voicepeak' ? '' : `<button class="dk-mini" data-s="${esc(x.sur)}" onclick="rdDelWord(this.dataset.s)">消す</button>`}</td></tr>`;
   mine.sort((a, b) => (b.pending ? 1 : 0) - (a.pending ? 1 : 0));
   document.getElementById('rdBody').innerHTML = `
     <div class="rd-add">書き方 <input id="rdNewSur" placeholder="例：E-767"> 読み（カタカナ） <input id="rdNewPron" placeholder="例：イーナナロクナナ">
       <button class="btn-save" onclick="rdAddNew()">＋ 足す</button></div>
-    <table class="dkh-t rd-dicttbl"><tr><th>書き方</th><th>読み</th><th>出どころ</th><th>メモ</th><th></th></tr>${mine.concat(vp).map(row).join('')}</table>`;
+    <table class="dkh-t rd-dicttbl"><tr><th>書き方</th><th>読み</th><th title="VOICEPEAK のアクセント。数字は音が下がる位置">アクセント</th><th>出どころ</th><th>メモ</th><th></th></tr>${mine.concat(vp).map(row).join('')}</table>`;
+}
+async function rdExport() {
+  const r = await fetch('/api/reading-dict/export');
+  if (!r.ok) { let e = ''; try { e = (await r.json()).error; } catch (x) {} rdToast(e || '書き出せませんでした', true); return; }
+  const blob = await r.blob();
+  const m = /filename\*=UTF-8''([^;]+)/.exec(r.headers.get('Content-Disposition') || '');
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = m ? decodeURIComponent(m[1]) : 'TAKERU読み辞書.vdc2';
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+  rdToast(`書き出しました（全部で ${r.headers.get('X-Count')}語、うち新しい語 ${r.headers.get('X-New')}語）。ダウンロードのフォルダにあります。VOICEPEAK の「辞書のインポート」で読み込んでください`);
 }
 async function rdAddNew() {
   const s = document.getElementById('rdNewSur').value.trim(), p = document.getElementById('rdNewPron').value.trim();
@@ -252,11 +287,106 @@ function rdImport(ev) {
     let entries; try { entries = JSON.parse(String(fr.result).replace(/^﻿/, '')); } catch (e) { rdToast('ファイルが読めません（VOICEPEAK の辞書の書き出しを選んでください）', true); return; }
     const r = await (await fetch('/api/reading-dict/import', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ entries }) })).json();
     if (!r.ok) { rdToast(r.error, true); return; }
-    rdDict = r.items; rdToast(`VOICEPEAK の語を ${r.imported}語 取り込みました（辞書は全部で ${r.total}語）`); rdRenderDict();
+    rdDict = r.items;
+    rdToast(`VOICEPEAK の語を ${r.imported}語 取り込みました（辞書は全部で ${r.total}語）。${r.absorbed ? `作業台の語のうち ${r.absorbed}語は VOICEPEAK に入っていたので、VOICEPEAK 任せにしました。` : ''}${r.differ && r.differ.length ? `VOICEPEAK と読みが違う語：${r.differ.join('・')}（作業台の読みが先に効きます）` : ''}`, !!(r.differ && r.differ.length));
+    rdRenderDict();
   };
   fr.readAsText(f, 'utf-8');
 }
-function rdSetTab(t) { rdTab = t; rdRender(); }
+async function rdSetTab(t) { rdTab = t; if (t === 'check') await rdChkLoad(); rdRender(); }
+
+// ---------------- 🔎 検算（S-16：録ってから Whisper で書き起こし、読ませた文と見比べる） ----------------
+let rdChk = { results: {}, rerecord: {}, fixes: [] }, rdChkReply = null, rdChkCur = '', rdChkBusy = false;
+function rdChkCards() { return rdCards().filter(c => typeof mp3Ids === 'undefined' || mp3Ids.has(c.id)); }
+async function rdChkLoad() {
+  const codes = rdCards().map(c => c.id).join(',');
+  try { const j = await (await fetch('/api/reading-check?codes=' + encodeURIComponent(codes))).json(); if (j.ok) rdChk = j; } catch (e) {}
+  rdChkReply = null;
+  try { const j = await (await fetch('/api/reading-check/reply?theme=' + encodeURIComponent(curUnit))).json(); if (j.ok && j.found) rdChkReply = j; } catch (e) {}
+}
+function rdRenderCheck() {
+  const cs = rdChkCards(), all = rdCards();
+  const done = cs.filter(c => rdChk.results[c.id]);
+  const nDiff = done.reduce((s, c) => s + rdChk.results[c.id].diffs.length, 0);
+  const rr = Object.keys(rdChk.rerecord || {}).filter(id => all.some(c => c.id === id));
+  const fixes = (rdChk.fixes || []).map((f, i) => ({ ...f, i })).filter(f => String(f.code).split(';').some(id => all.some(c => c.id === id)));
+  document.getElementById('rdSide').innerHTML =
+    `<div class="rd-sum">検算 ${done.length}／${cs.length}枚・ずれ ${nDiff}件${all.length > cs.length ? `<div class="ik-sub">音声の無いカード ${all.length - cs.length}枚は除く</div>` : ''}</div>
+     <div class="rd-sophiebox">
+       <button class="btn-save" id="rdChkRunBtn" onclick="rdChkRun()" ${rdChkBusy ? 'disabled' : ''}>🔎 印のカードを検算</button>
+       ${rdChkReply ? `<button class="btn-save" onclick="rdChkImport()">📥 ソフィーの仕分けを取り込む（${rdChkReply.rows.length}件${rdChkReply.bad.length ? `・形の悪い行 ${rdChkReply.bad.length}` : ''}）</button>`
+                    : `<button class="dash-refresh" onclick="rdChkRequest()" ${done.length ? '' : 'disabled'} title="ずれの一覧を TAKERU_共有の 70_読み\\依頼 に置く">📤 ソフィーに仕分けを頼む</button>`}
+       <div class="ik-note">1枚 10〜20秒ほど。初めての時だけ、Whisper のモデル（約480MB）の読み込みで長くかかります。</div>
+     </div>
+     ${rr.length ? `<div class="ik-warns">🔁 録り直すカード：${rr.map(esc).join('・')}<div class="ik-sub">「カードの読み」で紫の所を確かめて確定 →「🎙 一括」（印が付いています）</div></div>` : ''}
+     ${fixes.length ? `<div class="ik-warns">✏️ 原稿の直し（ソフィーの d）${fixes.map(f => `<div>${esc(f.code)}：${esc(f.what)}${f.why ? `（${esc(f.why)}）` : ''} <button class="dk-mini" onclick="rdChkFixDone(${f.i})">直した</button></div>`).join('')}</div>` : ''}
+     <div class="rd-chk-tools"><button class="dk-mini" onclick="rdChkSel(true)">全部</button><button class="dk-mini" onclick="rdChkSel(false)">外す</button></div>` +
+    cs.map(c => { const r = rdChk.results[c.id];
+      return `<div class="rd-item ${c.id === rdChkCur ? 'on' : ''}" data-id="${esc(c.id)}" onclick="if(event.target.tagName!=='INPUT')rdChkOpen(this.dataset.id)">
+        <input type="checkbox" class="rd-chk-cb" data-id="${esc(c.id)}" ${r ? '' : 'checked'}>
+        <span class="rd-code">${esc(c.id)}</span><span class="rd-title">${esc(c.title || '')}</span>
+        <span class="rd-bmark ${r ? (r.diffs.length ? 'warn' : 'ok') : 'legacy'}">${r ? (r.diffs.length ? `ずれ${r.diffs.length}` : '一致') : '未'}</span></div>`; }).join('');
+  rdChkRenderCard();
+}
+function rdChkSel(v) { document.querySelectorAll('.rd-chk-cb').forEach(cb => cb.checked = v); }
+function rdChkOpen(id) { rdChkCur = id; rdRenderCheck(); }
+function rdChkRenderCard() {
+  const box = document.getElementById('rdBody');
+  const card = cardData.find(c => c.id === rdChkCur), r = rdChk.results[rdChkCur];
+  if (!card) { box.innerHTML = `<p class="qr-empty">左でカードを選ぶと、ずれの一覧が出ます。</p>
+    <div class="ik-note">流れ：「🎙 一括」でテーマを録る →「🔎 検算」→「📤 ソフィーに仕分けを頼む」→ 返事を取り込む → 録り直すカードだけ「カードの読み」で確定して録り直す。<br>
+    Whisper は聞いた音を漢字に直して書くので、漢字の別の読み（金沢柵をカナザワと読んだ、など）は、ここには出にくいです。</div>`; return; }
+  if (!r) { box.innerHTML = `<div class="rd-head"><b>${esc(card.id)}</b>　${esc(card.title || '')}</div><p class="qr-empty">まだ検算していません。左で印を付けて「🔎 印のカードを検算」。</p>`; return; }
+  box.innerHTML = `
+    <div class="rd-head"><b>${esc(card.id)}</b>　${esc(card.title || '')}　<span class="rd-badge">一致 ${Math.round(r.match * 100)}%・ずれ ${r.diffs.length}件</span>
+      <span class="ik-sub">${esc(r.checkedAt || '')}・${esc(r.model)}・${r.seconds}秒${r.textFrom === 'guess' ? '・読ませた文の記録が無いので、今の読み原稿か本文と見比べた' : ''}</span></div>
+    <audio id="rdChkAudio" controls preload="auto" src="/api/voice/audio/${encodeURIComponent(card.id)}?t=${Date.now()}" style="width:100%"></audio>
+    ${r.diffs.length ? `<table class="dkh-t rd-chktbl"><tr><th></th><th>秒</th><th>読ませた文</th><th>書き起こし</th><th>読ませた音 → 聞こえた音</th></tr>
+      ${r.diffs.map(d => `<tr><td><button class="dk-mini" onclick="rdChkPlay(${d.at})">▶</button></td><td>${d.at}</td><td>${rdChkHi(d.script)}</td><td>${rdChkHi(d.heard)}</td><td class="ik-sub">${esc(d.said)} → ${esc(d.got)}</td></tr>`).join('')}</table>`
+      : '<p class="qr-empty">ずれはありませんでした。</p>'}
+    <details><summary>書き起こしの全文</summary><div class="rd-text">${esc(r.heard)}</div></details>
+    <details><summary>読ませた文</summary><div class="rd-text">${esc(r.script)}</div></details>`;
+}
+function rdChkHi(s) { return esc(s).replace(/【(.*?)】/, '<mark class="rd-m rd-flag">$1</mark>'); }
+function rdChkPlay(t) { const a = document.getElementById('rdChkAudio'); if (!a) return; a.currentTime = Math.max(0, t); a.play(); }
+async function rdChkRun() {
+  const ids = [...document.querySelectorAll('.rd-chk-cb:checked')].map(cb => cb.dataset.id);
+  if (!ids.length) { rdToast('検算するカードに印を付けてください', true); return; }
+  rdChkBusy = true; let ok = 0, ng = 0, lastErr = '';
+  for (let i = 0; i < ids.length; i++) {
+    const card = cardData.find(c => c.id === ids[i]); if (!card) continue;
+    const btn = document.getElementById('rdChkRunBtn'); if (btn) { btn.disabled = true; btn.textContent = `⏳ 検算中 ${i + 1}/${ids.length}（${card.id}）`; }
+    try {
+      const r = await (await fetch('/api/reading-check', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: card.id, text: (readingScripts[card.id] || card.body || '').trim() }) })).json();
+      if (r.ok) { rdChk.results[card.id] = r; ok++; } else { ng++; lastErr = r.error; if (/入っていません|起動できません/.test(r.error || '')) break; }
+    } catch (e) { ng++; lastErr = e.message; }
+  }
+  rdChkBusy = false;
+  if (!rdChkCur && ids.length) rdChkCur = ids[0];
+  rdRenderCheck();
+  rdToast(`検算 ${ok}枚${ng ? `・できなかった ${ng}枚：${lastErr}` : ''}`, !!ng);
+}
+async function rdChkRequest() {
+  const codes = rdChkCards().filter(c => rdChk.results[c.id]).map(c => c.id);
+  const titles = {}; rdCards().forEach(c => titles[c.id] = c.title || '');
+  const r = await (await fetch('/api/reading-check/request', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ theme: curUnit, codes, titles }) })).json();
+  if (!r.ok) { rdToast(r.error, true); return; }
+  rdToast(`仕分けの依頼を置きました（70_読み\\依頼\\${r.name}.md・ずれ ${r.count}件）。ソフィーが6時・18時の見回りで拾います（急ぐときは声をかけてください）`);
+}
+async function rdChkImport() {
+  if (!rdChkReply) return;
+  const bad = rdChkReply.bad.length ? `\n形の悪い行（取り込みません）：\n${rdChkReply.bad.map(b => `・${b.line}行目 ${b.reason}`).join('\n')}` : '';
+  if (!confirm(`ソフィーの仕分け（${rdChkReply.file}）を取り込みます。a（VOICEPEAK の読み違い）は辞書に「ソフィー案」として入り、そのカードに「録り直す」の印が付きます。d（原稿の誤り）は直す所の一覧に出ます。${bad}\nよろしいですか？`)) return;
+  const r = await (await fetch('/api/reading-check/reply/import', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ theme: curUnit }) })).json();
+  if (!r.ok) { rdToast(r.error, true); return; }
+  rdDict = r.items; await rdChkLoad(); rdRenderCheck();
+  rdToast(`取り込みました：a ${r.counts.a}・b ${r.counts.b}・c ${r.counts.c}・d ${r.counts.d}。${r.rerecord.length ? `録り直すカード：${r.rerecord.join('・')}` : '録り直すカードはありません'}`);
+}
+async function rdChkFixDone(i) {
+  const r = await (await fetch('/api/reading-check/fix-done', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ index: i }) })).json();
+  if (r.ok) { rdChk.fixes = r.fixes; rdRenderCheck(); }
+}
 
 // 起動時に読み込んでおく（一括録音の一覧の印に使う）
 rdLoad();

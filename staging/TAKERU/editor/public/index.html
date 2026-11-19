@@ -641,6 +641,7 @@
     <div class="modal-head mag-top">
       <h2>🔤 読み確認</h2>
       <button class="rd-tab dash-refresh" data-t="cards" onclick="rdSetTab('cards')">カードの読み</button>
+      <button class="rd-tab dash-refresh" data-t="check" onclick="rdSetTab('check')">🔎 検算</button>
       <button class="rd-tab dash-refresh" data-t="dict" onclick="rdSetTab('dict')">読みの辞書</button>
       <button class="dash-refresh" onclick="openManual('カードの基本作業')" title="使い方">❓ 使い方</button>
       <button class="btn-cancel" onclick="closeReading()">✕ 閉じる</button>
@@ -723,7 +724,8 @@
       <button class="btn-unit-nav" id="btnNextUnit" onclick="nextUnit()" disabled title="次のテーマ">▶</button>
       <button class="btn-rename" id="btnRename" onclick="openRename()" disabled title="テーマ名・サブテーマ名を変更">✏️</button>
       <button class="btn-batch-rec" id="btnReading" onclick="openReading()" disabled title="読み確認：テーマのカードの読みの原稿（VOICEPEAK に読ませる文）を確かめて確定する。年代の読みや辞書の語は自動で置き換え、辞書に無い型式は要確認で出す。確定した読みを「🎙 一括」が読む">🔤 読み</button>
-      <button class="btn-batch-rec" id="btnBatchRecord" onclick="recordUnitBatch()" disabled title="テーマ内の未生成カードを一括録音">🎙 一括</button>
+      <button class="btn-batch-rec" id="btnBatchRecord" onclick="recordUnitBatch()" disabled title="テーマ内の未生成カードを一括録音（確定していないカードは、年代・辞書を自動で置き換えた読みで録る）">🎙 一括</button>
+      <button class="btn-batch-rec" id="btnCheck" onclick="openReading('check')" disabled title="検算：録った音声を Whisper で書き起こし、読ませた文と見比べて、ずれた所を出す。ずれの仕分けはソフィーに頼む">🔎 検算</button>
       <button class="btn-unit-pub" id="btnUnitPub" onclick="openUnitPub()" disabled title="このテーマをまとめて公開／非公開にする">🌐 公開</button>
       <span class="card-count" id="cardCount">0枚</span>
     </div>

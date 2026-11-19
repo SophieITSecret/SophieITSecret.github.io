@@ -1,0 +1,1678 @@
+[
+  {
+    "sur": "高市",
+    "pron": "タカイチ",
+    "src": "voicepeak",
+    "note": "",
+    "added": "2026-11-19",
+    "vp": {
+      "sur": "高市",
+      "pron": "タカイチ",
+      "pos": "Japanese_Futsuu_meishi",
+      "priority": 5,
+      "accentType": 0,
+      "lang": "ja"
+    }
+  },
+  {
+    "sur": "捏造",
+    "pron": "ネツゾウ",
+    "src": "voicepeak",
+    "note": "",
+    "added": "2026-11-19",
+    "vp": {
+      "sur": "捏造",
+      "pron": "ネツゾウ",
+      "pos": "Japanese_Futsuu_meishi",
+      "priority": 10,
+      "accentType": 0,
+      "lang": "ja"
+    }
+  },
+  {
+    "sur": "孫子",
+    "pron": "ソンシ",
+    "src": "voicepeak",
+    "note": "",
+    "added": "2026-11-19",
+    "vp": {
+      "sur": "孫子",
+      "pron": "ソンシ",
+      "pos": "Japanese_Futsuu_meishi",
+      "priority": 5,
+      "accentType": 1,
+      "lang": "ja"
+    }
+  },
+  {
+    "sur": "鄧小平",
+    "pron": "トウショウヘイ",
+    "src": "voicepeak",
+    "note": "",
+    "added": "2026-11-19",
+    "vp": {
+      "sur": "鄧小平",
+      "pron": "トウショウヘイ",
+      "pos": "Japanese_Futsuu_meishi",
+      "priority": 5,
+      "accentType": 0,
+      "lang": "ja"
+    }
+  },
+  {
+    "sur": "兵法",
+    "pron": "ヘイホウ",
+    "src": "voicepeak",
+    "note": "",
+    "added": "2026-11-19",
+    "vp": {
+      "sur": "兵法",
+      "pron": "ヘイホウ",
+      "pos": "Japanese_Futsuu_meishi",
+      "priority": 5,
+      "accentType": 1,
+      "lang": "ja"
+    }
+  },
+  {
+    "sur": "歩兵",
+    "pron": "ホヘイ",
+    "src": "voicepeak",
+    "note": "",
+    "added": "2026-11-19",
+    "vp": {
+      "sur": "歩兵",
+      "pron": "ホヘイ",
+      "pos": "Japanese_Futsuu_meishi",
+      "priority": 5,
+      "accentType": 0,
+      "lang": "ja"
+    }
+  },
+  {
+    "sur": "突破口",
+    "pron": "トッパコウ",
+    "src": "voicepeak",
+    "note": "",
+    "added": "2026-11-19",
+    "vp": {
+      "sur": "突破口",
+      "pron": "トッパコウ",
+      "pos": "Japanese_Futsuu_meishi",
+      "priority": 5,
+      "accentType": 4,
+      "lang": "ja"
+    }
+  },
+  {
+    "sur": "74式",
+    "pron": "ナナヨンシキ",
+    "src": "voicepeak",
+    "note": "",
+    "added": "2026-11-19",
+    "vp": {
+      "sur": "74式",
+      "pron": "ナナヨンシキ",
+      "pos": "Japanese_Futsuu_meishi",
+      "priority": 5,
+      "accentType": 0,
+      "lang": "ja"
+    }
+  },
+  {
+    "sur": "９０式",
+    "pron": "キュウマルシキ",
+    "src": "voicepeak",
+    "note": "",
+    "added": "2026-11-19",
+    "vp": {
+      "sur": "９０式",
+      "pron": "キュウマルシキ",
+      "pos": "Japanese_Futsuu_meishi",
+      "priority": 5,
+      "accentType": 0,
+      "lang": "ja"
+    }
+  },
+  {
+    "sur": "１０式",
+    "pron": "ヒトマルシキ",
+    "src": "voicepeak",
+    "note": "",
+    "added": "2026-11-19",
+    "vp": {
+      "sur": "１０式",
+      "pron": "ヒトマルシキ",
+      "pos": "Japanese_Futsuu_meishi",
+      "priority": 5,
+      "accentType": 0,
+      "lang": "ja"
+    }
+  },
+  {
+    "sur": "H１",
+    "pron": "エイチワン",
+    "src": "voicepeak",
+    "note": "",
+    "added": "2026-11-19",
+    "vp": {
+      "sur": "H１",
+      "pron": "エイチワン",
+      "pos": "Japanese_Futsuu_meishi",
+      "priority": 5,
+      "accentType": 0,
+      "overwriteAccents": [
+        8192,
+        8192,
+        8193,
+        8193,
+        8192
+      ],
+      "lang": "ja"
+    }
+  },
+  {
+    "sur": "樽",
+    "pron": "タル",
+    "src": "voicepeak",
+    "note": "",
+    "added": "2026-11-19",
+    "vp": {
+      "sur": "樽",
+      "pron": "タル",
+      "pos": "Japanese_Futsuu_meishi",
+      "priority": 5,
+      "accentType": 0,
+      "lang": "ja"
+    }
+  },
+  {
+    "sur": "逃避行",
+    "pron": "トウヒコウ",
+    "src": "voicepeak",
+    "note": "",
+    "added": "2026-11-19",
+    "vp": {
+      "sur": "逃避行",
+      "pron": "トウヒコウ",
+      "pos": "Japanese_Futsuu_meishi",
+      "priority": 5,
+      "accentType": 0,
+      "lang": "ja"
+    }
+  },
+  {
+    "sur": "角のとれた",
+    "pron": "カドノトレタ",
+    "src": "voicepeak",
+    "note": "",
+    "added": "2026-11-19",
+    "vp": {
+      "sur": "角のとれた",
+      "pron": "カドノトレタ",
+      "pos": "Japanese_Futsuu_meishi",
+      "priority": 5,
+      "accentType": 0,
+      "lang": "ja"
+    }
+  },
+  {
+    "sur": "炊料",
+    "pron": "スイリョウ",
+    "src": "voicepeak",
+    "note": "",
+    "added": "2026-11-19",
+    "vp": {
+      "sur": "炊料",
+      "pron": "スイリョウ",
+      "pos": "Japanese_Futsuu_meishi",
+      "priority": 5,
+      "accentType": 0,
+      "lang": "ja"
+    }
+  },
+  {
+    "sur": "川",
+    "pron": "カワ",
+    "src": "voicepeak",
+    "note": "",
+    "added": "2026-11-19",
+    "vp": {
+      "sur": "川",
+      "pron": "カワ",
+      "pos": "Japanese_Futsuu_meishi",
+      "priority": 5,
+      "accentType": 0,
+      "lang": "ja"
+    }
+  },
+  {
+    "sur": "一曲",
+    "pron": "イッキョク",
+    "src": "voicepeak",
+    "note": "",
+    "added": "2026-11-19",
+    "vp": {
+      "sur": "一曲",
+      "pron": "イッキョク",
+      "pos": "Japanese_Futsuu_meishi",
+      "priority": 5,
+      "accentType": 0,
+      "lang": "ja"
+    }
+  },
+  {
+    "sur": "気に入ら",
+    "pron": "キニイラ",
+    "src": "voicepeak",
+    "note": "",
+    "added": "2026-11-19",
+    "vp": {
+      "sur": "気に入ら",
+      "pron": "キニイラ",
+      "pos": "Japanese_Futsuu_meishi",
+      "priority": 5,
+      "accentType": 0,
+      "lang": "ja"
+    }
+  },
+  {
+    "sur": "お気に入り",
+    "pron": "オキニイリ",
+    "src": "voicepeak",
+    "note": "",
+    "added": "2026-11-19",
+    "vp": {
+      "sur": "お気に入り",
+      "pron": "オキニイリ",
+      "pos": "Japanese_Futsuu_meishi",
+      "priority": 5,
+      "accentType": 0,
+      "lang": "ja"
+    }
+  },
+  {
+    "sur": "四柱推命",
+    "pron": "シチュウスイメイ",
+    "src": "voicepeak",
+    "note": "",
+    "added": "2026-11-19",
+    "vp": {
+      "sur": "四柱推命",
+      "pron": "シチュウスイメイ",
+      "pos": "Japanese_Futsuu_meishi",
+      "priority": 5,
+      "accentType": 0,
+      "lang": "ja"
+    }
+  },
+  {
+    "sur": "方",
+    "pron": "カタ",
+    "src": "voicepeak",
+    "note": "",
+    "added": "2026-11-19",
+    "vp": {
+      "sur": "方",
+      "pron": "カタ",
+      "pos": "Japanese_Futsuu_meishi",
+      "priority": 5,
+      "accentType": 0,
+      "lang": "ja"
+    }
+  },
+  {
+    "sur": "神田川",
+    "pron": "カンダガワ",
+    "src": "voicepeak",
+    "note": "",
+    "added": "2026-11-19",
+    "vp": {
+      "sur": "神田川",
+      "pron": "カンダガワ",
+      "pos": "Japanese_Futsuu_meishi",
+      "priority": 5,
+      "accentType": 0,
+      "overwriteAccents": [
+        8192,
+        8193,
+        8193,
+        8193,
+        8192
+      ],
+      "lang": "ja"
+    }
+  },
+  {
+    "sur": "一間",
+    "pron": "ヒトマ",
+    "src": "voicepeak",
+    "note": "",
+    "added": "2026-11-19",
+    "vp": {
+      "sur": "一間",
+      "pron": "ヒトマ",
+      "pos": "Japanese_Futsuu_meishi",
+      "priority": 5,
+      "accentType": 0,
+      "lang": "ja"
+    }
+  },
+  {
+    "sur": "走水",
+    "pron": "ハシリミズ",
+    "src": "voicepeak",
+    "note": "",
+    "added": "2026-11-19",
+    "vp": {
+      "sur": "走水",
+      "pron": "ハシリミズ",
+      "pos": "Japanese_Futsuu_meishi",
+      "priority": 5,
+      "accentType": 0,
+      "lang": "ja"
+    }
+  },
+  {
+    "sur": "日本武尊",
+    "pron": "ヤマトタケル",
+    "src": "voicepeak",
+    "note": "",
+    "added": "2026-11-19",
+    "vp": {
+      "sur": "日本武尊",
+      "pron": "ヤマトタケル",
+      "pos": "Japanese_Futsuu_meishi",
+      "priority": 5,
+      "accentType": 0,
+      "lang": "ja"
+    }
+  },
+  {
+    "sur": "陸海空",
+    "pron": "リクカイクウ",
+    "src": "voicepeak",
+    "note": "",
+    "added": "2026-11-19",
+    "vp": {
+      "sur": "陸海空",
+      "pron": "リクカイクウ",
+      "pos": "Japanese_Futsuu_meishi",
+      "priority": 5,
+      "accentType": 0,
+      "lang": "ja"
+    }
+  },
+  {
+    "sur": "２４時間",
+    "pron": "ニジュウヨジカン",
+    "src": "voicepeak",
+    "note": "",
+    "added": "2026-11-19",
+    "vp": {
+      "sur": "２４時間",
+      "pron": "ニジュウヨジカン",
+      "pos": "Japanese_Futsuu_meishi",
+      "priority": 5,
+      "accentType": 0,
+      "lang": "ja"
+    }
+  },
+  {
+    "sur": "一都",
+    "pron": "イット",
+    "src": "voicepeak",
+    "note": "",
+    "added": "2026-11-19",
+    "vp": {
+      "sur": "一都",
+      "pron": "イット",
+      "pos": "Japanese_Futsuu_meishi",
+      "priority": 5,
+      "accentType": 0,
+      "lang": "ja"
+    }
+  },
+  {
+    "sur": "要となる",
+    "pron": "カナメトナル",
+    "src": "voicepeak",
+    "note": "",
+    "added": "2026-11-19",
+    "vp": {
+      "sur": "要となる",
+      "pron": "カナメトナル",
+      "pos": "Japanese_Futsuu_meishi",
+      "priority": 5,
+      "accentType": 0,
+      "lang": "ja"
+    }
+  },
+  {
+    "sur": "日夜",
+    "pron": "ニチヤ",
+    "src": "voicepeak",
+    "note": "",
+    "added": "2026-11-19",
+    "vp": {
+      "sur": "日夜",
+      "pron": "ニチヤ",
+      "pos": "Japanese_Futsuu_meishi",
+      "priority": 5,
+      "accentType": 0,
+      "lang": "ja"
+    }
+  },
+  {
+    "sur": "要石",
+    "pron": "カナメイシ",
+    "src": "voicepeak",
+    "note": "",
+    "added": "2026-11-19",
+    "vp": {
+      "sur": "要石",
+      "pron": "カナメイシ",
+      "pos": "Japanese_Futsuu_meishi",
+      "priority": 5,
+      "accentType": 0,
+      "lang": "ja"
+    }
+  },
+  {
+    "sur": "音波",
+    "pron": "オンパ",
+    "src": "voicepeak",
+    "note": "",
+    "added": "2026-11-19",
+    "vp": {
+      "sur": "音波",
+      "pron": "オンパ",
+      "pos": "Japanese_Futsuu_meishi",
+      "priority": 5,
+      "accentType": 0,
+      "lang": "ja"
+    }
+  },
+  {
+    "sur": "24時間",
+    "pron": "ニジュウヨジカン",
+    "src": "voicepeak",
+    "note": "",
+    "added": "2026-11-19",
+    "vp": {
+      "sur": "24時間",
+      "pron": "ニジュウヨジカン",
+      "pos": "Japanese_Futsuu_meishi",
+      "priority": 5,
+      "accentType": 0,
+      "lang": "ja"
+    }
+  },
+  {
+    "sur": "要",
+    "pron": "カナメ",
+    "src": "voicepeak",
+    "note": "",
+    "added": "2026-11-19",
+    "vp": {
+      "sur": "要",
+      "pron": "カナメ",
+      "pos": "Japanese_Futsuu_meishi",
+      "priority": 5,
+      "accentType": 0,
+      "lang": "ja"
+    }
+  },
+  {
+    "sur": "要です",
+    "pron": "カナメデス",
+    "src": "voicepeak",
+    "note": "",
+    "added": "2026-11-19",
+    "vp": {
+      "sur": "要です",
+      "pron": "カナメデス",
+      "pos": "Japanese_Futsuu_meishi",
+      "priority": 5,
+      "accentType": 0,
+      "lang": "ja"
+    }
+  },
+  {
+    "sur": "北方領土",
+    "pron": "ホッポウリョウド",
+    "src": "voicepeak",
+    "note": "",
+    "added": "2026-11-19",
+    "vp": {
+      "sur": "北方領土",
+      "pron": "ホッポウリョウド",
+      "pos": "Japanese_Futsuu_meishi",
+      "priority": 5,
+      "accentType": 0,
+      "lang": "ja"
+    }
+  },
+  {
+    "sur": "一度",
+    "pron": "イチド",
+    "src": "voicepeak",
+    "note": "",
+    "added": "2026-11-19",
+    "vp": {
+      "sur": "一度",
+      "pron": "イチド",
+      "pos": "Japanese_Futsuu_meishi",
+      "priority": 5,
+      "accentType": 0,
+      "lang": "ja"
+    }
+  },
+  {
+    "sur": "少将",
+    "pron": "ショウショウ",
+    "src": "voicepeak",
+    "note": "",
+    "added": "2026-11-19",
+    "vp": {
+      "sur": "少将",
+      "pron": "ショウショウ",
+      "pos": "Japanese_Futsuu_meishi",
+      "priority": 5,
+      "accentType": 0,
+      "lang": "ja"
+    }
+  },
+  {
+    "sur": "曹",
+    "pron": "ソウ",
+    "src": "voicepeak",
+    "note": "",
+    "added": "2026-11-19",
+    "vp": {
+      "sur": "曹",
+      "pron": "ソウ",
+      "pos": "Japanese_Futsuu_meishi",
+      "priority": 5,
+      "accentType": 0,
+      "lang": "ja"
+    }
+  },
+  {
+    "sur": "F-35",
+    "pron": "エフサンジュウゴ",
+    "src": "voicepeak",
+    "note": "",
+    "added": "2026-11-19",
+    "vp": {
+      "sur": "F-35",
+      "pron": "エフサンジュウゴ",
+      "pos": "Japanese_Futsuu_meishi",
+      "priority": 5,
+      "accentType": 0,
+      "lang": "ja"
+    }
+  },
+  {
+    "sur": "F-15",
+    "pron": "エフジュウゴ",
+    "src": "voicepeak",
+    "note": "",
+    "added": "2026-11-19",
+    "vp": {
+      "sur": "F-15",
+      "pron": "エフジュウゴ",
+      "pos": "Japanese_Futsuu_meishi",
+      "priority": 5,
+      "accentType": 0,
+      "lang": "ja"
+    }
+  },
+  {
+    "sur": "F-2",
+    "pron": "エフツー",
+    "src": "voicepeak",
+    "note": "",
+    "added": "2026-11-19",
+    "vp": {
+      "sur": "F-2",
+      "pron": "エフツー",
+      "pos": "Japanese_Futsuu_meishi",
+      "priority": 5,
+      "accentType": 0,
+      "lang": "ja"
+    }
+  },
+  {
+    "sur": "十分",
+    "pron": "ジュウブン",
+    "src": "voicepeak",
+    "note": "",
+    "added": "2026-11-19",
+    "vp": {
+      "sur": "十分",
+      "pron": "ジュウブン",
+      "pos": "Japanese_Futsuu_meishi",
+      "priority": 5,
+      "accentType": 0,
+      "lang": "ja"
+    }
+  },
+  {
+    "sur": "遠方",
+    "pron": "エンポウ",
+    "src": "voicepeak",
+    "note": "",
+    "added": "2026-11-19",
+    "vp": {
+      "sur": "遠方",
+      "pron": "エンポウ",
+      "pos": "Japanese_Futsuu_meishi",
+      "priority": 5,
+      "accentType": 0,
+      "lang": "ja"
+    }
+  },
+  {
+    "sur": "4倍",
+    "pron": "ヨンバイ",
+    "src": "voicepeak",
+    "note": "",
+    "added": "2026-11-19",
+    "vp": {
+      "sur": "4倍",
+      "pron": "ヨンバイ",
+      "pos": "Japanese_Futsuu_meishi",
+      "priority": 5,
+      "accentType": 0,
+      "lang": "ja"
+    }
+  },
+  {
+    "sur": "C-1",
+    "pron": "シーワン",
+    "src": "voicepeak",
+    "note": "",
+    "added": "2026-11-19",
+    "vp": {
+      "sur": "C-1",
+      "pron": "シーワン",
+      "pos": "Japanese_Futsuu_meishi",
+      "priority": 5,
+      "accentType": 0,
+      "lang": "ja"
+    }
+  },
+  {
+    "sur": "C-2",
+    "pron": "シーツー",
+    "src": "voicepeak",
+    "note": "",
+    "added": "2026-11-19",
+    "vp": {
+      "sur": "C-2",
+      "pron": "シーツー",
+      "pos": "Japanese_Futsuu_meishi",
+      "priority": 5,
+      "accentType": 0,
+      "lang": "ja"
+    }
+  },
+  {
+    "sur": "E-2C",
+    "pron": "イーツーシー",
+    "src": "voicepeak",
+    "note": "",
+    "added": "2026-11-19",
+    "vp": {
+      "sur": "E-2C",
+      "pron": "イーツーシー",
+      "pos": "Japanese_Futsuu_meishi",
+      "priority": 5,
+      "accentType": 0,
+      "lang": "ja"
+    }
+  },
+  {
+    "sur": "E-2D",
+    "pron": "イーツーディイ",
+    "src": "voicepeak",
+    "note": "",
+    "added": "2026-11-19",
+    "vp": {
+      "sur": "E-2D",
+      "pron": "イーツーディイ",
+      "pos": "Japanese_Futsuu_meishi",
+      "priority": 5,
+      "accentType": 0,
+      "lang": "ja"
+    }
+  },
+  {
+    "sur": "E-767",
+    "pron": "イーナナロクナナ",
+    "src": "voicepeak",
+    "note": "",
+    "added": "2026-11-19",
+    "vp": {
+      "sur": "E-767",
+      "pron": "イーナナロクナナ",
+      "pos": "Japanese_Futsuu_meishi",
+      "priority": 5,
+      "accentType": 0,
+      "lang": "ja"
+    }
+  },
+  {
+    "sur": "F-16",
+    "pron": "エフジュウロク",
+    "src": "voicepeak",
+    "note": "",
+    "added": "2026-11-19",
+    "vp": {
+      "sur": "F-16",
+      "pron": "エフジュウロク",
+      "pos": "Japanese_Futsuu_meishi",
+      "priority": 5,
+      "accentType": 0,
+      "lang": "ja"
+    }
+  },
+  {
+    "sur": "空対艦",
+    "pron": "クウタイカン",
+    "src": "voicepeak",
+    "note": "",
+    "added": "2026-11-19",
+    "vp": {
+      "sur": "空対艦",
+      "pron": "クウタイカン",
+      "pos": "Japanese_Futsuu_meishi",
+      "priority": 5,
+      "accentType": 0,
+      "lang": "ja"
+    }
+  },
+  {
+    "sur": "P-1",
+    "pron": "ピーワン",
+    "src": "voicepeak",
+    "note": "",
+    "added": "2026-11-19",
+    "vp": {
+      "sur": "P-1",
+      "pron": "ピーワン",
+      "pos": "Japanese_Futsuu_meishi",
+      "priority": 5,
+      "accentType": 0,
+      "lang": "ja"
+    }
+  },
+  {
+    "sur": "空対空",
+    "pron": "クウタイクウ",
+    "src": "voicepeak",
+    "note": "",
+    "added": "2026-11-19",
+    "vp": {
+      "sur": "空対空",
+      "pron": "クウタイクウ",
+      "pos": "Japanese_Futsuu_meishi",
+      "priority": 5,
+      "accentType": 0,
+      "lang": "ja"
+    }
+  },
+  {
+    "sur": "19式",
+    "pron": "ヒトキュウシキ",
+    "src": "voicepeak",
+    "note": "",
+    "added": "2026-11-19",
+    "vp": {
+      "sur": "19式",
+      "pron": "ヒトキュウシキ",
+      "pos": "Japanese_Futsuu_meishi",
+      "priority": 5,
+      "accentType": 0,
+      "lang": "ja"
+    }
+  },
+  {
+    "sur": "8輪",
+    "pron": "ハチリン",
+    "src": "voicepeak",
+    "note": "",
+    "added": "2026-11-19",
+    "vp": {
+      "sur": "8輪",
+      "pron": "ハチリン",
+      "pos": "Japanese_Futsuu_meishi",
+      "priority": 5,
+      "accentType": 0,
+      "lang": "ja"
+    }
+  },
+  {
+    "sur": "60トン",
+    "pron": "ロクジュットン",
+    "src": "voicepeak",
+    "note": "",
+    "added": "2026-11-19",
+    "vp": {
+      "sur": "60トン",
+      "pron": "ロクジュットン",
+      "pos": "Japanese_Futsuu_meishi",
+      "priority": 5,
+      "accentType": 0,
+      "lang": "ja"
+    }
+  },
+  {
+    "sur": "20トン",
+    "pron": "ニジュットン",
+    "src": "voicepeak",
+    "note": "",
+    "added": "2026-11-19",
+    "vp": {
+      "sur": "20トン",
+      "pron": "ニジュットン",
+      "pos": "Japanese_Futsuu_meishi",
+      "priority": 5,
+      "accentType": 0,
+      "lang": "ja"
+    }
+  },
+  {
+    "sur": "40トン",
+    "pron": "ヨンジュットン",
+    "src": "voicepeak",
+    "note": "",
+    "added": "2026-11-19",
+    "vp": {
+      "sur": "40トン",
+      "pron": "ヨンジュットン",
+      "pos": "Japanese_Futsuu_meishi",
+      "priority": 5,
+      "accentType": 0,
+      "lang": "ja"
+    }
+  },
+  {
+    "sur": "SM-3",
+    "pron": "エスエムスリー",
+    "src": "voicepeak",
+    "note": "",
+    "added": "2026-11-19",
+    "vp": {
+      "sur": "SM-3",
+      "pron": "エスエムスリー",
+      "pos": "Japanese_Futsuu_meishi",
+      "priority": 5,
+      "accentType": 0,
+      "lang": "ja"
+    }
+  },
+  {
+    "sur": "PAC-3",
+    "pron": "パックスリー",
+    "src": "voicepeak",
+    "note": "",
+    "added": "2026-11-19",
+    "vp": {
+      "sur": "PAC-3",
+      "pron": "パックスリー",
+      "pos": "Japanese_Futsuu_meishi",
+      "priority": 5,
+      "accentType": 0,
+      "lang": "ja"
+    }
+  },
+  {
+    "sur": "10分",
+    "pron": "ジュップン",
+    "src": "voicepeak",
+    "note": "",
+    "added": "2026-11-19",
+    "vp": {
+      "sur": "10分",
+      "pron": "ジュップン",
+      "pos": "Japanese_Futsuu_meishi",
+      "priority": 5,
+      "accentType": 0,
+      "lang": "ja"
+    }
+  },
+  {
+    "sur": "陸・海・空",
+    "pron": "リクカイクウ",
+    "src": "voicepeak",
+    "note": "",
+    "added": "2026-11-19",
+    "vp": {
+      "sur": "陸・海・空",
+      "pron": "リクカイクウ",
+      "pos": "Japanese_Futsuu_meishi",
+      "priority": 5,
+      "accentType": 0,
+      "lang": "ja"
+    }
+  },
+  {
+    "sur": "1枚",
+    "pron": "イチマイ",
+    "src": "voicepeak",
+    "note": "",
+    "added": "2026-11-19",
+    "vp": {
+      "sur": "1枚",
+      "pron": "イチマイ",
+      "pos": "Japanese_Futsuu_meishi",
+      "priority": 5,
+      "accentType": 0,
+      "lang": "ja"
+    }
+  },
+  {
+    "sur": "一次",
+    "pron": "イチジ",
+    "src": "voicepeak",
+    "note": "",
+    "added": "2026-11-19",
+    "vp": {
+      "sur": "一次",
+      "pron": "イチジ",
+      "pos": "Japanese_Futsuu_meishi",
+      "priority": 5,
+      "accentType": 0,
+      "lang": "ja"
+    }
+  },
+  {
+    "sur": "大東亜",
+    "pron": "ダイトウア",
+    "src": "voicepeak",
+    "note": "",
+    "added": "2026-11-19",
+    "vp": {
+      "sur": "大東亜",
+      "pron": "ダイトウア",
+      "pos": "Japanese_Futsuu_meishi",
+      "priority": 5,
+      "accentType": 0,
+      "lang": "ja"
+    }
+  },
+  {
+    "sur": "大東亜戦争",
+    "pron": "ダイトウアセンソウ",
+    "src": "voicepeak",
+    "note": "",
+    "added": "2026-11-19",
+    "vp": {
+      "sur": "大東亜戦争",
+      "pron": "ダイトウアセンソウ",
+      "pos": "Japanese_Futsuu_meishi",
+      "priority": 5,
+      "accentType": 0,
+      "lang": "ja"
+    }
+  },
+  {
+    "sur": "後方",
+    "pron": "コウホウ",
+    "src": "voicepeak",
+    "note": "",
+    "added": "2026-11-19",
+    "vp": {
+      "sur": "後方",
+      "pron": "コウホウ",
+      "pos": "Japanese_Futsuu_meishi",
+      "priority": 5,
+      "accentType": 0,
+      "lang": "ja"
+    }
+  },
+  {
+    "sur": "要因",
+    "pron": "ヨウイン",
+    "src": "voicepeak",
+    "note": "",
+    "added": "2026-11-19",
+    "vp": {
+      "sur": "要因",
+      "pron": "ヨウイン",
+      "pos": "Japanese_Futsuu_meishi",
+      "priority": 5,
+      "accentType": 0,
+      "lang": "ja"
+    }
+  },
+  {
+    "sur": "漢",
+    "pron": "カン",
+    "src": "voicepeak",
+    "note": "",
+    "added": "2026-11-19",
+    "vp": {
+      "sur": "漢",
+      "pron": "カン",
+      "pos": "Japanese_Futsuu_meishi",
+      "priority": 5,
+      "accentType": 0,
+      "lang": "ja"
+    }
+  },
+  {
+    "sur": "唯一神",
+    "pron": "ユイイツシン",
+    "src": "voicepeak",
+    "note": "",
+    "added": "2026-11-19",
+    "vp": {
+      "sur": "唯一神",
+      "pron": "ユイイツシン",
+      "pos": "Japanese_Futsuu_meishi",
+      "priority": 5,
+      "accentType": 0,
+      "lang": "ja"
+    }
+  },
+  {
+    "sur": "水道橋",
+    "pron": "スイドウキョウ",
+    "src": "voicepeak",
+    "note": "",
+    "added": "2026-11-19",
+    "vp": {
+      "sur": "水道橋",
+      "pron": "スイドウキョウ",
+      "pos": "Japanese_Futsuu_meishi",
+      "priority": 5,
+      "accentType": 0,
+      "lang": "ja"
+    }
+  },
+  {
+    "sur": "中原",
+    "pron": "チュウゲン",
+    "src": "voicepeak",
+    "note": "",
+    "added": "2026-11-19",
+    "vp": {
+      "sur": "中原",
+      "pron": "チュウゲン",
+      "pos": "Japanese_Futsuu_meishi",
+      "priority": 5,
+      "accentType": 0,
+      "lang": "ja"
+    }
+  },
+  {
+    "sur": "前方後円墳",
+    "pron": "ゼンポウコウエンフン",
+    "src": "voicepeak",
+    "note": "",
+    "added": "2026-11-19",
+    "vp": {
+      "sur": "前方後円墳",
+      "pron": "ゼンポウコウエンフン",
+      "pos": "Japanese_Futsuu_meishi",
+      "priority": 5,
+      "accentType": 0,
+      "lang": "ja"
+    }
+  },
+  {
+    "sur": "大帝国",
+    "pron": "ダイテイコク",
+    "src": "voicepeak",
+    "note": "",
+    "added": "2026-11-19",
+    "vp": {
+      "sur": "大帝国",
+      "pron": "ダイテイコク",
+      "pos": "Japanese_Futsuu_meishi",
+      "priority": 5,
+      "accentType": 0,
+      "lang": "ja"
+    }
+  },
+  {
+    "sur": "ウマイヤ朝",
+    "pron": "ウマイヤチョウ",
+    "src": "voicepeak",
+    "note": "",
+    "added": "2026-11-19",
+    "vp": {
+      "sur": "ウマイヤ朝",
+      "pron": "ウマイヤチョウ",
+      "pos": "Japanese_Futsuu_meishi",
+      "priority": 5,
+      "accentType": 0,
+      "lang": "ja"
+    }
+  },
+  {
+    "sur": "聖徳太子",
+    "pron": "ショウトクタイシ",
+    "src": "voicepeak",
+    "note": "",
+    "added": "2026-11-19",
+    "vp": {
+      "sur": "聖徳太子",
+      "pron": "ショウトクタイシ",
+      "pos": "Japanese_Futsuu_meishi",
+      "priority": 5,
+      "accentType": 0,
+      "lang": "ja"
+    }
+  },
+  {
+    "sur": "ライン川",
+    "pron": "ラインガワ",
+    "src": "voicepeak",
+    "note": "",
+    "added": "2026-11-19",
+    "vp": {
+      "sur": "ライン川",
+      "pron": "ラインガワ",
+      "pos": "Japanese_Futsuu_meishi",
+      "priority": 5,
+      "accentType": 0,
+      "lang": "ja"
+    }
+  },
+  {
+    "sur": "ドナウ川",
+    "pron": "ドナウガワ",
+    "src": "voicepeak",
+    "note": "",
+    "added": "2026-11-19",
+    "vp": {
+      "sur": "ドナウ川",
+      "pron": "ドナウガワ",
+      "pos": "Japanese_Futsuu_meishi",
+      "priority": 5,
+      "accentType": 0,
+      "lang": "ja"
+    }
+  },
+  {
+    "sur": "守護神",
+    "pron": "シュゴシン",
+    "src": "voicepeak",
+    "note": "",
+    "added": "2026-11-19",
+    "vp": {
+      "sur": "守護神",
+      "pron": "シュゴシン",
+      "pos": "Japanese_Futsuu_meishi",
+      "priority": 5,
+      "accentType": 0,
+      "lang": "ja"
+    }
+  },
+  {
+    "sur": "天日",
+    "pron": "テンビ",
+    "src": "voicepeak",
+    "note": "",
+    "added": "2026-11-19",
+    "vp": {
+      "sur": "天日",
+      "pron": "テンビ",
+      "pos": "Japanese_Futsuu_meishi",
+      "priority": 5,
+      "accentType": 0,
+      "lang": "ja"
+    }
+  },
+  {
+    "sur": "楔形文字",
+    "pron": "クサビガタモジ",
+    "src": "voicepeak",
+    "note": "",
+    "added": "2026-11-19",
+    "vp": {
+      "sur": "楔形文字",
+      "pron": "クサビガタモジ",
+      "pos": "Japanese_Futsuu_meishi",
+      "priority": 5,
+      "accentType": 0,
+      "lang": "ja"
+    }
+  },
+  {
+    "sur": "前漢",
+    "pron": "ゼンカン",
+    "src": "voicepeak",
+    "note": "",
+    "added": "2026-11-19",
+    "vp": {
+      "sur": "前漢",
+      "pron": "ゼンカン",
+      "pos": "Japanese_Futsuu_meishi",
+      "priority": 5,
+      "accentType": 0,
+      "lang": "ja"
+    }
+  },
+  {
+    "sur": "土器",
+    "pron": "ドキ",
+    "src": "voicepeak",
+    "note": "",
+    "added": "2026-11-19",
+    "vp": {
+      "sur": "土器",
+      "pron": "ドキ",
+      "pos": "Japanese_Futsuu_meishi",
+      "priority": 5,
+      "accentType": 0,
+      "lang": "ja"
+    }
+  },
+  {
+    "sur": "有力者",
+    "pron": "ユウリョクシャ",
+    "src": "voicepeak",
+    "note": "",
+    "added": "2026-11-19",
+    "vp": {
+      "sur": "有力者",
+      "pron": "ユウリョクシャ",
+      "pos": "Japanese_Futsuu_meishi",
+      "priority": 5,
+      "accentType": 0,
+      "lang": "ja"
+    }
+  },
+  {
+    "sur": "天智",
+    "pron": "テンチ",
+    "src": "voicepeak",
+    "note": "",
+    "added": "2026-11-19",
+    "vp": {
+      "sur": "天智",
+      "pron": "テンチ",
+      "pos": "Japanese_Futsuu_meishi",
+      "priority": 5,
+      "accentType": 0,
+      "lang": "ja"
+    }
+  },
+  {
+    "sur": "天武",
+    "pron": "テンム",
+    "src": "voicepeak",
+    "note": "",
+    "added": "2026-11-19",
+    "vp": {
+      "sur": "天武",
+      "pron": "テンム",
+      "pos": "Japanese_Futsuu_meishi",
+      "priority": 5,
+      "accentType": 0,
+      "lang": "ja"
+    }
+  },
+  {
+    "sur": "三分の一",
+    "pron": "サンブンノイチ",
+    "src": "voicepeak",
+    "note": "",
+    "added": "2026-11-19",
+    "vp": {
+      "sur": "三分の一",
+      "pron": "サンブンノイチ",
+      "pos": "Japanese_Futsuu_meishi",
+      "priority": 5,
+      "accentType": 0,
+      "lang": "ja"
+    }
+  },
+  {
+    "sur": "10対1",
+    "pron": "ジュッタイイチ",
+    "src": "voicepeak",
+    "note": "",
+    "added": "2026-11-19",
+    "vp": {
+      "sur": "10対1",
+      "pron": "ジュッタイイチ",
+      "pos": "Japanese_Futsuu_meishi",
+      "priority": 5,
+      "accentType": 0,
+      "lang": "ja"
+    }
+  },
+  {
+    "sur": "疫病",
+    "pron": "エキビョウ",
+    "src": "voicepeak",
+    "note": "",
+    "added": "2026-11-19",
+    "vp": {
+      "sur": "疫病",
+      "pron": "エキビョウ",
+      "pos": "Japanese_Futsuu_meishi",
+      "priority": 5,
+      "accentType": 0,
+      "lang": "ja"
+    }
+  },
+  {
+    "sur": "ハン国",
+    "pron": "ハンコク",
+    "src": "voicepeak",
+    "note": "",
+    "added": "2026-11-19",
+    "vp": {
+      "sur": "ハン国",
+      "pron": "ハンコク",
+      "pos": "Japanese_Futsuu_meishi",
+      "priority": 5,
+      "accentType": 0,
+      "lang": "ja"
+    }
+  },
+  {
+    "sur": "東方",
+    "pron": "トウホウ",
+    "src": "voicepeak",
+    "note": "",
+    "added": "2026-11-19",
+    "vp": {
+      "sur": "東方",
+      "pron": "トウホウ",
+      "pos": "Japanese_Futsuu_meishi",
+      "priority": 5,
+      "accentType": 0,
+      "lang": "ja"
+    }
+  },
+  {
+    "sur": "十人",
+    "pron": "ジュウニン",
+    "src": "voicepeak",
+    "note": "",
+    "added": "2026-11-19",
+    "vp": {
+      "sur": "十人",
+      "pron": "ジュウニン",
+      "pos": "Japanese_Futsuu_meishi",
+      "priority": 5,
+      "accentType": 0,
+      "lang": "ja"
+    }
+  },
+  {
+    "sur": "百人",
+    "pron": "ヒャクニン",
+    "src": "voicepeak",
+    "note": "",
+    "added": "2026-11-19",
+    "vp": {
+      "sur": "百人",
+      "pron": "ヒャクニン",
+      "pos": "Japanese_Futsuu_meishi",
+      "priority": 5,
+      "accentType": 0,
+      "lang": "ja"
+    }
+  },
+  {
+    "sur": "千人",
+    "pron": "センニン",
+    "src": "voicepeak",
+    "note": "",
+    "added": "2026-11-19",
+    "vp": {
+      "sur": "千人",
+      "pron": "センニン",
+      "pos": "Japanese_Futsuu_meishi",
+      "priority": 5,
+      "accentType": 0,
+      "lang": "ja"
+    }
+  },
+  {
+    "sur": "バトゥ",
+    "pron": "バトゥウ",
+    "src": "voicepeak",
+    "note": "",
+    "added": "2026-11-19",
+    "vp": {
+      "sur": "バトゥ",
+      "pron": "バトゥウ",
+      "pos": "Japanese_Futsuu_meishi",
+      "priority": 5,
+      "accentType": 0,
+      "lang": "ja"
+    }
+  },
+  {
+    "sur": "文永の役",
+    "pron": "ブンエイノエキ",
+    "src": "voicepeak",
+    "note": "",
+    "added": "2026-11-19",
+    "vp": {
+      "sur": "文永の役",
+      "pron": "ブンエイノエキ",
+      "pos": "Japanese_Futsuu_meishi",
+      "priority": 5,
+      "accentType": 0,
+      "lang": "ja"
+    }
+  },
+  {
+    "sur": "三圃制",
+    "pron": "サンポセイ",
+    "src": "voicepeak",
+    "note": "",
+    "added": "2026-11-19",
+    "vp": {
+      "sur": "三圃制",
+      "pron": "サンポセイ",
+      "pos": "Japanese_Futsuu_meishi",
+      "priority": 5,
+      "accentType": 0,
+      "lang": "ja"
+    }
+  },
+  {
+    "sur": "青海",
+    "pron": "セイカイ",
+    "src": "voicepeak",
+    "note": "",
+    "added": "2026-11-19",
+    "vp": {
+      "sur": "青海",
+      "pron": "セイカイ",
+      "pos": "Japanese_Futsuu_meishi",
+      "priority": 5,
+      "accentType": 0,
+      "lang": "ja"
+    }
+  },
+  {
+    "sur": "清",
+    "pron": "シン",
+    "src": "voicepeak",
+    "note": "",
+    "added": "2026-11-19",
+    "vp": {
+      "sur": "清",
+      "pron": "シン",
+      "pos": "Japanese_Futsuu_meishi",
+      "priority": 5,
+      "accentType": 0,
+      "overwriteAccents": [
+        8193,
+        8192
+      ],
+      "lang": "ja"
+    }
+  },
+  {
+    "sur": "鍛冶",
+    "pron": "カジ",
+    "src": "voicepeak",
+    "note": "",
+    "added": "2026-11-19",
+    "vp": {
+      "sur": "鍛冶",
+      "pron": "カジ",
+      "pos": "Japanese_Futsuu_meishi",
+      "priority": 5,
+      "accentType": 0,
+      "overwriteAccents": [
+        8193,
+        8192
+      ],
+      "lang": "ja"
+    }
+  },
+  {
+    "sur": "要塞",
+    "pron": "ヨウサイ",
+    "src": "voicepeak",
+    "note": "",
+    "added": "2026-11-19",
+    "vp": {
+      "sur": "要塞",
+      "pron": "ヨウサイ",
+      "pos": "Japanese_Futsuu_meishi",
+      "priority": 5,
+      "accentType": 0,
+      "lang": "ja"
+    }
+  },
+  {
+    "sur": "城",
+    "pron": "シロ",
+    "src": "voicepeak",
+    "note": "",
+    "added": "2026-11-19",
+    "vp": {
+      "sur": "城",
+      "pron": "シロ",
+      "pos": "Japanese_Futsuu_meishi",
+      "priority": 5,
+      "accentType": 0,
+      "lang": "ja"
+    }
+  },
+  {
+    "sur": "英仏",
+    "pron": "エイフツ",
+    "src": "voicepeak",
+    "note": "",
+    "added": "2026-11-19",
+    "vp": {
+      "sur": "英仏",
+      "pron": "エイフツ",
+      "pos": "Japanese_Futsuu_meishi",
+      "priority": 5,
+      "accentType": 0,
+      "overwriteAccents": [
+        8192,
+        8193,
+        8193,
+        8192
+      ],
+      "lang": "ja"
+    }
+  },
+  {
+    "sur": "城下町",
+    "pron": "ジョウカマチ",
+    "src": "voicepeak",
+    "note": "",
+    "added": "2026-11-19",
+    "vp": {
+      "sur": "城下町",
+      "pron": "ジョウカマチ",
+      "pos": "Japanese_Futsuu_meishi",
+      "priority": 5,
+      "accentType": 0,
+      "lang": "ja"
+    }
+  },
+  {
+    "sur": "大河川",
+    "pron": "ダイカセン",
+    "src": "voicepeak",
+    "note": "",
+    "added": "2026-11-19",
+    "vp": {
+      "sur": "大河川",
+      "pron": "ダイカセン",
+      "pos": "Japanese_Futsuu_meishi",
+      "priority": 5,
+      "accentType": 0,
+      "overwriteAccents": [
+        8192,
+        8193,
+        8193,
+        8193,
+        8192
+      ],
+      "lang": "ja"
+    }
+  },
+  {
+    "sur": "利根川",
+    "pron": "トネガワ",
+    "src": "voicepeak",
+    "note": "",
+    "added": "2026-11-19",
+    "vp": {
+      "sur": "利根川",
+      "pron": "トネガワ",
+      "pos": "Japanese_Futsuu_meishi",
+      "priority": 5,
+      "accentType": 0,
+      "lang": "ja"
+    }
+  },
+  {
+    "sur": "徳川",
+    "pron": "トクガワ",
+    "src": "voicepeak",
+    "note": "",
+    "added": "2026-11-19",
+    "vp": {
+      "sur": "徳川",
+      "pron": "トクガワ",
+      "pos": "Japanese_Futsuu_meishi",
+      "priority": 5,
+      "accentType": 0,
+      "overwriteAccents": [
+        8192,
+        8193,
+        8193,
+        8192
+      ],
+      "lang": "ja"
+    }
+  },
+  {
+    "sur": "アッバース朝",
+    "pron": "アッバースチョウ",
+    "src": "voicepeak",
+    "note": "",
+    "added": "2026-11-19",
+    "vp": {
+      "sur": "アッバース朝",
+      "pron": "アッバースチョウ",
+      "pos": "Japanese_Futsuu_meishi",
+      "priority": 5,
+      "accentType": 0,
+      "lang": "ja"
+    }
+  }
+]
