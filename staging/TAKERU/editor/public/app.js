@@ -108,6 +108,38 @@ function buildUnitSelect() {
   if(firstGenre){sel.value=firstGenre;filterCards();}
 }
 
+// テーマの一覧（ブラウザ標準の一覧は長さを変えられないので、作業台で出す。テーマが増えたため長くした。2026-11-20）
+//   キーボードの上下での選び直しは、ブラウザ標準のまま
+function openUnitPicker(ev){
+  const sel=document.getElementById('unitSelect');
+  if(ev.button!==0) return;
+  ev.preventDefault(); sel.focus();
+  let box=document.getElementById('unitPicker');
+  if(box){ box.remove(); return; }
+  box=document.createElement('div'); box.id='unitPicker'; box.className='unit-picker';
+  let html='';
+  for(const n of sel.children){
+    if(n.tagName==='OPTGROUP'){
+      html+=`<div class="up-grp">${esc(n.label)}</div>`;
+      for(const o of n.children) html+=`<div class="up-opt${o.value===sel.value?' on':''}" data-v="${esc(o.value)}">${esc(o.textContent)}</div>`;
+    } else if(n.value) html+=`<div class="up-opt${n.value===sel.value?' on':''}" data-v="${esc(n.value)}">${esc(n.textContent)}</div>`;
+  }
+  box.innerHTML=html;
+  const r=sel.getBoundingClientRect();
+  box.style.left=r.left+'px'; box.style.top=(r.bottom+2)+'px';
+  box.style.minWidth=Math.max(r.width,320)+'px';
+  box.style.maxHeight=Math.max(240, window.innerHeight-r.bottom-16)+'px';
+  document.body.appendChild(box);
+  const on=box.querySelector('.up-opt.on'); if(on) on.scrollIntoView({block:'center'});
+  box.addEventListener('click',e=>{
+    const o=e.target.closest('.up-opt'); if(!o) return;
+    sel.value=o.dataset.v; box.remove(); sel.dispatchEvent(new Event('change'));
+  });
+  const close=e=>{ if(!box.isConnected||(!box.contains(e.target)&&e.target!==sel)){ box.remove(); document.removeEventListener('mousedown',close,true); document.removeEventListener('keydown',esc1,true);} };
+  const esc1=e=>{ if(e.key==='Escape'){ box.remove(); document.removeEventListener('mousedown',close,true); document.removeEventListener('keydown',esc1,true);} };
+  setTimeout(()=>{ document.addEventListener('mousedown',close,true); document.addEventListener('keydown',esc1,true); },0);
+}
+
 function filterCards() {
   curUnit=document.getElementById('unitSelect').value;
   filteredList=curUnit?cardData.filter(d=>d.genre===curUnit):cardData;
@@ -279,6 +311,8 @@ function showCard(gIdx) {
   document.getElementById('editArea').style.display='flex';
   document.getElementById('voiceArea').style.display='flex';
   document.getElementById('editCode').value=card.id;
+  // どのテーマのカードかを出す（ツールバーが窮屈でテーマ名が読めないため。2026-11-20）
+  document.getElementById('editTheme').textContent='📂 '+(card.genre||'（テーマなし）')+(card.section?'　›　'+card.section:'');
   document.getElementById('editTitle').value=card.title;
   document.getElementById('editBody').value=card.body;
   document.getElementById('editPublished').checked=!!card.published;

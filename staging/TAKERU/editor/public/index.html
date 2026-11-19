@@ -717,17 +717,23 @@
   <!-- 列1：カード一覧 -->
   <div class="pane-list">
     <div class="pane-toolbar">
+     <!-- 1段目：テーマを選ぶ（名前が読めるよう、この段はテーマの欄だけ。2026-11-20） -->
+     <div class="tb-row">
       <button class="btn-unit-nav" id="btnPrevUnit" onclick="prevUnit()" disabled title="前のテーマ">◀</button>
-      <select id="unitSelect" onchange="filterCards()">
+      <select id="unitSelect" onchange="filterCards()" onmousedown="openUnitPicker(event)">
         <option value="">── テーマを選択 ──</option>
       </select>
       <button class="btn-unit-nav" id="btnNextUnit" onclick="nextUnit()" disabled title="次のテーマ">▶</button>
+     </div>
+     <!-- 2段目：テーマ単位の操作 -->
+     <div class="tb-row">
       <button class="btn-rename" id="btnRename" onclick="openRename()" disabled title="テーマ名・サブテーマ名を変更">✏️</button>
       <button class="btn-batch-rec" id="btnReading" onclick="openReading()" disabled title="読み確認：テーマのカードの読みの原稿（VOICEPEAK に読ませる文）を確かめて確定する。年代の読みや辞書の語は自動で置き換え、辞書に無い型式は要確認で出す。確定した読みを「🎙 一括」が読む">🔤 読み</button>
       <button class="btn-batch-rec" id="btnBatchRecord" onclick="recordUnitBatch()" disabled title="テーマ内の未生成カードを一括録音（確定していないカードは、年代・辞書を自動で置き換えた読みで録る）">🎙 一括</button>
       <button class="btn-batch-rec" id="btnCheck" onclick="openReading('check')" disabled title="検算：録った音声を Whisper で書き起こし、読ませた文と見比べて、ずれた所を出す。ずれの仕分けはソフィーに頼む">🔎 検算</button>
       <button class="btn-unit-pub" id="btnUnitPub" onclick="openUnitPub()" disabled title="このテーマをまとめて公開／非公開にする">🌐 公開</button>
       <span class="card-count" id="cardCount">0枚</span>
+     </div>
     </div>
     <div class="list-scroll" id="listScroll">
       <div class="empty-state"><div class="icon">📋</div>読み込み中…</div>
@@ -741,6 +747,7 @@
 
   <!-- 列3：編集エリア -->
   <div class="edit-area" id="editArea" style="display:none">
+    <div class="edit-theme" id="editTheme" title="このカードのテーマ（・サブテーマ）"></div>
     <div style="display:flex;gap:10px;align-items:flex-end">
       <div style="flex:1"><div class="edit-label">コード</div><input class="edit-input" id="editCode" readonly style="color:var(--fact);font-family:monospace"></div>
       <label class="pub-toggle" title="本番で表示するか（チェックで公開）"><input type="checkbox" id="editPublished" onchange="onPublishedChange()"><span>🌐 公開</span></label>

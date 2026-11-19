@@ -26,7 +26,10 @@ header h1 { font-size:0.95rem; color:var(--accent); font-weight:700; letter-spac
 
 /* 左ペイン */
 .pane-list { width:360px; min-width:360px; border-right:3px solid var(--border); display:flex; flex-direction:column; flex-shrink:0; }
-.pane-toolbar { background:var(--bg2); padding:8px; border-bottom:1px solid var(--border); display:flex; gap:6px; align-items:center; flex-shrink:0; }
+.pane-toolbar { background:var(--bg2); padding:6px 8px; border-bottom:1px solid var(--border); display:flex; flex-direction:column; gap:5px; flex-shrink:0; }
+.pane-toolbar .tb-row { display:flex; gap:6px; align-items:center; min-width:0; }
+.pane-toolbar .tb-row .card-count { margin-left:auto; }
+.edit-theme { font-size:0.78rem; color:var(--accent2, #8fd18f); background:var(--bg3); border:1px solid var(--border); border-radius:4px; padding:4px 8px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex-shrink:0; }
 .pane-toolbar select { background:var(--bg3); border:1px solid var(--border); color:var(--text); padding:5px 6px; border-radius:4px; font-size:0.8rem; flex:1; min-width:0; }
 .card-count { font-size:0.72rem; color:var(--text3); white-space:nowrap; }
 .list-scroll { flex:1; overflow-y:auto; }
@@ -58,7 +61,12 @@ header h1 { font-size:0.95rem; color:var(--accent); font-weight:700; letter-spac
 .card-section { font-size:0.82rem; color:var(--accent); letter-spacing:.06em; }
 .card-title-row { display:flex; align-items:center; justify-content:space-between; gap:8px; padding-top:6px; padding-bottom:8px; border-bottom:1px solid var(--border); }
 .card-title-disp { font-size:1.05rem; font-weight:700; color:var(--text); line-height:1.4; flex:1; }
-.card-body-disp { font-size:0.88rem; line-height:1.9; color:var(--text); white-space:pre-wrap; padding-top:8px; max-height:400px; overflow-y:auto; }
+.card-body-disp { font-size:0.88rem; line-height:1.9; color:var(--text); white-space:pre-wrap; padding-top:8px; max-height:500px; overflow-y:auto; }  /* 400→500（原稿が長くなったため。2026-11-20） */
+.unit-picker { position:fixed; z-index:400; background:var(--bg2); border:1px solid var(--accent); border-radius:4px; overflow-y:auto; box-shadow:0 6px 24px rgba(0,0,0,.6); font-size:0.82rem; padding:2px 0; }
+.unit-picker .up-grp { padding:5px 10px 2px; color:var(--text3); font-size:0.72rem; font-weight:700; position:sticky; top:0; background:var(--bg2); }
+.unit-picker .up-opt { padding:4px 10px 4px 18px; cursor:pointer; color:var(--text); white-space:nowrap; }
+.unit-picker .up-opt:hover { background:rgba(76,175,80,.18); }
+.unit-picker .up-opt.on { background:rgba(76,175,80,.30); font-weight:700; }
 .card-body-disp.wip { color:var(--text3); font-style:italic; font-size:0.8rem; }
 .card-nav { display:flex; align-items:center; gap:6px; flex-shrink:0; }
 .btn-nav { background:rgba(76,175,80,.15); border:1px solid var(--accent); color:var(--accent); width:34px; height:34px; border-radius:50%; cursor:pointer; font-size:1rem; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
