@@ -95,6 +95,8 @@ const RD_ST = { ok: ['✅', '確定済み'], changed: ['⚠', '本文が変わ�
 //   確定済み・前からの読み原稿 → その読み原稿／それ以外 → 決まり（年代・作業台の辞書）で自動に作った読み
 function rdAutoText(card) {
   const st = readingStatus(card), s = (readingScripts[card.id] || '').trim();
+  // 前からの読み原稿が本文の写しのまま（手で直していない）なら、無いものとして自動の読みにする
+  if (st === 'legacy' && s === String(card.body || '').trim()) return rdBuild(card.body, card.id, { noPending: true }).text.trim();
   if ((st === 'ok' || st === 'legacy') && s) return s;
   return rdBuild(card.body, card.id, { noPending: true }).text.trim();
 }
@@ -154,7 +156,10 @@ function rdRenderCard() {
   const st = readingStatus(card);
   rdGen = rdBuild(card.body, card.id);
   const existing = (readingScripts[card.id] || '').trim();
-  const useExisting = existing && st !== 'none';
+  // 右に出すのは、確定済みなら確定した読み原稿。それ以外（前からの読み原稿・本文が変わった）は、決まりとソフィー案で作った新しい下書き
+  //   （前からの読み原稿を出すと、ソフィー案の読みが入らないまま確定してしまうため。2026-11-20 UDG02 で起きた）
+  const useExisting = existing && st === 'ok';
+  const hasOld = existing && !useExisting && existing !== rdGen.text.trim();
   // 左：本文に色を付ける
   let html = '', p = 0;
   for (const k of rdGen.marks) {
@@ -169,7 +174,8 @@ function rdRenderCard() {
     ${st === 'changed' ? '<div class="ik-warns">確定した後に本文が直されています。読みを確かめ直して、もう一度「確定」してください。</div>' : ''}
     <div class="rd-cols">
       <div class="rd-col"><div class="rd-lbl">本文（色の所を置き換え・要確認）</div><div class="rd-text">${html}</div></div>
-      <div class="rd-col"><div class="rd-lbl">読みの原稿（VOICEPEAK に読ませる文）${useExisting ? '　<button class="dk-mini" onclick="rdRegen()">決まりで作り直す</button>' : ''}</div>
+      <div class="rd-col"><div class="rd-lbl">読みの原稿（VOICEPEAK に読ませる文）${useExisting ? '　<button class="dk-mini" onclick="rdRegen()">決まりで作り直す</button>' : ''}${hasOld ? '　<button class="dk-mini" onclick="rdRestoreOld()" title="手で直した前の読み原稿を生かしたいとき">前の読み原稿に戻す</button>' : ''}</div>
+        ${hasOld ? '<div class="ik-sub">前の読み原稿があります。右は、決まりとソフィー案で作り直した新しい下書きです。</div>' : ''}
         <textarea id="rdScript" class="rd-script">${esc(useExisting ? existing : rdGen.text)}</textarea></div>
     </div>
     ${flags.length ? `<div class="rd-flags"><b>要確認（辞書に無い型式）</b>${flags.map(k => `<div class="rd-flag">${esc(k.orig)}　読み <input class="rd-in" data-sur="${esc(k.orig)}" placeholder="例：エフサンジュウゴ"> <button class="dk-mini" onclick="rdAddFromFlag(this)">辞書に足す</button></div>`).join('')}</div>` : ''}
@@ -181,6 +187,7 @@ function rdRenderCard() {
       <span class="ik-note">確定すると、このカードの読み修正として保存され、「🎙 一括」でこの文が読まれます。</span>
     </div>`;
 }
+function rdRestoreOld() { const t = (readingScripts[rdCur] || '').trim(); if (t) { document.getElementById('rdScript').value = t; rdToast('前の読み原稿に戻しました（まだ保存していません）'); } }
 function rdRegen() { const card = cardData.find(c => c.id === rdCur); if (!card) return; document.getElementById('rdScript').value = rdBuild(card.body, card.id).text; rdToast('決まりで作り直しました（まだ保存していません）'); }
 async function rdConfirm() {
   const card = cardData.find(c => c.id === rdCur); if (!card) return;
@@ -189,7 +196,9 @@ async function rdConfirm() {
   const left = (rdGen ? rdGen.marks : []).filter(k => k.kind === 'flag').filter(k => text.includes(k.orig));
   if (left.length && !confirm(`辞書に無い型式（${left.map(k => k.orig).join('、')}）が、読みの原稿にそのまま残っています。VOICEPEAK は「マイナス」と読むかもしれません。このまま確定しますか？`)) return;
   // このカードで使ったソフィー案の語のうち、読みの原稿にその読みが残っているものを認める
-  const approve = [...new Set((rdGen ? rdGen.marks : []).filter(k => k.kind === 'sophie' && text.includes(k.read)).map(k => k.orig))];
+  const sophie = (rdGen ? rdGen.marks : []).filter(k => k.kind === 'sophie');
+  const approve = [...new Set(sophie.filter(k => text.includes(k.read)).map(k => k.orig))];
+  if (sophie.length && !approve.length && !confirm(`ソフィー案（紫の ${new Set(sophie.map(k => k.orig)).size}語）の読みが、読みの原稿に1つも入っていません。本文のまま読ませることになります。このまま確定しますか？\n（入れるときは「キャンセル」→「決まりで作り直す」）`)) return;
   const r = await (await fetch('/api/reading-confirm', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: card.id, text, bodyHash: rdHash(card.body), approve }) })).json();
   if (!r.ok) { rdToast(r.error, true); return; }
   readingScripts[card.id] = text; rdMeta[card.id] = r.meta;

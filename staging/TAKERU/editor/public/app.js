@@ -291,7 +291,7 @@ function showCard(gIdx) {
   stopVoice();
   if(showingReadScript){
     clearTimeout(_readScriptSaveTimer);
-    saveReadingScript();
+    if(_rsDirty) saveReadingScript();
     _exitReadScriptMode();
   }
   selectedIdx=gIdx;
@@ -2706,7 +2706,11 @@ function toggleReadScript(){
     if(selectedIdx<0) return;
     const id=cardData[selectedIdx].id;
     const rsArea=document.getElementById('editReadScript');
-    rsArea.value=readingScripts[id]||document.getElementById('editBody').value;
+    // 読み原稿が無ければ、録音で実際に読ませる文（年代・辞書を自動で置き換えた読み）を見せる。
+    // 見るだけなら保存しない（手で書き直したときだけ残す）。2026-11-20：開いて閉じただけで本文の写しが残り、ソフィーの読みが隠れた（UDG02）
+    const bodyNow=document.getElementById('editBody').value;
+    rsArea.value=readingScripts[id]||(typeof rdAutoText==='function'?rdAutoText({...cardData[selectedIdx],body:bodyNow}):bodyNow);
+    _rsDirty=false;
     document.getElementById('editBody').style.display='none';
     rsArea.style.display='';
     document.getElementById('bodyTabLabel').innerHTML='<span class="rs-label">読み上げ原稿</span>';
@@ -2715,10 +2719,11 @@ function toggleReadScript(){
     showingReadScript=true;
   } else {
     clearTimeout(_readScriptSaveTimer);
-    saveReadingScript();
+    if(_rsDirty) saveReadingScript();
     _exitReadScriptMode();
   }
 }
+let _rsDirty=false;   // 読み修正の欄を手で書き直したか
 
 function _exitReadScriptMode(){
   showingReadScript=false;
@@ -2730,6 +2735,7 @@ function _exitReadScriptMode(){
 }
 
 function onReadScriptInput(){
+  _rsDirty=true;
   clearTimeout(_readScriptSaveTimer);
   _readScriptSaveTimer=setTimeout(saveReadingScript, 800);
 }

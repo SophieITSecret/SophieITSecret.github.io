@@ -169,6 +169,10 @@ def main():
         # 見やすいよう、前後に少し文を足す
         ctx = lambda s, x, y, n=6: (s[max(0, x - n):x], s[x:max(y, x + 1)], s[max(y, x + 1):max(y, x + 1) + n])
         pa, ma, na = ctx(script, sa, ea)
+        # 読ませた文がカタカナだけの所は数えない。VOICEPEAK はカタカナを書いたとおりに読むので、
+        # ずれは Whisper が漢字で書いた（上杉→植杉 など）のを読み違えた空振り（2026-11-20 城攻め1で 99件中63件がこれ）
+        if ma.strip() and re.fullmatch(r'[ァ-ヶー・\s、。（）「」]+', ma):
+            continue
         pb, mb, nb = ctx(heard, sb, eb)
         at = times[min(sb, len(times) - 1)] if times else 0
         diffs.append({
