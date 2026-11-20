@@ -346,7 +346,8 @@ function rdChkRenderCard() {
   const box = document.getElementById('rdBody');
   const card = cardData.find(c => c.id === rdChkCur), r = rdChk.results[rdChkCur];
   if (!card) { box.innerHTML = `<p class="qr-empty">左でカードを選ぶと、ずれの一覧が出ます。</p>
-    <div class="ik-note">流れ：「🎙 一括」でテーマを録る →「🔎 検算」→「📤 ソフィーに仕分けを頼む」→ 返事を取り込む → 録り直すカードだけ「カードの読み」で確定して録り直す。<br>
+    <div class="ik-note">ふだんは、録る前にソフィーに読みを付けてもらい（「📤 ソフィーに読みを頼む」→ 取り込む → 1枚ずつ確定）、録ってから1回通して聞きます。<br>
+    検算は、聞くべき所を絞る手伝いです：印のカードを検算 → 怪しい所を ▶ で聞く →（要るときは「📤 ソフィーに仕分けを頼む」→ 取り込む）→ 録り直すカードだけ「カードの読み」で確定して録り直す。<br>
     Whisper は聞いた音を漢字に直して書くので、漢字の別の読み（金沢柵をカナザワと読んだ、など）は、ここには出にくいです。</div>`; return; }
   if (!r) { box.innerHTML = `<div class="rd-head"><b>${esc(card.id)}</b>　${esc(card.title || '')}</div><p class="qr-empty">まだ検算していません。左で印を付けて「🔎 印のカードを検算」。</p>`; return; }
   box.innerHTML = `
