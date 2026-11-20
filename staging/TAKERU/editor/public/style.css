@@ -658,6 +658,7 @@ textarea.svg-overlay-input { min-height:120px; font-family:monospace; font-size:
 .mag-st-下書き { background: #4a3a18; color: #ffcf8a; }
 .mag-st-確認済 { background: #1c4a26; color: #9be3a8; }
 .mag-st-配信済 { background: #1a3a72; color: #bdd4f5; }
+.mag-st-pre { background: #4a2a4a; color: #f0c2f0; }
 .mag-dim { color: #8a97a6; font-size: 12px; }
 .mag-note { margin: 6px 0 8px; padding: 8px 12px; border-radius: 6px; font-size: 13px; }
 .mag-note-quiet { color: #8a97a6; background: #142030; }

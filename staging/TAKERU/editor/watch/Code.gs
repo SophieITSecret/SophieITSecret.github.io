@@ -106,12 +106,15 @@ function checkMagazine_(now, results, found) {
     results.push({ name: 'マガジン', state: 'ng', detail: '窓口が応えない' });
     return;
   }
-  var n = 0;
+  var n = 0, skipped = 0;
+  var dow = dow_(now), hm = fmt_(now, 'HH:mm'), today = fmt_(now, 'yyyy-MM-dd');
   (j.alerts || []).forEach(function (a) {
     var text = typeof a === 'string' ? a : (a.message || a.text || a.label || JSON.stringify(a));
+    // 金曜 16:06 の担当M金曜は日経平均だけを取り、米国株・為替・原油は土曜 7:05 の担当Mが取る。
+    // その間（金曜16:00〜土曜7:30）の「一部の銘柄だけ」は正常なので数えない（2026-11-21 マガジンの C-03）
+    if (marketPartialOk_(dow, hm) && text.indexOf('一部の銘柄だけ') >= 0) { skipped++; return; }
     n++; found.push({ key: 'mag-alert-' + hash_(text), title: 'マガジンの警告', detail: text, who: 'マガジン' });
   });
-  var dow = dow_(now), hm = fmt_(now, 'HH:mm'), today = fmt_(now, 'yyyy-MM-dd');
   if (dow === 5 && hm >= '23:00' && j.issue && j.friday === today && !j.issue.exists) {
     n++; found.push({ key: 'mag-nodraft-' + today, title: '明日の号（' + j.issue.issue_date + '）の下書きがまだありません',
       detail: '初版は金曜 20:50 ごろ自動で作られるはずです', who: 'マガジン' });
@@ -123,7 +126,11 @@ function checkMagazine_(now, results, found) {
         detail: h ? ('配信の記録：' + JSON.stringify(h.mail || {})) : '今日の号の記録がありません', who: 'マガジン（メールの送り出しは会員システム）' });
     }
   }
-  results.push({ name: 'マガジン', state: n ? 'ng' : 'ok', detail: '警告 ' + (j.alerts || []).length + '件' + (n ? '・異常 ' + n + '件' : '') });
+  // 「警告」と「異常」が別々にあるように見えないよう、数えた分は「いまの異常」に載せたと書く（C-03 の2）
+  var counted = (j.alerts || []).length - skipped;
+  results.push({ name: 'マガジン', state: n ? 'ng' : 'ok', detail: 'GAS の警告 ' + (j.alerts || []).length + '件' +
+    (skipped ? '（うち ' + skipped + '件は金曜夕方〜土曜朝の「一部の銘柄だけ」なので正常として数えない）' : '') +
+    (n ? '・異常 ' + n + '件（GAS の警告 ' + counted + '件を含む。中身は上の「いまの異常」）' : '') });
 }
 
 // アプリ本番：開けるか、様子の窓（集計の日付・ニュースの更新・版）
@@ -331,6 +338,7 @@ function props_() { return PropertiesService.getScriptProperties().getProperties
 function now_() { return WATCH_NOW ? new Date(WATCH_NOW) : new Date(); }
 function fmt_(d, f) { return Utilities.formatDate(d, TZ, f); }
 function dow_(d) { return Number(fmt_(d, 'u')) % 7; }   // 0＝日曜 … 6＝土曜
+function marketPartialOk_(dow, hm) { return (dow === 5 && hm >= '16:00') || (dow === 6 && hm < '07:30'); }   // マーケットが日経平均だけでよい時間（金曜16:00〜土曜7:30）
 function addHours_(d, h) { return new Date(d.getTime() + h * 3600000); }
 function minutesBetween_(a, b) { return Math.floor((b.getTime() - a.getTime()) / 60000); }
 function daysBetween_(a, b) {   // 'yyyy-MM-dd' どうしの日数（b − a）

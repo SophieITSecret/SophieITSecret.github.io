@@ -13,6 +13,7 @@ let magDash = null;         // magazine_dashboard の返事
 let magDoc = null;          // magazine_latest の返事（入力・プレビューで使う）
 let magTimer = null;
 let magLastOkAt = null;
+const magNoteCache = {};  // 号ごとの「事務局で添えた一言」（/api/magazine/note）
 const MAG_SUMMARY_MIN = 480, MAG_SUMMARY_MAX = 520;
 const MAG_FIELDS = ['summary', 'schedule', 'trivia', 'notice'];
 const MAG_STASH = 'takeru.mag.stash.';     // ＋号の日付。入力中の文章の一時保存
@@ -181,8 +182,14 @@ async function magLoadDoc(render, tries = 2) {
   // 状況ボードで「まだ下書きが無い」とわかっている号は、本文を取りに行かずに先置きの画面にする
   const di = magDash && magDash.focus_issue === issue ? magDash.issue : null;
   if (di && !di.exists) {
-    const inp = di.inputs || {};
+    let inp = di.inputs || {};
+    // マーケットの一言（先置き）が状況ボードに載っていなければ、先置きの窓口から読む（11/21 C-09・C-10）
+    if (!('market_comment' in inp)) {
+      try { const p = await (await fetch('/api/magazine/inputs?issue=' + encodeURIComponent(issue))).json();
+        if (p.ok && !p.has_draft) inp = { ...inp, ...p }; } catch (e) { /* 読めなくても、ほかの欄は出す */ }
+    }
     magDoc = { pre: true, issue_date: issue, version: 0, notice: inp.notice || '', trivia: inp.trivia || '',
+               market_comment: inp.market_comment || '',
                updated_at: inp.updated_at || '', is_test: !!di.is_test, issue_label: di.label || '', mock: magDash.mock };
     if (render) magRenderEdit();
     return magDoc;
@@ -197,6 +204,7 @@ async function magLoadDoc(render, tries = 2) {
       const p = await (await fetch('/api/magazine/inputs?issue=' + encodeURIComponent(issue))).json();
       if (!p.ok) throw new Error(p.error || '不明');
       if (!p.has_draft) magDoc = { pre: true, issue_date: issue, version: 0, notice: p.notice || '', trivia: p.trivia || '',
+        market_comment: p.market_comment || '',
         updated_at: p.updated_at || '', is_test: !!(di && di.is_test), issue_label: (di && di.label) || '', mock: p.mock };
     }
     magWaitEnd();
@@ -424,11 +432,16 @@ const MAG_MARKET_URL = 'https://takeru.ms-forum.com/?view=market';
 function magPeriodJa(p) {
   return String(p || '').replace(/(\d{4})-(\d{2})-(\d{2})/g, (_, y, mo, d) => `${+mo}月${+d}日`);
 }
-function magBuildMail(m, v) {
+// 頭の形は会員システムの magazine_mail_text（D:\ms-member\lib\magazine.php）に合わせる（2026-11-21 そろえ直し）：
+//   ━／TAKERUマガジン　第N号／〇年〇月〇日（土）発行／軍事と戦略の週刊メルマガ　ＭＳフォーラム（10/31〜）／━／空行／
+//   ▶図や表つきの読みやすいHP版は、こちら＋号ページ（10/31〜）／空行／事務局で添えた一言（note。あれば）＋空行
+function magBuildMail(m, v, note) {
+  const page0 = `https://ms-forum.com/mailmag/${m.is_test ? 'test-' : ''}${String(m.issue_date).replace(/-/g, '')}.html`;
   const out = [MAG_RULE, `TAKERUマガジン　${magIssueNo(m)}`, magIssueDateJa(m.issue_date)];
-  out.push('ＭＳフォーラムの軍事と戦略、週刊メルマガ', MAG_RULE);
+  out.push('軍事と戦略の週刊メルマガ　ＭＳフォーラム', MAG_RULE);
   // stamp_text（作成・確認の印）は読者向けには出さない（10/15 牧村さん）。作業台の帯にだけ出す
-  out.push('');
+  out.push('', '▶図や表つきの読みやすいHP版は、こちら', page0, '');
+  if (note && String(note).trim()) out.push(String(note).trim(), '');
   const sec = (title, body, add) => {
     if (!body || !String(body).trim()) return;
     out.push(title, MAG_LINE, String(body).replace(/\s+$/, ''));
@@ -475,8 +488,22 @@ function magRenderPreview() {
   if (m.pre) {
     const d0 = new Date(m.issue_date + 'T00:00:00'), ymd = n => { const d = new Date(d0); d.setDate(d.getDate() + n);
       return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
-    mm = { ...m, period: `${ymd(-7)}〜${ymd(-1)}`, market: PRE_FILL, market_note: '', stamp_text: '' };
+    // マーケット：数字は土曜7時ごろ入る。先に入れた一言コメントは、数字のあと1行あけて出る（GAS が market に混ぜる）
+    const mc = String(m.market_comment || '').trim();
+    mm = { ...m, period: `${ymd(-7)}〜${ymd(-1)}`, market: '（数字は土曜7時ごろ自動で入ります）' + (mc ? '\n\n' + mc : ''), market_note: '', stamp_text: '' };
   }
+  // 事務局（会員システム）で添えた一言。号ごとに一度だけ読み、読めたら組み立て直す
+  const nk = m.issue_date, nc = magNoteCache[nk];
+  if (!nc) { magNoteCache[nk] = { loading: true };
+    fetch('/api/magazine/note?issue=' + encodeURIComponent(nk)).then(r => r.json())
+      .then(j => { magNoteCache[nk] = j.ok ? { note: j.note || '' } : { error: j.error || '読めません' }; })
+      .catch(e => { magNoteCache[nk] = { error: e.message }; })
+      .then(() => { if (magTabName === 'preview' && magDoc && magDoc.issue_date === nk) magRenderPreview(); }); }
+  const nState = magNoteCache[nk] || {};
+  const noteMsg = nState.loading ? '事務局で添えた一言を、会員システムから読んでいます…'
+    : nState.error ? `事務局で添えた一言を読めませんでした（${magEsc(nState.error)}）。一言は入っていない形で見せています。`
+    : nState.note ? '▶HP版の案内のあとの文は、事務局の「メルマガ」画面で添えた一言です（会員システムから読みました）。'
+    : 'この号には、事務局で添えた一言はありません。';
   // 入力タブで直しかけの文章があれば、それで組み立てる（保存前でも見られるように）
   let v = { summary: m.pre ? PRE_FILL : m.summary, schedule: m.pre ? PRE_FILL : m.schedule, trivia: m.trivia, notice: m.notice }, fromStash = false;
   try { const st = JSON.parse(localStorage.getItem(magStashKey()) || 'null'); if (st && st.v) { v = { ...v, ...st.v }; fromStash = true; } } catch (e) {}
@@ -485,10 +512,10 @@ function magRenderPreview() {
     ${m.pre ? '<p class="qr-warn">この号の初版はまだです（金曜20:50ごろにできます）。いま見えているのは、先に入れたご存知ですか・お知らせと、メールの形だけです。</p>' : ''}
     ${m.is_test ? `<div class="mag-band"><span class="mag-test">試験号　${magEsc(m.issue_label || '')}</span></div>` : ''}
     <p class="mag-dim">メールに載る形です（空の欄は見出しごと省きます）。${fromStash ? '<b>まだ保存していない直しも入れて組み立てています。</b>' : ''}
-      会員システムの組み立ての規則（10/7）と同じ形です。</p>
+      会員システムの組み立て（magazine_mail_text）と同じ形です。末尾の発行者・配信停止の行は、会員システムが送るときに付ける形の見本です。</p>
     <div class="mag-dim">件名：<b>${magEsc(magMailSubject(m))}</b></div>
-    <p class="mag-dim">※事務局の「メルマガ」画面で、その号に添える一言を書いた場合は、見出しのあとに入ります（作業台からは見えません）。</p>
-    <div class="mag-mail">${magEsc(magBuildMail(mm, v))}</div>
+    <p class="mag-dim">※${noteMsg} <button class="dash-refresh" onclick="delete magNoteCache['${magEsc(nk)}'];magRenderPreview()">↻ 読み直す</button></p>
+    <div class="mag-mail">${magEsc(magBuildMail(mm, v, nState.note || ''))}</div>
     <div class="mag-btns"><button class="dash-refresh" onclick="magTab('edit')">✎ 入力に戻る</button></div>`;
 }
 
@@ -540,7 +567,7 @@ async function magSaveMarketComment() {
   const j = await magPost({ mode: 'market_comment', issue_date: magDoc.issue_date, text });
   if (!j.ok) { box.innerHTML = `<div class="mag-msgbox bad">保存できませんでした：${magEsc(j.error || '')}（入れた文は残してあります）</div>`; return; }
   magDoc.market_comment = text;
-  box.innerHTML = `<div class="mag-msgbox ok">${text ? '一言コメントを保存しました' : '一言コメントを消しました'}。マーケット欄の表示は、次に読み直したときに変わります。</div>`;
+  box.innerHTML = `<div class="mag-msgbox ok">${text ? '一言コメントを保存しました' : '一言コメントを消しました'}。${magDoc.pre ? '土曜朝にマーケットの数字が入ると、そのあとに出ます。' : 'マーケット欄の表示は、次に読み直したときに変わります。'}</div>`;
 }
 
 // お知らせを前の号から写す（10/16 牧村さん。お知らせは毎週あまり変わらないので）
@@ -577,8 +604,8 @@ function magRenderPre() {
     ${m.mock ? '<p class="qr-warn">【試験用の見本モード】GASには書き込みません。</p>' : ''}
     <div class="mag-band"><div class="row">
       ${m.is_test ? `<span class="mag-test">試験号　${magEsc(m.issue_label || '')}</span>` : ''}
-      <span class="mag-date">${magEsc(magDateLabel(m.issue_date))}号</span><span class="mag-dim">まだ下書きがありません</span></div>
-      <div>下書き（先週の世界の動き）は、金曜20:50ごろに自動でできます。<b>お知らせ欄と「ご存知ですか」は、いま先に入れておけます。</b>
+      <span class="mag-date">${magEsc(magDateLabel(m.issue_date))}号</span><span class="mag-badge mag-st-pre">下書き前（先置き）</span><span class="mag-dim">まだ下書きがありません</span></div>
+      <div>下書き（先週の世界の動き）は、金曜20:50ごろに自動でできます。<b>お知らせ欄・「ご存知ですか」・解説・マーケットの一言は、いま先に入れておけます。</b>
         初版ができたとき、自動で中に入ります。</div>
       ${m.updated_at ? `<div class="mag-dim">先に入れた内容があります（${magEsc(String(m.updated_at).replace('T', ' ').slice(0, 16))}）</div>` : ''}
     </div>
@@ -588,8 +615,13 @@ function magRenderPre() {
     ${f('notice', 'MSフォーラムからのお知らせ', '（空で保存＝この欄はメールに出ません）')}
     ${'<div class="mag-btns"><button class="dash-refresh" onclick="magCopyPrevNotice()">📋 前の号のお知らせを写す</button><button class="dash-refresh" onclick="magXPick()" title="投稿済のXの投稿（新しい順に5件）から選んで、お知らせの欄の最後にリンクを足します">🔗 Xの投稿のリンクを貼る</button><span id="magXPick"></span><span class="sub">いちばん近い配信済の号のお知らせを、この欄に写します（写したあと直して、保存してください）</span></div><div id="magCopyMsg"></div>'}
     <div class="mag-btns"><button class="btn-save" onclick="magSavePre()">💾 先に入れておく（保存）</button>
-      <span class="sub">主要日程とマーケットは、初版と土曜朝に自動で入ります</span></div>
+      <span class="sub">ご存知ですか・お知らせの保存です。主要日程とマーケットの数字は、初版と土曜朝に自動で入ります</span></div>
     <div id="magMsgBox"></div>
+    <div class="mag-field"><div class="lbl">マーケットの一言コメント <span class="hint">（号ごと。土曜朝に入る数字のあと、1行あけて出ます。空で保存＝出さない。毎週でなくてよい）</span></div>
+      <textarea id="magF_mcomment" rows="2" placeholder="例：中東の緊張が続き、原油が上がりました。">${magEsc(m.market_comment || '')}</textarea>
+      <div class="mag-btns"><button class="dash-refresh" onclick="magSaveMarketComment()">💾 一言コメントを保存</button>
+        <span class="sub">上の「先に入れておく」とは別の保存です</span></div>
+      <div id="magMcMsg"></div></div>
     <div id="magCm"></div>`;
   magAfterRenderEdit();
   if (!m.mock) magCmMount(m.issue_date);

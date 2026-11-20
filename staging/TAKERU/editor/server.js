@@ -283,7 +283,9 @@ function postMagazineSave(req, res) {
         // マーケット欄の一言コメント（GAS v30〜。号ごと。空文字で削除）。版は変わらない
         body = { stage: 'market_comment', issue_date: b.issue_date, text: String(b.text || '') };
         if (MAG_MOCK) { magMockInit(); const cur = magMock.filter(r => r.issue_date === b.issue_date).pop();
-          if (cur) cur.market_comment = body.text; return sendGas(res, { ok: true, text: 'OK market_comment（見本）' }); }
+          if (cur) cur.market_comment = body.text;
+          else { const pre = magMockPre[b.issue_date] = magMockPre[b.issue_date] || { notice: '', trivia: '' }; pre.market_comment = body.text; pre.updated_at = new Date().toISOString(); }
+          return sendGas(res, { ok: true, text: 'OK market_comment（見本）' }); }
         return sendGas(res, await gasPost(body));
       }
       if (b.mode === 'issue_inputs') {
@@ -1573,6 +1575,28 @@ async function getHpAccess(req, res) {
   }
 }
 
+// GET /api/magazine/note?issue=YYYY-MM-DD — 会員システムの「号の冒頭に添える一言」をSSHで読む（2026-11-21 牧村さん）
+//   書くのは会員システム（D:\ms-member の magazine_note_save）。こちらは読むだけ。形は { "配信日": "文", … }。
+//   置き場の ~/member-private には名簿もあるので、このファイル1つだけを cat する。返すのはその号の文だけ。
+async function getMagazineNote(req, res, q) {
+  const issue = q.get('issue') || '';
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(issue)) return sendJSON(res, 400, { ok: false, error: '配信日の形が違います' });
+  if (MAG_MOCK) return sendJSON(res, 200, { ok: true, issue, note: '📢 MSフォーラムからのお知らせ\n（見本）事務局で添えた一言です。\nhttps://ms-forum.com/', mock: true });
+  const args = [
+    '-i', PROD.keyPath, '-p', String(PROD.port),
+    '-o', 'StrictHostKeyChecking=no', '-o', 'BatchMode=yes', '-o', 'ConnectTimeout=20',
+    `${PROD.user}@${PROD.host}`, 'cat ~/member-private/magazine_note.json 2>/dev/null; true',
+  ];
+  try {
+    const out = (await spawnP('ssh', args, {})).trim();
+    const all = out ? JSON.parse(out) : {};
+    const note = all && typeof all[issue] === 'string' ? all[issue] : '';
+    sendJSON(res, 200, { ok: true, issue, note });
+  } catch (e) {
+    sendJSON(res, 200, { ok: false, issue, note: '', error: e.message });
+  }
+}
+
 // GET /api/members — 本番の会員メール一覧(logs/members.csv)をSSHで取得
 //   1行 = 「日付, メール」。外部からは403で見えないのでSSHで取りに行く。
 async function getMembers(req, res) {
@@ -2075,6 +2099,7 @@ const server = http.createServer((req, res) => {
   if (pathname === '/api/magazine/dashboard' && method === 'GET') return getMagazineDashboard(req, res, parsed.searchParams);
   if (pathname === '/api/magazine/deliveries' && method === 'GET') return getMagazineDeliveries(req, res, parsed.searchParams);
   if (pathname === '/api/magazine/inputs' && method === 'GET') return getMagazineInputs(req, res, parsed.searchParams);
+  if (pathname === '/api/magazine/note' && method === 'GET') return getMagazineNote(req, res, parsed.searchParams);
   if (pathname === '/api/magazine/save' && method === 'POST') return postMagazineSave(req, res);
   if (pathname === '/api/magazine/image' && method === 'GET') return getMagazineImage(req, res, parsed.searchParams);
   if (pathname === '/api/x/status' && method === 'GET') return getXStatus(req, res);
