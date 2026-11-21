@@ -6,6 +6,8 @@
 //   1時間ごとに hourly() が動く。確かめごとは、それぞれの時刻の条件のときだけ判定する。
 //   何もなければ静か。新しい異常だけをメールで知らせ、片付くまで1日1回だけ知らせ直す。
 //   毎回、TAKERU_共有\20_見張り\今日の様子.md を書き直す（最後に動いた時刻・いまの異常・確かめた項目）。
+//   毎回、TAKERU_共有\20_見張り\共有箱データ.js も書き直す（提出箱の一覧。ソフィーのビューア用。R-20261121-S-03）。
+//     番号・題・種別・出した人・宛先・更新日時・閲覧リンク・受領の有無だけ。本文は読まない。番号の重複も数える。
 //
 //   読む所（どれも読むだけ）：
 //     X 用 GAS の窓口（action=x_list）／マガジン GAS の窓口（action=magazine_dashboard）
@@ -24,6 +26,10 @@ var YT_PAGE_URL = 'https://ms-forum.com/youtube.html';
 var YT_FEED_URL = 'https://www.youtube.com/feeds/videos.xml?channel_id=UCOhTl9zeT96dp5XYXEJbZYw';   // MSフォーラム 軍事・戦略検定講座（@MSCPOfficial）
 var TZ = 'Asia/Tokyo';
 var STATUS_FILE = '今日の様子.md';
+var BOX_DATA_FILE = '共有箱データ.js';
+var BOX_FOLDER = '10_提出箱';
+var RECEIPT_FILE = '90_受領一覧.md';
+var BOX_MAX = 500;
 var RENOTIFY_HOURS = 24;
 
 // 期日表の初め（DEADLINES_JSON が無いときに使う）
@@ -61,6 +67,8 @@ function hourly() {
       catch (e) { found.push({ key: 'watch-' + fn.name, title: '見張り番の確かめごとが失敗しました（' + fn.name + '）', detail: String(e && e.message || e), who: 'T' }); }
     });
     notify_(now, found);
+    try { exportBox_(now, results); }
+    catch (e) { results.push({ name: '提出箱の書き出し', state: 'ng', detail: '書き出せませんでした：' + String(e && e.message || e) }); }
     writeStatus_(now, results, found);
   } finally {
     lock.releaseLock();
@@ -331,6 +339,74 @@ function statusFile_() {
 }
 function statusFileUrl_() {
   try { var f = statusFile_(); return f ? f.getUrl() : '（20_見張り のフォルダが未設定）'; } catch (e) { return '（今日の様子.md を開けません）'; }
+}
+
+// ---------------- 共有箱データ.js（提出箱の一覧。ソフィーのビューア用） ----------------
+//   見張り番の知らせ（メール）にはしない。番号の重複は「確かめた項目」に ⚠️ で出すだけ
+function exportBox_(now, results) {
+  var id = props_().WATCH_FOLDER_ID;
+  if (!id) { results.push({ name: '提出箱の書き出し', state: 'skip', detail: 'WATCH_FOLDER_ID が未設定' }); return; }
+  var watch = DriveApp.getFolderById(id);
+  var parents = watch.getParents();
+  if (!parents.hasNext()) throw new Error('20_見張り の親フォルダ（TAKERU_共有）が見つかりません');
+  var root = parents.next();
+  var boxes = root.getFoldersByName(BOX_FOLDER);
+  if (!boxes.hasNext()) throw new Error(BOX_FOLDER + ' が見つかりません');
+  // 受領一覧の表の1列目（番号）
+  var received = {};
+  var rf = root.getFilesByName(RECEIPT_FILE);
+  if (rf.hasNext()) receiptIds_(rf.next().getBlob().getDataAsString('UTF-8')).forEach(function (x) { received[x] = true; });
+  var items = [], it = boxes.next().getFiles();
+  while (it.hasNext()) {
+    var f = it.next();
+    if (f.isTrashed()) continue;
+    var p = parseBoxName_(f.getName()), d = f.getLastUpdated();
+    p.date = fmt_(d, 'yyyy-MM-dd HH:mm'); p.t = d.getTime();
+    p.url = f.getUrl();
+    p.received = p.id ? !!received[p.id] : null;
+    items.push(p);
+  }
+  items.sort(function (a, b) { return b.t - a.t; });
+  var total = items.length;
+  if (items.length > BOX_MAX) items = items.slice(0, BOX_MAX);
+  items.forEach(function (x) { delete x.t; });
+  var dups = boxDuplicates_(items);
+  var data = { generated: fmt_(now, 'yyyy-MM-dd HH:mm'), count: items.length, total: total, items: items, duplicates: dups };
+  var js = '// 見張り番が1時間ごとに書き直す（TAKERU担当 T。コードは staging/TAKERU/editor/watch/Code.gs）。手で直さないでください\n' +
+    'window.KYOYUBAKO_DATA = ' + JSON.stringify(data, null, 1).replace(new RegExp('[\u2028\u2029]', 'g'), '') + ';\n';
+  var ex = watch.getFilesByName(BOX_DATA_FILE);
+  if (ex.hasNext()) ex.next().setContent(js); else watch.createFile(BOX_DATA_FILE, js, 'application/javascript');
+  var notRec = items.filter(function (x) { return x.received === false; }).length;
+  results.push({ name: '提出箱の書き出し', state: dups.length ? 'ng' : 'ok',
+    detail: BOX_DATA_FILE + ' に ' + items.length + '件（受領一覧に無い番号 ' + notRec + '件）' +
+      (dups.length ? '・番号の重複 ' + dups.length + '件：' + dups.map(function (x) { return x.id + '（' + x.names.length + '）'; }).join('、') + '（知らせはしない）' : '・番号の重複なし') });
+}
+// ファイル名を読み分ける：R-20261121-S-03_依頼_題（〇〇あて）.md など
+function parseBoxName_(name) {
+  var base = String(name).replace(/\.[A-Za-z0-9]{1,5}$/, '');
+  var o = { id: '', idDate: '', from: '', kind: '', title: base, to: '', name: String(name),
+    attachment: /\.(png|jpe?g|gif|webp|svg|mp3|mp4|csv)$/i.test(String(name)) };   // 図など（同じ番号の報告に添えたもの）
+  var m = /^(?:【[^】]*】)?([RA]-(\d{4})(\d{2})(\d{2})-(.+?)-(\d{2,3}))(?=[_ 　（(]|$)/.exec(base);
+  if (m) {
+    o.id = m[1]; o.idDate = m[2] + '-' + m[3] + '-' + m[4]; o.from = m[5];
+    var rest = base.slice(m[0].length).replace(/^[_ 　]+/, '');
+    var u = rest.indexOf('_');
+    if (u > 0 && u <= 6) { o.kind = rest.slice(0, u); rest = rest.slice(u + 1); }   // 6字まで（依頼・返事・連絡・報告・X時事解説…）
+    o.title = rest;
+  }
+  var t = /（([^（）]+?)あて）\s*$/.exec(o.title);
+  if (t) o.to = t[1];
+  return o;
+}
+function receiptIds_(md) {
+  var out = [];
+  String(md).split(/\r?\n/).forEach(function (l) { var m = /^\|\s*([RA]-\d{8}-[^\s|]+)\s*\|/.exec(l); if (m) out.push(m[1]); });
+  return out;
+}
+function boxDuplicates_(items) {
+  var by = {};
+  items.forEach(function (x) { if (x.id && !x.attachment) (by[x.id] = by[x.id] || []).push(x.name); });   // 添えた図は数えない
+  return Object.keys(by).filter(function (k) { return by[k].length > 1; }).sort().map(function (k) { return { id: k, names: by[k] }; });
 }
 
 // ---------------- 小さな道具 ----------------
