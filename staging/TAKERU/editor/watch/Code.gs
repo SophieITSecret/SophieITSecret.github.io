@@ -383,9 +383,12 @@ function exportBox_(now, results) {
 }
 // ファイル名を読み分ける：R-20261121-S-03_依頼_題（〇〇あて）.md など
 function parseBoxName_(name) {
-  var base = String(name).replace(/\.[A-Za-z0-9]{1,5}$/, '');
+  var EXT = /\.[A-Za-z][A-Za-z0-9]{0,4}$/;   // 拡張子（「v0.1」の「.1」は拡張子と見ない）
+  var base = String(name).replace(EXT, '');
+  // 文書＝md・gdoc・docx・doc と、拡張子の無いもの（Google ドキュメント）。ほか（図・txt・pdf・html など）は添付
+  //   重複は文書だけで数える（R-20261121-C-02 の md＋txt＋png の組を重複にしないため。2026-11-21）
   var o = { id: '', idDate: '', from: '', kind: '', title: base, to: '', name: String(name),
-    attachment: /\.(png|jpe?g|gif|webp|svg|mp3|mp4|csv)$/i.test(String(name)) };   // 図など（同じ番号の報告に添えたもの）
+    attachment: EXT.test(String(name)) && !/\.(md|gdoc|docx?)$/i.test(String(name)) };
   var m = /^(?:【[^】]*】)?([RA]-(\d{4})(\d{2})(\d{2})-(.+?)-(\d{2,3}))(?=[_ 　（(]|$)/.exec(base);
   if (m) {
     o.id = m[1]; o.idDate = m[2] + '-' + m[3] + '-' + m[4]; o.from = m[5];
