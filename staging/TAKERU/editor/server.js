@@ -1160,6 +1160,7 @@ function readingRequestMd(name, theme, cards, dict) {
     '- **人名・地名・城や寺社の名前・歴史や軍事の用語・英字や型式は、VOICEPEAK が読めそうでも全部拾う**（2026-11-20 牧村さんの決定。読み違えそうかは前もって当てられないため）。ふつうの言葉は拾わない。',
     '- 地名・寺社などの読みは調べて裏を取り、「なぜ」に根拠を書く（例：横手市の金沢はカネザワ）。',
     '- 1文字の語は前後を付けて書く（「米」でなく「米の高騰」）。',
+    '- 「〇〇家・〇〇方・〇〇氏・〇〇勢」は、録るときに作業台が「ケ・ガタ・シ・ゼイ」に直すので、苗字だけ拾えばよい。「〇〇家臣」「〇〇勢力」のように後ろに漢字が続くときは、まとめて拾う（2026-11-21）。',
     '- 本文の最後の「（出典：…）」の行は読み上げないので、下の本文から除いてあります。',
     '- 下の「今の辞書」にある語と、「作業台が自動で直すもの」は、拾わなくてよい。',
     `- 返事は \`70_読み\\返事\\${name}.csv\` に置いてください（UTF-8）。1行目は見出し：`, '',
@@ -1711,8 +1712,18 @@ async function spawnVP(args, opts, retries = 3, cancelRef) {
 // WAVs（複数可）→ MP3（ffmpeg で結合＋変換を一括処理）
 // loudnorm で音量を一定基準(EBU R128)にそろえる。ナレーターや感情で声量が
 // 変わっても、カードごとの仕上がり音量が揃う。
-function wavsToMp3(wavFiles, mp3Path, tempDir, reqId) {
-  const af = 'loudnorm=I=-16:TP=-1.5:LRA=11,afade=t=in:st=0:d=0.08';
+// サ行の角を和らげる処理（2026-11-21 牧村さんが聞き比べて「強さ0.50」に決定。Male 2 で合わせたので Male 2 だけ）
+//   config.json の voiceTone（ffmpeg の -af の文字列）・voiceToneNarrators（声の名前の配列）で差し替えられる
+const VOICE_TONE_DEFAULT = 'deesser=i=0.50:m=0.5:f=0.5:s=o,equalizer=f=6800:t=q:w=2:g=-7,equalizer=f=2500:t=q:w=1:g=2,highshelf=f=10000:g=2';
+const VOICE_TONE_NARRATORS_DEFAULT = ['Japanese Male 2'];
+function voiceToneFor(narrator) {
+  const list = Array.isArray(config.voiceToneNarrators) ? config.voiceToneNarrators : VOICE_TONE_NARRATORS_DEFAULT;
+  if (!narrator || !list.includes(narrator)) return '';
+  return typeof config.voiceTone === 'string' ? config.voiceTone.trim() : VOICE_TONE_DEFAULT;
+}
+function wavsToMp3(wavFiles, mp3Path, tempDir, reqId, narrator) {
+  const tone = voiceToneFor(narrator);
+  const af = (tone ? tone + ',' : '') + 'loudnorm=I=-16:TP=-1.5:LRA=11,afade=t=in:st=0:d=0.08';
   if (wavFiles.length === 1) {
     return spawnP('ffmpeg', ['-y', '-i', wavFiles[0], '-af', af, '-ar', '44100', '-ac', '1', '-b:a', '96k', mp3Path]);
   }
@@ -1816,11 +1827,25 @@ function toStdWav(inPath, outPath) {
 }
 
 // VOICEPEAK用にテキストを分割する。
+//  0) 空行で段落に分け、段落の中で、つないで limit字に収まる文は1回に読ませる
+//     （1文ずつだと、どの文も言い切りの下げ調子で終わり、強く聞こえる。2026-11-21 牧村さん）
 //  1) まず「。」で文に分ける（句点は各文の末尾に残す）
 //  2) limit字を超える文は「、」でさらに分割（読点は前側の末尾に残す）
 //  3) それでも超える断片は、最後の保険として limit字ごとに機械的に切る
 // これで句点のない長文（例：服務の宣誓 163字）でも上限内に収まる。
 function splitForVP(text, limit) {
+  const out = [];
+  for (const para of String(text).split(/\r?\n\s*\r?\n/)) {
+    let buf = '';
+    for (const s of splitSentencesForVP(para, limit)) {
+      if (buf && (buf + s).length > limit) { out.push(buf); buf = s; }
+      else buf += s;
+    }
+    if (buf) out.push(buf);
+  }
+  return out;
+}
+function splitSentencesForVP(text, limit) {
   const out = [];
   const pushChunked = (s) => {
     // どうしても limit を超える場合だけ、字数で強制分割
@@ -1828,7 +1853,7 @@ function splitForVP(text, limit) {
     if (s) out.push(s);
   };
   for (let sentence of text.split('。')) {
-    sentence = sentence.trim();
+    sentence = sentence.replace(/\s*\r?\n\s*/g, '').trim();   // 段落の中の改行はつなぐ（まとめたとき文の途中に改行を残さない）
     if (!sentence) continue;
     sentence += '。';
     if (sentence.length <= limit) { out.push(sentence); continue; }
@@ -1909,7 +1934,7 @@ function postVoiceCompare(req, res) {
         try { fs.unlinkSync(txtFile); } catch {}
 
         const mp3Path = path.join(COMPARE_DIR, `${i}.mp3`);
-        await wavsToMp3([wavFile], mp3Path, tempDir, `${reqId}_${i}`);
+        await wavsToMp3([wavFile], mp3Path, tempDir, `${reqId}_${i}`, narrator);
         outValues.push(v);
       }
       sendJSON(res, 200, { ok: true, param, values: outValues });
@@ -1935,6 +1960,15 @@ function getVoiceCompareAudio(req, res, idx) {
 function stripSourceLines(t) {
   return String(t).split(/\r?\n/).filter(l => !/^\s*[（(]\s*出典\s*[:：].*[)）]\s*$/.test(l)).join('\n').trim();
 }
+// 読みに置き換えたカタカナの後ろに残った「家・方・氏・勢」を読みに直す（2026-11-21 牧村さん）
+//   「タケダ家は」を VOICEPEAK は「タケダいえは」と読むため。後ろが漢字（家臣・勢力・氏側など）のときは別の語なので触らない
+const KANA_SUFFIX = { '家': 'ケ', '方': 'ガタ', '氏': 'シ', '勢': 'ゼイ' };
+const KANA_SUFFIX_RE = /([ァ-ヴー]{2,})([家方氏勢])(?![一-龥々〆ヵヶ])/g;
+function fixKanaSuffix(t) {
+  let n = 0;
+  const text = String(t).replace(KANA_SUFFIX_RE, (m, kana, k) => { n++; return kana + KANA_SUFFIX[k]; });
+  return { text, count: n };
+}
 function postVoiceGenerate(req, res) {
   let chunks = [];
   const cancelRef = { cancelled: false, proc: null };
@@ -1952,7 +1986,8 @@ function postVoiceGenerate(req, res) {
       const d        = JSON.parse(Buffer.concat(chunks).toString('utf8'));
       const code     = (d.code     || '').trim();
       // 「（出典：…）」の行は読み上げない（画面には出す。搬入が本文の最後に足す行。2026-11-20 牧村さん）
-      const text     = stripSourceLines(d.text || '');
+      const fixed    = fixKanaSuffix(stripSourceLines(d.text || ''));
+      const text     = fixed.text;
       const narrator = (d.narrator || 'Japanese Female 1').trim();
       const emotion  = (d.emotion  || 'happy=40,fun=30');
       const speed    = String(d.speed || 100);
@@ -1979,7 +2014,7 @@ function postVoiceGenerate(req, res) {
       // リクエストごとにユニークなプレフィックスを生成（同一カードの並行処理に備える）
       const reqId = `${code}_${Date.now().toString(36)}`;
       const pauseCount = segments.length - speechCount;
-      console.log(`[voice] ${code}  ${speechCount}文` + (pauseCount ? ` ＋間${pauseCount}個` : '') + ` narrator=${narrator}`);
+      console.log(`[voice] ${code}  まとめて${speechCount}回` + (pauseCount ? ` ＋間${pauseCount}個` : '') + ` narrator=${narrator}` + (voiceToneFor(narrator) ? '（サ行の処理あり）' : '') + (fixed.count ? `  カタカナ＋家などを読みに ${fixed.count}か所` : ''));
 
       let spoken = 0;
       for (let i = 0; i < segments.length; i++) {
@@ -2009,7 +2044,7 @@ function postVoiceGenerate(req, res) {
       }
 
       // WAV 結合 → MP3（loudnormで音量そろえ）
-      await wavsToMp3(chunkWavs, mp3Path, tempDir, reqId);
+      await wavsToMp3(chunkWavs, mp3Path, tempDir, reqId, narrator);
       console.log(`  ✅ ${code}.mp3 完成`);
       updateMp3List(voicesDir);
       // 検算のため、実際に読ませた文を残す。録り直したカードは「録り直す」の印を外す
