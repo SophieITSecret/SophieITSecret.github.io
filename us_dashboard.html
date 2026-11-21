@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SUPER DECAGON - US Media Dashboard</title>
+    <style>
+        /* サイバーで洗練された司令室風のデザイン */
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #121212; color: #e0e0e0; margin: 0; padding: 20px; }
+        h1 { text-align: center; color: #00e5ff; border-bottom: 2px solid #333; padding-bottom: 10px; letter-spacing: 2px; }
+        .description { text-align: center; color: #888; margin-bottom: 30px; }
+        
+        /* 画面いっぱいに並べるためのグリッド設定 */
+        .dashboard { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+        
+        /* 各メディアの柱（カラム） */
+        .column { background: #1e1e1e; padding: 20px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
+        .column h2 { text-align: center; margin-top: 0; border-bottom: 1px solid #444; padding-bottom: 10px; font-size: 1.2rem; }
+        
+        /* 左右の陣営を色分け */
+        .left h2 { color: #4dabf7; } /* リベラルはブルー */
+        .center h2 { color: #fcc419; } /* 中道・経済はイエロー */
+        .right h2 { color: #ff8787; } /* 保守はレッド */
+        
+        /* ニュース見出しのデザイン */
+        .news-item { margin-bottom: 15px; border-bottom: 1px dashed #333; padding-bottom: 10px; }
+        .news-item a { color: #ffffff; text-decoration: none; font-weight: bold; font-size: 0.95rem; display: block; margin-bottom: 5px; transition: color 0.2s; }
+        .news-item a:hover { color: #00e5ff; }
+        .news-date { font-size: 0.8rem; color: #888; }
+
+        /* スマホで見た時は縦一列に自動調整 */
+        @media (max-width: 768px) {
+            .dashboard { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <h1>🛡️ SUPER DECAGON - US Media</h1>
+    <p class="description">アメリカ主要メディアの最新見出し（RSS）を自動収集するダッシュボード</p>
+
+    <div class="dashboard">
+        <div class="column left">
+            <h2>NY Times (リベラル/左派)</h2>
+            <div id="feed-left">最新記事を読み込み中...</div>
+        </div>
+
+        <div class="column center">
+            <h2>WSJ (中道/経済)</h2>
+            <div id="feed-center">最新記事を読み込み中...</div>
+        </div>
+
+        <div class="column right">
+            <h2>Fox News (保守/右派)</h2>
+            <div id="feed-right">最新記事を読み込み中...</div>
+        </div>
+    </div>
+
+    <script>
+        // RSSをブラウザで読み込めるJSONに変換する無料API（これが壁をすり抜ける鍵です）
+        const rss2jsonUrl = 'https://api.rss2json.com/v1/api.json?rss_url=';
+
+        // 取得したい見出しの配給所（RSSURL）リスト
+        const feeds = {
+            'feed-left': 'https://rss.nytimes.com/services/xml/rss/nyt/Politics.xml',
+            'feed-center': 'https://feeds.a.dj.com/rss/RSSWorldNews.xml',
+            'feed-right': 'https://moxie.foxnews.com/google-publisher/politics.xml'
+        };
+
+        // 見出しを取得して画面に並べる機能
+        function loadFeed(containerId, rssUrl) {
+            fetch(rss2jsonUrl + encodeURIComponent(rssUrl))
+                .then(response => response.json())
+                .then(data => {
+                    let html = '';
+                    if (data.status === 'ok') {
+                        // 上位10件の見出しだけを抽出
+                        const items = data.items.slice(0, 10);
+                        items.forEach(item => {
+                            const date = new Date(item.pubDate).toLocaleString('ja-JP');
+                            html += `
+                                <div class="news-item">
+                                    <a href="${item.link}" target="_blank">${item.title}</a>
+                                    <div class="news-date">${date}</div>
+                                </div>
+                            `;
+                        });
+                    } else {
+                        html = '<p style="color:red;">読み込みエラーが発生しました</p>';
+                    }
+                    document.getElementById(containerId).innerHTML = html;
+                })
+                .catch(error => {
+                    document.getElementById(containerId).innerHTML = '<p style="color:red;">通信エラー</p>';
+                });
+        }
+
+        // 3つのメディアの読み込みを同時スタート
+        for (const [id, url] of Object.entries(feeds)) {
+            loadFeed(id, url);
+        }
+    </script>
+
+</body>
+</html>
