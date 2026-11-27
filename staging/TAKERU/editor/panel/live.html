@@ -43,6 +43,7 @@
     panelEl.style.transform = 'translateX(-50%) scale(1)';
     var h = panelEl.scrollHeight || 1;
     var s = Math.min(1840 / 1000, (1030 - 48) / h);
+    panelEl.style.top = Math.max(24, Math.round((1030 - h * s) / 2)) + 'px';   // 短い中身は上下の真ん中に
     panelEl.style.transform = 'translateX(-50%) scale(' + s + ')';
   }
   function setStopped(v) {
@@ -69,7 +70,7 @@
 
   // ---- 音 ----
   var audio = new Audio(), list = [], seen = null, priority = [], lastName = '', loopName = '', playing = false, nextTimer = null;
-  function label(n) { return n.replace(/\.mp3$/i, '').replace(/^[0-9]+[_\-－　 ]*/, ''); }
+  function label(n) { return n.replace(/^.*\//, '').replace(/\.mp3$/i, '').replace(/^[0-9]+[_\-－　 ]*/, ''); }
   function loadList(cb) {
     fetch('/audio/list?t=' + Date.now()).then(function (r) { return r.json(); }).then(function (a) {
       list = a.map(function (f) { return f.name; });
