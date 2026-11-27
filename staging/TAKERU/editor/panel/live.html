@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>開票ライブ</title>
+<!-- 開票ライブの画面（OBS のブラウザの部品で 1920×1080 に映す）2026-11-27 TAKERU担当（T）
+     画：/panel（速報パネルの中身）を1分ごとに読む。音：/audio/list の mp3 を名前の順にループ。
+     新しく置かれた1本は、いまの1本の次に先に流す。中身が空（停止.txt）なら札にして音も止める。 -->
+<style>
+  html, body { margin: 0; height: 100%; }
+  body { width: 1920px; height: 1080px; overflow: hidden; background: #f4f1ea; color: #222;
+         font-family: "Yu Gothic UI", "Yu Gothic", Meiryo, sans-serif; position: relative; }
+  #stage { position: absolute; left: 0; top: 0; width: 1920px; height: 1030px; overflow: hidden; }
+  #panel { position: absolute; left: 50%; top: 24px; width: 1000px; transform-origin: top center; }
+  #wait { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; }
+  #wait div { background: #fff; border: 4px solid #b03a2e; border-radius: 12px; padding: 40px 80px;
+              font-size: 56px; font-weight: 800; color: #b03a2e; }
+  #foot { position: absolute; left: 0; right: 0; bottom: 0; height: 50px; display: flex; align-items: center;
+          justify-content: space-between; padding: 0 40px; font-size: 24px; color: #555; background: #ebe6db; }
+  #foot b { color: #b03a2e; }
+  #now { color: #333; }
+  #tap { position: absolute; inset: 0; display: none; align-items: center; justify-content: center;
+         background: rgba(0,0,0,.45); color: #fff; font-size: 48px; cursor: pointer; }
+</style>
+</head>
+<body>
+<div id="stage"><div id="panel"></div><div id="wait"><div>しばらくお待ちください</div></div></div>
+<div id="foot"><span>同じ速報は <b>ms-forum.com</b> でご覧になれます</span><span id="now"></span></div>
+<div id="tap">クリックすると音が出ます（OBS では出ません）</div>
+<script>
+(function () {
+  // 試しのときだけ ?poll=秒&gap=秒 で縮められる（ふだんは1分ごと・間は15秒）
+  var q = new URLSearchParams(location.search), POLL = Number(q.get('poll')) || 60, GAPS = q.has('gap') ? Number(q.get('gap')) : 15;
+  var PANEL_EVERY = POLL * 1000, AUDIO_EVERY = POLL * 1000, GAP = GAPS * 1000;
+  var panelEl = document.getElementById('panel'), waitEl = document.getElementById('wait'),
+      nowEl = document.getElementById('now'), tapEl = document.getElementById('tap');
+  var lastHtml = null, stopped = false;
+
+  function log(m) { try { fetch('/log?m=' + encodeURIComponent(m)); } catch (e) {} }
+
+  // ---- 画 ----
+  function fit() {
+    panelEl.style.transform = 'translateX(-50%) scale(1)';
+    var h = panelEl.scrollHeight || 1;
+    var s = Math.min(1840 / 1000, (1030 - 48) / h);
+    panelEl.style.transform = 'translateX(-50%) scale(' + s + ')';
+  }
+  function setStopped(v) {
+    if (v === stopped) return;
+    stopped = v;
+    waitEl.style.display = v ? 'flex' : 'none';
+    panelEl.style.display = v ? 'none' : 'block';
+    if (v) { audio.pause(); playing = false; clearTimeout(nextTimer); nextTimer = null; nowEl.textContent = ''; log('停止：札を出し、音を止めました'); }
+    else { log('再開'); playNext(); }
+  }
+  function loadPanel() {
+    fetch('/panel?t=' + Date.now()).then(function (r) { return r.json(); }).then(function (j) {
+      if (!j || !j.ok) return;                       // 読めないときは前の画のまま
+      if (j.stopped || !j.html) { setStopped(true); return; }
+      if (j.html !== lastHtml) {
+        lastHtml = j.html; panelEl.innerHTML = j.html;
+        Array.prototype.forEach.call(panelEl.querySelectorAll('img'), function (im) { im.addEventListener('load', fit); });
+        log('画を替えました：' + (j.file || ''));
+      }
+      setStopped(false);
+      fit();
+    }).catch(function () {});
+  }
+
+  // ---- 音 ----
+  var audio = new Audio(), list = [], seen = null, priority = [], lastName = '', loopName = '', playing = false, nextTimer = null;
+  function label(n) { return n.replace(/\.mp3$/i, '').replace(/^[0-9]+[_\-－　 ]*/, ''); }
+  function loadList(cb) {
+    fetch('/audio/list?t=' + Date.now()).then(function (r) { return r.json(); }).then(function (a) {
+      list = a.map(function (f) { return f.name; });
+      if (seen === null) { seen = {}; list.forEach(function (n) { seen[n] = 1; }); }
+      list.forEach(function (n) { if (!seen[n]) { seen[n] = 1; priority.push(n); log('新しい音：' + n + '（次に流します）'); } });
+      if (cb) cb();
+      if (!playing && !nextTimer && !stopped) playNext();
+    }).catch(function () { if (cb) cb(); });
+  }
+  function pick() {
+    while (priority.length) { var p = priority.shift(); if (list.indexOf(p) >= 0) return p; }
+    if (!list.length) return '';
+    var n = loopAfter(loopName);
+    if (n === lastName && list.length > 1) n = loopAfter(n);   // 先に流した1本と同じなら、続けては流さない
+    return (loopName = n);
+  }
+  function loopAfter(x) {
+    for (var i = 0; i < list.length; i++) if (list[i].localeCompare(x, 'ja') > 0) return list[i];
+    return list[0];                                  // 最後まで行ったら頭に戻る
+  }
+  function playNext() {
+    clearTimeout(nextTimer); nextTimer = null;
+    if (stopped || playing) return;
+    var n = pick();
+    if (!n) { nextTimer = setTimeout(function () { nextTimer = null; playNext(); }, 10000); return; }
+    lastName = n; playing = true;
+    audio.src = '/audio/' + encodeURIComponent(n);
+    var pr = audio.play();
+    if (pr && pr.catch) pr.catch(function () { playing = false; tapEl.style.display = 'flex'; });
+    log('流します：' + n);
+  }
+  function after(wait) {
+    playing = false; nowEl.textContent = '';
+    if (stopped) return;
+    nextTimer = setTimeout(function () { nextTimer = null; playNext(); }, wait);
+  }
+  audio.addEventListener('playing', function () { nowEl.textContent = '解説：' + label(lastName); });
+  audio.addEventListener('ended', function () { after(GAP); });
+  audio.addEventListener('error', function () { log('流せません：' + lastName); after(2000); });
+  tapEl.addEventListener('click', function () { tapEl.style.display = 'none'; loopName = ''; playNext(); });
+
+  loadPanel(); setInterval(loadPanel, PANEL_EVERY);
+  loadList(); setInterval(loadList, AUDIO_EVERY);
+  window.addEventListener('resize', fit);
+})();
+</script>
+</body>
+</html>
