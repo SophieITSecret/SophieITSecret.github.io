@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node --check *)",
+      "Bash(bash tools/bump-sw.sh)",
+      "Bash(curl -s https://takeru.ms-forum.com/*)",
+      "Bash(curl -s https://sophieitsecret.github.io/*)",
+      "Bash(curl -s http://localhost:3000/*)"
+    ]
+  }
+}
